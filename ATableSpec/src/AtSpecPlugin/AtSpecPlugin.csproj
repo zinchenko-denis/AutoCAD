@@ -9,29 +9,20 @@
     <PlatformTarget>x64</PlatformTarget>
     <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
-
-    <!-- Путь к установленному AutoCAD (берём оттуда managed-сборки).
-         Перекрывается из build.ps1:  -p:AcadDir="..."  -->
-    <AcadDir Condition="'$(AcadDir)' == ''">C:\Program Files\Autodesk\AutoCAD 2021</AcadDir>
   </PropertyGroup>
 
   <ItemGroup>
-    <!-- Сборки AutoCAD .NET API. Private=false => не копировать в bin
-         (они и так есть в составе AutoCAD во время выполнения). -->
-    <Reference Include="accoremgd">
-      <HintPath>$(AcadDir)\accoremgd.dll</HintPath>
-      <Private>false</Private>
-    </Reference>
-    <Reference Include="acdbmgd">
-      <HintPath>$(AcadDir)\acdbmgd.dll</HintPath>
-      <Private>false</Private>
-    </Reference>
-    <Reference Include="acmgd">
-      <HintPath>$(AcadDir)\acmgd.dll</HintPath>
-      <Private>false</Private>
-    </Reference>
+    <!-- Reference-сборки AutoCAD 2021 (product version 24.0) из NuGet.
+         Дают собирать БЕЗ установленного AutoCAD (в т.ч. на GitHub Actions).
+         Это метаданные (CopyLocal=false) — в бандл попадёт только наш AtSpecPlugin.dll. -->
+    <PackageReference Include="AutoCAD.NET" Version="24.0.0" />
 
-    <!-- JavaScriptSerializer (без внешних NuGet-зависимостей) -->
+    <!-- Reference-сборки .NET Framework 4.8: компиляция net48 без установки targeting-пака. -->
+    <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.3">
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
+
+    <!-- JavaScriptSerializer (разбор JSON без внешних зависимостей) -->
     <Reference Include="System.Web.Extensions" />
   </ItemGroup>
 

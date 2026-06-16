@@ -1,0 +1,73 @@
+name: build-bundle
+
+# Собирает готовый ATableSpec.bundle.zip на Windows-раннере GitHub
+# (ничего ставить локально не нужно) и публикует его в релиз "latest".
+# Конструктор скачивает zip по ссылке и просто кладёт папку в AutoCAD.
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - "ATableSpec/**"
+      - ".github/workflows/build.yml"
+  workflow_dispatch: {}        # можно запускать вручную кнопкой в разделе Actions
+
+permissions:
+  contents: write              # нужно, чтобы опубликовать релиз (см. примечание в README)
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      # 1) Плагин (DLL) — ссылки на AutoCAD берутся из NuGet, AutoCAD не нужен
+      - name: Build plugin DLL
+        run: dotnet build ATableSpec/src/AtSpecPlugin/AtSpecPlugin.csproj -c Release -o build_dll
+
+      # 2) Движок (EXE) — PyInstaller на Windows даёт Windows-exe со встроенным Python
+      - name: Freeze engine EXE
+        run: |
+          python -m pip install --upgrade pip
+          pip install pyinstaller ezdxf pyyaml openpyxl
+          pyinstaller --onefile --name dxf_spec ATableSpec/engine/dxf_spec.py --distpath build_exe
+
+      # 3) Собрать бандл и упаковать в zip
+      - name: Assemble bundle
+        shell: pwsh
+        run: |
+          $b = "ATableSpec.bundle"
+          New-Item -ItemType Directory -Force "$b/Contents/net48"  | Out-Null
+          New-Item -ItemType Directory -Force "$b/Contents/engine" | Out-Null
+          Copy-Item "ATableSpec/bundle/ATableSpec.bundle/PackageContents.xml" "$b/"
+          Copy-Item "build_dll/AtSpecPlugin.dll" "$b/Contents/net48/"
+          Copy-Item "build_exe/dxf_spec.exe"     "$b/Contents/engine/"
+          Copy-Item "ATableSpec/engine/mapping.yaml" "$b/Contents/engine/"
+          Compress-Archive -Path $b -DestinationPath "ATableSpec.bundle.zip" -Force
+
+      # 4a) Артефакт сборки (виден в разделе Actions; скачивание — для залогиненных)
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ATableSpec.bundle
+          path: ATableSpec.bundle.zip
+
+      # 4b) Релиз "latest" — постоянная прямая ссылка на скачивание для конструктора
+      - name: Publish to "latest" release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: latest
+          name: "ATableSpec — последняя сборка"
+          body: "Готовый бандл. Скачать ATableSpec.bundle.zip, распаковать, папку ATableSpec.bundle положить в %APPDATA%\\Autodesk\\ApplicationPlugins\\, запустить AutoCAD, команда ATSPEC."
+          files: ATableSpec.bundle.zip
