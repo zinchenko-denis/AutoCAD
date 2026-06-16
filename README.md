@@ -3,6 +3,19 @@
 Сборник инструментов автоматизации AutoCAD. Каждая надстройка — в своей подпапке,
 самодостаточна (исходники, сборка, инструкция).
 
+## Готовая сборка — скачать и поставить (без установки пакетов)
+
+Готовый бандл собирается автоматически (GitHub Actions) и лежит здесь:
+**[Releases → latest](https://github.com/zinchenko-denis/AutoCAD/releases/latest)** —
+файл `ATableSpec.bundle.zip`.
+
+Установка (на машине нужен только AutoCAD, больше ничего):
+1. Скачать и распаковать `ATableSpec.bundle.zip`.
+2. Папку `ATableSpec.bundle` положить в `%APPDATA%\Autodesk\ApplicationPlugins\`.
+3. Запустить AutoCAD, набрать команду `ATSPEC`.
+
+Подробная инструкция с диагностикой: [`ATableSpec/docs/ATableSpec_install.pdf`](ATableSpec/docs/ATableSpec_install.pdf).
+
 ## Инструменты
 
 ### ATableSpec — спецификации из блоков без СПДС
