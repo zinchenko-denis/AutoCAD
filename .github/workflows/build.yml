@@ -8,7 +8,9 @@ on:
   push:
     branches: [ main ]
     paths:
-      - "ATableSpec/**"
+      - "ATableSpec/src/**"
+      - "ATableSpec/engine/**"
+      - "ATableSpec/bundle/**"
       - ".github/workflows/build.yml"
   workflow_dispatch: {}        # можно запускать вручную кнопкой в разделе Actions
 
