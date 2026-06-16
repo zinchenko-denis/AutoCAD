@@ -86,11 +86,12 @@ class Element:
     size: Optional[str] = None      # сырой размер заполнения "ШхВ"
     width: Optional[float] = None   # ширина из size, мм
     height: Optional[float] = None  # высота из size, мм
-    extras: Dict[str, str] = field(default_factory=dict)  # прочие атрибуты
+    extras: Dict[str, str] = field(default_factory=dict)  # прочие атрибуты (keep_attrs)
+    raw: Dict[str, str] = field(default_factory=dict)     # ВСЕ исходные атрибуты блока
     x: float = 0.0
     y: float = 0.0
 
-    # доступ к полю по имени (канон или extras) — нужно агрегатору
+    # доступ к полю по имени: канон -> extras -> сырые атрибуты блока
     def get(self, name: str) -> Any:
         canon = {
             "type": self.etype, "etype": self.etype,
@@ -102,7 +103,9 @@ class Element:
         }
         if name in canon:
             return canon[name]
-        return self.extras.get(name)
+        if name in self.extras:
+            return self.extras[name]
+        return self.raw.get(name)
 
 
 @dataclass
@@ -207,7 +210,7 @@ class ElementMapper:
             layer=raw.layer, block=raw.name,
             mark=mark, article=article, length=length,
             size=size, width=width, height=height,
-            extras=extras, x=raw.x, y=raw.y,
+            extras=extras, raw=dict(a), x=raw.x, y=raw.y,
         )
 
     def map_all(self, blocks: List[RawBlock]) -> Tuple[List[Element], List[RawBlock]]:
@@ -231,17 +234,53 @@ def _sort_key_value(v: Any):
     return (1, str(v))
 
 
+def _cmp(a: Any, op: str, b: Any) -> bool:
+    """Сравнение значения a с эталоном b по оператору op.
+    По умолчанию строковое (регистронезависимое); для >,<,>=,<= — числовое."""
+    sa = "" if a is None else str(a).strip()
+    sb = "" if b is None else str(b).strip()
+    if op in ("=", "=="):
+        return sa.lower() == sb.lower()
+    if op in ("!=", "<>"):
+        return sa.lower() != sb.lower()
+    if op == "contains":
+        return sb.lower() in sa.lower()
+    if op in (">", "<", ">=", "<="):
+        na, nb = parse_number(sa), parse_number(sb)
+        if na is None or nb is None:
+            return False
+        return {">": na > nb, "<": na < nb, ">=": na >= nb, "<=": na <= nb}[op]
+    return True
+
+
+def _passes(e: "Element", include_types, include_layers, filters) -> bool:
+    """Проходит ли элемент фильтры запроса (источник по типам/слоям + условия AND)."""
+    if include_types and e.etype not in include_types:
+        return False
+    if include_layers and e.layer not in include_layers:
+        return False
+    for f in (filters or []):
+        field = f.get("field")
+        if not field:
+            continue
+        if not _cmp(e.get(field), f.get("op", "="), f.get("value", "")):
+            return False
+    return True
+
+
 class SpecBuilder:
     def __init__(self, config: dict):
         self.reports: List[dict] = config.get("reports", [])
 
     def build(self, report_cfg: dict, elements: List[Element]) -> Spec:
         include = set(report_cfg.get("include_types", []))
+        include_layers = set(report_cfg.get("include_layers", []))
+        filters = report_cfg.get("filters", [])
         group_by: List[str] = report_cfg["group_by"]
         measures: Dict[str, str] = report_cfg.get("measures", {"qty": "count"})
         sort_by: List[str] = report_cfg.get("sort_by", group_by)
 
-        subset = [e for e in elements if (not include or e.etype in include)]
+        subset = [e for e in elements if _passes(e, include, include_layers, filters)]
 
         # агрегируем
         buckets: "OrderedDict[tuple, dict]" = OrderedDict()
@@ -404,16 +443,104 @@ def load_config(config_path: str) -> dict:
         return yaml.safe_load(f)
 
 
-def engine_json(records: List[dict], config: dict) -> dict:
-    """Точка входа движка для C#-шима: записи блоков -> JSON со спецификациями."""
-    specs, elements, skipped = records_to_specs(records, config)
+# поля, по которым осмысленно фильтровать/группировать (помимо сырых атрибутов)
+_DERIVED_FIELDS = ["layer", "type", "width", "height", "length"]
+
+
+def describe(elements: List[Element], config: dict) -> dict:
+    """Метаданные для построителя запроса в плагине: какие типы/слои/поля/значения
+    есть в выборке, и какие пресеты заданы в конфиге."""
+    types, layers = [], []
+    attr_tags = []
+    values: Dict[str, set] = {}
+
+    def add_val(field, v):
+        if v is None or str(v).strip() == "":
+            return
+        values.setdefault(field, set()).add(str(v))
+
+    for e in elements:
+        if e.etype not in types:
+            types.append(e.etype)
+        if e.layer not in layers:
+            layers.append(e.layer)
+        add_val("type", e.etype)
+        add_val("layer", e.layer)
+        add_val("width", e.width)
+        add_val("height", e.height)
+        add_val("length", e.length)
+        for tag, val in e.raw.items():
+            if tag not in attr_tags:
+                attr_tags.append(tag)
+            add_val(tag, val)
+
+    fields = sorted(attr_tags) + _DERIVED_FIELDS
     return {
         "ok": True,
-        "blocks_in": len(records),
         "elements": len(elements),
-        "skipped": len(skipped),
-        "reports": [spec_to_dict(s) for s in specs],
+        "types": sorted(types),
+        "layers": sorted(layers),
+        "fields": fields,                       # доступно для фильтра/группировки
+        "values": {k: sorted(v) for k, v in values.items()},
+        "presets": config.get("reports", []),   # пресеты = текущие отчёты
     }
+
+
+def engine_json(payload: Any, config: dict) -> dict:
+    """Точка входа движка для C#-шима.
+
+    Совместимо со старым форматом (payload = список записей блоков -> все пресеты).
+    Новый формат — словарь:
+      {"blocks":[...], "action":"describe"}                      -> метаданные
+      {"blocks":[...], "action":"run", "report":"<имя пресета>"} -> один пресет
+      {"blocks":[...], "action":"run", "query":{...}}            -> произвольный запрос
+      {"blocks":[...], "action":"run"}                            -> все пресеты
+    """
+    # старый формат: голый список
+    if isinstance(payload, list):
+        records = payload
+        action, report, query = "run", None, None
+    else:
+        records = payload.get("blocks", [])
+        action = payload.get("action", "run")
+        report = payload.get("report")
+        query = payload.get("query")
+
+    mapper = ElementMapper(config)
+    blocks = [RawBlock.from_record(r) for r in records]
+    elements, skipped = mapper.map_all(blocks)
+    base = {"ok": True, "blocks_in": len(records),
+            "elements": len(elements), "skipped": len(skipped)}
+
+    if action == "describe":
+        d = describe(elements, config)
+        d.update({"blocks_in": len(records), "skipped": len(skipped)})
+        return d
+
+    builder = SpecBuilder(config)
+    if query:
+        # произвольный запрос из диалога
+        rc = {
+            "name": query.get("name", "запрос"),
+            "title": query.get("title", "Ведомость"),
+            "include_types": query.get("include_types", []),
+            "include_layers": query.get("include_layers", []),
+            "filters": query.get("filters", []),
+            "group_by": query.get("group_by") or ["type"],
+            "measures": query.get("measures") or {"кол_во": "count"},
+            "sort_by": query.get("sort_by") or (query.get("group_by") or ["type"]),
+        }
+        specs = [builder.build(rc, elements)]
+    elif report:
+        rc = next((r for r in builder.reports if r.get("name") == report), None)
+        if rc is None:
+            return {"ok": False, "error": f"пресет не найден: {report}", **base}
+        specs = [builder.build(rc, elements)]
+    else:
+        specs = builder.build_all(elements)
+
+    base["reports"] = [spec_to_dict(s) for s in specs]
+    return base
 
 
 # --------------------------------------------------------------------------- #
@@ -478,12 +605,11 @@ def main(argv=None):
                 pass
         if a.infile:
             with open(a.infile, "r", encoding="utf-8") as f:
-                records = json.load(f)
+                payload = json.load(f)
         else:
-            records = json.load(sys.stdin)
-        if isinstance(records, dict):           # допускаем {"blocks":[...]}
-            records = records.get("blocks", [])
-        result = engine_json(records, config)
+            payload = json.load(sys.stdin)
+        # payload: список записей (старый формат) ИЛИ словарь {blocks, action, query/report}
+        result = engine_json(payload, config)
         text = json.dumps(result, ensure_ascii=False)
         if a.outjson:
             with open(a.outjson, "w", encoding="utf-8") as f:

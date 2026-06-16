@@ -24,6 +24,9 @@
 
     <!-- JavaScriptSerializer (разбор JSON без внешних зависимостей) -->
     <Reference Include="System.Web.Extensions" />
+    <!-- Окно-построитель запроса -->
+    <Reference Include="System.Windows.Forms" />
+    <Reference Include="System.Drawing" />
   </ItemGroup>
 
 </Project>

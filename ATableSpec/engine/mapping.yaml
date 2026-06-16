@@ -41,6 +41,15 @@ reports:
       длина_сумм_мм: sum_length
     sort_by: [type, article, mark, length]
 
+  - name: раскрой
+    title: "Ведомость раскроя профилей"
+    include_types: [ригель, стойка]
+    group_by: [article, length]        # без mark -> одинаковые длины сливаются
+    measures:
+      кол_во: count
+      длина_сумм_мм: sum_length
+    sort_by: [article, length]
+
   - name: кронштейны
     title: "Ведомость кронштейнов"
     include_types: [кронштейн]
