@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Манифест автозагрузки Autodesk. Папку *.bundle кладут в
+  %APPDATA%\Autodesk\ApplicationPlugins\ — AutoCAD подхватит сам.
+
+  Components с RuntimeRequirements SeriesMin/SeriesMax маршрутизируют
+  нужную DLL под версию AutoCAD. Сейчас активна одна ветка (net48,
+  2013–2024). Ветка net8 (2025+) заготовлена и закомментирована.
+-->
+<ApplicationPackage
+    SchemaVersion="1.0"
+    AutodeskProduct="AutoCAD"
+    Name="ATableSpec"
+    AppVersion="1.0.0"
+    ProductCode="{0AE396BC-A7DC-4FC5-AADA-711331AF9A67}"
+    Description="Спецификации из блоков AutoCAD без СПДС"
+    Author="Denis Zinchenko">
+
+  <CompanyDetails Name="Denis Zinchenko" />
+
+  <!-- AutoCAD 2013–2024 : .NET Framework. R24.0 = AutoCAD 2021. -->
+  <Components Description="net48 (AutoCAD 2013-2024)">
+    <RuntimeRequirements OS="Win64" Platform="AutoCAD" SeriesMin="R19.0" SeriesMax="R24.3" />
+    <ComponentEntry
+        AppName="ATableSpec"
+        ModuleName="./Contents/net48/AtSpecPlugin.dll"
+        AppType=".NET"
+        LoadOnCommandInvocation="True"
+        LoadOnAutoCADStartup="False">
+      <Commands GroupName="ATableSpecCommands">
+        <Command Global="ATSPEC" Local="ATSPEC" />
+      </Commands>
+    </ComponentEntry>
+  </Components>
+
+  <!-- AutoCAD 2025+ : .NET 8. Добавить после сборки net8.
+  <Components Description="net8 (AutoCAD 2025+)">
+    <RuntimeRequirements OS="Win64" Platform="AutoCAD" SeriesMin="R25.0" SeriesMax="R25.9" />
+    <ComponentEntry
+        AppName="ATableSpec"
+        ModuleName="./Contents/net8/AtSpecPlugin.dll"
+        AppType=".NET"
+        LoadOnCommandInvocation="True"
+        LoadOnAutoCADStartup="False">
+      <Commands GroupName="ATableSpecCommands">
+        <Command Global="ATSPEC" Local="ATSPEC" />
+      </Commands>
+    </ComponentEntry>
+  </Components>
+  -->
+
+</ApplicationPackage>

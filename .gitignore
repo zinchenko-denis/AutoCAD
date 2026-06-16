@@ -1,0 +1,8 @@
+# артефакты сборки
+**/dist/
+**/.pybuild/
+**/bin/
+**/obj/
+*.user
+__pycache__/
+*.pyc
