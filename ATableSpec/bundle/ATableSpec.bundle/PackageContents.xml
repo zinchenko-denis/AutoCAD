@@ -29,6 +29,8 @@
         LoadOnAutoCADStartup="False">
       <Commands GroupName="ATableSpecCommands">
         <Command Global="ATSPEC" Local="ATSPEC" />
+        <Command Global="ATSPECREPORT" Local="ATSPECREPORT" />
+        <Command Global="ATSPECUPDATE" Local="ATSPECUPDATE" />
       </Commands>
     </ComponentEntry>
   </Components>

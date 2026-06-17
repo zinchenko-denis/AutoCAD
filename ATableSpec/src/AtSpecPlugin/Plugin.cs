@@ -12,7 +12,8 @@ namespace AtSpecPlugin
             var doc = AcApp.DocumentManager.MdiActiveDocument;
             if (doc != null)
                 doc.Editor.WriteMessage(
-                    "\nATableSpec загружен. Команда: ATSPEC — спецификация из блоков.\n");
+                    "\nATableSpec загружен. Команды: ATSPEC — спецификация из блоков; " +
+                    "ATSPECREPORT — свой отчёт по формулам; ATSPECUPDATE — пересчитать отчётные таблицы.\n");
         }
 
         public void Terminate() { }

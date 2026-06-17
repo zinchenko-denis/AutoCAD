@@ -127,12 +127,12 @@ namespace AtSpecPlugin
             PromptPointResult pr = ed.GetPoint("\nТочка вставки таблицы: ");
             if (pr.Status != PromptStatus.OK) return;
 
-            // --- 8. AcDbTable: title + header + rows (позиционно) ---
-            DrawTable(db, pr.Value, title, header, rows);
-            ed.WriteMessage("\nГотово: \"" + title + "\", строк: " + rows.Count + ".");
+            // --- 8. AcDbTable: title + header + rows (позиционно) + определение в таблице ---
+            DrawTable(db, pr.Value, title, header, rows, ser.Serialize(form.ReportDef));
+            ed.WriteMessage("\nГотово: \"" + title + "\", строк: " + rows.Count + ". Пересчёт — ATSPECUPDATE.");
         }
 
-        private static void DrawTable(Database db, Point3d pos, string title, List<string> header, IList rows)
+        private static void DrawTable(Database db, Point3d pos, string title, List<string> header, IList rows, string defJson)
         {
             int nCols = header.Count, nRows = rows.Count;
             using (Transaction tr = db.TransactionManager.StartTransaction())
@@ -158,6 +158,8 @@ namespace AtSpecPlugin
                 tbl.GenerateLayout();
                 ms.AppendEntity(tbl);
                 tr.AddNewlyCreatedDBObject(tbl, true);
+                // сохранить определение отчёта в самой таблице — чтобы её можно было пересчитать (ATSPECUPDATE)
+                try { ReportReactor.StoreDef(tr, tbl, defJson); } catch { }
                 tr.Commit();
             }
         }
