@@ -34,6 +34,8 @@ from typing import Any, Dict, List, Optional, Tuple
 import ezdxf
 import yaml
 
+import atspec_report  # ядро «своего отчёта» (выражения + шаблон), версионно-независимое
+
 
 # --------------------------------------------------------------------------- #
 #  Структуры данных
@@ -516,6 +518,14 @@ def engine_json(payload: Any, config: dict) -> dict:
         d = describe(elements, config)
         d.update({"blocks_in": len(records), "skipped": len(skipped)})
         return d
+
+    # «Свой отчёт» (аналог Шаблона отчёта СПДС): источник-фильтр + выражения по
+    # столбцам + группировка/сортировка + производные строки. Работает с СЫРЫМИ
+    # записями блоков (любое поле/атрибут/слой), без проекции через mapping.yaml.
+    if action == "report":
+        report_def = payload.get("report") or {}
+        base["report"] = atspec_report.run_report(records, report_def)
+        return base
 
     builder = SpecBuilder(config)
     if query:
