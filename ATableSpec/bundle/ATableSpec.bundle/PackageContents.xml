@@ -25,8 +25,8 @@
         AppName="ATableSpec"
         ModuleName="./Contents/net48/AtSpecPlugin.dll"
         AppType=".NET"
-        LoadOnCommandInvocation="True"
-        LoadOnAutoCADStartup="False">
+        LoadOnCommandInvocation="False"
+        LoadOnAutoCADStartup="True">
       <Commands GroupName="ATableSpecCommands">
         <Command Global="ATSPEC" Local="ATSPEC" />
         <Command Global="ATSPECREPORT" Local="ATSPECREPORT" />

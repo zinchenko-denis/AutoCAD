@@ -18,6 +18,7 @@ using System.IO;
 using System.Reflection;
 using System.Text;
 using System.Web.Script.Serialization;
+using Autodesk.AutoCAD.ApplicationServices;
 using Autodesk.AutoCAD.DatabaseServices;
 using Autodesk.AutoCAD.EditorInput;
 using Autodesk.AutoCAD.Runtime;
@@ -31,6 +32,12 @@ namespace AtSpecPlugin
     {
         // ключ записи определения отчёта в словаре расширения таблицы
         public const string DICTKEY = "ATSPEC_REPORT_DEF";
+
+        // состояние реактора (см. секцию «авто-триггер» ниже)
+        private static bool _attached;
+        private static bool _busy;     // гасит события от нашей же перезаписи таблиц
+        private static bool _dirty;    // в текущей команде менялись блоки/атрибуты
+        private static readonly HashSet<Document> _hooked = new HashSet<Document>();
 
         // ───────────────────── команда: ручной пересчёт ─────────────────────
         [CommandMethod("ATSPECUPDATE")]
@@ -54,6 +61,98 @@ namespace AtSpecPlugin
 
             int n = Recompute(doc, only);
             ed.WriteMessage("\nПересчитано отчётных таблиц: " + n + ".");
+            _dirty = false;   // ручной пересчёт обнулил «грязь» → авто-триггер не дублирует
+        }
+
+        // ───────────────────── авто-триггер (реактор) ─────────────────────
+        // Правка блока/атрибута → таблица пересчитывается сама по завершении команды.
+        // Дебаунс: копим «грязь» в _dirty, пересчёт один раз на CommandEnded (не на каждое
+        // событие). Ре-энтрантность: _busy гасит события от нашей же перезаписи таблицы.
+        // AutoCAD однопоточен (UI-поток) → поля без блокировок.
+
+        public static void Attach()
+        {
+            if (_attached) return;
+            _attached = true;
+            var dm = AcApp.DocumentManager;
+            dm.DocumentCreated += OnDocCreated;
+            dm.DocumentToBeDestroyed += OnDocDestroyed;
+            foreach (Document doc in dm) Hook(doc);   // уже открытые документы
+        }
+
+        public static void Detach()
+        {
+            if (!_attached) return;
+            var dm = AcApp.DocumentManager;
+            dm.DocumentCreated -= OnDocCreated;
+            dm.DocumentToBeDestroyed -= OnDocDestroyed;
+            foreach (Document doc in new List<Document>(_hooked)) Unhook(doc);
+            _attached = false;
+        }
+
+        private static void Hook(Document doc)
+        {
+            if (doc == null || _hooked.Contains(doc)) return;
+            Database db = doc.Database;
+            db.ObjectModified += OnObjModified;
+            db.ObjectAppended += OnObjAppended;
+            db.ObjectErased += OnObjErased;
+            doc.CommandEnded += OnCommandEnded;
+            doc.CommandCancelled += OnCommandEnded;
+            _hooked.Add(doc);
+        }
+
+        private static void Unhook(Document doc)
+        {
+            if (doc == null || !_hooked.Contains(doc)) return;
+            try
+            {
+                Database db = doc.Database;
+                db.ObjectModified -= OnObjModified;
+                db.ObjectAppended -= OnObjAppended;
+                db.ObjectErased -= OnObjErased;
+                doc.CommandEnded -= OnCommandEnded;
+                doc.CommandCancelled -= OnCommandEnded;
+            }
+            catch { }
+            _hooked.Remove(doc);
+        }
+
+        private static void OnDocCreated(object sender, DocumentCollectionEventArgs e) { Hook(e.Document); }
+        private static void OnDocDestroyed(object sender, DocumentCollectionEventArgs e) { Unhook(e.Document); }
+
+        // Правка атрибута (EATTEDIT/двойной клик) шлёт ObjectModified на AttributeReference,
+        // а НЕ на владельца-BlockReference. ДЛИНА/ИМЯ — атрибуты, поэтому ловим оба типа.
+        private static void OnObjModified(object sender, ObjectEventArgs e)
+        {
+            if (_busy) return;
+            if (e.DBObject is BlockReference || e.DBObject is AttributeReference) _dirty = true;
+        }
+        private static void OnObjAppended(object sender, ObjectEventArgs e)
+        {
+            if (_busy) return;
+            if (e.DBObject is BlockReference) _dirty = true;   // вставлен новый блок
+        }
+        private static void OnObjErased(object sender, ObjectErasedEventArgs e)
+        {
+            if (_busy) return;
+            if (e.DBObject is BlockReference) _dirty = true;   // блок удалён/восстановлен
+        }
+
+        private static void OnCommandEnded(object sender, CommandEventArgs e)
+        {
+            if (!_dirty || _busy) return;
+            _dirty = false;
+            _busy = true;
+            try
+            {
+                var doc = AcApp.DocumentManager.MdiActiveDocument;
+                if (doc != null)
+                    using (doc.LockDocument())   // правка вне команды иначе кинет eLockViolation
+                        Recompute(doc, null);
+            }
+            catch { /* авто-пересчёт не должен ронять команду пользователя */ }
+            finally { _busy = false; }
         }
 
         // ───────────────────── пересчёт таблиц ─────────────────────

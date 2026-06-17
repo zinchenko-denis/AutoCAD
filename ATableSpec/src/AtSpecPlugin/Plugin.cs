@@ -9,6 +9,7 @@ namespace AtSpecPlugin
     {
         public void Initialize()
         {
+            ReportReactor.Attach();   // авто-пересчёт отчётных таблиц по правке блока
             var doc = AcApp.DocumentManager.MdiActiveDocument;
             if (doc != null)
                 doc.Editor.WriteMessage(
@@ -16,6 +17,6 @@ namespace AtSpecPlugin
                     "ATSPECREPORT — свой отчёт по формулам; ATSPECUPDATE — пересчитать отчётные таблицы.\n");
         }
 
-        public void Terminate() { }
+        public void Terminate() { ReportReactor.Detach(); }
     }
 }
