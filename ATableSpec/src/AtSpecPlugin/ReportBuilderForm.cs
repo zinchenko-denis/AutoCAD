@@ -1,0 +1,164 @@
+// Окно-построитель "своего отчёта": источник (слой + опц. фильтр), столбцы как
+// выражения (Заголовок | Выражение, по образцу редактора СПДС), группировка по
+// столбцу и сортировка. Формирует определение отчёта (ReportDef) для движка
+// (action=report). Каркас — один шаблон отчёта.
+//
+// Подсказка по выражениям (как в построителе СПДС):
+//   =Object.«ИМЯ»        -> атрибут блока
+//   =Object.Name          -> имя блока (часто = профиль)
+//   =Object.«Длина»-150   -> арифметика над полем
+//   =«01 02 04»           -> литерал (свой артикул)
+//   ="Опора "+Object.«ИМЯ» -> конкатенация
+//   =Count                -> количество в группе ; =row-1 -> нумерация
+
+using System;
+using System.Collections.Generic;
+using System.Drawing;
+using System.Windows.Forms;
+
+namespace AtSpecPlugin
+{
+    public class ReportBuilderForm : Form
+    {
+        private readonly List<string> _layers, _fields;
+        private ComboBox cbLayer, cbFilterField, cbFilterOp, cbGroup, cbSort;
+        private TextBox txtFilterVal, txtTitle;
+        private CheckBox chkFilter;
+        private DataGridView grid;
+
+        public Dictionary<string, object> ReportDef { get; private set; }
+
+        public ReportBuilderForm(List<string> layers, List<string> fields)
+        {
+            _layers = layers ?? new List<string>();
+            _fields = fields ?? new List<string>();
+            BuildUi();
+        }
+
+        private void BuildUi()
+        {
+            Text = "ATableSpec — построитель отчёта";
+            FormBorderStyle = FormBorderStyle.FixedDialog;
+            StartPosition = FormStartPosition.CenterScreen;
+            ClientSize = new Size(660, 560);
+            MaximizeBox = false; MinimizeBox = false;
+
+            int x = 12, y = 12, lblW = 110;
+
+            Controls.Add(new Label { Left = x, Top = y + 3, Width = lblW, Text = "Заголовок:" });
+            txtTitle = new TextBox { Left = x + lblW, Top = y, Width = 420, Text = "СПЕЦИФИКАЦИЯ ЭЛЕМЕНТОВ" };
+            Controls.Add(txtTitle); y += 32;
+
+            Controls.Add(new Label { Left = x, Top = y + 3, Width = lblW, Text = "Источник: слой" });
+            cbLayer = new ComboBox { Left = x + lblW, Top = y, Width = 220, DropDownStyle = ComboBoxStyle.DropDown };
+            cbLayer.Items.AddRange(_layers.ToArray());
+            if (cbLayer.Items.Count > 0) cbLayer.SelectedIndex = 0;
+            Controls.Add(cbLayer); y += 32;
+
+            chkFilter = new CheckBox { Left = x, Top = y + 2, Width = 80, Text = "Фильтр" };
+            Controls.Add(chkFilter);
+            cbFilterField = new ComboBox { Left = x + 90, Top = y, Width = 150, DropDownStyle = ComboBoxStyle.DropDown };
+            cbFilterField.Items.AddRange(_fields.ToArray());
+            Controls.Add(cbFilterField);
+            cbFilterOp = new ComboBox { Left = x + 250, Top = y, Width = 90, DropDownStyle = ComboBoxStyle.DropDownList };
+            cbFilterOp.Items.AddRange(new object[] { "=", "≠", ">", "<", "≥", "содержит" });
+            cbFilterOp.SelectedIndex = 0;
+            Controls.Add(cbFilterOp);
+            txtFilterVal = new TextBox { Left = x + 350, Top = y, Width = 130 };
+            Controls.Add(txtFilterVal); y += 34;
+
+            Controls.Add(new Label
+            {
+                Left = x, Top = y, Width = 636, Height = 34,
+                Text = "Поля для Object.«…»: " + string.Join(", ", _fields.ToArray())
+            });
+            y += 38;
+
+            Controls.Add(new Label { Left = x, Top = y, Width = 636, Text = "Столбцы (Заголовок | Выражение):" });
+            y += 22;
+            grid = new DataGridView
+            {
+                Left = x, Top = y, Width = 636, Height = 240,
+                AllowUserToAddRows = true, AllowUserToDeleteRows = true,
+                RowHeadersVisible = true,
+                ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize
+            };
+            grid.Columns.Add("hdr", "Заголовок");
+            grid.Columns.Add("expr", "Выражение");
+            grid.Columns[0].Width = 200;
+            grid.Columns[1].AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
+            // дефолт = базовая спецификация (как на скриншотах СПДС)
+            grid.Rows.Add("№ п/п", "=row-1");
+            grid.Rows.Add("НАИМЕНОВАНИЕ", "=Object.«ИМЯ»");
+            grid.Rows.Add("Артикул", "=Object.Name");
+            grid.Rows.Add("Длина, мм", "=Object.«Длина»");
+            grid.Rows.Add("Колич.", "=Count");
+            grid.Rows.Add("Ед. изм.", "=«шт.»");
+            Controls.Add(grid); y += 250;
+
+            Controls.Add(new Label { Left = x, Top = y + 3, Width = 120, Text = "Группа по столбцу №:" });
+            cbGroup = new ComboBox { Left = x + 125, Top = y, Width = 80, DropDownStyle = ComboBoxStyle.DropDownList };
+            cbGroup.Items.Add("(нет)");
+            for (int i = 1; i <= 12; i++) cbGroup.Items.Add(i.ToString());
+            cbGroup.SelectedIndex = 2;  // столбец 2 (НАИМЕНОВАНИЕ) -> 0-базовый индекс 1
+            Controls.Add(cbGroup);
+            Controls.Add(new Label { Left = x + 230, Top = y + 3, Width = 60, Text = "Сорт.:" });
+            cbSort = new ComboBox { Left = x + 290, Top = y, Width = 130, DropDownStyle = ComboBoxStyle.DropDownList };
+            cbSort.Items.AddRange(new object[] { "по возрастанию", "по убыванию", "(без сортировки)" });
+            cbSort.SelectedIndex = 0;
+            Controls.Add(cbSort); y += 42;
+
+            var ok = new Button { Text = "Построить", Left = 460, Top = y, Width = 90, DialogResult = DialogResult.OK };
+            var cancel = new Button { Text = "Отмена", Left = 560, Top = y, Width = 90, DialogResult = DialogResult.Cancel };
+            ok.Click += (s, e) => BuildDef();
+            Controls.Add(ok); Controls.Add(cancel);
+            AcceptButton = ok; CancelButton = cancel;
+        }
+
+        private void BuildDef()
+        {
+            var headers = new List<object>();
+            var columns = new List<object>();
+            foreach (DataGridViewRow r in grid.Rows)
+            {
+                if (r.IsNewRow) continue;
+                string h = Convert.ToString(r.Cells[0].Value) ?? "";
+                string e = Convert.ToString(r.Cells[1].Value) ?? "";
+                if (h.Length == 0 && e.Length == 0) continue;
+                headers.Add(h);
+                columns.Add(e);
+            }
+
+            var filters = new List<object>();
+            string layer = cbLayer.Text;
+            if (!string.IsNullOrEmpty(layer))
+                filters.Add(new Dictionary<string, object> { { "field", "Слой" }, { "op", "=" }, { "value", layer } });
+            if (chkFilter.Checked && cbFilterField.Text.Length > 0)
+                filters.Add(new Dictionary<string, object>
+                {
+                    { "field", cbFilterField.Text }, { "op", cbFilterOp.Text }, { "value", txtFilterVal.Text }
+                });
+
+            object groupBy = null;
+            if (cbGroup.SelectedIndex > 0) groupBy = cbGroup.SelectedIndex - 1;  // 0-базовый индекс столбца
+
+            object sortBy = null;
+            if (cbSort.SelectedIndex != 2 && groupBy is int)
+                sortBy = new object[] { (int)groupBy, cbSort.SelectedIndex == 0 ? "asc" : "desc" };
+
+            var template = new Dictionary<string, object>
+            {
+                { "filter", filters },
+                { "columns", columns },
+                { "group_by", groupBy },
+                { "sort_by", sortBy }
+            };
+            ReportDef = new Dictionary<string, object>
+            {
+                { "title", txtTitle.Text },
+                { "header", headers },
+                { "templates", new List<object> { template } }
+            };
+        }
+    }
+}

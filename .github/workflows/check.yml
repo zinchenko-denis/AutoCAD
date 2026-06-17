@@ -1,0 +1,45 @@
+name: check
+
+# Лёгкая проверка веток (НЕ main): собрать плагин (csproj) и прогнать тест
+# движка. Релиз НЕ публикуется — это делает только build-bundle на main.
+# Нужна, чтобы C#-код, который нельзя собрать в песочнице, проверялся в ветке.
+
+on:
+  push:
+    branches-ignore: [ main ]
+    paths:
+      - "ATableSpec/src/**"
+      - "ATableSpec/engine/**"
+      - ".github/workflows/check.yml"
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Build plugin DLL (compile check)
+        run: dotnet build ATableSpec/src/AtSpecPlugin/AtSpecPlugin.csproj -c Release -o build_dll
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Engine unit test
+        shell: bash
+        run: |
+          python -m pip install --upgrade pip
+          pip install ezdxf pyyaml
+          cd ATableSpec/engine
+          python test_atspec_report.py
