@@ -27,7 +27,7 @@ using AcApp = Autodesk.AutoCAD.ApplicationServices.Application;
 
 namespace AtSpecPlugin
 {
-    public static class ReportReactor
+    public class ReportReactor
     {
         // ключ записи определения отчёта в словаре расширения таблицы
         public const string DICTKEY = "ATSPEC_REPORT_DEF";
