@@ -2,6 +2,11 @@
 """Тест ядра atspec_report. Самодостаточен (inline-фикстуры реальных значений),
 плюс опциональный прогон на живых DXF В-13/В-32, если они доступны."""
 import os
+import sys
+try:
+    sys.stdout.reconfigure(encoding="utf-8")   # Windows CI: stdout по умолчанию cp1252
+except Exception:
+    pass
 from atspec_report import run_report, evaluate, Obj
 
 

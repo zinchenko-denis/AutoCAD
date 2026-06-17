@@ -38,6 +38,9 @@ jobs:
 
       - name: Engine unit test
         shell: bash
+        env:
+          PYTHONUTF8: "1"
+          PYTHONIOENCODING: "utf-8"
         run: |
           python -m pip install --upgrade pip
           pip install ezdxf pyyaml
