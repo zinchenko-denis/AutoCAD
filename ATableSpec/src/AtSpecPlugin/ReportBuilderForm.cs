@@ -81,10 +81,25 @@ namespace AtSpecPlugin
                 RowHeadersVisible = true,
                 ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize
             };
-            grid.Columns.Add("hdr", "Заголовок");
-            grid.Columns.Add("expr", "Выражение");
-            grid.Columns[0].Width = 200;
-            grid.Columns[1].AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
+            var colHdr = new DataGridViewTextBoxColumn { Name = "hdr", HeaderText = "Заголовок", Width = 200 };
+            var colExpr = new DataGridViewComboBoxColumn
+            {
+                Name = "expr",
+                HeaderText = "Выражение",
+                AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill,
+                FlatStyle = FlatStyle.Flat,
+                DropDownWidth = 260
+            };
+            // выпадающие варианты = служебные выражения + поля как готовые вставки Object.«…».
+            // Список редактируемый: ручной ввод сохранён (см. Grid_EditingControlShowing).
+            var seed = new List<string> { "=row-1", "=Count", "=«шт.»",
+                                          "=Object.Name", "=Object.«ИМЯ»", "=Object.«Длина»" };
+            foreach (var f in _fields) seed.Add("=Object.«" + f + "»");
+            foreach (var sx in seed) if (!colExpr.Items.Contains(sx)) colExpr.Items.Add(sx);
+            grid.Columns.Add(colHdr);
+            grid.Columns.Add(colExpr);
+            grid.EditingControlShowing += Grid_EditingControlShowing;
+            grid.DataError += (s, e) => { e.ThrowException = false; e.Cancel = false; };
             // дефолт = базовая спецификация (как на скриншотах СПДС)
             grid.Rows.Add("№ п/п", "=row-1");
             grid.Rows.Add("НАИМЕНОВАНИЕ", "=Object.«ИМЯ»");
@@ -111,6 +126,30 @@ namespace AtSpecPlugin
             ok.Click += (s, e) => BuildDef();
             Controls.Add(ok); Controls.Add(cancel);
             AcceptButton = ok; CancelButton = cancel;
+        }
+
+        // Делает выпадающий список в ячейке «Выражение» редактируемым: можно выбрать
+        // готовую вставку Object.«…» ИЛИ дописать/исправить выражение руками.
+        private void Grid_EditingControlShowing(object sender, DataGridViewEditingControlShowingEventArgs e)
+        {
+            var cb = e.Control as ComboBox;
+            if (cb == null) return;
+            if (grid.CurrentCell == null || grid.CurrentCell.OwningColumn == null
+                || grid.CurrentCell.OwningColumn.Name != "expr") return;
+            cb.DropDownStyle = ComboBoxStyle.DropDown;     // разрешить ручной ввод
+            cb.Validating -= Expr_Validating;
+            cb.Validating += Expr_Validating;
+        }
+
+        // Введённое вручную выражение делаем валидным для combo-ячейки (иначе оно не
+        // сохранится): добавляем его в список вариантов, если такого ещё нет.
+        private void Expr_Validating(object sender, System.ComponentModel.CancelEventArgs e)
+        {
+            var cb = (ComboBox)sender;
+            string txt = cb.Text;
+            var col = grid.Columns["expr"] as DataGridViewComboBoxColumn;
+            if (col != null && txt.Length > 0 && !col.Items.Contains(txt))
+                col.Items.Add(txt);
         }
 
         private void BuildDef()
