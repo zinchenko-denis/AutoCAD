@@ -56,11 +56,23 @@ namespace AtSpecPlugin
                     if (so == null) continue;
                     var br = tr.GetObject(so.ObjectId, OpenMode.ForRead) as BlockReference;
                     if (br == null) continue;
-                    var attrs = new Dictionary<string, object>();
+                    var attrs = new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase);
                     foreach (ObjectId arId in br.AttributeCollection)
                     {
                         var ar = tr.GetObject(arId, OpenMode.ForRead) as AttributeReference;
                         if (ar != null) { attrs[ar.Tag] = ar.TextString; fieldSet.Add(ar.Tag); }
+                    }
+                    // Динамические свойства блока (ручки): у доборников и т.п. длина/ширина —
+                    // это параметры, а не ATTRIB; без них Object.«Длина» пустой. ATTRIB в приоритете.
+                    if (br.IsDynamicBlock)
+                    {
+                        foreach (DynamicBlockReferenceProperty dp in br.DynamicBlockReferencePropertyCollection)
+                        {
+                            string pn = dp.PropertyName;
+                            if (string.IsNullOrEmpty(pn) || attrs.ContainsKey(pn)) continue;
+                            attrs[pn] = Convert.ToString(dp.Value, System.Globalization.CultureInfo.InvariantCulture);
+                            fieldSet.Add(pn);
+                        }
                     }
                     layerSet.Add(br.Layer);
                     records.Add(new Dictionary<string, object>
@@ -81,8 +93,15 @@ namespace AtSpecPlugin
             if (!File.Exists(engineExe)) { ed.WriteMessage("\nНе найден движок: " + engineExe); return; }
             if (!File.Exists(configYaml)) { ed.WriteMessage("\nНе найден конфиг: " + configYaml); return; }
 
-            // поля для подсказки в окне: атрибуты выбранных блоков + служебные
-            var fields = new List<string>(fieldSet) { "Имя", "Слой", "Длина" };
+            // поля для подсказки в окне: атрибуты/параметры выбранных блоков + служебные.
+            // Скрываем переменные деталировки (в спецификациях не участвуют).
+            var HIDE = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+                { "DOBL", "DOBR", "KLL", "KLR", "L", "R", "UGL", "UGR" };
+            var fields = new List<string>();
+            foreach (var f in fieldSet) if (!HIDE.Contains(f)) fields.Add(f);
+            foreach (var extra in new[] { "Имя", "Слой", "Длина", "Ширина", "Высота" })
+                if (!fields.Exists(z => string.Equals(z, extra, StringComparison.OrdinalIgnoreCase)))
+                    fields.Add(extra);
             var layers = new List<string>(layerSet);
 
             // --- 4. окно-построитель отчёта ---

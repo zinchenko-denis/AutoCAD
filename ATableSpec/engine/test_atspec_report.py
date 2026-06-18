@@ -80,6 +80,27 @@ assert evaluate('=Iff(Object.«Длина»>3000, «длинная», «коро
 assert evaluate('="арт-"+Object.«ИМЯ»', o, [o], 1) == "арт-С6"
 assert evaluate('=Count', o, [o, o, o], 1) == 3
 
+# ───────── регресс по фиксам: нумерация / литерал / не содержит ─────────
+# п.1: №п/п (=row-1) идёт по порядку ПОСЛЕ сортировки по наименованию
+nums = [r[0] for r in b13["rows"]]
+assert nums == list(range(0, len(b13["rows"]))), f"№п/п не по порядку: {nums}"
+assert [r[1] for r in b13["rows"]] == sorted(r[1] for r in b13["rows"])
+
+# п.4: ячейка без «=» — литерал; пустая — ""; кириллица без кавычек не роняет
+assert evaluate("Примечание", o, [o], 1) == "Примечание"
+assert evaluate("", o, [o], 1) == ""
+_lit = run_report(st13, {"templates": [{
+    "filter": [{"field": "Слой", "op": "=", "value": "RF-стойки"}],
+    "columns": ["=row-1", "=Object.«ИМЯ»", "Примечание", ""],
+    "group_by": 1, "sort_by": (1, "asc")}]})
+assert find(_lit, "С01")[2] == "Примечание" and find(_lit, "С01")[3] == ""
+
+# п.6: «не содержит» — обратное «содержит»
+from atspec_report import _passes
+_f = [{"field": "ИМЯ", "op": "не содержит", "value": "0"}]
+assert _passes(Obj({"attributes": {"ИМЯ": "Р1"}}), _f) is True
+assert _passes(Obj({"attributes": {"ИМЯ": "С01"}}), _f) is False
+
 print("UNIT: все ассерты прошли (В-13, В-32, выражения).")
 
 # ───────── контракт обмена: engine_json с action="report" ─────────

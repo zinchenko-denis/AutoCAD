@@ -23,7 +23,6 @@ namespace AtSpecPlugin
         private readonly List<string> _layers, _fields;
         private ComboBox cbLayer, cbFilterField, cbFilterOp, cbGroup, cbSort;
         private TextBox txtFilterVal, txtTitle;
-        private CheckBox chkFilter;
         private DataGridView grid;
 
         public Dictionary<string, object> ReportDef { get; private set; }
@@ -55,13 +54,12 @@ namespace AtSpecPlugin
             if (cbLayer.Items.Count > 0) cbLayer.SelectedIndex = 0;
             Controls.Add(cbLayer); y += 32;
 
-            chkFilter = new CheckBox { Left = x, Top = y + 2, Width = 80, Text = "Фильтр" };
-            Controls.Add(chkFilter);
+            Controls.Add(new Label { Left = x, Top = y + 5, Width = 80, Text = "Фильтр:" });
             cbFilterField = new ComboBox { Left = x + 90, Top = y, Width = 150, DropDownStyle = ComboBoxStyle.DropDown };
             cbFilterField.Items.AddRange(_fields.ToArray());
             Controls.Add(cbFilterField);
             cbFilterOp = new ComboBox { Left = x + 250, Top = y, Width = 90, DropDownStyle = ComboBoxStyle.DropDownList };
-            cbFilterOp.Items.AddRange(new object[] { "=", "≠", ">", "<", "≥", "содержит" });
+            cbFilterOp.Items.AddRange(new object[] { "=", "≠", ">", "<", "≥", "содержит", "не содержит" });
             cbFilterOp.SelectedIndex = 0;
             Controls.Add(cbFilterOp);
             txtFilterVal = new TextBox { Left = x + 350, Top = y, Width = 130 };
@@ -133,10 +131,10 @@ namespace AtSpecPlugin
             string layer = cbLayer.Text;
             if (!string.IsNullOrEmpty(layer))
                 filters.Add(new Dictionary<string, object> { { "field", "Слой" }, { "op", "=" }, { "value", layer } });
-            if (chkFilter.Checked && cbFilterField.Text.Length > 0)
+            if (cbFilterField.Text.Trim().Length > 0 && txtFilterVal.Text.Trim().Length > 0)
                 filters.Add(new Dictionary<string, object>
                 {
-                    { "field", cbFilterField.Text }, { "op", cbFilterOp.Text }, { "value", txtFilterVal.Text }
+                    { "field", cbFilterField.Text.Trim() }, { "op", cbFilterOp.Text }, { "value", txtFilterVal.Text.Trim() }
                 });
 
             object groupBy = null;

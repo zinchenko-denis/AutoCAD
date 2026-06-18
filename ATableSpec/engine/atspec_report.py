@@ -201,7 +201,12 @@ def _clone(toks):
 
 
 def evaluate(expr: str, obj: Optional[Obj], group: List[Obj], rownum: int) -> Any:
-    return _Eval(_tokenize(expr), obj, group, rownum).run()
+    # Ячейка без ведущего «=» — это литерал-текст (как в СПДС/Excel): пустая ячейка
+    # даёт "", «Примечание» — просто текст. Формула вычисляется только при «=».
+    s = (expr or "").strip()
+    if not s.startswith("="):
+        return s
+    return _Eval(_tokenize(s), obj, group, rownum).run()
 
 
 # ─────────────────────────────── раннер шаблона отчёта ───────────────────────────────
@@ -217,6 +222,8 @@ def _passes(obj: Obj, flt: List[dict]) -> bool:
             ok = ls.lower() != vs.lower()
         elif op in ("contains", "содержит"):
             ok = vs.lower() in ls.lower()
+        elif op in ("not_contains", "не содержит"):
+            ok = vs.lower() not in ls.lower()
         elif op in (">", "<", ">=", "<=", "≥", "≤"):
             try:
                 a, b = float(ls.replace(",", ".")), float(vs.replace(",", "."))
@@ -255,7 +262,15 @@ def run_template(records: List[dict], tmpl: dict) -> List[List[Any]]:
             buckets.setdefault(key, []).append(o)
         groups = list(buckets.values())
 
-    # 2) строка на группу; Count/Sum видят всю группу, row — порядковый номер
+    # 2) сортировка ГРУПП (до нумерации) — чтобы №п/п (=row) шёл по порядку строк
+    sb = tmpl.get("sort_by")
+    if sb:
+        col, direction = sb
+        groups.sort(key=lambda g: _sortkey(evaluate(cols[col], g[0], g, 0)),
+                    reverse=(direction == "desc"))
+
+    # 3) строка на группу в финальном порядке; Count/Sum видят всю группу,
+    #    row — порядковый номер уже ПОСЛЕ сортировки
     rows: List[List[Any]] = []
     for idx, grp in enumerate(groups, 1):
         rep = grp[0]
@@ -266,12 +281,6 @@ def run_template(records: List[dict], tmpl: dict) -> List[List[Any]]:
                 v = int(v)
             row.append(v)
         rows.append(row)
-
-    # 3) сортировка
-    sb = tmpl.get("sort_by")
-    if sb:
-        col, direction = sb
-        rows.sort(key=lambda r: _sortkey(r[col]), reverse=(direction == "desc"))
     return rows
 
 
