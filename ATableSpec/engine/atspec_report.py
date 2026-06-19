@@ -23,6 +23,32 @@ from typing import Any, Dict, List, Optional
 # числовые поля — читаются как float; остальные как строка
 _NUMERIC_FIELDS = {"ДЛИНА", "ВЫСОТА", "ШИРИНА", "ДЛИНА,ММ", "ДЛИНА, ММ", "ROTATION"}
 
+# Разделители "Ширина<sep>Высота" в РАЗМЕР_ЗАП. Первый — кириллическая Х (U+0425),
+# как в исходных чертежах (ср. mapping.yaml size_separators); латинские/«*» — на всякий.
+_SIZE_SEPS = ("\u0425", "X", "\u0445", "x", "*")
+
+
+def _to_num(x: Any):
+    try:
+        return float(str(x).replace("\u00a0", "").replace(" ", "").replace(",", "."))
+    except ValueError:
+        return None
+
+
+def _split_size(raw: Any):
+    """РАЗМЕР_ЗАП вида 'ШиринаХВысота' -> (ширина, высота) как float, иначе (None, None)."""
+    if raw is None:
+        return (None, None)
+    s = str(raw).strip()
+    for sep in _SIZE_SEPS:
+        if sep in s:
+            parts = s.split(sep)
+            if len(parts) == 2:
+                w, h = _to_num(parts[0]), _to_num(parts[1])
+                if w is not None or h is not None:
+                    return (w, h)
+    return (None, None)
+
 
 # ─────────────────────────── объект (одна вставка блока) ───────────────────────────
 class Obj:
@@ -41,6 +67,11 @@ class Obj:
         if up in ("СЛОЙ", "LAYER"):
             return self.layer
         raw = self.attrs.get(up, self.attrs.get(name, None))
+        # Ширина/Высота заполнения: отдельных атрибутов у блока нет — достаём из
+        # РАЗМЕР_ЗАП ("ШиринаХВысота"). Прямое поле, если оно есть, имеет приоритет.
+        if up in ("ШИРИНА", "ВЫСОТА") and (raw is None or str(raw).strip() == ""):
+            w, h = _split_size(self.attrs.get("РАЗМЕР_ЗАП"))
+            return w if up == "ШИРИНА" else h
         if raw is None:
             return None
         if up == "ДЛИНА" or up in {f.upper() for f in _NUMERIC_FIELDS}:
