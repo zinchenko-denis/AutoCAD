@@ -214,22 +214,37 @@ namespace AtSpecPlugin
             string title = SafeStr(Get(rep, "title"));
             if (rows == null) return false;
 
+            var defDict = reportDef as Dictionary<string, object>;
+            bool hideTitle = GetBool(defDict, "hide_title");
+            bool hideHeader = GetBool(defDict, "hide_header");
+
             int nCols = header.Count > 0 ? header.Count
                        : (rows.Count > 0 ? ((IList)rows[0]).Count : tbl.Columns.Count);
             int nRows = rows.Count;
+            int titleRow = hideTitle ? -1 : 0;
+            int headerRow = hideHeader ? -1 : (hideTitle ? 0 : 1);
+            int top = (hideTitle ? 0 : 1) + (hideHeader ? 0 : 1);
+            int want = top + nRows; if (want < 1) want = 1;
 
             tbl.UpgradeOpen();
-            tbl.SetSize(nRows + 2, nCols);
-            tbl.Cells[0, 0].TextString = title ?? "";
-            try { tbl.MergeCells(CellRange.Create(tbl, 0, 0, 0, nCols - 1)); } catch { }
-            for (int c = 0; c < nCols; c++)
-                tbl.Cells[1, c].TextString = c < header.Count ? SafeStr(header[c]) : "";
+            tbl.SetSize(want, nCols);
+            if (titleRow >= 0)
+            {
+                tbl.Cells[titleRow, 0].TextString = title ?? "";
+                try { tbl.MergeCells(CellRange.Create(tbl, titleRow, 0, titleRow, nCols - 1)); } catch { }
+            }
+            if (headerRow >= 0)
+                for (int c = 0; c < nCols; c++)
+                    tbl.Cells[headerRow, c].TextString = c < header.Count ? SafeStr(header[c]) : "";
             for (int r = 0; r < nRows; r++)
             {
                 var row = rows[r] as IList;
                 for (int c = 0; c < nCols; c++)
-                    tbl.Cells[r + 2, c].TextString = (row != null && c < row.Count) ? SafeStr(row[c]) : "";
+                    tbl.Cells[top + r, c].TextString = (row != null && c < row.Count) ? SafeStr(row[c]) : "";
             }
+            // #7: убрать возможные хвостовые пустые строки (усечение SetSize иногда оставляет лишние)
+            if (tbl.Rows.Count > want)
+                tbl.DeleteRows(want, tbl.Rows.Count - want);
             tbl.GenerateLayout();
             return true;
         }
@@ -335,6 +350,13 @@ namespace AtSpecPlugin
 
         private static object Get(Dictionary<string, object> d, string key)
         { object v; return (d != null && d.TryGetValue(key, out v)) ? v : null; }
+        private static bool GetBool(Dictionary<string, object> d, string key)
+        {
+            object v;
+            if (d != null && d.TryGetValue(key, out v) && v != null)
+            { try { return Convert.ToBoolean(v); } catch { return false; } }
+            return false;
+        }
         private static List<string> ToStrList(object o)
         { var l = new List<string>(); var il = o as IList; if (il != null) foreach (var x in il) l.Add(SafeStr(x)); return l; }
         private static string EffectiveName(Transaction tr, BlockReference br)

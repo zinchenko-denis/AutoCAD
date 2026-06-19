@@ -147,13 +147,20 @@ namespace AtSpecPlugin
             if (pr.Status != PromptStatus.OK) return;
 
             // --- 8. AcDbTable: title + header + rows (позиционно) + определение в таблице ---
-            DrawTable(db, pr.Value, title, header, rows, ser.Serialize(form.ReportDef));
+            bool hideTitle = GetBoolFlag(form.ReportDef, "hide_title");
+            bool hideHeader = GetBoolFlag(form.ReportDef, "hide_header");
+            DrawTable(db, pr.Value, title, header, rows, ser.Serialize(form.ReportDef), hideTitle, hideHeader);
             ed.WriteMessage("\nГотово: \"" + title + "\", строк: " + rows.Count + ". Пересчёт — ATSPECUPDATE.");
         }
 
-        private static void DrawTable(Database db, Point3d pos, string title, List<string> header, IList rows, string defJson)
+        private static void DrawTable(Database db, Point3d pos, string title, List<string> header, IList rows,
+            string defJson, bool hideTitle, bool hideHeader)
         {
             int nCols = header.Count, nRows = rows.Count;
+            int titleRow = hideTitle ? -1 : 0;
+            int headerRow = hideHeader ? -1 : (hideTitle ? 0 : 1);
+            int top = (hideTitle ? 0 : 1) + (hideHeader ? 0 : 1);   // зарезервировано строк сверху
+            int want = top + nRows; if (want < 1) want = 1;
             using (Transaction tr = db.TransactionManager.StartTransaction())
             {
                 var bt = (BlockTable)tr.GetObject(db.BlockTableId, OpenMode.ForRead);
@@ -162,18 +169,25 @@ namespace AtSpecPlugin
                 var tbl = new Table();
                 tbl.TableStyle = db.Tablestyle;
                 tbl.Position = pos;
-                tbl.SetSize(nRows + 2, nCols);
+                tbl.SetSize(want, nCols);
 
-                tbl.Cells[0, 0].TextString = title ?? "";
-                try { tbl.MergeCells(CellRange.Create(tbl, 0, 0, 0, nCols - 1)); } catch { }
-                for (int c = 0; c < nCols; c++)
-                    tbl.Cells[1, c].TextString = SafeStr(header[c]);
+                if (titleRow >= 0)
+                {
+                    tbl.Cells[titleRow, 0].TextString = title ?? "";
+                    try { tbl.MergeCells(CellRange.Create(tbl, titleRow, 0, titleRow, nCols - 1)); } catch { }
+                }
+                if (headerRow >= 0)
+                    for (int c = 0; c < nCols; c++)
+                        tbl.Cells[headerRow, c].TextString = SafeStr(header[c]);
                 for (int r = 0; r < nRows; r++)
                 {
                     var row = rows[r] as IList;
                     for (int c = 0; c < nCols; c++)
-                        tbl.Cells[r + 2, c].TextString = (row != null && c < row.Count) ? SafeStr(row[c]) : "";
+                        tbl.Cells[top + r, c].TextString = (row != null && c < row.Count) ? SafeStr(row[c]) : "";
                 }
+                // #7: убрать возможные хвостовые пустые строки (усечение SetSize иногда оставляет лишние)
+                if (tbl.Rows.Count > want)
+                    tbl.DeleteRows(want, tbl.Rows.Count - want);
                 tbl.GenerateLayout();
                 ms.AppendEntity(tbl);
                 tr.AddNewlyCreatedDBObject(tbl, true);
@@ -211,6 +225,14 @@ namespace AtSpecPlugin
 
         private static object Get(Dictionary<string, object> d, string key)
         { object v; return (d != null && d.TryGetValue(key, out v)) ? v : null; }
+
+        private static bool GetBoolFlag(Dictionary<string, object> d, string key)
+        {
+            object v;
+            if (d != null && d.TryGetValue(key, out v) && v != null)
+            { try { return Convert.ToBoolean(v); } catch { return false; } }
+            return false;
+        }
 
         private static List<string> ToStrList(object o)
         {
