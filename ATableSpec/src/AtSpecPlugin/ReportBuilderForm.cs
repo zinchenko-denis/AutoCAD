@@ -24,6 +24,7 @@ namespace AtSpecPlugin
         private ComboBox cbLayer, cbFilterField, cbFilterOp, cbGroup, cbSort;
         private TextBox txtFilterVal, txtTitle;
         private DataGridView grid;
+        private CheckBox chkHideTitle, chkHideHeader;
 
         public Dictionary<string, object> ReportDef { get; private set; }
 
@@ -65,12 +66,12 @@ namespace AtSpecPlugin
             txtFilterVal = new TextBox { Left = x + 350, Top = y, Width = 130 };
             Controls.Add(txtFilterVal); y += 34;
 
-            Controls.Add(new Label
-            {
-                Left = x, Top = y, Width = 636, Height = 34,
-                Text = "Поля для Object.«…»: " + string.Join(", ", _fields.ToArray())
-            });
-            y += 38;
+            // (бывшая подсказка «Поля для Object…» убрана — поля и так есть в выпадающем
+            //  списке столбца «Выражение».) Здесь — флажки скрытия строк итоговой таблицы.
+            chkHideTitle = new CheckBox { Left = x, Top = y + 2, Width = 200, Text = "Скрыть заголовок" };
+            chkHideHeader = new CheckBox { Left = x + 215, Top = y + 2, Width = 240, Text = "Скрыть шапку столбцов" };
+            Controls.Add(chkHideTitle); Controls.Add(chkHideHeader);
+            y += 32;
 
             Controls.Add(new Label { Left = x, Top = y, Width = 636, Text = "Столбцы (Заголовок | Выражение):" });
             y += 22;
@@ -92,7 +93,7 @@ namespace AtSpecPlugin
             };
             // выпадающие варианты = служебные выражения + поля как готовые вставки Object.«…».
             // Список редактируемый: ручной ввод сохранён (см. Grid_EditingControlShowing).
-            var seed = new List<string> { "=row-1", "=Count", "=«шт.»",
+            var seed = new List<string> { "=row", "=Count", "=«шт.»",
                                           "=Object.Name", "=Object.«ИМЯ»", "=Object.«Длина»" };
             foreach (var f in _fields) seed.Add("=Object.«" + f + "»");
             foreach (var sx in seed) if (!colExpr.Items.Contains(sx)) colExpr.Items.Add(sx);
@@ -101,7 +102,7 @@ namespace AtSpecPlugin
             grid.EditingControlShowing += Grid_EditingControlShowing;
             grid.DataError += (s, e) => { e.ThrowException = false; e.Cancel = false; };
             // дефолт = базовая спецификация (как на скриншотах СПДС)
-            grid.Rows.Add("№ п/п", "=row-1");
+            grid.Rows.Add("№ п/п", "=row");
             grid.Rows.Add("НАИМЕНОВАНИЕ", "=Object.«ИМЯ»");
             grid.Rows.Add("Артикул", "=Object.Name");
             grid.Rows.Add("Длина, мм", "=Object.«Длина»");
@@ -194,7 +195,9 @@ namespace AtSpecPlugin
             {
                 { "title", txtTitle.Text },
                 { "header", headers },
-                { "templates", new List<object> { template } }
+                { "templates", new List<object> { template } },
+                { "hide_title", chkHideTitle.Checked },
+                { "hide_header", chkHideHeader.Checked }
             };
         }
     }
