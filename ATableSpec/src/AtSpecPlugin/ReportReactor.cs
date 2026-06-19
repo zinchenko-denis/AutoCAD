@@ -246,6 +246,7 @@ namespace AtSpecPlugin
             if (tbl.Rows.Count > want)
                 tbl.DeleteRows(want, tbl.Rows.Count - want);
             ApplyTableScale(tbl, GetDouble(defDict, "scale", 1.0));   // #6: масштаб из определения
+            ApplyHeaderMerges(tbl, headerRow, nCols, ParseMerges(Get(defDict, "header_merges")));  // #5
             tbl.GenerateLayout();
             return true;
         }
@@ -375,9 +376,43 @@ namespace AtSpecPlugin
             double th = 2.5 * s;
             for (int r = 0; r < tbl.Rows.Count; r++)
                 for (int c = 0; c < tbl.Columns.Count; c++)
-                    tbl.Cells[r, c].TextHeight = th;
+                    try { tbl.Cells[r, c].TextHeight = th; } catch { }   // объединённые подъячейки пропускаем
             tbl.SetColumnWidth(th * 10.0);
             tbl.SetRowHeight(th * 1.8);
+        }
+
+        // #5: распарсить спаны объединения шапки из определения ([[s,e],...]).
+        public static List<int[]> ParseMerges(object o)
+        {
+            var res = new List<int[]>();
+            var outer = o as IList;
+            if (outer == null) return res;
+            foreach (var item in outer)
+            {
+                var pair = item as IList;
+                if (pair == null || pair.Count < 2) continue;
+                try
+                {
+                    int a = Convert.ToInt32(pair[0]), b = Convert.ToInt32(pair[1]);
+                    if (a > b) { int t = a; a = b; b = t; }
+                    res.Add(new[] { a, b });
+                }
+                catch { }
+            }
+            return res;
+        }
+
+        // #5: объединить ячейки СТРОКИ-ШАПКИ по спанам (только если шапка видима).
+        public static void ApplyHeaderMerges(Table tbl, int headerRow, int nCols, List<int[]> merges)
+        {
+            if (headerRow < 0 || merges == null) return;
+            foreach (var sp in merges)
+            {
+                int s = sp[0] < 0 ? 0 : sp[0];
+                int e = sp[1] > nCols - 1 ? nCols - 1 : sp[1];
+                if (e > s)
+                    try { tbl.MergeCells(CellRange.Create(tbl, headerRow, s, headerRow, e)); } catch { }
+            }
         }
         private static List<string> ToStrList(object o)
         { var l = new List<string>(); var il = o as IList; if (il != null) foreach (var x in il) l.Add(SafeStr(x)); return l; }

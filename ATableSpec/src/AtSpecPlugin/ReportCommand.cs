@@ -150,7 +150,8 @@ namespace AtSpecPlugin
             bool hideTitle = GetBoolFlag(form.ReportDef, "hide_title");
             bool hideHeader = GetBoolFlag(form.ReportDef, "hide_header");
             double scale = GetDoubleFlag(form.ReportDef, "scale", 1.0);
-            DrawTable(db, pr.Value, title, header, rows, ser.Serialize(form.ReportDef), hideTitle, hideHeader, scale);
+            var headerMerges = ReportReactor.ParseMerges(Get(form.ReportDef, "header_merges"));
+            DrawTable(db, pr.Value, title, header, rows, ser.Serialize(form.ReportDef), hideTitle, hideHeader, scale, headerMerges);
             ed.WriteMessage("\nГотово: \"" + title + "\", строк: " + rows.Count + ". Пересчёт — ATSPECUPDATE.");
         }
 
@@ -222,7 +223,7 @@ namespace AtSpecPlugin
         }
 
         private static void DrawTable(Database db, Point3d pos, string title, List<string> header, IList rows,
-            string defJson, bool hideTitle, bool hideHeader, double scale)
+            string defJson, bool hideTitle, bool hideHeader, double scale, List<int[]> headerMerges)
         {
             int nCols = header.Count, nRows = rows.Count;
             int titleRow = hideTitle ? -1 : 0;
@@ -257,6 +258,7 @@ namespace AtSpecPlugin
                 if (tbl.Rows.Count > want)
                     tbl.DeleteRows(want, tbl.Rows.Count - want);
                 ReportReactor.ApplyTableScale(tbl, scale);   // #6: масштаб таблицы
+                ReportReactor.ApplyHeaderMerges(tbl, headerRow, nCols, headerMerges);  // #5: объединение шапки
                 tbl.GenerateLayout();
                 ms.AppendEntity(tbl);
                 tr.AddNewlyCreatedDBObject(tbl, true);

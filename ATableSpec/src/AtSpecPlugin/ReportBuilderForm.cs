@@ -26,6 +26,8 @@ namespace AtSpecPlugin
         private DataGridView grid;
         private CheckBox chkHideTitle, chkHideHeader;
         private NumericUpDown nudScale;
+        private Label lblMerges;
+        private readonly List<int[]> _headerMerges = new List<int[]>();   // [startCol,endCol], 0-базово
 
         public Dictionary<string, object> ReportDef { get; private set; }
 
@@ -109,7 +111,19 @@ namespace AtSpecPlugin
             grid.Rows.Add("Длина, мм", "=Object.«Длина»");
             grid.Rows.Add("Колич.", "=Count");
             grid.Rows.Add("Ед. изм.", "=«шт.»");
+            // #5: контекстное меню грида — объединение/разъединение ШАПКИ выделенных столбцов
+            var menu = new ContextMenuStrip();
+            var miMerge = new ToolStripMenuItem("Объединить шапку выделенных столбцов");
+            var miUnmerge = new ToolStripMenuItem("Разъединить шапку");
+            miMerge.Click += (s, e) => MergeSelectedHeader();
+            miUnmerge.Click += (s, e) => UnmergeSelectedHeader();
+            menu.Items.Add(miMerge); menu.Items.Add(miUnmerge);
+            grid.ContextMenuStrip = menu;
             Controls.Add(grid); y += 250;
+
+            lblMerges = new Label { Left = x, Top = y, Width = 636,
+                Text = "Объединение шапки: (нет)  —  выделите столбцы (строки слева) и ПКМ" };
+            Controls.Add(lblMerges); y += 24;
 
             Controls.Add(new Label { Left = x, Top = y + 3, Width = 120, Text = "Группа по столбцу №:" });
             cbGroup = new ComboBox { Left = x + 125, Top = y, Width = 80, DropDownStyle = ComboBoxStyle.DropDownList };
@@ -196,6 +210,8 @@ namespace AtSpecPlugin
                 { "group_by", groupBy },
                 { "sort_by", sortBy }
             };
+            var merges = new List<object>();
+            foreach (var sp in _headerMerges) merges.Add(new List<object> { sp[0], sp[1] });
             ReportDef = new Dictionary<string, object>
             {
                 { "title", txtTitle.Text },
@@ -203,8 +219,61 @@ namespace AtSpecPlugin
                 { "templates", new List<object> { template } },
                 { "hide_title", chkHideTitle.Checked },
                 { "hide_header", chkHideHeader.Checked },
-                { "scale", (double)nudScale.Value }
+                { "scale", (double)nudScale.Value },
+                { "header_merges", merges }
             };
+        }
+
+        // ── #5: объединение ШАПКИ столбцов (Вариант А): только строка-шапка, данные раздельны ──
+        private List<int> SelectedOutputColumns()
+        {
+            var set = new SortedSet<int>();
+            foreach (DataGridViewCell c in grid.SelectedCells)
+                if (c.OwningRow != null && !c.OwningRow.IsNewRow) set.Add(c.RowIndex);
+            foreach (DataGridViewRow r in grid.SelectedRows)
+                if (!r.IsNewRow) set.Add(r.Index);
+            return new List<int>(set);
+        }
+
+        private void MergeSelectedHeader()
+        {
+            var cols = SelectedOutputColumns();
+            if (cols.Count < 2)
+            {
+                MessageBox.Show("Выделите 2+ столбца (строки в таблице слева), чтобы объединить их шапку.",
+                    "Объединение шапки", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return;
+            }
+            int s = cols[0], e = cols[cols.Count - 1];                // диапазон по краям выделения
+            _headerMerges.RemoveAll(sp => !(sp[1] < s || sp[0] > e));  // убрать пересекающиеся
+            _headerMerges.Add(new[] { s, e });
+            _headerMerges.Sort((a, b) => a[0].CompareTo(b[0]));
+            UpdateMergesLabel();
+        }
+
+        private void UnmergeSelectedHeader()
+        {
+            var cols = SelectedOutputColumns();
+            if (cols.Count == 0) return;
+            int s = cols[0], e = cols[cols.Count - 1];
+            int removed = _headerMerges.RemoveAll(sp => !(sp[1] < s || sp[0] > e));
+            if (removed == 0)
+                MessageBox.Show("В выделении нет объединённой шапки.",
+                    "Разъединение шапки", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            UpdateMergesLabel();
+        }
+
+        private void UpdateMergesLabel()
+        {
+            if (lblMerges == null) return;
+            if (_headerMerges.Count == 0)
+            {
+                lblMerges.Text = "Объединение шапки: (нет)  —  выделите столбцы (строки слева) и ПКМ";
+                return;
+            }
+            var parts = new List<string>();
+            foreach (var sp in _headerMerges) parts.Add((sp[0] + 1) + "–" + (sp[1] + 1)); // 1-базово для глаза
+            lblMerges.Text = "Объединение шапки: столбцы " + string.Join(", ", parts.ToArray());
         }
     }
 }
