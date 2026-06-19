@@ -245,6 +245,7 @@ namespace AtSpecPlugin
             // #7: убрать возможные хвостовые пустые строки (усечение SetSize иногда оставляет лишние)
             if (tbl.Rows.Count > want)
                 tbl.DeleteRows(want, tbl.Rows.Count - want);
+            ApplyTableScale(tbl, GetDouble(defDict, "scale", 1.0));   // #6: масштаб из определения
             tbl.GenerateLayout();
             return true;
         }
@@ -356,6 +357,27 @@ namespace AtSpecPlugin
             if (d != null && d.TryGetValue(key, out v) && v != null)
             { try { return Convert.ToBoolean(v); } catch { return false; } }
             return false;
+        }
+        private static double GetDouble(Dictionary<string, object> d, string key, double dflt)
+        {
+            object v;
+            if (d != null && d.TryGetValue(key, out v) && v != null)
+            { try { return Convert.ToDouble(v, System.Globalization.CultureInfo.InvariantCulture); } catch { return dflt; } }
+            return dflt;
+        }
+
+        // Масштаб итоговой таблицы (#6): текст/строки/столбцы × scale, размеры АБСОЛЮТНЫЕ —
+        // идемпотентно (повторный пересчёт не накапливает). scale<=1 -> размеры стиля.
+        public static void ApplyTableScale(Table tbl, double scale)
+        {
+            double s = scale <= 0 ? 1.0 : scale;
+            if (s == 1.0) return;
+            double th = 2.5 * s;
+            for (int r = 0; r < tbl.Rows.Count; r++)
+                for (int c = 0; c < tbl.Columns.Count; c++)
+                    tbl.Cells[r, c].TextHeight = th;
+            tbl.SetColumnWidth(th * 10.0);
+            tbl.SetRowHeight(th * 1.8);
         }
         private static List<string> ToStrList(object o)
         { var l = new List<string>(); var il = o as IList; if (il != null) foreach (var x in il) l.Add(SafeStr(x)); return l; }

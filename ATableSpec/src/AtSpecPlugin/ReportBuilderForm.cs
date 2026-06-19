@@ -25,6 +25,7 @@ namespace AtSpecPlugin
         private TextBox txtFilterVal, txtTitle;
         private DataGridView grid;
         private CheckBox chkHideTitle, chkHideHeader;
+        private NumericUpDown nudScale;
 
         public Dictionary<string, object> ReportDef { get; private set; }
 
@@ -120,7 +121,11 @@ namespace AtSpecPlugin
             cbSort = new ComboBox { Left = x + 290, Top = y, Width = 130, DropDownStyle = ComboBoxStyle.DropDownList };
             cbSort.Items.AddRange(new object[] { "по возрастанию", "по убыванию", "(без сортировки)" });
             cbSort.SelectedIndex = 0;
-            Controls.Add(cbSort); y += 42;
+            Controls.Add(cbSort);
+            Controls.Add(new Label { Left = x + 425, Top = y + 3, Width = 62, Text = "Масштаб:" });
+            nudScale = new NumericUpDown { Left = x + 490, Top = y, Width = 100, Minimum = 1, Maximum = 100000, Value = 1000, DecimalPlaces = 0, Increment = 100 };
+            Controls.Add(nudScale);
+            y += 42;
 
             var ok = new Button { Text = "Построить", Left = 460, Top = y, Width = 90, DialogResult = DialogResult.OK };
             var cancel = new Button { Text = "Отмена", Left = 560, Top = y, Width = 90, DialogResult = DialogResult.Cancel };
@@ -197,7 +202,8 @@ namespace AtSpecPlugin
                 { "header", headers },
                 { "templates", new List<object> { template } },
                 { "hide_title", chkHideTitle.Checked },
-                { "hide_header", chkHideHeader.Checked }
+                { "hide_header", chkHideHeader.Checked },
+                { "scale", (double)nudScale.Value }
             };
         }
     }

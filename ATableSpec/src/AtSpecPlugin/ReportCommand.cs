@@ -149,7 +149,8 @@ namespace AtSpecPlugin
             // --- 8. AcDbTable: title + header + rows (позиционно) + определение в таблице ---
             bool hideTitle = GetBoolFlag(form.ReportDef, "hide_title");
             bool hideHeader = GetBoolFlag(form.ReportDef, "hide_header");
-            DrawTable(db, pr.Value, title, header, rows, ser.Serialize(form.ReportDef), hideTitle, hideHeader);
+            double scale = GetDoubleFlag(form.ReportDef, "scale", 1.0);
+            DrawTable(db, pr.Value, title, header, rows, ser.Serialize(form.ReportDef), hideTitle, hideHeader, scale);
             ed.WriteMessage("\nГотово: \"" + title + "\", строк: " + rows.Count + ". Пересчёт — ATSPECUPDATE.");
         }
 
@@ -221,7 +222,7 @@ namespace AtSpecPlugin
         }
 
         private static void DrawTable(Database db, Point3d pos, string title, List<string> header, IList rows,
-            string defJson, bool hideTitle, bool hideHeader)
+            string defJson, bool hideTitle, bool hideHeader, double scale)
         {
             int nCols = header.Count, nRows = rows.Count;
             int titleRow = hideTitle ? -1 : 0;
@@ -255,6 +256,7 @@ namespace AtSpecPlugin
                 // #7: убрать возможные хвостовые пустые строки (усечение SetSize иногда оставляет лишние)
                 if (tbl.Rows.Count > want)
                     tbl.DeleteRows(want, tbl.Rows.Count - want);
+                ReportReactor.ApplyTableScale(tbl, scale);   // #6: масштаб таблицы
                 tbl.GenerateLayout();
                 ms.AppendEntity(tbl);
                 tr.AddNewlyCreatedDBObject(tbl, true);
@@ -299,6 +301,14 @@ namespace AtSpecPlugin
             if (d != null && d.TryGetValue(key, out v) && v != null)
             { try { return Convert.ToBoolean(v); } catch { return false; } }
             return false;
+        }
+
+        private static double GetDoubleFlag(Dictionary<string, object> d, string key, double dflt)
+        {
+            object v;
+            if (d != null && d.TryGetValue(key, out v) && v != null)
+            { try { return Convert.ToDouble(v, System.Globalization.CultureInfo.InvariantCulture); } catch { return dflt; } }
+            return dflt;
         }
 
         private static List<string> ToStrList(object o)
