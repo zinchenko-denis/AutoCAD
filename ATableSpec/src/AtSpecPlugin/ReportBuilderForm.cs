@@ -137,7 +137,7 @@ namespace AtSpecPlugin
             cbSort.SelectedIndex = 0;
             Controls.Add(cbSort);
             Controls.Add(new Label { Left = x + 425, Top = y + 3, Width = 62, Text = "Масштаб:" });
-            nudScale = new NumericUpDown { Left = x + 490, Top = y, Width = 100, Minimum = 1, Maximum = 100000, Value = 1000, DecimalPlaces = 0, Increment = 100 };
+            nudScale = new NumericUpDown { Left = x + 490, Top = y, Width = 100, Minimum = 1, Maximum = 100000, Value = 100, DecimalPlaces = 0, Increment = 100 };
             Controls.Add(nudScale);
             y += 42;
 
