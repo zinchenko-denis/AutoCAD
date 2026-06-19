@@ -227,26 +227,39 @@ namespace AtSpecPlugin
             int want = top + nRows; if (want < 1) want = 1;
 
             tbl.UpgradeOpen();
-            tbl.SetSize(want, nCols);
+            // Бережный пересчёт (C): если СТРУКТУРА та же (число строк и столбцов не изменилось) —
+            // обновляем ТОЛЬКО текст ячеек. Ручные правки оформления (ширины столбцов, масштаб,
+            // форматирование, объединения) при этом сохраняются. Полную перестройку (SetSize +
+            // масштаб + объединения) делаем лишь когда строк/столбцов стало другое число
+            // (добавили/удалили элемент). Присваивание текста обёрнуто в try — на случай
+            // объединённых подъячеек.
+            bool sameShape = (tbl.Rows.Count == want && tbl.Columns.Count == nCols);
+            if (!sameShape)
+                tbl.SetSize(want, nCols);
+
             if (titleRow >= 0)
             {
-                tbl.Cells[titleRow, 0].TextString = title ?? "";
-                try { tbl.MergeCells(CellRange.Create(tbl, titleRow, 0, titleRow, nCols - 1)); } catch { }
+                try { tbl.Cells[titleRow, 0].TextString = title ?? ""; } catch { }
+                if (!sameShape)
+                    try { tbl.MergeCells(CellRange.Create(tbl, titleRow, 0, titleRow, nCols - 1)); } catch { }
             }
             if (headerRow >= 0)
                 for (int c = 0; c < nCols; c++)
-                    tbl.Cells[headerRow, c].TextString = c < header.Count ? SafeStr(header[c]) : "";
+                    try { tbl.Cells[headerRow, c].TextString = c < header.Count ? SafeStr(header[c]) : ""; } catch { }
             for (int r = 0; r < nRows; r++)
             {
                 var row = rows[r] as IList;
                 for (int c = 0; c < nCols; c++)
-                    tbl.Cells[top + r, c].TextString = (row != null && c < row.Count) ? SafeStr(row[c]) : "";
+                    try { tbl.Cells[top + r, c].TextString = (row != null && c < row.Count) ? SafeStr(row[c]) : ""; } catch { }
             }
-            // #7: убрать возможные хвостовые пустые строки (усечение SetSize иногда оставляет лишние)
-            if (tbl.Rows.Count > want)
-                tbl.DeleteRows(want, tbl.Rows.Count - want);
-            ApplyTableScale(tbl, GetDouble(defDict, "scale", 1.0));   // #6: масштаб из определения
-            ApplyHeaderMerges(tbl, headerRow, nCols, ParseMerges(Get(defDict, "header_merges")));  // #5
+            if (!sameShape)
+            {
+                // #7: убрать возможные хвостовые пустые строки (усечение SetSize иногда оставляет лишние)
+                if (tbl.Rows.Count > want)
+                    tbl.DeleteRows(want, tbl.Rows.Count - want);
+                ApplyTableScale(tbl, GetDouble(defDict, "scale", 1.0));   // #6: масштаб из определения
+                ApplyHeaderMerges(tbl, headerRow, nCols, ParseMerges(Get(defDict, "header_merges")));  // #5
+            }
             tbl.GenerateLayout();
             return true;
         }
@@ -298,11 +311,23 @@ namespace AtSpecPlugin
                 {
                     var br = tr.GetObject(id, OpenMode.ForRead) as BlockReference;
                     if (br == null) continue;
-                    var attrs = new Dictionary<string, object>();
+                    var attrs = new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase);
                     foreach (ObjectId arId in br.AttributeCollection)
                     {
                         var ar = tr.GetObject(arId, OpenMode.ForRead) as AttributeReference;
                         if (ar != null) attrs[ar.Tag] = ar.TextString;
+                    }
+                    // Динам. параметры (ручки): длина доборника / угол створки и т.п. — это
+                    // параметры, а не ATTRIB. Без них при ПЕРЕСЧЁТЕ Object.«Длина» обнуляется
+                    // (первичная вставка их читает, а пересчёт — нет). ATTRIB в приоритете.
+                    if (br.IsDynamicBlock)
+                    {
+                        foreach (DynamicBlockReferenceProperty dp in br.DynamicBlockReferencePropertyCollection)
+                        {
+                            string pn = dp.PropertyName;
+                            if (string.IsNullOrEmpty(pn) || attrs.ContainsKey(pn)) continue;
+                            attrs[pn] = Convert.ToString(dp.Value, System.Globalization.CultureInfo.InvariantCulture);
+                        }
                     }
                     recs.Add(new Dictionary<string, object> {
                         { "name", EffectiveName(tr, br) }, { "layer", br.Layer }, { "attributes", attrs } });
