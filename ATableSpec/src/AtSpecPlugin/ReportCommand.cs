@@ -153,6 +153,73 @@ namespace AtSpecPlugin
             ed.WriteMessage("\nГотово: \"" + title + "\", строк: " + rows.Count + ". Пересчёт — ATSPECUPDATE.");
         }
 
+        // Диагностика: точные имена/значения/типы атрибутов и динам. параметров выбранных
+        // блоков + габарит. Маркеры «» показывают крайние пробелы в именах. Нужна, чтобы
+        // понять, под каким именем живой API отдаёт длину/ширину/высоту (имена ручек разнятся).
+        [CommandMethod("ATSPECDUMP")]
+        public void AtSpecDump()
+        {
+            var doc = AcApp.DocumentManager.MdiActiveDocument;
+            if (doc == null) return;
+            Editor ed = doc.Editor;
+            Database db = doc.Database;
+            var ci = System.Globalization.CultureInfo.InvariantCulture;
+
+            var filter = new SelectionFilter(new[] { new TypedValue((int)DxfCode.Start, "INSERT") });
+            var pso = new PromptSelectionOptions { MessageForAdding = "\nВыберите блок(и) для диагностики: " };
+            PromptSelectionResult sel = ed.GetSelection(pso, filter);
+            if (sel.Status != PromptStatus.OK) { ed.WriteMessage("\nОтменено."); return; }
+
+            using (Transaction tr = db.TransactionManager.StartTransaction())
+            {
+                int idx = 0;
+                foreach (SelectedObject so in sel.Value)
+                {
+                    if (so == null) continue;
+                    var br = tr.GetObject(so.ObjectId, OpenMode.ForRead) as BlockReference;
+                    if (br == null) continue;
+                    idx++;
+                    ed.WriteMessage("\n===== блок #" + idx + " =====");
+                    ed.WriteMessage("\n  слой: «" + br.Layer + "»");
+                    ed.WriteMessage("\n  имя : «" + EffectiveName(tr, br) + "»  (динамоблок: " + br.IsDynamicBlock + ")");
+                    ed.WriteMessage("\n  поворот: " + (br.Rotation * 180.0 / Math.PI).ToString("0.#", ci) + " град");
+                    try
+                    {
+                        Extents3d ext = br.GeometricExtents;
+                        ed.WriteMessage("\n  габарит: Ш=" + (ext.MaxPoint.X - ext.MinPoint.X).ToString("0.#", ci)
+                                      + "  В=" + (ext.MaxPoint.Y - ext.MinPoint.Y).ToString("0.#", ci));
+                    }
+                    catch { ed.WriteMessage("\n  габарит: (недоступен)"); }
+
+                    ed.WriteMessage("\n  -- ATTRIB --");
+                    bool anyAttr = false;
+                    foreach (ObjectId arId in br.AttributeCollection)
+                    {
+                        var ar = tr.GetObject(arId, OpenMode.ForRead) as AttributeReference;
+                        if (ar != null) { ed.WriteMessage("\n    «" + ar.Tag + "» = «" + ar.TextString + "»"); anyAttr = true; }
+                    }
+                    if (!anyAttr) ed.WriteMessage("\n    (нет)");
+
+                    ed.WriteMessage("\n  -- динам. параметры --");
+                    bool anyDyn = false;
+                    if (br.IsDynamicBlock)
+                    {
+                        foreach (DynamicBlockReferenceProperty dp in br.DynamicBlockReferencePropertyCollection)
+                        {
+                            string val;
+                            try { val = Convert.ToString(dp.Value, ci); } catch { val = "<?>"; }
+                            string tn = dp.Value == null ? "null" : dp.Value.GetType().Name;
+                            ed.WriteMessage("\n    «" + dp.PropertyName + "» = «" + val + "»  [" + tn + "]");
+                            anyDyn = true;
+                        }
+                    }
+                    if (!anyDyn) ed.WriteMessage("\n    (нет)");
+                }
+                tr.Commit();
+            }
+            ed.WriteMessage("\n===== конец =====");
+        }
+
         private static void DrawTable(Database db, Point3d pos, string title, List<string> header, IList rows,
             string defJson, bool hideTitle, bool hideHeader)
         {
