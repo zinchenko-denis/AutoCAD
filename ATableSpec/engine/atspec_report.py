@@ -323,8 +323,10 @@ def run_template(records: List[dict], tmpl: dict) -> List[List[Any]]:
         row = []
         for expr in cols:
             v = evaluate(expr, rep, grp, idx)
-            if isinstance(v, float) and v.is_integer():
-                v = int(v)
+            if isinstance(v, float):
+                # в спецификацию — целые: дробную часть динам. параметров отбрасываем,
+                # округляя к ближайшему (·.5 — от нуля)
+                v = int(v + 0.5) if v >= 0 else -int(-v + 0.5)
             row.append(v)
         rows.append(row)
     return rows
