@@ -50,31 +50,46 @@ def _split_size(raw: Any):
     return (None, None)
 
 
+def _nk(s: Any) -> str:
+    """Нормализованный ключ поля: без «», без крайних пробелов, в верхнем регистре.
+    Имена динамических параметров приходят из C# «как есть» (возможны иной регистр или
+    хвостовой пробел), поэтому поиск поля делаем по нормализованному ключу."""
+    return str(s).replace("«", "").replace("»", "").strip().upper()
+
+
 # ─────────────────────────── объект (одна вставка блока) ───────────────────────────
 class Obj:
     """Обёртка над записью блока: доступ к Name / Layer / любому атрибуту."""
     def __init__(self, rec: dict):
         self.attrs = {str(k): ("" if v is None else str(v)) for k, v in (rec.get("attributes") or {}).items()}
         self.layer = str(rec.get("layer", ""))
+        # Нормализованный поиск полей: ключ без «», без крайних пробелов, в ВЕРХНЕМ
+        # регистре. Так Object.«Длина» находит и ATTRIB ДЛИНА, и динам. параметр
+        # "Длина"/"Длина "/"длина" (имена ручек приходят из C# как есть). Непустое в приоритете.
+        self._norm: Dict[str, str] = {}
+        for k, v in self.attrs.items():
+            nk = _nk(k)
+            if nk not in self._norm or self._norm[nk] == "":
+                self._norm[nk] = v
         # Object.Name = эффективное имя блока. У этих блоков оно = профиль (ПРОФ);
         # в C# можно резолвить настоящее имя динамоблока — здесь берём ПРОФ как прокси.
-        self._name = self.attrs.get("ПРОФ") or str(rec.get("name", ""))
+        self._name = self._norm.get("ПРОФ") or str(rec.get("name", ""))
 
     def field(self, name: str) -> Any:
-        up = name.upper().replace("«", "").replace("»", "")
+        up = _nk(name)
         if up in ("ИМЯ_БЛОКА", "NAME"):
             return self._name
         if up in ("СЛОЙ", "LAYER"):
             return self.layer
-        raw = self.attrs.get(up, self.attrs.get(name, None))
+        raw = self._norm.get(up)
         # Ширина/Высота заполнения: отдельных атрибутов у блока нет — достаём из
-        # РАЗМЕР_ЗАП ("ШиринаХВысота"). Прямое поле, если оно есть, имеет приоритет.
+        # РАЗМЕР_ЗАП ("ШиринаХВысота"). Прямое поле, если оно есть и непустое, в приоритете.
         if up in ("ШИРИНА", "ВЫСОТА") and (raw is None or str(raw).strip() == ""):
-            w, h = _split_size(self.attrs.get("РАЗМЕР_ЗАП"))
+            w, h = _split_size(self._norm.get("РАЗМЕР_ЗАП"))
             return w if up == "ШИРИНА" else h
         if raw is None:
             return None
-        if up == "ДЛИНА" or up in {f.upper() for f in _NUMERIC_FIELDS}:
+        if up == "ДЛИНА" or up in {_nk(f) for f in _NUMERIC_FIELDS}:
             try:
                 return float(str(raw).replace(",", "."))
             except ValueError:
