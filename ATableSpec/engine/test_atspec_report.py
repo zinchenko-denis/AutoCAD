@@ -179,6 +179,30 @@ assert len(_oldrep["sections"]) == 1 and _oldrep["sections"][0]["title"] == ""
 assert _oldrep["sections"][0]["header"][1] == "Наим" and _oldrep["sections"][0]["rows"] == _oldrep["rows"]
 print("SECTIONS: многосекционный отчёт (стойки+ригеля, разные столбцы) + обратная совместимость. OK")
 
+# ───────── Заполнения: площадь (2 знака, запятая, half-up) + строка ИТОГ ─────────
+_zfill = []
+for mk, w, h, n in [("13/3/1", 1125, 275, 2), ("13/3/2", 1125, 1900, 2),
+                    ("13/3/3", 1045, 275, 2), ("13/3/4", 1045, 2550, 2)]:
+    for _ in range(n):
+        _zfill.append({"layer": "RF-заполнения",
+                       "attributes": {"МАРКИРОВКА": mk, "РАЗМЕР_ЗАП": f"{w}Х{h}"}})
+_zsec = {"section_title": "", "header": [], "hide_header": False, "header_merges": [],
+         "columns": ["=row", "=Object.«МАРКИРОВКА»", "=Object.«Ширина»", "=Object.«Высота»",
+                     "=Count", "=Object.«Ширина»*Object.«Высота»*Count/1000000"],
+         "filter": [{"field": "Слой", "op": "=", "value": "RF-заполнения"}],
+         "group_by": 1, "sort_by": (1, "asc"), "total_row": True}
+_zr = run_report(_zfill, {"sections": [_zsec]})["sections"][0]["rows"]
+_bym = {r[1]: r for r in _zr if isinstance(r[1], str) and r[1].startswith("13/3/")}
+assert _bym["13/3/1"][5] == "0,62", _bym["13/3/1"]          # 0.61875 -> 0,62
+assert _bym["13/3/2"][5] == "4,28", _bym["13/3/2"]          # 4.275 half-up -> 4,28 (не 4,27)
+assert _bym["13/3/3"][5] == "0,57" and _bym["13/3/4"][5] == "5,33", (_bym["13/3/3"], _bym["13/3/4"])
+_tot = _zr[-1]
+assert _tot[0] == "сумма", _tot                            # метка в первом столбце
+assert _tot[4] == 8, _tot                                  # Σ количества — целое
+assert _tot[5] == "10,8", _tot                             # Σ площади — запятая, хвостовой 0 срезан
+assert _tot[2] == "" and _tot[3] == "", _tot               # под Ш/В — пусто (нет Count)
+print("AREA+TOTAL: площадь (2 знака, запятая, half-up) + строка ИТОГ. OK")
+
 # ───────── опциональный прогон на живых DXF ─────────
 files = {"В-13": "/mnt/user-data/uploads/КМД_В-13_ИЗМ.dxf",
          "В-32": "/mnt/user-data/uploads/КМД_В32_2.dxf"}
