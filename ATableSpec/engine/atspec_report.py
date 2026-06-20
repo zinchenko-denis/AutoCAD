@@ -332,14 +332,59 @@ def run_template(records: List[dict], tmpl: dict) -> List[List[Any]]:
     return rows
 
 
+def _sections_of(report: dict) -> List[dict]:
+    """Нормализует определение к списку секций.
+
+    Новый формат (Фаза 2): report["sections"] = [{section_title, header,
+    hide_header, header_merges, columns, filter, group_by, sort_by}, ...] —
+    у каждой секции СВОИ столбцы/шапка/источник-фильтр/группировка.
+
+    Старый формат (этап 1): report["header"]/["templates"] — общая шапка на весь
+    отчёт + шаблоны. Заворачиваем каждый шаблон в секцию с общей шапкой, чтобы
+    уже вставленные в чертёж таблицы пересчитывались без изменений раскладки.
+    """
+    secs = report.get("sections")
+    if secs:
+        return secs
+    shared_header = report.get("header", [])
+    hh = bool(report.get("hide_header", False))
+    hm = report.get("header_merges", [])
+    out = []
+    for t in report.get("templates", []):
+        out.append({"section_title": "", "header": shared_header,
+                    "hide_header": hh, "header_merges": hm,
+                    "columns": t.get("columns", []), "filter": t.get("filter", []),
+                    "group_by": t.get("group_by"), "sort_by": t.get("sort_by")})
+    return out
+
+
 def run_report(records: List[dict], report: dict) -> Dict[str, Any]:
-    """Отчёт = заголовок + 1..N шаблонов (для производных строк: крышка+прижим)."""
-    all_rows: List[List[Any]] = []
-    for t in report["templates"]:
-        all_rows.extend(run_template(records, t))
+    """Отчёт = заголовок таблицы + 1..N секций (стойки, ригеля, ... в одной таблице).
+
+    Возвращает:
+      sections — [{title, header, hide_header, header_merges, rows}] на каждую секцию
+                 (нумерация =row внутри секции — своя, т.к. это отдельный шаблон);
+      rows/header — плоско (конкатенация секций), для совместимости со старыми
+                 потребителями и тестами.
+    """
+    out_sections: List[Dict[str, Any]] = []
+    flat: List[List[Any]] = []
+    for s in _sections_of(report):
+        rows = run_template(records, {
+            "filter": s.get("filter", []), "columns": s.get("columns", []),
+            "group_by": s.get("group_by"), "sort_by": s.get("sort_by")})
+        out_sections.append({
+            "title": s.get("section_title", "") or "",
+            "header": s.get("header", []),
+            "hide_header": bool(s.get("hide_header", False)),
+            "header_merges": s.get("header_merges", []),
+            "rows": rows})
+        flat.extend(rows)
+    top_header = out_sections[0]["header"] if out_sections else report.get("header", [])
     return {"title": report.get("title", ""),
-            "header": report.get("header", []),
-            "rows": all_rows}
+            "header": top_header,      # совместимость (плоско)
+            "rows": flat,              # совместимость (конкатенация секций)
+            "sections": out_sections}  # Фаза 2
 
 
 def _sortkey(v):

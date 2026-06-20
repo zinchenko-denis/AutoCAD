@@ -143,6 +143,42 @@ assert _out["ok"] and "report" in _out
 assert any(r[1] == "С01" and r[3] == 3495 for r in _out["report"]["rows"])
 print("CONTRACT: engine_json(action='report') отдаёт отчёт. OK")
 
+# ───────── Фаза 2: несколько секций в одной таблице (стойки + ригеля) ─────────
+def _sec(title, layer, cols, header):
+    return {"section_title": title, "header": header, "hide_header": False,
+            "header_merges": [], "columns": cols,
+            "filter": [{"field": "Слой", "op": "=", "value": layer}],
+            "group_by": 1, "sort_by": (1, "asc")}
+
+_cols6 = ["=row", "=Object.«ИМЯ»", "=Object.Name", "=Object.«Длина»", "=Count", "=«шт.»"]
+_hdr6 = ["№", "Наим", "Арт", "Длина", "Кол", "Ед"]
+_secrep = run_report(st32 + rg32, {"title": "СПЕЦИФИКАЦИЯ", "scale": 100, "hide_title": False,
+    "sections": [_sec("Стойки", "RF-стойки", _cols6, _hdr6),
+                 _sec("Ригеля", "RF-ригеля", _cols6, _hdr6)]})
+assert "sections" in _secrep and len(_secrep["sections"]) == 2, list(_secrep.keys())
+_s0, _s1 = _secrep["sections"]
+assert _s0["title"] == "Стойки" and _s1["title"] == "Ригеля"
+# источник = фильтр секции: в секции 0 только стойки, в секции 1 только ригеля
+assert len(_s0["rows"]) == 3 and all(r[1].startswith("С") for r in _s0["rows"]), _s0["rows"]
+assert len(_s1["rows"]) == 3 and all(r[1].startswith("Р") for r in _s1["rows"]), _s1["rows"]
+# нумерация =row внутри секции своя (каждая стартует с 1)
+assert [r[0] for r in _s0["rows"]] == [1, 2, 3] and [r[0] for r in _s1["rows"]] == [1, 2, 3]
+# плоско = конкатенация секций; поля секции пробрасываются
+assert _secrep["rows"] == _s0["rows"] + _s1["rows"]
+assert _s0["hide_header"] is False and _s0["header"][0] == "№"
+
+# секции с РАЗНЫМ числом столбцов (ширина итоговой таблицы = макс по секциям)
+_difrep = run_report(st32 + rg32, {"sections": [
+    _sec("A", "RF-стойки", ["=row", "=Object.«ИМЯ»"], ["№", "Наим"]),
+    _sec("B", "RF-ригеля", ["=row", "=Object.«ИМЯ»", "=Object.Name", "=Object.«Длина»"], ["№", "Наим", "Арт", "Длина"])]})
+assert len(_difrep["sections"][0]["rows"][0]) == 2 and len(_difrep["sections"][1]["rows"][0]) == 4
+
+# обратная совместимость: старый формат (templates[] + общая шапка) -> одна секция, та же раскладка
+_oldrep = run_report(st13, {"title": "T", "header": _hdr6, "templates": [base_tmpl("RF-стойки")]})
+assert len(_oldrep["sections"]) == 1 and _oldrep["sections"][0]["title"] == ""
+assert _oldrep["sections"][0]["header"][1] == "Наим" and _oldrep["sections"][0]["rows"] == _oldrep["rows"]
+print("SECTIONS: многосекционный отчёт (стойки+ригеля, разные столбцы) + обратная совместимость. OK")
+
 # ───────── опциональный прогон на живых DXF ─────────
 files = {"В-13": "/mnt/user-data/uploads/КМД_В-13_ИЗМ.dxf",
          "В-32": "/mnt/user-data/uploads/КМД_В32_2.dxf"}
