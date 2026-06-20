@@ -30,14 +30,18 @@ namespace AtSpecPlugin
         private NumericUpDown nudScale;
         private FlowLayoutPanel flow;
 
+        private readonly int _template;
         public Dictionary<string, object> ReportDef { get; private set; }
 
-        public ReportBuilderForm(List<string> layers, List<string> fields)
+        // template: 0 — Ручное (пусто), 1 — Спецификация, 2 — Раскрой, 3 — Заполнения.
+        public ReportBuilderForm(List<string> layers, List<string> fields, int template = 1)
         {
             _layers = layers ?? new List<string>();
             _fields = fields ?? new List<string>();
+            _template = template;
             BuildUi();
-            AddSection(true);   // стартуем с одной секции с дефолтным наполнением
+            txtTitle.Text = DefaultTitleFor(template);
+            AddSection(PresetFor(template, true));   // стартовая секция, засеяна под шаблон
         }
 
         private void BuildUi()
@@ -80,7 +84,7 @@ namespace AtSpecPlugin
 
             var btnAdd = new Button { Text = "+ Добавить отчёт", Left = x, Top = ClientSize.Height - 78, Width = 160,
                                       Anchor = AnchorStyles.Bottom | AnchorStyles.Left };
-            btnAdd.Click += (s, e) => AddSection(false);
+            btnAdd.Click += (s, e) => AddSection(PresetFor(_template, false));
             Controls.Add(btnAdd);
 
             var ok = new Button { Text = "Построить", Width = 100, Top = ClientSize.Height - 40,
@@ -94,9 +98,9 @@ namespace AtSpecPlugin
             AcceptButton = ok; CancelButton = cancel;
         }
 
-        private void AddSection(bool seedDefault)
+        private void AddSection(SectionSeed seed)
         {
-            var card = new SectionCard(_layers, _fields, seedDefault);
+            var card = new SectionCard(_layers, _fields, seed);
             card.MoveUpRequested += MoveCardUp;
             card.MoveDownRequested += MoveCardDown;
             card.RemoveRequested += RemoveCard;
@@ -104,6 +108,55 @@ namespace AtSpecPlugin
             flow.Controls.Add(card);
             Renumber();
             flow.ScrollControlIntoView(card);
+        }
+
+        // Стартовое наполнение секции под шаблон. useFirstLayer — авто-подстановка первого
+        // слоя как источника (только для самой первой секции; для добавляемых — false).
+        private static SectionSeed PresetFor(int tpl, bool useFirstLayer)
+        {
+            var s = new SectionSeed { UseFirstLayer = useFirstLayer };
+            switch (tpl)
+            {
+                case 1: // Спецификация (рабочий пресет)
+                    s.Columns.Add(new[] { "№ п/п", "=row" });
+                    s.Columns.Add(new[] { "НАИМЕНОВАНИЕ", "=Object.«ИМЯ»" });
+                    s.Columns.Add(new[] { "Артикул", "=Object.Name" });
+                    s.Columns.Add(new[] { "Длина, мм", "=Object.«Длина»" });
+                    s.Columns.Add(new[] { "Колич.", "=Count" });
+                    s.Columns.Add(new[] { "Ед. изм.", "=«шт.»" });
+                    s.GroupIdx = 1; s.SortMode = 0;
+                    break;
+                case 2: // Раскрой (ЧЕРНОВИК — уточняется по DXF конструктора)
+                    s.Columns.Add(new[] { "№ п/п", "=row" });
+                    s.Columns.Add(new[] { "Профиль", "=Object.Name" });
+                    s.Columns.Add(new[] { "Длина, мм", "=Object.«Длина»" });
+                    s.Columns.Add(new[] { "Колич.", "=Count" });
+                    s.GroupIdx = 2; s.SortMode = 0;   // группа по длине
+                    break;
+                case 3: // Заполнения (ЧЕРНОВИК — Ш/В из РАЗМЕР_ЗАП; уточняется по DXF)
+                    s.Columns.Add(new[] { "№ п/п", "=row" });
+                    s.Columns.Add(new[] { "Марка", "=Object.«МАРКИРОВКА»" });
+                    s.Columns.Add(new[] { "Ширина", "=Object.«Ширина»" });
+                    s.Columns.Add(new[] { "Высота", "=Object.«Высота»" });
+                    s.Columns.Add(new[] { "Колич.", "=Count" });
+                    s.Columns.Add(new[] { "Ед. изм.", "=«шт.»" });
+                    s.GroupIdx = 1; s.SortMode = 0;   // группа по марке
+                    break;
+                default: // 0 — Ручное: пустая секция
+                    break;
+            }
+            return s;
+        }
+
+        private static string DefaultTitleFor(int tpl)
+        {
+            switch (tpl)
+            {
+                case 2: return "ВЕДОМОСТЬ РАСКРОЯ";
+                case 3: return "СПЕЦИФИКАЦИЯ ЗАПОЛНЕНИЙ";
+                case 0: return "";                       // ручное — без заголовка по умолчанию
+                default: return "СПЕЦИФИКАЦИЯ ЭЛЕМЕНТОВ"; // спецификация
+            }
         }
 
         private void RemoveCard(SectionCard card)
@@ -185,18 +238,21 @@ namespace AtSpecPlugin
 
         public event Action<SectionCard> MoveUpRequested, MoveDownRequested, RemoveRequested;
 
-        public SectionCard(List<string> layers, List<string> fields, bool seedDefault)
+        public SectionCard(List<string> layers, List<string> fields, SectionSeed seed)
         {
             _layers = layers; _fields = fields;
             BorderStyle = BorderStyle.FixedSingle;
             Width = 690; Height = 272; Margin = new Padding(0, 0, 0, 8);
-            BuildUi(seedDefault);
-            if (seedDefault && _layers.Count > 0) _layer = _layers[0];
-            if (seedDefault) { _groupIdx = 1; _sortMode = 0; }   // группа по столбцу 2 (НАИМЕНОВАНИЕ)
+            BuildUi(seed);
+            if (seed != null)
+            {
+                _groupIdx = seed.GroupIdx; _sortMode = seed.SortMode;
+                if (seed.UseFirstLayer && _layers.Count > 0) _layer = _layers[0];
+            }
             RefreshSummary();
         }
 
-        private void BuildUi(bool seedDefault)
+        private void BuildUi(SectionSeed seed)
         {
             int y = 8;
             lblNum = new Label { Left = 8, Top = y + 4, Width = 70, Text = "Отчёт", Font = new Font(Font, FontStyle.Bold) };
@@ -221,7 +277,6 @@ namespace AtSpecPlugin
 
             Controls.Add(new Label { Left = 8, Top = y + 4, Width = 118, Text = "Заголовок секции:" });
             txtSecTitle = new TextBox { Left = 128, Top = y, Width = 280 };
-            if (seedDefault) txtSecTitle.Text = "";
             Controls.Add(txtSecTitle);
             chkHideHeader = new CheckBox { Left = 420, Top = y + 2, Width = 240, Text = "Скрыть шапку столбцов" };
             Controls.Add(chkHideHeader);
@@ -241,21 +296,15 @@ namespace AtSpecPlugin
                 Name = "expr", HeaderText = "Выражение",
                 AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill, FlatStyle = FlatStyle.Flat, DropDownWidth = 260
             };
-            var seed = new List<string> { "=row", "=Count", "=«шт.»", "=Object.Name", "=Object.«ИМЯ»", "=Object.«Длина»" };
-            foreach (var f in _fields) seed.Add("=Object.«" + f + "»");
-            foreach (var sx in seed) if (!colExpr.Items.Contains(sx)) colExpr.Items.Add(sx);
+            var comboSeed = new List<string> { "=row", "=Count", "=«шт.»", "=Object.Name", "=Object.«ИМЯ»", "=Object.«Длина»" };
+            foreach (var f in _fields) comboSeed.Add("=Object.«" + f + "»");
+            foreach (var sx in comboSeed) if (!colExpr.Items.Contains(sx)) colExpr.Items.Add(sx);
             grid.Columns.Add(colHdr); grid.Columns.Add(colExpr);
             grid.EditingControlShowing += Grid_EditingControlShowing;
             grid.DataError += (s, e) => { e.ThrowException = false; e.Cancel = false; };
-            if (seedDefault)
-            {
-                grid.Rows.Add("№ п/п", "=row");
-                grid.Rows.Add("НАИМЕНОВАНИЕ", "=Object.«ИМЯ»");
-                grid.Rows.Add("Артикул", "=Object.Name");
-                grid.Rows.Add("Длина, мм", "=Object.«Длина»");
-                grid.Rows.Add("Колич.", "=Count");
-                grid.Rows.Add("Ед. изм.", "=«шт.»");
-            }
+            if (seed != null)
+                foreach (var c in seed.Columns)
+                    if (c != null && c.Length >= 2) grid.Rows.Add(c[0], c[1]);
             var menu = new ContextMenuStrip();
             var miMerge = new ToolStripMenuItem("Объединить шапку выделенных столбцов");
             var miUnmerge = new ToolStripMenuItem("Разъединить шапку");
@@ -536,6 +585,51 @@ namespace AtSpecPlugin
 
             var ok = new Button { Text = "OK", Left = 184, Top = 100, Width = 84, DialogResult = DialogResult.OK };
             var cancel = new Button { Text = "Отмена", Left = 276, Top = 100, Width = 92, DialogResult = DialogResult.Cancel };
+            Controls.Add(ok); Controls.Add(cancel);
+            AcceptButton = ok; CancelButton = cancel;
+        }
+    }
+
+    // ───────────────────────── стартовое наполнение секции (пресет) ─────────────────────────
+    public class SectionSeed
+    {
+        public List<string[]> Columns = new List<string[]>();   // каждый — {Заголовок, Выражение}
+        public int GroupIdx = -1;                                // 0-базовый столбец группировки (-1 = нет)
+        public int SortMode = 0;                                 // 0 — по возр., 1 — по убыв., 2 — без сорт.
+        public bool UseFirstLayer = false;                       // подставить первый слой источником
+    }
+
+    // ───────────────────────── окно выбора шаблона (Этап 3) ─────────────────────────
+    // Возвращает Choice: 0 — Ручное (пусто), 1 — Спецификация, 2 — Раскрой, 3 — Заполнения.
+    // Последние три засевают поля; всё остаётся полностью редактируемым в построителе.
+    public class TemplatePickerForm : Form
+    {
+        private RadioButton rbManual, rbSpec, rbCut, rbFill;
+        public int Choice
+        {
+            get { return rbManual.Checked ? 0 : (rbCut.Checked ? 2 : (rbFill.Checked ? 3 : 1)); }
+        }
+
+        public TemplatePickerForm()
+        {
+            Text = "ATableSpec — шаблон отчёта";
+            FormBorderStyle = FormBorderStyle.FixedDialog;
+            StartPosition = FormStartPosition.CenterScreen;
+            ClientSize = new Size(460, 252);
+            MaximizeBox = false; MinimizeBox = false;
+
+            int y = 12;
+            Controls.Add(new Label { Left = 14, Top = y, Width = 432,
+                Text = "Выберите шаблон. Последние три засевают столбцы готовыми выражениями Object — всё остаётся редактируемым (столбцы, источник, фильтр, группа, число секций)." });
+            y += 48;
+            rbManual = new RadioButton { Left = 20, Top = y, Width = 420, Text = "Ручное создание — пустой отчёт, всё задаёте сами" }; y += 28;
+            rbSpec = new RadioButton { Left = 20, Top = y, Width = 420, Text = "Спецификация — №, наименование, артикул, длина, кол-во", Checked = true }; y += 28;
+            rbCut = new RadioButton { Left = 20, Top = y, Width = 420, Text = "Раскрой — профиль / длина / кол-во (черновик, уточняется по примеру)" }; y += 28;
+            rbFill = new RadioButton { Left = 20, Top = y, Width = 420, Text = "Заполнения — марка / ширина / высота / кол-во (черновик)" }; y += 36;
+            Controls.Add(rbManual); Controls.Add(rbSpec); Controls.Add(rbCut); Controls.Add(rbFill);
+
+            var ok = new Button { Text = "Далее", Left = 256, Top = y, Width = 84, DialogResult = DialogResult.OK };
+            var cancel = new Button { Text = "Отмена", Left = 348, Top = y, Width = 92, DialogResult = DialogResult.Cancel };
             Controls.Add(ok); Controls.Add(cancel);
             AcceptButton = ok; CancelButton = cancel;
         }
