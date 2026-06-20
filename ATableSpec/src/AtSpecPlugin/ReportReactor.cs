@@ -335,6 +335,7 @@ namespace AtSpecPlugin
             {
                 if (tbl.Rows.Count > p.Want) tbl.DeleteRows(p.Want, tbl.Rows.Count - p.Want);
                 ApplyTableScale(tbl, scale);                       // #6: масштаб таблицы
+                AutoFitColumns(tbl, p.MaxCols, secs);              // #4: ширины столбцов по содержимому (как СПДС)
                 if (p.TitleRow >= 0 && p.MaxCols > 1)
                     try { tbl.MergeCells(CellRange.Create(tbl, p.TitleRow, 0, p.TitleRow, p.MaxCols - 1)); } catch { }
                 for (int i = 0; i < secs.Count; i++)
@@ -523,6 +524,45 @@ namespace AtSpecPlugin
                     try { tbl.Cells[r, c].TextHeight = th; } catch { }   // объединённые подъячейки пропускаем
             tbl.SetColumnWidth(th * 10.0);
             tbl.SetRowHeight(th * 1.8);
+        }
+
+        // #4: ширины столбцов ПО СОДЕРЖИМОМУ (а не одинаковые) — № узкий, наименование/площадь
+        // шире, как в таблицах СПДС. Оценка ширины глифа ≈ 0.62·высоты текста (пропорц. шрифт),
+        // зажим [4·th, 48·th]. Только при перестройке (rebuild) — ручную ширину бережный пересчёт
+        // сохраняет. Подписи (заголовок таблицы/секций) объединены и на ширину столбца не влияют.
+        public static void AutoFitColumns(Table tbl, int maxCols, List<SectionView> secs)
+        {
+            if (tbl == null || maxCols < 1) return;
+            double th = 2.5;
+            try
+            {
+                if (tbl.Rows.Count > 0 && tbl.Columns.Count > 0)
+                {
+                    double h = tbl.Cells[tbl.Rows.Count - 1, 0].TextHeight;
+                    if (h > 0) th = h;
+                }
+            }
+            catch { }
+            for (int c = 0; c < maxCols && c < tbl.Columns.Count; c++)
+            {
+                int maxLen = 1;
+                foreach (var s in secs)
+                {
+                    if (c < s.Header.Count)
+                    { int l = SafeStr(s.Header[c]).Length; if (l > maxLen) maxLen = l; }
+                    foreach (var r in s.Rows)
+                    {
+                        var rl = r as IList;
+                        if (rl != null && c < rl.Count)
+                        { int l = SafeStr(rl[c]).Length; if (l > maxLen) maxLen = l; }
+                    }
+                }
+                double w = maxLen * th * 0.62 + th * 1.4;
+                double lo = th * 4.0, hi = th * 48.0;
+                if (w < lo) w = lo;
+                if (w > hi) w = hi;
+                try { tbl.Columns[c].Width = w; } catch { }
+            }
         }
 
         // #5: распарсить спаны объединения шапки из определения ([[s,e],...]).
