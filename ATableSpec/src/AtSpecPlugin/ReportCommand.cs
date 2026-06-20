@@ -132,27 +132,21 @@ namespace AtSpecPlugin
 
             var rep = Get(result, "report") as Dictionary<string, object>;
             if (rep == null) { ed.WriteMessage("\nПустой отчёт."); return; }
-            var header = ToStrList(Get(rep, "header"));
-            var rows = Get(rep, "rows") as IList;
             string title = SafeStr(Get(rep, "title"));
-            if (rows == null || rows.Count == 0) { ed.WriteMessage("\nВ отчёт не попало ни одной строки."); return; }
-            if (header.Count == 0) // нет шапки -> ширина по первой строке
-            {
-                int wcols = ((IList)rows[0]).Count;
-                for (int i = 0; i < wcols; i++) header.Add("");
-            }
+            var secs = ReportReactor.ParseSections(Get(rep, "sections"));
+            if (secs.Count == 0) { ed.WriteMessage("\nОтчёт без секций."); return; }
+            int totalRows = 0; foreach (var s in secs) totalRows += s.Rows.Count;
+            if (totalRows == 0) { ed.WriteMessage("\nВ отчёт не попало ни одной строки."); return; }
 
             // --- 7. точка вставки ---
             PromptPointResult pr = ed.GetPoint("\nТочка вставки таблицы: ");
             if (pr.Status != PromptStatus.OK) return;
 
-            // --- 8. AcDbTable: title + header + rows (позиционно) + определение в таблице ---
+            // --- 8. AcDbTable: заголовок + секции (подпись/шапка/данные) + определение в таблице ---
             bool hideTitle = GetBoolFlag(form.ReportDef, "hide_title");
-            bool hideHeader = GetBoolFlag(form.ReportDef, "hide_header");
             double scale = GetDoubleFlag(form.ReportDef, "scale", 1.0);
-            var headerMerges = ReportReactor.ParseMerges(Get(form.ReportDef, "header_merges"));
-            DrawTable(db, pr.Value, title, header, rows, ser.Serialize(form.ReportDef), hideTitle, hideHeader, scale, headerMerges);
-            ed.WriteMessage("\nГотово: \"" + title + "\", строк: " + rows.Count + ". Пересчёт — ATSPECUPDATE.");
+            DrawTable(db, pr.Value, title, secs, ser.Serialize(form.ReportDef), hideTitle, scale);
+            ed.WriteMessage("\nГотово: \"" + title + "\", секций: " + secs.Count + ", строк: " + totalRows + ". Пересчёт — ATSPECUPDATE.");
         }
 
         // Диагностика: точные имена/значения/типы атрибутов и динам. параметров выбранных
@@ -222,14 +216,9 @@ namespace AtSpecPlugin
             ed.WriteMessage("\n===== конец =====");
         }
 
-        private static void DrawTable(Database db, Point3d pos, string title, List<string> header, IList rows,
-            string defJson, bool hideTitle, bool hideHeader, double scale, List<int[]> headerMerges)
+        private static void DrawTable(Database db, Point3d pos, string title,
+            List<ReportReactor.SectionView> secs, string defJson, bool hideTitle, double scale)
         {
-            int nCols = header.Count, nRows = rows.Count;
-            int titleRow = hideTitle ? -1 : 0;
-            int headerRow = hideHeader ? -1 : (hideTitle ? 0 : 1);
-            int top = (hideTitle ? 0 : 1) + (hideHeader ? 0 : 1);   // зарезервировано строк сверху
-            int want = top + nRows; if (want < 1) want = 1;
             using (Transaction tr = db.TransactionManager.StartTransaction())
             {
                 var bt = (BlockTable)tr.GetObject(db.BlockTableId, OpenMode.ForRead);
@@ -238,32 +227,14 @@ namespace AtSpecPlugin
                 var tbl = new Table();
                 tbl.TableStyle = db.Tablestyle;
                 tbl.Position = pos;
-                tbl.SetSize(want, nCols);
-
-                if (titleRow >= 0)
-                {
-                    tbl.Cells[titleRow, 0].TextString = title ?? "";
-                    try { tbl.MergeCells(CellRange.Create(tbl, titleRow, 0, titleRow, nCols - 1)); } catch { }
-                }
-                if (headerRow >= 0)
-                    for (int c = 0; c < nCols; c++)
-                        tbl.Cells[headerRow, c].TextString = SafeStr(header[c]);
-                for (int r = 0; r < nRows; r++)
-                {
-                    var row = rows[r] as IList;
-                    for (int c = 0; c < nCols; c++)
-                        tbl.Cells[top + r, c].TextString = (row != null && c < row.Count) ? SafeStr(row[c]) : "";
-                }
-                // #7: убрать возможные хвостовые пустые строки (усечение SetSize иногда оставляет лишние)
-                if (tbl.Rows.Count > want)
-                    tbl.DeleteRows(want, tbl.Rows.Count - want);
-                ReportReactor.ApplyTableScale(tbl, scale);   // #6: масштаб таблицы
-                ReportReactor.ApplyHeaderMerges(tbl, headerRow, nCols, headerMerges);  // #5: объединение шапки
+                // раскладка секций (rebuild): SetSize + текст + усечение хвоста + масштаб + объединения
+                int[] wm = ReportReactor.LayoutSections(tbl, title, hideTitle, scale, secs, true);
                 tbl.GenerateLayout();
                 ms.AppendEntity(tbl);
                 tr.AddNewlyCreatedDBObject(tbl, true);
-                // сохранить определение отчёта в самой таблице — чтобы её можно было пересчитать (ATSPECUPDATE)
+                // определение отчёта + сигнатуру раскладки — в саму таблицу (для пересчёта ATSPECUPDATE)
                 try { ReportReactor.StoreDef(tr, tbl, defJson); } catch { }
+                try { ReportReactor.StoreShape(tr, tbl, ReportReactor.ComputeShape(wm[1], secs)); } catch { }
                 tr.Commit();
             }
         }
