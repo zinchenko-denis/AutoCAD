@@ -104,8 +104,14 @@ namespace AtSpecPlugin
                     fields.Add(extra);
             var layers = new List<string>(layerSet);
 
-            // --- 4. окно-построитель отчёта ---
-            var form = new ReportBuilderForm(layers, fields);
+            // --- 4. выбор шаблона (Этап 3) -> построитель отчёта (засев под шаблон) ---
+            int tpl;
+            using (var picker = new TemplatePickerForm())
+            {
+                if (AcApp.ShowModalDialog(picker) != DialogResult.OK) { ed.WriteMessage("\nОтменено."); return; }
+                tpl = picker.Choice;
+            }
+            var form = new ReportBuilderForm(layers, fields, tpl);
             if (AcApp.ShowModalDialog(form) != DialogResult.OK) { ed.WriteMessage("\nОтменено."); return; }
 
             // --- 5. payload: action=report + определение отчёта ---
