@@ -32,6 +32,9 @@ namespace AtSpecPlugin
     {
         // ключ записи определения отчёта в словаре расширения таблицы
         public const string DICTKEY = "ATSPEC_REPORT_DEF";
+        // ключ сигнатуры раскладки (число столбцов + строк по секциям) — для бережного
+        // пересчёта: если структура та же, правим только текст, сохраняя ручное оформление.
+        public const string SHAPEKEY = "ATSPEC_REPORT_SHAPE";
 
         // состояние реактора (см. секцию «авто-триггер» ниже)
         private static bool _attached;
@@ -209,88 +212,204 @@ namespace AtSpecPlugin
 
             var rep = Get(result, "report") as Dictionary<string, object>;
             if (rep == null) return false;
-            var header = ToStrList(Get(rep, "header"));
-            var rows = Get(rep, "rows") as IList;
             string title = SafeStr(Get(rep, "title"));
-            if (rows == null) return false;
+            var secs = ParseSections(Get(rep, "sections"));
+            if (secs.Count == 0) return false;
 
             var defDict = reportDef as Dictionary<string, object>;
             bool hideTitle = GetBool(defDict, "hide_title");
-            bool hideHeader = GetBool(defDict, "hide_header");
+            double scale = GetDouble(defDict, "scale", 1.0);
 
-            int nCols = header.Count > 0 ? header.Count
-                       : (rows.Count > 0 ? ((IList)rows[0]).Count : tbl.Columns.Count);
-            int nRows = rows.Count;
-            int titleRow = hideTitle ? -1 : 0;
-            int headerRow = hideHeader ? -1 : (hideTitle ? 0 : 1);
-            int top = (hideTitle ? 0 : 1) + (hideHeader ? 0 : 1);
-            int want = top + nRows; if (want < 1) want = 1;
+            var p = MakePlan(hideTitle, secs);
+            string newShape = ComputeShape(p.MaxCols, secs);
+            string oldShape = ReadShape(tr, tbl);
+            // Бережный пересчёт (C): структура та же (та же сигнатура И габариты таблицы) —
+            // обновляем ТОЛЬКО текст ячеек, ручное оформление (ширины/масштаб/объединения)
+            // сохраняется. Иначе — полная перестройка (SetSize + масштаб + объединения).
+            bool sameShape = oldShape != null && oldShape == newShape
+                             && tbl.Rows.Count == p.Want && tbl.Columns.Count == p.MaxCols;
 
             tbl.UpgradeOpen();
-            // Бережный пересчёт (C): если СТРУКТУРА та же (число строк и столбцов не изменилось) —
-            // обновляем ТОЛЬКО текст ячеек. Ручные правки оформления (ширины столбцов, масштаб,
-            // форматирование, объединения) при этом сохраняются. Полную перестройку (SetSize +
-            // масштаб + объединения) делаем лишь когда строк/столбцов стало другое число
-            // (добавили/удалили элемент). Присваивание текста обёрнуто в try — на случай
-            // объединённых подъячеек.
-            bool sameShape = (tbl.Rows.Count == want && tbl.Columns.Count == nCols);
-            if (!sameShape)
-                tbl.SetSize(want, nCols);
-
-            if (titleRow >= 0)
-            {
-                try { tbl.Cells[titleRow, 0].TextString = title ?? ""; } catch { }
-                if (!sameShape)
-                    try { tbl.MergeCells(CellRange.Create(tbl, titleRow, 0, titleRow, nCols - 1)); } catch { }
-            }
-            if (headerRow >= 0)
-                for (int c = 0; c < nCols; c++)
-                    try { tbl.Cells[headerRow, c].TextString = c < header.Count ? SafeStr(header[c]) : ""; } catch { }
-            for (int r = 0; r < nRows; r++)
-            {
-                var row = rows[r] as IList;
-                for (int c = 0; c < nCols; c++)
-                    try { tbl.Cells[top + r, c].TextString = (row != null && c < row.Count) ? SafeStr(row[c]) : ""; } catch { }
-            }
-            if (!sameShape)
-            {
-                // #7: убрать возможные хвостовые пустые строки (усечение SetSize иногда оставляет лишние)
-                if (tbl.Rows.Count > want)
-                    tbl.DeleteRows(want, tbl.Rows.Count - want);
-                ApplyTableScale(tbl, GetDouble(defDict, "scale", 1.0));   // #6: масштаб из определения
-                ApplyHeaderMerges(tbl, headerRow, nCols, ParseMerges(Get(defDict, "header_merges")));  // #5
-            }
+            LayoutSections(tbl, title, hideTitle, scale, secs, !sameShape);
+            if (!sameShape) { try { StoreShape(tr, tbl, newShape); } catch { } }
             tbl.GenerateLayout();
             return true;
+        }
+
+        // ───────────── общий рендер секций (для вставки и пересчёта) ─────────────
+        // Одна секция итоговой таблицы: подпись-разделитель + шапка столбцов + строки данных.
+        public class SectionView
+        {
+            public string Title;            // заголовок секции (пусто = без строки-разделителя)
+            public List<string> Header;     // подписи столбцов секции
+            public bool HideHeader;
+            public List<int[]> Merges;      // объединения шапки секции [s,e] (0-базово)
+            public IList Rows;              // строки данных (каждая — IList)
+            public int Width;               // столбцов в секции = max(Header, длина строк)
+        }
+
+        // Разбор ответа движка report.sections -> список секций для отрисовки.
+        public static List<SectionView> ParseSections(object o)
+        {
+            var res = new List<SectionView>();
+            var arr = o as IList;
+            if (arr == null) return res;
+            foreach (var item in arr)
+            {
+                var d = item as Dictionary<string, object>;
+                if (d == null) continue;
+                var sv = new SectionView
+                {
+                    Title = SafeStr(Get(d, "title")),
+                    Header = ToStrList(Get(d, "header")),
+                    HideHeader = GetBool(d, "hide_header"),
+                    Merges = ParseMerges(Get(d, "header_merges")),
+                    Rows = Get(d, "rows") as IList
+                };
+                if (sv.Rows == null) sv.Rows = new System.Collections.ArrayList();
+                int w = sv.Header.Count;
+                foreach (var r in sv.Rows) { var rl = r as IList; if (rl != null && rl.Count > w) w = rl.Count; }
+                sv.Width = w < 1 ? 1 : w;
+                res.Add(sv);
+            }
+            return res;
+        }
+
+        // План раскладки: сквозная нумерация строк итоговой таблицы по секциям.
+        private class Plan
+        {
+            public int MaxCols, Want, TitleRow;
+            public int[] SecTitleRow, SecHeaderRow, SecFirstData;
+        }
+        private static Plan MakePlan(bool hideTitle, List<SectionView> secs)
+        {
+            var p = new Plan { MaxCols = 1 };
+            foreach (var s in secs) if (s.Width > p.MaxCols) p.MaxCols = s.Width;
+            int n = secs.Count;
+            p.SecTitleRow = new int[n]; p.SecHeaderRow = new int[n]; p.SecFirstData = new int[n];
+            int cur = 0;
+            p.TitleRow = -1;
+            if (!hideTitle) { p.TitleRow = cur; cur++; }
+            for (int i = 0; i < n; i++)
+            {
+                p.SecTitleRow[i] = -1; p.SecHeaderRow[i] = -1;
+                if (!string.IsNullOrEmpty(secs[i].Title)) { p.SecTitleRow[i] = cur; cur++; }
+                if (!secs[i].HideHeader) { p.SecHeaderRow[i] = cur; cur++; }
+                p.SecFirstData[i] = cur;
+                cur += secs[i].Rows.Count;
+            }
+            p.Want = cur < 1 ? 1 : cur;
+            return p;
+        }
+
+        // Заполняет таблицу секциями. rebuild=true → SetSize + масштаб + объединения (полная
+        // перестройка); rebuild=false → ТОЛЬКО текст ячеек (бережный пересчёт). Возвращает
+        // {want, maxCols}. Присваивание текста и объединения обёрнуты в try (объединённые подъячейки).
+        public static int[] LayoutSections(Table tbl, string title, bool hideTitle,
+            double scale, List<SectionView> secs, bool rebuild)
+        {
+            var p = MakePlan(hideTitle, secs);
+            if (rebuild) tbl.SetSize(p.Want, p.MaxCols);
+
+            // 1) текст: заголовок таблицы + по секциям (подпись / шапка / данные)
+            if (p.TitleRow >= 0)
+                try { tbl.Cells[p.TitleRow, 0].TextString = title ?? ""; } catch { }
+            for (int i = 0; i < secs.Count; i++)
+            {
+                var s = secs[i];
+                if (p.SecTitleRow[i] >= 0)
+                    try { tbl.Cells[p.SecTitleRow[i], 0].TextString = s.Title ?? ""; } catch { }
+                if (p.SecHeaderRow[i] >= 0)
+                    for (int c = 0; c < p.MaxCols; c++)
+                        try { tbl.Cells[p.SecHeaderRow[i], c].TextString = c < s.Header.Count ? SafeStr(s.Header[c]) : ""; } catch { }
+                for (int r = 0; r < s.Rows.Count; r++)
+                {
+                    var row = s.Rows[r] as IList;
+                    for (int c = 0; c < p.MaxCols; c++)
+                        try { tbl.Cells[p.SecFirstData[i] + r, c].TextString = (row != null && c < row.Count) ? SafeStr(row[c]) : ""; } catch { }
+                }
+            }
+
+            // 2) структура (только перестройка): усечение хвоста, масштаб, затем объединения
+            if (rebuild)
+            {
+                if (tbl.Rows.Count > p.Want) tbl.DeleteRows(p.Want, tbl.Rows.Count - p.Want);
+                ApplyTableScale(tbl, scale);                       // #6: масштаб таблицы
+                if (p.TitleRow >= 0 && p.MaxCols > 1)
+                    try { tbl.MergeCells(CellRange.Create(tbl, p.TitleRow, 0, p.TitleRow, p.MaxCols - 1)); } catch { }
+                for (int i = 0; i < secs.Count; i++)
+                {
+                    if (p.SecTitleRow[i] >= 0 && p.MaxCols > 1)
+                        try { tbl.MergeCells(CellRange.Create(tbl, p.SecTitleRow[i], 0, p.SecTitleRow[i], p.MaxCols - 1)); } catch { }
+                    if (p.SecHeaderRow[i] >= 0)
+                        ApplyHeaderMerges(tbl, p.SecHeaderRow[i], p.MaxCols, secs[i].Merges);  // #5: объединение шапки секции
+                }
+            }
+            return new[] { p.Want, p.MaxCols };
+        }
+
+        // Сигнатура раскладки: столбцы + по секциям (число строк, есть ли подпись, скрыта ли шапка).
+        public static string ComputeShape(int maxCols, List<SectionView> secs)
+        {
+            var sb = new StringBuilder();
+            sb.Append("c").Append(maxCols).Append("|");
+            for (int i = 0; i < secs.Count; i++)
+            {
+                if (i > 0) sb.Append(",");
+                sb.Append(secs[i].Rows.Count)
+                  .Append(string.IsNullOrEmpty(secs[i].Title) ? "" : "t")
+                  .Append(secs[i].HideHeader ? "h" : "");
+            }
+            return sb.ToString();
         }
 
         // ───────────── определение отчёта в словаре расширения таблицы ─────────────
         public static void StoreDef(Transaction tr, Table tbl, string json)
         {
+            StoreString(tr, tbl, DICTKEY, json);
+        }
+
+        // сигнатура раскладки — для бережного пересчёта (см. SHAPEKEY).
+        public static void StoreShape(Transaction tr, Table tbl, string shape)
+        {
+            StoreString(tr, tbl, SHAPEKEY, shape);
+        }
+        private static string ReadShape(Transaction tr, Table tbl)
+        {
+            return ReadString(tr, tbl, SHAPEKEY);
+        }
+
+        // запись произвольной строки в словарь расширения таблицы (чанками по 250 — лимит XData/Xrecord).
+        private static void StoreString(Transaction tr, Table tbl, string key, string s)
+        {
             if (tbl.ExtensionDictionary.IsNull)
                 tbl.CreateExtensionDictionary();
             var dict = (DBDictionary)tr.GetObject(tbl.ExtensionDictionary, OpenMode.ForWrite);
             var rb = new ResultBuffer();
-            foreach (string chunk in Chunks(json, 250))     // строки XData/Xrecord ограничены 255 байт
+            foreach (string chunk in Chunks(s, 250))
                 rb.Add(new TypedValue((int)DxfCode.Text, chunk));
             var xrec = new Xrecord { Data = rb };
-            if (dict.Contains(DICTKEY))
-                dict.Remove(DICTKEY);
-            dict.SetAt(DICTKEY, xrec);
+            if (dict.Contains(key))
+                dict.Remove(key);
+            dict.SetAt(key, xrec);
             tr.AddNewlyCreatedDBObject(xrec, true);
         }
-
-        private static string ReadDef(Transaction tr, Table tbl)
+        private static string ReadString(Transaction tr, Table tbl, string key)
         {
             if (tbl.ExtensionDictionary.IsNull) return null;
             var dict = tr.GetObject(tbl.ExtensionDictionary, OpenMode.ForRead) as DBDictionary;
-            if (dict == null || !dict.Contains(DICTKEY)) return null;
-            var xrec = tr.GetObject(dict.GetAt(DICTKEY), OpenMode.ForRead) as Xrecord;
+            if (dict == null || !dict.Contains(key)) return null;
+            var xrec = tr.GetObject(dict.GetAt(key), OpenMode.ForRead) as Xrecord;
             if (xrec == null || xrec.Data == null) return null;
             var sb = new StringBuilder();
             foreach (TypedValue tv in xrec.Data)
                 if (tv.TypeCode == (int)DxfCode.Text) sb.Append(SafeStr(tv.Value));
             return sb.ToString();
+        }
+
+        private static string ReadDef(Transaction tr, Table tbl)
+        {
+            return ReadString(tr, tbl, DICTKEY);
         }
 
         private static IEnumerable<string> Chunks(string s, int n)
