@@ -538,8 +538,8 @@ namespace AtSpecPlugin
             {
                 if (tbl.Rows.Count > 0 && tbl.Columns.Count > 0)
                 {
-                    double h = tbl.Cells[tbl.Rows.Count - 1, 0].TextHeight;
-                    if (h > 0) th = h;
+                    double? h = tbl.Cells[tbl.Rows.Count - 1, 0].TextHeight;
+                    if (h.HasValue && h.Value > 0) th = h.Value;
                 }
             }
             catch { }
