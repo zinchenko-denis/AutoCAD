@@ -18,6 +18,7 @@ using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Windows.Forms;
+using Microsoft.Win32;
 
 namespace AtSpecPlugin
 {
@@ -68,6 +69,17 @@ namespace AtSpecPlugin
             nudScale = new NumericUpDown { Left = x + 64, Top = y, Width = 90, Minimum = 1, Maximum = 100000,
                                            Value = 100, DecimalPlaces = 0, Increment = 100 };
             Controls.Add(nudScale);
+            try   // #5: новые таблицы открываются с последним применённым масштабом (HKCU\Software\ATableSpec)
+            {
+                using (var rk = Registry.CurrentUser.OpenSubKey(@"Software\ATableSpec"))
+                {
+                    object rv = rk == null ? null : rk.GetValue("Scale");
+                    double sv;
+                    if (rv != null && double.TryParse(Convert.ToString(rv), out sv) && sv >= 1)
+                        nudScale.Value = (decimal)Math.Min(sv, 100000);
+                }
+            }
+            catch { }
             Controls.Add(new Label { Left = x + 170, Top = y + 4, Width = 540,
                 Text = "Несколько секций = несколько спецификаций в одной таблице (стойки, ригеля, …).",
                 Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right });
@@ -133,14 +145,17 @@ namespace AtSpecPlugin
                     s.Columns.Add(new[] { "Колич.", "=Count" });
                     s.GroupIdx = 2; s.SortMode = 0;   // группа по длине
                     break;
-                case 3: // Заполнения (ЧЕРНОВИК — Ш/В из РАЗМЕР_ЗАП; уточняется по DXF)
+                case 3: // Заполнения (Ш/В из РАЗМЕР_ЗАП; Тип — динам. параметр Visibility1)
                     s.Columns.Add(new[] { "№ п/п", "=row" });
+                    s.Columns.Add(new[] { "Тип заполнения", "=Object.«Visibility1»" });
                     s.Columns.Add(new[] { "Марка", "=Object.«МАРКИРОВКА»" });
-                    s.Columns.Add(new[] { "Ширина", "=Object.«Ширина»" });
-                    s.Columns.Add(new[] { "Высота", "=Object.«Высота»" });
+                    s.Columns.Add(new[] { "Ширина, мм", "=Object.«Ширина»" });
+                    s.Columns.Add(new[] { "Высота, мм", "=Object.«Высота»" });
                     s.Columns.Add(new[] { "Колич.", "=Count" });
-                    s.Columns.Add(new[] { "Ед. изм.", "=«шт.»" });
-                    s.GroupIdx = 1; s.SortMode = 0;   // группа по марке
+                    s.Columns.Add(new[] { "Площадь, м²", "=Object.«Ширина»*Object.«Высота»*Count/1000000" });
+                    s.GroupIdx = 2; s.SortMode = 0;     // группа по марке (столбец 2: №=0, Тип=1, Марка=2)
+                    s.TotalRow = true;                  // строка ИТОГ (сумма кол-ва и площади)
+                    if (useFirstLayer) s.SeedLayer = "RF-заполнения";   // авто-источник для шаблона
                     break;
                 default: // 0 — Ручное: пустая секция
                     break;
@@ -217,6 +232,12 @@ namespace AtSpecPlugin
                 { "scale", (double)nudScale.Value },
                 { "sections", sections }
             };
+            try   // #5: запомнить масштаб — следующая таблица создастся с ним
+            {
+                using (var rk = Registry.CurrentUser.CreateSubKey(@"Software\ATableSpec"))
+                    if (rk != null) rk.SetValue("Scale", ((int)nudScale.Value).ToString());
+            }
+            catch { }
         }
     }
 
@@ -226,7 +247,7 @@ namespace AtSpecPlugin
         private readonly List<string> _layers, _fields;
         private Label lblNum, lblSummary;
         private TextBox txtSecTitle;
-        private CheckBox chkHideHeader;
+        private CheckBox chkHideHeader, chkTotal;
         private DataGridView grid;
         private readonly List<int[]> _merges = new List<int[]>();   // [s,e] 0-базово
 
@@ -247,7 +268,10 @@ namespace AtSpecPlugin
             if (seed != null)
             {
                 _groupIdx = seed.GroupIdx; _sortMode = seed.SortMode;
-                if (seed.UseFirstLayer && _layers.Count > 0) _layer = _layers[0];
+                if (!string.IsNullOrEmpty(seed.SeedLayer) && _layers.Contains(seed.SeedLayer))
+                    _layer = seed.SeedLayer;                       // авто-источник из пресета (RF-заполнения)
+                else if (seed.UseFirstLayer && _layers.Count > 0)
+                    _layer = _layers[0];
             }
             RefreshSummary();
         }
@@ -275,11 +299,14 @@ namespace AtSpecPlugin
             Controls.Add(btnUp); Controls.Add(btnDn); Controls.Add(btnDel);
             y += 30;
 
-            Controls.Add(new Label { Left = 8, Top = y + 4, Width = 118, Text = "Заголовок секции:" });
-            txtSecTitle = new TextBox { Left = 128, Top = y, Width = 280 };
+            Controls.Add(new Label { Left = 8, Top = y + 4, Width = 104, Text = "Заголовок секции:" });
+            txtSecTitle = new TextBox { Left = 114, Top = y, Width = 170 };
             Controls.Add(txtSecTitle);
-            chkHideHeader = new CheckBox { Left = 420, Top = y + 2, Width = 240, Text = "Скрыть шапку столбцов" };
+            chkHideHeader = new CheckBox { Left = 290, Top = y + 2, Width = 170, Text = "Скрыть шапку столбцов" };
             Controls.Add(chkHideHeader);
+            chkTotal = new CheckBox { Left = 464, Top = y + 2, Width = 184, Text = "Строка ИТОГ (сумма)" };
+            if (seed != null) chkTotal.Checked = seed.TotalRow;
+            Controls.Add(chkTotal);
             y += 30;
 
             Controls.Add(new Label { Left = 8, Top = y, Width = 360, Text = "Столбцы (Заголовок | Выражение):" });
@@ -302,14 +329,33 @@ namespace AtSpecPlugin
             grid.Columns.Add(colHdr); grid.Columns.Add(colExpr);
             grid.EditingControlShowing += Grid_EditingControlShowing;
             grid.DataError += (s, e) => { e.ThrowException = false; e.Cancel = false; };
+            // #2: свободно введённое выражение сразу видно в ячейке — кладём текст в Items
+            // ДО фиксации значения (combo не отображает значение, которого нет в списке).
+            grid.CellValidating += Grid_ExprCellValidating;
+            grid.CellEndEdit += (s, e) =>
+            {
+                var col = grid.Columns["expr"];
+                if (col != null && e.ColumnIndex == col.Index && e.RowIndex >= 0)
+                    grid.InvalidateCell(e.ColumnIndex, e.RowIndex);
+            };
+            // #1: удалить строку-столбец клавишей Delete (вне режима правки ячейки)
+            grid.KeyDown += (s, e) =>
+            {
+                if (e.KeyCode == Keys.Delete && !grid.IsCurrentCellInEditMode)
+                { DeleteSelectedRows(); e.Handled = true; }
+            };
             if (seed != null)
                 foreach (var c in seed.Columns)
                     if (c != null && c.Length >= 2) grid.Rows.Add(c[0], c[1]);
             var menu = new ContextMenuStrip();
+            var miDelRow = new ToolStripMenuItem("Удалить строку");
             var miMerge = new ToolStripMenuItem("Объединить шапку выделенных столбцов");
             var miUnmerge = new ToolStripMenuItem("Разъединить шапку");
+            miDelRow.Click += (s, e) => DeleteSelectedRows();
             miMerge.Click += (s, e) => MergeSelectedHeader();
             miUnmerge.Click += (s, e) => UnmergeSelectedHeader();
+            menu.Items.Add(miDelRow);
+            menu.Items.Add(new ToolStripSeparator());
             menu.Items.Add(miMerge); menu.Items.Add(miUnmerge);
             grid.ContextMenuStrip = menu;
             Controls.Add(grid);
@@ -391,6 +437,37 @@ namespace AtSpecPlugin
             string txt = cb.Text;
             var col = grid.Columns["expr"] as DataGridViewComboBoxColumn;
             if (col != null && txt.Length > 0 && !col.Items.Contains(txt)) col.Items.Add(txt);
+        }
+
+        // #2: при фиксации значения кладём введённый текст в Items, чтобы combo-ячейка
+        // отобразила его сразу (без повторного открытия списка).
+        private void Grid_ExprCellValidating(object sender, DataGridViewCellValidatingEventArgs e)
+        {
+            var col = grid.Columns["expr"] as DataGridViewComboBoxColumn;
+            if (col == null || e.ColumnIndex != col.Index || e.RowIndex < 0) return;
+            string txt = Convert.ToString(e.FormattedValue) ?? "";
+            if (txt.Length > 0 && !col.Items.Contains(txt)) col.Items.Add(txt);
+        }
+
+        // #1: удалить выделенные строки-столбцы (кроме строки-«звёздочки»); затем снять
+        // объединения/группу, ушедшие за пределы оставшихся столбцов, и обновить сводку.
+        private void DeleteSelectedRows()
+        {
+            var idx = new SortedSet<int>();
+            foreach (DataGridViewRow r in grid.SelectedRows) if (!r.IsNewRow) idx.Add(r.Index);
+            foreach (DataGridViewCell c in grid.SelectedCells)
+                if (c.OwningRow != null && !c.OwningRow.IsNewRow) idx.Add(c.RowIndex);
+            if (idx.Count == 0 && grid.CurrentRow != null && !grid.CurrentRow.IsNewRow) idx.Add(grid.CurrentRow.Index);
+            if (idx.Count == 0) return;
+            var list = new List<int>(idx); list.Sort(); list.Reverse();
+            foreach (int i in list)
+                if (i >= 0 && i < grid.Rows.Count && !grid.Rows[i].IsNewRow) grid.Rows.RemoveAt(i);
+
+            int rc = 0;
+            foreach (DataGridViewRow r in grid.Rows) if (!r.IsNewRow) rc++;
+            _merges.RemoveAll(sp => sp[1] >= rc);     // объединение за пределами — снять
+            if (_groupIdx >= rc) _groupIdx = -1;      // группа за пределами — сбросить
+            RefreshSummary();
         }
 
         // ── объединение ШАПКИ столбцов этой секции (только строка-шапка) ──
@@ -479,7 +556,8 @@ namespace AtSpecPlugin
                 { "columns", columns },
                 { "filter", filters },
                 { "group_by", groupBy },
-                { "sort_by", sortBy }
+                { "sort_by", sortBy },
+                { "total_row", chkTotal.Checked }
             };
         }
     }
@@ -597,6 +675,8 @@ namespace AtSpecPlugin
         public int GroupIdx = -1;                                // 0-базовый столбец группировки (-1 = нет)
         public int SortMode = 0;                                 // 0 — по возр., 1 — по убыв., 2 — без сорт.
         public bool UseFirstLayer = false;                       // подставить первый слой источником
+        public bool TotalRow = false;                            // строка ИТОГ (сумма столбцов с Count)
+        public string SeedLayer = null;                          // предпочтительный слой-источник (если есть)
     }
 
     // ───────────────────────── окно выбора шаблона (Этап 3) ─────────────────────────
