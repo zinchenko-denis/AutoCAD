@@ -1,13 +1,20 @@
-// Окно-построитель отчёта (Фаза 2): несколько секций-отчётов в ОДНОЙ таблице.
-// Каждая секция = свой набор столбцов (Заголовок|Выражение) + свой Источник (слой) +
-// свой Фильтр + своя Группировка/Сортировка. Источник/Фильтр/Группировка задаются в
-// отдельных всплывающих окнах (кнопки на карточке секции). Секций — без ограничения
-// (прокручиваемая стопка). Это нужно, например, для спецификации на стойки И ригеля
-// в одной таблице.
+// Окно-построитель отчёта (Фаза 2 + заход 21.06): несколько секций-отчётов в ОДНОЙ
+// таблице. Каждая секция = свой набор столбцов (Заголовок|Выражение) + Источник (слой)
+// + Фильтр (несколько условий, И) + Группировка/Сортировка.
+//
+// Изменения захода 21.06 (по фидбэку конструктора):
+//   (1) выбор шаблона — НЕ отдельным окном, а выпадающим списком «Шаблон» вверху формы;
+//       смена шаблона пересевает секции (с подтверждением). Окно TemplatePickerForm убрано.
+//   (2) «Выражение» — обычный TextBox-столбец (свободный ввод коммитится всегда; combo
+//       раньше терял введённый текст, которого нет в списке). Удобство: автодополнение
+//       в ячейке + ПКМ «Вставить выражение».
+//   (3) Фильтр — видимая мини-таблица прямо на карточке (вместо попапа): Поле|Условие|
+//       Значение, несколько строк = И. Поле — только поля блоков выбранного слоя;
+//       Значение — автодополнение реальными значениями поля у блоков слоя (+ свободный ввод).
 //
 // Формирует определение отчёта (ReportDef) для движка (action=report):
 //   { title, hide_title, scale, sections:[ {section_title, hide_header, header,
-//     header_merges, columns, filter, group_by, sort_by}, ... ] }
+//     header_merges, columns, filter, group_by, sort_by, total_row}, ... ] }
 //
 // Подсказка по выражениям (как в построителе СПДС):
 //   =Object.«ИМЯ»  -> атрибут; =Object.Name -> имя блока; =Object.«Длина»-150 -> арифм.;
@@ -25,24 +32,34 @@ namespace AtSpecPlugin
     public class ReportBuilderForm : Form
     {
         private readonly List<string> _layers, _fields;
+        // карта значений: слой -> поле -> отсортированные уникальные значения; ключ "" = все блоки.
+        private readonly Dictionary<string, Dictionary<string, List<string>>> _valuesByLayer;
         private readonly List<SectionCard> _cards = new List<SectionCard>();
         private TextBox txtTitle;
         private CheckBox chkHideTitle;
         private NumericUpDown nudScale;
+        private ComboBox cbTemplate;
         private FlowLayoutPanel flow;
 
-        private readonly int _template;
+        private int _template;
+        private bool _suppressTpl;
         public Dictionary<string, object> ReportDef { get; private set; }
 
         // template: 0 — Ручное (пусто), 1 — Спецификация, 2 — Раскрой, 3 — Заполнения.
-        public ReportBuilderForm(List<string> layers, List<string> fields, int template = 1)
+        public ReportBuilderForm(List<string> layers, List<string> fields,
+                                 Dictionary<string, Dictionary<string, List<string>>> valuesByLayer = null,
+                                 int template = 1)
         {
             _layers = layers ?? new List<string>();
             _fields = fields ?? new List<string>();
-            _template = template;
+            _valuesByLayer = valuesByLayer;
+            _template = (template >= 0 && template <= 3) ? template : 1;
             BuildUi();
-            txtTitle.Text = DefaultTitleFor(template);
-            AddSection(PresetFor(template, true));   // стартовая секция, засеяна под шаблон
+            _suppressTpl = true;
+            cbTemplate.SelectedIndex = _template;     // index == номер шаблона
+            _suppressTpl = false;
+            txtTitle.Text = DefaultTitleFor(_template);
+            AddSection(PresetFor(_template, true));    // стартовая секция, засеяна под шаблон
         }
 
         private void BuildUi()
@@ -50,23 +67,23 @@ namespace AtSpecPlugin
             Text = "ATableSpec — построитель отчёта";
             FormBorderStyle = FormBorderStyle.Sizable;
             StartPosition = FormStartPosition.CenterScreen;
-            ClientSize = new Size(740, 660);
-            MinimumSize = new Size(700, 480);
+            ClientSize = new Size(760, 720);
+            MinimumSize = new Size(720, 520);
             MaximizeBox = true; MinimizeBox = false;
 
             int x = 12, y = 12, lblW = 90;
 
             Controls.Add(new Label { Left = x, Top = y + 4, Width = lblW, Text = "Заголовок:" });
-            txtTitle = new TextBox { Left = x + lblW, Top = y, Width = 380, Text = "СПЕЦИФИКАЦИЯ ЭЛЕМЕНТОВ",
+            txtTitle = new TextBox { Left = x + lblW, Top = y, Width = 392, Text = "СПЕЦИФИКАЦИЯ ЭЛЕМЕНТОВ",
                                      Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right };
             Controls.Add(txtTitle);
-            chkHideTitle = new CheckBox { Left = x + lblW + 392, Top = y + 2, Width = 230,
+            chkHideTitle = new CheckBox { Left = x + lblW + 404, Top = y + 2, Width = 230,
                                           Text = "Скрыть заголовок таблицы", Anchor = AnchorStyles.Top | AnchorStyles.Right };
             Controls.Add(chkHideTitle);
             y += 32;
 
             Controls.Add(new Label { Left = x, Top = y + 4, Width = 62, Text = "Масштаб:" });
-            nudScale = new NumericUpDown { Left = x + 64, Top = y, Width = 90, Minimum = 1, Maximum = 100000,
+            nudScale = new NumericUpDown { Left = x + 64, Top = y, Width = 84, Minimum = 1, Maximum = 100000,
                                            Value = 100, DecimalPlaces = 0, Increment = 100 };
             Controls.Add(nudScale);
             try   // #5: новые таблицы открываются с последним применённым масштабом (HKCU\Software\ATableSpec)
@@ -80,8 +97,15 @@ namespace AtSpecPlugin
                 }
             }
             catch { }
-            Controls.Add(new Label { Left = x + 170, Top = y + 4, Width = 540,
-                Text = "Несколько секций = несколько спецификаций в одной таблице (стойки, ригеля, …).",
+
+            // (1) выбор шаблона — выпадающим списком прямо в форме
+            Controls.Add(new Label { Left = x + 162, Top = y + 4, Width = 60, Text = "Шаблон:" });
+            cbTemplate = new ComboBox { Left = x + 224, Top = y, Width = 168, DropDownStyle = ComboBoxStyle.DropDownList };
+            cbTemplate.Items.AddRange(new object[] { "Ручное (пусто)", "Спецификация", "Раскрой", "Заполнения" });
+            cbTemplate.SelectedIndexChanged += (s, e) => ApplyTemplate(cbTemplate.SelectedIndex);
+            Controls.Add(cbTemplate);
+            Controls.Add(new Label { Left = x + 400, Top = y + 4, Width = 340,
+                Text = "Шаблон засевает столбцы; всё редактируемо. «+ Добавить отчёт» — ещё секция.",
                 Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right });
             y += 34;
 
@@ -110,9 +134,32 @@ namespace AtSpecPlugin
             AcceptButton = ok; CancelButton = cancel;
         }
 
+        // смена шаблона из списка: пересеять секции заготовкой (с подтверждением, чтобы
+        // случайно не затереть наработанное).
+        private void ApplyTemplate(int tpl)
+        {
+            if (_suppressTpl) return;
+            if (tpl < 0 || tpl > 3) return;
+            if (_cards.Count > 0)
+            {
+                var r = MessageBox.Show("Заменить все секции заготовкой шаблона?", "ATableSpec",
+                    MessageBoxButtons.YesNo, MessageBoxIcon.Question);
+                if (r != DialogResult.Yes)
+                {
+                    _suppressTpl = true; cbTemplate.SelectedIndex = _template; _suppressTpl = false;
+                    return;
+                }
+            }
+            foreach (var c in new List<SectionCard>(_cards)) { flow.Controls.Remove(c); c.Dispose(); }
+            _cards.Clear();
+            _template = tpl;
+            txtTitle.Text = DefaultTitleFor(tpl);
+            AddSection(PresetFor(tpl, true));
+        }
+
         private void AddSection(SectionSeed seed)
         {
-            var card = new SectionCard(_layers, _fields, seed);
+            var card = new SectionCard(_layers, _fields, _valuesByLayer, seed);
             card.MoveUpRequested += MoveCardUp;
             card.MoveDownRequested += MoveCardDown;
             card.RemoveRequested += RemoveCard;
@@ -245,25 +292,34 @@ namespace AtSpecPlugin
     public class SectionCard : Panel
     {
         private readonly List<string> _layers, _fields;
+        private readonly Dictionary<string, Dictionary<string, List<string>>> _valuesByLayer;
         private Label lblNum, lblSummary;
         private TextBox txtSecTitle;
         private CheckBox chkHideHeader, chkTotal;
-        private DataGridView grid;
+        private DataGridView grid;     // столбцы (Заголовок | Выражение)
+        private DataGridView fgrid;    // фильтр (Поле | Условие | Значение)
+        private DataGridViewComboBoxColumn _colFField;
         private readonly List<int[]> _merges = new List<int[]>();   // [s,e] 0-базово
+        private readonly List<string> _exprSuggest = new List<string>();
 
-        // состояние, задаваемое через всплывающие окна
         private string _layer = "";
-        private string _ffield = "", _fop = "=", _fval = "";
         private int _groupIdx = -1;     // 0-базовый индекс столбца группировки (-1 = нет)
         private int _sortMode = 0;      // 0 — по возрастанию, 1 — по убыванию, 2 — без сортировки
 
         public event Action<SectionCard> MoveUpRequested, MoveDownRequested, RemoveRequested;
 
-        public SectionCard(List<string> layers, List<string> fields, SectionSeed seed)
+        public SectionCard(List<string> layers, List<string> fields,
+                           Dictionary<string, Dictionary<string, List<string>>> valuesByLayer, SectionSeed seed)
         {
-            _layers = layers; _fields = fields;
+            _layers = layers ?? new List<string>();
+            _fields = fields ?? new List<string>();
+            _valuesByLayer = valuesByLayer;
             BorderStyle = BorderStyle.FixedSingle;
-            Width = 690; Height = 272; Margin = new Padding(0, 0, 0, 8);
+            Width = 712; Height = 358; Margin = new Padding(0, 0, 0, 8);
+
+            _exprSuggest.AddRange(new[] { "=row", "=Count", "=Sum", "=«шт.»", "=Object.Name", "=Object.«ИМЯ»", "=Object.«Длина»" });
+            foreach (var f in _fields) { string e = "=Object.«" + f + "»"; if (!_exprSuggest.Contains(e)) _exprSuggest.Add(e); }
+
             BuildUi(seed);
             if (seed != null)
             {
@@ -273,6 +329,7 @@ namespace AtSpecPlugin
                 else if (seed.UseFirstLayer && _layers.Count > 0)
                     _layer = _layers[0];
             }
+            RefreshFilterFields();
             RefreshSummary();
         }
 
@@ -282,17 +339,15 @@ namespace AtSpecPlugin
             lblNum = new Label { Left = 8, Top = y + 4, Width = 70, Text = "Отчёт", Font = new Font(Font, FontStyle.Bold) };
             Controls.Add(lblNum);
 
-            var btnSrc = new Button { Left = 84, Top = y, Width = 92, Text = "Источник…" };
-            var btnFlt = new Button { Left = 178, Top = y, Width = 82, Text = "Фильтр…" };
-            var btnGrp = new Button { Left = 262, Top = y, Width = 112, Text = "Группировка…" };
+            var btnSrc = new Button { Left = 84, Top = y, Width = 100, Text = "Источник…" };
+            var btnGrp = new Button { Left = 188, Top = y, Width = 116, Text = "Группировка…" };
             btnSrc.Click += (s, e) => OpenSource();
-            btnFlt.Click += (s, e) => OpenFilter();
             btnGrp.Click += (s, e) => OpenGroup();
-            Controls.Add(btnSrc); Controls.Add(btnFlt); Controls.Add(btnGrp);
+            Controls.Add(btnSrc); Controls.Add(btnGrp);
 
-            var btnUp = new Button { Left = 588, Top = y, Width = 28, Text = "↑" };
-            var btnDn = new Button { Left = 618, Top = y, Width = 28, Text = "↓" };
-            var btnDel = new Button { Left = 648, Top = y, Width = 28, Text = "✕" };
+            var btnUp = new Button { Left = 610, Top = y, Width = 28, Text = "↑" };
+            var btnDn = new Button { Left = 640, Top = y, Width = 28, Text = "↓" };
+            var btnDel = new Button { Left = 670, Top = y, Width = 28, Text = "✕" };
             btnUp.Click += (s, e) => { var h = MoveUpRequested; if (h != null) h(this); };
             btnDn.Click += (s, e) => { var h = MoveDownRequested; if (h != null) h(this); };
             btnDel.Click += (s, e) => { var h = RemoveRequested; if (h != null) h(this); };
@@ -300,45 +355,33 @@ namespace AtSpecPlugin
             y += 30;
 
             Controls.Add(new Label { Left = 8, Top = y + 4, Width = 104, Text = "Заголовок секции:" });
-            txtSecTitle = new TextBox { Left = 114, Top = y, Width = 170 };
+            txtSecTitle = new TextBox { Left = 114, Top = y, Width = 180 };
             Controls.Add(txtSecTitle);
-            chkHideHeader = new CheckBox { Left = 290, Top = y + 2, Width = 170, Text = "Скрыть шапку столбцов" };
+            chkHideHeader = new CheckBox { Left = 300, Top = y + 2, Width = 174, Text = "Скрыть шапку столбцов" };
             Controls.Add(chkHideHeader);
-            chkTotal = new CheckBox { Left = 464, Top = y + 2, Width = 184, Text = "Строка ИТОГ (сумма)" };
+            chkTotal = new CheckBox { Left = 480, Top = y + 2, Width = 190, Text = "Строка ИТОГ (сумма)" };
             if (seed != null) chkTotal.Checked = seed.TotalRow;
             Controls.Add(chkTotal);
-            y += 30;
+            y += 28;
 
             Controls.Add(new Label { Left = 8, Top = y, Width = 360, Text = "Столбцы (Заголовок | Выражение):" });
-            y += 20;
+            y += 18;
             grid = new DataGridView
             {
-                Left = 8, Top = y, Width = 668, Height = 140,
+                Left = 8, Top = y, Width = 690, Height = 116,
                 AllowUserToAddRows = true, AllowUserToDeleteRows = true, RowHeadersVisible = true,
                 ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize
             };
-            var colHdr = new DataGridViewTextBoxColumn { Name = "hdr", HeaderText = "Заголовок", Width = 220 };
-            var colExpr = new DataGridViewComboBoxColumn
+            var colHdr = new DataGridViewTextBoxColumn { Name = "hdr", HeaderText = "Заголовок", Width = 230 };
+            // (2) «Выражение» — обычный TextBox-столбец (свободный текст коммитится всегда).
+            var colExpr = new DataGridViewTextBoxColumn
             {
                 Name = "expr", HeaderText = "Выражение",
-                AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill, FlatStyle = FlatStyle.Flat, DropDownWidth = 260
+                AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill
             };
-            var comboSeed = new List<string> { "=row", "=Count", "=«шт.»", "=Object.Name", "=Object.«ИМЯ»", "=Object.«Длина»" };
-            foreach (var f in _fields) comboSeed.Add("=Object.«" + f + "»");
-            foreach (var sx in comboSeed) if (!colExpr.Items.Contains(sx)) colExpr.Items.Add(sx);
             grid.Columns.Add(colHdr); grid.Columns.Add(colExpr);
             grid.EditingControlShowing += Grid_EditingControlShowing;
             grid.DataError += (s, e) => { e.ThrowException = false; e.Cancel = false; };
-            // #2: свободно введённое выражение сразу видно в ячейке — кладём текст в Items
-            // ДО фиксации значения (combo не отображает значение, которого нет в списке).
-            grid.CellValidating += Grid_ExprCellValidating;
-            grid.CellEndEdit += (s, e) =>
-            {
-                var col = grid.Columns["expr"];
-                if (col != null && e.ColumnIndex == col.Index && e.RowIndex >= 0)
-                    grid.InvalidateCell(e.ColumnIndex, e.RowIndex);
-            };
-            // #1: удалить строку-столбец клавишей Delete (вне режима правки ячейки)
             grid.KeyDown += (s, e) =>
             {
                 if (e.KeyCode == Keys.Delete && !grid.IsCurrentCellInEditMode)
@@ -347,61 +390,208 @@ namespace AtSpecPlugin
             if (seed != null)
                 foreach (var c in seed.Columns)
                     if (c != null && c.Length >= 2) grid.Rows.Add(c[0], c[1]);
+
             var menu = new ContextMenuStrip();
+            var miInsert = new ToolStripMenuItem("Вставить выражение");
+            foreach (var sx in _exprSuggest)
+            {
+                string val = sx;
+                var it = new ToolStripMenuItem(sx);
+                it.Click += (s, e) => InsertExpr(val);
+                miInsert.DropDownItems.Add(it);
+            }
             var miDelRow = new ToolStripMenuItem("Удалить строку");
             var miMerge = new ToolStripMenuItem("Объединить шапку выделенных столбцов");
             var miUnmerge = new ToolStripMenuItem("Разъединить шапку");
             miDelRow.Click += (s, e) => DeleteSelectedRows();
             miMerge.Click += (s, e) => MergeSelectedHeader();
             miUnmerge.Click += (s, e) => UnmergeSelectedHeader();
+            menu.Items.Add(miInsert);
+            menu.Items.Add(new ToolStripSeparator());
             menu.Items.Add(miDelRow);
             menu.Items.Add(new ToolStripSeparator());
             menu.Items.Add(miMerge); menu.Items.Add(miUnmerge);
             grid.ContextMenuStrip = menu;
             Controls.Add(grid);
-            y += 146;
+            y += 122;
 
-            lblSummary = new Label { Left = 8, Top = y, Width = 668,
+            // (3) фильтр — видимая мини-таблица (несколько условий = И; значения из источника)
+            Controls.Add(new Label { Left = 8, Top = y, Width = 680,
+                Text = "Фильтр (несколько строк = И; поля и значения берутся из выбранного источника):" });
+            y += 18;
+            fgrid = new DataGridView
+            {
+                Left = 8, Top = y, Width = 690, Height = 96,
+                AllowUserToAddRows = true, AllowUserToDeleteRows = true, RowHeadersVisible = true,
+                ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize
+            };
+            _colFField = new DataGridViewComboBoxColumn
+            {
+                Name = "ffield", HeaderText = "Поле", Width = 200,
+                FlatStyle = FlatStyle.Flat, DropDownWidth = 200, DisplayStyle = DataGridViewComboBoxDisplayStyle.Nothing
+            };
+            var colFOp = new DataGridViewComboBoxColumn
+            {
+                Name = "fop", HeaderText = "Условие", Width = 120,
+                FlatStyle = FlatStyle.Flat, DisplayStyle = DataGridViewComboBoxDisplayStyle.Nothing
+            };
+            colFOp.Items.AddRange(new object[] { "=", "≠", "содержит", "не содержит", ">", "<", "≥", "≤" });
+            var colFVal = new DataGridViewTextBoxColumn
+            {
+                Name = "fval", HeaderText = "Значение", AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill
+            };
+            fgrid.Columns.Add(_colFField); fgrid.Columns.Add(colFOp); fgrid.Columns.Add(colFVal);
+            fgrid.DataError += (s, e) => { e.ThrowException = false; e.Cancel = false; };
+            fgrid.EditingControlShowing += Fgrid_EditingControlShowing;
+            fgrid.CellValueChanged += (s, e) =>
+            {
+                if (e.RowIndex >= 0 && e.ColumnIndex == colFOp.Index) { }
+                RefreshSummary();
+            };
+            fgrid.KeyDown += (s, e) =>
+            {
+                if (e.KeyCode == Keys.Delete && !fgrid.IsCurrentCellInEditMode)
+                {
+                    var rows = new List<int>();
+                    foreach (DataGridViewRow r in fgrid.SelectedRows) if (!r.IsNewRow) rows.Add(r.Index);
+                    foreach (DataGridViewCell c in fgrid.SelectedCells)
+                        if (c.OwningRow != null && !c.OwningRow.IsNewRow && !rows.Contains(c.RowIndex)) rows.Add(c.RowIndex);
+                    if (rows.Count == 0 && fgrid.CurrentRow != null && !fgrid.CurrentRow.IsNewRow) rows.Add(fgrid.CurrentRow.Index);
+                    rows.Sort(); rows.Reverse();
+                    foreach (int i in rows) if (i >= 0 && i < fgrid.Rows.Count && !fgrid.Rows[i].IsNewRow) fgrid.Rows.RemoveAt(i);
+                    RefreshSummary(); e.Handled = true;
+                }
+            };
+            Controls.Add(fgrid);
+            y += 102;
+
+            lblSummary = new Label { Left = 8, Top = y, Width = 690,
                 Text = "Источник: —    Фильтр: —    Группа: —" };
             Controls.Add(lblSummary);
         }
 
         public void SetIndex(int n) { lblNum.Text = "Отчёт " + n; }
 
-        // ── всплывающие окна ──
-        private void OpenSource()
+        // ── вставка готового выражения (ПКМ-меню) в текущую строку столбцов ──
+        private void InsertExpr(string expr)
         {
-            using (var dlg = new SourceDialog(_layers, _layer))
-                if (dlg.ShowDialog(this) == DialogResult.OK) { _layer = dlg.Layer; RefreshSummary(); }
-        }
-        private void OpenFilter()
-        {
-            using (var dlg = new FilterDialog(_fields, _ffield, _fop, _fval))
-                if (dlg.ShowDialog(this) == DialogResult.OK)
-                { _ffield = dlg.FField; _fop = dlg.FOp; _fval = dlg.FVal; RefreshSummary(); }
-        }
-        private void OpenGroup()
-        {
-            using (var dlg = new GroupDialog(CurrentHeaders(), _groupIdx, _sortMode))
-                if (dlg.ShowDialog(this) == DialogResult.OK)
-                { _groupIdx = dlg.GroupIdx; _sortMode = dlg.SortMode; RefreshSummary(); }
+            var c = grid.CurrentCell;
+            int row = (c != null) ? c.RowIndex : -1;
+            if (row < 0 || row >= grid.Rows.Count || grid.Rows[row].IsNewRow)
+            {
+                int n = grid.Rows.Add();
+                row = n;
+            }
+            grid.Rows[row].Cells["expr"].Value = expr;
         }
 
-        private List<string> CurrentHeaders()
+        // ── автодополнение в ячейке «Выражение» ──
+        private void Grid_EditingControlShowing(object sender, DataGridViewEditingControlShowingEventArgs e)
         {
-            var l = new List<string>();
-            foreach (DataGridViewRow r in grid.Rows)
+            var tb = e.Control as TextBox;
+            if (tb == null) return;
+            tb.AutoCompleteMode = AutoCompleteMode.None;
+            tb.AutoCompleteSource = AutoCompleteSource.None;
+            if (grid.CurrentCell != null && grid.CurrentCell.OwningColumn != null
+                && grid.CurrentCell.OwningColumn.Name == "expr")
             {
-                if (r.IsNewRow) continue;
-                l.Add(Convert.ToString(r.Cells[0].Value) ?? "");
+                var ac = new AutoCompleteStringCollection();
+                ac.AddRange(_exprSuggest.ToArray());
+                tb.AutoCompleteCustomSource = ac;
+                tb.AutoCompleteSource = AutoCompleteSource.CustomSource;
+                tb.AutoCompleteMode = AutoCompleteMode.SuggestAppend;
             }
-            return l;
         }
+
+        // ── автодополнение в ячейке «Значение» фильтра: значения поля строки у блоков слоя ──
+        private void Fgrid_EditingControlShowing(object sender, DataGridViewEditingControlShowingEventArgs e)
+        {
+            var tb = e.Control as TextBox;
+            if (tb == null) return;
+            tb.AutoCompleteMode = AutoCompleteMode.None;
+            tb.AutoCompleteSource = AutoCompleteSource.None;
+            if (fgrid.CurrentCell != null && fgrid.CurrentCell.OwningColumn != null
+                && fgrid.CurrentCell.OwningColumn.Name == "fval")
+            {
+                int ri = fgrid.CurrentCell.RowIndex;
+                string field = (ri >= 0) ? Convert.ToString(fgrid.Rows[ri].Cells["ffield"].Value) : "";
+                var vals = ValuesFor(_layer, field ?? "");
+                if (vals.Count > 0)
+                {
+                    var ac = new AutoCompleteStringCollection();
+                    ac.AddRange(vals.ToArray());
+                    tb.AutoCompleteCustomSource = ac;
+                    tb.AutoCompleteSource = AutoCompleteSource.CustomSource;
+                    tb.AutoCompleteMode = AutoCompleteMode.SuggestAppend;
+                }
+            }
+        }
+
+        // поля для combo «Поле» фильтра: поля блоков выбранного слоя (+ служебные), либо все.
+        private List<string> FieldsFor(string layer)
+        {
+            var outl = new List<string>();
+            Dictionary<string, List<string>> byField = null;
+            if (_valuesByLayer != null)
+            {
+                if (!string.IsNullOrEmpty(layer)) _valuesByLayer.TryGetValue(layer, out byField);
+                if (byField == null) _valuesByLayer.TryGetValue("", out byField);
+            }
+            if (byField != null) { foreach (var k in byField.Keys) outl.Add(k); }
+            else outl.AddRange(_fields);
+            foreach (var ex in new[] { "Слой", "Имя", "Длина", "Ширина", "Высота" })
+                if (!outl.Exists(z => NkEq(z, ex))) outl.Add(ex);
+            outl.Sort(StringComparer.OrdinalIgnoreCase);
+            return outl;
+        }
+
+        private List<string> ValuesFor(string layer, string field)
+        {
+            var empty = new List<string>();
+            if (string.IsNullOrEmpty(field)) return empty;
+            if (NkEq(field, "Слой"))
+            {
+                var l = new List<string>();
+                if (!string.IsNullOrEmpty(layer)) l.Add(layer); else l.AddRange(_layers);
+                return l;
+            }
+            if (_valuesByLayer == null) return empty;
+            Dictionary<string, List<string>> byField = null;
+            if (!string.IsNullOrEmpty(layer)) _valuesByLayer.TryGetValue(layer, out byField);
+            if (byField == null) _valuesByLayer.TryGetValue("", out byField);
+            if (byField == null) return empty;
+            foreach (var kv in byField) if (NkEq(kv.Key, field)) return kv.Value;
+            return empty;
+        }
+
+        // пересобрать список полей в combo фильтра под текущий источник (сохраняя уже выбранные)
+        private void RefreshFilterFields()
+        {
+            if (_colFField == null) return;
+            var fs = FieldsFor(_layer);
+            _colFField.Items.Clear();
+            foreach (var f in fs) _colFField.Items.Add(f);
+            if (fgrid != null)
+                foreach (DataGridViewRow r in fgrid.Rows)
+                {
+                    if (r.IsNewRow) continue;
+                    string cur = Convert.ToString(r.Cells["ffield"].Value);
+                    if (!string.IsNullOrEmpty(cur) && !_colFField.Items.Contains(cur)) _colFField.Items.Add(cur);
+                }
+        }
+
+        private static string Nk(string s)
+        {
+            if (s == null) return "";
+            s = s.Trim().Trim('«', '»', '"', ' ');
+            return s.ToUpperInvariant();
+        }
+        private static bool NkEq(string a, string b) { return Nk(a) == Nk(b); }
 
         private void RefreshSummary()
         {
             string src = string.IsNullOrEmpty(_layer) ? "—" : _layer;
-            string flt = (string.IsNullOrEmpty(_ffield) || string.IsNullOrEmpty(_fval)) ? "—" : (_ffield + " " + _fop + " " + _fval);
+            string flt = FilterText();
             string grp = "—";
             if (_groupIdx >= 0)
             {
@@ -411,7 +601,24 @@ namespace AtSpecPlugin
                 grp = col + ar;
             }
             string mrg = _merges.Count == 0 ? "" : ("    Объед.шапки: " + MergesText());
-            lblSummary.Text = "Источник: " + src + "    Фильтр: " + flt + "    Группа: " + grp + mrg;
+            if (lblSummary != null)
+                lblSummary.Text = "Источник: " + src + "    Фильтр: " + flt + "    Группа: " + grp + mrg;
+        }
+        private string FilterText()
+        {
+            var parts = new List<string>();
+            if (fgrid != null)
+                foreach (DataGridViewRow r in fgrid.Rows)
+                {
+                    if (r.IsNewRow) continue;
+                    string fld = (Convert.ToString(r.Cells["ffield"].Value) ?? "").Trim();
+                    string op = (Convert.ToString(r.Cells["fop"].Value) ?? "").Trim();
+                    string val = (Convert.ToString(r.Cells["fval"].Value) ?? "").Trim();
+                    if (fld.Length == 0 || val.Length == 0) continue;
+                    if (op.Length == 0) op = "=";
+                    parts.Add(fld + " " + op + " " + val);
+                }
+            return parts.Count == 0 ? "—" : string.Join(" и ", parts.ToArray());
         }
         private string MergesText()
         {
@@ -420,37 +627,6 @@ namespace AtSpecPlugin
             return string.Join(", ", parts.ToArray());
         }
 
-        // ── редактируемый combo «Выражение» (выбор готовой вставки ИЛИ ручной ввод) ──
-        private void Grid_EditingControlShowing(object sender, DataGridViewEditingControlShowingEventArgs e)
-        {
-            var cb = e.Control as ComboBox;
-            if (cb == null) return;
-            if (grid.CurrentCell == null || grid.CurrentCell.OwningColumn == null
-                || grid.CurrentCell.OwningColumn.Name != "expr") return;
-            cb.DropDownStyle = ComboBoxStyle.DropDown;
-            cb.Validating -= Expr_Validating;
-            cb.Validating += Expr_Validating;
-        }
-        private void Expr_Validating(object sender, System.ComponentModel.CancelEventArgs e)
-        {
-            var cb = (ComboBox)sender;
-            string txt = cb.Text;
-            var col = grid.Columns["expr"] as DataGridViewComboBoxColumn;
-            if (col != null && txt.Length > 0 && !col.Items.Contains(txt)) col.Items.Add(txt);
-        }
-
-        // #2: при фиксации значения кладём введённый текст в Items, чтобы combo-ячейка
-        // отобразила его сразу (без повторного открытия списка).
-        private void Grid_ExprCellValidating(object sender, DataGridViewCellValidatingEventArgs e)
-        {
-            var col = grid.Columns["expr"] as DataGridViewComboBoxColumn;
-            if (col == null || e.ColumnIndex != col.Index || e.RowIndex < 0) return;
-            string txt = Convert.ToString(e.FormattedValue) ?? "";
-            if (txt.Length > 0 && !col.Items.Contains(txt)) col.Items.Add(txt);
-        }
-
-        // #1: удалить выделенные строки-столбцы (кроме строки-«звёздочки»); затем снять
-        // объединения/группу, ушедшие за пределы оставшихся столбцов, и обновить сводку.
         private void DeleteSelectedRows()
         {
             var idx = new SortedSet<int>();
@@ -519,6 +695,36 @@ namespace AtSpecPlugin
             return false;
         }
 
+        // ── всплывающие окна (источник, группировка) ──
+        private void OpenSource()
+        {
+            using (var dlg = new SourceDialog(_layers, _layer))
+                if (dlg.ShowDialog(this) == DialogResult.OK)
+                { _layer = dlg.Layer; RefreshFilterFields(); RefreshSummary(); }
+        }
+        private void OpenGroup()
+        {
+            using (var dlg = new GroupDialog(CurrentHeaders(), _groupIdx, _sortMode))
+                if (dlg.ShowDialog(this) == DialogResult.OK)
+                { _groupIdx = dlg.GroupIdx; _sortMode = dlg.SortMode; RefreshSummary(); }
+        }
+
+        private List<string> CurrentHeaders()
+        {
+            var l = new List<string>();
+            foreach (DataGridViewRow r in grid.Rows)
+            {
+                if (r.IsNewRow) continue;
+                l.Add(Convert.ToString(r.Cells[0].Value) ?? "");
+            }
+            return l;
+        }
+
+        private static Dictionary<string, object> Cond(string field, string op, string value)
+        {
+            return new Dictionary<string, object> { { "field", field }, { "op", op }, { "value", value } };
+        }
+
         public Dictionary<string, object> ToDef()
         {
             var headers = new List<object>();
@@ -535,9 +741,17 @@ namespace AtSpecPlugin
 
             var filters = new List<object>();
             if (!string.IsNullOrEmpty(_layer))
-                filters.Add(new Dictionary<string, object> { { "field", "Слой" }, { "op", "=" }, { "value", _layer } });
-            if (!string.IsNullOrEmpty(_ffield) && !string.IsNullOrEmpty(_fval))
-                filters.Add(new Dictionary<string, object> { { "field", _ffield }, { "op", _fop }, { "value", _fval } });
+                filters.Add(Cond("Слой", "=", _layer));
+            foreach (DataGridViewRow r in fgrid.Rows)
+            {
+                if (r.IsNewRow) continue;
+                string fld = (Convert.ToString(r.Cells["ffield"].Value) ?? "").Trim();
+                string op = (Convert.ToString(r.Cells["fop"].Value) ?? "").Trim();
+                string val = (Convert.ToString(r.Cells["fval"].Value) ?? "").Trim();
+                if (fld.Length == 0 || val.Length == 0) continue;
+                if (op.Length == 0) op = "=";
+                filters.Add(Cond(fld, op, val));
+            }
 
             object groupBy = (_groupIdx >= 0 && _groupIdx < colCount) ? (object)_groupIdx : null;
             object sortBy = null;
@@ -584,44 +798,6 @@ namespace AtSpecPlugin
 
             var ok = new Button { Text = "OK", Left = 164, Top = 64, Width = 84, DialogResult = DialogResult.OK };
             var cancel = new Button { Text = "Отмена", Left = 256, Top = 64, Width = 88, DialogResult = DialogResult.Cancel };
-            Controls.Add(ok); Controls.Add(cancel);
-            AcceptButton = ok; CancelButton = cancel;
-        }
-    }
-
-    // ───────────────────────── всплывающее окно: Фильтр ─────────────────────────
-    public class FilterDialog : Form
-    {
-        private ComboBox cbField, cbOp;
-        private TextBox txtVal;
-        public string FField { get { return cbField.Text.Trim(); } }
-        public string FOp { get { return cbOp.Text; } }
-        public string FVal { get { return txtVal.Text.Trim(); } }
-
-        public FilterDialog(List<string> fields, string field, string op, string val)
-        {
-            Text = "Фильтр секции";
-            FormBorderStyle = FormBorderStyle.FixedDialog;
-            StartPosition = FormStartPosition.CenterParent;
-            ClientSize = new Size(420, 140);
-            MaximizeBox = false; MinimizeBox = false;
-
-            Controls.Add(new Label { Left = 12, Top = 14, Width = 396,
-                Text = "Доп. условие к источнику (пустое поле = без фильтра):" });
-            cbField = new ComboBox { Left = 12, Top = 40, Width = 170, DropDownStyle = ComboBoxStyle.DropDown };
-            if (fields != null) cbField.Items.AddRange(fields.ToArray());
-            cbField.Text = field ?? "";
-            Controls.Add(cbField);
-            cbOp = new ComboBox { Left = 188, Top = 40, Width = 90, DropDownStyle = ComboBoxStyle.DropDownList };
-            cbOp.Items.AddRange(new object[] { "=", "≠", ">", "<", "≥", "содержит", "не содержит" });
-            cbOp.SelectedItem = string.IsNullOrEmpty(op) ? "=" : op;
-            if (cbOp.SelectedIndex < 0) cbOp.SelectedIndex = 0;
-            Controls.Add(cbOp);
-            txtVal = new TextBox { Left = 284, Top = 40, Width = 124, Text = val ?? "" };
-            Controls.Add(txtVal);
-
-            var ok = new Button { Text = "OK", Left = 224, Top = 92, Width = 84, DialogResult = DialogResult.OK };
-            var cancel = new Button { Text = "Отмена", Left = 316, Top = 92, Width = 92, DialogResult = DialogResult.Cancel };
             Controls.Add(ok); Controls.Add(cancel);
             AcceptButton = ok; CancelButton = cancel;
         }
@@ -677,41 +853,5 @@ namespace AtSpecPlugin
         public bool UseFirstLayer = false;                       // подставить первый слой источником
         public bool TotalRow = false;                            // строка ИТОГ (сумма столбцов с Count)
         public string SeedLayer = null;                          // предпочтительный слой-источник (если есть)
-    }
-
-    // ───────────────────────── окно выбора шаблона (Этап 3) ─────────────────────────
-    // Возвращает Choice: 0 — Ручное (пусто), 1 — Спецификация, 2 — Раскрой, 3 — Заполнения.
-    // Последние три засевают поля; всё остаётся полностью редактируемым в построителе.
-    public class TemplatePickerForm : Form
-    {
-        private RadioButton rbManual, rbSpec, rbCut, rbFill;
-        public int Choice
-        {
-            get { return rbManual.Checked ? 0 : (rbCut.Checked ? 2 : (rbFill.Checked ? 3 : 1)); }
-        }
-
-        public TemplatePickerForm()
-        {
-            Text = "ATableSpec — шаблон отчёта";
-            FormBorderStyle = FormBorderStyle.FixedDialog;
-            StartPosition = FormStartPosition.CenterScreen;
-            ClientSize = new Size(460, 252);
-            MaximizeBox = false; MinimizeBox = false;
-
-            int y = 12;
-            Controls.Add(new Label { Left = 14, Top = y, Width = 432,
-                Text = "Выберите шаблон. Последние три засевают столбцы готовыми выражениями Object — всё остаётся редактируемым (столбцы, источник, фильтр, группа, число секций)." });
-            y += 48;
-            rbManual = new RadioButton { Left = 20, Top = y, Width = 420, Text = "Ручное создание — пустой отчёт, всё задаёте сами" }; y += 28;
-            rbSpec = new RadioButton { Left = 20, Top = y, Width = 420, Text = "Спецификация — №, наименование, артикул, длина, кол-во", Checked = true }; y += 28;
-            rbCut = new RadioButton { Left = 20, Top = y, Width = 420, Text = "Раскрой — профиль / длина / кол-во (черновик, уточняется по примеру)" }; y += 28;
-            rbFill = new RadioButton { Left = 20, Top = y, Width = 420, Text = "Заполнения — марка / ширина / высота / кол-во (черновик)" }; y += 36;
-            Controls.Add(rbManual); Controls.Add(rbSpec); Controls.Add(rbCut); Controls.Add(rbFill);
-
-            var ok = new Button { Text = "Далее", Left = 256, Top = y, Width = 84, DialogResult = DialogResult.OK };
-            var cancel = new Button { Text = "Отмена", Left = 348, Top = y, Width = 92, DialogResult = DialogResult.Cancel };
-            Controls.Add(ok); Controls.Add(cancel);
-            AcceptButton = ok; CancelButton = cancel;
-        }
     }
 }

@@ -49,6 +49,8 @@ namespace AtSpecPlugin
             var records = new List<Dictionary<string, object>>();
             var layerSet = new SortedSet<string>(StringComparer.OrdinalIgnoreCase);
             var fieldSet = new SortedSet<string>(StringComparer.OrdinalIgnoreCase);
+            // карта значений для контекстного фильтра: слой -> поле -> уникальные значения; "" = все блоки
+            var valuesRaw = new Dictionary<string, Dictionary<string, HashSet<string>>>(StringComparer.OrdinalIgnoreCase);
             using (Transaction tr = db.TransactionManager.StartTransaction())
             {
                 foreach (SelectedObject so in sel.Value)
@@ -75,9 +77,15 @@ namespace AtSpecPlugin
                         }
                     }
                     layerSet.Add(br.Layer);
+                    string effName = EffectiveName(tr, br);
+                    // накопить значения полей для контекстного фильтра (по слою и в общий "")
+                    AddVal(valuesRaw, br.Layer, "Слой", br.Layer);
+                    AddVal(valuesRaw, br.Layer, "Имя", effName);
+                    foreach (var kv in attrs)
+                        AddVal(valuesRaw, br.Layer, kv.Key, Convert.ToString(kv.Value));
                     records.Add(new Dictionary<string, object>
                     {
-                        { "name", EffectiveName(tr, br) },
+                        { "name", effName },
                         { "layer", br.Layer },
                         { "attributes", attrs }
                     });
@@ -103,15 +111,22 @@ namespace AtSpecPlugin
                 if (!fields.Exists(z => string.Equals(z, extra, StringComparison.OrdinalIgnoreCase)))
                     fields.Add(extra);
             var layers = new List<string>(layerSet);
-
-            // --- 4. выбор шаблона (Этап 3) -> построитель отчёта (засев под шаблон) ---
-            int tpl;
-            using (var picker = new TemplatePickerForm())
+            // значения для фильтра: HashSet -> отсортированный List
+            var valuesByLayer = new Dictionary<string, Dictionary<string, List<string>>>(StringComparer.OrdinalIgnoreCase);
+            foreach (var kvL in valuesRaw)
             {
-                if (AcApp.ShowModalDialog(picker) != DialogResult.OK) { ed.WriteMessage("\nОтменено."); return; }
-                tpl = picker.Choice;
+                var byF = new Dictionary<string, List<string>>(StringComparer.OrdinalIgnoreCase);
+                foreach (var kvF in kvL.Value)
+                {
+                    var lst = new List<string>(kvF.Value);
+                    lst.Sort(StringComparer.OrdinalIgnoreCase);
+                    byF[kvF.Key] = lst;
+                }
+                valuesByLayer[kvL.Key] = byF;
             }
-            var form = new ReportBuilderForm(layers, fields, tpl);
+
+            // --- 4. построитель отчёта (шаблон выбирается списком прямо в окне) ---
+            var form = new ReportBuilderForm(layers, fields, valuesByLayer);
             if (AcApp.ShowModalDialog(form) != DialogResult.OK) { ed.WriteMessage("\nОтменено."); return; }
 
             // --- 5. payload: action=report + определение отчёта ---
@@ -295,6 +310,26 @@ namespace AtSpecPlugin
             var list = new List<string>(); var il = o as IList;
             if (il != null) foreach (var x in il) list.Add(SafeStr(x));
             return list;
+        }
+
+        // накопитель значений поля для контекстного фильтра: пишем в свой слой и в общий ""
+        private static void AddVal(Dictionary<string, Dictionary<string, HashSet<string>>> map,
+                                   string layer, string field, string val)
+        {
+            if (string.IsNullOrEmpty(field)) return;
+            val = (val ?? "").Trim();
+            if (val.Length == 0) return;
+            string[] keys = { layer ?? "", "" };
+            foreach (var key in keys)
+            {
+                Dictionary<string, HashSet<string>> byF;
+                if (!map.TryGetValue(key, out byF))
+                { byF = new Dictionary<string, HashSet<string>>(StringComparer.OrdinalIgnoreCase); map[key] = byF; }
+                HashSet<string> set;
+                if (!byF.TryGetValue(field, out set))
+                { set = new HashSet<string>(StringComparer.OrdinalIgnoreCase); byF[field] = set; }
+                set.Add(val);
+            }
         }
 
         private static string EffectiveName(Transaction tr, BlockReference br)
