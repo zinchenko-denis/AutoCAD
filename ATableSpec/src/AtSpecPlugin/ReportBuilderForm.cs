@@ -185,12 +185,10 @@ namespace AtSpecPlugin
                     s.Columns.Add(new[] { "Ед. изм.", "=«шт.»" });
                     s.GroupIdx = 1; s.SortMode = 0;
                     break;
-                case 2: // Раскрой (ЧЕРНОВИК — уточняется по DXF конструктора)
-                    s.Columns.Add(new[] { "№ п/п", "=row" });
-                    s.Columns.Add(new[] { "Профиль", "=Object.Name" });
+                case 2: // Раскрой — только длина + количество (фидбэк 21.06: №п/п и профиль убрать)
                     s.Columns.Add(new[] { "Длина, мм", "=Object.«Длина»" });
                     s.Columns.Add(new[] { "Колич.", "=Count" });
-                    s.GroupIdx = 2; s.SortMode = 0;   // группа по длине
+                    s.GroupIdx = 0; s.SortMode = 0;   // группа по длине (теперь это столбец 0)
                     break;
                 case 3: // Заполнения (Ш/В из РАЗМЕР_ЗАП; Тип — динам. параметр Visibility1)
                     s.Columns.Add(new[] { "№ п/п", "=row" });
