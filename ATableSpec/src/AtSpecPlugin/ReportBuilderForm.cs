@@ -442,6 +442,7 @@ namespace AtSpecPlugin
             grid.Columns.Add(_colVal); grid.Columns.Add(_colGroup);
 
             grid.EditingControlShowing += Grid_EditingControlShowing;
+            grid.CellFormatting += Grid_CellFormatting;        // (5) «(объединено)» в подчинённых строках шапки
             grid.CellValidating += Grid_CellValidating;
             grid.CellValueChanged += Grid_CellValueChanged;
             grid.DataError += (s, e) => { e.ThrowException = false; e.Cancel = false; };
@@ -679,6 +680,7 @@ namespace AtSpecPlugin
             string mrg = _merges.Count == 0 ? "" : ("    Объед.шапки: " + MergesText());
             if (lblSummary != null)
                 lblSummary.Text = "Источник: " + src + "    Фильтр: " + flt + "    Группа: " + grp + mrg;
+            RefreshMergeVisuals();   // (5) подсветка объединённой шапки в гриде
         }
 
         // фильтр читается из строк грида: условие на ПОЛЕ из «Выражение» строки.
@@ -759,6 +761,52 @@ namespace AtSpecPlugin
                 MessageBox.Show("В выделении нет объединённой шапки.",
                     "Разъединение шапки", MessageBoxButtons.OK, MessageBoxIcon.Information);
             RefreshSummary();
+        }
+
+        // (5) визуальная пометка объединённой шапки в гриде: общий фон группы; текст — в первой строке
+        //     (редактируемо), в остальных «(объединено)» серым. «Заголовок» подчинённых строк НЕ затирается
+        //     (показ через CellFormatting), при разъединении исходное значение возвращается.
+        private static readonly Color MergeBack = Color.FromArgb(225, 236, 250);
+        private bool InMerge(int rowIndex, out bool anchor)
+        {
+            anchor = false;
+            foreach (var sp in _merges)
+                if (rowIndex >= sp[0] && rowIndex <= sp[1]) { anchor = (rowIndex == sp[0]); return true; }
+            return false;
+        }
+        private void RefreshMergeVisuals()
+        {
+            if (grid == null) return;
+            foreach (DataGridViewRow r in grid.Rows)
+            {
+                if (r.IsNewRow) continue;
+                var cell = r.Cells["hdr"];
+                bool anchor;
+                if (InMerge(r.Index, out anchor))
+                {
+                    cell.Style.BackColor = MergeBack;
+                    cell.ReadOnly = !anchor;        // править можно только первую строку группы (= слитую шапку)
+                }
+                else
+                {
+                    cell.Style.BackColor = Color.Empty;
+                    cell.ReadOnly = false;
+                }
+            }
+            var hc = grid.Columns["hdr"];
+            if (hc != null) grid.InvalidateColumn(hc.Index);
+        }
+        private void Grid_CellFormatting(object sender, DataGridViewCellFormattingEventArgs e)
+        {
+            if (e.RowIndex < 0 || e.ColumnIndex < 0) return;
+            if (grid.Columns[e.ColumnIndex].Name != "hdr") return;
+            bool anchor;
+            if (InMerge(e.RowIndex, out anchor) && !anchor)
+            {
+                e.Value = "(объединено)";
+                e.CellStyle.ForeColor = Color.Gray;
+                e.FormattingApplied = true;
+            }
         }
 
         public bool HasColumns()
