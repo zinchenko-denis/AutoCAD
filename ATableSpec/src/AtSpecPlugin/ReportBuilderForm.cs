@@ -68,6 +68,7 @@ namespace AtSpecPlugin
             _suppressTpl = true;
             cbTitle.Text = DefaultTitleFor(_template);
             _suppressTpl = false;
+            chkHideTitle.Checked = (_template == 2);   // раскрой — по умолчанию скрыть заголовок
             _lastTitle = cbTitle.Text;
             AddSection(PresetFor(_template, true));    // стартовая секция, засеяна под шаблон
         }
@@ -188,6 +189,7 @@ namespace AtSpecPlugin
             _cards.Clear();
             _template = tpl;
             _suppressTpl = true; cbTitle.SelectedIndex = -1; cbTitle.Text = DefaultTitleFor(tpl); _suppressTpl = false;
+            chkHideTitle.Checked = (tpl == 2);   // раскрой — по умолчанию скрыть заголовок таблицы
             _lastTitle = cbTitle.Text;
             AddSection(PresetFor(tpl, true));
         }
@@ -247,7 +249,7 @@ namespace AtSpecPlugin
         {
             switch (tpl)
             {
-                case 2: return "ВЕДОМОСТЬ РАСКРОЯ";
+                case 2: return "";                       // раскрой — без заголовка (по задумке конструктора)
                 case 3: return "СПЕЦИФИКАЦИЯ ЗАПОЛНЕНИЙ";
                 case 0: return "";                       // ручное — без заголовка по умолчанию
                 default: return "СПЕЦИФИКАЦИЯ ЭЛЕМЕНТОВ"; // спецификация
@@ -330,7 +332,8 @@ namespace AtSpecPlugin
         private TextBox txtSecTitle;
         private CheckBox chkHideHeader, chkTotal;
         private DataGridView grid;     // Заголовок | Выражение | Условие | Значение
-        private DataGridViewComboBoxColumn _colExpr, _colCond, _colVal;
+        private DataGridViewTextBoxColumn _colExpr;     // «Выражение» — TextBox (надёжный свободный ввод)
+        private DataGridViewComboBoxColumn _colCond, _colVal;
         private ToolStripMenuItem _miInsert;
         private readonly List<int[]> _merges = new List<int[]>();   // [s,e] 0-базово (по строкам грида)
         private readonly List<string> _exprSuggest = new List<string>();
@@ -406,13 +409,10 @@ namespace AtSpecPlugin
                 ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize
             };
             var colHdr = new DataGridViewTextBoxColumn { Name = "hdr", HeaderText = "Заголовок", Width = 165 };
-            // (2) «Выражение» — combo, контекстный слою, со свободным вводом (коммит чинится в CellValidating).
-            _colExpr = new DataGridViewComboBoxColumn
-            {
-                Name = "expr", HeaderText = "Выражение", Width = 205,
-                FlatStyle = FlatStyle.Flat, DropDownWidth = 220,
-                DisplayStyle = DataGridViewComboBoxDisplayStyle.Nothing
-            };
+            // (2-fix) «Выражение» — обычный TextBox со свободным вводом (combo в DataGridView терял
+            //         введённый текст на коммите — фидбэк Алексея). Подсказки — автодополнением
+            //         (контекстный список слою) + ПКМ «Вставить выражение».
+            _colExpr = new DataGridViewTextBoxColumn { Name = "expr", HeaderText = "Выражение", Width = 205 };
             // (4) условие фильтра — прямо в гриде
             _colCond = new DataGridViewComboBoxColumn
             {
@@ -430,12 +430,8 @@ namespace AtSpecPlugin
             };
             grid.Columns.Add(colHdr); grid.Columns.Add(_colExpr); grid.Columns.Add(_colCond); grid.Columns.Add(_colVal);
 
-            // пустой пункт + засеваемые выражения — в Items ДО добавления строк (иначе combo их отклонит)
-            _colExpr.Items.Add("");
+            // пустой пункт в combo «Значение» (чтобы пустая ячейка рендерилась без DataError)
             _colVal.Items.Add("");
-            if (seed != null)
-                foreach (var c in seed.Columns)
-                    if (c != null && c.Length >= 2 && !_colExpr.Items.Contains(c[1])) _colExpr.Items.Add(c[1]);
 
             grid.EditingControlShowing += Grid_EditingControlShowing;
             grid.CellValidating += Grid_CellValidating;
@@ -484,7 +480,6 @@ namespace AtSpecPlugin
                 int n = grid.Rows.Add();
                 row = n;
             }
-            if (!_colExpr.Items.Contains(expr)) _colExpr.Items.Add(expr);
             grid.Rows[row].Cells["expr"].Value = expr;
         }
 
@@ -493,10 +488,21 @@ namespace AtSpecPlugin
         {
             var col = grid.CurrentCell != null ? grid.CurrentCell.OwningColumn : null;
             if (col == null) return;
+            if (col.Name == "expr")
+            {
+                // «Выражение» — TextBox с автодополнением (контекстный список слою); свободный ввод коммитится всегда.
+                var tb = e.Control as TextBox;
+                if (tb == null) return;
+                var ac = new AutoCompleteStringCollection();
+                ac.AddRange(_exprSuggest.ToArray());
+                tb.AutoCompleteCustomSource = ac;
+                tb.AutoCompleteSource = AutoCompleteSource.CustomSource;
+                tb.AutoCompleteMode = AutoCompleteMode.SuggestAppend;
+                return;
+            }
             var cb = e.Control as ComboBox;
             if (cb == null) return;
             if (col.Name == "cond") { cb.DropDownStyle = ComboBoxStyle.DropDownList; return; }
-            if (col.Name == "expr") { cb.DropDownStyle = ComboBoxStyle.DropDown; return; }
             if (col.Name == "val")
             {
                 cb.DropDownStyle = ComboBoxStyle.DropDown;
@@ -521,8 +527,8 @@ namespace AtSpecPlugin
             var col = grid.Columns[e.ColumnIndex];
             string v = Convert.ToString(e.FormattedValue);
             if (string.IsNullOrEmpty(v)) return;
-            if (col.Name == "expr") { if (!_colExpr.Items.Contains(v)) _colExpr.Items.Add(v); }
-            else if (col.Name == "val") { if (!_colVal.Items.Contains(v)) _colVal.Items.Add(v); }
+            // только combo «Значение»: свободно введённое значение кладём в Items, чтобы оно прошло коммит
+            if (col.Name == "val") { if (!_colVal.Items.Contains(v)) _colVal.Items.Add(v); }
         }
 
         private void Grid_CellValueChanged(object sender, DataGridViewCellEventArgs e)
@@ -605,20 +611,8 @@ namespace AtSpecPlugin
                 string ex = "=Object.«" + f + "»";
                 if (!_exprSuggest.Contains(ex)) _exprSuggest.Add(ex);
             }
-            if (_colExpr != null)
-            {
-                var keep = new List<string>();     // сохранить уже введённые выражения (рендер combo)
-                foreach (DataGridViewRow r in grid.Rows)
-                {
-                    if (r.IsNewRow) continue;
-                    string cur = Convert.ToString(r.Cells["expr"].Value);
-                    if (!string.IsNullOrEmpty(cur)) keep.Add(cur);
-                }
-                _colExpr.Items.Clear();
-                _colExpr.Items.Add("");
-                foreach (var sx in _exprSuggest) _colExpr.Items.Add(sx);
-                foreach (var k in keep) if (!_colExpr.Items.Contains(k)) _colExpr.Items.Add(k);
-            }
+            // «Выражение» — TextBox: список подсказок (_exprSuggest) применяется автодополнением
+            //  в Grid_EditingControlShowing; отдельный рендер Items не нужен.
             if (_miInsert != null)
             {
                 _miInsert.DropDownItems.Clear();
