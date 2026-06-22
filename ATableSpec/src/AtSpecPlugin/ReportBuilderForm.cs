@@ -216,7 +216,7 @@ namespace AtSpecPlugin
                 case 1: // Спецификация (рабочий пресет)
                     s.Columns.Add(new[] { "№ п/п", "=row" });
                     s.Columns.Add(new[] { "НАИМЕНОВАНИЕ", "=Object.«ИМЯ»" });
-                    s.Columns.Add(new[] { "Артикул", "=Object.Name" });
+                    s.Columns.Add(new[] { "Артикул", "=Object.«ПРОФ»" });
                     s.Columns.Add(new[] { "Длина, мм", "=Object.«Длина»" });
                     s.Columns.Add(new[] { "Колич.", "=Count" });
                     s.Columns.Add(new[] { "Ед. изм.", "=«шт.»" });
