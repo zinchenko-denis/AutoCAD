@@ -215,7 +215,7 @@ namespace AtSpecPlugin
             {
                 case 1: // Спецификация (рабочий пресет)
                     s.Columns.Add(new[] { "№ п/п", "=row" });
-                    s.Columns.Add(new[] { "НАИМЕНОВАНИЕ", "=Object.«ИМЯ»" });
+                    s.Columns.Add(new[] { "Наименование", "=Object.«ИМЯ»" });
                     s.Columns.Add(new[] { "Артикул", "=Object.«ПРОФ»" });
                     s.Columns.Add(new[] { "Длина, мм", "=Object.«Длина»" });
                     s.Columns.Add(new[] { "Колич.", "=Count" });
@@ -330,10 +330,12 @@ namespace AtSpecPlugin
         private readonly Dictionary<string, Dictionary<string, List<string>>> _valuesByLayer;
         private Label lblNum, lblSummary;
         private TextBox txtSecTitle;
+        private ComboBox cmbSource;     // (2) Источник секции — редактируемый combo (как «Заголовок»)
         private CheckBox chkHideHeader, chkTotal;
         private DataGridView grid;     // Заголовок | Выражение | Условие | Значение
         private DataGridViewTextBoxColumn _colExpr;     // «Выражение» — TextBox (надёжный свободный ввод)
-        private DataGridViewComboBoxColumn _colCond, _colVal, _colGroup;
+        private DataGridViewComboBoxColumn _colCond, _colGroup;
+        private DataGridViewTextBoxColumn _colVal;      // «Значение» — TextBox (свободный ввод держится)
         private ToolStripMenuItem _miInsert;
         private readonly List<int[]> _merges = new List<int[]>();   // [s,e] 0-базово (по строкам грида)
         private readonly List<string> _exprSuggest = new List<string>();
@@ -360,6 +362,7 @@ namespace AtSpecPlugin
                 else if (seed.UseFirstLayer && _layers.Count > 0)
                     _layer = _layers[0];
             }
+            if (cmbSource != null) cmbSource.Text = _layer ?? "";   // (2) показать текущий источник в combo
             RefreshContext();
             for (int i = 0; i < grid.Rows.Count; i++)
                 if (!grid.Rows[i].IsNewRow) SetFilterEnabledForRow(i);
@@ -372,9 +375,13 @@ namespace AtSpecPlugin
             lblNum = new Label { Left = 8, Top = y + 4, Width = 70, Text = "Отчёт", Font = new Font(Font, FontStyle.Bold) };
             Controls.Add(lblNum);
 
-            var btnSrc = new Button { Left = 84, Top = y, Width = 120, Text = "Источник…" };
-            btnSrc.Click += (s, e) => OpenSource();
-            Controls.Add(btnSrc);
+            // (2) Источник — редактируемый combo (как «Заголовок»): выбор слоя ИЛИ ручной ввод имени.
+            Controls.Add(new Label { Left = 84, Top = y + 4, Width = 58, Text = "Источник:" });
+            cmbSource = new ComboBox { Left = 144, Top = y, Width = 200, DropDownStyle = ComboBoxStyle.DropDown };
+            cmbSource.Items.AddRange(_layers.ToArray());
+            cmbSource.SelectedIndexChanged += (s, e) => OnSourceChanged();
+            cmbSource.Leave += (s, e) => OnSourceChanged();
+            Controls.Add(cmbSource);
 
             var btnUp = new Button { Left = 610, Top = y, Width = 28, Text = "↑" };
             var btnDn = new Button { Left = 640, Top = y, Width = 28, Text = "↓" };
@@ -416,13 +423,12 @@ namespace AtSpecPlugin
                 FlatStyle = FlatStyle.Flat, DisplayStyle = DataGridViewComboBoxDisplayStyle.Nothing
             };
             _colCond.Items.AddRange(new object[] { "", "=", "≠", "содержит", "не содержит", ">", "<", "≥", "≤" });
-            // (3) значение фильтра — combo реальных значений поля + свободный ввод
-            _colVal = new DataGridViewComboBoxColumn
+            // (1-fix) «Значение» — TextBox со свободным вводом + автодополнение (combo в DataGridView
+            //          терял введённую подстроку для «содержит» — фидбэк Алексея). Зеркало «Выражения».
+            _colVal = new DataGridViewTextBoxColumn
             {
                 Name = "val", HeaderText = "Значение",
-                AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill,
-                FlatStyle = FlatStyle.Flat, DropDownWidth = 200,
-                DisplayStyle = DataGridViewComboBoxDisplayStyle.Nothing
+                AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill
             };
             // (хотелка) группировка — инлайн-столбец правее «Значение»: непустое значение = группа
             //  по этому столбцу с выбранной сортировкой; единственная группа на секцию.
@@ -434,9 +440,6 @@ namespace AtSpecPlugin
             _colGroup.Items.AddRange(new object[] { "", "по возрастанию", "по убыванию", "без сортировки" });
             grid.Columns.Add(colHdr); grid.Columns.Add(_colExpr); grid.Columns.Add(_colCond);
             grid.Columns.Add(_colVal); grid.Columns.Add(_colGroup);
-
-            // пустой пункт в combo «Значение» (чтобы пустая ячейка рендерилась без DataError)
-            _colVal.Items.Add("");
 
             grid.EditingControlShowing += Grid_EditingControlShowing;
             grid.CellValidating += Grid_CellValidating;
@@ -497,18 +500,27 @@ namespace AtSpecPlugin
             grid.Rows[row].Cells["expr"].Value = expr;
         }
 
-        // редактор ячейки: combo «Выражение»/«Значение» — редактируемые; «Условие» — только выбор.
+        // редактор ячейки: «Выражение»/«Значение» — TextBox с автодополнением; «Условие» — только выбор.
         private void Grid_EditingControlShowing(object sender, DataGridViewEditingControlShowingEventArgs e)
         {
             var col = grid.CurrentCell != null ? grid.CurrentCell.OwningColumn : null;
             if (col == null) return;
-            if (col.Name == "expr")
+            if (col.Name == "expr" || col.Name == "val")
             {
-                // «Выражение» — TextBox с автодополнением (контекстный список слою); свободный ввод коммитится всегда.
+                // «Выражение» и «Значение» — TextBox с автодополнением; свободный ввод коммитится всегда
+                // (combo в DataGridView терял текст — фидбэк Алексея). «Выражение» — список вставок;
+                // «Значение» — контекстные значения поля строки (для «содержит» можно ввести подстроку).
                 var tb = e.Control as TextBox;
                 if (tb == null) return;
                 var ac = new AutoCompleteStringCollection();
-                ac.AddRange(_exprSuggest.ToArray());
+                if (col.Name == "expr")
+                    ac.AddRange(_exprSuggest.ToArray());
+                else
+                {
+                    int ri = grid.CurrentCell.RowIndex;
+                    string expr = ri >= 0 ? Convert.ToString(grid.Rows[ri].Cells["expr"].Value) : "";
+                    foreach (var v in ValuesFor(_layer, ExtractField(expr) ?? "")) ac.Add(Convert.ToString(v));
+                }
                 tb.AutoCompleteCustomSource = ac;
                 tb.AutoCompleteSource = AutoCompleteSource.CustomSource;
                 tb.AutoCompleteMode = AutoCompleteMode.SuggestAppend;
@@ -517,32 +529,13 @@ namespace AtSpecPlugin
             var cb = e.Control as ComboBox;
             if (cb == null) return;
             if (col.Name == "cond") { cb.DropDownStyle = ComboBoxStyle.DropDownList; return; }
-            if (col.Name == "val")
-            {
-                cb.DropDownStyle = ComboBoxStyle.DropDown;
-                int ri = grid.CurrentCell.RowIndex;
-                string expr = ri >= 0 ? Convert.ToString(grid.Rows[ri].Cells["expr"].Value) : "";
-                string fld = ExtractField(expr);
-                var vals = ValuesFor(_layer, fld ?? "");
-                cb.Items.Clear();          // в выпадушке — контекстные значения поля строки
-                foreach (var v in vals)
-                {
-                    cb.Items.Add(v);
-                    if (!_colVal.Items.Contains(v)) _colVal.Items.Add(v);   // и в колонку — чтобы валидировались
-                }
-            }
         }
 
         // корень гонки combo: свободно введённый текст кладём в Items колонки ДО коммита →
         // combo его принимает (раньше отклонял и ячейка оставалась со старым значением).
         private void Grid_CellValidating(object sender, DataGridViewCellValidatingEventArgs e)
         {
-            if (e.ColumnIndex < 0) return;
-            var col = grid.Columns[e.ColumnIndex];
-            string v = Convert.ToString(e.FormattedValue);
-            if (string.IsNullOrEmpty(v)) return;
-            // только combo «Значение»: свободно введённое значение кладём в Items, чтобы оно прошло коммит
-            if (col.Name == "val") { if (!_colVal.Items.Contains(v)) _colVal.Items.Add(v); }
+            // «Значение» теперь TextBox — свободный ввод коммитится всегда, спец-валидация не нужна.
         }
 
         private void Grid_CellValueChanged(object sender, DataGridViewCellEventArgs e)
@@ -783,7 +776,17 @@ namespace AtSpecPlugin
             return false;
         }
 
-        // ── всплывающее окно: источник ──
+        // (2) смена источника из combo (выбор из списка ИЛИ ручной ввод имени слоя)
+        private void OnSourceChanged()
+        {
+            string v = (cmbSource.Text ?? "").Trim();
+            if (v == _layer) return;
+            _layer = v;
+            RefreshContext();
+            RefreshSummary();
+        }
+
+        // ── всплывающее окно: источник (запасной путь; основной выбор — combo «Источник») ──
         private void OpenSource()
         {
             using (var dlg = new SourceDialog(_layers, _layer))
