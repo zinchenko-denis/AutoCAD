@@ -131,6 +131,19 @@ _f = [{"field": "ИМЯ", "op": "не содержит", "value": "0"}]
 assert _passes(Obj({"attributes": {"ИМЯ": "Р1"}}), _f) is True
 assert _passes(Obj({"attributes": {"ИМЯ": "С01"}}), _f) is False
 
+# п.7: фильтр «=»/«≠» по числовому полю — численно, формат не мешает (баг фильтра по длине)
+#      длина-атрибут «3495.00» → float → str «3495.0»; раньше «3495.0»=="3495.00" → ноль строк
+_st = Obj({"attributes": {"ИМЯ": "С01", "ДЛИНА": "3495.00"}})
+assert _passes(_st, [{"field": "Длина", "op": "=", "value": "3495.00"}]) is True   # формат выпадушки
+assert _passes(_st, [{"field": "Длина", "op": "=", "value": "3495"}])    is True   # целое (как в таблице)
+assert _passes(_st, [{"field": "Длина", "op": "=", "value": "3495,00"}]) is True   # запятая-десятичная
+assert _passes(_st, [{"field": "Длина", "op": "=", "value": "3494"}])    is False  # другая длина — мимо
+assert _passes(_st, [{"field": "Длина", "op": "≠", "value": "3000"}])    is True
+# артикул (не число) — строгое строковое сравнение, в число не схлопывать
+_pr = Obj({"attributes": {"ПРОФ": "01_03_06"}})
+assert _passes(_pr, [{"field": "ПРОФ", "op": "=", "value": "01_03_06"}]) is True
+assert _passes(_pr, [{"field": "ПРОФ", "op": "=", "value": "010306"}])   is False
+
 print("UNIT: все ассерты прошли (В-13, В-32, выражения).")
 
 # ───────── контракт обмена: engine_json с action="report" ─────────

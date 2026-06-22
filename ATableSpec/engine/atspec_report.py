@@ -257,6 +257,23 @@ def evaluate(expr: str, obj: Optional[Obj], group: List[Obj], rownum: int) -> An
 
 
 # ─────────────────────────────── раннер шаблона отчёта ───────────────────────────────
+def _num_or_none(s: Any):
+    """float из строки или None. Парсим ТОЛЬКО чистое число (опц. знак, один
+    разделитель «.» или «,»). Нужно, чтобы фильтр «=»/«≠» сравнивал числа численно:
+    длина в атрибуте «3495.00» сводится к float → str «3495.0»; значение из выпадушки —
+    «3495.00» (или «3495» как в таблице). Строковое сравнение их не сводит — это и был
+    баг фильтра по длине. Идентификаторы (С01, 01_03_06) в число НЕ парсятся (буквы/«_»)
+    → для них остаётся строгое строковое сравнение."""
+    t = str(s).strip().replace(",", ".")
+    body = t[1:] if t[:1] in "+-" else t
+    if body and body.replace(".", "", 1).isdecimal():
+        try:
+            return float(t)
+        except ValueError:
+            return None
+    return None
+
+
 def _passes(obj: Obj, flt: List[dict]) -> bool:
     for f in flt or []:
         fld, op, val = f.get("field"), f.get("op", "="), f.get("value", "")
@@ -264,9 +281,11 @@ def _passes(obj: Obj, flt: List[dict]) -> bool:
         ls = "" if lhs is None else str(lhs).strip()
         vs = str(val).strip()
         if op in ("=", "=="):
-            ok = ls.lower() == vs.lower()
+            a, b = _num_or_none(ls), _num_or_none(vs)
+            ok = (a == b) if (a is not None and b is not None) else (ls.lower() == vs.lower())
         elif op in ("!=", "<>", "≠"):
-            ok = ls.lower() != vs.lower()
+            a, b = _num_or_none(ls), _num_or_none(vs)
+            ok = (a != b) if (a is not None and b is not None) else (ls.lower() != vs.lower())
         elif op in ("contains", "содержит"):
             ok = vs.lower() in ls.lower()
         elif op in ("not_contains", "не содержит"):
