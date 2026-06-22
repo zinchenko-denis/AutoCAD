@@ -333,14 +333,13 @@ namespace AtSpecPlugin
         private CheckBox chkHideHeader, chkTotal;
         private DataGridView grid;     // Заголовок | Выражение | Условие | Значение
         private DataGridViewTextBoxColumn _colExpr;     // «Выражение» — TextBox (надёжный свободный ввод)
-        private DataGridViewComboBoxColumn _colCond, _colVal;
+        private DataGridViewComboBoxColumn _colCond, _colVal, _colGroup;
         private ToolStripMenuItem _miInsert;
         private readonly List<int[]> _merges = new List<int[]>();   // [s,e] 0-базово (по строкам грида)
         private readonly List<string> _exprSuggest = new List<string>();
+        private bool _syncingGrp;       // защита от реентрантности при «единственной группе»
 
         private string _layer = "";
-        private int _groupIdx = -1;     // 0-базовый индекс строки грида для группировки (-1 = нет)
-        private int _sortMode = 0;      // 0 — по возрастанию, 1 — по убыванию, 2 — без сортировки
 
         public event Action<SectionCard> MoveUpRequested, MoveDownRequested, RemoveRequested;
 
@@ -356,7 +355,6 @@ namespace AtSpecPlugin
             BuildUi(seed);
             if (seed != null)
             {
-                _groupIdx = seed.GroupIdx; _sortMode = seed.SortMode;
                 if (!string.IsNullOrEmpty(seed.SeedLayer) && _layers.Contains(seed.SeedLayer))
                     _layer = seed.SeedLayer;                       // авто-источник из пресета (RF-заполнения)
                 else if (seed.UseFirstLayer && _layers.Count > 0)
@@ -374,11 +372,9 @@ namespace AtSpecPlugin
             lblNum = new Label { Left = 8, Top = y + 4, Width = 70, Text = "Отчёт", Font = new Font(Font, FontStyle.Bold) };
             Controls.Add(lblNum);
 
-            var btnSrc = new Button { Left = 84, Top = y, Width = 100, Text = "Источник…" };
-            var btnGrp = new Button { Left = 188, Top = y, Width = 116, Text = "Группировка…" };
+            var btnSrc = new Button { Left = 84, Top = y, Width = 120, Text = "Источник…" };
             btnSrc.Click += (s, e) => OpenSource();
-            btnGrp.Click += (s, e) => OpenGroup();
-            Controls.Add(btnSrc); Controls.Add(btnGrp);
+            Controls.Add(btnSrc);
 
             var btnUp = new Button { Left = 610, Top = y, Width = 28, Text = "↑" };
             var btnDn = new Button { Left = 640, Top = y, Width = 28, Text = "↓" };
@@ -399,8 +395,8 @@ namespace AtSpecPlugin
             Controls.Add(chkTotal);
             y += 28;
 
-            Controls.Add(new Label { Left = 8, Top = y, Width = 600,
-                Text = "Столбцы и фильтр (Заголовок | Выражение | Условие | Значение):" });
+            Controls.Add(new Label { Left = 8, Top = y, Width = 660,
+                Text = "Столбцы, фильтр и группировка (Заголовок | Выражение | Условие | Значение | Группа):" });
             y += 18;
             grid = new DataGridView
             {
@@ -408,15 +404,15 @@ namespace AtSpecPlugin
                 AllowUserToAddRows = true, AllowUserToDeleteRows = true, RowHeadersVisible = true,
                 ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize
             };
-            var colHdr = new DataGridViewTextBoxColumn { Name = "hdr", HeaderText = "Заголовок", Width = 165 };
+            var colHdr = new DataGridViewTextBoxColumn { Name = "hdr", HeaderText = "Заголовок", Width = 150 };
             // (2-fix) «Выражение» — обычный TextBox со свободным вводом (combo в DataGridView терял
             //         введённый текст на коммите — фидбэк Алексея). Подсказки — автодополнением
             //         (контекстный список слою) + ПКМ «Вставить выражение».
-            _colExpr = new DataGridViewTextBoxColumn { Name = "expr", HeaderText = "Выражение", Width = 205 };
+            _colExpr = new DataGridViewTextBoxColumn { Name = "expr", HeaderText = "Выражение", Width = 190 };
             // (4) условие фильтра — прямо в гриде
             _colCond = new DataGridViewComboBoxColumn
             {
-                Name = "cond", HeaderText = "Условие", Width = 92,
+                Name = "cond", HeaderText = "Условие", Width = 80,
                 FlatStyle = FlatStyle.Flat, DisplayStyle = DataGridViewComboBoxDisplayStyle.Nothing
             };
             _colCond.Items.AddRange(new object[] { "", "=", "≠", "содержит", "не содержит", ">", "<", "≥", "≤" });
@@ -428,7 +424,16 @@ namespace AtSpecPlugin
                 FlatStyle = FlatStyle.Flat, DropDownWidth = 200,
                 DisplayStyle = DataGridViewComboBoxDisplayStyle.Nothing
             };
-            grid.Columns.Add(colHdr); grid.Columns.Add(_colExpr); grid.Columns.Add(_colCond); grid.Columns.Add(_colVal);
+            // (хотелка) группировка — инлайн-столбец правее «Значение»: непустое значение = группа
+            //  по этому столбцу с выбранной сортировкой; единственная группа на секцию.
+            _colGroup = new DataGridViewComboBoxColumn
+            {
+                Name = "grp", HeaderText = "Группа", Width = 120,
+                FlatStyle = FlatStyle.Flat, DisplayStyle = DataGridViewComboBoxDisplayStyle.Nothing
+            };
+            _colGroup.Items.AddRange(new object[] { "", "по возрастанию", "по убыванию", "без сортировки" });
+            grid.Columns.Add(colHdr); grid.Columns.Add(_colExpr); grid.Columns.Add(_colCond);
+            grid.Columns.Add(_colVal); grid.Columns.Add(_colGroup);
 
             // пустой пункт в combo «Значение» (чтобы пустая ячейка рендерилась без DataError)
             _colVal.Items.Add("");
@@ -442,9 +447,18 @@ namespace AtSpecPlugin
                 if (e.KeyCode == Keys.Delete && !grid.IsCurrentCellInEditMode)
                 { DeleteSelectedRows(); e.Handled = true; }
             };
+            // засев строк: для строки-группы (seed.GroupIdx) ставим сортировку из seed.SortMode
+            string[] grpLabels = { "по возрастанию", "по убыванию", "без сортировки" };
             if (seed != null)
-                foreach (var c in seed.Columns)
-                    if (c != null && c.Length >= 2) grid.Rows.Add(c[0], c[1], "", "");
+                for (int gi = 0; gi < seed.Columns.Count; gi++)
+                {
+                    var c = seed.Columns[gi];
+                    if (c == null || c.Length < 2) continue;
+                    string grp = "";
+                    if (seed.GroupIdx >= 0 && gi == seed.GroupIdx)
+                        grp = grpLabels[(seed.SortMode >= 0 && seed.SortMode <= 2) ? seed.SortMode : 0];
+                    grid.Rows.Add(c[0], c[1], "", "", grp);
+                }
 
             var menu = new ContextMenuStrip();
             _miInsert = new ToolStripMenuItem("Вставить выражение");
@@ -533,9 +547,28 @@ namespace AtSpecPlugin
 
         private void Grid_CellValueChanged(object sender, DataGridViewCellEventArgs e)
         {
-            if (e.RowIndex >= 0 && e.ColumnIndex >= 0 && grid.Columns[e.ColumnIndex].Name == "expr")
-                SetFilterEnabledForRow(e.RowIndex);
+            if (e.RowIndex >= 0 && e.ColumnIndex >= 0)
+            {
+                string cn = grid.Columns[e.ColumnIndex].Name;
+                if (cn == "expr") SetFilterEnabledForRow(e.RowIndex);
+                else if (cn == "grp") EnforceSingleGroup(e.RowIndex);
+            }
             RefreshSummary();
+        }
+
+        // единственная группа на секцию: при выборе «Группа» в строке снимаем её с остальных.
+        private void EnforceSingleGroup(int ri)
+        {
+            if (_syncingGrp || ri < 0 || ri >= grid.Rows.Count) return;
+            if (string.IsNullOrEmpty(Convert.ToString(grid.Rows[ri].Cells["grp"].Value))) return;
+            _syncingGrp = true;
+            foreach (DataGridViewRow r in grid.Rows)
+            {
+                if (r.IsNewRow || r.Index == ri) continue;
+                if (!string.IsNullOrEmpty(Convert.ToString(r.Cells["grp"].Value)))
+                    r.Cells["grp"].Value = "";
+            }
+            _syncingGrp = false;
         }
 
         // Условие/Значение активны, только если «Выражение» строки ссылается на поле блока.
@@ -639,12 +672,16 @@ namespace AtSpecPlugin
             string src = string.IsNullOrEmpty(_layer) ? "—" : _layer;
             string flt = FilterText();
             string grp = "—";
-            if (_groupIdx >= 0)
+            foreach (DataGridViewRow r in grid.Rows)
             {
-                var h = CurrentHeaders();
-                string col = (_groupIdx < h.Count && h[_groupIdx].Length > 0) ? h[_groupIdx] : ("№" + (_groupIdx + 1));
-                string ar = _sortMode == 0 ? " ↑" : (_sortMode == 1 ? " ↓" : "");
+                if (r.IsNewRow) continue;
+                string g = (Convert.ToString(r.Cells["grp"].Value) ?? "").Trim();
+                if (g.Length == 0) continue;
+                string hh = Convert.ToString(r.Cells["hdr"].Value) ?? "";
+                string col = hh.Length > 0 ? hh : ("№" + (r.Index + 1));
+                string ar = g.StartsWith("по возр") ? " ↑" : (g.StartsWith("по убыв") ? " ↓" : "");
                 grp = col + ar;
+                break;
             }
             string mrg = _merges.Count == 0 ? "" : ("    Объед.шапки: " + MergesText());
             if (lblSummary != null)
@@ -691,7 +728,6 @@ namespace AtSpecPlugin
             int rc = 0;
             foreach (DataGridViewRow r in grid.Rows) if (!r.IsNewRow) rc++;
             _merges.RemoveAll(sp => sp[1] >= rc);     // объединение за пределами — снять
-            if (_groupIdx >= rc) _groupIdx = -1;      // группа за пределами — сбросить
             RefreshSummary();
         }
 
@@ -747,29 +783,12 @@ namespace AtSpecPlugin
             return false;
         }
 
-        // ── всплывающие окна (источник, группировка) ──
+        // ── всплывающее окно: источник ──
         private void OpenSource()
         {
             using (var dlg = new SourceDialog(_layers, _layer))
                 if (dlg.ShowDialog(this) == DialogResult.OK)
                 { _layer = dlg.Layer; RefreshContext(); RefreshSummary(); }
-        }
-        private void OpenGroup()
-        {
-            using (var dlg = new GroupDialog(CurrentHeaders(), _groupIdx, _sortMode))
-                if (dlg.ShowDialog(this) == DialogResult.OK)
-                { _groupIdx = dlg.GroupIdx; _sortMode = dlg.SortMode; RefreshSummary(); }
-        }
-
-        private List<string> CurrentHeaders()
-        {
-            var l = new List<string>();
-            foreach (DataGridViewRow r in grid.Rows)
-            {
-                if (r.IsNewRow) continue;
-                l.Add(Convert.ToString(r.Cells[0].Value) ?? "");
-            }
-            return l;
         }
 
         private static Dictionary<string, object> Cond(string field, string op, string value)
@@ -810,16 +829,26 @@ namespace AtSpecPlugin
             }
             int colCount = columns.Count;
 
-            int gOut = -1;
-            if (_groupIdx >= 0 && rowToOut.TryGetValue(_groupIdx, out gOut))
+            // группа/сортировка — из инлайн-столбца «Группа» (строка с непустым значением)
+            int gOut = -1, sortMode = 0;
+            foreach (DataGridViewRow r in grid.Rows)
             {
-                if (gOut < 0 || gOut >= colCount) gOut = -1;
+                if (r.IsNewRow) continue;
+                string g = (Convert.ToString(r.Cells["grp"].Value) ?? "").Trim();
+                if (g.Length == 0) continue;
+                int oi;
+                if (rowToOut.TryGetValue(r.Index, out oi))
+                {
+                    gOut = oi;
+                    sortMode = g.StartsWith("по возр") ? 0 : (g.StartsWith("по убыв") ? 1 : 2);
+                }
+                break;
             }
-            else gOut = -1;
+            if (gOut < 0 || gOut >= colCount) gOut = -1;
             object groupBy = gOut >= 0 ? (object)gOut : null;
             object sortBy = null;
-            if (gOut >= 0 && _sortMode != 2)
-                sortBy = new object[] { gOut, _sortMode == 0 ? "asc" : "desc" };
+            if (gOut >= 0 && sortMode != 2)
+                sortBy = new object[] { gOut, sortMode == 0 ? "asc" : "desc" };
 
             var merges = new List<object>();   // объединения шапки — в координатах выходных столбцов
             foreach (var sp in _merges)
@@ -866,47 +895,6 @@ namespace AtSpecPlugin
 
             var ok = new Button { Text = "OK", Left = 164, Top = 64, Width = 84, DialogResult = DialogResult.OK };
             var cancel = new Button { Text = "Отмена", Left = 256, Top = 64, Width = 88, DialogResult = DialogResult.Cancel };
-            Controls.Add(ok); Controls.Add(cancel);
-            AcceptButton = ok; CancelButton = cancel;
-        }
-    }
-
-    // ───────────────────────── всплывающее окно: Группировка ─────────────────────────
-    public class GroupDialog : Form
-    {
-        private ComboBox cbGroup, cbSort;
-        public int GroupIdx { get { return cbGroup.SelectedIndex - 1; } }     // -1 = (нет)
-        public int SortMode { get { return cbSort.SelectedIndex; } }          // 0/1/2
-
-        public GroupDialog(List<string> colHeaders, int groupIdx, int sortMode)
-        {
-            Text = "Группировка и сортировка";
-            FormBorderStyle = FormBorderStyle.FixedDialog;
-            StartPosition = FormStartPosition.CenterParent;
-            ClientSize = new Size(380, 150);
-            MaximizeBox = false; MinimizeBox = false;
-
-            Controls.Add(new Label { Left = 12, Top = 16, Width = 130, Text = "Группа по столбцу:" });
-            cbGroup = new ComboBox { Left = 148, Top = 12, Width = 220, DropDownStyle = ComboBoxStyle.DropDownList };
-            cbGroup.Items.Add("(нет)");
-            int n = colHeaders == null ? 0 : colHeaders.Count;
-            for (int i = 0; i < n; i++)
-            {
-                string h = colHeaders[i];
-                cbGroup.Items.Add((i + 1) + ": " + (string.IsNullOrEmpty(h) ? "(без названия)" : h));
-            }
-            int gsel = (groupIdx >= 0 && groupIdx < n) ? groupIdx + 1 : 0;
-            cbGroup.SelectedIndex = gsel;
-            Controls.Add(cbGroup);
-
-            Controls.Add(new Label { Left = 12, Top = 52, Width = 130, Text = "Сортировка:" });
-            cbSort = new ComboBox { Left = 148, Top = 48, Width = 220, DropDownStyle = ComboBoxStyle.DropDownList };
-            cbSort.Items.AddRange(new object[] { "по возрастанию", "по убыванию", "(без сортировки)" });
-            cbSort.SelectedIndex = (sortMode >= 0 && sortMode <= 2) ? sortMode : 0;
-            Controls.Add(cbSort);
-
-            var ok = new Button { Text = "OK", Left = 184, Top = 100, Width = 84, DialogResult = DialogResult.OK };
-            var cancel = new Button { Text = "Отмена", Left = 276, Top = 100, Width = 92, DialogResult = DialogResult.Cancel };
             Controls.Add(ok); Controls.Add(cancel);
             AcceptButton = ok; CancelButton = cancel;
         }
