@@ -103,21 +103,28 @@ namespace AtSpecPlugin
 
             // поля для подсказки в окне: атрибуты/параметры выбранных блоков + служебные.
             // Скрываем переменные деталировки (в спецификациях не участвуют).
-            var HIDE = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
-                { "DOBL", "DOBR", "KLL", "KLR", "L", "R", "UGL", "UGR" };
+            // нормализатор имени поля (без «», без крайних пробелов, верхний регистр) — как _nk
+            // в движке. Деталировочные имена приходят «как есть» (иной регистр/пробел), поэтому
+            // регистрозависимый HashSet их пропускал → они текли в фильтр.
+            System.Func<string, string> nkf = z => (z ?? "").Trim().Trim('«', '»', '"', ' ').ToUpperInvariant();
+            var HIDE = new[] { "DOBL", "DOBR", "KLL", "KLR", "L", "R", "UGL", "UGR" };
+            var HIDEN = new HashSet<string>();
+            foreach (var h0 in HIDE) HIDEN.Add(nkf(h0));
             var fields = new List<string>();
-            foreach (var f in fieldSet) if (!HIDE.Contains(f)) fields.Add(f);
+            foreach (var f in fieldSet) if (!HIDEN.Contains(nkf(f))) fields.Add(f);
             foreach (var extra in new[] { "Имя", "Слой", "Длина", "Ширина", "Высота" })
                 if (!fields.Exists(z => string.Equals(z, extra, StringComparison.OrdinalIgnoreCase)))
                     fields.Add(extra);
             var layers = new List<string>(layerSet);
-            // значения для фильтра: HashSet -> отсортированный List
+            // значения для фильтра: HashSet -> отсортированный List. #5: ту же деталировку
+            // вырезаем и из ключей карты «слой→поле→значения» (фильтр берёт поля отсюда).
             var valuesByLayer = new Dictionary<string, Dictionary<string, List<string>>>(StringComparer.OrdinalIgnoreCase);
             foreach (var kvL in valuesRaw)
             {
                 var byF = new Dictionary<string, List<string>>(StringComparer.OrdinalIgnoreCase);
                 foreach (var kvF in kvL.Value)
                 {
+                    if (HIDEN.Contains(nkf(kvF.Key))) continue;   // деталировку в фильтр не пускаем
                     var lst = new List<string>(kvF.Value);
                     lst.Sort(StringComparer.OrdinalIgnoreCase);
                     byF[kvF.Key] = lst;
