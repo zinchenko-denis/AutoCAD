@@ -345,6 +345,11 @@ namespace AtSpecPlugin
                     if (p.SecHeaderRow[i] >= 0)
                         ApplyHeaderMerges(tbl, p.SecHeaderRow[i], p.MaxCols, secs[i].Merges);  // #5: объединение шапки секции
                 }
+                // выравнивание (фидбэк Алексея): текст во ВСЕХ ячейках — по центру (верт.+гориз.),
+                // иначе шапка прижималась кверху стилем таблицы. Объединённые подъячейки пропускаем (try).
+                for (int r = 0; r < tbl.Rows.Count; r++)
+                    for (int c = 0; c < tbl.Columns.Count; c++)
+                        try { tbl.Cells[r, c].Alignment = CellAlignment.MiddleCenter; } catch { }
             }
             return new[] { p.Want, p.MaxCols };
         }
