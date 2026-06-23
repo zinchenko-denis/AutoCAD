@@ -335,7 +335,7 @@ namespace AtSpecPlugin
         private DataGridView grid;     // Заголовок | Выражение | Условие | Значение
         private DataGridViewTextBoxColumn _colExpr;     // «Выражение» — TextBox (надёжный свободный ввод)
         private DataGridViewComboBoxColumn _colCond, _colGroup;
-        private DataGridViewTextBoxColumn _colVal;      // «Значение» — TextBox (свободный ввод держится)
+        private DataGridViewColumn _colVal;             // «Значение» — combo DropDown на строковой ячейке (ValueComboCell)
         private ToolStripMenuItem _miInsert;
         private readonly List<int[]> _merges = new List<int[]>();   // [s,e] 0-базово (по строкам грида)
         private readonly List<string> _exprSuggest = new List<string>();
@@ -423,9 +423,11 @@ namespace AtSpecPlugin
                 FlatStyle = FlatStyle.Flat, DisplayStyle = DataGridViewComboBoxDisplayStyle.Nothing
             };
             _colCond.Items.AddRange(new object[] { "", "=", "≠", "содержит", "не содержит", ">", "<", "≥", "≤" });
-            // (1-fix) «Значение» — TextBox со свободным вводом + автодополнение (combo в DataGridView
-            //          терял введённую подстроку для «содержит» — фидбэк Алексея). Зеркало «Выражения».
-            _colVal = new DataGridViewTextBoxColumn
+            // (Алексей) ВЕРНУТЬ кнопку выпадающего списка: «Значение» = редактируемый combo.
+            //  Ячейка ValueComboCell хранит строку (как TextBox) → свободный ввод/подстрока «содержит»
+            //  держится; редактор — ComboBox DropDown (кнопка списка + ручной ввод). Список значений
+            //  наполняется per-row в Grid_EditingControlShowing. (combo-КОЛОНКА ранее теряла текст.)
+            _colVal = new DataGridViewColumn(new ValueComboCell())
             {
                 Name = "val", HeaderText = "Значение",
                 AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill
@@ -501,35 +503,55 @@ namespace AtSpecPlugin
             grid.Rows[row].Cells["expr"].Value = expr;
         }
 
-        // редактор ячейки: «Выражение»/«Значение» — TextBox с автодополнением; «Условие» — только выбор.
+        // редактор ячейки: «Выражение» — TextBox с автодополнением; «Значение» — редактируемый
+        //  combo (кнопка списка + свободный ввод); «Условие» — только выбор.
         private void Grid_EditingControlShowing(object sender, DataGridViewEditingControlShowingEventArgs e)
         {
             var col = grid.CurrentCell != null ? grid.CurrentCell.OwningColumn : null;
             if (col == null) return;
-            if (col.Name == "expr" || col.Name == "val")
+
+            if (col.Name == "expr")
             {
-                // «Выражение» и «Значение» — TextBox с автодополнением; свободный ввод коммитится всегда
-                // (combo в DataGridView терял текст — фидбэк Алексея). «Выражение» — список вставок;
-                // «Значение» — контекстные значения поля строки (для «содержит» можно ввести подстроку).
+                // «Выражение» — TextBox с автодополнением (combo терял введённый текст — фидбэк Алексея).
                 var tb = e.Control as TextBox;
                 if (tb == null) return;
                 var ac = new AutoCompleteStringCollection();
-                if (col.Name == "expr")
-                    ac.AddRange(_exprSuggest.ToArray());
-                else
-                {
-                    int ri = grid.CurrentCell.RowIndex;
-                    string expr = ri >= 0 ? Convert.ToString(grid.Rows[ri].Cells["expr"].Value) : "";
-                    foreach (var v in ValuesFor(_layer, ExtractField(expr) ?? "")) ac.Add(Convert.ToString(v));
-                }
+                ac.AddRange(_exprSuggest.ToArray());
                 tb.AutoCompleteCustomSource = ac;
                 tb.AutoCompleteSource = AutoCompleteSource.CustomSource;
                 tb.AutoCompleteMode = AutoCompleteMode.SuggestAppend;
                 return;
             }
+
+            if (col.Name == "val")
+            {
+                // «Значение» — редактируемый combo (ValueComboCell): кнопка списка ВОЗВРАЩЕНА,
+                //  свободный ввод держится (значение = Text, не SelectedItem). Список — контекстные
+                //  значения поля строки (для «содержит» можно ввести подстроку руками).
+                var cbv = e.Control as ComboBox;
+                if (cbv == null) return;
+                cbv.DropDownStyle = ComboBoxStyle.DropDown;
+                int ri = grid.CurrentCell.RowIndex;
+                string expr = ri >= 0 ? Convert.ToString(grid.Rows[ri].Cells["expr"].Value) : "";
+                string keep = cbv.Text;          // не терять уже введённое при наполнении списка
+                cbv.Items.Clear();
+                var ac = new AutoCompleteStringCollection();
+                foreach (var v in ValuesFor(_layer, ExtractField(expr) ?? ""))
+                {
+                    string sv = Convert.ToString(v);
+                    cbv.Items.Add(sv);
+                    ac.Add(sv);
+                }
+                cbv.Text = keep;
+                cbv.AutoCompleteCustomSource = ac;
+                cbv.AutoCompleteSource = AutoCompleteSource.CustomSource;
+                cbv.AutoCompleteMode = AutoCompleteMode.SuggestAppend;
+                return;
+            }
+
             var cb = e.Control as ComboBox;
             if (cb == null) return;
-            if (col.Name == "cond") { cb.DropDownStyle = ComboBoxStyle.DropDownList; return; }
+            if (col.Name == "cond") { cb.DropDownStyle = ComboBoxStyle.DropDownList; }
         }
 
         // корень гонки combo: свободно введённый текст кладём в Items колонки ДО коммита →
