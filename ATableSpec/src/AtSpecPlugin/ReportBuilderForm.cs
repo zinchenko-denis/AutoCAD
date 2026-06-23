@@ -37,18 +37,20 @@ namespace AtSpecPlugin
 {
     public class ReportBuilderForm : Form
     {
-        private readonly List<string> _layers, _fields;
+        private readonly List<string> _layers, _fields, _textStyles;
         // карта значений: слой -> поле -> отсортированные уникальные значения; ключ "" = все блоки.
         private readonly Dictionary<string, Dictionary<string, List<string>>> _valuesByLayer;
         private readonly List<SectionCard> _cards = new List<SectionCard>();
         private ComboBox cbTitle;          // «Заголовок» = редактируемый combo (выпадушка = шаблоны)
         private CheckBox chkHideTitle;
         private NumericUpDown nudScale;
+        private ComboBox cmbFont;          // «Шрифт» = текстстиль чертежа (единый стиль ячеек)
         private FlowLayoutPanel flow;
 
         // подписи выпадушки заголовка -> номер шаблона (0 Ручное, 1 Спец, 2 Раскрой, 3 Заполнения)
         private static readonly string[] TplLabels = { "Спецификация", "Раскрой", "Заполнения", "Ручное (пусто)" };
         private static readonly int[] TplOrder = { 1, 2, 3, 0 };
+        private const string NoFontLabel = "(по стилю таблицы)";   // дефолт «Шрифта» — не переопределять стиль
 
         private int _template;
         private bool _suppressTpl;
@@ -58,11 +60,13 @@ namespace AtSpecPlugin
         // template: 0 — Ручное (пусто), 1 — Спецификация, 2 — Раскрой, 3 — Заполнения.
         public ReportBuilderForm(List<string> layers, List<string> fields,
                                  Dictionary<string, Dictionary<string, List<string>>> valuesByLayer = null,
+                                 List<string> textStyles = null,
                                  int template = 1)
         {
             _layers = layers ?? new List<string>();
             _fields = fields ?? new List<string>();
             _valuesByLayer = valuesByLayer;
+            _textStyles = textStyles ?? new List<string>();
             _template = (template >= 0 && template <= 3) ? template : 1;
             BuildUi();
             _suppressTpl = true;
@@ -129,12 +133,33 @@ namespace AtSpecPlugin
             }
             catch { }
 
-            Controls.Add(new Label
+            // (Алексей) подсказку про шаблон убрали (перегружала интерфейс). Вместо неё — «Шрифт»:
+            //  единый текстстиль чертежа на все ячейки таблицы (единый стиль документации).
+            Controls.Add(new Label { Left = x + 162, Top = y + 4, Width = 52, Text = "Шрифт:" });
+            cmbFont = new ComboBox
             {
-                Left = x + 162, Top = y + 4, Width = 578,
-                Text = "Выпадушка «Заголовка» = шаблон (засевает столбцы); всё редактируемо. «+ Добавить отчёт» — ещё секция.",
-                Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right
-            });
+                Left = x + 216, Top = y, Width = 250, DropDownStyle = ComboBoxStyle.DropDownList,
+                Anchor = AnchorStyles.Top | AnchorStyles.Left
+            };
+            cmbFont.Items.Add(NoFontLabel);                       // дефолт: не переопределять стиль таблицы
+            foreach (var ts in _textStyles)
+                if (!string.IsNullOrEmpty(ts)) cmbFont.Items.Add(ts);
+            cmbFont.SelectedIndex = 0;
+            Controls.Add(cmbFont);
+            try   // последний выбранный шрифт — дефолт для новых таблиц (зеркало «Масштаба»)
+            {
+                using (var rk = Registry.CurrentUser.OpenSubKey(@"Software\ATableSpec"))
+                {
+                    object fv = rk == null ? null : rk.GetValue("Font");
+                    string fs = fv == null ? "" : Convert.ToString(fv);
+                    if (!string.IsNullOrEmpty(fs))
+                    {
+                        int idx = cmbFont.Items.IndexOf(fs);
+                        if (idx >= 0) cmbFont.SelectedIndex = idx;
+                    }
+                }
+            }
+            catch { }
             y += 34;
 
             flow = new FlowLayoutPanel
@@ -307,17 +332,24 @@ namespace AtSpecPlugin
                 DialogResult = DialogResult.None;   // не закрывать форму
                 return;
             }
+            string fontName = (cmbFont != null && cmbFont.SelectedIndex > 0)
+                ? Convert.ToString(cmbFont.SelectedItem) : "";   // индекс 0 = «(по стилю таблицы)» → не переопределять
             ReportDef = new Dictionary<string, object>
             {
                 { "title", cbTitle.Text },
                 { "hide_title", chkHideTitle.Checked },
                 { "scale", (double)nudScale.Value },
+                { "font", fontName },
                 { "sections", sections }
             };
-            try   // запомнить масштаб — следующая таблица создастся с ним
+            try   // запомнить масштаб и шрифт — следующая таблица создастся с ними
             {
                 using (var rk = Registry.CurrentUser.CreateSubKey(@"Software\ATableSpec"))
-                    if (rk != null) rk.SetValue("Scale", ((int)nudScale.Value).ToString());
+                    if (rk != null)
+                    {
+                        rk.SetValue("Scale", ((int)nudScale.Value).ToString());
+                        rk.SetValue("Font", fontName);
+                    }
             }
             catch { }
         }

@@ -51,6 +51,7 @@ namespace AtSpecPlugin
             var fieldSet = new SortedSet<string>(StringComparer.OrdinalIgnoreCase);
             // карта значений для контекстного фильтра: слой -> поле -> уникальные значения; "" = все блоки
             var valuesRaw = new Dictionary<string, Dictionary<string, HashSet<string>>>(StringComparer.OrdinalIgnoreCase);
+            var styleSet = new SortedSet<string>(StringComparer.OrdinalIgnoreCase);   // текстстили чертежа -> «Шрифт»
             using (Transaction tr = db.TransactionManager.StartTransaction())
             {
                 foreach (SelectedObject so in sel.Value)
@@ -90,6 +91,18 @@ namespace AtSpecPlugin
                         { "attributes", attrs }
                     });
                 }
+                // текстстили чертежа -> выпадушка «Шрифт» (единый стиль документации)
+                try
+                {
+                    var tst = tr.GetObject(db.TextStyleTableId, OpenMode.ForRead) as TextStyleTable;
+                    if (tst != null)
+                        foreach (ObjectId sid in tst)
+                        {
+                            var rec = tr.GetObject(sid, OpenMode.ForRead) as TextStyleTableRecord;
+                            if (rec != null && !string.IsNullOrEmpty(rec.Name)) styleSet.Add(rec.Name);
+                        }
+                }
+                catch { }
                 tr.Commit();
             }
             if (records.Count == 0) { ed.WriteMessage("\nСреди выбранного нет блоков."); return; }
@@ -116,6 +129,7 @@ namespace AtSpecPlugin
                 if (!fields.Exists(z => string.Equals(z, extra, StringComparison.OrdinalIgnoreCase)))
                     fields.Add(extra);
             var layers = new List<string>(layerSet);
+            var textStyles = new List<string>(styleSet);
             // значения для фильтра: HashSet -> отсортированный List. #5: ту же деталировку
             // вырезаем и из ключей карты «слой→поле→значения» (фильтр берёт поля отсюда).
             var valuesByLayer = new Dictionary<string, Dictionary<string, List<string>>>(StringComparer.OrdinalIgnoreCase);
@@ -133,7 +147,7 @@ namespace AtSpecPlugin
             }
 
             // --- 4. построитель отчёта (шаблон выбирается списком прямо в окне) ---
-            var form = new ReportBuilderForm(layers, fields, valuesByLayer);
+            var form = new ReportBuilderForm(layers, fields, valuesByLayer, textStyles);
             if (AcApp.ShowModalDialog(form) != DialogResult.OK) { ed.WriteMessage("\nОтменено."); return; }
 
             // --- 5. payload: action=report + определение отчёта ---
@@ -173,7 +187,8 @@ namespace AtSpecPlugin
             // --- 8. AcDbTable: заголовок + секции (подпись/шапка/данные) + определение в таблице ---
             bool hideTitle = GetBoolFlag(form.ReportDef, "hide_title");
             double scale = GetDoubleFlag(form.ReportDef, "scale", 1.0);
-            DrawTable(db, pr.Value, title, secs, ser.Serialize(form.ReportDef), hideTitle, scale);
+            string fontName = SafeStr(Get(form.ReportDef, "font"));
+            DrawTable(db, pr.Value, title, secs, ser.Serialize(form.ReportDef), hideTitle, scale, fontName);
             ed.WriteMessage("\nГотово: \"" + title + "\", секций: " + secs.Count + ", строк: " + totalRows + ". Пересчёт — ATSPECUPDATE.");
         }
 
@@ -245,7 +260,7 @@ namespace AtSpecPlugin
         }
 
         private static void DrawTable(Database db, Point3d pos, string title,
-            List<ReportReactor.SectionView> secs, string defJson, bool hideTitle, double scale)
+            List<ReportReactor.SectionView> secs, string defJson, bool hideTitle, double scale, string font)
         {
             using (Transaction tr = db.TransactionManager.StartTransaction())
             {
@@ -255,11 +270,15 @@ namespace AtSpecPlugin
                 var tbl = new Table();
                 tbl.TableStyle = db.Tablestyle;
                 tbl.Position = pos;
-                // раскладка секций (rebuild): SetSize + текст + усечение хвоста + масштаб + объединения
-                int[] wm = ReportReactor.LayoutSections(tbl, title, hideTitle, scale, secs, true);
-                tbl.GenerateLayout();
+                // сначала делаем таблицу резидентной — тогда применение текстстиля к ячейкам
+                // (Cells[].TextStyleId в LayoutSections) безопасно, как и при пересчёте (Refill).
                 ms.AppendEntity(tbl);
                 tr.AddNewlyCreatedDBObject(tbl, true);
+                // шрифт = текстстиль чертежа по имени из формы; пусто/не найден → не переопределять
+                ObjectId fontId = ReportReactor.ResolveTextStyle(tr, db, font);
+                // раскладка секций (rebuild): SetSize + текст + усечение + масштаб + объединения + шрифт
+                int[] wm = ReportReactor.LayoutSections(tbl, title, hideTitle, scale, secs, true, fontId);
+                tbl.GenerateLayout();
                 // определение отчёта + сигнатуру раскладки — в саму таблицу (для пересчёта ATSPECUPDATE)
                 try { ReportReactor.StoreDef(tr, tbl, defJson); } catch { }
                 try { ReportReactor.StoreShape(tr, tbl, ReportReactor.ComputeShape(wm[1], secs)); } catch { }

@@ -219,6 +219,7 @@ namespace AtSpecPlugin
             var defDict = reportDef as Dictionary<string, object>;
             bool hideTitle = GetBool(defDict, "hide_title");
             double scale = GetDouble(defDict, "scale", 1.0);
+            string fontName = SafeStr(Get(defDict, "font"));
 
             var p = MakePlan(hideTitle, secs);
             string newShape = ComputeShape(p.MaxCols, secs);
@@ -230,7 +231,8 @@ namespace AtSpecPlugin
                              && tbl.Rows.Count == p.Want && tbl.Columns.Count == p.MaxCols;
 
             tbl.UpgradeOpen();
-            LayoutSections(tbl, title, hideTitle, scale, secs, !sameShape);
+            LayoutSections(tbl, title, hideTitle, scale, secs, !sameShape,
+                           ResolveTextStyle(tr, tbl.Database, fontName));
             if (!sameShape) { try { StoreShape(tr, tbl, newShape); } catch { } }
             tbl.GenerateLayout();
             return true;
@@ -302,11 +304,26 @@ namespace AtSpecPlugin
             return p;
         }
 
+        // Имя текстстиля -> ObjectId (для применения «Шрифта» к ячейкам). Пусто/не найден →
+        // ObjectId.Null (не переопределять стиль таблицы).
+        public static ObjectId ResolveTextStyle(Transaction tr, Database db, string name)
+        {
+            if (tr == null || db == null || string.IsNullOrEmpty(name)) return ObjectId.Null;
+            try
+            {
+                var tst = tr.GetObject(db.TextStyleTableId, OpenMode.ForRead) as TextStyleTable;
+                if (tst != null && tst.Has(name)) return tst[name];
+            }
+            catch { }
+            return ObjectId.Null;
+        }
+
         // Заполняет таблицу секциями. rebuild=true → SetSize + масштаб + объединения (полная
         // перестройка); rebuild=false → ТОЛЬКО текст ячеек (бережный пересчёт). Возвращает
         // {want, maxCols}. Присваивание текста и объединения обёрнуты в try (объединённые подъячейки).
+        // fontStyleId (≠Null) — единый текстстиль на все ячейки (применяется в rebuild-проходе).
         public static int[] LayoutSections(Table tbl, string title, bool hideTitle,
-            double scale, List<SectionView> secs, bool rebuild)
+            double scale, List<SectionView> secs, bool rebuild, ObjectId fontStyleId)
         {
             var p = MakePlan(hideTitle, secs);
             if (rebuild) tbl.SetSize(p.Want, p.MaxCols);
@@ -346,10 +363,15 @@ namespace AtSpecPlugin
                         ApplyHeaderMerges(tbl, p.SecHeaderRow[i], p.MaxCols, secs[i].Merges);  // #5: объединение шапки секции
                 }
                 // выравнивание (фидбэк Алексея): текст во ВСЕХ ячейках — по центру (верт.+гориз.),
-                // иначе шапка прижималась кверху стилем таблицы. Объединённые подъячейки пропускаем (try).
+                // иначе шапка прижималась кверху стилем таблицы. Шрифт (если задан текстстиль) — в том
+                // же проходе. Объединённые подъячейки пропускаем (try).
                 for (int r = 0; r < tbl.Rows.Count; r++)
                     for (int c = 0; c < tbl.Columns.Count; c++)
+                    {
                         try { tbl.Cells[r, c].Alignment = CellAlignment.MiddleCenter; } catch { }
+                        if (!fontStyleId.IsNull)
+                            try { tbl.Cells[r, c].TextStyleId = fontStyleId; } catch { }
+                    }
             }
             return new[] { p.Want, p.MaxCols };
         }
