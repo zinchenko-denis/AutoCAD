@@ -77,6 +77,150 @@ namespace AtSpecPlugin
             AddSection(PresetFor(_template, true));    // стартовая секция, засеяна под шаблон
         }
 
+        // Конструктор реверса (ATSPECEDIT): форма заполняется из готового определения —
+        //  заголовок/скрытие/масштаб/шрифт + секции из набора seed'ов (FullRows).
+        public ReportBuilderForm(List<string> layers, List<string> fields,
+                                 Dictionary<string, Dictionary<string, List<string>>> valuesByLayer,
+                                 List<string> textStyles,
+                                 string title, bool hideTitle, double scale, string font,
+                                 List<SectionSeed> sectionSeeds)
+        {
+            _layers = layers ?? new List<string>();
+            _fields = fields ?? new List<string>();
+            _valuesByLayer = valuesByLayer;
+            _textStyles = textStyles ?? new List<string>();
+            _template = 1;
+            BuildUi();
+            _suppressTpl = true; cbTitle.Text = title ?? ""; _suppressTpl = false;
+            chkHideTitle.Checked = hideTitle;
+            if (scale >= 1) nudScale.Value = (decimal)Math.Min(scale, 100000);   // def перекрывает дефолт реестра
+            if (!string.IsNullOrEmpty(font))
+            {
+                int fi = cmbFont.Items.IndexOf(font);
+                if (fi >= 0) cmbFont.SelectedIndex = fi;     // иначе остаётся «(по стилю таблицы)»
+            }
+            _lastTitle = cbTitle.Text;
+            if (sectionSeeds != null && sectionSeeds.Count > 0)
+                foreach (var s in sectionSeeds) AddSection(s);
+            else
+                AddSection(PresetFor(1, true));              // пустую форму не оставляем
+        }
+
+        // def (десериализованный объект) -> готовая форма для правки на месте.
+        public static ReportBuilderForm FromDef(object def,
+            List<string> layers, List<string> fields,
+            Dictionary<string, Dictionary<string, List<string>>> valuesByLayer, List<string> textStyles)
+        {
+            var d = def as Dictionary<string, object>;
+            string title = AsStr(d, "title");
+            bool hideTitle = AsBool(d, "hide_title");
+            double scale = AsDouble(d, "scale", 1.0);
+            string font = AsStr(d, "font");
+            var seeds = new List<SectionSeed>();
+            var secs = Val(d, "sections") as object[];
+            if (secs != null)
+                foreach (var so in secs)
+                {
+                    var seed = SeedFromSection(so as Dictionary<string, object>);
+                    if (seed != null) seeds.Add(seed);
+                }
+            return new ReportBuilderForm(layers, fields, valuesByLayer, textStyles,
+                                         title, hideTitle, scale, font, seeds);
+        }
+
+        // одна секция def -> seed (полный набор строк грида). Инверсия SectionCard.ToDef.
+        private static SectionSeed SeedFromSection(Dictionary<string, object> sec)
+        {
+            if (sec == null) return null;
+            var seed = new SectionSeed
+            {
+                FullRows = new List<string[]>(),
+                SeedMerges = new List<int[]>(),
+                SectionTitle = AsStr(sec, "section_title"),
+                HideHeader = AsBool(sec, "hide_header"),
+                TotalRow = AsBool(sec, "total_row")
+            };
+            var headers = ToStrListLocal(Val(sec, "header"));
+            var columns = ToStrListLocal(Val(sec, "columns"));
+            int colCount = Math.Max(headers.Count, columns.Count);
+
+            // фильтры: первый «Слой = X» -> источник секции; остальные -> условия
+            var conds = new List<string[]>();   // {field, op, value}
+            var filt = Val(sec, "filter") as object[];
+            if (filt != null)
+                foreach (var fo in filt)
+                {
+                    var fd = fo as Dictionary<string, object>;
+                    if (fd == null) continue;
+                    string field = AsStr(fd, "field"), op = AsStr(fd, "op"), value = AsStr(fd, "value");
+                    if (seed.SeedLayer == null && op == "=" &&
+                        string.Equals(field, "Слой", StringComparison.OrdinalIgnoreCase))
+                        seed.SeedLayer = value;
+                    else
+                        conds.Add(new[] { field, op, value });
+                }
+
+            // строки-столбцы (output): индексы 0..colCount-1 = output-координаты (как в ToDef)
+            for (int i = 0; i < colCount; i++)
+            {
+                string h  = i < headers.Count ? headers[i] : "";
+                string ex = i < columns.Count ? columns[i] : "";
+                seed.FullRows.Add(new[] { h, ex, "", "", "" });
+            }
+
+            // группа/сортировка: group_by (output idx) -> метка «Группа» строки
+            int gby = AsInt(Val(sec, "group_by"), -1);
+            if (gby >= 0 && gby < seed.FullRows.Count)
+            {
+                string label = "без сортировки";              // group_by есть, sort_by нет
+                var sb = Val(sec, "sort_by") as object[];      // [idx, "asc"|"desc"]
+                if (sb != null && sb.Length >= 2)
+                    label = (Convert.ToString(sb[1]) == "desc") ? "по убыванию" : "по возрастанию";
+                seed.FullRows[gby][4] = label;
+            }
+
+            // условия -> на строку-столбец с тем же полем (ExtractField), иначе — отдельная строка-фильтр
+            foreach (var c in conds)
+            {
+                string field = c[0], op = c[1], value = c[2];
+                bool placed = false;
+                for (int i = 0; i < colCount; i++)
+                    if (seed.FullRows[i][2].Length == 0 &&
+                        string.Equals(ExtractField(seed.FullRows[i][1]) ?? "", field, StringComparison.OrdinalIgnoreCase))
+                    { seed.FullRows[i][2] = op; seed.FullRows[i][3] = value; placed = true; break; }
+                if (!placed)
+                    seed.FullRows.Add(new[] { "", "=Object.«" + field + "»", op, value, "" });
+            }
+
+            // объединения шапки: header_merges в output-координатах == индексы строк-столбцов
+            var hm = Val(sec, "header_merges") as object[];
+            if (hm != null)
+                foreach (var mo in hm)
+                {
+                    var ml = mo as object[];
+                    if (ml != null && ml.Length >= 2)
+                    {
+                        int s = AsInt(ml[0], -1), e = AsInt(ml[1], -1);
+                        if (s >= 0 && e >= s && e < colCount) seed.SeedMerges.Add(new[] { s, e });
+                    }
+                }
+            return seed;
+        }
+
+        // --- мелкие хелперы разбора десериализованного def (JavaScriptSerializer: массив=object[]) ---
+        private static object Val(Dictionary<string, object> d, string k)
+        { object v; return (d != null && d.TryGetValue(k, out v)) ? v : null; }
+        private static string AsStr(Dictionary<string, object> d, string k)
+        { var v = Val(d, k); return v == null ? "" : Convert.ToString(v); }
+        private static bool AsBool(Dictionary<string, object> d, string k)
+        { var v = Val(d, k); try { return v != null && Convert.ToBoolean(v); } catch { return false; } }
+        private static double AsDouble(Dictionary<string, object> d, string k, double def)
+        { var v = Val(d, k); if (v == null) return def; try { return Convert.ToDouble(v, System.Globalization.CultureInfo.InvariantCulture); } catch { return def; } }
+        private static int AsInt(object v, int def)
+        { if (v == null) return def; try { return Convert.ToInt32(v); } catch { return def; } }
+        private static List<string> ToStrListLocal(object o)
+        { var r = new List<string>(); var a = o as object[]; if (a != null) foreach (var x in a) r.Add(x == null ? "" : Convert.ToString(x)); return r; }
+
         private void BuildUi()
         {
             Text = "ATableSpec — построитель отчёта";
@@ -213,9 +357,16 @@ namespace AtSpecPlugin
             foreach (var c in new List<SectionCard>(_cards)) { flow.Controls.Remove(c); c.Dispose(); }
             _cards.Clear();
             _template = tpl;
-            _suppressTpl = true; cbTitle.SelectedIndex = -1; cbTitle.Text = DefaultTitleFor(tpl); _suppressTpl = false;
             chkHideTitle.Checked = (tpl == 2);   // раскрой — по умолчанию скрыть заголовок таблицы
-            _lastTitle = cbTitle.Text;
+            string deftitle = DefaultTitleFor(tpl);
+            _suppressTpl = true; cbTitle.SelectedIndex = -1; _suppressTpl = false;
+            // (Алексей) верхний заголовок обнулялся при выборе шаблона: редактируемый combo сам
+            //  переписывает текст поля под выбранный пункт ПОСЛЕ закрытия выпадушки, затирая наш
+            //  заголовок. Ставим его ОТЛОЖЕННО — после того как combo доработает выбор.
+            BeginInvoke((Action)(() =>
+            {
+                _suppressTpl = true; cbTitle.Text = deftitle; _lastTitle = deftitle; _suppressTpl = false;
+            }));
             AddSection(PresetFor(tpl, true));
         }
 
@@ -485,9 +636,30 @@ namespace AtSpecPlugin
                 if (e.KeyCode == Keys.Delete && !grid.IsCurrentCellInEditMode)
                 { DeleteSelectedRows(); e.Handled = true; }
             };
-            // засев строк: для строки-группы (seed.GroupIdx) ставим сортировку из seed.SortMode
+            // засев строк
             string[] grpLabels = { "по возрастанию", "по убыванию", "без сортировки" };
-            if (seed != null)
+            if (seed != null && seed.FullRows != null)
+            {
+                // реверс из def: полный набор строк грида + заголовок/скрытие шапки + объединения
+                txtSecTitle.Text = seed.SectionTitle ?? "";
+                chkHideHeader.Checked = seed.HideHeader;
+                foreach (var fr in seed.FullRows)
+                {
+                    if (fr == null) continue;
+                    string h  = fr.Length > 0 ? (fr[0] ?? "") : "";
+                    string ex = fr.Length > 1 ? (fr[1] ?? "") : "";
+                    string op = fr.Length > 2 ? (fr[2] ?? "") : "";
+                    string vl = fr.Length > 3 ? (fr[3] ?? "") : "";
+                    string gr = fr.Length > 4 ? (fr[4] ?? "") : "";
+                    grid.Rows.Add(h, ex, op, vl, gr);
+                }
+                if (seed.SeedMerges != null)
+                    foreach (var sp in seed.SeedMerges)
+                        if (sp != null && sp.Length == 2 && sp[0] >= 0 && sp[1] >= sp[0] && sp[1] < seed.FullRows.Count)
+                            _merges.Add(new[] { sp[0], sp[1] });
+                _merges.Sort((a, b) => a[0].CompareTo(b[0]));
+            }
+            else if (seed != null)
                 for (int gi = 0; gi < seed.Columns.Count; gi++)
                 {
                     var c = seed.Columns[gi];
@@ -634,7 +806,7 @@ namespace AtSpecPlugin
         }
 
         // имя поля из выражения: первое «…» либо Object.Name (-> "Name"); иначе null (не поле).
-        private static string ExtractField(string expr)
+        internal static string ExtractField(string expr)
         {
             if (string.IsNullOrEmpty(expr)) return null;
             int i = expr.IndexOf('«');
@@ -1014,5 +1186,12 @@ namespace AtSpecPlugin
         public bool UseFirstLayer = false;                       // подставить первый слой источником
         public bool TotalRow = false;                            // строка ИТОГ (сумма столбцов с Count)
         public string SeedLayer = null;                          // предпочтительный слой-источник (если есть)
+
+        // --- путь реверса (ATSPECEDIT / FromDef): восстановление формы из сохранённого def ---
+        // Когда FullRows != null, секция засевается ИМИ (полные строки грида), а не Columns.
+        public List<string[]> FullRows = null;   // каждая = {Заголовок, Выражение, Условие, Значение, Группа}
+        public List<int[]> SeedMerges = null;     // объединения шапки [s,e] в координатах строк FullRows
+        public string SectionTitle = null;        // «Заголовок секции»
+        public bool HideHeader = false;           // «Скрыть шапку столбцов»
     }
 }
