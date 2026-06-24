@@ -186,7 +186,7 @@ namespace AtSpecPlugin
                 bool placed = false;
                 for (int i = 0; i < colCount; i++)
                     if (seed.FullRows[i][2].Length == 0 &&
-                        string.Equals(ExtractField(seed.FullRows[i][1]) ?? "", field, StringComparison.OrdinalIgnoreCase))
+                        string.Equals(SectionCard.ExtractField(seed.FullRows[i][1]) ?? "", field, StringComparison.OrdinalIgnoreCase))
                     { seed.FullRows[i][2] = op; seed.FullRows[i][3] = value; placed = true; break; }
                 if (!placed)
                     seed.FullRows.Add(new[] { "", "=Object.«" + field + "»", op, value, "" });
