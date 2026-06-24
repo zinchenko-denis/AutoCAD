@@ -31,6 +31,7 @@ using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Windows.Forms;
+using System.Web.Script.Serialization;
 using Microsoft.Win32;
 
 namespace AtSpecPlugin
@@ -370,16 +371,78 @@ namespace AtSpecPlugin
             AddSection(PresetFor(tpl, true));
         }
 
-        private void AddSection(SectionSeed seed)
+        private SectionCard NewCard(SectionSeed seed)
         {
             var card = new SectionCard(_layers, _fields, _valuesByLayer, seed);
             card.MoveUpRequested += MoveCardUp;
             card.MoveDownRequested += MoveCardDown;
             card.RemoveRequested += RemoveCard;
+            card.CopyRequested += CopyCard;
+            return card;
+        }
+
+        private void AddSection(SectionSeed seed)
+        {
+            var card = NewCard(seed);
             _cards.Add(card);
             flow.Controls.Add(card);
             Renumber();
             flow.ScrollControlIntoView(card);
+        }
+
+        // Копирование отчёта (фидбэк Алексея): дублирует секцию и вставляет в выбранную позицию
+        // (выпадушка «перед отчётом N» / «в конец»); последующие отчёты перенумеровываются.
+        // Клон строится через JSON-round-trip ToDef -> SeedFromSection — тот же проверенный путь,
+        // что и реверс готовой таблицы (ATSPECEDIT), чтобы скопировалось ВСЁ: источник, столбцы,
+        // фильтр, группа/сортировка, объединённая шапка.
+        private void CopyCard(SectionCard card)
+        {
+            int srcIdx = _cards.IndexOf(card);
+            if (srcIdx < 0) return;
+            int pos = AskInsertPosition(srcIdx);
+            if (pos < 0) return;                       // отмена
+
+            var js = new JavaScriptSerializer();
+            var parsed = js.Deserialize<Dictionary<string, object>>(js.Serialize(card.ToDef()));
+            var seed = SeedFromSection(parsed);
+            if (seed == null) return;
+
+            var nc = NewCard(seed);
+            if (pos > _cards.Count) pos = _cards.Count;
+            _cards.Insert(pos, nc);
+            flow.Controls.Add(nc);
+            SyncFlowOrder();
+            Renumber();
+            flow.ScrollControlIntoView(nc);
+        }
+
+        // Диалог позиции вставки копии. Индекс вставки 0..N (N = «в конец») или -1 при отмене.
+        // По умолчанию — сразу после исходного отчёта.
+        private int AskInsertPosition(int srcIdx)
+        {
+            int n = _cards.Count;
+            using (var dlg = new Form())
+            {
+                dlg.Text = "Копировать отчёт";
+                dlg.FormBorderStyle = FormBorderStyle.FixedDialog;
+                dlg.StartPosition = FormStartPosition.CenterParent;
+                dlg.MinimizeBox = false; dlg.MaximizeBox = false; dlg.ShowInTaskbar = false;
+                dlg.ClientSize = new Size(300, 112);
+
+                var lbl = new Label { Left = 12, Top = 14, Width = 276, Text = "Вставить копию перед отчётом:" };
+                var cmb = new ComboBox { Left = 12, Top = 38, Width = 276, DropDownStyle = ComboBoxStyle.DropDownList };
+                for (int k = 1; k <= n; k++) cmb.Items.Add("отчёт " + k);
+                cmb.Items.Add("в конец");
+                int def = srcIdx + 1; if (def < 0) def = n; if (def > n) def = n;
+                cmb.SelectedIndex = def;
+
+                var ok = new Button { Text = "OK", Left = 132, Top = 76, Width = 75, DialogResult = DialogResult.OK };
+                var cancel = new Button { Text = "Отмена", Left = 213, Top = 76, Width = 75, DialogResult = DialogResult.Cancel };
+                dlg.Controls.Add(lbl); dlg.Controls.Add(cmb); dlg.Controls.Add(ok); dlg.Controls.Add(cancel);
+                dlg.AcceptButton = ok; dlg.CancelButton = cancel;
+
+                return dlg.ShowDialog(this) == DialogResult.OK ? cmb.SelectedIndex : -1;
+            }
         }
 
         // Стартовое наполнение секции под шаблон. useFirstLayer — авто-подстановка первого
@@ -535,7 +598,7 @@ namespace AtSpecPlugin
 
         private string _layer = "";
 
-        public event Action<SectionCard> MoveUpRequested, MoveDownRequested, RemoveRequested;
+        public event Action<SectionCard> MoveUpRequested, MoveDownRequested, RemoveRequested, CopyRequested;
 
         public SectionCard(List<string> layers, List<string> fields,
                            Dictionary<string, Dictionary<string, List<string>>> valuesByLayer, SectionSeed seed)
@@ -574,6 +637,11 @@ namespace AtSpecPlugin
             cmbSource.SelectedIndexChanged += (s, e) => OnSourceChanged();
             cmbSource.Leave += (s, e) => OnSourceChanged();
             Controls.Add(cmbSource);
+
+            // «Копировать» отчёт — рядом с «Источник»: дублирует секцию (с выбором позиции вставки).
+            var btnCopy = new Button { Left = 352, Top = y, Width = 104, Text = "Копировать" };
+            btnCopy.Click += (s, e) => { var h = CopyRequested; if (h != null) h(this); };
+            Controls.Add(btnCopy);
 
             var btnUp = new Button { Left = 610, Top = y, Width = 28, Text = "↑" };
             var btnDn = new Button { Left = 640, Top = y, Width = 28, Text = "↓" };
