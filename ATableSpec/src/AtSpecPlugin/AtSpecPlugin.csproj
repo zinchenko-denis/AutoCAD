@@ -27,6 +27,11 @@
     <!-- Окно-построитель запроса -->
     <Reference Include="System.Windows.Forms" />
     <Reference Include="System.Drawing" />
+    <!-- WPF: лента AutoCAD (Autodesk.Windows) и иконки кнопок (ImageSource/BitmapImage) -->
+    <Reference Include="PresentationCore" />
+    <Reference Include="PresentationFramework" />
+    <Reference Include="WindowsBase" />
+    <Reference Include="System.Xaml" />
   </ItemGroup>
 
 </Project>

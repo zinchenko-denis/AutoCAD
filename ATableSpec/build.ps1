@@ -48,6 +48,12 @@ Copy-Item (Join-Path $root "bundle\ATableSpec.bundle\PackageContents.xml") $bund
 Copy-Item $dll  (Join-Path $bundle "Contents\net48\")
 Copy-Item $exe  (Join-Path $bundle "Contents\engine\")
 Copy-Item (Join-Path $root "engine\mapping.yaml") (Join-Path $bundle "Contents\engine\")
+# иконки кнопок ленты (если есть)
+$iconsSrc = Join-Path $root "bundle\ATableSpec.bundle\Contents\icons"
+if (Test-Path $iconsSrc) {
+    New-Item -ItemType Directory -Force (Join-Path $bundle "Contents\icons") | Out-Null
+    Copy-Item (Join-Path $iconsSrc "*") (Join-Path $bundle "Contents\icons\") -Recurse -Force
+}
 
 # --- 4. ZIP ---
 Write-Host "`n[4/4] Упаковка ZIP..."

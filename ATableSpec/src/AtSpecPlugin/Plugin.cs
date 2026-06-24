@@ -10,6 +10,7 @@ namespace AtSpecPlugin
         public void Initialize()
         {
             ReportReactor.Attach();   // авто-пересчёт отчётных таблиц по правке блока
+            RibbonUi.Init();          // кнопки команд в ленте (классика — отдельным заходом)
             var doc = AcApp.DocumentManager.MdiActiveDocument;
             if (doc != null)
                 doc.Editor.WriteMessage(
@@ -18,6 +19,6 @@ namespace AtSpecPlugin
                     "ATSPECEXPORT — выгрузка таблицы в CSV; ATSPECUPDATE — пересчитать отчётные таблицы.\n");
         }
 
-        public void Terminate() { ReportReactor.Detach(); }
+        public void Terminate() { RibbonUi.Cleanup(); ReportReactor.Detach(); }
     }
 }

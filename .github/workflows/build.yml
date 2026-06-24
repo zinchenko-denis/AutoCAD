@@ -56,6 +56,10 @@ jobs:
           Copy-Item "build_dll/AtSpecPlugin.dll" "$b/Contents/net48/"
           Copy-Item "build_exe/dxf_spec.exe"     "$b/Contents/engine/"
           Copy-Item "ATableSpec/engine/mapping.yaml" "$b/Contents/engine/"
+          if (Test-Path "ATableSpec/bundle/ATableSpec.bundle/Contents/icons") {
+            New-Item -ItemType Directory -Force "$b/Contents/icons" | Out-Null
+            Copy-Item "ATableSpec/bundle/ATableSpec.bundle/Contents/icons/*" "$b/Contents/icons/" -Recurse -Force
+          }
           Compress-Archive -Path $b -DestinationPath "ATableSpec.bundle.zip" -Force
 
       # 4a) Артефакт сборки (виден в разделе Actions; скачивание — для залогиненных)
