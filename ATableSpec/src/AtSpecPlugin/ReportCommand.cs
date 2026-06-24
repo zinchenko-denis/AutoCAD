@@ -192,6 +192,208 @@ namespace AtSpecPlugin
             ed.WriteMessage("\nГотово: \"" + title + "\", секций: " + secs.Count + ", строк: " + totalRows + ". Пересчёт — ATSPECUPDATE.");
         }
 
+        // ATSPECEDIT — обратная связь: выбрать готовую таблицу ATableSpec, прочитать её
+        // определение (ReadDef), открыть построитель ЗАПОЛНЕННЫМ, по OK перезаписать
+        // определение и пересобрать таблицу НА МЕСТЕ через реактор (Recompute).
+        [CommandMethod("ATSPECEDIT")]
+        public void AtSpecEdit()
+        {
+            var doc = AcApp.DocumentManager.MdiActiveDocument;
+            if (doc == null) return;
+            Editor ed = doc.Editor;
+            Database db = doc.Database;
+
+            var peo = new PromptEntityOptions("\nВыберите таблицу ATableSpec для правки: ");
+            peo.SetRejectMessage("\nНужна таблица.");
+            peo.AddAllowedClass(typeof(Table), false);
+            PromptEntityResult per = ed.GetEntity(peo);
+            if (per.Status != PromptStatus.OK) { ed.WriteMessage("\nОтменено."); return; }
+            ObjectId tblId = per.ObjectId;
+
+            string defJson = null;
+            using (Transaction tr = db.TransactionManager.StartTransaction())
+            {
+                var tbl = tr.GetObject(tblId, OpenMode.ForRead) as Table;
+                if (tbl != null) defJson = ReportReactor.ReadDef(tr, tbl);
+                tr.Commit();
+            }
+            if (string.IsNullOrEmpty(defJson))
+            { ed.WriteMessage("\nУ этой таблицы нет определения ATableSpec (создайте через ATSPECREPORT)."); return; }
+
+            var ser = new JavaScriptSerializer { MaxJsonLength = int.MaxValue };
+            object def;
+            try { def = ser.DeserializeObject(defJson); }
+            catch (System.Exception e) { ed.WriteMessage("\nНе удалось прочитать определение: " + e.Message); return; }
+
+            // данные для выпадушек формы — со всех блоков чертежа
+            List<string> layers, fields, textStyles;
+            Dictionary<string, Dictionary<string, List<string>>> valuesByLayer;
+            GatherFormData(db, out layers, out fields, out valuesByLayer, out textStyles);
+
+            var form = ReportBuilderForm.FromDef(def, layers, fields, valuesByLayer, textStyles);
+            if (AcApp.ShowModalDialog(form) != DialogResult.OK) { ed.WriteMessage("\nПравка отменена."); return; }
+
+            // перезаписать определение и пересобрать на месте (реактор читает def из таблицы)
+            string newDefJson = ser.Serialize(form.ReportDef);
+            using (Transaction tr = db.TransactionManager.StartTransaction())
+            {
+                var tbl = tr.GetObject(tblId, OpenMode.ForWrite) as Table;
+                if (tbl == null) { ed.WriteMessage("\nТаблица недоступна."); return; }
+                try { ReportReactor.StoreDef(tr, tbl, newDefJson); } catch { }
+                tr.Commit();
+            }
+            int n = ReportReactor.Recompute(doc, new List<ObjectId> { tblId });
+            ed.WriteMessage(n > 0 ? "\nТаблица обновлена по новому определению."
+                                  : "\nОпределение сохранено, но пересборка не дала строк (проверьте фильтры/блоки).");
+        }
+
+        // ATSPECEXPORT — выгрузка готовой таблицы в CSV (для внешней программы оптимизации
+        // раскроя Алексея). Сырой дамп ячеек: разделитель «;», UTF-8 с BOM.
+        [CommandMethod("ATSPECEXPORT")]
+        public void AtSpecExport()
+        {
+            var doc = AcApp.DocumentManager.MdiActiveDocument;
+            if (doc == null) return;
+            Editor ed = doc.Editor;
+            Database db = doc.Database;
+
+            var peo = new PromptEntityOptions("\nВыберите таблицу для экспорта в CSV: ");
+            peo.SetRejectMessage("\nНужна таблица.");
+            peo.AddAllowedClass(typeof(Table), false);
+            PromptEntityResult per = ed.GetEntity(peo);
+            if (per.Status != PromptStatus.OK) { ed.WriteMessage("\nОтменено."); return; }
+
+            var sb = new StringBuilder();
+            int rows = 0;
+            using (Transaction tr = db.TransactionManager.StartTransaction())
+            {
+                var tbl = tr.GetObject(per.ObjectId, OpenMode.ForRead) as Table;
+                if (tbl == null) { ed.WriteMessage("\nЭто не таблица."); return; }
+                rows = tbl.Rows.Count;
+                int cols = tbl.Columns.Count;
+                for (int r = 0; r < rows; r++)
+                {
+                    var cells = new List<string>();
+                    for (int c = 0; c < cols; c++)
+                    {
+                        string t;
+                        try { t = tbl.Cells[r, c].TextString ?? ""; } catch { t = ""; }
+                        cells.Add(CsvEscape(t));
+                    }
+                    sb.Append(string.Join(";", cells)).Append("\r\n");
+                }
+                tr.Commit();
+            }
+            if (rows == 0) { ed.WriteMessage("\nТаблица пуста."); return; }
+
+            string path;
+            using (var dlg = new SaveFileDialog
+            {
+                Title = "Экспорт таблицы в CSV", Filter = "CSV (*.csv)|*.csv",
+                DefaultExt = "csv", FileName = "atspec_export.csv", OverwritePrompt = true
+            })
+            {
+                if (dlg.ShowDialog() != DialogResult.OK) { ed.WriteMessage("\nЭкспорт отменён."); return; }
+                path = dlg.FileName;
+            }
+            try
+            {
+                File.WriteAllText(path, sb.ToString(), new UTF8Encoding(true));   // BOM — кириллица в Excel
+                ed.WriteMessage("\nЭкспортировано строк: " + rows + " -> " + path);
+            }
+            catch (System.Exception e) { ed.WriteMessage("\nНе удалось записать файл: " + e.Message); }
+        }
+
+        private static string CsvEscape(string s)
+        {
+            if (s == null) s = "";
+            bool quote = s.IndexOf('"') >= 0 || s.IndexOf(';') >= 0 || s.IndexOf(',') >= 0
+                         || s.IndexOf('\n') >= 0 || s.IndexOf('\r') >= 0;
+            if (s.IndexOf('"') >= 0) s = s.Replace("\"", "\"\"");
+            return quote ? "\"" + s + "\"" : s;
+        }
+
+        // Сбор данных для выпадушек формы (слои/поля/значения/текстстили) по ВСЕМ блокам
+        // модели — для ATSPECEDIT (в отличие от ATSPECREPORT, где блоки выбирает пользователь).
+        // Деталировочные поля (DOBL/…/UGR) вырезаются нормализованным сравнением (как в ATSPECREPORT).
+        private static void GatherFormData(Database db,
+            out List<string> layers, out List<string> fields,
+            out Dictionary<string, Dictionary<string, List<string>>> valuesByLayer, out List<string> textStyles)
+        {
+            var layerSet = new SortedSet<string>(StringComparer.OrdinalIgnoreCase);
+            var fieldSet = new SortedSet<string>(StringComparer.OrdinalIgnoreCase);
+            var valuesRaw = new Dictionary<string, Dictionary<string, HashSet<string>>>(StringComparer.OrdinalIgnoreCase);
+            var styleSet = new SortedSet<string>(StringComparer.OrdinalIgnoreCase);
+
+            using (Transaction tr = db.TransactionManager.StartTransaction())
+            {
+                var bt = (BlockTable)tr.GetObject(db.BlockTableId, OpenMode.ForRead);
+                var ms = (BlockTableRecord)tr.GetObject(bt[BlockTableRecord.ModelSpace], OpenMode.ForRead);
+                foreach (ObjectId id in ms)
+                {
+                    var br = tr.GetObject(id, OpenMode.ForRead) as BlockReference;
+                    if (br == null) continue;
+                    var attrs = new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase);
+                    foreach (ObjectId arId in br.AttributeCollection)
+                    {
+                        var ar = tr.GetObject(arId, OpenMode.ForRead) as AttributeReference;
+                        if (ar != null) { attrs[ar.Tag] = ar.TextString; fieldSet.Add(ar.Tag); }
+                    }
+                    if (br.IsDynamicBlock)
+                        foreach (DynamicBlockReferenceProperty dp in br.DynamicBlockReferencePropertyCollection)
+                        {
+                            string pn = dp.PropertyName;
+                            if (string.IsNullOrEmpty(pn) || attrs.ContainsKey(pn)) continue;
+                            attrs[pn] = Convert.ToString(dp.Value, System.Globalization.CultureInfo.InvariantCulture);
+                            fieldSet.Add(pn);
+                        }
+                    layerSet.Add(br.Layer);
+                    string effName = EffectiveName(tr, br);
+                    AddVal(valuesRaw, br.Layer, "Слой", br.Layer);
+                    AddVal(valuesRaw, br.Layer, "Имя", effName);
+                    foreach (var kv in attrs)
+                        AddVal(valuesRaw, br.Layer, kv.Key, Convert.ToString(kv.Value));
+                }
+                try
+                {
+                    var tst = tr.GetObject(db.TextStyleTableId, OpenMode.ForRead) as TextStyleTable;
+                    if (tst != null)
+                        foreach (ObjectId sid in tst)
+                        {
+                            var rec = tr.GetObject(sid, OpenMode.ForRead) as TextStyleTableRecord;
+                            if (rec != null && !string.IsNullOrEmpty(rec.Name)) styleSet.Add(rec.Name);
+                        }
+                }
+                catch { }
+                tr.Commit();
+            }
+
+            System.Func<string, string> nkf = z => (z ?? "").Trim().Trim('«', '»', '"', ' ').ToUpperInvariant();
+            var HIDE = new[] { "DOBL", "DOBR", "KLL", "KLR", "L", "R", "UGL", "UGR" };
+            var HIDEN = new HashSet<string>();
+            foreach (var h0 in HIDE) HIDEN.Add(nkf(h0));
+            fields = new List<string>();
+            foreach (var f in fieldSet) if (!HIDEN.Contains(nkf(f))) fields.Add(f);
+            foreach (var extra in new[] { "Имя", "Слой", "Длина", "Ширина", "Высота" })
+                if (!fields.Exists(z => string.Equals(z, extra, StringComparison.OrdinalIgnoreCase)))
+                    fields.Add(extra);
+            layers = new List<string>(layerSet);
+            textStyles = new List<string>(styleSet);
+            valuesByLayer = new Dictionary<string, Dictionary<string, List<string>>>(StringComparer.OrdinalIgnoreCase);
+            foreach (var kvL in valuesRaw)
+            {
+                var byF = new Dictionary<string, List<string>>(StringComparer.OrdinalIgnoreCase);
+                foreach (var kvF in kvL.Value)
+                {
+                    if (HIDEN.Contains(nkf(kvF.Key))) continue;
+                    var lst = new List<string>(kvF.Value);
+                    lst.Sort(StringComparer.OrdinalIgnoreCase);
+                    byF[kvF.Key] = lst;
+                }
+                valuesByLayer[kvL.Key] = byF;
+            }
+        }
+
         // Диагностика: точные имена/значения/типы атрибутов и динам. параметров выбранных
         // блоков + габарит. Маркеры «» показывают крайние пробелы в именах. Нужна, чтобы
         // понять, под каким именем живой API отдаёт длину/ширину/высоту (имена ручек разнятся).

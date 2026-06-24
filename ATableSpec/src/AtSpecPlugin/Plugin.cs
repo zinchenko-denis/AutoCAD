@@ -14,7 +14,8 @@ namespace AtSpecPlugin
             if (doc != null)
                 doc.Editor.WriteMessage(
                     "\nATableSpec загружен. Команды: ATSPEC — спецификация из блоков; " +
-                    "ATSPECREPORT — свой отчёт по формулам; ATSPECUPDATE — пересчитать отчётные таблицы.\n");
+                    "ATSPECREPORT — свой отчёт по формулам; ATSPECEDIT — правка готовой таблицы; " +
+                    "ATSPECEXPORT — выгрузка таблицы в CSV; ATSPECUPDATE — пересчитать отчётные таблицы.\n");
         }
 
         public void Terminate() { ReportReactor.Detach(); }
