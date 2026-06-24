@@ -435,7 +435,7 @@ namespace AtSpecPlugin
             return sb.ToString();
         }
 
-        private static string ReadDef(Transaction tr, Table tbl)
+        public static string ReadDef(Transaction tr, Table tbl)
         {
             return ReadString(tr, tbl, DICTKEY);
         }
