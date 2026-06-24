@@ -32,6 +32,8 @@
     <Reference Include="PresentationFramework" />
     <Reference Include="WindowsBase" />
     <Reference Include="System.Xaml" />
+    <!-- dynamic (позднее связывание COM AcadApplication для классического меню/тулбара) -->
+    <Reference Include="Microsoft.CSharp" />
   </ItemGroup>
 
 </Project>
