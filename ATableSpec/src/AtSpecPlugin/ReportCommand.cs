@@ -129,6 +129,7 @@ namespace AtSpecPlugin
                 if (!fields.Exists(z => string.Equals(z, extra, StringComparison.OrdinalIgnoreCase)))
                     fields.Add(extra);
             var layers = new List<string>(layerSet);
+            layers.Reverse();   // (Алексей) обратный порядок: слой стоек первым (с него начинают обработку)
             var textStyles = new List<string>(styleSet);
             // значения для фильтра: HashSet -> отсортированный List. #5: ту же деталировку
             // вырезаем и из ключей карты «слой→поле→значения» (фильтр берёт поля отсюда).
@@ -378,6 +379,7 @@ namespace AtSpecPlugin
                 if (!fields.Exists(z => string.Equals(z, extra, StringComparison.OrdinalIgnoreCase)))
                     fields.Add(extra);
             layers = new List<string>(layerSet);
+            layers.Reverse();   // (Алексей) обратный порядок: слой стоек первым
             textStyles = new List<string>(styleSet);
             valuesByLayer = new Dictionary<string, Dictionary<string, List<string>>>(StringComparer.OrdinalIgnoreCase);
             foreach (var kvL in valuesRaw)
