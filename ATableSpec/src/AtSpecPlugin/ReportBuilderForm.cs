@@ -402,8 +402,12 @@ namespace AtSpecPlugin
             int pos = AskInsertPosition(srcIdx);
             if (pos < 0) return;                       // отмена
 
-            var js = new JavaScriptSerializer();
-            var parsed = js.Deserialize<Dictionary<string, object>>(js.Serialize(card.ToDef()));
+            // ВАЖНО: DeserializeObject (массивы -> object[]) — как в рабочем пути ATSPECEDIT.
+            // Deserialize<Dictionary> отдаёт вложенные массивы иным типом, и SeedFromSection
+            // (ToStrListLocal/«filter as object[]») их не разбирает -> пустая копия.
+            var ser = new JavaScriptSerializer { MaxJsonLength = int.MaxValue };
+            var parsed = ser.DeserializeObject(ser.Serialize(card.ToDef())) as Dictionary<string, object>;
+            if (parsed == null) return;
             var seed = SeedFromSection(parsed);
             if (seed == null) return;
 
@@ -468,7 +472,7 @@ namespace AtSpecPlugin
                         //  слой профиля; на весь объект — по секции на профиль («+ Добавить отчёт»).
                     s.FullRows = new List<string[]>
                     {
-                        new[] { "Артикул 5 6000", "=Object.«Длина»", "", "", "по возрастанию" },
+                        new[] { "Артикул 8 6000", "=Object.«Длина»", "", "", "по возрастанию" },
                         new[] { "", "=Count", "", "", "" }
                     };
                     s.SeedMerges = new List<int[]> { new[] { 0, 1 } };   // объединить шапку обеих колонок
@@ -482,7 +486,7 @@ namespace AtSpecPlugin
                     s.Columns.Add(new[] { "Ширина, мм", "=Object.«Ширина»" });
                     s.Columns.Add(new[] { "Высота, мм", "=Object.«Высота»" });
                     s.Columns.Add(new[] { "Колич.", "=Count" });
-                    s.Columns.Add(new[] { "Площадь, м²", "=Object.«Ширина»*Object.«Высота»*Count/1000000" });
+                    s.Columns.Add(new[] { "Площадь, м²", "=Col(4)*Col(5)*Count/1000000" });  // Ш=столбец4, В=столбец5
                     s.GroupIdx = 2; s.SortMode = 0;     // группа по марке (столбец 2: №=0, Тип=1, Марка=2)
                     s.TotalRow = true;                  // строка ИТОГ (сумма кол-ва и площади)
                     if (useFirstLayer) s.SeedLayer = "RF-заполнения";   // авто-источник для шаблона

@@ -2,7 +2,9 @@
 // выпадающее меню «ATableSpec» в строке меню + плавающий тулбар с 5 кнопками.
 // Делается в рантайме через COM ActiveX (AcadApplication) ПОЗДНИМ СВЯЗЫВАНИЕМ (dynamic),
 // чтобы НЕ зависеть от interop-PIA (их нет в NuGet AutoCAD.NET) — для компиляции хватает
-// Microsoft.CSharp. Иконки тулбара — PNG из Contents/icons (через support-путь).
+// Microsoft.CSharp. Иконки тулбара — BMP из Contents/icons по ПОЛНОМУ пути (классика не
+// грузит PNG → были «?»). Макрос команды — «_CMD » без ^C^C: в COM-макросе ^C^C у Алексея
+// бралось буквально («неизвестная команда»), а «_CMD» отрабатывает.
 // Всё в try/catch: не ляжет COM/иконки — команды/лента/реактор работают. Рантайм
 // кросс-версийно проверяет Алексей (вероятны 1–2 итерации).
 //
@@ -54,7 +56,7 @@ namespace AtSpecPlugin
             dynamic app = AcApp.AcadApplication;
             if (app == null) return;
 
-            EnsureIconPath(app);
+            string icons = IconsDir();              // полный путь к Contents/icons (или null)
 
             dynamic mg = app.MenuGroups.Item(0);    // основная группа меню (ACAD)
 
@@ -63,7 +65,7 @@ namespace AtSpecPlugin
             dynamic menus = mg.Menus;
             dynamic menu = menus.Add(GroupName);     // AcadPopupMenu
             foreach (var it in Items)
-                menu.AddMenuItem(menu.Count, it[0], "^C^C_" + it[1] + " ");
+                menu.AddMenuItem(menu.Count, it[0], "_" + it[1] + " ");
             try { menu.InsertInMenuBar((int)app.MenuBar.Count); } catch { }
 
             // ── плавающий тулбар ──
@@ -72,8 +74,10 @@ namespace AtSpecPlugin
             dynamic tb = toolbars.Add(GroupName);    // AcadToolbar
             foreach (var it in Items)
             {
-                dynamic b = tb.AddToolbarButton(tb.Count, it[0], it[0], "^C^C_" + it[1] + " ", false);
-                try { b.SetBitmaps(it[2] + "_16.png", it[2] + ".png"); } catch { }
+                dynamic b = tb.AddToolbarButton(tb.Count, it[0], it[0], "_" + it[1] + " ", false);
+                if (icons != null)
+                    try { b.SetBitmaps(Path.Combine(icons, it[2] + "_16.bmp"),
+                                       Path.Combine(icons, it[2] + "_32.bmp")); } catch { }
             }
             try { tb.Visible = true; } catch { }
         }
@@ -117,21 +121,17 @@ namespace AtSpecPlugin
             catch { return false; }
         }
 
-        // добавить папку иконок бандла в support-путь, чтобы SetBitmaps нашёл файлы по имени
-        private static void EnsureIconPath(dynamic app)
+        // полный путь к папке иконок бандла (Contents/icons) или null
+        private static string IconsDir()
         {
             try
             {
                 string dir = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
-                if (string.IsNullOrEmpty(dir)) return;
+                if (string.IsNullOrEmpty(dir)) return null;
                 string icons = Path.GetFullPath(Path.Combine(dir, "..", "icons"));
-                if (!Directory.Exists(icons)) return;
-                dynamic files = app.Preferences.Files;
-                string sp = (string)files.SupportPath ?? "";
-                if (sp.IndexOf(icons, StringComparison.OrdinalIgnoreCase) < 0)
-                    files.SupportPath = icons + ";" + sp;
+                return Directory.Exists(icons) ? icons : null;
             }
-            catch { }
+            catch { return null; }
         }
     }
 }

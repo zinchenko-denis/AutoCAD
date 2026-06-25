@@ -143,9 +143,10 @@ def _tokenize(s: str) -> List[_Tok]:
 
 class _Eval:
     """Рекурсивный спуск. Грамматика: cmp < add < mul < unary < primary."""
-    def __init__(self, toks, obj: Optional[Obj], group: List[Obj], rownum: int):
+    def __init__(self, toks, obj: Optional[Obj], group: List[Obj], rownum: int, cells=None):
         self.t, self.i = toks, 0
         self.obj, self.group, self.rownum = obj, group, rownum
+        self.cells = cells or []        # уже посчитанные ячейки текущей строки -> Col(n)
 
     def _peek(self): return self.t[self.i]
     def _eat(self, k=None):
@@ -217,12 +218,18 @@ class _Eval:
                 return self.rownum
             if low == "sum":
                 self._eat("("); inner = self._capture_arg(); self._eat(")")
-                return sum(_Eval(_clone(inner), o, self.group, self.rownum).run() for o in self.group)
+                return sum(_Eval(_clone(inner), o, self.group, self.rownum, self.cells).run() for o in self.group)
             if low == "iff":
                 self._eat("(")
                 cond = self._cmp(); self._eat(","); a = self._cmp(); self._eat(","); b = self._cmp()
                 self._eat(")")
                 return a if cond else b
+            if low == "col":
+                # Col(n) — значение n-го столбца (1-based) ТЕКУЩЕЙ строки, уже посчитанного
+                # левее. Так площадь = Col(ш)*Col(в) считается по фактическим (в т.ч. правленым)
+                # значениям столбцов Ширина/Высота, а не из блока повторно.
+                self._eat("("); arg = self._cmp(); self._eat(")")
+                return self._col(arg)
             raise ValueError(f"неизвестный идентификатор {name!r}")
         raise ValueError(f"неожиданный токен {tk.k}")
 
@@ -242,18 +249,30 @@ class _Eval:
             self.i += 1
         return self.t[start:self.i]
 
+    def _col(self, arg):
+        """1-based индекс столбца -> значение ячейки этой строки (число, если парсится)."""
+        try:
+            idx = int(round(float(arg)))
+        except Exception:
+            return None
+        if 1 <= idx <= len(self.cells):
+            c = self.cells[idx - 1]
+            n = _num_or_none(c)
+            return n if n is not None else c
+        return None
+
 
 def _clone(toks):
     return list(toks) + [_Tok("END", None)]
 
 
-def evaluate(expr: str, obj: Optional[Obj], group: List[Obj], rownum: int) -> Any:
+def evaluate(expr: str, obj: Optional[Obj], group: List[Obj], rownum: int, cells=None) -> Any:
     # Ячейка без ведущего «=» — это литерал-текст (как в СПДС/Excel): пустая ячейка
     # даёт "", «Примечание» — просто текст. Формула вычисляется только при «=».
     s = (expr or "").strip()
     if not s.startswith("="):
         return s
-    return _Eval(_tokenize(s), obj, group, rownum).run()
+    return _Eval(_tokenize(s), obj, group, rownum, cells).run()
 
 
 # ─────────────────────────────── раннер шаблона отчёта ───────────────────────────────
@@ -357,36 +376,32 @@ def run_template(records: List[dict], tmpl: dict) -> List[List[Any]]:
     #    row — порядковый номер уже ПОСЛЕ сортировки. Числа: целые, кроме
     #    столбцов с делением (площадь и т.п.) — у тех 2 знака с запятой.
     rows: List[List[Any]] = []
+    raw_rows: List[List[Any]] = []      # сырые числовые значения ячеек (для ИТОГ)
     decs = ["/" in (c or "") for c in cols]
     for idx, grp in enumerate(groups, 1):
         rep = grp[0]
-        row = []
+        row: List[Any] = []             # форматированные ячейки строки — источник для Col(n)
+        raw: List[Any] = []
         for ci, expr in enumerate(cols):
             try:
-                v = evaluate(expr, rep, grp, idx)
+                v = evaluate(expr, rep, grp, idx, row)   # row = посчитанные левее ячейки
             except Exception:
                 v = None        # битое выражение в одной ячейке не роняет таблицу
+            raw.append(v if isinstance(v, (int, float)) else None)
             if isinstance(v, float):
                 v = _fmt_num(v, decs[ci])
             row.append(v)
-        rows.append(row)
+        rows.append(row); raw_rows.append(raw)
 
-    # строка ИТОГ (опц.): суммируем столбцы, чьё выражение содержит Count
-    # (как «сумма» в СПДС: под Кол-во и Площадь — суммы, под №/Ш/В — пусто).
+    # строка ИТОГ (опц.): суммируем уже посчитанные значения столбцов, чьё выражение
+    # содержит Count (как «сумма» в СПДС: под Кол-во и Площадь — суммы, под №/Ш/В — пусто).
     if tmpl.get("total_row"):
         label = tmpl.get("total_label") or "сумма"
         total: List[Any] = []
         labeled = False
         for ci, expr in enumerate(cols):
             if "count" in (expr or "").lower():
-                acc = 0.0
-                for j, gj in enumerate(groups, 1):
-                    try:
-                        vv = evaluate(expr, gj[0], gj, j)
-                    except Exception:
-                        vv = None
-                    if isinstance(vv, (int, float)):
-                        acc += vv
+                acc = sum(r[ci] for r in raw_rows if r[ci] is not None)
                 total.append(_fmt_num(float(acc), decs[ci]))
             elif not labeled:
                 total.append(label); labeled = True
