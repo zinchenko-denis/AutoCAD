@@ -33,6 +33,9 @@ using System.Drawing;
 using System.Windows.Forms;
 using System.Web.Script.Serialization;
 using Microsoft.Win32;
+using Autodesk.AutoCAD.DatabaseServices;
+using Autodesk.AutoCAD.EditorInput;
+using AcApp = Autodesk.AutoCAD.ApplicationServices.Application;
 
 namespace AtSpecPlugin
 {
@@ -611,7 +614,7 @@ namespace AtSpecPlugin
             _fields = fields ?? new List<string>();
             _valuesByLayer = valuesByLayer;
             BorderStyle = BorderStyle.FixedSingle;
-            Width = 712; Height = 308; Margin = new Padding(0, 0, 0, 8);
+            Width = 712; Height = 316; Margin = new Padding(0, 0, 0, 8);  // +8: ряд пипеток над гридом
 
             BuildUi(seed);
             if (seed != null)
@@ -647,6 +650,11 @@ namespace AtSpecPlugin
             btnCopy.Click += (s, e) => { var h = CopyRequested; if (h != null) h(this); };
             Controls.Add(btnCopy);
 
+            // (пипетка 1) слой «Источника» — прямо с блока на чертеже; ручной ввод в combo жив.
+            var btnPipSrc = new Button { Left = 458, Top = y, Width = 148, Text = "Слой с блока" };
+            btnPipSrc.Click += (s, e) => PipSource();
+            Controls.Add(btnPipSrc);
+
             var btnUp = new Button { Left = 610, Top = y, Width = 28, Text = "↑" };
             var btnDn = new Button { Left = 640, Top = y, Width = 28, Text = "↓" };
             var btnDel = new Button { Left = 670, Top = y, Width = 28, Text = "✕" };
@@ -666,9 +674,19 @@ namespace AtSpecPlugin
             Controls.Add(chkTotal);
             y += 28;
 
-            Controls.Add(new Label { Left = 8, Top = y, Width = 660,
-                Text = "Столбцы, фильтр и группировка (Заголовок | Выражение | Условие | Значение | Группа):" });
-            y += 18;
+            Controls.Add(new Label { Left = 8, Top = y + 4, Width = 402,
+                Text = "Столбцы (Заголовок | Выражение | Условие | Значение | Группа):" });
+            // (пипетки 2 и 3) по гриду: «Значение» фильтра / артикул в заголовок — с блока на чертеже.
+            var btnPipVal = new Button { Left = 414, Top = y, Width = 132, Text = "Значение с блока" };
+            var btnPipHdr = new Button { Left = 550, Top = y, Width = 148, Text = "Артикул в заголовок" };
+            btnPipVal.Click += (s, e) => PipValue();
+            btnPipHdr.Click += (s, e) => PipHeader();
+            var tips = new ToolTip();
+            tips.SetToolTip(btnPipSrc, "Взять слой с указанного блока (поле остаётся редактируемым)");
+            tips.SetToolTip(btnPipVal, "Вставить в «Значение» текущей строки значение её поля с указанного блока");
+            tips.SetToolTip(btnPipHdr, "Заменить артикул в заголовке текущей строки на Object.«ПРОФ» с блока; хвост («8 6000») сохраняется");
+            Controls.Add(btnPipVal); Controls.Add(btnPipHdr);
+            y += 26;
             grid = new DataGridView
             {
                 Left = 8, Top = y, Width = 690, Height = 196,
@@ -774,6 +792,113 @@ namespace AtSpecPlugin
         }
 
         public void SetIndex(int n) { lblNum.Text = "Отчёт " + n; }
+
+        // ───────────── пипетки: взять слой/значение/артикул прямо с блока ─────────────
+        // Форма модальная (ShowModalDialog) → на время выбора прячем её штатно через
+        // Editor.StartUserInteraction. Пипетки ТОЛЬКО пишут текст в поля — ручное
+        // редактирование всех трёх мест полностью сохраняется.
+        private bool PickBlock(out string layer, out string name, out Dictionary<string, string> attrs)
+        {
+            layer = null; name = null;
+            attrs = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+            var doc = AcApp.DocumentManager.MdiActiveDocument;
+            var frm = FindForm();
+            if (doc == null || frm == null) return false;
+            var ed = doc.Editor;
+            EditorUserInteraction ui = null;
+            try
+            {
+                ui = ed.StartUserInteraction(frm);
+                var peo = new PromptEntityOptions("\nПипетка — укажите блок: ");
+                peo.SetRejectMessage("\nЭто не вхождение блока.");
+                peo.AddAllowedClass(typeof(BlockReference), false);
+                var res = ed.GetEntity(peo);
+                if (res.Status != PromptStatus.OK) return false;
+                using (var tr = doc.TransactionManager.StartTransaction())
+                {
+                    var br = (BlockReference)tr.GetObject(res.ObjectId, OpenMode.ForRead);
+                    layer = br.Layer;
+                    var btr = (BlockTableRecord)tr.GetObject(br.DynamicBlockTableRecord, OpenMode.ForRead);
+                    name = btr.Name;   // эффективное имя (динам. блоки)
+                    foreach (ObjectId id in br.AttributeCollection)
+                    {
+                        var ar = tr.GetObject(id, OpenMode.ForRead) as AttributeReference;
+                        if (ar != null && !attrs.ContainsKey(ar.Tag)) attrs[ar.Tag] = ar.TextString ?? "";
+                    }
+                    tr.Commit();
+                }
+                // производные Ширина/Высота из РАЗМЕР_ЗАП («1125Х275») — как в движке
+                string rz;
+                if (attrs.TryGetValue("РАЗМЕР_ЗАП", out rz) && !string.IsNullOrEmpty(rz))
+                {
+                    var p = rz.Split(new[] { 'Х', 'х', 'X', 'x', '*' }, StringSplitOptions.RemoveEmptyEntries);
+                    if (p.Length == 2)
+                    {
+                        if (!attrs.ContainsKey("Ширина")) attrs["Ширина"] = p[0].Trim();
+                        if (!attrs.ContainsKey("Высота")) attrs["Высота"] = p[1].Trim();
+                    }
+                }
+                return true;
+            }
+            catch { return false; }
+            finally { if (ui != null) ui.End(); }
+        }
+
+        // (1) слой «Источника» с блока
+        private void PipSource()
+        {
+            string layer, name; Dictionary<string, string> attrs;
+            if (!PickBlock(out layer, out name, out attrs) || string.IsNullOrEmpty(layer)) return;
+            cmbSource.Text = layer;
+            OnSourceChanged();
+        }
+
+        // (2) «Значение» текущей строки — значение ЕЁ поля (из «Выражения») с блока;
+        //     пустое «Условие» добиваем «=» (правится вручную).
+        private void PipValue()
+        {
+            var cur = grid.CurrentCell;
+            int ri = (cur != null) ? cur.RowIndex : -1;
+            if (ri < 0 || ri >= grid.Rows.Count || grid.Rows[ri].IsNewRow)
+            { MessageBox.Show(FindForm(), "Выберите строку столбца, куда вставить значение.", "Пипетка"); return; }
+            string ex = Convert.ToString(grid.Rows[ri].Cells["expr"].Value) ?? "";
+            string fld = ExtractField(ex);
+            if (string.IsNullOrEmpty(fld))
+            { MessageBox.Show(FindForm(), "В строке нет поля: «Выражение» должно быть вида =Object.«Поле».", "Пипетка"); return; }
+            string layer, name; Dictionary<string, string> attrs;
+            if (!PickBlock(out layer, out name, out attrs)) return;
+            string val;
+            if (fld.Equals("Слой", StringComparison.OrdinalIgnoreCase)) val = layer;
+            else if (fld.Equals("Имя", StringComparison.OrdinalIgnoreCase)) val = name;
+            else if (!attrs.TryGetValue(fld, out val))
+            { MessageBox.Show(FindForm(), "У блока нет поля «" + fld + "».", "Пипетка"); return; }
+            grid.Rows[ri].Cells["val"].Value = val ?? "";
+            string op = (Convert.ToString(grid.Rows[ri].Cells["cond"].Value) ?? "").Trim();
+            if (op.Length == 0) grid.Rows[ri].Cells["cond"].Value = "=";
+        }
+
+        // (3) заголовок текущей строки (шапка раскроя): токен-артикул ← Object.«ПРОФ»
+        //     (запасной «ПРОФИЛЬ»), хвост строки (пила/хлыст, по умолчанию «8 6000») сохраняется.
+        private void PipHeader()
+        {
+            var cur = grid.CurrentCell;
+            int ri = (cur != null) ? cur.RowIndex : 0;
+            if (ri < 0 || ri >= grid.Rows.Count) ri = 0;
+            if (grid.Rows.Count == 0 || grid.Rows[ri].IsNewRow)
+            { MessageBox.Show(FindForm(), "Нет строки столбца для заголовка.", "Пипетка"); return; }
+            string layer, name; Dictionary<string, string> attrs;
+            if (!PickBlock(out layer, out name, out attrs)) return;
+            string art;
+            if (!attrs.TryGetValue("ПРОФ", out art) && !attrs.TryGetValue("ПРОФИЛЬ", out art))
+            { MessageBox.Show(FindForm(), "У блока нет атрибута «ПРОФ» (или «ПРОФИЛЬ»).", "Пипетка"); return; }
+            art = (art ?? "").Replace(" ", "");   // артикул в шапке раскроя — без пробелов (формат R-Fasad)
+            if (art.Length == 0)
+            { MessageBox.Show(FindForm(), "Атрибут «ПРОФ» у блока пуст.", "Пипетка"); return; }
+            string curTxt = Convert.ToString(grid.Rows[ri].Cells["hdr"].Value) ?? "";
+            var toks = curTxt.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
+            string rest = (toks.Length >= 2) ? string.Join(" ", toks, 1, toks.Length - 1) : "8 6000";
+            grid.Rows[ri].Cells["hdr"].Value = (art + " " + rest).Trim();
+        }
 
         // ── вставка готового выражения (ПКМ-меню) в текущую строку столбцов ──
         private void InsertExpr(string expr)
