@@ -33,8 +33,8 @@ using System.Drawing;
 using System.Windows.Forms;
 using System.Web.Script.Serialization;
 using Microsoft.Win32;
-using Autodesk.AutoCAD.DatabaseServices;
 using Autodesk.AutoCAD.EditorInput;
+using AcDb = Autodesk.AutoCAD.DatabaseServices;   // алиас: без блочного using (в нём свои Font/FlowDirection)
 using AcApp = Autodesk.AutoCAD.ApplicationServices.Application;
 
 namespace AtSpecPlugin
@@ -811,18 +811,18 @@ namespace AtSpecPlugin
                 ui = ed.StartUserInteraction(frm);
                 var peo = new PromptEntityOptions("\nПипетка — укажите блок: ");
                 peo.SetRejectMessage("\nЭто не вхождение блока.");
-                peo.AddAllowedClass(typeof(BlockReference), false);
+                peo.AddAllowedClass(typeof(AcDb.BlockReference), false);
                 var res = ed.GetEntity(peo);
                 if (res.Status != PromptStatus.OK) return false;
                 using (var tr = doc.TransactionManager.StartTransaction())
                 {
-                    var br = (BlockReference)tr.GetObject(res.ObjectId, OpenMode.ForRead);
+                    var br = (AcDb.BlockReference)tr.GetObject(res.ObjectId, AcDb.OpenMode.ForRead);
                     layer = br.Layer;
-                    var btr = (BlockTableRecord)tr.GetObject(br.DynamicBlockTableRecord, OpenMode.ForRead);
+                    var btr = (AcDb.BlockTableRecord)tr.GetObject(br.DynamicBlockTableRecord, AcDb.OpenMode.ForRead);
                     name = btr.Name;   // эффективное имя (динам. блоки)
-                    foreach (ObjectId id in br.AttributeCollection)
+                    foreach (AcDb.ObjectId id in br.AttributeCollection)
                     {
-                        var ar = tr.GetObject(id, OpenMode.ForRead) as AttributeReference;
+                        var ar = tr.GetObject(id, AcDb.OpenMode.ForRead) as AcDb.AttributeReference;
                         if (ar != null && !attrs.ContainsKey(ar.Tag)) attrs[ar.Tag] = ar.TextString ?? "";
                     }
                     tr.Commit();
