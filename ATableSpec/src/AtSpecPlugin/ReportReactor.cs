@@ -357,7 +357,8 @@ namespace AtSpecPlugin
                 if (colMm != null)
                 {
                     // (вариант Б, решение Дениса 03.07) фикс. пропорции пресета «как СПДС»:
-                    // ширины = col_mm × масштаб; строки = 15 мм (заголовок/шапки) / 8 мм (данные) × масштаб.
+                    // ширины = col_mm × масштаб; строки = 10 мм (заголовок/шапки) / 6 мм (данные) × масштаб
+                    // (фидбэк Алексея 03.07: было 15/8 — попросил ужать; ширины оставлены).
                     // Ручная растяжка за ручки ЖИВЁТ: бережный пересчёт (rebuild=false) сюда не заходит.
                     double s2 = scale <= 0 ? 1.0 : scale;
                     for (int c = 0; c < tbl.Columns.Count; c++)
@@ -370,7 +371,7 @@ namespace AtSpecPlugin
                         bool head = (r == p.TitleRow);
                         for (int i = 0; i < secs.Count && !head; i++)
                             head = (r == p.SecTitleRow[i]) || (r == p.SecHeaderRow[i]);
-                        try { tbl.Rows[r].Height = (head ? 15.0 : 8.0) * s2; } catch { }
+                        try { tbl.Rows[r].Height = (head ? 10.0 : 6.0) * s2; } catch { }
                     }
                 }
                 else
