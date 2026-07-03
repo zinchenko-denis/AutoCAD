@@ -148,6 +148,21 @@ namespace AtSpecPlugin
             var columns = ToStrListLocal(Val(sec, "columns"));
             int colCount = Math.Max(headers.Count, columns.Count);
 
+            // (вариант Б) фикс. ширины столбцов, мм — параллельно output-столбцам def;
+            // строки-фильтры добавляются НИЖЕ строк-столбцов, выравнивание по индексу живёт.
+            var cmArr = Val(sec, "col_mm") as object[];
+            if (cmArr != null && cmArr.Length > 0)
+            {
+                seed.ColMm = new List<double>();
+                foreach (var v in cmArr)
+                {
+                    double d2;
+                    try { d2 = Convert.ToDouble(v, System.Globalization.CultureInfo.InvariantCulture); }
+                    catch { d2 = -1; }
+                    seed.ColMm.Add(d2);
+                }
+            }
+
             // фильтры: первый «Слой = X» -> источник секции; остальные -> условия
             var conds = new List<string[]>();   // {field, op, value}
             var filt = Val(sec, "filter") as object[];
@@ -467,6 +482,8 @@ namespace AtSpecPlugin
                     s.Columns.Add(new[] { "Колич.", "=Count" });
                     s.Columns.Add(new[] { "Ед. изм.", "=«шт.»" });
                     s.GroupIdx = 1; s.SortMode = 0;
+                    // (вариант Б) фикс. ширины столбцов, мм (×масштаб при отрисовке)
+                    s.ColMm = new List<double> { 10, 65, 35, 20, 15, 15 };
                     break;
                 case 2: // Раскрой — контракт-шапка «<артикул> <рез> <хлыст>», ОБЪЕДИНЁННАЯ на обе
                         //  колонки, + две колонки Длина|Колич., группа по длине. Форма выверена по
@@ -481,6 +498,7 @@ namespace AtSpecPlugin
                     s.SeedMerges = new List<int[]> { new[] { 0, 1 } };   // объединить шапку обеих колонок
                     s.SectionTitle = "";
                     s.HideHeader = false;                                 // шапка-контракт должна быть видна
+                    s.ColMm = new List<double> { 25, 15 };                // (вариант Б) Длина | Колич., мм
                     break;
                 case 3: // Заполнения (Ш/В из РАЗМЕР_ЗАП; Тип — динам. параметр Visibility1)
                     s.Columns.Add(new[] { "№ п/п", "=row" });
@@ -493,6 +511,8 @@ namespace AtSpecPlugin
                     s.GroupIdx = 2; s.SortMode = 0;     // группа по марке (столбец 2: №=0, Тип=1, Марка=2)
                     s.TotalRow = true;                  // строка ИТОГ (сумма кол-ва и площади)
                     if (useFirstLayer) s.SeedLayer = "RF-заполнения";   // авто-источник для шаблона
+                    // (вариант Б) №|Тип|Марка|Ш|В|Колич.|Площадь, мм
+                    s.ColMm = new List<double> { 10, 40, 25, 20, 20, 15, 25 };
                     break;
                 default: // 0 — Ручное: пустая секция
                     break;
@@ -597,6 +617,7 @@ namespace AtSpecPlugin
         private DataGridView grid;     // Заголовок | Выражение | Условие | Значение
         private DataGridViewTextBoxColumn _colExpr;     // «Выражение» — TextBox (надёжный свободный ввод)
         private DataGridViewComboBoxColumn _colCond, _colGroup;
+        private DataGridViewTextBoxColumn _colMm;       // скрытый: ширина столбца таблицы, мм (вариант Б)
         private DataGridViewColumn _colVal;             // «Значение» — combo DropDown на строковой ячейке (ValueComboCell)
         private ToolStripMenuItem _miInsert;
         private readonly List<int[]> _merges = new List<int[]>();   // [s,e] 0-базово (по строкам грида)
@@ -645,15 +666,17 @@ namespace AtSpecPlugin
             cmbSource.Leave += (s, e) => OnSourceChanged();
             Controls.Add(cmbSource);
 
-            // «Копировать» отчёт — рядом с «Источник»: дублирует секцию (с выбором позиции вставки).
-            var btnCopy = new Button { Left = 352, Top = y, Width = 104, Text = "Копировать" };
-            btnCopy.Click += (s, e) => { var h = CopyRequested; if (h != null) h(this); };
-            Controls.Add(btnCopy);
-
-            // (пипетка 1) слой «Источника» — прямо с блока на чертеже; ручной ввод в combo жив.
-            var btnPipSrc = new Button { Left = 458, Top = y, Width = 148, Text = "Слой с блока" };
+            // (пипетка 1, вариант 1 Алексея) слой «Источника» — иконка-глиф ВПЛОТНУЮ к combo
+            //  (текстовая кнопка в стороне была неинформативна: не видно, к какому полю относится).
+            var btnPipSrc = new Button { Left = 346, Top = y, Width = 26, Height = 23,
+                Image = PipBitmap(), ImageAlign = ContentAlignment.MiddleCenter };
             btnPipSrc.Click += (s, e) => PipSource();
             Controls.Add(btnPipSrc);
+
+            // «Копировать» отчёт — правее пипетки: дублирует секцию (с выбором позиции вставки).
+            var btnCopy = new Button { Left = 378, Top = y, Width = 104, Text = "Копировать" };
+            btnCopy.Click += (s, e) => { var h = CopyRequested; if (h != null) h(this); };
+            Controls.Add(btnCopy);
 
             var btnUp = new Button { Left = 610, Top = y, Width = 28, Text = "↑" };
             var btnDn = new Button { Left = 640, Top = y, Width = 28, Text = "↓" };
@@ -674,18 +697,12 @@ namespace AtSpecPlugin
             Controls.Add(chkTotal);
             y += 28;
 
-            Controls.Add(new Label { Left = 8, Top = y + 4, Width = 402,
+            Controls.Add(new Label { Left = 8, Top = y + 4, Width = 690,
                 Text = "Столбцы (Заголовок | Выражение | Условие | Значение | Группа):" });
-            // (пипетки 2 и 3) по гриду: «Значение» фильтра / артикул в заголовок — с блока на чертеже.
-            var btnPipVal = new Button { Left = 414, Top = y, Width = 132, Text = "Значение с блока" };
-            var btnPipHdr = new Button { Left = 550, Top = y, Width = 148, Text = "Артикул в заголовок" };
-            btnPipVal.Click += (s, e) => PipValue();
-            btnPipHdr.Click += (s, e) => PipHeader();
+            // (пипетки 2 и 3, вариант 1 Алексея) — теперь ГЛИФЫ У ПРАВОГО КРАЯ ЯЧЕЕК
+            //  «Заголовок»/«Значение» (Grid_CellPainting/Grid_CellMouseDown), а не кнопки над гридом.
             var tips = new ToolTip();
-            tips.SetToolTip(btnPipSrc, "Взять слой с указанного блока (поле остаётся редактируемым)");
-            tips.SetToolTip(btnPipVal, "Вставить в «Значение» текущей строки значение её поля с указанного блока");
-            tips.SetToolTip(btnPipHdr, "Заменить артикул в заголовке текущей строки на Object.«ПРОФ» с блока; хвост («8 6000») сохраняется");
-            Controls.Add(btnPipVal); Controls.Add(btnPipHdr);
+            tips.SetToolTip(btnPipSrc, "Слой с блока: взять слой указанного блока в «Источник» (поле остаётся редактируемым)");
             y += 26;
             grid = new DataGridView
             {
@@ -722,13 +739,18 @@ namespace AtSpecPlugin
                 FlatStyle = FlatStyle.Flat, DisplayStyle = DataGridViewComboBoxDisplayStyle.Nothing
             };
             _colGroup.Items.AddRange(new object[] { "", "по возрастанию", "по убыванию", "без сортировки" });
+            // (вариант Б) скрытый столбец «mm» — ширина ЭТОГО столбца итоговой таблицы в мм
+            //  (заполняется пресетом/реверсом; пусто = дефолт рендера 20 мм). В UI не виден.
+            _colMm = new DataGridViewTextBoxColumn { Name = "mm", Visible = false };
             grid.Columns.Add(colHdr); grid.Columns.Add(_colExpr); grid.Columns.Add(_colCond);
-            grid.Columns.Add(_colVal); grid.Columns.Add(_colGroup);
+            grid.Columns.Add(_colVal); grid.Columns.Add(_colGroup); grid.Columns.Add(_colMm);
 
             grid.EditingControlShowing += Grid_EditingControlShowing;
             grid.CellFormatting += Grid_CellFormatting;        // (5) «(объединено)» в подчинённых строках шапки
             grid.CellValidating += Grid_CellValidating;
             grid.CellValueChanged += Grid_CellValueChanged;
+            grid.CellPainting += Grid_CellPainting;            // пипетки 2/3: глиф у правого края ячеек hdr/val
+            grid.CellMouseDown += Grid_CellMouseDown;          //   клик по глифу — взять с блока (вариант 1)
             grid.DataError += (s, e) => { e.ThrowException = false; e.Cancel = false; };
             grid.KeyDown += (s, e) =>
             {
@@ -742,15 +764,19 @@ namespace AtSpecPlugin
                 // реверс из def: полный набор строк грида + заголовок/скрытие шапки + объединения
                 txtSecTitle.Text = seed.SectionTitle ?? "";
                 chkHideHeader.Checked = seed.HideHeader;
+                int fi = 0;
                 foreach (var fr in seed.FullRows)
                 {
-                    if (fr == null) continue;
+                    if (fr == null) { fi++; continue; }
                     string h  = fr.Length > 0 ? (fr[0] ?? "") : "";
                     string ex = fr.Length > 1 ? (fr[1] ?? "") : "";
                     string op = fr.Length > 2 ? (fr[2] ?? "") : "";
                     string vl = fr.Length > 3 ? (fr[3] ?? "") : "";
                     string gr = fr.Length > 4 ? (fr[4] ?? "") : "";
-                    grid.Rows.Add(h, ex, op, vl, gr);
+                    string mm = (seed.ColMm != null && fi < seed.ColMm.Count && seed.ColMm[fi] > 0)
+                        ? seed.ColMm[fi].ToString(System.Globalization.CultureInfo.InvariantCulture) : "";
+                    grid.Rows.Add(h, ex, op, vl, gr, mm);
+                    fi++;
                 }
                 if (seed.SeedMerges != null)
                     foreach (var sp in seed.SeedMerges)
@@ -766,7 +792,9 @@ namespace AtSpecPlugin
                     string grp = "";
                     if (seed.GroupIdx >= 0 && gi == seed.GroupIdx)
                         grp = grpLabels[(seed.SortMode >= 0 && seed.SortMode <= 2) ? seed.SortMode : 0];
-                    grid.Rows.Add(c[0], c[1], "", "", grp);
+                    string mm = (seed.ColMm != null && gi < seed.ColMm.Count && seed.ColMm[gi] > 0)
+                        ? seed.ColMm[gi].ToString(System.Globalization.CultureInfo.InvariantCulture) : "";
+                    grid.Rows.Add(c[0], c[1], "", "", grp, mm);
                 }
 
             var menu = new ContextMenuStrip();
@@ -797,6 +825,78 @@ namespace AtSpecPlugin
         // Форма модальная (ShowModalDialog) → на время выбора прячем её штатно через
         // Editor.StartUserInteraction. Пипетки ТОЛЬКО пишут текст в поля — ручное
         // редактирование всех трёх мест полностью сохраняется.
+        // (вариант 1 Алексея) Триггеры — В САМИХ ПОЛЯХ: глиф-кнопка у combo «Источник»;
+        // глифы у правого края ячеек «Заголовок» (артикул раскроя) и «Значение» (фильтр).
+
+        private const int PipZone = 20;   // клик-зона глифа у правого края ячейки, px
+
+        // узнаваемая «пипетка» в произвольном box: ствол по диагонали + колба + капля у носика
+        private static void DrawPipGlyph(Graphics g, Rectangle box, Color color)
+        {
+            var old = g.SmoothingMode;
+            g.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
+            using (var pen = new Pen(color, 2f))
+            using (var br = new SolidBrush(color))
+            {
+                float x = box.X, y = box.Y, w = box.Width, h = box.Height;
+                g.DrawLine(pen, x + w * 0.22f, y + h * 0.78f, x + w * 0.62f, y + h * 0.38f); // ствол
+                g.FillEllipse(br, x + w * 0.50f, y + h * 0.06f, w * 0.44f, h * 0.44f);        // колба
+                g.FillEllipse(br, x + w * 0.06f, y + h * 0.80f, w * 0.18f, h * 0.18f);        // капля
+            }
+            g.SmoothingMode = old;
+        }
+
+        private static Bitmap _pipBmp;
+        private static Bitmap PipBitmap()
+        {
+            if (_pipBmp != null) return _pipBmp;
+            var bmp = new Bitmap(16, 16);
+            using (var g = Graphics.FromImage(bmp))
+                DrawPipGlyph(g, new Rectangle(1, 1, 14, 14), Color.FromArgb(37, 99, 235));
+            _pipBmp = bmp;
+            return bmp;
+        }
+
+        // подчинённая строка объединённой шапки (внутри спана, не первая) — глиф не рисуем
+        private bool IsMergeSub(int ri)
+        {
+            foreach (var m in _merges) if (ri > m[0] && ri <= m[1]) return true;
+            return false;
+        }
+
+        private void Grid_CellPainting(object sender, DataGridViewCellPaintingEventArgs e)
+        {
+            if (e.RowIndex < 0 || e.ColumnIndex < 0) return;
+            string cn = grid.Columns[e.ColumnIndex].Name;
+            if (cn != "hdr" && cn != "val") return;
+            if (grid.Rows[e.RowIndex].IsNewRow) return;
+            if (cn == "hdr" && IsMergeSub(e.RowIndex)) return;
+            e.Paint(e.ClipBounds, DataGridViewPaintParts.All);
+            bool sel = (e.State & DataGridViewElementStates.Selected) != 0;
+            var box = new Rectangle(e.CellBounds.Right - 17,
+                                    e.CellBounds.Top + (e.CellBounds.Height - 14) / 2, 14, 14);
+            DrawPipGlyph(e.Graphics, box, sel ? Color.White : Color.FromArgb(37, 99, 235));
+            e.Handled = true;
+        }
+
+        private void Grid_CellMouseDown(object sender, DataGridViewCellMouseEventArgs e)
+        {
+            if (e.Button != MouseButtons.Left || e.RowIndex < 0 || e.ColumnIndex < 0) return;
+            string cn = grid.Columns[e.ColumnIndex].Name;
+            if (cn != "hdr" && cn != "val") return;
+            if (grid.Rows[e.RowIndex].IsNewRow) return;
+            if (cn == "hdr" && IsMergeSub(e.RowIndex)) return;
+            var rect = grid.GetCellDisplayRectangle(e.ColumnIndex, e.RowIndex, false);
+            if (e.X < rect.Width - PipZone) return;              // клик мимо глифа — обычное поведение
+            try
+            {
+                grid.EndEdit();
+                grid.CurrentCell = grid.Rows[e.RowIndex].Cells[e.ColumnIndex];
+            }
+            catch { }
+            if (cn == "val") PipValue(e.RowIndex); else PipHeader(e.RowIndex);
+        }
+
         private bool PickBlock(out string layer, out string name, out Dictionary<string, string> attrs)
         {
             layer = null; name = null;
@@ -855,10 +955,8 @@ namespace AtSpecPlugin
 
         // (2) «Значение» текущей строки — значение ЕЁ поля (из «Выражения») с блока;
         //     пустое «Условие» добиваем «=» (правится вручную).
-        private void PipValue()
+        private void PipValue(int ri)
         {
-            var cur = grid.CurrentCell;
-            int ri = (cur != null) ? cur.RowIndex : -1;
             if (ri < 0 || ri >= grid.Rows.Count || grid.Rows[ri].IsNewRow)
             { MessageBox.Show(FindForm(), "Выберите строку столбца, куда вставить значение.", "Пипетка"); return; }
             string ex = Convert.ToString(grid.Rows[ri].Cells["expr"].Value) ?? "";
@@ -879,12 +977,9 @@ namespace AtSpecPlugin
 
         // (3) заголовок текущей строки (шапка раскроя): токен-артикул ← Object.«ПРОФ»
         //     (запасной «ПРОФИЛЬ»), хвост строки (пила/хлыст, по умолчанию «8 6000») сохраняется.
-        private void PipHeader()
+        private void PipHeader(int ri)
         {
-            var cur = grid.CurrentCell;
-            int ri = (cur != null) ? cur.RowIndex : 0;
-            if (ri < 0 || ri >= grid.Rows.Count) ri = 0;
-            if (grid.Rows.Count == 0 || grid.Rows[ri].IsNewRow)
+            if (ri < 0 || ri >= grid.Rows.Count || grid.Rows[ri].IsNewRow)
             { MessageBox.Show(FindForm(), "Нет строки столбца для заголовка.", "Пипетка"); return; }
             string layer, name; Dictionary<string, string> attrs;
             if (!PickBlock(out layer, out name, out attrs)) return;
@@ -1283,6 +1378,7 @@ namespace AtSpecPlugin
         {
             var headers = new List<object>();
             var columns = new List<object>();
+            var colMm  = new List<double>();    // (вариант Б) мм по output-столбцам; -1 = дефолт рендера
             var filters = new List<object>();
             if (!string.IsNullOrEmpty(_layer))
                 filters.Add(Cond("Слой", "=", _layer));
@@ -1308,6 +1404,11 @@ namespace AtSpecPlugin
                 {
                     rowToOut[r.Index] = columns.Count;
                     headers.Add(h); columns.Add(ex);
+                    double mv;
+                    string mtxt = Convert.ToString(r.Cells["mm"].Value) ?? "";
+                    if (!double.TryParse(mtxt, System.Globalization.NumberStyles.Float,
+                        System.Globalization.CultureInfo.InvariantCulture, out mv) || mv <= 0) mv = -1;
+                    colMm.Add(mv);
                 }
             }
             int colCount = columns.Count;
@@ -1341,7 +1442,7 @@ namespace AtSpecPlugin
                     merges.Add(new List<object> { s, e2 });
             }
 
-            return new Dictionary<string, object>
+            var def = new Dictionary<string, object>
             {
                 { "section_title", txtSecTitle.Text },
                 { "hide_header", chkHideHeader.Checked },
@@ -1353,6 +1454,12 @@ namespace AtSpecPlugin
                 { "sort_by", sortBy },
                 { "total_row", chkTotal.Checked }
             };
+            // (вариант Б) мм-ширины пишем, только если задана хоть одна (иначе легаси-AutoFit);
+            // движок незнакомый ключ игнорирует (.get по известным полям).
+            bool anyMm = false;
+            foreach (var m in colMm) if (m > 0) { anyMm = true; break; }
+            if (anyMm) def["col_mm"] = colMm;
+            return def;
         }
     }
 
@@ -1392,6 +1499,8 @@ namespace AtSpecPlugin
         public bool UseFirstLayer = false;                       // подставить первый слой источником
         public bool TotalRow = false;                            // строка ИТОГ (сумма столбцов с Count)
         public string SeedLayer = null;                          // предпочтительный слой-источник (если есть)
+        public List<double> ColMm = null;                        // (вариант Б) ширины столбцов, мм — параллельно
+                                                                 //  Columns / строкам-столбцам FullRows; ≤0 = нет
 
         // --- путь реверса (ATSPECEDIT / FromDef): восстановление формы из сохранённого def ---
         // Когда FullRows != null, секция засевается ИМИ (полные строки грида), а не Columns.

@@ -480,8 +480,16 @@ namespace AtSpecPlugin
                 tr.AddNewlyCreatedDBObject(tbl, true);
                 // шрифт = текстстиль чертежа по имени из формы; пусто/не найден → не переопределять
                 ObjectId fontId = ReportReactor.ResolveTextStyle(tr, db, font);
-                // раскладка секций (rebuild): SetSize + текст + усечение + масштаб + объединения + шрифт
-                int[] wm = ReportReactor.LayoutSections(tbl, title, hideTitle, scale, secs, true, fontId);
+                // (вариант Б) фикс. мм-ширины пресета из def (null = легаси-AutoFit по содержимому)
+                double[] colMm = null;
+                try
+                {
+                    colMm = ReportReactor.ColMmFromDef(
+                        new JavaScriptSerializer { MaxJsonLength = int.MaxValue }.DeserializeObject(defJson));
+                }
+                catch { }
+                // раскладка секций (rebuild): SetSize + текст + усечение + масштаб/геометрия + объединения + шрифт
+                int[] wm = ReportReactor.LayoutSections(tbl, title, hideTitle, scale, secs, true, fontId, colMm);
                 tbl.GenerateLayout();
                 // определение отчёта + сигнатуру раскладки — в саму таблицу (для пересчёта ATSPECUPDATE)
                 try { ReportReactor.StoreDef(tr, tbl, defJson); } catch { }

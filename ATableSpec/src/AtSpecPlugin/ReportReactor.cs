@@ -232,7 +232,8 @@ namespace AtSpecPlugin
 
             tbl.UpgradeOpen();
             LayoutSections(tbl, title, hideTitle, scale, secs, !sameShape,
-                           ResolveTextStyle(tr, tbl.Database, fontName));
+                           ResolveTextStyle(tr, tbl.Database, fontName),
+                           ColMmFromDef(reportDef));   // (вариант Б) фикс. мм при перестройке
             if (!sameShape) { try { StoreShape(tr, tbl, newShape); } catch { } }
             tbl.GenerateLayout();
             return true;
@@ -323,7 +324,8 @@ namespace AtSpecPlugin
         // {want, maxCols}. Присваивание текста и объединения обёрнуты в try (объединённые подъячейки).
         // fontStyleId (≠Null) — единый текстстиль на все ячейки (применяется в rebuild-проходе).
         public static int[] LayoutSections(Table tbl, string title, bool hideTitle,
-            double scale, List<SectionView> secs, bool rebuild, ObjectId fontStyleId)
+            double scale, List<SectionView> secs, bool rebuild, ObjectId fontStyleId,
+            double[] colMm)
         {
             var p = MakePlan(hideTitle, secs);
             if (rebuild) tbl.SetSize(p.Want, p.MaxCols);
@@ -351,8 +353,28 @@ namespace AtSpecPlugin
             if (rebuild)
             {
                 if (tbl.Rows.Count > p.Want) tbl.DeleteRows(p.Want, tbl.Rows.Count - p.Want);
-                ApplyTableScale(tbl, scale);                       // #6: масштаб таблицы
-                AutoFitColumns(tbl, p.MaxCols, secs);              // #4: ширины столбцов по содержимому (как СПДС)
+                ApplyTableScale(tbl, scale);                       // #6: масштаб таблицы (текст 2.5×s)
+                if (colMm != null)
+                {
+                    // (вариант Б, решение Дениса 03.07) фикс. пропорции пресета «как СПДС»:
+                    // ширины = col_mm × масштаб; строки = 15 мм (заголовок/шапки) / 8 мм (данные) × масштаб.
+                    // Ручная растяжка за ручки ЖИВЁТ: бережный пересчёт (rebuild=false) сюда не заходит.
+                    double s2 = scale <= 0 ? 1.0 : scale;
+                    for (int c = 0; c < tbl.Columns.Count; c++)
+                    {
+                        double wmm = (c < colMm.Length && colMm[c] > 0) ? colMm[c] : 20.0;
+                        try { tbl.Columns[c].Width = wmm * s2; } catch { }
+                    }
+                    for (int r = 0; r < tbl.Rows.Count; r++)
+                    {
+                        bool head = (r == p.TitleRow);
+                        for (int i = 0; i < secs.Count && !head; i++)
+                            head = (r == p.SecTitleRow[i]) || (r == p.SecHeaderRow[i]);
+                        try { tbl.Rows[r].Height = (head ? 15.0 : 8.0) * s2; } catch { }
+                    }
+                }
+                else
+                    AutoFitColumns(tbl, p.MaxCols, secs);          // #4: легаси — ширины по содержимому
                 if (p.TitleRow >= 0 && p.MaxCols > 1)
                     try { tbl.MergeCells(CellRange.Create(tbl, p.TitleRow, 0, p.TitleRow, p.MaxCols - 1)); } catch { }
                 for (int i = 0; i < secs.Count; i++)
@@ -537,6 +559,33 @@ namespace AtSpecPlugin
             if (d != null && d.TryGetValue(key, out v) && v != null)
             { try { return Convert.ToDouble(v, System.Globalization.CultureInfo.InvariantCulture); } catch { return dflt; } }
             return dflt;
+        }
+
+        // (вариант Б) фикс. ширины столбцов из def: col_mm секций, слитые по индексу
+        // МАКСИМУМОМ (столбцы итоговой таблицы общие на все секции; шире — побеждает).
+        // null = в def нет ни одной мм-ширины → легаси-AutoFit по содержимому.
+        public static double[] ColMmFromDef(object reportDef)
+        {
+            var d = reportDef as Dictionary<string, object>;
+            var secs = (d != null ? Get(d, "sections") : null) as IList;
+            if (secs == null) return null;
+            var res = new List<double>();
+            bool any = false;
+            foreach (var so in secs)
+            {
+                var sd = so as Dictionary<string, object>;
+                var cm = (sd != null ? Get(sd, "col_mm") : null) as IList;
+                if (cm == null) continue;
+                for (int i = 0; i < cm.Count; i++)
+                {
+                    double v;
+                    try { v = Convert.ToDouble(cm[i], System.Globalization.CultureInfo.InvariantCulture); }
+                    catch { v = -1; }
+                    while (res.Count <= i) res.Add(-1);
+                    if (v > 0 && v > res[i]) { res[i] = v; any = true; }
+                }
+            }
+            return any ? res.ToArray() : null;
         }
 
         // Масштаб итоговой таблицы (#6): текст/строки/столбцы × scale, размеры АБСОЛЮТНЫЕ —
