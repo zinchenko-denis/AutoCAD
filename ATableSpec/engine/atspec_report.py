@@ -83,7 +83,7 @@ class Obj:
 
     def field(self, name: str) -> Any:
         up = _nk(name)
-        if up in ("ИМЯ_БЛОКА", "NAME"):
+        if up in ("ИМЯ_БЛОКА", "ИМЯ БЛОКА", "NAME"):
             return self._name
         if up in ("СЛОЙ", "LAYER"):
             return self.layer
@@ -298,6 +298,13 @@ def _num_or_none(s: Any):
     return None
 
 
+def _num_eq(a: float, b: float) -> bool:
+    # double-хвосты динамических параметров («1499.9999999998») должны находиться
+    # фильтром «=1500»: числовое равенство с относительным допуском 1e-6.
+    # Честные дроби не склеиваются: 749.5 ≠ 750.
+    return abs(a - b) <= 1e-6 * max(1.0, abs(a), abs(b))
+
+
 def _passes(obj: Obj, flt: List[dict]) -> bool:
     for f in flt or []:
         fld, op, val = f.get("field"), f.get("op", "="), f.get("value", "")
@@ -306,10 +313,10 @@ def _passes(obj: Obj, flt: List[dict]) -> bool:
         vs = str(val).strip()
         if op in ("=", "=="):
             a, b = _num_or_none(ls), _num_or_none(vs)
-            ok = (a == b) if (a is not None and b is not None) else (ls.lower() == vs.lower())
+            ok = _num_eq(a, b) if (a is not None and b is not None) else (ls.lower() == vs.lower())
         elif op in ("!=", "<>", "≠"):
             a, b = _num_or_none(ls), _num_or_none(vs)
-            ok = (a != b) if (a is not None and b is not None) else (ls.lower() != vs.lower())
+            ok = (not _num_eq(a, b)) if (a is not None and b is not None) else (ls.lower() != vs.lower())
         elif op in ("contains", "содержит"):
             ok = vs.lower() in ls.lower()
         elif op in ("not_contains", "не содержит"):

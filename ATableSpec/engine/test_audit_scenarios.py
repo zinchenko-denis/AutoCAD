@@ -207,6 +207,20 @@ rws = run_template(mk, {"filter": [], "columns": ["=Object.«ИМЯ»"], "group_
 order = [x[0] for x in rws]
 rep("OK" if order == ["Р-05", "Р-6", "Р-10"] else "BUG", "S27", f"Р-05/Р-6/Р-10 → {order}")
 
+# S28 — фильтр «=» с допуском: double-хвосты динпараметров (видео Алексея 06.07)
+dd = [B("g", "L", Ширина="1499.9999999998"), B("g", "L", Ширина="749.5")]
+r1 = run_template(dd, {"filter": [{"field": "Ширина", "op": "=", "value": "1500"}], "columns": ["=Count"], "group_by": None, "sort_by": None})
+r2 = run_template(dd, {"filter": [{"field": "Ширина", "op": "=", "value": "750"}], "columns": ["=Count"], "group_by": None, "sort_by": None})
+rep("OK" if len(r1) == 1 and len(r2) == 0 else "BUG", "S28",
+    f"«=1500» ловит 1499.9999999998 ({len(r1)} стр), «=750» НЕ ловит 749.5 ({len(r2)} стр)")
+
+# S29 — «Имя блока» — отдельное поле, не атрибут ИМЯ (список имён без ПРОФ)
+bb = [{"name": "КП45", "layer": "RF-стойки", "attributes": {"ИМЯ": "С01"}}]
+r1 = run_template(bb, {"filter": [{"field": "Имя блока", "op": "=", "value": "КП45"}], "columns": ["=Object.«ИМЯ»"], "group_by": None, "sort_by": None})
+r2 = run_template(bb, {"filter": [{"field": "ИМЯ", "op": "=", "value": "КП45"}], "columns": ["=Count"], "group_by": None, "sort_by": None})
+rep("OK" if len(r1) == 1 and r1[0][0] == "С01" and len(r2) == 0 else "BUG", "S29",
+    f"поле «Имя блока»=КП45 находит блок (атрибут ИМЯ={r1[0][0] if r1 else '—'}); атрибут ИМЯ=КП45 не находит ({len(r2)} стр)")
+
 print()
 print("── СВОДКА ──")
 for tag in ("BUG", "EDGE"):
