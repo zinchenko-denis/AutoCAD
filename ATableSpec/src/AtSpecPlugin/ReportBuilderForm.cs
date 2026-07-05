@@ -582,6 +582,35 @@ namespace AtSpecPlugin
                 DialogResult = DialogResult.None;   // не закрывать форму
                 return;
             }
+            // (аудит 05.07) столбцы итоговой таблицы ОБЩИЕ на все секции: при разном числе
+            // столбцов ширины (в т.ч. мм-пресеты, слитые максимумом) применяются к общей сетке —
+            // спецификация + раскрой в ОДНОЙ таблице разъедутся. Предупреждаем, не запрещаем.
+            if (sections.Count > 1)
+            {
+                int minC = int.MaxValue, maxC = 0;
+                foreach (var so in sections)
+                {
+                    var sd = so as Dictionary<string, object>;
+                    var cl = (sd != null && sd.ContainsKey("columns")) ? sd["columns"] as System.Collections.IList : null;
+                    int c = cl != null ? cl.Count : 0;
+                    if (c < minC) minC = c;
+                    if (c > maxC) maxC = c;
+                }
+                if (minC != maxC)
+                {
+                    var ans = MessageBox.Show(this,
+                        "Секции отчёта имеют разное число столбцов (" + minC + " и " + maxC + ").\n" +
+                        "Столбцы итоговой таблицы общие на все секции — ширины возьмутся по максимуму,\n" +
+                        "и узкая секция (например, раскрой) растянется под широкую.\n\n" +
+                        "Обычно раскрой строят ОТДЕЛЬНОЙ таблицей. Всё равно построить одной?",
+                        "ATableSpec — разные секции", MessageBoxButtons.YesNo, MessageBoxIcon.Warning);
+                    if (ans != DialogResult.Yes)
+                    {
+                        DialogResult = DialogResult.None;   // остаться в форме
+                        return;
+                    }
+                }
+            }
             string fontName = (cmbFont != null && cmbFont.SelectedIndex > 0)
                 ? Convert.ToString(cmbFont.SelectedItem) : "";   // индекс 0 = «(по стилю таблицы)» → не переопределять
             ReportDef = new Dictionary<string, object>
@@ -751,6 +780,8 @@ namespace AtSpecPlugin
             grid.CellValueChanged += Grid_CellValueChanged;
             grid.CellPainting += Grid_CellPainting;            // пипетки 2/3: глиф у правого края ячеек hdr/val
             grid.CellMouseDown += Grid_CellMouseDown;          //   клик по глифу — взять с блока (вариант 1)
+            grid.RowsRemoved += Grid_RowsRemoved;              // сдвиг объединений шапки при удалении строк
+                                                               //   (в т.ч. Del-клавишей мимо DeleteSelectedRows)
             grid.DataError += (s, e) => { e.ThrowException = false; e.Cancel = false; };
             grid.KeyDown += (s, e) =>
             {
@@ -887,6 +918,24 @@ namespace AtSpecPlugin
         {
             foreach (var m in _merges) if (ri == m[0]) return true;
             return false;
+        }
+
+        // Удаление строк грида (кнопкой формы ИЛИ Del-клавишей): индексы объединений шапки
+        // обязаны сдвинуться, иначе merge «переезжает» на чужие строки — «(объединено)»,
+        // hdr-пипетка и header_merges в def оказываются не там (найдено аудитом 05.07).
+        private void Grid_RowsRemoved(object sender, DataGridViewRowsRemovedEventArgs e)
+        {
+            int ri = e.RowIndex, n = e.RowCount;
+            if (n <= 0) return;
+            for (int k = _merges.Count - 1; k >= 0; k--)
+            {
+                int s = _merges[k][0], t = _merges[k][1];
+                int ns = s >= ri + n ? s - n : (s >= ri ? ri : s);
+                int nt = t >= ri + n ? t - n : (t >= ri ? ri - 1 : t);
+                if (nt <= ns) { _merges.RemoveAt(k); continue; }   // спан ужался до <2 строк — снять
+                _merges[k][0] = ns; _merges[k][1] = nt;
+            }
+            RefreshSummary();
         }
 
         private void Grid_CellPainting(object sender, DataGridViewCellPaintingEventArgs e)
@@ -1296,11 +1345,7 @@ namespace AtSpecPlugin
             var list = new List<int>(idx); list.Sort(); list.Reverse();
             foreach (int i in list)
                 if (i >= 0 && i < grid.Rows.Count && !grid.Rows[i].IsNewRow) grid.Rows.RemoveAt(i);
-
-            int rc = 0;
-            foreach (DataGridViewRow r in grid.Rows) if (!r.IsNewRow) rc++;
-            _merges.RemoveAll(sp => sp[1] >= rc);     // объединение за пределами — снять
-            RefreshSummary();
+            // сдвиг/снятие объединений шапки делает Grid_RowsRemoved (на каждый RemoveAt)
         }
 
         // ── объединение ШАПКИ столбцов этой секции (только строка-шапка) ──

@@ -37,7 +37,9 @@ namespace AtSpecPlugin
             bool singleVerticalBorderAdded, bool singleHorizontalBorderAdded,
             bool isFirstDisplayedColumn, bool isFirstDisplayedRow)
         {
-            if (cellBounds.Width > PipReserve + 40)
+            // порог 76 синхронизирован с формой (PipZone+DdZone+40): ужимаем редактор ровно
+            // тогда, когда в ячейке рисуются ▼+пипетка; на более узкой — редактор во всю ячейку
+            if (cellBounds.Width > 76)
             {
                 cellBounds.Width -= PipReserve;
                 cellClip = Rectangle.Intersect(cellClip, cellBounds);
