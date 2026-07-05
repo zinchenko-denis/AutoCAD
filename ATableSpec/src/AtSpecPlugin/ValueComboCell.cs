@@ -13,6 +13,7 @@
 // ReportBuilderForm.Grid_EditingControlShowing из ValuesFor(слой, поле).
 
 using System;
+using System.Drawing;
 using System.Windows.Forms;
 
 namespace AtSpecPlugin
@@ -20,11 +21,32 @@ namespace AtSpecPlugin
     // Ячейка хранит строку (как TextBox), но редактируется выпадающим combo.
     internal class ValueComboCell : DataGridViewTextBoxCell
     {
+        // Правая полоса ячейки, зарезервированная под глиф-пипетку (фидбэк Алексея,
+        // видео 05.07): редактор ужимается на эту ширину → его системная кнопка списка
+        // встаёт ЛЕВЕЕ пипетки, пипетка видна и кликабельна даже в режиме редактирования.
+        public const int PipReserve = 18;
+
         // базовый InitializeEditingControl null-безопасно кастит к TextBox-редактору и для
         // не-TextBox контрола просто ничего не делает — звать base безопасно.
         public override Type EditType { get { return typeof(ValueComboEditingControl); } }
         public override Type ValueType { get { return typeof(string); } }
         public override object DefaultNewRowValue { get { return string.Empty; } }
+
+        public override void PositionEditingControl(bool setLocation, bool setSize,
+            Rectangle cellBounds, Rectangle cellClip, DataGridViewCellStyle cellStyle,
+            bool singleVerticalBorderAdded, bool singleHorizontalBorderAdded,
+            bool isFirstDisplayedColumn, bool isFirstDisplayedRow)
+        {
+            if (cellBounds.Width > PipReserve + 40)
+            {
+                cellBounds.Width -= PipReserve;
+                cellClip = Rectangle.Intersect(cellClip, cellBounds);
+                if (cellClip.IsEmpty) cellClip = cellBounds;
+            }
+            base.PositionEditingControl(setLocation, setSize, cellBounds, cellClip, cellStyle,
+                singleVerticalBorderAdded, singleHorizontalBorderAdded,
+                isFirstDisplayedColumn, isFirstDisplayedRow);
+        }
 
         public override void InitializeEditingControl(int rowIndex, object initialFormattedValue,
             DataGridViewCellStyle dataGridViewCellStyle)

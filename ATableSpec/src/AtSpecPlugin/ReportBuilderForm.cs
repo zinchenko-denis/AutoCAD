@@ -828,7 +828,8 @@ namespace AtSpecPlugin
         // (вариант 1 Алексея) Триггеры — В САМИХ ПОЛЯХ: глиф-кнопка у combo «Источник»;
         // глифы у правого края ячеек «Заголовок» (артикул раскроя) и «Значение» (фильтр).
 
-        private const int PipZone = 20;   // клик-зона глифа у правого края ячейки, px
+        private const int PipZone = 18;   // клик-зона пипетки у правого края ячейки, px
+        private const int DdZone  = 18;   // клик-зона «раскрыть список» левее пипетки (только val), px
 
         // узнаваемая «пипетка» в произвольном box: ствол по диагонали + колба + капля у носика
         private static void DrawPipGlyph(Graphics g, Rectangle box, Color color)
@@ -843,6 +844,21 @@ namespace AtSpecPlugin
                 g.FillEllipse(br, x + w * 0.50f, y + h * 0.06f, w * 0.44f, h * 0.44f);        // колба
                 g.FillEllipse(br, x + w * 0.06f, y + h * 0.80f, w * 0.18f, h * 0.18f);        // капля
             }
+            g.SmoothingMode = old;
+        }
+
+        // маленький ▼ «раскрыть список» — рисуется в val ЛЕВЕЕ пипетки, чтобы клик по списку
+        // и клик по пипетке не конфликтовали (фидбэк Алексея, видео 05.07)
+        private static void DrawDropGlyph(Graphics g, Rectangle zone, Color color)
+        {
+            var old = g.SmoothingMode;
+            g.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
+            int cx = zone.X + zone.Width / 2, cy = zone.Y + zone.Height / 2;
+            using (var br = new SolidBrush(color))
+                g.FillPolygon(br, new[]
+                {
+                    new Point(cx - 4, cy - 2), new Point(cx + 4, cy - 2), new Point(cx, cy + 3)
+                });
             g.SmoothingMode = old;
         }
 
@@ -864,18 +880,33 @@ namespace AtSpecPlugin
             return false;
         }
 
+        // глава объединённой шапки: hdr-пипетка (артикул раскроя) живёт ТОЛЬКО здесь —
+        // в спецификациях без merge её нет (фидбэк Алексея 05.07: «в шаблонах спецификаций
+        // пипетки из заголовков убрать, в раскрое оставить»)
+        private bool IsMergeHead(int ri)
+        {
+            foreach (var m in _merges) if (ri == m[0]) return true;
+            return false;
+        }
+
         private void Grid_CellPainting(object sender, DataGridViewCellPaintingEventArgs e)
         {
             if (e.RowIndex < 0 || e.ColumnIndex < 0) return;
             string cn = grid.Columns[e.ColumnIndex].Name;
             if (cn != "hdr" && cn != "val") return;
             if (grid.Rows[e.RowIndex].IsNewRow) return;
-            if (cn == "hdr" && IsMergeSub(e.RowIndex)) return;
+            if (cn == "hdr" && !IsMergeHead(e.RowIndex)) return;   // hdr-глиф — только на объединённой шапке
             e.Paint(e.ClipBounds, DataGridViewPaintParts.All);
             bool sel = (e.State & DataGridViewElementStates.Selected) != 0;
-            var box = new Rectangle(e.CellBounds.Right - 17,
+            var box = new Rectangle(e.CellBounds.Right - PipZone + 1,
                                     e.CellBounds.Top + (e.CellBounds.Height - 14) / 2, 14, 14);
             DrawPipGlyph(e.Graphics, box, sel ? Color.White : Color.FromArgb(37, 99, 235));
+            if (cn == "val" && e.CellBounds.Width > PipZone + DdZone + 40)
+            {
+                var dz = new Rectangle(e.CellBounds.Right - PipZone - DdZone, e.CellBounds.Top,
+                                       DdZone, e.CellBounds.Height);
+                DrawDropGlyph(e.Graphics, dz, sel ? Color.White : Color.FromArgb(96, 96, 96));
+            }
             e.Handled = true;
         }
 
@@ -885,16 +916,35 @@ namespace AtSpecPlugin
             string cn = grid.Columns[e.ColumnIndex].Name;
             if (cn != "hdr" && cn != "val") return;
             if (grid.Rows[e.RowIndex].IsNewRow) return;
-            if (cn == "hdr" && IsMergeSub(e.RowIndex)) return;
+            if (cn == "hdr" && !IsMergeHead(e.RowIndex)) return;
             var rect = grid.GetCellDisplayRectangle(e.ColumnIndex, e.RowIndex, false);
-            if (e.X < rect.Width - PipZone) return;              // клик мимо глифа — обычное поведение
-            try
+            if (e.X > rect.Width - PipZone)
             {
-                grid.EndEdit();
-                grid.CurrentCell = grid.Rows[e.RowIndex].Cells[e.ColumnIndex];
+                // пипетка — у самого правого края
+                try
+                {
+                    grid.EndEdit();
+                    grid.CurrentCell = grid.Rows[e.RowIndex].Cells[e.ColumnIndex];
+                }
+                catch { }
+                if (cn == "val") PipValue(e.RowIndex); else PipHeader(e.RowIndex);
+                return;
             }
-            catch { }
-            if (cn == "val") PipValue(e.RowIndex); else PipHeader(e.RowIndex);
+            if (cn == "val" && e.X > rect.Width - PipZone - DdZone && rect.Width > PipZone + DdZone + 40)
+            {
+                // ▼ левее пипетки: раскрыть список ОДНИМ кликом (вход в редактор + DroppedDown)
+                try
+                {
+                    grid.CurrentCell = grid.Rows[e.RowIndex].Cells[e.ColumnIndex];
+                    grid.BeginEdit(true);
+                    grid.BeginInvoke(new Action(() =>
+                    {
+                        var cb = grid.EditingControl as ComboBox;
+                        if (cb != null) cb.DroppedDown = true;
+                    }));
+                }
+                catch { }
+            }
         }
 
         private bool PickBlock(out string layer, out string name, out Dictionary<string, string> attrs)
