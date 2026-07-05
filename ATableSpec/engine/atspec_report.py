@@ -18,8 +18,13 @@ atspec_report — версионно-независимое ЯДРО табли�
 """
 from __future__ import annotations
 import collections
+import re
 from decimal import Decimal, ROUND_HALF_UP
 from typing import Any, Dict, List, Optional
+
+# натуральная сортировка марок: числовые куски сравниваются как числа
+# (С1 < С2 < С10; Р-05 < Р-6 < Р-10) — лексикографика давала С1, С10, С2
+_NATSPLIT = re.compile(r"(\d+)")
 
 # числовые поля — читаются как float; остальные как строка
 _NUMERIC_FIELDS = {"ДЛИНА", "ВЫСОТА", "ШИРИНА", "ДЛИНА,ММ", "ДЛИНА, ММ", "ROTATION"}
@@ -91,10 +96,8 @@ class Obj:
         if raw is None:
             return None
         if up == "ДЛИНА" or up in {_nk(f) for f in _NUMERIC_FIELDS}:
-            try:
-                return float(str(raw).replace(",", "."))
-            except ValueError:
-                return None
+            # через _to_num: чистит пробел/nbsp-разделители («3 495») и запятую
+            return _to_num(raw)
         return raw
 
 
@@ -131,7 +134,9 @@ def _tokenize(s: str) -> List[_Tok]:
             while j < L and (s[j].isdigit() or s[j] == "."):
                 j += 1
             out.append(_Tok("NUM", float(s[i:j]))); i = j; continue
-        if c.isascii() and (c.isalpha() or c == "_"):
+        if c.isalpha() or c == "_":
+            # идентификаторы В ТОМ ЧИСЛЕ кириллические: =Object.Длина без «ёлочек» —
+            # привычный синтаксис СПДС; раньше кириллица давала «непонятный символ» → пусто
             j = i
             while j < L and (s[j].isalnum() or s[j] == "_"):
                 j += 1
@@ -283,7 +288,7 @@ def _num_or_none(s: Any):
     «3495.00» (или «3495» как в таблице). Строковое сравнение их не сводит — это и был
     баг фильтра по длине. Идентификаторы (С01, 01_03_06) в число НЕ парсятся (буквы/«_»)
     → для них остаётся строгое строковое сравнение."""
-    t = str(s).strip().replace(",", ".")
+    t = str(s).strip().replace("\u00a0", "").replace(" ", "").replace(",", ".")
     body = t[1:] if t[:1] in "+-" else t
     if body and body.replace(".", "", 1).isdecimal():
         try:
@@ -354,55 +359,96 @@ def run_template(records: List[dict], tmpl: dict) -> List[List[Any]]:
     objs = [Obj(r) for r in records if _passes(Obj(r), tmpl.get("filter", []))]
     cols: List[str] = tmpl["columns"]
     gi = tmpl.get("group_by")
+    # правленый руками/устаревший def не должен ронять таблицу: индекс за пределами → без группировки
+    if gi is not None and not (isinstance(gi, int) and 0 <= gi < len(cols)):
+        gi = None
 
-    # 1) группировка по значению столбца group_by (вычисленному на объекте)
+    def _safe(expr, obj, group, rownum, cells=None):
+        try:
+            return evaluate(expr, obj, group, rownum, cells)
+        except Exception:
+            return None
+
+    # 1) группировка по значению столбца group_by (вычисленному на объекте);
+    #    битое выражение группы → ключ None (объекты собираются в «прочее»), не падение
     if gi is None:
         groups = [[o] for o in objs]
     else:
         buckets: "collections.OrderedDict[Any, List[Obj]]" = collections.OrderedDict()
         for o in objs:
-            key = evaluate(cols[gi], o, [o], 0)
+            key = _safe(cols[gi], o, [o], 0)
             buckets.setdefault(key, []).append(o)
         groups = list(buckets.values())
 
-    # 2) сортировка ГРУПП (до нумерации) — чтобы №п/п (=row) шёл по порядку строк
+    # 2) сортировка ГРУПП (до нумерации) — чтобы №п/п (=row) шёл по порядку строк;
+    #    индекс за пределами / битое выражение сортировку молча пропускают/дают None-ключ
     sb = tmpl.get("sort_by")
     if sb:
-        col, direction = sb
-        groups.sort(key=lambda g: _sortkey(evaluate(cols[col], g[0], g, 0)),
-                    reverse=(direction == "desc"))
+        try:
+            col, direction = sb[0], sb[1]
+        except Exception:
+            col, direction = None, "asc"
+        if isinstance(col, int) and 0 <= col < len(cols):
+            groups.sort(key=lambda g: _sortkey(_safe(cols[col], g[0], g, 0)),
+                        reverse=(direction == "desc"))
 
     # 3) строка на группу в финальном порядке; Count/Sum видят всю группу,
     #    row — порядковый номер уже ПОСЛЕ сортировки. Числа: целые, кроме
     #    столбцов с делением (площадь и т.п.) — у тех 2 знака с запятой.
     rows: List[List[Any]] = []
-    raw_rows: List[List[Any]] = []      # сырые числовые значения ячеек (для ИТОГ)
     decs = ["/" in (c or "") for c in cols]
+    # столбцы, зависящие от объекта напрямую (без агрегатов): кандидаты на детект «разн.»
+    _lc = [(c or "").lower() for c in cols]
+    objdep = ["object." in _lc[ci] and not any(k in _lc[ci] for k in ("count", "sum", "col(")) 
+              for ci in range(len(cols))]
     for idx, grp in enumerate(groups, 1):
         rep = grp[0]
+        # неоднородная группа: одна марка — разные значения объектных столбцов
+        # (ошибка чертежа: СП01 с двумя размерами). Молча брать первый — прятать ошибку;
+        # пишем «разн.» — конструктор видит, что группу надо проверить.
+        varies = set()
+        if len(grp) > 1:
+            for ci, expr in enumerate(cols):
+                if not objdep[ci]:
+                    continue
+                seen = set()
+                for o in grp:
+                    seen.add(str(_safe(expr, o, [o], 0)))
+                    if len(seen) > 1:
+                        varies.add(ci); break
         row: List[Any] = []             # форматированные ячейки строки — источник для Col(n)
-        raw: List[Any] = []
         for ci, expr in enumerate(cols):
+            if ci in varies:
+                row.append("разн."); continue
             try:
                 v = evaluate(expr, rep, grp, idx, row)   # row = посчитанные левее ячейки
+            except ValueError:
+                v = "#ВЫРАЖ?"   # синтаксическая ошибка выражения — видимым маркером, не пустотой
             except Exception:
-                v = None        # битое выражение в одной ячейке не роняет таблицу
-            raw.append(v if isinstance(v, (int, float)) else None)
+                v = None        # рантайм (нет атрибута, деление на 0) — пусто, как в СПДС
             if isinstance(v, float):
                 v = _fmt_num(v, decs[ci])
             row.append(v)
-        rows.append(row); raw_rows.append(raw)
+        rows.append(row)
 
-    # строка ИТОГ (опц.): суммируем уже посчитанные значения столбцов, чьё выражение
-    # содержит Count (как «сумма» в СПДС: под Кол-во и Площадь — суммы, под №/Ш/В — пусто).
-    if tmpl.get("total_row"):
+    # строка ИТОГ (опц.): суммируем НАПЕЧАТАННЫЕ значения столбцов, чьё выражение содержит
+    # Count (как «сумма» в СПДС: под Кол-во и Площадь — суммы, под №/Ш/В — пусто).
+    # Именно напечатанные (округлённые), а не сырые: чтобы итог сходился с суммой видимых
+    # ячеек при проверке вручную (0,62+0,62 = 1,24, а не 1,23 из сырых 0.615+0.615).
+    # На пустой выборке ИТОГ не печатаем — одинокая строка «сумма 0» бессмысленна.
+    if tmpl.get("total_row") and rows:
         label = tmpl.get("total_label") or "сумма"
         total: List[Any] = []
         labeled = False
         for ci, expr in enumerate(cols):
             if "count" in (expr or "").lower():
-                acc = sum(r[ci] for r in raw_rows if r[ci] is not None)
-                total.append(_fmt_num(float(acc), decs[ci]))
+                acc = 0.0
+                for r in rows:
+                    v = r[ci]
+                    n = v if isinstance(v, (int, float)) else _num_or_none(v)
+                    if n is not None:
+                        acc += float(n)
+                total.append(_fmt_num(acc, decs[ci]))
             elif not labeled:
                 total.append(label); labeled = True
             else:
@@ -470,7 +516,11 @@ def run_report(records: List[dict], report: dict) -> Dict[str, Any]:
 
 def _sortkey(v):
     if v is None:
-        return (2, "")
+        return (2, ())
     if isinstance(v, (int, float)):
         return (0, v)
-    return (1, str(v))
+    s = str(v)
+    # натуральный ключ: «С10» = [('С',) (10)] > «С2» = [('С',) (2)]
+    parts = tuple((0, int(p)) if p.isdigit() else (1, p)
+                  for p in _NATSPLIT.split(s) if p)
+    return (1, parts)
