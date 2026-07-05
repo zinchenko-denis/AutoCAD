@@ -63,7 +63,7 @@ namespace AtSpecPlugin
                     foreach (ObjectId arId in br.AttributeCollection)
                     {
                         var ar = tr.GetObject(arId, OpenMode.ForRead) as AttributeReference;
-                        if (ar != null) { attrs[ar.Tag] = ar.TextString; fieldSet.Add(ar.Tag); }
+                        if (ar != null) { attrs[ar.Tag] = NumClean(ar.TextString); fieldSet.Add(ar.Tag); }
                     }
                     // Динамические свойства блока (ручки): у доборников и т.п. длина/ширина —
                     // это параметры, а не ATTRIB; без них Object.«Длина» пустой. ATTRIB в приоритете.
@@ -73,7 +73,7 @@ namespace AtSpecPlugin
                         {
                             string pn = dp.PropertyName;
                             if (string.IsNullOrEmpty(pn) || attrs.ContainsKey(pn)) continue;
-                            attrs[pn] = Convert.ToString(dp.Value, System.Globalization.CultureInfo.InvariantCulture);
+                            attrs[pn] = NumClean(Convert.ToString(dp.Value, System.Globalization.CultureInfo.InvariantCulture));
                             fieldSet.Add(pn);
                         }
                     }
@@ -81,7 +81,7 @@ namespace AtSpecPlugin
                     string effName = EffectiveName(tr, br);
                     // накопить значения полей для контекстного фильтра (по слою и в общий "")
                     AddVal(valuesRaw, br.Layer, "Слой", br.Layer);
-                    AddVal(valuesRaw, br.Layer, "Имя", effName);
+                    AddVal(valuesRaw, br.Layer, "Имя блока", effName);   // НЕ «Имя»: сливалось с атрибутом ИМЯ (маркировкой)
                     foreach (var kv in attrs)
                         AddVal(valuesRaw, br.Layer, kv.Key, Convert.ToString(kv.Value));
                     records.Add(new Dictionary<string, object>
@@ -125,7 +125,7 @@ namespace AtSpecPlugin
             foreach (var h0 in HIDE) HIDEN.Add(nkf(h0));
             var fields = new List<string>();
             foreach (var f in fieldSet) if (!HIDEN.Contains(nkf(f))) fields.Add(f);
-            foreach (var extra in new[] { "Имя", "Слой", "Длина", "Ширина", "Высота" })
+            foreach (var extra in new[] { "Имя блока", "Слой", "Длина", "Ширина", "Высота" })
                 if (!fields.Exists(z => string.Equals(z, extra, StringComparison.OrdinalIgnoreCase)))
                     fields.Add(extra);
             var layers = new List<string>(layerSet);
@@ -338,20 +338,20 @@ namespace AtSpecPlugin
                     foreach (ObjectId arId in br.AttributeCollection)
                     {
                         var ar = tr.GetObject(arId, OpenMode.ForRead) as AttributeReference;
-                        if (ar != null) { attrs[ar.Tag] = ar.TextString; fieldSet.Add(ar.Tag); }
+                        if (ar != null) { attrs[ar.Tag] = NumClean(ar.TextString); fieldSet.Add(ar.Tag); }
                     }
                     if (br.IsDynamicBlock)
                         foreach (DynamicBlockReferenceProperty dp in br.DynamicBlockReferencePropertyCollection)
                         {
                             string pn = dp.PropertyName;
                             if (string.IsNullOrEmpty(pn) || attrs.ContainsKey(pn)) continue;
-                            attrs[pn] = Convert.ToString(dp.Value, System.Globalization.CultureInfo.InvariantCulture);
+                            attrs[pn] = NumClean(Convert.ToString(dp.Value, System.Globalization.CultureInfo.InvariantCulture));
                             fieldSet.Add(pn);
                         }
                     layerSet.Add(br.Layer);
                     string effName = EffectiveName(tr, br);
                     AddVal(valuesRaw, br.Layer, "Слой", br.Layer);
-                    AddVal(valuesRaw, br.Layer, "Имя", effName);
+                    AddVal(valuesRaw, br.Layer, "Имя блока", effName);   // НЕ «Имя»: сливалось с атрибутом ИМЯ (маркировкой)
                     foreach (var kv in attrs)
                         AddVal(valuesRaw, br.Layer, kv.Key, Convert.ToString(kv.Value));
                 }
@@ -375,7 +375,7 @@ namespace AtSpecPlugin
             foreach (var h0 in HIDE) HIDEN.Add(nkf(h0));
             fields = new List<string>();
             foreach (var f in fieldSet) if (!HIDEN.Contains(nkf(f))) fields.Add(f);
-            foreach (var extra in new[] { "Имя", "Слой", "Длина", "Ширина", "Высота" })
+            foreach (var extra in new[] { "Имя блока", "Слой", "Длина", "Ширина", "Высота" })
                 if (!fields.Exists(z => string.Equals(z, extra, StringComparison.OrdinalIgnoreCase)))
                     fields.Add(extra);
             layers = new List<string>(layerSet);
@@ -551,6 +551,25 @@ namespace AtSpecPlugin
         }
 
         // накопитель значений поля для контекстного фильтра: пишем в свой слой и в общий ""
+        // Числовая чистка отображаемых значений (видео Алексея 06.07): динамические
+        // параметры приходят с double-хвостами («1200.0000000002», «1499.9999999998») —
+        // почти-целые сводим к целому. Строки БЕЗ точки/запятой («01», «С01») не трогаем
+        // (ведущие нули маркировок); честные дроби («749.5», артикул «0,1») возвращаем
+        // КАК НАПИСАНЫ — иначе фильтры/вид артикулов поедут.
+        internal static string NumClean(string s)
+        {
+            if (string.IsNullOrEmpty(s)) return s;
+            if (s.IndexOf('.') < 0 && s.IndexOf(',') < 0) return s;
+            string t = s.Replace("\u00a0", "").Replace(" ", "").Replace(',', '.');
+            double x;
+            if (!double.TryParse(t, System.Globalization.NumberStyles.Float,
+                System.Globalization.CultureInfo.InvariantCulture, out x)) return s;
+            double r = Math.Round(x);
+            if (Math.Abs(x - r) <= 1e-6 * Math.Max(1.0, Math.Abs(x)))
+                return r.ToString("0", System.Globalization.CultureInfo.InvariantCulture);
+            return s;
+        }
+
         private static void AddVal(Dictionary<string, Dictionary<string, HashSet<string>>> map,
                                    string layer, string field, string val)
         {

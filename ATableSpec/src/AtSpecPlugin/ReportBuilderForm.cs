@@ -1022,7 +1022,7 @@ namespace AtSpecPlugin
                     foreach (AcDb.ObjectId id in br.AttributeCollection)
                     {
                         var ar = tr.GetObject(id, AcDb.OpenMode.ForRead) as AcDb.AttributeReference;
-                        if (ar != null && !attrs.ContainsKey(ar.Tag)) attrs[ar.Tag] = ar.TextString ?? "";
+                        if (ar != null && !attrs.ContainsKey(ar.Tag)) attrs[ar.Tag] = ReportCommand.NumClean(ar.TextString ?? "");
                     }
                     tr.Commit();
                 }

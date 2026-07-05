@@ -15,6 +15,7 @@
 using System;
 using System.IO;
 using System.Reflection;
+using Microsoft.Win32;
 using AcApp = Autodesk.AutoCAD.ApplicationServices.Application;
 
 namespace AtSpecPlugin
@@ -45,8 +46,55 @@ namespace AtSpecPlugin
                 dynamic app = AcApp.AcadApplication;
                 if (app == null) return;
                 dynamic mg = app.MenuGroups.Item(0);
+                SaveToolbarPosByName(mg);            // (видео Алексея 06.07) позиция — в реестр
                 RemoveMenu(mg);
                 RemoveToolbar(mg);
+            }
+            catch { }
+        }
+
+        // ── позиция тулбара: тулбар пересоздаётся при каждом запуске (RemoveToolbar+Add),
+        //    поэтому AutoCAD его позицию не хранит — храним сами в HKCU\Software\ATableSpec.
+        //    DockStatus: 0..3 = стороны докинга, 4 = плавающий (Top/Left в пикселях экрана).
+        private const string RegKey = @"Software\ATableSpec";
+
+        private static void SaveToolbarPosByName(dynamic mg)
+        {
+            try
+            {
+                dynamic tbs = mg.Toolbars;
+                for (int i = (int)tbs.Count - 1; i >= 0; i--)
+                {
+                    dynamic t = tbs.Item(i);
+                    if (!NameEquals(t, GroupName)) continue;
+                    int dock = (int)t.DockStatus;
+                    int top = 0, left = 0;
+                    if (dock == 4) { try { top = (int)t.Top; left = (int)t.Left; } catch { } }
+                    using (var k = Registry.CurrentUser.CreateSubKey(RegKey))
+                    {
+                        k.SetValue("TbDock", dock);
+                        k.SetValue("TbTop", top);
+                        k.SetValue("TbLeft", left);
+                    }
+                    return;
+                }
+            }
+            catch { }
+        }
+
+        private static void RestoreToolbarPos(dynamic tb)
+        {
+            try
+            {
+                using (var k = Registry.CurrentUser.OpenSubKey(RegKey))
+                {
+                    if (k == null) return;               // первый запуск — дефолтная позиция
+                    int dock = Convert.ToInt32(k.GetValue("TbDock", 4));
+                    int top = Convert.ToInt32(k.GetValue("TbTop", 0));
+                    int left = Convert.ToInt32(k.GetValue("TbLeft", 0));
+                    if (dock >= 0 && dock <= 3) tb.Dock(dock);
+                    else tb.Float(top, left, 1);
+                }
             }
             catch { }
         }
@@ -80,6 +128,7 @@ namespace AtSpecPlugin
                                        Path.Combine(icons, it[2] + "_32.bmp")); } catch { }
             }
             try { tb.Visible = true; } catch { }
+            RestoreToolbarPos(tb);                   // вернуть сохранённое положение (док/флоат)
         }
 
         private static void RemoveMenu(dynamic mg)
