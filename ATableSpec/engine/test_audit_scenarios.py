@@ -221,6 +221,42 @@ r2 = run_template(bb, {"filter": [{"field": "ИМЯ", "op": "=", "value": "КП4
 rep("OK" if len(r1) == 1 and r1[0][0] == "С01" and len(r2) == 0 else "BUG", "S29",
     f"поле «Имя блока»=КП45 находит блок (атрибут ИМЯ={r1[0][0] if r1 else '—'}); атрибут ИМЯ=КП45 не находит ({len(r2)} стр)")
 
+# S30 — «Имя блока» в выражении столбца
+bb = [{"name": "КП45", "layer": "L", "attributes": {"ИМЯ": "С01"}}]
+rws = run_template(bb, {"filter": [], "columns": ["=Object.«Имя блока»", "=Object.«ИМЯ»"], "group_by": None, "sort_by": None})
+rep("OK" if rws[0] == ["КП45", "С01"] else "BUG", "S30", f"столбцы Имя блока/ИМЯ → {rws[0]}")
+
+# S31 — «≠» с допуском: хвостатое значение НЕ проходит ≠
+dd = [B("g", "L", Ширина="1499.9999999998")]
+rws = run_template(dd, {"filter": [{"field": "Ширина", "op": "≠", "value": "1500"}], "columns": ["=Count"], "group_by": None, "sort_by": None})
+rep("OK" if len(rws) == 0 else "BUG", "S31", f"«≠1500» на 1499.9999999998 → {len(rws)} строк (допуск работает и в ≠)")
+
+# S32 — Visibility1 как обычное поле блока
+vv = [B("g", "L", Visibility1="Стеклопакет", МАРКИРОВКА="СП01")]
+rws = run_template(vv, {"filter": [], "columns": ["=Object.«Visibility1»"], "group_by": None, "sort_by": None})
+rep("OK" if rws[0][0] == "Стеклопакет" else "BUG", "S32", f"Visibility1 → {rws[0][0]!r}")
+
+# S33 — зеркало ReportCommands.NumClean (C#): контракт числовой чистки формы.
+# Логика ДОЛЖНА совпадать с C#: трогаем только строки с '.' или ','; парс с чисткой
+# пробелов/nbsp и ','→'.'; почти-целое (1e-6 отн.) → целое; иначе — исходник как есть.
+def num_clean(v):
+    if not v or ('.' not in v and ',' not in v):
+        return v
+    t = v.replace("\u00a0", "").replace(" ", "").replace(",", ".")
+    try:
+        x = float(t)
+    except ValueError:
+        return v
+    r = round(x)
+    if abs(x - r) <= 1e-6 * max(1.0, abs(x)):
+        return "%d" % r
+    return v
+cases = [("01", "01"), ("С01", "С01"), ("0,1", "0,1"), ("749.5", "749.5"),
+         ("1499.9999999998", "1500"), ("1200.0000000002", "1200"),
+         ("3495.0000", "3495"), ("3 495,00", "3495"), ("2050", "2050"), ("", "")]
+bad = [(inp, num_clean(inp), exp) for inp, exp in cases if num_clean(inp) != exp]
+rep("OK" if not bad else "BUG", "S33", f"NumClean-зеркало: {'все ' + str(len(cases)) + ' кейсов' if not bad else bad}")
+
 print()
 print("── СВОДКА ──")
 for tag in ("BUG", "EDGE"):
