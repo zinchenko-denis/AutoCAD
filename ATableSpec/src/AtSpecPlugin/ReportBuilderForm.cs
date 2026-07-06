@@ -1233,7 +1233,16 @@ namespace AtSpecPlugin
             if (string.IsNullOrEmpty(expr)) return null;
             int i = expr.IndexOf('«');
             if (i >= 0) { int j = expr.IndexOf('»', i + 1); if (j > i + 1) return expr.Substring(i + 1, j - i - 1); }
-            if (expr.IndexOf("Object.Name", StringComparison.OrdinalIgnoreCase) >= 0) return "Name";
+            // (краш-тест 06.07-2) движок понимает =Object.Длина БЕЗ «ёлочек» (синтаксис СПДС),
+            // а помощники формы (пипетка, список значений) такое поле не видели — берём
+            // хвост-идентификатор после «Object.» (буквы/цифры/_ , юникод). Покрывает и Object.Name.
+            int k = expr.IndexOf("Object.", StringComparison.OrdinalIgnoreCase);
+            if (k >= 0)
+            {
+                int p = k + 7, q = p;
+                while (q < expr.Length && (char.IsLetterOrDigit(expr[q]) || expr[q] == '_')) q++;
+                if (q > p) return expr.Substring(p, q - p);
+            }
             return null;
         }
 
@@ -1249,7 +1258,7 @@ namespace AtSpecPlugin
             }
             if (byField != null) { foreach (var k in byField.Keys) outl.Add(k); }
             else outl.AddRange(_fields);
-            foreach (var ex in new[] { "Слой", "Имя", "Длина", "Ширина", "Высота" })
+            foreach (var ex in new[] { "Слой", "Имя блока", "Длина", "Ширина", "Высота" })
                 if (!outl.Exists(z => NkEq(z, ex))) outl.Add(ex);
             outl.Sort(StringComparer.OrdinalIgnoreCase);
             return outl;
