@@ -1024,6 +1024,20 @@ namespace AtSpecPlugin
                         var ar = tr.GetObject(id, AcDb.OpenMode.ForRead) as AcDb.AttributeReference;
                         if (ar != null && !attrs.ContainsKey(ar.Tag)) attrs[ar.Tag] = ReportCommands.NumClean(ar.TextString ?? "");
                     }
+                    // (видео Алексея 06.07-2) динамические свойства (Visibility1, размеры
+                    // динблоков) пипетка НЕ видела — собирался только AttributeCollection,
+                    // и «Тип заполнения» =Object.«Visibility1» давал «у блока нет поля».
+                    // Добираем как в главном сборе ReportCommands (атрибуты приоритетнее).
+                    if (br.IsDynamicBlock)
+                    {
+                        foreach (AcDb.DynamicBlockReferenceProperty dp in br.DynamicBlockReferencePropertyCollection)
+                        {
+                            string pn = dp.PropertyName;
+                            if (string.IsNullOrEmpty(pn) || attrs.ContainsKey(pn)) continue;
+                            attrs[pn] = ReportCommands.NumClean(
+                                Convert.ToString(dp.Value, System.Globalization.CultureInfo.InvariantCulture));
+                        }
+                    }
                     tr.Commit();
                 }
                 // производные Ширина/Высота из РАЗМЕР_ЗАП («1125Х275») — как в движке
@@ -1066,8 +1080,16 @@ namespace AtSpecPlugin
             if (!PickBlock(out layer, out name, out attrs)) return;
             string val;
             if (fld.Equals("Слой", StringComparison.OrdinalIgnoreCase)) val = layer;
+            else if (fld.Equals("Имя блока", StringComparison.OrdinalIgnoreCase) ||
+                     fld.Equals("ИМЯ_БЛОКА", StringComparison.OrdinalIgnoreCase) ||
+                     fld.Equals("Name", StringComparison.OrdinalIgnoreCase)) val = name;
+            // (видео Алексея 06.07-2) поле «ИМЯ» — это АТРИБУТ (маркировка С01),
+            // а не имя блока: старая ветка «Имя → name» вставляла КП45 (блоки названы
+            // по профилю). Атрибуты/динсвойства смотрим ПЕРВЫМИ, имя блока — только
+            // legacy-фолбэк для «Имя» без такого атрибута.
+            else if (attrs.TryGetValue(fld, out val)) { }
             else if (fld.Equals("Имя", StringComparison.OrdinalIgnoreCase)) val = name;
-            else if (!attrs.TryGetValue(fld, out val))
+            else
             { MessageBox.Show(FindForm(), "У блока нет поля «" + fld + "».", "Пипетка"); return; }
             grid.Rows[ri].Cells["val"].Value = val ?? "";
             string op = (Convert.ToString(grid.Rows[ri].Cells["cond"].Value) ?? "").Trim();

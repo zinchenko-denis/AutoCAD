@@ -37,16 +37,32 @@ namespace AtSpecPlugin
         public static void Init()
         {
             try { Build(); } catch { /* классика не обязательна */ }
+            // (видео Алексея 06.07-2) позиция НЕ сохранялась: запись жила в Cleanup=Terminate,
+            // когда COM AutoCAD уже мёртв → catch глотал → реестр пуст → рестарт в дефолте.
+            // BeginQuit стреляет ДО разрушения COM — пишем позицию здесь.
+            try { AcApp.BeginQuit += OnBeginQuit; } catch { }
         }
 
-        public static void Cleanup()
+        private static void OnBeginQuit(object sender, EventArgs e)
         {
             try
             {
                 dynamic app = AcApp.AcadApplication;
                 if (app == null) return;
+                SaveToolbarPosByName(app.MenuGroups.Item(0));
+            }
+            catch { }
+        }
+
+        public static void Cleanup()
+        {
+            try { AcApp.BeginQuit -= OnBeginQuit; } catch { }
+            try
+            {
+                dynamic app = AcApp.AcadApplication;
+                if (app == null) return;
                 dynamic mg = app.MenuGroups.Item(0);
-                SaveToolbarPosByName(mg);            // (видео Алексея 06.07) позиция — в реестр
+                SaveToolbarPosByName(mg);            // запасная попытка (если COM ещё жив)
                 RemoveMenu(mg);
                 RemoveToolbar(mg);
             }
