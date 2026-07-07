@@ -27,6 +27,17 @@ namespace AtSpecPlugin
 {
     public class Commands
     {
+        // Диагностика позиции классического тулбара: реестр + живое состояние + статус
+        // опроса. Для разбора «тулбар не держит позицию» — Алексей шлёт фото ком. строки.
+        // На кнопки НЕ выносится (как ATSPECDUMP).
+        [CommandMethod("ATSPECTBPOS")]
+        public void AtSpecTbPos()
+        {
+            var doc = AcApp.DocumentManager.MdiActiveDocument;
+            if (doc == null) return;
+            doc.Editor.WriteMessage("\n[ATableSpec] " + ClassicUi.DebugPos() + "\n");
+        }
+
         [CommandMethod("ATSPEC")]
         public void AtSpec()
         {
