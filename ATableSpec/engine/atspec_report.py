@@ -27,7 +27,8 @@ from typing import Any, Dict, List, Optional
 _NATSPLIT = re.compile(r"(\d+)")
 
 # числовые поля — читаются как float; остальные как строка
-_NUMERIC_FIELDS = {"ДЛИНА", "ВЫСОТА", "ШИРИНА", "ДЛИНА,ММ", "ДЛИНА, ММ", "ROTATION"}
+_NUMERIC_FIELDS = {"ДЛИНА", "ВЫСОТА", "ШИРИНА", "ДЛИНА,ММ", "ДЛИНА, ММ", "ROTATION",
+                   "ШТ_РАЗМЕР", "ШТ_НИЗ", "ШТ_ВЕРХ", "ШТ_ЗАЗОР"}
 
 # Разделители "Ширина<sep>Высота" в РАЗМЕР_ЗАП. Первый — кириллическая Х (U+0425),
 # как в исходных чертежах (ср. mapping.yaml size_separators); латинские/«*» — на всякий.
@@ -426,7 +427,13 @@ def run_template(records: List[dict], tmpl: dict) -> List[List[Any]]:
         row: List[Any] = []             # форматированные ячейки строки — источник для Col(n)
         for ci, expr in enumerate(cols):
             if ci in varies:
-                row.append("разн."); continue
+                # п.4 ТЗ 07.07: не голое «разн.», а «<значение первого>, разн.» —
+                # для штапиков смесь марок в группе по длине — НОРМА, марка нужна.
+                v0 = _safe(expr, rep, [rep], 0)
+                if isinstance(v0, float) and abs(v0 - round(v0)) < 1e-9:
+                    v0 = int(round(v0))
+                s0 = "" if v0 is None else str(v0)
+                row.append((s0 + ", разн.") if s0 else "разн."); continue
             try:
                 v = evaluate(expr, rep, grp, idx, row)   # row = посчитанные левее ячейки
             except ValueError:
@@ -490,6 +497,110 @@ def _sections_of(report: dict) -> List[dict]:
     return out
 
 
+# ─────────────────────── штапики: стыки стоек (терморазрывы) ───────────────────────
+# ТЗ 07.07 (файл Проба_штапики_2.dxf): размер разрезного штапика = ЧИСТОЕ пересечение
+# Y-интервалов блока заполнения и прилегающей стойки (эталон: перехлёсты 247/57, зазор 10).
+# Асимметричный стык и второй стык в одном спане — игнорируем (п.2–3 ТЗ, на практике нет).
+
+_BEADS_CUT_LAYER = "ШТАПИК-РАЗРЕЗ"   # служебный слой производных записей-«половин»
+_GAB_KEYS = ("ГАБ_X0", "ГАБ_Y0", "ГАБ_X1", "ГАБ_Y1")   # габарит блока, кладёт C#-сборщик
+
+
+def _rec_box(rec: dict):
+    """Габарит записи (x0,y0,x1,y1) из служебных полей ГАБ_* или None."""
+    at = rec.get("attributes") or {}
+    vals = []
+    for key in _GAB_KEYS:
+        v = at.get(key)
+        if v is None:                       # запасной нормализованный поиск
+            for k, vv in at.items():
+                if _nk(k) == key:
+                    v = vv
+                    break
+        n = _num_or_none("" if v is None else str(v))
+        if n is None:
+            return None
+        vals.append(n)
+    x0, y0, x1, y1 = vals
+    return (min(x0, x1), min(y0, y1), max(x0, x1), max(y0, y1))
+
+
+def _bead_num(v: float) -> str:
+    """Число → строка без double-хвостов (почти целое → целое)."""
+    if abs(v - round(v)) <= 1e-6 * max(1.0, abs(v)):
+        return str(int(round(v)))
+    return ("%.3f" % v).rstrip("0").rstrip(".")
+
+
+def _beads_expand(records: List[dict], cfg) -> List[dict]:
+    """Производные поля штапиков по стыкам стоек.
+
+    cfg = {"layer": "<слой стоек>"} (def-ключ "beads"; нет ключа — записи нетронуты,
+    старые таблицы не знают о штапиках). Для каждой записи НЕ со слоя стоек:
+      ШТ_СТЫК = 1, если зазор между прилегающими (пересечение X-интервалов, допуск
+      1 мм) стойками попадает строго внутрь Y-спана записи, иначе 0. При стыке:
+      ШТ_НИЗ/ШТ_ВЕРХ = перехлёсты (длины пересечений Y-интервалов) с нижней/верхней
+      стойкой, ШТ_ЗАЗОР = ширина зазора; плюс ДВЕ производные записи-«половины» на
+      служебном слое ШТАПИК-РАЗРЕЗ с полями ШТ_РАЗМЕР и ШТ_ЧАСТЬ («низ»/«верх») —
+      секция с этим источником и группой по ШТ_РАЗМЕР даёт две строки с естественной
+      нумерацией. Y-интервалы левой/правой колонок стоек сливаются (дубли схлопнуты).
+    Запись без габарита получает ШТ_СТЫК=0 (консервативный фолбэк)."""
+    if not isinstance(cfg, dict):
+        return records
+    lay = str(cfg.get("layer", "")).strip().lower()
+    if not lay:
+        return records
+    stands = []
+    for r in records:
+        if str(r.get("layer", "")).strip().lower() != lay:
+            continue
+        b = _rec_box(r)
+        if b:
+            stands.append(b)
+    out = list(records)
+    for r in records:
+        if str(r.get("layer", "")).strip().lower() == lay:
+            continue
+        at = r.setdefault("attributes", {})
+        box = _rec_box(r)
+        if box is None:
+            at.setdefault("ШТ_СТЫК", "0")
+            continue
+        zx0, zy0, zx1, zy1 = box
+        ivs = sorted((sy0, sy1) for sx0, sy0, sx1, sy1 in stands
+                     if not (sx1 < zx0 - 1.0 or sx0 > zx1 + 1.0))
+        merged: List[tuple] = []
+        for y0, y1 in ivs:
+            if merged and y0 <= merged[-1][1] + 0.5:
+                merged[-1] = (merged[-1][0], max(merged[-1][1], y1))
+            else:
+                merged.append((y0, y1))
+        joint = None
+        for lo, hi in zip(merged, merged[1:]):
+            if zy0 + 0.5 < lo[1] and hi[0] < zy1 - 0.5:   # зазор строго внутри спана
+                joint = (lo, hi)
+                break                                      # второй стык игнорируем (п.3)
+        if joint is None:
+            at["ШТ_СТЫК"] = "0"
+            continue
+        (a0, a1), (b0, b1) = joint
+        low = min(zy1, a1) - max(zy0, a0)
+        high = min(zy1, b1) - max(zy0, b0)
+        at["ШТ_СТЫК"] = "1"
+        at["ШТ_НИЗ"] = _bead_num(low)
+        at["ШТ_ВЕРХ"] = _bead_num(high)
+        at["ШТ_ЗАЗОР"] = _bead_num(b0 - a1)
+        for part, size in (("низ", low), ("верх", high)):
+            half = dict(at)
+            half.pop("ШТ_НИЗ", None)
+            half.pop("ШТ_ВЕРХ", None)
+            half["ШТ_РАЗМЕР"] = _bead_num(size)
+            half["ШТ_ЧАСТЬ"] = part
+            out.append({"name": r.get("name", ""), "layer": _BEADS_CUT_LAYER,
+                        "attributes": half})
+    return out
+
+
 def run_report(records: List[dict], report: dict) -> Dict[str, Any]:
     """Отчёт = заголовок таблицы + 1..N секций (стойки, ригеля, ... в одной таблице).
 
@@ -499,6 +610,7 @@ def run_report(records: List[dict], report: dict) -> Dict[str, Any]:
       rows/header — плоско (конкатенация секций), для совместимости со старыми
                  потребителями и тестами.
     """
+    records = _beads_expand(records, report.get("beads"))
     out_sections: List[Dict[str, Any]] = []
     flat: List[List[Any]] = []
     for s in _sections_of(report):
