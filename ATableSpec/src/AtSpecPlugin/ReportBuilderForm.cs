@@ -754,12 +754,8 @@ namespace AtSpecPlugin
                     {
                         MessageBox.Show(this,
                             "Отчёт " + (pi + 1) + ": фильтр по ШТ_СТЫК виден в таблице условий, но не попал в определение (" +
-                            inGrid + " в гриде / " + inDef + " в определении).
-
-Диагностика ячеек:
-" + dg +
-                            "
-Построение отменено. Пришлите этот текст разработчику.",
+                            inGrid + " в гриде / " + inDef + " в определении).\n\nДиагностика ячеек:\n" + dg +
+                            "\nПостроение отменено. Пришлите этот текст разработчику.",
                             "ATableSpec — самопроверка штапиков", MessageBoxButtons.OK, MessageBoxIcon.Error);
                         DialogResult = DialogResult.None;
                         return;
@@ -772,13 +768,9 @@ namespace AtSpecPlugin
                     if (!string.Equals(SectionSourceLayer(pairs[pi].Value), standsLayer, StringComparison.OrdinalIgnoreCase))
                         continue;
                     var ans2 = MessageBox.Show(this,
-                        "Отчёт " + (pi + 1) + " берёт блоки со слоя стоек («" + standsLayer + "»).
-" +
-                        "Этот слой указан в поле «Стойки» для расчёта стыков (терморазрывов);
-" +
-                        "источником штапиков обычно служит слой заполнений.
-
-Всё равно построить?",
+                        "Отчёт " + (pi + 1) + " берёт блоки со слоя стоек («" + standsLayer + "»).\n" +
+                        "Этот слой указан в поле «Стойки» для расчёта стыков (терморазрывов);\n" +
+                        "источником штапиков обычно служит слой заполнений.\n\nВсё равно построить?",
                         "ATableSpec — источник равен слою стоек", MessageBoxButtons.YesNo, MessageBoxIcon.Warning);
                     if (ans2 != DialogResult.Yes) { DialogResult = DialogResult.None; return; }
                     break;
