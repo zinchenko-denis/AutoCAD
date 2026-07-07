@@ -31,6 +31,7 @@ using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Windows.Forms;
+using System.IO;
 using System.Web.Script.Serialization;
 using Microsoft.Win32;
 using Autodesk.AutoCAD.EditorInput;
@@ -82,6 +83,7 @@ namespace AtSpecPlugin
             _lastTitle = cbTitle.Text;
             foreach (var sd in PresetListFor(_template, true))   // «Штапики» сеет 4 секции, прочие — одну
                 AddSection(sd);
+            if (_cards.Count > 0) flow.ScrollControlIntoView(_cards[0]);
             ApplyStandsDefault(_template);
         }
 
@@ -117,6 +119,22 @@ namespace AtSpecPlugin
                 foreach (var s in sectionSeeds) AddSection(s);
             else
                 AddSection(PresetFor(1, true));              // пустую форму не оставляем
+        }
+
+        // Слой-источник секции из собранного def: первый фильтр field=«Слой».
+        private static string SectionSourceLayer(Dictionary<string, object> sd)
+        {
+            var fl = (sd != null && sd.ContainsKey("filter")) ? sd["filter"] as System.Collections.IEnumerable : null;
+            if (fl == null) return "";
+            foreach (var fo in fl)
+            {
+                var fd = fo as Dictionary<string, object>;
+                if (fd == null) continue;
+                if (string.Equals(Convert.ToString(fd.ContainsKey("field") ? fd["field"] : ""), "Слой",
+                        StringComparison.OrdinalIgnoreCase))
+                    return Convert.ToString(fd.ContainsKey("value") ? fd["value"] : "") ?? "";
+            }
+            return "";
         }
 
         // def (десериализованный объект) -> готовая форма для правки на месте.
@@ -416,6 +434,7 @@ namespace AtSpecPlugin
             }));
             foreach (var sd in PresetListFor(tpl, true))         // «Штапики» сеет 4 секции
                 AddSection(sd);
+            if (_cards.Count > 0) flow.ScrollControlIntoView(_cards[0]);
             ApplyStandsDefault(tpl);
         }
 
@@ -660,14 +679,20 @@ namespace AtSpecPlugin
         }
         private void Renumber()
         {
-            for (int i = 0; i < _cards.Count; i++) _cards[i].SetIndex(i + 1);
+            for (int i = 0; i < _cards.Count; i++) _cards[i].SetIndex(i + 1, _cards.Count);
         }
 
         private void BuildDef()
         {
             var sections = new List<object>();
+            var pairs = new List<KeyValuePair<SectionCard, Dictionary<string, object>>>();
             foreach (var card in _cards)
-                if (card.HasColumns()) sections.Add(card.ToDef());
+                if (card.HasColumns())
+                {
+                    var sd0 = card.ToDef();
+                    sections.Add(sd0);
+                    pairs.Add(new KeyValuePair<SectionCard, Dictionary<string, object>>(card, sd0));
+                }
             if (sections.Count == 0)
             {
                 MessageBox.Show("Добавьте хотя бы одну секцию со столбцами (Заголовок | Выражение).",
@@ -704,6 +729,61 @@ namespace AtSpecPlugin
                     }
                 }
             }
+            string standsLayer = (cmbStands != null && cmbStands.SelectedIndex > 0)
+                ? Convert.ToString(cmbStands.SelectedItem) : "";
+            if (standsLayer.Length > 0)
+            {
+                // Гард 07.07 (видео Алексея): фильтр ШТ_СТЫК видел в гриде, но терялся в def →
+                // секция «без терморазрыва» тянула всё подряд. Сверяем грид ↔ собранные фильтры;
+                // расхождение — диагностика и отмена построения (не строим заведомо битое).
+                for (int pi = 0; pi < pairs.Count; pi++)
+                {
+                    var card = pairs[pi].Key; var sd = pairs[pi].Value;
+                    var dg = new System.Text.StringBuilder();
+                    int inGrid = card.CountGridFilters("ШТ_СТЫК", dg);
+                    int inDef = 0;
+                    var fl = sd.ContainsKey("filter") ? sd["filter"] as System.Collections.IEnumerable : null;
+                    if (fl != null)
+                        foreach (var fo in fl)
+                        {
+                            var fd = fo as Dictionary<string, object>;
+                            if (fd != null && (Convert.ToString(fd.ContainsKey("field") ? fd["field"] : "") ?? "")
+                                    .IndexOf("ШТ_СТЫК", StringComparison.OrdinalIgnoreCase) >= 0) inDef++;
+                        }
+                    if (inGrid != inDef)
+                    {
+                        MessageBox.Show(this,
+                            "Отчёт " + (pi + 1) + ": фильтр по ШТ_СТЫК виден в таблице условий, но не попал в определение (" +
+                            inGrid + " в гриде / " + inDef + " в определении).
+
+Диагностика ячеек:
+" + dg +
+                            "
+Построение отменено. Пришлите этот текст разработчику.",
+                            "ATableSpec — самопроверка штапиков", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                        DialogResult = DialogResult.None;
+                        return;
+                    }
+                }
+                // Источник секции = слой стоек: почти наверняка ошибка чтения инструкции
+                // («Стойки» — слой для РАСЧЁТА стыков, а не источник штапиков).
+                for (int pi = 0; pi < pairs.Count; pi++)
+                {
+                    if (!string.Equals(SectionSourceLayer(pairs[pi].Value), standsLayer, StringComparison.OrdinalIgnoreCase))
+                        continue;
+                    var ans2 = MessageBox.Show(this,
+                        "Отчёт " + (pi + 1) + " берёт блоки со слоя стоек («" + standsLayer + "»).
+" +
+                        "Этот слой указан в поле «Стойки» для расчёта стыков (терморазрывов);
+" +
+                        "источником штапиков обычно служит слой заполнений.
+
+Всё равно построить?",
+                        "ATableSpec — источник равен слою стоек", MessageBoxButtons.YesNo, MessageBoxIcon.Warning);
+                    if (ans2 != DialogResult.Yes) { DialogResult = DialogResult.None; return; }
+                    break;
+                }
+            }
             string fontName = (cmbFont != null && cmbFont.SelectedIndex > 0)
                 ? Convert.ToString(cmbFont.SelectedItem) : "";   // индекс 0 = «(по стилю таблицы)» → не переопределять
             ReportDef = new Dictionary<string, object>
@@ -714,9 +794,27 @@ namespace AtSpecPlugin
                 { "font", fontName },
                 { "sections", sections }
             };
-            if (cmbStands != null && cmbStands.SelectedIndex > 0)   // стыки штапиков: слой стоек
-                ReportDef["beads"] = new Dictionary<string, object>
-                    { { "layer", Convert.ToString(cmbStands.SelectedItem) } };
+            if (standsLayer.Length > 0)   // стыки штапиков: слой стоек + слой-источник половин
+            {
+                string srcLayer = "";
+                foreach (var pr2 in pairs)
+                {
+                    string sl = SectionSourceLayer(pr2.Value);
+                    if (sl.Length == 0) continue;
+                    if (string.Equals(sl, standsLayer, StringComparison.OrdinalIgnoreCase)) continue;
+                    if (string.Equals(sl, BeadsCutLayer, StringComparison.OrdinalIgnoreCase)) continue;
+                    srcLayer = sl; break;      // первая «обычная» секция = откуда режем половины
+                }
+                var bd2 = new Dictionary<string, object> { { "layer", standsLayer } };
+                if (srcLayer.Length > 0) bd2["source"] = srcLayer;
+                ReportDef["beads"] = bd2;
+            }
+            try   // последний собранный def — в %TEMP% (диагностика «что реально построилось»)
+            {
+                File.WriteAllText(Path.Combine(Path.GetTempPath(), "ATableSpec_last_def.json"),
+                    new JavaScriptSerializer().Serialize(ReportDef), System.Text.Encoding.UTF8);
+            }
+            catch { }
             try   // запомнить масштаб и шрифт — следующая таблица создастся с ними
             {
                 using (var rk = Registry.CurrentUser.CreateSubKey(@"Software\ATableSpec"))
@@ -902,7 +1000,11 @@ namespace AtSpecPlugin
                     string gr = fr.Length > 4 ? (fr[4] ?? "") : "";
                     string mm = (seed.ColMm != null && fi < seed.ColMm.Count && seed.ColMm[fi] > 0)
                         ? seed.ColMm[fi].ToString(System.Globalization.CultureInfo.InvariantCulture) : "";
-                    grid.Rows.Add(h, ex, op, vl, gr, mm);
+                    int nri = grid.Rows.Add();          // именная запись: не зависит от порядка колонок
+                    var nr = grid.Rows[nri];
+                    nr.Cells["hdr"].Value = h;   nr.Cells["expr"].Value = ex;
+                    nr.Cells["cond"].Value = op; nr.Cells["val"].Value = vl;
+                    nr.Cells["grp"].Value = gr;  nr.Cells["mm"].Value = mm;
                     fi++;
                 }
                 if (seed.SeedMerges != null)
@@ -921,7 +1023,10 @@ namespace AtSpecPlugin
                         grp = grpLabels[(seed.SortMode >= 0 && seed.SortMode <= 2) ? seed.SortMode : 0];
                     string mm = (seed.ColMm != null && gi < seed.ColMm.Count && seed.ColMm[gi] > 0)
                         ? seed.ColMm[gi].ToString(System.Globalization.CultureInfo.InvariantCulture) : "";
-                    grid.Rows.Add(c[0], c[1], "", "", grp, mm);
+                    int nri = grid.Rows.Add();
+                    var nr = grid.Rows[nri];
+                    nr.Cells["hdr"].Value = c[0]; nr.Cells["expr"].Value = c[1];
+                    nr.Cells["grp"].Value = grp;  nr.Cells["mm"].Value = mm;
                 }
 
             var menu = new ContextMenuStrip();
@@ -946,7 +1051,7 @@ namespace AtSpecPlugin
             Controls.Add(lblSummary);
         }
 
-        public void SetIndex(int n) { lblNum.Text = "Отчёт " + n; }
+        public void SetIndex(int n, int total) { lblNum.Text = "Отчёт " + n + (total > 1 ? " из " + total : ""); }
 
         // ───────────── пипетки: взять слой/значение/артикул прямо с блока ─────────────
         // Форма модальная (ShowModalDialog) → на время выбора прячем её штатно через
@@ -1423,7 +1528,7 @@ namespace AtSpecPlugin
             foreach (DataGridViewRow r in grid.Rows)
             {
                 if (r.IsNewRow) continue;
-                string g = (Convert.ToString(r.Cells["grp"].Value) ?? "").Trim();
+                string g = CellText(r, "grp").Trim();
                 if (g.Length == 0) continue;
                 string hh = Convert.ToString(r.Cells["hdr"].Value) ?? "";
                 string col = hh.Length > 0 ? hh : ("№" + (r.Index + 1));
@@ -1559,19 +1664,50 @@ namespace AtSpecPlugin
             }
         }
 
+        // Значение ячейки: Value, при пустом — FormattedValue (страховка: на живом .NET Fx
+        // под AutoCAD засеянные комбо-ячейки могли читаться пусто при видимом тексте).
+        internal static string CellText(DataGridViewRow r, string col)
+        {
+            string v = Convert.ToString(r.Cells[col].Value) ?? "";
+            if (v.Length == 0)
+                try { v = Convert.ToString(r.Cells[col].FormattedValue) ?? ""; } catch { }
+            return v;
+        }
+
         public bool HasColumns()
         {
             foreach (DataGridViewRow r in grid.Rows)
             {
                 if (r.IsNewRow) continue;
-                string h = Convert.ToString(r.Cells["hdr"].Value) ?? "";
-                string ex = Convert.ToString(r.Cells["expr"].Value) ?? "";
-                string op = (Convert.ToString(r.Cells["cond"].Value) ?? "").Trim();
-                string val = (Convert.ToString(r.Cells["val"].Value) ?? "").Trim();
+                string h = CellText(r, "hdr");
+                string ex = CellText(r, "expr");
+                string op = CellText(r, "cond").Trim();
+                string val = CellText(r, "val").Trim();
                 bool hasCond = op.Length > 0 && val.Length > 0;
                 if (h.Length > 0 || (ex.Length > 0 && !hasCond)) return true;
             }
             return false;
+        }
+
+        // Диагностика фильтр-строк по подстроке имени поля: сколько строк грида несут
+        // условие по этому полю и как читаются их ячейки (Value vs FormattedValue).
+        public int CountGridFilters(string fieldPart, System.Text.StringBuilder diag)
+        {
+            int n = 0;
+            foreach (DataGridViewRow r in grid.Rows)
+            {
+                if (r.IsNewRow) continue;
+                string ex = CellText(r, "expr");
+                if (ex.IndexOf(fieldPart, StringComparison.OrdinalIgnoreCase) < 0) continue;
+                string op = CellText(r, "cond").Trim(), vl = CellText(r, "val").Trim();
+                if (op.Length > 0 && vl.Length > 0) n++;
+                if (diag != null)
+                    diag.AppendLine("  строка «" + ex + "»: Условие Value='" +
+                        (Convert.ToString(r.Cells["cond"].Value) ?? "") + "'/Fmt='" + op +
+                        "', Значение Value='" + (Convert.ToString(r.Cells["val"].Value) ?? "") +
+                        "'/Fmt='" + vl + "'");
+            }
+            return n;
         }
 
         // (2) смена источника из combo (выбор из списка ИЛИ ручной ввод имени слоя)
@@ -1610,10 +1746,10 @@ namespace AtSpecPlugin
             foreach (DataGridViewRow r in grid.Rows)
             {
                 if (r.IsNewRow) continue;
-                string h = Convert.ToString(r.Cells["hdr"].Value) ?? "";
-                string ex = Convert.ToString(r.Cells["expr"].Value) ?? "";
-                string op = (Convert.ToString(r.Cells["cond"].Value) ?? "").Trim();
-                string val = (Convert.ToString(r.Cells["val"].Value) ?? "").Trim();
+                string h = CellText(r, "hdr");
+                string ex = CellText(r, "expr");
+                string op = CellText(r, "cond").Trim();
+                string val = CellText(r, "val").Trim();
                 bool hasCond = op.Length > 0 && val.Length > 0;
 
                 if (hasCond)   // условие фильтрует по полю из выражения этой строки
@@ -1641,7 +1777,7 @@ namespace AtSpecPlugin
             foreach (DataGridViewRow r in grid.Rows)
             {
                 if (r.IsNewRow) continue;
-                string g = (Convert.ToString(r.Cells["grp"].Value) ?? "").Trim();
+                string g = CellText(r, "grp").Trim();
                 if (g.Length == 0) continue;
                 int oi;
                 if (rowToOut.TryGetValue(r.Index, out oi))

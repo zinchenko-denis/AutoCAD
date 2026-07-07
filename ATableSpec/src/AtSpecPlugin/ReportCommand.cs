@@ -181,7 +181,20 @@ namespace AtSpecPlugin
             var secs = ReportReactor.ParseSections(Get(rep, "sections"));
             if (secs.Count == 0) { ed.WriteMessage("\nОтчёт без секций."); return; }
             int totalRows = 0; foreach (var s in secs) totalRows += s.Rows.Count;
-            if (totalRows == 0) { ed.WriteMessage("\nВ отчёт не попало ни одной строки."); return; }
+            if (totalRows == 0)
+            {
+                ed.WriteMessage("\nВ отчёт не попало ни одной строки.");
+                MessageBox.Show(
+                    "В отчёт не попало ни одной строки — таблица не построена.\n\n" +
+                    "Проверьте:\n" +
+                    "— «Источник» секций: есть ли такие блоки в выборке;\n" +
+                    "— строки-фильтры (Условие/Значение);\n" +
+                    "— для штапиков: рамка должна захватывать И СТОЙКИ,\n" +
+                    "   поле «Стойки» — слой стоек, источник разрезной секции — ШТАПИК-РАЗРЕЗ.\n\n" +
+                    "Определение сохранено: %TEMP%\\ATableSpec_last_def.json — приложите к вопросу.",
+                    "ATableSpec — пустой отчёт", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
 
             // --- 7. точка вставки ---
             PromptPointResult pr = ed.GetPoint("\nТочка вставки таблицы: ");
