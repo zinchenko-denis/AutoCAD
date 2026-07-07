@@ -46,3 +46,5 @@ jobs:
           pip install ezdxf pyyaml
           cd ATableSpec/engine
           python test_atspec_report.py
+          python test_audit_scenarios.py
+          python test_beads.py

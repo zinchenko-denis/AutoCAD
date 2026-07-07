@@ -499,6 +499,7 @@ namespace AtSpecPlugin
                             attrs[pn] = Convert.ToString(dp.Value, System.Globalization.CultureInfo.InvariantCulture);
                         }
                     }
+                    ReportCommands.AddGab(tr, br, attrs);   // габарит — для стыков штапиков при пересчёте
                     recs.Add(new Dictionary<string, object> {
                         { "name", EffectiveName(tr, br) }, { "layer", br.Layer }, { "attributes", attrs } });
                 }

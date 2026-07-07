@@ -49,11 +49,13 @@ namespace AtSpecPlugin
         private CheckBox chkHideTitle;
         private NumericUpDown nudScale;
         private ComboBox cmbFont;          // «Шрифт» = текстстиль чертежа (единый стиль ячеек)
+        private ComboBox cmbStands;        // «Стойки» = слой стоек для стыков штапиков (def-ключ beads)
         private FlowLayoutPanel flow;
 
         // подписи выпадушки заголовка -> номер шаблона (0 Ручное, 1 Спец, 2 Раскрой, 3 Заполнения)
-        private static readonly string[] TplLabels = { "Спецификация", "Раскрой", "Заполнения", "Ручное (пусто)" };
-        private static readonly int[] TplOrder = { 1, 2, 3, 0 };
+        private static readonly string[] TplLabels = { "Спецификация", "Раскрой", "Заполнения", "Штапики", "Ручное (пусто)" };
+        private static readonly int[] TplOrder = { 1, 2, 3, 4, 0 };
+        internal const string BeadsCutLayer = "ШТАПИК-РАЗРЕЗ";   // служебный слой «половин» разрезных штапиков (движок)
         private const string NoFontLabel = "(по стилю таблицы)";   // дефолт «Шрифта» — не переопределять стиль
 
         private int _template;
@@ -71,14 +73,16 @@ namespace AtSpecPlugin
             _fields = fields ?? new List<string>();
             _valuesByLayer = valuesByLayer;
             _textStyles = textStyles ?? new List<string>();
-            _template = (template >= 0 && template <= 3) ? template : 1;
+            _template = (template >= 0 && template <= 4) ? template : 1;
             BuildUi();
             _suppressTpl = true;
             cbTitle.Text = DefaultTitleFor(_template);
             _suppressTpl = false;
             chkHideTitle.Checked = (_template == 2);   // раскрой — по умолчанию скрыть заголовок
             _lastTitle = cbTitle.Text;
-            AddSection(PresetFor(_template, true));    // стартовая секция, засеяна под шаблон
+            foreach (var sd in PresetListFor(_template, true))   // «Штапики» сеет 4 секции, прочие — одну
+                AddSection(sd);
+            ApplyStandsDefault(_template);
         }
 
         // Конструктор реверса (ATSPECEDIT): форма заполняется из готового определения —
@@ -87,7 +91,7 @@ namespace AtSpecPlugin
                                  Dictionary<string, Dictionary<string, List<string>>> valuesByLayer,
                                  List<string> textStyles,
                                  string title, bool hideTitle, double scale, string font,
-                                 List<SectionSeed> sectionSeeds)
+                                 List<SectionSeed> sectionSeeds, string beadsLayer = "")
         {
             _layers = layers ?? new List<string>();
             _fields = fields ?? new List<string>();
@@ -104,6 +108,11 @@ namespace AtSpecPlugin
                 if (fi >= 0) cmbFont.SelectedIndex = fi;     // иначе остаётся «(по стилю таблицы)»
             }
             _lastTitle = cbTitle.Text;
+            if (!string.IsNullOrEmpty(beadsLayer))
+            {
+                if (cmbStands.Items.IndexOf(beadsLayer) < 0) cmbStands.Items.Add(beadsLayer);
+                cmbStands.SelectedIndex = cmbStands.Items.IndexOf(beadsLayer);   // def перекрывает дефолт
+            }
             if (sectionSeeds != null && sectionSeeds.Count > 0)
                 foreach (var s in sectionSeeds) AddSection(s);
             else
@@ -120,6 +129,9 @@ namespace AtSpecPlugin
             bool hideTitle = AsBool(d, "hide_title");
             double scale = AsDouble(d, "scale", 1.0);
             string font = AsStr(d, "font");
+            string beadsLayer = "";
+            var bd = Val(d, "beads") as Dictionary<string, object>;
+            if (bd != null) beadsLayer = AsStr(bd, "layer");
             var seeds = new List<SectionSeed>();
             var secs = Val(d, "sections") as object[];
             if (secs != null)
@@ -129,7 +141,7 @@ namespace AtSpecPlugin
                     if (seed != null) seeds.Add(seed);
                 }
             return new ReportBuilderForm(layers, fields, valuesByLayer, textStyles,
-                                         title, hideTitle, scale, font, seeds);
+                                         title, hideTitle, scale, font, seeds, beadsLayer);
         }
 
         // одна секция def -> seed (полный набор строк грида). Инверсия SectionCard.ToDef.
@@ -242,6 +254,8 @@ namespace AtSpecPlugin
 
         private void BuildUi()
         {
+            // служебный источник для секции разрезных штапиков (записи-«половины» движка)
+            if (!_layers.Contains(BeadsCutLayer)) _layers.Add(BeadsCutLayer);
             Text = "ATableSpec — построитель отчёта";
             FormBorderStyle = FormBorderStyle.Sizable;
             StartPosition = FormStartPosition.CenterScreen;
@@ -309,6 +323,20 @@ namespace AtSpecPlugin
                 if (!string.IsNullOrEmpty(ts)) cmbFont.Items.Add(ts);
             cmbFont.SelectedIndex = 0;
             Controls.Add(cmbFont);
+
+            // «Стойки» — слой стоек для расчёта стыков (терморазрывов) штапиков.
+            //  «(нет)» = стыки не считаются (def без ключа beads, движок молчит).
+            Controls.Add(new Label { Left = x + 474, Top = y + 4, Width = 54, Text = "Стойки:" });
+            cmbStands = new ComboBox
+            {
+                Left = x + 530, Top = y, Width = 190, DropDownStyle = ComboBoxStyle.DropDownList,
+                Anchor = AnchorStyles.Top | AnchorStyles.Left
+            };
+            cmbStands.Items.Add("(нет)");
+            foreach (var ll in _layers)
+                if (!string.IsNullOrEmpty(ll) && ll != BeadsCutLayer) cmbStands.Items.Add(ll);
+            cmbStands.SelectedIndex = 0;
+            Controls.Add(cmbStands);
             try   // последний выбранный шрифт — дефолт для новых таблиц (зеркало «Масштаба»)
             {
                 using (var rk = Registry.CurrentUser.OpenSubKey(@"Software\ATableSpec"))
@@ -386,7 +414,21 @@ namespace AtSpecPlugin
             {
                 _suppressTpl = true; cbTitle.Text = deftitle; _lastTitle = deftitle; _suppressTpl = false;
             }));
-            AddSection(PresetFor(tpl, true));
+            foreach (var sd in PresetListFor(tpl, true))         // «Штапики» сеет 4 секции
+                AddSection(sd);
+            ApplyStandsDefault(tpl);
+        }
+
+        // Дефолт «Стоек» для шаблона «Штапики»: RF-стойки, если слой есть в чертеже.
+        private void ApplyStandsDefault(int tpl)
+        {
+            try
+            {
+                if (tpl != 4 || cmbStands == null || cmbStands.SelectedIndex > 0) return;
+                int i = cmbStands.Items.IndexOf("RF-стойки");
+                if (i > 0) cmbStands.SelectedIndex = i;
+            }
+            catch { }
         }
 
         private SectionCard NewCard(SectionSeed seed)
@@ -514,9 +556,59 @@ namespace AtSpecPlugin
                     // (вариант Б) №|Тип|Марка|Ш|В|Колич.|Площадь, мм
                     s.ColMm = new List<double> { 10, 40, 25, 20, 20, 15, 25 };
                     break;
+                case 4: // Штапики: «+ Добавить отчёт» даёт базовую секцию (гориз., без терморазрыва);
+                        //  полный набор из 4 секций сеет PresetListFor при ВЫБОРЕ шаблона.
+                    s = BeadSeed("Горизонтальный штапик в зонах без терморазрыва", "=Object.«Ширина»",
+                                 "0", "", useFirstLayer ? "RF-заполнения" : null, false);
+                    s.UseFirstLayer = useFirstLayer;
+                    break;
                 default: // 0 — Ручное: пустая секция
                     break;
             }
+            return s;
+        }
+
+        // Шаблон «Штапики» — 4 секции (ТЗ 07.07): разделение ЧИСТО геометрическое (стык
+        //  стоек есть/нет, поле ШТ_СТЫК от движка); типы заполнений (Visibility1) конструктор
+        //  при необходимости добирает сам «Копировать»+фильтр. Секция «с терморазрывом,
+        //  вертикальный» берёт «половины» со служебного слоя ШТАПИК-РАЗРЕЗ (две строки,
+        //  группа по ШТ_РАЗМЕР). Корректировки длин (например «+20») дописываются в
+        //  выражение Длины; «Артикул» — литерал-плейсхолдер, чтобы не забывали править (п.5).
+        private static List<SectionSeed> PresetListFor(int tpl, bool useFirstLayer)
+        {
+            if (tpl != 4) return new List<SectionSeed> { PresetFor(tpl, useFirstLayer) };
+            string zl = useFirstLayer ? "RF-заполнения" : null;   // сядет, только если слой есть
+            return new List<SectionSeed>
+            {
+                BeadSeed("Горизонтальный штапик в зонах без терморазрыва", "=Object.«Ширина»",    "0", "", zl, false),
+                BeadSeed("Вертикальный штапик в зонах без терморазрыва",   "=Object.«Высота»",    "0", "", zl, true),
+                BeadSeed("Горизонтальный штапик в зонах с терморазрывом",  "=Object.«Ширина»",    "1", "", zl, true),
+                BeadSeed("Вертикальный штапик в зонах с терморазрывом",    "=Object.«ШТ_РАЗМЕР»", "",  "м/э зона", BeadsCutLayer, true)
+            };
+        }
+
+        private static SectionSeed BeadSeed(string title, string lenExpr, string styk, string note,
+                                            string layer, bool hideHeader)
+        {
+            var s = new SectionSeed
+            {
+                SectionTitle = title,
+                HideHeader = hideHeader,          // шапка столбцов — только у первой секции (вид СПДС)
+                SeedLayer = layer,
+                ColMm = new List<double> { 10, 30, 25, 20, 15, 12, 30 }
+            };
+            s.FullRows = new List<string[]>
+            {
+                new[] { "№ п/п",        "=row",                 "", "", "" },
+                new[] { "Наименование", "=Object.«МАРКИРОВКА»", "", "", "" },
+                new[] { "Артикул",      "Артикул",              "", "", "" },
+                new[] { "Длина, мм",    lenExpr,                "", "", "по возрастанию" },
+                new[] { "Колич.",       "=Count*2",             "", "", "" },
+                new[] { "Ед. изм.",     "=«шт.»",               "", "", "" },
+                new[] { "Примечание",   note,                   "", "", "" }
+            };
+            if (!string.IsNullOrEmpty(styk))          // строка-фильтр «только условие» по ШТ_СТЫК
+                s.FullRows.Add(new[] { "", "=Object.«ШТ_СТЫК»", "=", styk, "" });
             return s;
         }
 
@@ -526,6 +618,7 @@ namespace AtSpecPlugin
             {
                 case 2: return "";                       // раскрой — без заголовка (по задумке конструктора)
                 case 3: return "СПЕЦИФИКАЦИЯ ЗАПОЛНЕНИЙ";
+                case 4: return "СПЕЦИФИКАЦИЯ ШТАПИКОВ";
                 case 0: return "";                       // ручное — без заголовка по умолчанию
                 default: return "СПЕЦИФИКАЦИЯ ЭЛЕМЕНТОВ"; // спецификация
             }
@@ -621,6 +714,9 @@ namespace AtSpecPlugin
                 { "font", fontName },
                 { "sections", sections }
             };
+            if (cmbStands != null && cmbStands.SelectedIndex > 0)   // стыки штапиков: слой стоек
+                ReportDef["beads"] = new Dictionary<string, object>
+                    { { "layer", Convert.ToString(cmbStands.SelectedItem) } };
             try   // запомнить масштаб и шрифт — следующая таблица создастся с ними
             {
                 using (var rk = Registry.CurrentUser.CreateSubKey(@"Software\ATableSpec"))
@@ -1258,7 +1354,8 @@ namespace AtSpecPlugin
             }
             if (byField != null) { foreach (var k in byField.Keys) outl.Add(k); }
             else outl.AddRange(_fields);
-            foreach (var ex in new[] { "Слой", "Имя блока", "Длина", "Ширина", "Высота" })
+            foreach (var ex in new[] { "Слой", "Имя блока", "Длина", "Ширина", "Высота",
+                                       "ШТ_СТЫК", "ШТ_НИЗ", "ШТ_ВЕРХ", "ШТ_РАЗМЕР", "ШТ_ЧАСТЬ" })
                 if (!outl.Exists(z => NkEq(z, ex))) outl.Add(ex);
             outl.Sort(StringComparer.OrdinalIgnoreCase);
             return outl;

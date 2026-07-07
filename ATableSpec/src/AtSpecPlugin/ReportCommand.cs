@@ -77,6 +77,7 @@ namespace AtSpecPlugin
                             fieldSet.Add(pn);
                         }
                     }
+                    AddGab(tr, br, attrs);   // габарит блока — для стыков штапиков (движок)
                     layerSet.Add(br.Layer);
                     string effName = EffectiveName(tr, br);
                     // накопить значения полей для контекстного фильтра (по слою и в общий "")
@@ -120,7 +121,8 @@ namespace AtSpecPlugin
             // в движке. Деталировочные имена приходят «как есть» (иной регистр/пробел), поэтому
             // регистрозависимый HashSet их пропускал → они текли в фильтр.
             System.Func<string, string> nkf = z => (z ?? "").Trim().Trim('«', '»', '"', ' ').ToUpperInvariant();
-            var HIDE = new[] { "DOBL", "DOBR", "KLL", "KLR", "L", "R", "UGL", "UGR" };
+            var HIDE = new[] { "DOBL", "DOBR", "KLL", "KLR", "L", "R", "UGL", "UGR",
+                               "ГАБ_X0", "ГАБ_Y0", "ГАБ_X1", "ГАБ_Y1" };
             var HIDEN = new HashSet<string>();
             foreach (var h0 in HIDE) HIDEN.Add(nkf(h0));
             var fields = new List<string>();
@@ -348,6 +350,7 @@ namespace AtSpecPlugin
                             attrs[pn] = NumClean(Convert.ToString(dp.Value, System.Globalization.CultureInfo.InvariantCulture));
                             fieldSet.Add(pn);
                         }
+                    AddGab(tr, br, attrs);   // габарит блока — для стыков штапиков (движок)
                     layerSet.Add(br.Layer);
                     string effName = EffectiveName(tr, br);
                     AddVal(valuesRaw, br.Layer, "Слой", br.Layer);
@@ -370,7 +373,8 @@ namespace AtSpecPlugin
             }
 
             System.Func<string, string> nkf = z => (z ?? "").Trim().Trim('«', '»', '"', ' ').ToUpperInvariant();
-            var HIDE = new[] { "DOBL", "DOBR", "KLL", "KLR", "L", "R", "UGL", "UGR" };
+            var HIDE = new[] { "DOBL", "DOBR", "KLL", "KLR", "L", "R", "UGL", "UGR",
+                               "ГАБ_X0", "ГАБ_Y0", "ГАБ_X1", "ГАБ_Y1" };
             var HIDEN = new HashSet<string>();
             foreach (var h0 in HIDE) HIDEN.Add(nkf(h0));
             fields = new List<string>();
@@ -568,6 +572,61 @@ namespace AtSpecPlugin
             if (Math.Abs(x - r) <= 1e-6 * Math.Max(1.0, Math.Abs(x)))
                 return r.ToString("0", System.Globalization.CultureInfo.InvariantCulture);
             return s;
+        }
+
+        // Габарит блока (модельные координаты) — служебные поля ГАБ_X0..ГАБ_Y1 для движка
+        // (штапики: пересечения Y-интервалов заполнений и стоек = размеры разрезных штапиков).
+        // Считаем по ГРАФИКЕ определения блока (тексты/атрибуты/размеры/штриховки — мимо),
+        // трансформированной BlockTransform: br.GeometricExtents может включать тексты
+        // атрибутов и сдвинуть перехлёсты (эталон 247/57 выверен по чистой графике).
+        // Фолбэк — сырой GeometricExtents. Числа — InvariantCulture (ru-локаль даёт запятую).
+        internal static void AddGab(Transaction tr, BlockReference br, Dictionary<string, object> attrs)
+        {
+            try
+            {
+                double x0 = double.MaxValue, y0 = double.MaxValue,
+                       x1 = double.MinValue, y1 = double.MinValue;
+                bool any = false;
+                try
+                {
+                    var btr = tr.GetObject(br.BlockTableRecord, OpenMode.ForRead) as BlockTableRecord;
+                    if (btr != null)
+                    {
+                        Matrix3d m = br.BlockTransform;
+                        foreach (ObjectId eid in btr)
+                        {
+                            var ent = tr.GetObject(eid, OpenMode.ForRead) as Entity;
+                            if (ent == null) continue;
+                            if (ent is DBText || ent is MText || ent is AttributeDefinition ||
+                                ent is Dimension || ent is Hatch) continue;
+                            try
+                            {
+                                Extents3d ex = ent.GeometricExtents;
+                                ex.TransformBy(m);
+                                if (ex.MinPoint.X < x0) x0 = ex.MinPoint.X;
+                                if (ex.MinPoint.Y < y0) y0 = ex.MinPoint.Y;
+                                if (ex.MaxPoint.X > x1) x1 = ex.MaxPoint.X;
+                                if (ex.MaxPoint.Y > y1) y1 = ex.MaxPoint.Y;
+                                any = true;
+                            }
+                            catch { }   // сущность без экстентов (Xref-огрызок и т.п.)
+                        }
+                    }
+                }
+                catch { }
+                if (!any)
+                {
+                    Extents3d ex2 = br.GeometricExtents;
+                    x0 = ex2.MinPoint.X; y0 = ex2.MinPoint.Y;
+                    x1 = ex2.MaxPoint.X; y1 = ex2.MaxPoint.Y;
+                }
+                var ic = System.Globalization.CultureInfo.InvariantCulture;
+                attrs["ГАБ_X0"] = x0.ToString("0.###", ic);
+                attrs["ГАБ_Y0"] = y0.ToString("0.###", ic);
+                attrs["ГАБ_X1"] = x1.ToString("0.###", ic);
+                attrs["ГАБ_Y1"] = y1.ToString("0.###", ic);
+            }
+            catch { }   // блок без геометрии — записи просто не получат габарит (ШТ_СТЫК=0)
         }
 
         private static void AddVal(Dictionary<string, Dictionary<string, HashSet<string>>> map,
