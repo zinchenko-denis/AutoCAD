@@ -47,9 +47,11 @@ recs = [
     B("RF-заполнения", 2000, 800, 2600, 1300, МАРКИРОВКА="Сп9"),
     # запись без габарита → консервативный фолбэк ШТ_СТЫК=0
     {"name": "blk", "layer": "RF-заполнения", "attributes": {"МАРКИРОВКА": "Бг1"}},
+    # ЧУЖОЙ слой на том же стыке: поля ШТ_* получает, «половин» НЕ порождает
+    B("RF-ригеля", 80, 900, 620, 1200, МАРКИРОВКА="Р1"),
 ]
 out = _beads_expand([dict(r, attributes=dict(r["attributes"])) for r in recs],
-                    {"layer": "RF-стойки"})
+                    {"layer": "RF-стойки", "source": "RF-заполнения"})
 
 by_mark = {}
 for r in out:
@@ -71,6 +73,15 @@ rep(len(halves) == 2 and sorted(h["attributes"]["ШТ_РАЗМЕР"] for h in ha
     and {h["attributes"]["ШТ_ЧАСТЬ"] for h in halves} == {"низ", "верх"}
     and all(h["attributes"].get("МАРКИРОВКА") == "Эм1" for h in halves),
     "B5", f"половины: {[ (h['attributes']['ШТ_ЧАСТЬ'], h['attributes']['ШТ_РАЗМЕР']) for h in halves ]}")
+rig = next(r["attributes"] for r in out if r["layer"] == "RF-ригеля")
+rep(rig.get("ШТ_СТЫК") == "1" and rig.get("ШТ_НИЗ") == "100" and rig.get("ШТ_ВЕРХ") == "190"
+    and all(h["attributes"].get("МАРКИРОВКА") != "Р1" for h in halves),
+    "B5b", f"чужой слой: ШТ_* есть ({rig.get('ШТ_НИЗ')}/{rig.get('ШТ_ВЕРХ')}), половин не порождает")
+nosrc = _beads_expand([dict(r, attributes=dict(r["attributes"])) for r in recs],
+                      {"layer": "RF-стойки"})
+rep(all(r["layer"] != _BEADS_CUT_LAYER for r in nosrc)
+    and any(r["attributes"].get("ШТ_СТЫК") == "1" for r in nosrc),
+    "B5c", "без source: полей ШТ_* дают, половин НЕ создают")
 
 # стойки не трогаются, beads=None — no-op
 rep(all("ШТ_СТЫК" not in r["attributes"] for r in out if r["layer"] == "RF-стойки"),
@@ -90,7 +101,7 @@ def sec(title, length_expr, flt, grp=3):
             "columns": cols, "filter": flt, "group_by": grp, "sort_by": [grp, "asc"]}
 
 
-DEF = {"title": "Спецификация штапиков", "beads": {"layer": "RF-стойки"}, "sections": [
+DEF = {"title": "Спецификация штапиков", "beads": {"layer": "RF-стойки", "source": "RF-заполнения"}, "sections": [
     sec("Горизонтальный штапик в зонах без терморазрыва", "=Object.«Ширина»",
         [{"field": "Слой", "op": "=", "value": "RF-заполнения"},
          {"field": "ШТ_СТЫК", "op": "=", "value": "0"}]),
@@ -169,18 +180,15 @@ else:
         warnings.filterwarnings("ignore")
         doc = ezdxf.readfile(path)
         rr = []
-        for e in doc.modelspace().query("INSERT"):
+        for e in doc.modelspace().query("INSERT"):     # ВСЕ слои — как реальный C#-сборщик
             lay = e.dxf.layer
-            if lay not in ("RF-заполнения", "RF-стойки"):
-                continue
             b = gbox(e)
-            if not b:
-                continue
             at = {a.dxf.tag: a.dxf.text for a in e.attribs}
-            at.update({"ГАБ_X0": str(b[0]), "ГАБ_Y0": str(b[1]),
-                       "ГАБ_X1": str(b[2]), "ГАБ_Y1": str(b[3])})
+            if b:
+                at.update({"ГАБ_X0": str(b[0]), "ГАБ_Y0": str(b[1]),
+                           "ГАБ_X1": str(b[2]), "ГАБ_Y1": str(b[3])})
             rr.append({"name": "blk", "layer": lay, "attributes": at})
-        out2 = _beads_expand(rr, {"layer": "RF-стойки"})
+        out2 = _beads_expand(rr, {"layer": "RF-стойки", "source": "RF-заполнения"})
         em = [r for r in out2 if r["layer"] == "RF-заполнения"
               and r["attributes"].get("МАРКИРОВКА") == "Эм1"]
         ok = (len(em) == 30
@@ -199,8 +207,23 @@ else:
             f"прочие заполнения без стыка: {len(others)} шт")
         halves2 = [r for r in out2 if r["layer"] == _BEADS_CUT_LAYER]
         rep(len(halves2) == 60 and
-            sorted({r["attributes"]["ШТ_РАЗМЕР"] for r in halves2}) == ["247", "57"],
-            "D3", f"половин: {len(halves2)} (ожидание 60 = 30×2)")
+            sorted({r["attributes"]["ШТ_РАЗМЕР"] for r in halves2}) == ["247", "57"] and
+            all(r["attributes"].get("МАРКИРОВКА", "").startswith("Эм") for r in halves2),
+            "D3", f"половин: {len(halves2)} (ожидание 60 = 30×2, только Эм1), "
+                  f"размеры={sorted({r['attributes']['ШТ_РАЗМЕР'] for r in halves2})}")
+        # D4: полный набор слоёв НЕ мусорит секцию разрезных (ригеля/кронштейны на стыке)
+        DEF4 = {"title": "t", "beads": {"layer": "RF-стойки", "source": "RF-заполнения"},
+                "sections": [{"section_title": "верт. с терморазрывом",
+                              "header": ["№", "Наим", "Арт", "Длина", "Колич", "Ед"],
+                              "columns": ["=row", "=Object.«МАРКИРОВКА»", "Артикул",
+                                          "=Object.«ШТ_РАЗМЕР»", "=Count*2", "=«шт.»"],
+                              "filter": [{"field": "Слой", "op": "=", "value": _BEADS_CUT_LAYER}],
+                              "group_by": 3, "sort_by": [3, "asc"]}]}
+        r4 = run_report([dict(x, attributes=dict(x["attributes"])) for x in rr], DEF4)
+        s4 = r4["sections"][0]["rows"]
+        rep(len(s4) == 2 and s4[0][3] == 57 and s4[1][3] == 247
+            and s4[0][4] == 60 and s4[1][4] == 60,
+            "D4", f"секция разрезных на ПОЛНОМ наборе слоёв: {s4} (ожидание 2 строки 57/247 по 60)")
 
 print()
 if FAIL:
