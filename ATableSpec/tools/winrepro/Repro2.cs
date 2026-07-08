@@ -206,11 +206,12 @@ static class Repro2
         // ═══ «Взять с таблицы» (фидбэк Алексея 08.07): def -> секции раскроя ═══
         var takeM = form.GetType().GetMethod("BuildCutSeedsFromDef",
                         BindingFlags.Static | BindingFlags.NonPublic | BindingFlags.Public);
-        Func<Dictionary<string, object>, object[]> take = d0x =>
+        Func<Dictionary<string, object>, Func<string, string, List<string>>, object[]> take =
+        (d0x, resolver) =>
         {
-            var args = new object[] { d0x, null, null };
+            var args = new object[] { d0x, resolver, null, null };
             var res = takeM.Invoke(null, args);
-            return new object[] { res, args[1], args[2] };
+            return new object[] { res, args[2], args[3] };
         };
 
         var defSpec = new Dictionary<string, object>
@@ -231,7 +232,7 @@ static class Repro2
                     { "filter", new object[] {
                         new Dictionary<string, object> { { "field", "Слой" }, { "op", "=" }, { "value", "RF-стойки" } } } } } } }
         };
-        var t1 = take(defSpec);
+        var t1 = take(defSpec, null);
         var sd1 = (IList)t1[0];
         var nl1 = (List<string>)t1[2];
         Check(sd1.Count == 2, "взять: 2 секции источника -> 2 отчёта раскроя", "n=" + sd1.Count);
@@ -272,7 +273,7 @@ static class Repro2
                     { "header", new object[] { "Марка" } },
                     { "columns", new object[] { "=Object.«МАРКИРОВКА»" } } } } }
         };
-        var t2 = take(defBeads);
+        var t2 = take(defBeads, null);
         var sd2x = (IList)t2[0];
         string bl2 = Convert.ToString(t2[1]);
         var nl2 = (List<string>)t2[2];
@@ -285,9 +286,55 @@ static class Repro2
             Check(rowsC[0][1] == "=Object.«ШТ_РАЗМЕР»", "взять(штапики): длина = ШТ_РАЗМЕР", rowsC[0][1]);
         }
 
-        var t3 = take(null);
+        var t3 = take(null, null);
         Check(((IList)t3[0]).Count == 0 && ((List<string>)t3[2]).Count > 0,
               "взять: null-def -> пусто с заметкой, без падения");
+
+        // ═══ 08.07-4: развёртка артикула-выражения по значениям с чертежа ═══
+        Func<string, string, List<string>> res45 = (lay, fld) =>
+            (lay == "RF-стойки" && fld == "ПРОФ")
+                ? new List<string> { "КП50", "КП45" } : new List<string>();
+        var t4 = take(defSpec, res45);
+        var sd4 = (IList)t4[0];
+        var nl4 = (List<string>)t4[2];
+        Check(sd4.Count == 3, "развёртка: литерал(1) + выражение(2 артикула) = 3 отчёта", "n=" + sd4.Count);
+        if (sd4.Count == 3)
+        {
+            var rB = (List<string[]>)sd4[1].GetType().GetField("FullRows").GetValue(sd4[1]);
+            var rC = (List<string[]>)sd4[2].GetType().GetField("FullRows").GetValue(sd4[2]);
+            Check(rB[0][0] == "КП45 8 6000" && rC[0][0] == "КП50 8 6000",
+                  "развёртка: шапки по артикулам, сортировка", rB[0][0] + " / " + rC[0][0]);
+            bool extra = false;
+            foreach (var rr in rB)
+                if ((rr[1] ?? "").Contains("ПРОФ") && rr[2] == "=" && rr[3] == "КП45") extra = true;
+            Check(extra, "развёртка: доп-фильтр «ПРОФ = КП45» в отчёте");
+            Check(nl4.Exists(z => z.Contains("развёрнут")), "развёртка: заметка о N отчётах");
+        }
+
+        // ═══ 08.07-4: «Взять с табл.» — только в «Раскрое»; резина карточек ═══
+        var takeVis = new Func<object, bool>(c =>
+        {
+            var b = (Button)F(c, "_btnTake");
+            return b != null && b.Visible;
+        });
+        Check(!takeVis(cards[0]), "Take: скрыта в текущем шаблоне (Спецификация)");
+        cbTitle.SelectedIndex = cbTitle.Items.IndexOf("Раскрой");
+        Pump(400);
+        Check(cards.Count >= 1 && takeVis(cards[0]), "Take: видима в «Раскрое»");
+        int w0 = ((Control)cards[0]).Width;
+        form.Width += 240; Pump(200);
+        int w1 = ((Control)cards[0]).Width;
+        Check(w1 >= w0 + 200, "резина: карточка тянется за формой", w0 + " -> " + w1);
+
+        // раскладка грида: смоук Save/Apply через реестр
+        var g0x = (DataGridView)F(cards[0], "grid");
+        g0x.Columns["val"].Width = 234;
+        using (var rk = Microsoft.Win32.Registry.CurrentUser.CreateSubKey(@"Software\ATableSpec"))
+            cards[0].GetType().GetMethod("SaveGridLayout").Invoke(cards[0], new object[] { rk });
+        int saved = 0;
+        using (var rk = Microsoft.Win32.Registry.CurrentUser.OpenSubKey(@"Software\ATableSpec"))
+            saved = Convert.ToInt32(rk.GetValue("ColW_val", 0));
+        Check(saved == 234, "раскладка: ширина колонки ушла в реестр", "ColW_val=" + saved);
 
         string dump = Path.Combine(Path.GetTempPath(), "ATableSpec_last_def.json");
         Check(File.Exists(dump), "дамп def в TEMP записан", dump);

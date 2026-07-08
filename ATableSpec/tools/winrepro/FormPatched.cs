@@ -92,13 +92,13 @@ namespace AtSpecPlugin
                                  Dictionary<string, Dictionary<string, List<string>>> valuesByLayer,
                                  List<string> textStyles,
                                  string title, bool hideTitle, double scale, string font,
-                                 List<SectionSeed> sectionSeeds, string beadsLayer = "")
+                                 List<SectionSeed> sectionSeeds, string beadsLayer = "", int template = 1)
         {
             _layers = layers ?? new List<string>();
             _fields = fields ?? new List<string>();
             _valuesByLayer = valuesByLayer;
             _textStyles = textStyles ?? new List<string>();
-            _template = 1;
+            _template = (template >= 0 && template <= 4) ? template : 1;
             BuildUi();
             _suppressTpl = true; cbTitle.Text = title ?? ""; _suppressTpl = false;
             chkHideTitle.Checked = hideTitle;
@@ -163,8 +163,9 @@ namespace AtSpecPlugin
                     var seed = SeedFromSection(so as Dictionary<string, object>);
                     if (seed != null) seeds.Add(seed);
                 }
+            int tpl = (int)AsDouble(d, "template", 1.0);   // старые def без template -> 1
             return new ReportBuilderForm(layers, fields, valuesByLayer, textStyles,
-                                         title, hideTitle, scale, font, seeds, beadsLayer);
+                                         title, hideTitle, scale, font, seeds, beadsLayer, tpl);
         }
 
         // одна секция def -> seed (полный набор строк грида). Инверсия SectionCard.ToDef.
@@ -284,6 +285,22 @@ namespace AtSpecPlugin
             StartPosition = FormStartPosition.CenterScreen;
             ClientSize = new Size(760, 720);
             MinimumSize = new Size(720, 520);
+            try   // (фидбэк 08.07-4) габариты формы и раскладка грида живут между вызовами
+            {
+                using (var rk = Registry.CurrentUser.OpenSubKey(@"Software\ATableSpec"))
+                    if (rk != null)
+                    {
+                        int fw = Convert.ToInt32(rk.GetValue("FormW", 0));
+                        int fh = Convert.ToInt32(rk.GetValue("FormH", 0));
+                        var wa = Screen.PrimaryScreen != null ? Screen.PrimaryScreen.WorkingArea
+                                                              : new Rectangle(0, 0, 1920, 1080);
+                        if (fw >= MinimumSize.Width && fh >= MinimumSize.Height)
+                            ClientSize = new Size(Math.Min(fw, wa.Width - 40), Math.Min(fh, wa.Height - 40));
+                    }
+            }
+            catch { }
+            Resize += (s2, e2) => SyncCardWidths();
+            FormClosing += (s2, e2) => SaveLayoutToRegistry();
             MaximizeBox = true; MinimizeBox = false;
 
             int x = 12, y = 12, lblW = 90;
@@ -452,6 +469,30 @@ namespace AtSpecPlugin
         // (ТЗ 08.07) Видимость пары «Стойки»: показывается только в контексте штапиков.
         //  Скрытие ОБЯЗАТЕЛЬНО сбрасывает выбор — иначе остаточный beads уехал бы в def
         //  обычной спецификации при смене шаблона со «Штапиков».
+        // (фидбэк 08.07-4) карточки тянутся за формой: одинаковый левый/правый отступ.
+        private void SyncCardWidths()
+        {
+            if (flow == null) return;
+            int w = flow.ClientSize.Width - 8;                 // маржины/скролл
+            if (w < 712) w = 712;                              // базовая раскладка — минимум
+            foreach (var c in _cards) if (c.Width != w) c.Width = w;
+        }
+
+        // Габариты формы + ширины/порядок колонок грида -> HKCU\Software\ATableSpec.
+        private void SaveLayoutToRegistry()
+        {
+            try
+            {
+                using (var rk = Registry.CurrentUser.CreateSubKey(@"Software\ATableSpec"))
+                {
+                    rk.SetValue("FormW", ClientSize.Width);
+                    rk.SetValue("FormH", ClientSize.Height);
+                    if (_cards.Count > 0) _cards[0].SaveGridLayout(rk);
+                }
+            }
+            catch { }
+        }
+
         private void SetStandsVisible(bool v)
         {
             if (lblStands != null) lblStands.Visible = v;
@@ -480,6 +521,7 @@ namespace AtSpecPlugin
             card.RemoveRequested += RemoveCard;
             card.CopyRequested += CopyCard;
             card.TakeFromTableRequested += TakeFromTable;
+            card.SetTakeVisible(_template == 2);   // (фидбэк 08.07) кнопка — только в «Раскрое»
             return card;
         }
 
@@ -679,6 +721,7 @@ namespace AtSpecPlugin
         //  · def.beads (штапики) возвращается наружу — без него движок не породит записи
         //    слоя ШТАПИК-РАЗРЕЗ и разрезная секция была бы пуста.
         internal static List<SectionSeed> BuildCutSeedsFromDef(Dictionary<string, object> def,
+            Func<string, string, List<string>> valuesFor,   // (слой, поле) -> значения с чертежа
             out string beadsLayer, out List<string> notes)
         {
             beadsLayer = "";
@@ -733,35 +776,101 @@ namespace AtSpecPlugin
                     string h = (i < headers.Count ? headers[i] : "").Trim().ToLowerInvariant();
                     if (h.Contains("артикул")) { ai = i; break; }
                 }
+                // локальная фабрика секции раскроя контракт-формата
+                Func<string, object[], SectionSeed> makeCut = (artText, filt) =>
+                {
+                    var cut = new Dictionary<string, object>
+                    {
+                        { "section_title", "" },
+                        { "hide_header", false },
+                        { "header", new object[] { artText + " 8 6000", "" } },
+                        { "header_merges", new object[] { new object[] { 0, 1 } } },
+                        { "columns", new object[] { columns[li], "=Count" } },
+                        { "filter", filt },
+                        { "group_by", 0 },
+                        { "sort_by", new object[] { 0, "asc" } },
+                        { "total_row", false },
+                        { "col_mm", new object[] { 25.0, 15.0 } }
+                    };
+                    return SeedFromSection(cut);
+                };
+                var srcFilt = (sec.ContainsKey("filter") ? sec["filter"] : null) as object[]
+                              ?? new object[0];
+
                 if (ai >= 0)
                 {
                     string ex = (columns[ai] ?? "").Trim();
                     if (ex.StartsWith("=«") && ex.EndsWith("»") && ex.Length > 3)
                         art = ex.Substring(2, ex.Length - 3);
                     else if (ex.Length > 0)
+                    {
+                        // (фидбэк Алексея 08.07-4) артикул-выражение РАЗВОРАЧИВАЕМ по значениям
+                        //  поля на слое источника: на каждый артикул — свой отчёт с доп-фильтром
+                        //  «поле = значение» (при 10+ профилях руками вписывать мучительно).
+                        string fld = SectionCard.ExtractField(ex);
+                        string srcLay = "";
+                        foreach (var fo in srcFilt)
+                        {
+                            var fd = fo as Dictionary<string, object>;
+                            if (fd == null) continue;
+                            if (string.Equals(Convert.ToString(fd.ContainsKey("field") ? fd["field"] : ""),
+                                    "Слой", StringComparison.OrdinalIgnoreCase))
+                            {
+                                var pl = SectionCard.SplitList(
+                                    Convert.ToString(fd.ContainsKey("value") ? fd["value"] : "") ?? "");
+                                srcLay = pl.Count > 0 ? pl[0] : "";
+                                break;
+                            }
+                        }
+                        List<string> arts = null;
+                        if (!string.IsNullOrEmpty(fld) && valuesFor != null)
+                            try { arts = valuesFor(srcLay, fld); } catch { arts = null; }
+                        if (arts != null && arts.Count > 0)
+                        {
+                            arts.Sort(StringComparer.OrdinalIgnoreCase);
+                            foreach (var v in arts)
+                            {
+                                var filt2 = new List<object>(srcFilt)
+                                {
+                                    new Dictionary<string, object>
+                                    { { "field", fld }, { "op", "=" }, { "value", v } }
+                                };
+                                var sv = makeCut(v, filt2.ToArray());
+                                if (sv != null) seeds.Add(sv);
+                            }
+                            notes.Add("секция " + tag + ": артикул " + ex + " развёрнут по значениям («" +
+                                      string.Join("», «", arts.ToArray()) + "») — " + arts.Count + " отчёт(а)");
+                            continue;   // отдельный отчёт на каждый артикул — общий сид не нужен
+                        }
                         notes.Add("секция " + tag + ": артикул — выражение (" + ex +
-                                  "), в шапке раскроя оставлен «Артикул» — впишите вручную");
+                                  "), значений с чертежа нет — в шапке оставлен «Артикул», впишите вручную");
+                    }
                 }
 
-                // секция раскроя = контракт-формат пресета tpl2 + фильтры источника КАК ЕСТЬ
-                var cut = new Dictionary<string, object>
-                {
-                    { "section_title", "" },
-                    { "hide_header", false },
-                    { "header", new object[] { art + " 8 6000", "" } },
-                    { "header_merges", new object[] { new object[] { 0, 1 } } },
-                    { "columns", new object[] { columns[li], "=Count" } },
-                    { "filter", sec.ContainsKey("filter") ? sec["filter"] : new object[0] },
-                    { "group_by", 0 },
-                    { "sort_by", new object[] { 0, "asc" } },
-                    { "total_row", false },
-                    { "col_mm", new object[] { 25.0, 15.0 } }
-                };
-                var seed = SeedFromSection(cut);
+                var seed = makeCut(art, srcFilt);
                 if (seed != null) seeds.Add(seed);
             }
             if (seeds.Count == 0) notes.Add("ни одной пригодной секции (нужны столбцы длины)");
             return seeds;
+        }
+
+        // Значения поля на слое (объединение по «;»-списку слоёв) — для развёртки артикулов.
+        private List<string> FormValuesFor(string layer, string field)
+        {
+            var outl = new List<string>();
+            if (_valuesByLayer == null || string.IsNullOrEmpty(field)) return outl;
+            var lays = SectionCard.SplitList(layer);
+            if (lays.Count == 0) lays.Add("");
+            foreach (var one in lays)
+            {
+                Dictionary<string, List<string>> bf;
+                if (!_valuesByLayer.TryGetValue(one, out bf) || bf == null) continue;
+                foreach (var kv in bf)
+                    if (SectionCard.NkEq(kv.Key, field))
+                        foreach (var v in kv.Value)
+                            if (!outl.Contains(v)) outl.Add(v);
+            }
+            return outl;
         }
 
         // Кнопка «Взять с таблицы» на карточке: разобрать def, подтвердить, заменить карточку
@@ -779,7 +888,7 @@ namespace AtSpecPlugin
             }
             catch { }
             string beadsLayer; List<string> notes;
-            var seeds = BuildCutSeedsFromDef(def, out beadsLayer, out notes);
+            var seeds = BuildCutSeedsFromDef(def, FormValuesFor, out beadsLayer, out notes);
             if (seeds.Count == 0)
             {
                 ReproMsg.Show(this, "Из выбранной таблицы нечего взять:\n— " +
@@ -787,8 +896,8 @@ namespace AtSpecPlugin
                     MessageBoxButtons.OK, MessageBoxIcon.Information);
                 return;
             }
-            var r = ReproMsg.Show(this, "Заменить отчёт " + (pos + 1) + " секциями из таблицы (" +
-                seeds.Count + " шт., по одной на артикул/секцию источника)?", "Взять с таблицы",
+            var r = ReproMsg.Show(this, "Заменить отчёт " + (pos + 1) + " взятыми отчётами раскроя (" +
+                seeds.Count + " шт. — по одному на артикул)?", "Взять с таблицы",
                 MessageBoxButtons.YesNo, MessageBoxIcon.Question);
             if (r != DialogResult.Yes) return;
 
@@ -855,6 +964,7 @@ namespace AtSpecPlugin
         private void Renumber()
         {
             for (int i = 0; i < _cards.Count; i++) _cards[i].SetIndex(i + 1, _cards.Count);
+            SyncCardWidths();
         }
 
         private void BuildDef()
@@ -959,6 +1069,7 @@ namespace AtSpecPlugin
                 { "hide_title", chkHideTitle.Checked },
                 { "scale", (double)nudScale.Value },
                 { "font", fontName },
+                { "template", _template },   // реверс восстанавливает контекст шаблона (Take/Стойки)
                 { "sections", sections }
             };
             if (standsLayer.Length > 0)   // стыки штапиков: слой стоек + слой-источник половин
@@ -1018,6 +1129,10 @@ namespace AtSpecPlugin
 
         public event Action<SectionCard> MoveUpRequested, MoveDownRequested, RemoveRequested, CopyRequested;
         public event Action<SectionCard, string> TakeFromTableRequested;   // (card, defJson источника)
+        private Button _btnTake;   // «Взять с табл.» — только в «Раскрое» (фидбэк 08.07; старый
+                                   //  Left=518 W=118 наезжал на btnUp(610) — ряд уплотнён)
+
+        public void SetTakeVisible(bool v) { if (_btnTake != null) _btnTake.Visible = v; }
 
         public SectionCard(List<string> layers, List<string> fields,
                            Dictionary<string, Dictionary<string, List<string>>> valuesByLayer, SectionSeed seed)
@@ -1070,24 +1185,25 @@ namespace AtSpecPlugin
             Controls.Add(btnMulti);
 
             // «Копировать» отчёт — правее пипетки: дублирует секцию (с выбором позиции вставки).
-            var btnCopy = new Button { Left = 406, Top = y, Width = 104, Text = "Копировать" };
+            var btnCopy = new Button { Left = 406, Top = y, Width = 96, Text = "Копировать", Anchor = AnchorStyles.Top | AnchorStyles.Right };
             btnCopy.Click += (s, e) => { var h = CopyRequested; if (h != null) h(this); };
             Controls.Add(btnCopy);
 
             // (фидбэк Алексея 08.07) раскрой из готовой таблицы: артикулы и ПРАВЛЕНЫЕ формулы
             //  длин выдёргиваются из def выбранной таблицы (Спецификация/Штапики).
-            var btnTake = new Button { Left = 518, Top = y, Width = 118, Text = "Взять с таблицы" };
-            btnTake.Click += (s, e) =>
+            _btnTake = new Button { Left = 508, Top = y, Width = 96, Text = "Взять с табл.",
+                                    Visible = false, Anchor = AnchorStyles.Top | AnchorStyles.Right };   // видимость даёт форма: только «Раскрой»
+            _btnTake.Click += (s, e) =>
             {
                 string js = PickTableDef();
                 if (string.IsNullOrEmpty(js)) return;
                 var h = TakeFromTableRequested; if (h != null) h(this, js);
             };
-            Controls.Add(btnTake);
+            Controls.Add(_btnTake);
 
-            var btnUp = new Button { Left = 610, Top = y, Width = 28, Text = "↑" };
-            var btnDn = new Button { Left = 640, Top = y, Width = 28, Text = "↓" };
-            var btnDel = new Button { Left = 670, Top = y, Width = 28, Text = "✕" };
+            var btnUp = new Button { Left = 610, Top = y, Width = 28, Text = "↑", Anchor = AnchorStyles.Top | AnchorStyles.Right };
+            var btnDn = new Button { Left = 640, Top = y, Width = 28, Text = "↓", Anchor = AnchorStyles.Top | AnchorStyles.Right };
+            var btnDel = new Button { Left = 670, Top = y, Width = 28, Text = "✕", Anchor = AnchorStyles.Top | AnchorStyles.Right };
             btnUp.Click += (s, e) => { var h = MoveUpRequested; if (h != null) h(this); };
             btnDn.Click += (s, e) => { var h = MoveDownRequested; if (h != null) h(this); };
             btnDel.Click += (s, e) => { var h = RemoveRequested; if (h != null) h(this); };
@@ -1111,12 +1227,15 @@ namespace AtSpecPlugin
             var tips = new ToolTip();
             tips.SetToolTip(btnPipSrc, "Слой с блока: взять слой указанного блока в «Источник» (поле остаётся редактируемым)");
             tips.SetToolTip(btnMulti, "Несколько слоёв: отметить галочками — источником станет список «Слой1; Слой2»");
+            tips.SetToolTip(_btnTake, "Взять с таблицы: раскрой из готовой «Спецификации»/«Штапиков» — " +
+                "артикулы и правленые формулы длин переезжают сами");
             y += 26;
             grid = new DataGridView
             {
                 Left = 8, Top = y, Width = 690, Height = 196,
                 AllowUserToAddRows = true, AllowUserToDeleteRows = true, RowHeadersVisible = true,
-                ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize
+                ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize,
+                Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right
             };
             var colHdr = new DataGridViewTextBoxColumn { Name = "hdr", HeaderText = "Заголовок", Width = 150 };
             // (2-fix) «Выражение» — обычный TextBox со свободным вводом (combo в DataGridView терял
@@ -1157,7 +1276,9 @@ namespace AtSpecPlugin
             grid.CellFormatting += Grid_CellFormatting;        // (5) «(объединено)» в подчинённых строках шапки
             grid.CellValidating += Grid_CellValidating;
             grid.CellValueChanged += Grid_CellValueChanged;
-            grid.CellPainting += Grid_CellPainting;            // пипетки 2/3: глиф у правого края ячеек hdr/val
+            grid.CellPainting += Grid_CellPainting;
+            grid.AllowUserToOrderColumns = true;   // (фидбэк 08.07-4) столбцы можно двигать
+            ApplyGridLayout();            // пипетки 2/3: глиф у правого края ячеек hdr/val
             grid.CellMouseDown += Grid_CellMouseDown;          //   клик по глифу — взять с блока (вариант 1)
             grid.RowsRemoved += Grid_RowsRemoved;              // сдвиг объединений шапки при удалении строк
                                                                //   (в т.ч. Del-клавишей мимо DeleteSelectedRows)
@@ -1232,8 +1353,40 @@ namespace AtSpecPlugin
             y += 200;
 
             lblSummary = new Label { Left = 8, Top = y, Width = 690,
+                Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right,
                 Text = "Источник: —    Фильтр: —    Группа: —" };
             Controls.Add(lblSummary);
+        }
+
+        // (фидбэк 08.07-4) раскладка грида: ширины и порядок колонок из/в HKCU\Software\ATableSpec.
+        private void ApplyGridLayout()
+        {
+            try
+            {
+                using (var rk = Registry.CurrentUser.OpenSubKey(@"Software\ATableSpec"))
+                {
+                    if (rk == null) return;
+                    foreach (DataGridViewColumn c in grid.Columns)
+                    {
+                        if (!c.Visible) continue;
+                        int w = Convert.ToInt32(rk.GetValue("ColW_" + c.Name, 0));
+                        if (w >= 30 && w <= 2000) c.Width = w;
+                        int di = Convert.ToInt32(rk.GetValue("ColOrd_" + c.Name, -1));
+                        if (di >= 0 && di < grid.Columns.Count) c.DisplayIndex = di;
+                    }
+                }
+            }
+            catch { }
+        }
+
+        public void SaveGridLayout(RegistryKey rk)
+        {
+            foreach (DataGridViewColumn c in grid.Columns)
+            {
+                if (!c.Visible) continue;
+                rk.SetValue("ColW_" + c.Name, c.Width);
+                rk.SetValue("ColOrd_" + c.Name, c.DisplayIndex);
+            }
         }
 
         public void SetIndex(int n, int total) { lblNum.Text = "Отчёт " + n + (total > 1 ? " из " + total : ""); }
@@ -1246,7 +1399,6 @@ namespace AtSpecPlugin
         // глифы у правого края ячеек «Заголовок» (артикул раскроя) и «Значение» (фильтр).
 
         private const int PipZone = 18;   // клик-зона пипетки у правого края ячейки, px
-        private const int DdZone  = 18;   // клик-зона «раскрыть список» левее пипетки (только val), px
         private const int MsZone  = 18;   // клик-зона «…» (несколько значений через ;) левее ▼, px
 
         // узнаваемая «пипетка» в произвольном box: ствол по диагонали + колба + капля у носика
@@ -1267,18 +1419,6 @@ namespace AtSpecPlugin
 
         // маленький ▼ «раскрыть список» — рисуется в val ЛЕВЕЕ пипетки, чтобы клик по списку
         // и клик по пипетке не конфликтовали (фидбэк Алексея, видео 05.07)
-        private static void DrawDropGlyph(Graphics g, Rectangle zone, Color color)
-        {
-            var old = g.SmoothingMode;
-            g.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
-            int cx = zone.X + zone.Width / 2, cy = zone.Y + zone.Height / 2;
-            using (var br = new SolidBrush(color))
-                g.FillPolygon(br, new[]
-                {
-                    new Point(cx - 4, cy - 2), new Point(cx + 4, cy - 2), new Point(cx, cy + 3)
-                });
-            g.SmoothingMode = old;
-        }
 
         private static Bitmap _pipBmp;
         private static Bitmap PipBitmap()
@@ -1337,16 +1477,10 @@ namespace AtSpecPlugin
             var box = new Rectangle(e.CellBounds.Right - PipZone + 1,
                                     e.CellBounds.Top + (e.CellBounds.Height - 14) / 2, 14, 14);
             DrawPipGlyph(e.Graphics, box, sel ? Color.White : Color.FromArgb(37, 99, 235));
-            if (cn == "val" && e.CellBounds.Width > PipZone + DdZone + 40)
-            {
-                var dz = new Rectangle(e.CellBounds.Right - PipZone - DdZone, e.CellBounds.Top,
-                                       DdZone, e.CellBounds.Height);
-                DrawDropGlyph(e.Graphics, dz, sel ? Color.White : Color.FromArgb(96, 96, 96));
-            }
-            if (cn == "val" && e.CellBounds.Width > PipZone + DdZone + MsZone + 40)
+            if (cn == "val" && e.CellBounds.Width > PipZone + MsZone + 40)
             {
                 // «…» — мультивыбор значений (фидбэк Алексея 08.07): галочки -> «A; B; C»
-                var mz = new Rectangle(e.CellBounds.Right - PipZone - DdZone - MsZone, e.CellBounds.Top,
+                var mz = new Rectangle(e.CellBounds.Right - PipZone - MsZone, e.CellBounds.Top,
                                        MsZone, e.CellBounds.Height);
                 using (var br = new SolidBrush(sel ? Color.White : Color.FromArgb(96, 96, 96)))
                 {
@@ -1378,24 +1512,8 @@ namespace AtSpecPlugin
                 if (cn == "val") PipValue(e.RowIndex); else PipHeader(e.RowIndex);
                 return;
             }
-            if (cn == "val" && e.X > rect.Width - PipZone - DdZone && rect.Width > PipZone + DdZone + 40)
-            {
-                // ▼ левее пипетки: раскрыть список ОДНИМ кликом (вход в редактор + DroppedDown)
-                try
-                {
-                    grid.CurrentCell = grid.Rows[e.RowIndex].Cells[e.ColumnIndex];
-                    grid.BeginEdit(true);
-                    grid.BeginInvoke(new Action(() =>
-                    {
-                        var cb = grid.EditingControl as ComboBox;
-                        if (cb != null) cb.DroppedDown = true;
-                    }));
-                }
-                catch { }
-                return;
-            }
-            if (cn == "val" && e.X > rect.Width - PipZone - DdZone - MsZone &&
-                rect.Width > PipZone + DdZone + MsZone + 40)
+            if (cn == "val" && e.X > rect.Width - PipZone - MsZone &&
+                rect.Width > PipZone + MsZone + 40)
             {
                 // «…»: мультивыбор значений поля текущей строки (фидбэк Алексея 08.07)
                 try { grid.EndEdit(); grid.CurrentCell = grid.Rows[e.RowIndex].Cells[e.ColumnIndex]; }
@@ -1758,7 +1876,7 @@ namespace AtSpecPlugin
             s = s.Trim().Trim('«', '»', '"', ' ');
             return s.ToUpperInvariant();
         }
-        private static bool NkEq(string a, string b) { return Nk(a) == Nk(b); }
+        internal static bool NkEq(string a, string b) { return Nk(a) == Nk(b); }
 
         private void RefreshSummary()
         {
