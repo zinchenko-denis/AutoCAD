@@ -306,31 +306,56 @@ def _num_eq(a: float, b: float) -> bool:
     return abs(a - b) <= 1e-6 * max(1.0, abs(a), abs(b))
 
 
+def _match_one(op: str, ls: str, vs: str) -> bool:
+    """Одно значение против одного оператора (вынесено из _passes ради списков)."""
+    if op in ("=", "=="):
+        a, b = _num_or_none(ls), _num_or_none(vs)
+        return _num_eq(a, b) if (a is not None and b is not None) else (ls.lower() == vs.lower())
+    if op in ("!=", "<>", "≠"):
+        a, b = _num_or_none(ls), _num_or_none(vs)
+        return (not _num_eq(a, b)) if (a is not None and b is not None) else (ls.lower() != vs.lower())
+    if op in ("contains", "содержит"):
+        return vs.lower() in ls.lower()
+    if op in ("not_contains", "не содержит"):
+        return vs.lower() not in ls.lower()
+    if op in (">", "<", ">=", "<=", "≥", "≤"):
+        try:
+            a, b = float(ls.replace(",", ".")), float(vs.replace(",", "."))
+        except ValueError:
+            return False
+        op2 = {"≥": ">=", "≤": "<="}.get(op, op)
+        return {">": a > b, "<": a < b, ">=": a >= b, "<=": a <= b}[op2]
+    return True
+
+
+_NEG_OPS = ("!=", "<>", "≠", "not_contains", "не содержит")
+_RANGE_OPS = (">", "<", ">=", "<=", "≥", "≤")
+
+
 def _passes(obj: Obj, flt: List[dict]) -> bool:
+    # Многослойные фильтры (ТЗ 08.07): элемент фильтра может нести values:[...] —
+    # список альтернатив. Строки фильтра между собой — И (как всегда); внутри списка:
+    #   =, содержит            -> «любое из» (ИЛИ);
+    #   ≠, не содержит         -> «ни одно из» (все отрицания разом);
+    #   >, <, ≥, ≤             -> списки не поддерживаются, защитно берётся ПЕРВОЕ.
+    # values имеет приоритет над value; пустые элементы отбрасываются; если после
+    # чистки список пуст — старый одиночный путь value (строка НЕ режется по «;»:
+    # семантика старых определений неприкосновенна).
     for f in flt or []:
-        fld, op, val = f.get("field"), f.get("op", "="), f.get("value", "")
+        fld, op = f.get("field"), f.get("op", "=")
         lhs = obj.field(fld)
         ls = "" if lhs is None else str(lhs).strip()
-        vs = str(val).strip()
-        if op in ("=", "=="):
-            a, b = _num_or_none(ls), _num_or_none(vs)
-            ok = _num_eq(a, b) if (a is not None and b is not None) else (ls.lower() == vs.lower())
-        elif op in ("!=", "<>", "≠"):
-            a, b = _num_or_none(ls), _num_or_none(vs)
-            ok = (not _num_eq(a, b)) if (a is not None and b is not None) else (ls.lower() != vs.lower())
-        elif op in ("contains", "содержит"):
-            ok = vs.lower() in ls.lower()
-        elif op in ("not_contains", "не содержит"):
-            ok = vs.lower() not in ls.lower()
-        elif op in (">", "<", ">=", "<=", "≥", "≤"):
-            try:
-                a, b = float(ls.replace(",", ".")), float(vs.replace(",", "."))
-            except ValueError:
-                return False
-            op2 = {"≥": ">=", "≤": "<="}.get(op, op)
-            ok = {">": a > b, "<": a < b, ">=": a >= b, "<=": a <= b}[op2]
+        raw = f.get("values")
+        vv = [str(v).strip() for v in raw] if isinstance(raw, list) else []
+        vv = [v for v in vv if v != ""]
+        if not vv:
+            vv = [str(f.get("value", "")).strip()]
+        if op in _RANGE_OPS:
+            vv = vv[:1]
+        if op in _NEG_OPS:
+            ok = all(_match_one(op, ls, v) for v in vv)
         else:
-            ok = True
+            ok = any(_match_one(op, ls, v) for v in vv)
         if not ok:
             return False
     return True
