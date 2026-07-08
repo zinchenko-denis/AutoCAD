@@ -408,7 +408,9 @@ namespace AtSpecPlugin
         // выбор шаблона из выпадушки заголовка: пересеять секции заготовкой (с подтверждением).
         private void ApplyTemplate(int tpl)
         {
-            if (tpl < 0 || tpl > 3) return;
+            // Валидация членством в TplOrder (раньше стояло «tpl > 3» — и tpl=4 «Штапики»
+            //  молча отсекался: выбор пункта в выпадушке НЕ делал ничего. Видео Алексея 07–08.07).
+            if (Array.IndexOf(TplOrder, tpl) < 0) return;
             if (_cards.Count > 0)
             {
                 var r = MessageBox.Show("Заменить все секции заготовкой шаблона?", "ATableSpec",
