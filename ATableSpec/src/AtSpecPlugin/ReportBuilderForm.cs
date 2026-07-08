@@ -482,6 +482,7 @@ namespace AtSpecPlugin
             card.MoveDownRequested += MoveCardDown;
             card.RemoveRequested += RemoveCard;
             card.CopyRequested += CopyCard;
+            card.TakeFromTableRequested += TakeFromTable;
             return card;
         }
 
@@ -666,6 +667,158 @@ namespace AtSpecPlugin
                 case 0: return "";                       // ручное — без заголовка по умолчанию
                 default: return "СПЕЦИФИКАЦИЯ ЭЛЕМЕНТОВ"; // спецификация
             }
+        }
+
+        // ═══ «Взять с таблицы» (фидбэк Алексея 08.07) ═══
+        // Из def готовой таблицы (Спецификация/Штапики) собираем секции РАСКРОЯ:
+        //  · длина — выражение источника КАК ЕСТЬ (с ручными правками: «=Object.«Длина»-150»);
+        //  · артикул-ЛИТЕРАЛ («=«17.01.01»») уходит в контракт-шапку «<артикул> 8 6000»
+        //    (рез/хлыст — дефолт, правится под профиль; шапку парсит R-Fasad);
+        //    артикул-ВЫРАЖЕНИЕ в текст шапки не вставить — плейсхолдер «Артикул» + заметка;
+        //  · фильтры секции переносятся ЦЕЛИКОМ (иначе правленая длина считалась бы по чужим
+        //    блокам); группа по Длине «по возрастанию», =Count суммирует одинаковые длины;
+        //  · по секции источника — отдельный отчёт раскроя («несколько артикулов — несколько
+        //    отчётов»: у конструктора артикул задаётся посекционно);
+        //  · def.beads (штапики) возвращается наружу — без него движок не породит записи
+        //    слоя ШТАПИК-РАЗРЕЗ и разрезная секция была бы пуста.
+        internal static List<SectionSeed> BuildCutSeedsFromDef(Dictionary<string, object> def,
+            out string beadsLayer, out List<string> notes)
+        {
+            beadsLayer = "";
+            notes = new List<string>();
+            var seeds = new List<SectionSeed>();
+            if (def == null) { notes.Add("определение не прочиталось"); return seeds; }
+
+            var bd = (def.ContainsKey("beads") ? def["beads"] : null) as Dictionary<string, object>;
+            if (bd != null && bd.ContainsKey("layer"))
+                beadsLayer = Convert.ToString(bd["layer"]) ?? "";
+
+            var secs = (def.ContainsKey("sections") ? def["sections"] : null)
+                        as System.Collections.IEnumerable;
+            if (secs == null) { notes.Add("в определении нет секций"); return seeds; }
+
+            int n = 0;
+            foreach (var so in secs)
+            {
+                n++;
+                var sec = so as Dictionary<string, object>;
+                if (sec == null) continue;
+                var headers = new List<string>();
+                var columns = new List<string>();
+                var ho = (sec.ContainsKey("header") ? sec["header"] : null) as object[];
+                var co = (sec.ContainsKey("columns") ? sec["columns"] : null) as object[];
+                if (ho != null) foreach (var h in ho) headers.Add(Convert.ToString(h) ?? "");
+                if (co != null) foreach (var c in co) columns.Add(Convert.ToString(c) ?? "");
+                string title = Convert.ToString(sec.ContainsKey("section_title") ? sec["section_title"] : "") ?? "";
+                string tag = title.Length > 0 ? "«" + title + "»" : ("№" + n);
+
+                // столбец длины: по заголовку («длина…»/«размер…») либо по выражению (Длина/ШТ_РАЗМЕР/Ширина/Высота)
+                int li = -1;
+                for (int i = 0; i < columns.Count; i++)
+                {
+                    string h = (i < headers.Count ? headers[i] : "").Trim().ToLowerInvariant();
+                    if (h.StartsWith("длина") || h.StartsWith("размер")) { li = i; break; }
+                }
+                if (li < 0)
+                    for (int i = 0; i < columns.Count; i++)
+                    {
+                        string ex = columns[i] ?? "";
+                        if (ex.Contains("ШТ_РАЗМЕР") || ex.Contains("«Длина»") ||
+                            ex.Contains("«Ширина»") || ex.Contains("«Высота»")) { li = i; break; }
+                    }
+                if (li < 0) { notes.Add("секция " + tag + ": не нашёл столбец длины — пропущена"); continue; }
+
+                // артикул: колонка с заголовком «артикул…»; литерал =«X» -> в шапку, иначе плейсхолдер
+                string art = "Артикул";
+                int ai = -1;
+                for (int i = 0; i < columns.Count; i++)
+                {
+                    string h = (i < headers.Count ? headers[i] : "").Trim().ToLowerInvariant();
+                    if (h.Contains("артикул")) { ai = i; break; }
+                }
+                if (ai >= 0)
+                {
+                    string ex = (columns[ai] ?? "").Trim();
+                    if (ex.StartsWith("=«") && ex.EndsWith("»") && ex.Length > 3)
+                        art = ex.Substring(2, ex.Length - 3);
+                    else if (ex.Length > 0)
+                        notes.Add("секция " + tag + ": артикул — выражение (" + ex +
+                                  "), в шапке раскроя оставлен «Артикул» — впишите вручную");
+                }
+
+                // секция раскроя = контракт-формат пресета tpl2 + фильтры источника КАК ЕСТЬ
+                var cut = new Dictionary<string, object>
+                {
+                    { "section_title", "" },
+                    { "hide_header", false },
+                    { "header", new object[] { art + " 8 6000", "" } },
+                    { "header_merges", new object[] { new object[] { 0, 1 } } },
+                    { "columns", new object[] { columns[li], "=Count" } },
+                    { "filter", sec.ContainsKey("filter") ? sec["filter"] : new object[0] },
+                    { "group_by", 0 },
+                    { "sort_by", new object[] { 0, "asc" } },
+                    { "total_row", false },
+                    { "col_mm", new object[] { 25.0, 15.0 } }
+                };
+                var seed = SeedFromSection(cut);
+                if (seed != null) seeds.Add(seed);
+            }
+            if (seeds.Count == 0) notes.Add("ни одной пригодной секции (нужны столбцы длины)");
+            return seeds;
+        }
+
+        // Кнопка «Взять с таблицы» на карточке: разобрать def, подтвердить, заменить карточку
+        // взятыми секциями (по секции источника — отдельный отчёт раскроя).
+        private void TakeFromTable(SectionCard card, string defJson)
+        {
+            int pos = _cards.IndexOf(card);
+            if (pos < 0 || string.IsNullOrEmpty(defJson)) return;
+
+            Dictionary<string, object> def = null;
+            try
+            {
+                var ser = new JavaScriptSerializer { MaxJsonLength = int.MaxValue };
+                def = ser.DeserializeObject(defJson) as Dictionary<string, object>;
+            }
+            catch { }
+            string beadsLayer; List<string> notes;
+            var seeds = BuildCutSeedsFromDef(def, out beadsLayer, out notes);
+            if (seeds.Count == 0)
+            {
+                MessageBox.Show(this, "Из выбранной таблицы нечего взять:\n— " +
+                    string.Join("\n— ", notes.ToArray()), "Взять с таблицы",
+                    MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return;
+            }
+            var r = MessageBox.Show(this, "Заменить отчёт " + (pos + 1) + " секциями из таблицы (" +
+                seeds.Count + " шт., по одной на артикул/секцию источника)?", "Взять с таблицы",
+                MessageBoxButtons.YesNo, MessageBoxIcon.Question);
+            if (r != DialogResult.Yes) return;
+
+            _cards.RemoveAt(pos);
+            flow.Controls.Remove(card);
+            card.Dispose();
+            int p = pos;
+            foreach (var sd in seeds)
+            {
+                var nc = NewCard(sd);
+                _cards.Insert(p++, nc);
+                flow.Controls.Add(nc);
+            }
+            SyncFlowOrder();
+            Renumber();
+            flow.ScrollControlIntoView(_cards[pos]);
+
+            if (!string.IsNullOrEmpty(beadsLayer))
+            {
+                // штапиковый источник: без beads движок не породит ШТАПИК-РАЗРЕЗ — переносим
+                if (cmbStands.Items.IndexOf(beadsLayer) < 0) cmbStands.Items.Add(beadsLayer);
+                cmbStands.SelectedIndex = cmbStands.Items.IndexOf(beadsLayer);
+                SetStandsVisible(true);
+            }
+            if (notes.Count > 0)
+                MessageBox.Show(this, "Взято с заметками:\n— " + string.Join("\n— ", notes.ToArray()),
+                    "Взять с таблицы", MessageBoxButtons.OK, MessageBoxIcon.Information);
         }
 
         private void RemoveCard(SectionCard card)
@@ -867,6 +1020,7 @@ namespace AtSpecPlugin
         private string _layer = "";
 
         public event Action<SectionCard> MoveUpRequested, MoveDownRequested, RemoveRequested, CopyRequested;
+        public event Action<SectionCard, string> TakeFromTableRequested;   // (card, defJson источника)
 
         public SectionCard(List<string> layers, List<string> fields,
                            Dictionary<string, Dictionary<string, List<string>>> valuesByLayer, SectionSeed seed)
@@ -922,6 +1076,17 @@ namespace AtSpecPlugin
             var btnCopy = new Button { Left = 406, Top = y, Width = 104, Text = "Копировать" };
             btnCopy.Click += (s, e) => { var h = CopyRequested; if (h != null) h(this); };
             Controls.Add(btnCopy);
+
+            // (фидбэк Алексея 08.07) раскрой из готовой таблицы: артикулы и ПРАВЛЕНЫЕ формулы
+            //  длин выдёргиваются из def выбранной таблицы (Спецификация/Штапики).
+            var btnTake = new Button { Left = 518, Top = y, Width = 118, Text = "Взять с таблицы" };
+            btnTake.Click += (s, e) =>
+            {
+                string js = PickTableDef();
+                if (string.IsNullOrEmpty(js)) return;
+                var h = TakeFromTableRequested; if (h != null) h(this, js);
+            };
+            Controls.Add(btnTake);
 
             var btnUp = new Button { Left = 610, Top = y, Width = 28, Text = "↑" };
             var btnDn = new Button { Left = 640, Top = y, Width = 28, Text = "↓" };
@@ -1085,6 +1250,7 @@ namespace AtSpecPlugin
 
         private const int PipZone = 18;   // клик-зона пипетки у правого края ячейки, px
         private const int DdZone  = 18;   // клик-зона «раскрыть список» левее пипетки (только val), px
+        private const int MsZone  = 18;   // клик-зона «…» (несколько значений через ;) левее ▼, px
 
         // узнаваемая «пипетка» в произвольном box: ствол по диагонали + колба + капля у носика
         private static void DrawPipGlyph(Graphics g, Rectangle box, Color color)
@@ -1180,6 +1346,18 @@ namespace AtSpecPlugin
                                        DdZone, e.CellBounds.Height);
                 DrawDropGlyph(e.Graphics, dz, sel ? Color.White : Color.FromArgb(96, 96, 96));
             }
+            if (cn == "val" && e.CellBounds.Width > PipZone + DdZone + MsZone + 40)
+            {
+                // «…» — мультивыбор значений (фидбэк Алексея 08.07): галочки -> «A; B; C»
+                var mz = new Rectangle(e.CellBounds.Right - PipZone - DdZone - MsZone, e.CellBounds.Top,
+                                       MsZone, e.CellBounds.Height);
+                using (var br = new SolidBrush(sel ? Color.White : Color.FromArgb(96, 96, 96)))
+                {
+                    int cy = mz.Top + mz.Height / 2 + 3;
+                    for (int k = 0; k < 3; k++)
+                        e.Graphics.FillEllipse(br, mz.Left + 3 + k * 4, cy, 2, 2);
+                }
+            }
             e.Handled = true;
         }
 
@@ -1217,7 +1395,49 @@ namespace AtSpecPlugin
                     }));
                 }
                 catch { }
+                return;
             }
+            if (cn == "val" && e.X > rect.Width - PipZone - DdZone - MsZone &&
+                rect.Width > PipZone + DdZone + MsZone + 40)
+            {
+                // «…»: мультивыбор значений поля текущей строки (фидбэк Алексея 08.07)
+                try { grid.EndEdit(); grid.CurrentCell = grid.Rows[e.RowIndex].Cells[e.ColumnIndex]; }
+                catch { }
+                OpenValueMulti(e.RowIndex);
+            }
+        }
+
+        // «Взять с таблицы»: указать готовую таблицу ATableSpec, вернуть её def-JSON (или null).
+        private string PickTableDef()
+        {
+            var doc = AcApp.DocumentManager.MdiActiveDocument;
+            var frm = FindForm();
+            if (doc == null || frm == null) return null;
+            var ed = doc.Editor;
+            EditorUserInteraction ui = null;
+            try
+            {
+                ui = ed.StartUserInteraction(frm);
+                var peo = new PromptEntityOptions("\nУкажите таблицу ATableSpec (Спецификация/Штапики): ");
+                peo.SetRejectMessage("\nНужна таблица.");
+                peo.AddAllowedClass(typeof(AcDb.Table), false);
+                var res = ed.GetEntity(peo);
+                if (res.Status != PromptStatus.OK) return null;
+                string js = null;
+                using (var tr = doc.TransactionManager.StartTransaction())
+                {
+                    var tbl = tr.GetObject(res.ObjectId, AcDb.OpenMode.ForRead) as AcDb.Table;
+                    if (tbl != null) js = ReportReactor.ReadDef(tr, tbl);
+                    tr.Commit();
+                }
+                if (string.IsNullOrEmpty(js))
+                    MessageBox.Show(frm, "У этой таблицы нет определения ATableSpec — " +
+                        "нужна таблица, построенная через ATSPECREPORT.", "Взять с таблицы",
+                        MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return js;
+            }
+            catch { return null; }
+            finally { if (ui != null) ui.End(); }
         }
 
         private bool PickBlock(out string layer, out string name, out Dictionary<string, string> attrs)
@@ -1292,6 +1512,46 @@ namespace AtSpecPlugin
 
         // (2) «Значение» текущей строки — значение ЕЁ поля (из «Выражения») с блока;
         //     пустое «Условие» добиваем «=» (правится вручную).
+        // «…» у «Значения»: окно с галочками по собранным значениям поля -> «A; B; C».
+        //  Для операторов > < ≥ ≤ несколько значений не имеют смысла — предупреждаем.
+        private void OpenValueMulti(int ri)
+        {
+            if (ri < 0 || ri >= grid.Rows.Count || grid.Rows[ri].IsNewRow) return;
+            string fld = ExtractField(Convert.ToString(grid.Rows[ri].Cells["expr"].Value) ?? "");
+            if (string.IsNullOrEmpty(fld))
+            {
+                MessageBox.Show(FindForm(), "Сначала укажите «Выражение» строки (поле), по которому " +
+                    "выбирать значения.", "ATableSpec — значения",
+                    MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return;
+            }
+            var items = ValuesFor(_layer, fld);
+            if (items == null || items.Count == 0)
+            {
+                MessageBox.Show(FindForm(), "Для поля «" + fld + "» нет собранных значений " +
+                    "(в выборке нет блоков с этим полем).", "ATableSpec — значения",
+                    MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return;
+            }
+            string cur = Convert.ToString(grid.Rows[ri].Cells["val"].Value) ?? "";
+            using (var dlg = new SourceDialog(items, cur, "Значение: несколько вариантов («" + fld + "»)"))
+            {
+                if (dlg.ShowDialog(FindForm()) != DialogResult.OK) return;
+                var picked = SplitList(dlg.Layer);
+                string op = (Convert.ToString(grid.Rows[ri].Cells["cond"].Value) ?? "").Trim();
+                if (picked.Count > 1 && Array.IndexOf(RangeOps, op) >= 0)
+                {
+                    MessageBox.Show(FindForm(), "Несколько значений через «;» не поддерживаются для " +
+                        "операторов > < ≥ ≤ — выберите одно значение.", "ATableSpec — фильтр",
+                        MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    return;
+                }
+                grid.Rows[ri].Cells["val"].Value = string.Join("; ", picked.ToArray());
+                if (picked.Count > 0 && op.Length == 0) grid.Rows[ri].Cells["cond"].Value = "=";
+                RefreshSummary();
+            }
+        }
+
         private void PipValue(int ri)
         {
             if (ri < 0 || ri >= grid.Rows.Count || grid.Rows[ri].IsNewRow)
@@ -1932,9 +2192,9 @@ namespace AtSpecPlugin
             }
         }
 
-        public SourceDialog(List<string> layers, string current)
+        public SourceDialog(List<string> layers, string current, string title = "Источник: несколько слоёв")
         {
-            Text = "Источник: несколько слоёв";
+            Text = title;
             FormBorderStyle = FormBorderStyle.FixedDialog;
             StartPosition = FormStartPosition.CenterParent;
             ClientSize = new Size(380, 330);

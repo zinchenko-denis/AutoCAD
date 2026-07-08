@@ -203,6 +203,92 @@ static class Repro2
         Check(form.ReportDef != null && !form.ReportDef.ContainsKey("beads"),
               "def после смены шаблона: без beads");
 
+        // ═══ «Взять с таблицы» (фидбэк Алексея 08.07): def -> секции раскроя ═══
+        var takeM = form.GetType().GetMethod("BuildCutSeedsFromDef",
+                        BindingFlags.Static | BindingFlags.NonPublic | BindingFlags.Public);
+        Func<Dictionary<string, object>, object[]> take = d0x =>
+        {
+            var args = new object[] { d0x, null, null };
+            var res = takeM.Invoke(null, args);
+            return new object[] { res, args[1], args[2] };
+        };
+
+        var defSpec = new Dictionary<string, object>
+        {
+            { "sections", new object[] {
+                new Dictionary<string, object> {
+                    { "section_title", "Крышки" },
+                    { "header", new object[] { "№ п/п", "Артикул", "Длина, мм", "Колич." } },
+                    { "columns", new object[] { "=row", "=«17.01.01»", "=Object.«Длина»-150", "=Count" } },
+                    { "filter", new object[] {
+                        new Dictionary<string, object> { { "field", "Слой" }, { "op", "=" }, { "value", "RF-крышки" } },
+                        new Dictionary<string, object> { { "field", "МАРКИРОВКА" }, { "op", "=" },
+                            { "value", "Сп1;Вр1" }, { "values", new object[] { "Сп1", "Вр1" } } } } } },
+                new Dictionary<string, object> {
+                    { "section_title", "Стойки" },
+                    { "header", new object[] { "Артикул", "Длина, мм" } },
+                    { "columns", new object[] { "=Object.«ПРОФ»", "=Object.«Длина»" } },
+                    { "filter", new object[] {
+                        new Dictionary<string, object> { { "field", "Слой" }, { "op", "=" }, { "value", "RF-стойки" } } } } } } }
+        };
+        var t1 = take(defSpec);
+        var sd1 = (IList)t1[0];
+        var nl1 = (List<string>)t1[2];
+        Check(sd1.Count == 2, "взять: 2 секции источника -> 2 отчёта раскроя", "n=" + sd1.Count);
+        if (sd1.Count == 2)
+        {
+            var a = sd1[0]; var rowsA = (List<string[]>)F(a, "FullRows") ?? (List<string[]>)a.GetType().GetField("FullRows").GetValue(a);
+            Check(rowsA[0][0] == "17.01.01 8 6000" && rowsA[0][1] == "=Object.«Длина»-150" &&
+                  rowsA[0][4] == "по возрастанию",
+                  "взять: литерал-артикул в шапке, ПРАВЛЕНАЯ длина, группа по длине",
+                  rowsA[0][0] + " | " + rowsA[0][1] + " | " + rowsA[0][4]);
+            Check(rowsA[1][1] == "=Count", "взять: строка =Count", rowsA[1][1]);
+            string sl = Convert.ToString(a.GetType().GetField("SeedLayer").GetValue(a));
+            Check(sl == "RF-крышки", "взять: источник секции перенесён", sl);
+            bool fOk = false;
+            foreach (var rr in rowsA)
+                if ((rr[1] ?? "").Contains("МАРКИРОВКА") && rr[2] == "=" && rr[3] == "Сп1;Вр1") fOk = true;
+            Check(fOk, "взять: values-фильтр источника перенесён строкой «Сп1;Вр1»");
+            var mg = (List<int[]>)a.GetType().GetField("SeedMerges").GetValue(a);
+            Check(mg != null && mg.Count == 1 && mg[0][0] == 0 && mg[0][1] == 1,
+                  "взять: контракт-шапка объединена [0,1]");
+            var b = sd1[1]; var rowsB = (List<string[]>)b.GetType().GetField("FullRows").GetValue(b);
+            Check(rowsB[0][0] == "Артикул 8 6000", "взять: выражение-артикул -> плейсхолдер в шапке", rowsB[0][0]);
+            Check(nl1.Exists(z => z.Contains("ПРОФ")), "взять: заметка про артикул-выражение");
+        }
+
+        var defBeads = new Dictionary<string, object>
+        {
+            { "beads", new Dictionary<string, object> { { "layer", "RF-стойки" }, { "source", "RF-заполнения" } } },
+            { "sections", new object[] {
+                new Dictionary<string, object> {
+                    { "section_title", "Вертикальный штапик в зонах с терморазрывом" },
+                    { "header", new object[] { "Наименование", "Размер, мм" } },
+                    { "columns", new object[] { "=Object.«ИМЯ»", "=Object.«ШТ_РАЗМЕР»" } },
+                    { "filter", new object[] {
+                        new Dictionary<string, object> { { "field", "Слой" }, { "op", "=" }, { "value", "ШТАПИК-РАЗРЕЗ" } } } } },
+                new Dictionary<string, object> {
+                    { "section_title", "Без длины" },
+                    { "header", new object[] { "Марка" } },
+                    { "columns", new object[] { "=Object.«МАРКИРОВКА»" } } } } }
+        };
+        var t2 = take(defBeads);
+        var sd2x = (IList)t2[0];
+        string bl2 = Convert.ToString(t2[1]);
+        var nl2 = (List<string>)t2[2];
+        Check(sd2x.Count == 1, "взять(штапики): секция без длины пропущена", "n=" + sd2x.Count);
+        Check(bl2 == "RF-стойки", "взять(штапики): beads.layer вытащен наружу", bl2);
+        Check(nl2.Exists(z => z.Contains("Без длины")), "взять: пропуск отражён в заметках");
+        if (sd2x.Count == 1)
+        {
+            var rowsC = (List<string[]>)sd2x[0].GetType().GetField("FullRows").GetValue(sd2x[0]);
+            Check(rowsC[0][1] == "=Object.«ШТ_РАЗМЕР»", "взять(штапики): длина = ШТ_РАЗМЕР", rowsC[0][1]);
+        }
+
+        var t3 = take(null);
+        Check(((IList)t3[0]).Count == 0 && ((List<string>)t3[2]).Count > 0,
+              "взять: null-def -> пусто с заметкой, без падения");
+
         string dump = Path.Combine(Path.GetTempPath(), "ATableSpec_last_def.json");
         Check(File.Exists(dump), "дамп def в TEMP записан", dump);
 
