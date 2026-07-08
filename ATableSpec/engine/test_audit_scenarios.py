@@ -257,6 +257,50 @@ cases = [("01", "01"), ("С01", "С01"), ("0,1", "0,1"), ("749.5", "749.5"),
 bad = [(inp, num_clean(inp), exp) for inp, exp in cases if num_clean(inp) != exp]
 rep("OK" if not bad else "BUG", "S33", f"NumClean-зеркало: {'все ' + str(len(cases)) + ' кейсов' if not bad else bad}")
 
+# ───────── КРАШ-ТЕСТ ТЗ 08.07: values[] под ударом ─────────
+def _mrec(layer, **at): return {"name": "b", "layer": layer, "attributes": {k: str(v) for k, v in at.items()}}
+MF = [_mrec("RF-стойки", МАРКИРОВКА="С1", Длина=3495),
+      _mrec("RF-ригеля", МАРКИРОВКА="Р1", Длина=1130),
+      _mrec("RF-заполнения", МАРКИРОВКА="Сп1", Длина=1499.9999999998),
+      _mrec("RF-заполнения", МАРКИРОВКА="Вр1"),          # без Длины
+      _mrec("0", МАРКИРОВКА="X0", Длина=1)]
+def _mrun(flt, cols=("=Object.«МАРКИРОВКА»",), **kw):
+    sec = {"header": ["М"], "columns": list(cols), "filter": flt}
+    sec.update(kw)
+    return run_report(MF, {"sections": [sec]})["sections"][0]["rows"]
+
+# S34 — дубликаты в списке не меняют результат
+a = sorted(r[0] for r in _mrun([{"field": "МАРКИРОВКА", "op": "=", "values": ["С1", "С1", "Р1", "С1"]}]))
+rep("OK" if a == ["Р1", "С1"] else "BUG", "S34", f"дубли в values: {a}")
+
+# S35 — values из мусора ["", "  "] при пустом value: фильтр «= пусто» -> матчит пустое/отсутствующее поле
+a = sorted(r[0] for r in _mrun([{"field": "Длина", "op": "=", "values": ["", "  "]},
+                                {"field": "Слой", "op": "=", "value": "RF-заполнения"}]))
+rep("OK" if a == ["Вр1"] else "BUG", "S35", f"мусорный values -> «= пусто»: {a} (блок без Длины)")
+
+# S36 — 200 элементов в списке: не падает, матчит хвостовой
+big = [f"нет{i}" for i in range(199)] + ["Р1"]
+a = [r[0] for r in _mrun([{"field": "МАРКИРОВКА", "op": "=", "values": big}])]
+rep("OK" if a == ["Р1"] else "BUG", "S36", f"200 значений: {a}")
+
+# S37 — Слой ≠ все слои: 0 строк, отчёт не падает (пустая секция)
+a = _mrun([{"field": "Слой", "op": "≠", "values": ["RF-стойки", "RF-ригеля", "RF-заполнения", "0"]}])
+rep("OK" if a == [] else "BUG", "S37", f"исключены все слои: {len(a)} строк")
+
+# S38 — мультислой + группа по Длине, которой нет у части блоков: пустой ключ = своя группа, не падает
+a = _mrun([{"field": "Слой", "op": "=", "values": ["RF-стойки", "RF-заполнения"]}],
+          cols=("=Object.«МАРКИРОВКА»", "=Object.«Длина»", "=Count"), group_by=1)
+rep("OK" if len(a) == 3 and all(r[2] == 1 for r in a) else "BUG",
+    "S38", f"группа по частично-пустому полю: {len(a)} групп {[(r[0], r[1]) for r in a]}")
+
+# S39 — числовое равенство внутри списка: double-хвост находится «=1500;9999»
+a = [r[0] for r in _mrun([{"field": "Длина", "op": "=", "values": ["1500", "9999"]}])]
+rep("OK" if a == ["Сп1"] else "BUG", "S39", f"num-eq в списке (1499.99…8 = 1500): {a}")
+
+# S40 — битый def: values НЕ список (строка) -> откат на value, не падает
+a = [r[0] for r in _mrun([{"field": "МАРКИРОВКА", "op": "=", "values": "С1;Р1", "value": "Р1"}])]
+rep("OK" if a == ["Р1"] else "BUG", "S40", f"values-строка (битый def) -> откат на value: {a}")
+
 print()
 print("── СВОДКА ──")
 for tag in ("BUG", "EDGE"):
