@@ -34,9 +34,6 @@ using System.Windows.Forms;
 using System.IO;
 using System.Web.Script.Serialization;
 using Microsoft.Win32;
-using Autodesk.AutoCAD.EditorInput;
-using AcDb = Autodesk.AutoCAD.DatabaseServices;   // алиас: без блочного using (в нём свои Font/FlowDirection)
-using AcApp = Autodesk.AutoCAD.ApplicationServices.Application;
 
 namespace AtSpecPlugin
 {
@@ -424,7 +421,7 @@ namespace AtSpecPlugin
             if (Array.IndexOf(TplOrder, tpl) < 0) return;
             if (_cards.Count > 0)
             {
-                var r = MessageBox.Show("Заменить все секции заготовкой шаблона?", "ATableSpec",
+                var r = ReproMsg.Show("Заменить все секции заготовкой шаблона?", "ATableSpec",
                     MessageBoxButtons.YesNo, MessageBoxIcon.Question);
                 if (r != DialogResult.Yes)
                 {
@@ -672,7 +669,7 @@ namespace AtSpecPlugin
         {
             if (_cards.Count <= 1)
             {
-                MessageBox.Show("Нужна хотя бы одна секция.", "ATableSpec",
+                ReproMsg.Show("Нужна хотя бы одна секция.", "ATableSpec",
                     MessageBoxButtons.OK, MessageBoxIcon.Information);
                 return;
             }
@@ -720,7 +717,7 @@ namespace AtSpecPlugin
                 }
             if (sections.Count == 0)
             {
-                MessageBox.Show("Добавьте хотя бы одну секцию со столбцами (Заголовок | Выражение).",
+                ReproMsg.Show("Добавьте хотя бы одну секцию со столбцами (Заголовок | Выражение).",
                     "ATableSpec", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 DialogResult = DialogResult.None;   // не закрывать форму
                 return;
@@ -741,7 +738,7 @@ namespace AtSpecPlugin
                 }
                 if (minC != maxC)
                 {
-                    var ans = MessageBox.Show(this,
+                    var ans = ReproMsg.Show(this,
                         "Секции отчёта имеют разное число столбцов (" + minC + " и " + maxC + ").\n" +
                         "Столбцы итоговой таблицы общие на все секции — ширины возьмутся по максимуму,\n" +
                         "и узкая секция (например, раскрой) растянется под широкую.\n\n" +
@@ -777,7 +774,7 @@ namespace AtSpecPlugin
                         }
                     if (inGrid != inDef)
                     {
-                        MessageBox.Show(this,
+                        ReproMsg.Show(this,
                             "Отчёт " + (pi + 1) + ": фильтр по ШТ_СТЫК виден в таблице условий, но не попал в определение (" +
                             inGrid + " в гриде / " + inDef + " в определении).\n\nДиагностика ячеек:\n" + dg +
                             "\nПостроение отменено. Пришлите этот текст разработчику.",
@@ -792,7 +789,7 @@ namespace AtSpecPlugin
                 {
                     if (!string.Equals(SectionSourceLayer(pairs[pi].Value), standsLayer, StringComparison.OrdinalIgnoreCase))
                         continue;
-                    var ans2 = MessageBox.Show(this,
+                    var ans2 = ReproMsg.Show(this,
                         "Отчёт " + (pi + 1) + " берёт блоки со слоя стоек («" + standsLayer + "»).\n" +
                         "Этот слой указан в поле «Стойки» для расчёта стыков (терморазрывов);\n" +
                         "источником штапиков обычно служит слой заполнений.\n\nВсё равно построить?",
@@ -1224,61 +1221,7 @@ namespace AtSpecPlugin
         {
             layer = null; name = null;
             attrs = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
-            var doc = AcApp.DocumentManager.MdiActiveDocument;
-            var frm = FindForm();
-            if (doc == null || frm == null) return false;
-            var ed = doc.Editor;
-            EditorUserInteraction ui = null;
-            try
-            {
-                ui = ed.StartUserInteraction(frm);
-                var peo = new PromptEntityOptions("\nПипетка — укажите блок: ");
-                peo.SetRejectMessage("\nЭто не вхождение блока.");
-                peo.AddAllowedClass(typeof(AcDb.BlockReference), false);
-                var res = ed.GetEntity(peo);
-                if (res.Status != PromptStatus.OK) return false;
-                using (var tr = doc.TransactionManager.StartTransaction())
-                {
-                    var br = (AcDb.BlockReference)tr.GetObject(res.ObjectId, AcDb.OpenMode.ForRead);
-                    layer = br.Layer;
-                    var btr = (AcDb.BlockTableRecord)tr.GetObject(br.DynamicBlockTableRecord, AcDb.OpenMode.ForRead);
-                    name = btr.Name;   // эффективное имя (динам. блоки)
-                    foreach (AcDb.ObjectId id in br.AttributeCollection)
-                    {
-                        var ar = tr.GetObject(id, AcDb.OpenMode.ForRead) as AcDb.AttributeReference;
-                        if (ar != null && !attrs.ContainsKey(ar.Tag)) attrs[ar.Tag] = ReportCommands.NumClean(ar.TextString ?? "");
-                    }
-                    // (видео Алексея 06.07-2) динамические свойства (Visibility1, размеры
-                    // динблоков) пипетка НЕ видела — собирался только AttributeCollection,
-                    // и «Тип заполнения» =Object.«Visibility1» давал «у блока нет поля».
-                    // Добираем как в главном сборе ReportCommands (атрибуты приоритетнее).
-                    if (br.IsDynamicBlock)
-                    {
-                        foreach (AcDb.DynamicBlockReferenceProperty dp in br.DynamicBlockReferencePropertyCollection)
-                        {
-                            string pn = dp.PropertyName;
-                            if (string.IsNullOrEmpty(pn) || attrs.ContainsKey(pn)) continue;
-                            attrs[pn] = ReportCommands.NumClean(
-                                Convert.ToString(dp.Value, System.Globalization.CultureInfo.InvariantCulture));
-                        }
-                    }
-                    tr.Commit();
-                }
-                // производные Ширина/Высота из РАЗМЕР_ЗАП («1125Х275») — как в движке
-                string rz;
-                if (attrs.TryGetValue("РАЗМЕР_ЗАП", out rz) && !string.IsNullOrEmpty(rz))
-                {
-                    var p = rz.Split(new[] { 'Х', 'х', 'X', 'x', '*' }, StringSplitOptions.RemoveEmptyEntries);
-                    if (p.Length == 2)
-                    {
-                        if (!attrs.ContainsKey("Ширина")) attrs["Ширина"] = p[0].Trim();
-                        if (!attrs.ContainsKey("Высота")) attrs["Высота"] = p[1].Trim();
-                    }
-                }
-                return true;
-            }
-            catch { return false; }
-            finally { if (ui != null) ui.End(); }
+            return false;   // репро: без AutoCAD пипетка недоступна
         }
 
         // (1) слой «Источника» с блока
@@ -1295,11 +1238,11 @@ namespace AtSpecPlugin
         private void PipValue(int ri)
         {
             if (ri < 0 || ri >= grid.Rows.Count || grid.Rows[ri].IsNewRow)
-            { MessageBox.Show(FindForm(), "Выберите строку столбца, куда вставить значение.", "Пипетка"); return; }
+            { ReproMsg.Show(FindForm(), "Выберите строку столбца, куда вставить значение.", "Пипетка"); return; }
             string ex = Convert.ToString(grid.Rows[ri].Cells["expr"].Value) ?? "";
             string fld = ExtractField(ex);
             if (string.IsNullOrEmpty(fld))
-            { MessageBox.Show(FindForm(), "В строке нет поля: «Выражение» должно быть вида =Object.«Поле».", "Пипетка"); return; }
+            { ReproMsg.Show(FindForm(), "В строке нет поля: «Выражение» должно быть вида =Object.«Поле».", "Пипетка"); return; }
             string layer, name; Dictionary<string, string> attrs;
             if (!PickBlock(out layer, out name, out attrs)) return;
             string val;
@@ -1314,7 +1257,7 @@ namespace AtSpecPlugin
             else if (attrs.TryGetValue(fld, out val)) { }
             else if (fld.Equals("Имя", StringComparison.OrdinalIgnoreCase)) val = name;
             else
-            { MessageBox.Show(FindForm(), "У блока нет поля «" + fld + "».", "Пипетка"); return; }
+            { ReproMsg.Show(FindForm(), "У блока нет поля «" + fld + "».", "Пипетка"); return; }
             grid.Rows[ri].Cells["val"].Value = val ?? "";
             string op = (Convert.ToString(grid.Rows[ri].Cells["cond"].Value) ?? "").Trim();
             if (op.Length == 0) grid.Rows[ri].Cells["cond"].Value = "=";
@@ -1325,15 +1268,15 @@ namespace AtSpecPlugin
         private void PipHeader(int ri)
         {
             if (ri < 0 || ri >= grid.Rows.Count || grid.Rows[ri].IsNewRow)
-            { MessageBox.Show(FindForm(), "Нет строки столбца для заголовка.", "Пипетка"); return; }
+            { ReproMsg.Show(FindForm(), "Нет строки столбца для заголовка.", "Пипетка"); return; }
             string layer, name; Dictionary<string, string> attrs;
             if (!PickBlock(out layer, out name, out attrs)) return;
             string art;
             if (!attrs.TryGetValue("ПРОФ", out art) && !attrs.TryGetValue("ПРОФИЛЬ", out art))
-            { MessageBox.Show(FindForm(), "У блока нет атрибута «ПРОФ» (или «ПРОФИЛЬ»).", "Пипетка"); return; }
+            { ReproMsg.Show(FindForm(), "У блока нет атрибута «ПРОФ» (или «ПРОФИЛЬ»).", "Пипетка"); return; }
             art = (art ?? "").Replace(" ", "");   // артикул в шапке раскроя — без пробелов (формат R-Fasad)
             if (art.Length == 0)
-            { MessageBox.Show(FindForm(), "Атрибут «ПРОФ» у блока пуст.", "Пипетка"); return; }
+            { ReproMsg.Show(FindForm(), "Атрибут «ПРОФ» у блока пуст.", "Пипетка"); return; }
             string curTxt = Convert.ToString(grid.Rows[ri].Cells["hdr"].Value) ?? "";
             var toks = curTxt.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
             string rest = (toks.Length >= 2) ? string.Join(" ", toks, 1, toks.Length - 1) : "8 6000";
@@ -1418,7 +1361,7 @@ namespace AtSpecPlugin
             string val = cn == "val"  ? nv : (CellText(grid.Rows[e.RowIndex], "val")  ?? "");
             if (val.IndexOf(';') >= 0 && Array.IndexOf(RangeOps, op.Trim()) >= 0)
             {
-                MessageBox.Show(FindForm(),
+                ReproMsg.Show(FindForm(),
                     "Несколько значений через «;» не поддерживаются для операторов > < ≥ ≤ —\n" +
                     "укажите одно значение (или используйте два условия-строки: > и <).",
                     "ATableSpec — фильтр", MessageBoxButtons.OK, MessageBoxIcon.Information);
@@ -1660,7 +1603,7 @@ namespace AtSpecPlugin
             var cols = SelectedOutputColumns();
             if (cols.Count < 2)
             {
-                MessageBox.Show("Выделите 2+ столбца (строки в таблице слева), чтобы объединить их шапку.",
+                ReproMsg.Show("Выделите 2+ столбца (строки в таблице слева), чтобы объединить их шапку.",
                     "Объединение шапки", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 return;
             }
@@ -1677,7 +1620,7 @@ namespace AtSpecPlugin
             int s = cols[0], e = cols[cols.Count - 1];
             int removed = _merges.RemoveAll(sp => !(sp[1] < s || sp[0] > e));
             if (removed == 0)
-                MessageBox.Show("В выделении нет объединённой шапки.",
+                ReproMsg.Show("В выделении нет объединённой шапки.",
                     "Разъединение шапки", MessageBoxButtons.OK, MessageBoxIcon.Information);
             RefreshSummary();
         }

@@ -125,6 +125,84 @@ static class Repro2
               "def.beads.source = RF-заполнения",
               beads == null ? "beads=null" : Convert.ToString(beads.ContainsKey("source") ? beads["source"] : "(нет)"));
 
+        // ═══ ТЗ 08.07: Стойки-видимость + многослойные фильтры ═══
+        var lblStands = (Label)F(form, "lblStands");
+
+        // после Штапиков пара видима
+        Check(cmbStands.Visible && lblStands.Visible, "Стойки: видимы в шаблоне «Штапики»");
+
+        // мультиисточник на карточке 1 + условие-список + диапазон-защита
+        var c0 = cards[0];
+        var src0 = (ComboBox)F(c0, "cmbSource");
+        var g0 = (DataGridView)F(c0, "grid");
+        src0.Text = "RF-стойки; RF-ригеля";
+        c0.GetType().GetMethod("OnSourceChanged", BindingFlags.Instance | BindingFlags.NonPublic)
+          .Invoke(c0, null);
+        {   // строка-условие: МАРКИРОВКА = «Сп1; Вр1 ;;Сп1» (трим/дедуп) — «только-фильтр»
+            int ri = g0.Rows.Add();
+            g0.Rows[ri].Cells["expr"].Value = "=Object.«МАРКИРОВКА»";
+            g0.Rows[ri].Cells["cond"].Value = "=";
+            g0.Rows[ri].Cells["val"].Value = "Сп1; Вр1 ;;Сп1";
+            int r2 = g0.Rows.Add();      // диапазон + список -> защитно первое (в def)
+            g0.Rows[r2].Cells["expr"].Value = "=Object.«Длина»";
+            g0.Rows[r2].Cells["cond"].Value = ">";
+            g0.Rows[r2].Cells["val"].Value = "1000;1";
+        }
+        var d0 = (Dictionary<string, object>)c0.GetType().GetMethod("ToDef").Invoke(c0, null);
+        var fl0 = (IList)d0["filter"];
+        var f0 = (Dictionary<string, object>)fl0[0];
+        var f0v = f0.ContainsKey("values") ? f0["values"] as List<string> : null;
+        Check(Convert.ToString(f0["field"]) == "Слой" && f0v != null &&
+              f0v.Count == 2 && f0v[0] == "RF-стойки" && f0v[1] == "RF-ригеля" &&
+              Convert.ToString(f0["value"]) == "RF-стойки;RF-ригеля",
+              "ToDef: мультиисточник -> Слой values[2] + value-склейка",
+              f0v == null ? "values=null" : string.Join("|", f0v.ToArray()));
+        Dictionary<string, object> fM = null, fR = null;
+        foreach (Dictionary<string, object> ff in fl0)
+        {
+            if (Convert.ToString(ff["field"]) == "МАРКИРОВКА") fM = ff;
+            if (Convert.ToString(ff["field"]) == "Длина") fR = ff;
+        }
+        var fMv = fM != null && fM.ContainsKey("values") ? fM["values"] as List<string> : null;
+        Check(fMv != null && fMv.Count == 2 && fMv[0] == "Сп1" && fMv[1] == "Вр1",
+              "ToDef: значение-список -> values (трим+дедуп)",
+              fMv == null ? "null" : string.Join("|", fMv.ToArray()));
+        Check(fR != null && !fR.ContainsKey("values") && Convert.ToString(fR["value"]) == "1000",
+              "ToDef: диапазон+список -> защитно первое, без values",
+              fR == null ? "null" : Convert.ToString(fR["value"]));
+
+        // реверс: def-фильтр с values -> ячейка «Сп1;Вр1», источник-список -> в Источник
+        var seedM = form.GetType().GetMethod("SeedFromSection", BindingFlags.Static | BindingFlags.NonPublic);
+        var sd2 = new Dictionary<string, object>
+        {
+            { "section_title", "T" }, { "header", new object[] { "М" } },
+            { "columns", new object[] { "=Object.«МАРКИРОВКА»" } },
+            { "filter", new object[] {
+                new Dictionary<string, object> { { "field", "Слой" }, { "op", "=" },
+                    { "value", "RF-стойки;RF-ригеля" },
+                    { "values", new object[] { "RF-стойки", "RF-ригеля" } } },
+                new Dictionary<string, object> { { "field", "МАРКИРОВКА" }, { "op", "=" },
+                    { "value", "Сп1;Вр1" },
+                    { "values", new object[] { "Сп1", "Вр1" } } } } }
+        };
+        var seed2 = seedM.Invoke(null, new object[] { sd2 });
+        var sLayer = Convert.ToString(seed2.GetType().GetField("SeedLayer").GetValue(seed2));
+        var sRows = (List<string[]>)seed2.GetType().GetField("FullRows").GetValue(seed2);
+        Check(sLayer == "RF-стойки;RF-ригеля", "реверс: источник-список вернулся", sLayer);
+        Check(sRows.Count >= 1 && sRows[0][2] == "=" && sRows[0][3] == "Сп1;Вр1",
+              "реверс: values -> ячейка «Сп1;Вр1»", sRows[0][3]);
+
+        // смена шаблона со Штапиков -> пара скрыта и сброшена, beads из def ушёл
+        cbTitle.SelectedIndex = cbTitle.Items.IndexOf("Спецификация");
+        Pump(500);
+        Check(!cmbStands.Visible && !lblStands.Visible && cmbStands.SelectedIndex == 0,
+              "Стойки: скрыты и сброшены вне штапиков",
+              "vis=" + cmbStands.Visible + " idx=" + cmbStands.SelectedIndex);
+        form.GetType().GetMethod("BuildDef", BindingFlags.Instance | BindingFlags.NonPublic)
+            .Invoke(form, null);
+        Check(form.ReportDef != null && !form.ReportDef.ContainsKey("beads"),
+              "def после смены шаблона: без beads");
+
         string dump = Path.Combine(Path.GetTempPath(), "ATableSpec_last_def.json");
         Check(File.Exists(dump), "дамп def в TEMP записан", dump);
 

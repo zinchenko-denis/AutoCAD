@@ -8,7 +8,9 @@ src = src.replace('using Autodesk.AutoCAD.EditorInput;\n', '')
 src = re.sub(r'using Ac(Db|App) = [^\n]+\n', '', src)
 sig = 'private bool PickBlock(out string layer, out string name, out Dictionary<string, string> attrs)'
 i = src.index(sig)
-j = src.index('}', src.index('finally { if (ui != null) ui.End(); }', i)) + 1
+endmark = 'finally { if (ui != null) ui.End(); }'
+j = src.index(endmark, i)
+j = src.index('}', j + len(endmark)) + 1   # закрывающая скобка МЕТОДА (после finally)
 src = src[:i] + sig + '''
         {
             layer = null; name = null;
