@@ -326,12 +326,13 @@ static class Repro2
         // ═══ 10.07: литерал-артикул + слияние по артикулу + скрытые auto-фильтры ═══
         var defLit = new Dictionary<string, object>
         {
+            { "beads", new Dictionary<string, object> { { "layer", "RF-стойки" }, { "source", "RF-заполнения" } } },
             { "sections", new object[] {
                 new Dictionary<string, object> {
                     { "section_title", "Горизонтальный штапик в зонах без терморазрыва" },
                     { "header", new object[] { "№", "Наименование", "Артикул", "Длина, мм", "Колич." } },
                     { "columns", new object[] { "=row", "=Object.«МАРКИРОВКА»", "17_01_04",
-                                                "=Object.«Ширина»+20", "=Count" } },
+                                                "=Object.«Ширина»+20", "=Count*2" } },
                     { "filter", new object[] {
                         new Dictionary<string, object> { { "field", "Слой" }, { "op", "=" }, { "value", "RF-заполнения" } },
                         new Dictionary<string, object> { { "field", "МАРКИРОВКА" }, { "op", "не содержит" }, { "value", "вр" } } } } },
@@ -370,6 +371,9 @@ static class Repro2
                   "слияние: у второго тот же артикул, шапка столбцов СКРЫТА");
             Check(rowsOf(sd5[1])[0][1] == "=Object.«Высота»-1",
                   "слияние: длина второго — СВОЁ выражение (верт)", rowsOf(sd5[1])[0][1]);
+            Check(rowsOf(sd5[0])[1][1] == "=Count*2",
+                  "количество раскроя = выражение ИСТОЧНИКА (множитель не теряется)",
+                  rowsOf(sd5[0])[1][1]);
             Check(!hidOf(sd5[2]) && !hidOf(sd5[3]),
                   "плейсхолдеры «Артикул» НЕ слиты (обе шапки видимы)");
             Check(nl5.Exists(z => z.Contains("взят из столбца")) &&
@@ -415,6 +419,32 @@ static class Repro2
         foreach (var rr in rowsE2) if ((rr[1] ?? "").Contains("МАРКИРОВКА")) rowFlt2 = true;
         Check(afE2 != null && afE2.Count == 1 && !rowFlt2,
               "e2e: round-trip def -> AutoFilters вернулись мимо грида");
+
+        // регресс 10.07 (пойман e2e на живом пресете): гард ШТ_СТЫК считает грид+авто,
+        // BuildDef после «Взять с табл.» не рубится «самопроверкой» и отдаёт РАСКРОЙ
+        form.GetType().GetMethod("BuildDef", BindingFlags.Instance | BindingFlags.NonPublic)
+            .Invoke(form, null);
+        Check(!ReproMsg.Log.Any(m => m.Contains("не попал в определение")),
+              "гард ШТ_СТЫК: авто-фильтры не считаются «потерей»");
+        var rdE = form.ReportDef;
+        var rsecs = (rdE != null && rdE.ContainsKey("sections")) ? rdE["sections"] as IList : null;
+        bool cutOk = false, hid2 = false, autoDef = false;
+        if (rsecs != null && rsecs.Count == 4)
+        {
+            var s0 = rsecs[0] as Dictionary<string, object>;
+            var s1 = rsecs[1] as Dictionary<string, object>;
+            var h0 = (s0 != null && s0.ContainsKey("header")) ? s0["header"] as IList : null;
+            cutOk = h0 != null && Convert.ToString(h0[0]) == "17_01_04 8 6000";
+            hid2 = s1 != null && Convert.ToBoolean(s1["hide_header"]);
+            var fl1 = (s1 != null && s1.ContainsKey("filter")) ? s1["filter"] as IList : null;
+            if (fl1 != null)
+                foreach (Dictionary<string, object> ff in fl1)
+                    if (ff.ContainsKey("auto") && Convert.ToBoolean(ff["auto"])) autoDef = true;
+        }
+        Check(cutOk, "BuildDef после Take: шапка раскроя «17_01_04 8 6000»",
+              rsecs == null ? "secs=null" : "n=" + rsecs.Count);
+        Check(hid2 && autoDef, "BuildDef после Take: продолжение с hide_header, авто-фильтр в def",
+              "hid=" + hid2 + " auto=" + autoDef);
 
         // ═══ 08.07-4: «Взять с табл.» — только в «Раскрое»; резина карточек ═══
         var takeVis = new Func<object, bool>(c =>

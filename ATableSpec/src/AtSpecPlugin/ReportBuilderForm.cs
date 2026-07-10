@@ -784,6 +784,31 @@ namespace AtSpecPlugin
                     }
                 if (li < 0) { notes.Add("секция " + tag + ": не нашёл столбец длины — пропущена"); continue; }
 
+                // (краш-тест 10.07) КОЛИЧЕСТВО тоже берём из источника: жёсткий «=Count»
+                //  терял множители (штапики «=Count*2» — раскрой занижал вдвое, видно и на
+                //  скринах Алексея: спец. 775×152, раскрой 775×76). Ссылки на Col(n) исходных
+                //  столбцов в раскрое не живут — такие не переносим (фолбэк =Count).
+                string cntExpr = "=Count";
+                int ci2 = -1;
+                for (int i = 0; i < columns.Count; i++)
+                {
+                    string h = (i < headers.Count ? headers[i] : "").Trim().ToLowerInvariant();
+                    if (h.StartsWith("колич") || h.StartsWith("кол-во") || h.StartsWith("кол.")) { ci2 = i; break; }
+                }
+                if (ci2 < 0)
+                    for (int i = 0; i < columns.Count; i++)
+                    {
+                        if (i == li) continue;
+                        string exq = (columns[i] ?? "");
+                        if (exq.IndexOf("count", StringComparison.OrdinalIgnoreCase) >= 0) { ci2 = i; break; }
+                    }
+                if (ci2 >= 0)
+                {
+                    string exq = (columns[ci2] ?? "").Trim();
+                    if (exq.Length > 0 && exq.IndexOf("col(", StringComparison.OrdinalIgnoreCase) < 0)
+                        cntExpr = exq;
+                }
+
                 // артикул: колонка с заголовком «артикул…»; литерал =«X» -> в шапку, иначе плейсхолдер
                 string art = "Артикул";
                 int ai = -1;
@@ -801,7 +826,7 @@ namespace AtSpecPlugin
                         { "hide_header", false },
                         { "header", new object[] { artText + " 8 6000", "" } },
                         { "header_merges", new object[] { new object[] { 0, 1 } } },
-                        { "columns", new object[] { columns[li], "=Count" } },
+                        { "columns", new object[] { columns[li], cntExpr } },
                         { "filter", filt },
                         { "group_by", 0 },
                         { "sort_by", new object[] { 0, "asc" } },
@@ -1107,7 +1132,10 @@ namespace AtSpecPlugin
                 {
                     var card = pairs[pi].Key; var sd = pairs[pi].Value;
                     var dg = new System.Text.StringBuilder();
-                    int inGrid = card.CountGridFilters("ШТ_СТЫК", dg);
+                    // (10.07) авто-фильтры («Взять с табл.») живут вне грида, но в def —
+                    //  считаем их вместе с гридом, иначе гард видит ложную «потерю»
+                    int inGrid = card.CountGridFilters("ШТ_СТЫК", dg) +
+                                 card.CountAutoFilters("ШТ_СТЫК", dg);
                     int inDef = 0;
                     var fl = sd.ContainsKey("filter") ? sd["filter"] as System.Collections.IEnumerable : null;
                     if (fl != null)
@@ -2239,6 +2267,23 @@ namespace AtSpecPlugin
                         (Convert.ToString(r.Cells["cond"].Value) ?? "") + "'/Fmt='" + op +
                         "', Значение Value='" + (Convert.ToString(r.Cells["val"].Value) ?? "") +
                         "'/Fmt='" + vl + "'");
+            }
+            return n;
+        }
+
+        // счёт скрытых авто-фильтров по полю (для самопроверки BuildDef: грид+авто ↔ def)
+        public int CountAutoFilters(string fieldPart, System.Text.StringBuilder diag)
+        {
+            int n = 0;
+            foreach (var af in _autoFilters)
+            {
+                string fld = Convert.ToString(af.ContainsKey("field") ? af["field"] : "") ?? "";
+                if (fld.IndexOf(fieldPart, StringComparison.OrdinalIgnoreCase) < 0) continue;
+                n++;
+                if (diag != null)
+                    diag.AppendLine("  авто-фильтр «" + fld + " " +
+                        Convert.ToString(af.ContainsKey("op") ? af["op"] : "") + " " +
+                        Convert.ToString(af.ContainsKey("value") ? af["value"] : "") + "» (скрыт из грида)");
             }
             return n;
         }
