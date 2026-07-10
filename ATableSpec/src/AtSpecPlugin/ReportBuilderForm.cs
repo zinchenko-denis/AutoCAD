@@ -214,6 +214,16 @@ namespace AtSpecPlugin
                     if (seed.SeedLayer == null && op == "=" &&
                         string.Equals(field, "Слой", StringComparison.OrdinalIgnoreCase))
                         seed.SeedLayer = value;
+                    else if (AsBool(fd, "auto"))
+                    {
+                        // скрытый авто-фильтр — мимо грида, в AutoFilters (флаг снимаем:
+                        //  ToDef поставит заново при сериализации)
+                        if (seed.AutoFilters == null)
+                            seed.AutoFilters = new List<Dictionary<string, object>>();
+                        var cpa = new Dictionary<string, object>(fd);
+                        cpa.Remove("auto");
+                        seed.AutoFilters.Add(cpa);
+                    }
                     else
                         conds.Add(new[] { field, op, value });
                 }
@@ -730,6 +740,9 @@ namespace AtSpecPlugin
             beadsLayer = "";
             notes = new List<string>();
             var seeds = new List<SectionSeed>();
+            var artKeys = new List<string>();    // норм-ключ артикула сида (null = плейсхолдер)
+            var artTexts = new List<string>();   // исходный текст — для заметок
+            Func<string, string> nkArt = z => (z ?? "").Trim().ToUpperInvariant();
             if (def == null) { notes.Add("определение не прочиталось"); return seeds; }
 
             var bd = (def.ContainsKey("beads") ? def["beads"] : null) as Dictionary<string, object>;
@@ -799,12 +812,45 @@ namespace AtSpecPlugin
                 };
                 var srcFilt = (sec.ContainsKey("filter") ? sec["filter"] : null) as object[]
                               ?? new object[0];
+                // (фидбэк Алексея 10.07) фильтры источника уезжают в раскрой СКРЫТЫМИ (auto):
+                //  строки в гриде смущали; работают как раньше, видны в сводке карточки.
+                //  Слойный элемент не помечаем — он уходит в «Источник», не в грид.
+                var srcAuto = new List<object>();
+                foreach (var fo0 in srcFilt)
+                {
+                    var fd0 = fo0 as Dictionary<string, object>;
+                    if (fd0 == null) { srcAuto.Add(fo0); continue; }
+                    bool isLay = string.Equals(
+                        Convert.ToString(fd0.ContainsKey("field") ? fd0["field"] : ""),
+                        "Слой", StringComparison.OrdinalIgnoreCase);
+                    if (isLay) { srcAuto.Add(fd0); continue; }
+                    var cp0 = new Dictionary<string, object>(fd0);
+                    cp0["auto"] = true;
+                    srcAuto.Add(cp0);
+                }
+                var srcFiltA = srcAuto.ToArray();
 
                 if (ai >= 0)
                 {
                     string ex = (columns[ai] ?? "").Trim();
                     if (ex.StartsWith("=«") && ex.EndsWith("»") && ex.Length > 3)
                         art = ex.Substring(2, ex.Length - 3);
+                    else if (ex.StartsWith("=\"") && ex.EndsWith("\"") && ex.Length > 3)
+                        art = ex.Substring(2, ex.Length - 3);
+                    else if (ex.Length > 0 && !ex.StartsWith("="))
+                    {
+                        // (фидбэк Алексея 10.07) ячейка без ведущего «=» — литерал (контракт
+                        //  движка): это и есть артикул — несём в шапку, руками не вписывать.
+                        //  «Артикул» — нетронутый плейсхолдер пресета, поведение прежнее.
+                        if (!string.Equals(ex, "Артикул", StringComparison.OrdinalIgnoreCase))
+                        {
+                            art = ex;
+                            notes.Add("секция " + tag + ": артикул «" + ex + "» взят из столбца");
+                        }
+                        else
+                            notes.Add("секция " + tag +
+                                ": артикул-плейсхолдер — в шапке оставлен «Артикул», впишите вручную");
+                    }
                     else if (ex.Length > 0)
                     {
                         // (фидбэк Алексея 08.07-4) артикул-выражение РАЗВОРАЧИВАЕМ по значениям
@@ -833,13 +879,13 @@ namespace AtSpecPlugin
                             arts.Sort(StringComparer.OrdinalIgnoreCase);
                             foreach (var v in arts)
                             {
-                                var filt2 = new List<object>(srcFilt)
+                                var filt2 = new List<object>(srcFiltA)
                                 {
                                     new Dictionary<string, object>
-                                    { { "field", fld }, { "op", "=" }, { "value", v } }
+                                    { { "field", fld }, { "op", "=" }, { "value", v }, { "auto", true } }
                                 };
                                 var sv = makeCut(v, filt2.ToArray());
-                                if (sv != null) seeds.Add(sv);
+                                if (sv != null) { seeds.Add(sv); artKeys.Add(nkArt(v)); artTexts.Add(v); }
                             }
                             notes.Add("секция " + tag + ": артикул " + ex + " развёрнут по значениям («" +
                                       string.Join("», «", arts.ToArray()) + "») — " + arts.Count + " отчёт(а)");
@@ -850,8 +896,41 @@ namespace AtSpecPlugin
                     }
                 }
 
-                var seed = makeCut(art, srcFilt);
-                if (seed != null) seeds.Add(seed);
+                var seed = makeCut(art, srcFiltA);
+                if (seed != null)
+                {
+                    seeds.Add(seed);
+                    bool ph = string.Equals(art, "Артикул", StringComparison.OrdinalIgnoreCase);
+                    artKeys.Add(ph ? null : nkArt(art));
+                    artTexts.Add(art);
+                }
+            }
+            // (фидбэк Алексея 10.07) один артикул -> ОДИН блок раскроя: секции с совпавшим
+            //  артикулом подтягиваются к первому вхождению, у продолжений скрывается шапка
+            //  столбцов — в таблице одна шапка «<арт> 8 6000» (СПДС-эталон «Штапик_…»).
+            //  Плейсхолдеры «Артикул» не сливаем — реальные артикулы могут быть разными.
+            if (seeds.Count > 1)
+            {
+                var ordered = new List<SectionSeed>();
+                var done = new bool[seeds.Count];
+                for (int i = 0; i < seeds.Count; i++)
+                {
+                    if (done[i]) continue;
+                    ordered.Add(seeds[i]); done[i] = true;
+                    if (artKeys[i] == null) continue;
+                    int glued = 0;
+                    for (int j = i + 1; j < seeds.Count; j++)
+                    {
+                        if (done[j] || artKeys[j] != artKeys[i]) continue;
+                        seeds[j].HideHeader = true;
+                        ordered.Add(seeds[j]); done[j] = true;
+                        glued++;
+                    }
+                    if (glued > 0)
+                        notes.Add("артикул «" + artTexts[i] + "»: " + (glued + 1) +
+                                  " секции объединены под одной шапкой раскроя");
+                }
+                seeds = ordered;
             }
             if (seeds.Count == 0) notes.Add("ни одной пригодной секции (нужны столбцы длины)");
             return seeds;
@@ -1129,6 +1208,9 @@ namespace AtSpecPlugin
         private bool _syncingGrp;       // защита от реентрантности при «единственной группе»
 
         private string _layer = "";
+        private List<Dictionary<string, object>> _autoFilters = new List<Dictionary<string, object>>();
+                             // (фидбэк Алексея 10.07) скрытые авто-фильтры секции: работают в def,
+                             //  в гриде не видны («служебная информация»), в сводке — видны
 
         public event Action<SectionCard> MoveUpRequested, MoveDownRequested, RemoveRequested, CopyRequested;
         public event Action<SectionCard, string> TakeFromTableRequested;   // (card, defJson источника)
@@ -1298,6 +1380,8 @@ namespace AtSpecPlugin
                 // реверс из def: полный набор строк грида + заголовок/скрытие шапки + объединения
                 txtSecTitle.Text = seed.SectionTitle ?? "";
                 chkHideHeader.Checked = seed.HideHeader;
+                if (seed.AutoFilters != null)
+                    _autoFilters = new List<Dictionary<string, object>>(seed.AutoFilters);
                 int fi = 0;
                 foreach (var fr in seed.FullRows)
                 {
@@ -1999,6 +2083,13 @@ namespace AtSpecPlugin
                 if (string.IsNullOrEmpty(fld)) continue;
                 parts.Add(fld + " " + op + " " + val);
             }
+            foreach (var af in _autoFilters)
+            {
+                string f2 = Convert.ToString(af.ContainsKey("field") ? af["field"] : "") ?? "";
+                string o2 = Convert.ToString(af.ContainsKey("op") ? af["op"] : "") ?? "";
+                string v2 = Convert.ToString(af.ContainsKey("value") ? af["value"] : "") ?? "";
+                if (f2.Length > 0) parts.Add(f2 + " " + o2 + " " + v2);
+            }
             return parts.Count == 0 ? "—" : string.Join(" и ", parts.ToArray());
         }
 
@@ -2242,6 +2333,14 @@ namespace AtSpecPlugin
                     colMm.Add(mv);
                 }
             }
+            // скрытые авто-фильтры — в def как обычные условия, но с флагом auto
+            //  (движку лишний ключ безразличен, реверс уводит их мимо грида)
+            foreach (var af in _autoFilters)
+            {
+                var d2 = new Dictionary<string, object>(af);
+                d2["auto"] = true;
+                filters.Add(d2);
+            }
             int colCount = columns.Count;
 
             // группа/сортировка — из инлайн-столбца «Группа» (строка с непустым значением)
@@ -2353,5 +2452,8 @@ namespace AtSpecPlugin
         public List<int[]> SeedMerges = null;     // объединения шапки [s,e] в координатах строк FullRows
         public string SectionTitle = null;        // «Заголовок секции»
         public bool HideHeader = false;           // «Скрыть шапку столбцов»
+        public List<Dictionary<string, object>> AutoFilters = null;   // скрытые авто-фильтры
+                                                  //  («Взять с табл.»/развёртка артикулов): в def
+                                                  //  уходят с "auto":true, в гриде не показываются
     }
 }

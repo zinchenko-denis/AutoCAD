@@ -246,10 +246,16 @@ static class Repro2
             Check(rowsA[1][1] == "=Count", "взять: строка =Count", rowsA[1][1]);
             string sl = Convert.ToString(a.GetType().GetField("SeedLayer").GetValue(a));
             Check(sl == "RF-крышки", "взять: источник секции перенесён", sl);
-            bool fOk = false;
+            bool fRow = false;
             foreach (var rr in rowsA)
-                if ((rr[1] ?? "").Contains("МАРКИРОВКА") && rr[2] == "=" && rr[3] == "Сп1;Вр1") fOk = true;
-            Check(fOk, "взять: values-фильтр источника перенесён строкой «Сп1;Вр1»");
+                if ((rr[1] ?? "").Contains("МАРКИРОВКА")) fRow = true;
+            var afA = (List<Dictionary<string, object>>)a.GetType().GetField("AutoFilters").GetValue(a);
+            bool afOk = afA != null && afA.Count == 1 &&
+                        Convert.ToString(afA[0]["field"]) == "МАРКИРОВКА" &&
+                        Convert.ToString(afA[0]["value"]) == "Сп1;Вр1" &&
+                        afA[0].ContainsKey("values");
+            Check(!fRow && afOk, "взять: фильтр источника СКРЫТ из грида, живёт в AutoFilters (values целы)",
+                  "row=" + fRow + " af=" + (afA == null ? "null" : afA.Count.ToString()));
             var mg = (List<int[]>)a.GetType().GetField("SeedMerges").GetValue(a);
             Check(mg != null && mg.Count == 1 && mg[0][0] == 0 && mg[0][1] == 1,
                   "взять: контракт-шапка объединена [0,1]");
@@ -304,12 +310,111 @@ static class Repro2
             var rC = (List<string[]>)sd4[2].GetType().GetField("FullRows").GetValue(sd4[2]);
             Check(rB[0][0] == "КП45 8 6000" && rC[0][0] == "КП50 8 6000",
                   "развёртка: шапки по артикулам, сортировка", rB[0][0] + " / " + rC[0][0]);
-            bool extra = false;
+            bool profRow = false;
             foreach (var rr in rB)
-                if ((rr[1] ?? "").Contains("ПРОФ") && rr[2] == "=" && rr[3] == "КП45") extra = true;
-            Check(extra, "развёртка: доп-фильтр «ПРОФ = КП45» в отчёте");
+                if ((rr[1] ?? "").Contains("ПРОФ")) profRow = true;
+            var afB = (List<Dictionary<string, object>>)sd4[1].GetType().GetField("AutoFilters").GetValue(sd4[1]);
+            bool profAf = false;
+            if (afB != null)
+                foreach (var ff in afB)
+                    if (Convert.ToString(ff["field"]) == "ПРОФ" && Convert.ToString(ff["value"]) == "КП45")
+                        profAf = true;
+            Check(!profRow && profAf, "развёртка: доп-фильтр «ПРОФ = КП45» скрыт в AutoFilters, не в гриде");
             Check(nl4.Exists(z => z.Contains("развёрнут")), "развёртка: заметка о N отчётах");
         }
+
+        // ═══ 10.07: литерал-артикул + слияние по артикулу + скрытые auto-фильтры ═══
+        var defLit = new Dictionary<string, object>
+        {
+            { "sections", new object[] {
+                new Dictionary<string, object> {
+                    { "section_title", "Горизонтальный штапик в зонах без терморазрыва" },
+                    { "header", new object[] { "№", "Наименование", "Артикул", "Длина, мм", "Колич." } },
+                    { "columns", new object[] { "=row", "=Object.«МАРКИРОВКА»", "17_01_04",
+                                                "=Object.«Ширина»+20", "=Count" } },
+                    { "filter", new object[] {
+                        new Dictionary<string, object> { { "field", "Слой" }, { "op", "=" }, { "value", "RF-заполнения" } },
+                        new Dictionary<string, object> { { "field", "МАРКИРОВКА" }, { "op", "не содержит" }, { "value", "вр" } } } } },
+                new Dictionary<string, object> {
+                    { "section_title", "Вертикальный штапик в зонах без терморазрыва" },
+                    { "header", new object[] { "№", "Наименование", "Артикул", "Длина, мм", "Колич." } },
+                    { "columns", new object[] { "=row", "=Object.«МАРКИРОВКА»", "17_01_04",
+                                                "=Object.«Высота»-1", "=Count" } },
+                    { "filter", new object[] {
+                        new Dictionary<string, object> { { "field", "Слой" }, { "op", "=" }, { "value", "RF-заполнения" } },
+                        new Dictionary<string, object> { { "field", "ШТ_СТЫК" }, { "op", "=" }, { "value", "0" } } } } },
+                new Dictionary<string, object> {
+                    { "section_title", "Гориз. с терморазрывом" },
+                    { "header", new object[] { "Артикул", "Длина, мм" } },
+                    { "columns", new object[] { "Артикул", "=Object.«ШТ_РАЗМЕР»" } },
+                    { "filter", new object[] {
+                        new Dictionary<string, object> { { "field", "Слой" }, { "op", "=" }, { "value", "ШТАПИК-РАЗРЕЗ" } } } } },
+                new Dictionary<string, object> {
+                    { "section_title", "Верт. с терморазрывом" },
+                    { "header", new object[] { "Артикул", "Длина, мм" } },
+                    { "columns", new object[] { "Артикул", "=Object.«ШТ_РАЗМЕР»" } },
+                    { "filter", new object[] {
+                        new Dictionary<string, object> { { "field", "Слой" }, { "op", "=" }, { "value", "ШТАПИК-РАЗРЕЗ" } } } } } } }
+        };
+        var t5 = take(defLit, null);
+        var sd5 = (IList)t5[0];
+        var nl5 = (List<string>)t5[2];
+        Check(sd5.Count == 4, "литерал: 4 секции -> 4 отчёта", "n=" + sd5.Count);
+        if (sd5.Count == 4)
+        {
+            Func<object, List<string[]>> rowsOf = o => (List<string[]>)o.GetType().GetField("FullRows").GetValue(o);
+            Func<object, bool> hidOf = o => (bool)o.GetType().GetField("HideHeader").GetValue(o);
+            Check(rowsOf(sd5[0])[0][0] == "17_01_04 8 6000" && !hidOf(sd5[0]),
+                  "литерал: артикул из столбца в шапке первого, шапка видима", rowsOf(sd5[0])[0][0]);
+            Check(rowsOf(sd5[1])[0][0] == "17_01_04 8 6000" && hidOf(sd5[1]),
+                  "слияние: у второго тот же артикул, шапка столбцов СКРЫТА");
+            Check(rowsOf(sd5[1])[0][1] == "=Object.«Высота»-1",
+                  "слияние: длина второго — СВОЁ выражение (верт)", rowsOf(sd5[1])[0][1]);
+            Check(!hidOf(sd5[2]) && !hidOf(sd5[3]),
+                  "плейсхолдеры «Артикул» НЕ слиты (обе шапки видимы)");
+            Check(nl5.Exists(z => z.Contains("взят из столбца")) &&
+                  nl5.Exists(z => z.Contains("объединены под одной шапкой")),
+                  "литерал/слияние: заметки на месте");
+        }
+
+        // e2e через живую форму: TakeFromTable -> карточки; авто-фильтры скрыты из грида,
+        // видны в сводке; def несёт auto; реверс возвращает их мимо грида
+        var serE = new System.Web.Script.Serialization.JavaScriptSerializer { MaxJsonLength = int.MaxValue };
+        form.GetType().GetMethod("TakeFromTable", BindingFlags.Instance | BindingFlags.NonPublic)
+            .Invoke(form, new object[] { cards[0], serE.Serialize(defLit) });
+        Pump(300);
+        Check(cards.Count == 4, "e2e Take: карточки заменены (4)", "n=" + cards.Count);
+        var gE = (DataGridView)F(cards[0], "grid");
+        bool gridFlt = false;
+        foreach (DataGridViewRow rr in gE.Rows)
+        {
+            if (rr.IsNewRow) continue;
+            string exx = Convert.ToString(rr.Cells["expr"].Value) ?? "";
+            if (exx.Contains("МАРКИРОВКА")) gridFlt = true;
+        }
+        var afE = (List<Dictionary<string, object>>)F(cards[0], "_autoFilters");
+        Check(!gridFlt && afE != null && afE.Count == 1,
+              "e2e: фильтр источника не в гриде, в _autoFilters", "grid=" + gridFlt +
+              " af=" + (afE == null ? "null" : afE.Count.ToString()));
+        var lblS = (Label)F(cards[0], "lblSummary");
+        Check(lblS != null && (lblS.Text ?? "").Contains("МАРКИРОВКА"),
+              "e2e: сводка показывает скрытый фильтр", lblS == null ? "null" : lblS.Text);
+        var chkHH = (CheckBox)F(cards[1], "chkHideHeader");
+        Check(chkHH != null && chkHH.Checked, "e2e: у второй карточки «Скрыть шапку столбцов» взведена");
+        var dE = (Dictionary<string, object>)cards[0].GetType().GetMethod("ToDef").Invoke(cards[0], null);
+        bool autoInDef = false;
+        foreach (Dictionary<string, object> ff in (IList)dE["filter"])
+            if (ff.ContainsKey("auto") && Convert.ToBoolean(ff["auto"])) autoInDef = true;
+        Check(autoInDef, "e2e: ToDef несёт авто-фильтр с флагом auto");
+        // контракт SeedFromSection — десериализованный def (object[]), как в CopyCard/ATSPECEDIT
+        var dE2 = serE.DeserializeObject(serE.Serialize(dE)) as Dictionary<string, object>;
+        var seedE = seedM.Invoke(null, new object[] { dE2 });
+        var afE2 = (List<Dictionary<string, object>>)seedE.GetType().GetField("AutoFilters").GetValue(seedE);
+        var rowsE2 = (List<string[]>)seedE.GetType().GetField("FullRows").GetValue(seedE);
+        bool rowFlt2 = false;
+        foreach (var rr in rowsE2) if ((rr[1] ?? "").Contains("МАРКИРОВКА")) rowFlt2 = true;
+        Check(afE2 != null && afE2.Count == 1 && !rowFlt2,
+              "e2e: round-trip def -> AutoFilters вернулись мимо грида");
 
         // ═══ 08.07-4: «Взять с табл.» — только в «Раскрое»; резина карточек ═══
         var takeVis = new Func<object, bool>(c =>
