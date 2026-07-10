@@ -379,7 +379,7 @@ def _fmt_num(v: float, decimals: bool):
     return format(d, "f").rstrip("0").rstrip(".").replace(".", ",")
 
 
-def run_template(records: List[dict], tmpl: dict) -> List[List[Any]]:
+def run_template(records: List[dict], tmpl: dict, row_start: int = 1) -> List[List[Any]]:
     """Один шаблон отчёта -> строки.
 
     tmpl = {
@@ -434,7 +434,7 @@ def run_template(records: List[dict], tmpl: dict) -> List[List[Any]]:
     _lc = [(c or "").lower() for c in cols]
     objdep = ["object." in _lc[ci] and not any(k in _lc[ci] for k in ("count", "sum", "col(")) 
               for ci in range(len(cols))]
-    for idx, grp in enumerate(groups, 1):
+    for idx, grp in enumerate(groups, row_start):
         rep = grp[0]
         # неоднородная группа: одна марка — разные значения объектных столбцов
         # (ошибка чертежа: СП01 с двумя размерами). Молча брать первый — прятать ошибку;
@@ -638,19 +638,22 @@ def run_report(records: List[dict], report: dict) -> Dict[str, Any]:
 
     Возвращает:
       sections — [{title, header, hide_header, header_merges, rows}] на каждую секцию
-                 (нумерация =row внутри секции — своя, т.к. это отдельный шаблон);
+                 (=row: секция с заголовком нумеруется с 1, без заголовка — продолжает предыдущую);
       rows/header — плоско (конкатенация секций), для совместимости со старыми
                  потребителями и тестами.
     """
     records = _beads_expand(records, report.get("beads"))
     out_sections: List[Dict[str, Any]] = []
     flat: List[List[Any]] = []
-    for s in _sections_of(report):
+    next_row = 1        # сквозная нумерация =row (фидбэк Алексея 10.07): секция БЕЗ
+    for s in _sections_of(report):          # заголовка продолжает счёт предыдущей,
+        title0 = str(s.get("section_title", "") or "").strip()   # с заголовком — с 1
+        start = next_row if not title0 else 1
         rows = run_template(records, {
             "filter": s.get("filter", []), "columns": s.get("columns", []),
             "group_by": s.get("group_by"), "sort_by": s.get("sort_by"),
             "total_row": s.get("total_row", False),
-            "total_label": s.get("total_label", "сумма")})
+            "total_label": s.get("total_label", "сумма")}, row_start=start)
         out_sections.append({
             "title": s.get("section_title", "") or "",
             "header": s.get("header", []),
@@ -658,6 +661,14 @@ def run_report(records: List[dict], report: dict) -> Dict[str, Any]:
             "header_merges": s.get("header_merges", []),
             "rows": rows})
         flat.extend(rows)
+        # строка ИТОГ не нумеруется — из счёта вон; пустая секция счёт не двигает
+        next_row = start + (len(rows) - (1 if (s.get("total_row", False) and rows) else 0))
+    # (фидбэк Алексея 10.07) секции без строк (нет терморазрыва и т.п.) не выводим —
+    # ни заголовка, ни шапки; появятся данные — авто-пересчёт вернёт секцию сам.
+    # Все секции пустые -> отдаём как раньше (краевое поведение «пустого отчёта» не трогаем).
+    non_empty = [sec for sec in out_sections if sec["rows"]]
+    if non_empty and len(non_empty) < len(out_sections):
+        out_sections = non_empty
     top_header = out_sections[0]["header"] if out_sections else report.get("header", [])
     return {"title": report.get("title", ""),
             "header": top_header,      # совместимость (плоско)

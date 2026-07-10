@@ -284,6 +284,34 @@ assert _m(_rows([{"field": "МАРКИРОВКА", "op": "=", "values": ["Р1"],
 assert _m(_rows([{"field": "МАРКИРОВКА", "op": "=", "values": ["", " "], "value": "Сп1"}])) == ["Сп1"]
 print("MULTIFLT: values[] — ИЛИ/НИ-ОДНО-ИЗ/диапазон-первое, мультислой, регресс value. OK")
 
+# ───────── СКВОЗНАЯ НУМЕРАЦИЯ + ПУСТЫЕ СЕКЦИИ (фидбэк Алексея 10.07) ─────────
+_ns = lambda title, lay, total=False: {"section_title": title, "header": ["№", "М", "К"],
+    "columns": ["=row", "=Object.«МАРКИРОВКА»", "=Count"],
+    "filter": [{"field": "Слой", "op": "=", "value": lay}],
+    "group_by": 1, "sort_by": [1, "asc"], "total_row": total}
+# N1: секция БЕЗ заголовка продолжает нумерацию предыдущей (стойки 1..2 -> ригеля 3)
+_n1 = run_report(_mf, {"sections": [_ns("", "RF-стойки"), _ns("", "RF-ригеля")]})["sections"]
+assert [r[0] for r in _n1[0]["rows"]] == [1, 2] and [r[0] for r in _n1[1]["rows"]] == [3], _n1
+# N2: секция С заголовком — свой отсчёт с 1 (визуальный разделитель)
+_n2 = run_report(_mf, {"sections": [_ns("", "RF-стойки"), _ns("Ригеля", "RF-ригеля")]})["sections"]
+assert [r[0] for r in _n2[1]["rows"]] == [1], _n2
+# N3: строка ИТОГ не нумеруется и сквозной счёт не сдвигает
+_n3 = run_report(_mf, {"sections": [_ns("", "RF-стойки", total=True), _ns("", "RF-ригеля")]})["sections"]
+assert _n3[0]["rows"][-1][0] == "сумма" and _n3[1]["rows"][0][0] == 3, _n3
+# N4: после титульной секции счёт продолжается от неё же (титул 1..2 -> хвост 3)
+_n4 = run_report(_mf, {"sections": [_ns("Стойки", "RF-стойки"), _ns("", "RF-ригеля")]})["sections"]
+assert _n4[1]["rows"][0][0] == 3, _n4
+# E1: пустая секция не выводится вовсе (нет пустых заголовков «...с терморазрывом»)
+_e1 = run_report(_mf, {"sections": [_ns("Стойки", "RF-стойки"), _ns("Пустая", "НЕТ-ТАКОГО-СЛОЯ")]})
+assert len(_e1["sections"]) == 1 and _e1["sections"][0]["title"] == "Стойки", _e1["sections"]
+# E2: ВСЕ секции пустые -> отдаём как раньше (краевое поведение не трогаем)
+_e2 = run_report(_mf, {"sections": [_ns("A", "X1"), _ns("B", "X2")]})
+assert len(_e2["sections"]) == 2, _e2["sections"]
+# E3: пустая секция между непустыми не рвёт сквозную нумерацию
+_e3 = run_report(_mf, {"sections": [_ns("", "RF-стойки"), _ns("", "ПУСТО"), _ns("", "RF-ригеля")]})
+assert [r[0] for r in _e3["sections"][-1]["rows"]] == [3] and len(_e3["sections"]) == 2, _e3["sections"]
+print("NUMSEQ/EMPTY: =row сквозной без заголовка, с заголовком — с 1; пустые секции скрыты. OK")
+
 # ───────── опциональный прогон на живых DXF ─────────
 files = {"В-13": "/mnt/user-data/uploads/КМД_В-13_ИЗМ.dxf",
          "В-32": "/mnt/user-data/uploads/КМД_В32_2.dxf"}
