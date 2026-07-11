@@ -110,6 +110,27 @@ titles = [s["title"] for s in ns]
 rep(len(ns) == 2 and all("терморазрыв" not in t or "без" in t for t in titles), "NOBRK2",
     "спецификация: заголовков «с терморазрывом» в таблице нет: " + str(titles))
 
+# ── NOBREAK-ФОРМА (10.07-2): построитель сам не сеет пустые терморазрыв-секции ──
+specN = json.load(open("/tmp/atspec_spec_nobrk_def.json"))
+tN = [str(s.get("section_title", "")) for s in specN["sections"]]
+rep(len(specN["sections"]) == 2 and all("без терморазрыва" in t for t in tN), "NOBRK3",
+    "пресет без стыков: def формы несёт 2 секции «...без терморазрыва»: " + str(tN))
+sN = run_report(rrg, specN)["sections"]
+rep(len(sN) == 2 and all(s["rows"] for s in sN), "NOBRK4",
+    "spec_nobrk на живом DXF: 2 секции, обе непустые: " + str([len(s["rows"]) for s in sN]))
+cutN = json.load(open("/tmp/atspec_cut_nobrk_def.json"))
+rep(len(cutN["sections"]) == 2, "NOBRK5",
+    "«Взять с табл.» из ПОЛНОЙ спецификации без стыков: разрезные пропущены, секций %d"
+    % len(cutN["sections"]))
+cN = run_report(rrg, cutN)["sections"]
+totN = sum(r[1] for s in cN for r in s["rows"])
+li2 = next(i for i, h in enumerate(sN[0]["header"]) if "колич" in str(h).lower())
+totSN = sum(r[li2] for s in sN for r in s["rows"] if isinstance(r[li2], (int, float)))
+rep(len(cN) == 2 and cN[0]["header"][0] == "17_01_04 8 6000" and
+    [s["hide_header"] for s in cN] == [False, True] and totN == totSN and totN > 0, "NOBRK6",
+    "cut_nobrk: одна шапка «17_01_04 8 6000», Σ количеств == спецификации: %s == %s"
+    % (totN, totSN))
+
 # ── FILL: Заполнения.dxf — площадь + строка ИТОГ ──
 rf = recs(DXF + "/Заполнения.dxf")
 fo = run_report(rf, {"sections": [{

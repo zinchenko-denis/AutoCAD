@@ -60,7 +60,7 @@ static class Repro2
         Check(ReproMsg.Log.Any(m => m.Contains("Заменить все секции")),
               "диалог подтверждения пересева показан");
 
-        string[] wantStyk = { "0", "0", "1", null };   // фильтр ШТ_СТЫК по секциям; 4-я — без
+        string[] wantStyk = { "0", "0", "1", null };   // авто-фильтр ШТ_СТЫК по секциям; 4-я — без
         string[] wantSrc  = { "RF-заполнения", "RF-заполнения", "RF-заполнения", "ШТАПИК-РАЗРЕЗ" };
         for (int i = 0; i < 4 && i < cards.Count; i++)
         {
@@ -72,19 +72,31 @@ static class Repro2
                   "секция " + (i + 1) + ": подпись", "«" + lblNum.Text + "»");
             Check(Convert.ToString(src.Text) == wantSrc[i],
                   "секция " + (i + 1) + ": источник " + wantSrc[i], "«" + src.Text + "»");
-            string got = null;
+            // (10.07-2) служебный фильтр ШТ_СТЫК в ГРИДЕ больше не живёт — скрытый auto
+            bool gridStyk = false;
             foreach (DataGridViewRow r in grid.Rows)
             {
                 if (r.IsNewRow) continue;
-                string ex = Convert.ToString(r.Cells["expr"].Value) ?? "";
-                if (ex.Contains("ШТ_СТЫК"))
-                    got = Convert.ToString(r.Cells["cond"].Value) + "|" + Convert.ToString(r.Cells["val"].Value);
+                if ((Convert.ToString(r.Cells["expr"].Value) ?? "").Contains("ШТ_СТЫК")) gridStyk = true;
             }
+            Check(!gridStyk, "секция " + (i + 1) + ": грид БЕЗ служебного ШТ_СТЫК");
+            var afP = (List<Dictionary<string, object>>)F(card, "_autoFilters");
+            string got = null;
+            if (afP != null)
+                foreach (var ff in afP)
+                    if (Convert.ToString(ff["field"]) == "ШТ_СТЫК")
+                        got = Convert.ToString(ff["op"]) + "|" + Convert.ToString(ff["value"]);
             if (wantStyk[i] == null)
-                Check(got == null, "секция " + (i + 1) + ": без фильтра ШТ_СТЫК", "got=" + got);
+                Check(got == null, "секция " + (i + 1) + ": без авто-фильтра ШТ_СТЫК", "got=" + got);
             else
+            {
                 Check(got == "=|" + wantStyk[i],
-                      "секция " + (i + 1) + ": фильтр-строка ШТ_СТЫК=" + wantStyk[i], "got=" + got);
+                      "секция " + (i + 1) + ": СКРЫТЫЙ авто-фильтр ШТ_СТЫК=" + wantStyk[i], "got=" + got);
+                var lblSm = (Label)F(card, "lblSummary");
+                Check(lblSm != null && (lblSm.Text ?? "").Contains("ШТ_СТЫК = " + wantStyk[i]),
+                      "секция " + (i + 1) + ": сводка показывает скрытый ШТ_СТЫК",
+                      lblSm == null ? "null" : lblSm.Text);
+            }
         }
 
         // === BuildDef: грид → def (то, чего Алексей так и не достиг) ===
@@ -209,9 +221,10 @@ static class Repro2
         Func<Dictionary<string, object>, Func<string, string, List<string>>, object[]> take =
         (d0x, resolver) =>
         {
-            var args = new object[] { d0x, resolver, null, null };
+            // (10.07-2) третий параметр — габариты по слоям (null = геометрии нет)
+            var args = new object[] { d0x, resolver, null, null, null };
             var res = takeM.Invoke(null, args);
-            return new object[] { res, args[2], args[3] };
+            return new object[] { res, args[3], args[4] };
         };
 
         var defSpec = new Dictionary<string, object>
@@ -473,6 +486,94 @@ static class Repro2
 
         string dump = Path.Combine(Path.GetTempPath(), "ATableSpec_last_def.json");
         Check(File.Exists(dump), "дамп def в TEMP записан", dump);
+
+        // ═══ 10.07-2: терморазрыв по геометрии (зеркало _beads_expand) ═══
+        var hbjM = form.GetType().GetMethod("HasBreakJoint",
+                       BindingFlags.Static | BindingFlags.NonPublic | BindingFlags.Public);
+        Func<Dictionary<string, List<double[]>>, string, string, bool> hbj = (bx, st, ck) =>
+            (bool)hbjM.Invoke(null, new object[] { bx, st, ck });
+        // стойки колонной с зазором 10 (y 2000..2010); заполнение ПОПЕРЁК зазора
+        var boxJoint = new Dictionary<string, List<double[]>> {
+            { "RF-стойки", new List<double[]> {
+                new[] { 0.0, 0.0, 60.0, 2000.0 }, new[] { 0.0, 2010.0, 60.0, 4000.0 } } },
+            { "RF-заполнения", new List<double[]> { new[] { 60.0, 1900.0, 1060.0, 2110.0 } } } };
+        // тот же зазор, но заполнение ЦЕЛИКОМ ниже — зазор не внутри спана
+        var boxNo = new Dictionary<string, List<double[]>> {
+            { "RF-стойки", new List<double[]> {
+                new[] { 0.0, 0.0, 60.0, 2000.0 }, new[] { 0.0, 2010.0, 60.0, 4000.0 } } },
+            { "RF-заполнения", new List<double[]> { new[] { 60.0, 100.0, 1060.0, 1900.0 } } } };
+        // стойки ВПЛОТНУЮ (зазор 0.3 < допуска слияния 0.5) — интервалы сливаются, стыка нет
+        var boxTight = new Dictionary<string, List<double[]>> {
+            { "RF-стойки", new List<double[]> {
+                new[] { 0.0, 0.0, 60.0, 2000.0 }, new[] { 0.0, 2000.3, 60.0, 4000.0 } } },
+            { "RF-заполнения", new List<double[]> { new[] { 60.0, 1900.0, 1060.0, 2110.0 } } } };
+        // стойки ДАЛЕКО по X (правее допуска 1.0) — не прилегают, стыка нет
+        var boxFar = new Dictionary<string, List<double[]>> {
+            { "RF-стойки", new List<double[]> {
+                new[] { 2000.0, 0.0, 2060.0, 2000.0 }, new[] { 2000.0, 2010.0, 2060.0, 4000.0 } } },
+            { "RF-заполнения", new List<double[]> { new[] { 60.0, 1900.0, 1060.0, 2110.0 } } } };
+        Check(hbj(boxJoint, "RF-стойки", "RF-заполнения"), "геометрия: зазор внутри спана = стык");
+        Check(!hbj(boxNo, "RF-стойки", "RF-заполнения"), "геометрия: зазор вне спана — стыка нет");
+        Check(!hbj(boxTight, "RF-стойки", "RF-заполнения"), "геометрия: стойки вплотную (слияние 0.5) — стыка нет");
+        Check(!hbj(boxFar, "RF-стойки", "RF-заполнения"), "геометрия: стойки не прилегают по X — стыка нет");
+        Check(!hbj(boxJoint, "RF-стойки", "RF-ригеля"), "геометрия: слой без записей — стыка нет");
+        Check(!hbj(null, "RF-стойки", "RF-заполнения"), "геометрия: боксов нет — false (консервативно)");
+
+        // пресет «Штапики»: без терморазрыва секции 3–4 не сеются, со стыком — все 4
+        form.BoxesByLayer = boxNo;
+        cbTitle.SelectedIndex = cbTitle.Items.IndexOf("Штапики");
+        Pump(500);
+        Check(cards.Count == 2, "пресет без терморазрыва: 2 секции (3–4 не сеются)", "cards=" + cards.Count);
+        bool titlesNoBrk = cards.Count == 2;
+        for (int i = 0; i < cards.Count && titlesNoBrk; i++)
+        {
+            var tb = (TextBox)F(cards[i], "txtSecTitle");
+            if (tb == null || !(tb.Text ?? "").Contains("без терморазрыва")) titlesNoBrk = false;
+        }
+        Check(titlesNoBrk, "пресет без терморазрыва: остались секции «...без терморазрыва»");
+        form.BoxesByLayer = boxJoint;
+        cbTitle.SelectedIndex = cbTitle.Items.IndexOf("Спецификация");
+        Pump(400);
+        cbTitle.SelectedIndex = cbTitle.Items.IndexOf("Штапики");
+        Pump(500);
+        Check(cards.Count == 4, "пресет со стыком: все 4 секции", "cards=" + cards.Count);
+        form.BoxesByLayer = null;
+
+        // «Взять с табл.»: разрезные секции def при отсутствии стыков пропускаются
+        var argsT = new object[] { defLit, null, boxNo, null, null };
+        var resT = (IList)takeM.Invoke(null, argsT);
+        var nlT = (List<string>)argsT[4];
+        Check(resT.Count == 2, "взять без терморазрыва: разрезные секции пропущены", "n=" + resT.Count);
+        Check(nlT.Exists(z => z.Contains("терморазрыва")), "взять: пропуск отражён в заметках");
+        var argsT2 = new object[] { defLit, null, boxJoint, null, null };
+        var resT2 = (IList)takeM.Invoke(null, argsT2);
+        Check(resT2.Count == 4, "взять со стыком: все 4 секции на месте", "n=" + resT2.Count);
+
+        // ═══ 10.07-2: ▼ у «Выражения» — подсказки выпадашкой ═══
+        var cX = cards[0];
+        var gX = (DataGridView)F(cX, "grid");
+        var emenu = (ContextMenuStrip)F(cX, "_exprMenu");
+        var esug = (List<string>)F(cX, "_exprSuggest");
+        Check(emenu != null && esug != null && emenu.Items.Count == esug.Count && emenu.Items.Count > 0,
+              "▼ выражения: меню наполнено подсказками",
+              "menu=" + (emenu == null ? -1 : emenu.Items.Count) +
+              " sug=" + (esug == null ? -1 : esug.Count));
+        bool hasObj = false;
+        if (emenu != null)
+            foreach (ToolStripItem itX in emenu.Items)
+                if ((itX.Text ?? "").StartsWith("=Object.«")) hasObj = true;
+        Check(hasObj, "▼ выражения: пункты =Object.«поле» на месте");
+        if (emenu != null && emenu.Items.Count > 0 && esug != null)
+        {
+            int rowX = -1;
+            foreach (DataGridViewRow rr in gX.Rows) if (!rr.IsNewRow) rowX = rr.Index;
+            cX.GetType().GetField("_exprMenuRow", BindingFlags.Instance | BindingFlags.NonPublic)
+              .SetValue(cX, rowX);
+            ((ToolStripMenuItem)emenu.Items[0]).PerformClick();
+            Check(rowX >= 0 && Convert.ToString(gX.Rows[rowX].Cells["expr"].Value) == esug[0],
+                  "▼ выражения: клик пункта пишет выражение в ячейку",
+                  rowX < 0 ? "row=-1" : Convert.ToString(gX.Rows[rowX].Cells["expr"].Value));
+        }
 
         Console.WriteLine(fails == 0 ? "\n=== ВСЕ ПРОВЕРКИ ПРОЙДЕНЫ ===" : "\n=== ПРОВАЛОВ: " + fails + " ===");
         Environment.Exit(fails == 0 ? 0 : 1);

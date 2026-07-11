@@ -83,7 +83,10 @@ namespace AtSpecPlugin
             chkHideTitle.Checked = (_template == 2);   // раскрой — по умолчанию скрыть заголовок
             _lastTitle = cbTitle.Text;
             foreach (var sd in PresetListFor(_template, true))   // «Штапики» сеет 4 секции, прочие — одну
+            {
+                if (_template == 4 && SkipEmptyBreakSeed(sd)) continue;   // (10.07-2)
                 AddSection(sd);
+            }
             if (_cards.Count > 0) flow.ScrollControlIntoView(_cards[0]);
             SetStandsVisible(_template == 4);    // (ТЗ 08.07) пара «Стойки» — только в штапиках
             ApplyStandsDefault(_template);
@@ -473,7 +476,11 @@ namespace AtSpecPlugin
                 _suppressTpl = true; cbTitle.Text = deftitle; _lastTitle = deftitle; _suppressTpl = false;
             }));
             foreach (var sd in PresetListFor(tpl, true))         // «Штапики» сеет 4 секции
+            {
+                // (10.07-2) на чертеже без терморазрыва секции 3–4 не сеем
+                if (tpl == 4 && SkipEmptyBreakSeed(sd)) continue;
                 AddSection(sd);
+            }
             if (_cards.Count > 0) flow.ScrollControlIntoView(_cards[0]);
             SetStandsVisible(tpl == 4);          // (ТЗ 08.07) пара «Стойки» — только в штапиках
             ApplyStandsDefault(tpl);
@@ -704,8 +711,18 @@ namespace AtSpecPlugin
                 new[] { "Ед. изм.",     "=«шт.»",               "", "", "" },
                 new[] { "Примечание",   note,                   "", "", "" }
             };
-            if (!string.IsNullOrEmpty(styk))          // строка-фильтр «только условие» по ШТ_СТЫК
-                s.FullRows.Add(new[] { "", "=Object.«ШТ_СТЫК»", "=", styk, "" });
+            if (!string.IsNullOrEmpty(styk))
+            {
+                // (фидбэк Алексея 10.07-2) фильтр по ШТ_СТЫК — СКРЫТЫЙ auto, не строка грида:
+                //  «=Object.«ШТ_СТЫК» = 0» в построителе смущал («служебная информация...
+                //  не понятно что это и для чего»). Def НЕ меняется: ToDef кладёт то же
+                //  {field,op,value} (+флаг auto), движок исполняет как прежде; в сводке виден.
+                s.AutoFilters = new List<Dictionary<string, object>>
+                {
+                    new Dictionary<string, object>
+                    { { "field", "ШТ_СТЫК" }, { "op", "=" }, { "value", styk } }
+                };
+            }
             return s;
         }
 
@@ -735,6 +752,7 @@ namespace AtSpecPlugin
         //    слоя ШТАПИК-РАЗРЕЗ и разрезная секция была бы пуста.
         internal static List<SectionSeed> BuildCutSeedsFromDef(Dictionary<string, object> def,
             Func<string, string, List<string>> valuesFor,   // (слой, поле) -> значения с чертежа
+            Dictionary<string, List<double[]>> boxesByLayer,   // габариты по слоям (null = нет данных)
             out string beadsLayer, out List<string> notes)
         {
             beadsLayer = "";
@@ -748,6 +766,8 @@ namespace AtSpecPlugin
             var bd = (def.ContainsKey("beads") ? def["beads"] : null) as Dictionary<string, object>;
             if (bd != null && bd.ContainsKey("layer"))
                 beadsLayer = Convert.ToString(bd["layer"]) ?? "";
+            string beadsSource = bd != null && bd.ContainsKey("source")
+                ? (Convert.ToString(bd["source"]) ?? "") : "";
 
             var secs = (def.ContainsKey("sections") ? def["sections"] : null)
                         as System.Collections.IEnumerable;
@@ -767,6 +787,17 @@ namespace AtSpecPlugin
                 if (co != null) foreach (var c in co) columns.Add(Convert.ToString(c) ?? "");
                 string title = Convert.ToString(sec.ContainsKey("section_title") ? sec["section_title"] : "") ?? "";
                 string tag = title.Length > 0 ? "«" + title + "»" : ("№" + n);
+                var srcFilt = (sec.ContainsKey("filter") ? sec["filter"] : null) as object[]
+                              ?? new object[0];
+
+                // (фидбэк Алексея 10.07-2) терморазрыв-секции источника, ГАРАНТИРОВАННО
+                //  пустые на чертеже (стыков стоек нет по геометрии), в раскрой не берём:
+                //  старый def спецификации несёт все 4 штапиковые секции.
+                if (SectionSurelyEmpty(srcFilt, beadsLayer, beadsSource, boxesByLayer, valuesFor))
+                {
+                    notes.Add("секция " + tag + ": терморазрыва на чертеже нет — пропущена (пустая)");
+                    continue;
+                }
 
                 // столбец длины: по заголовку («длина…»/«размер…») либо по выражению (Длина/ШТ_РАЗМЕР/Ширина/Высота)
                 int li = -1;
@@ -835,8 +866,6 @@ namespace AtSpecPlugin
                     };
                     return SeedFromSection(cut);
                 };
-                var srcFilt = (sec.ContainsKey("filter") ? sec["filter"] : null) as object[]
-                              ?? new object[0];
                 // (фидбэк Алексея 10.07) фильтры источника уезжают в раскрой СКРЫТЫМИ (auto):
                 //  строки в гриде смущали; работают как раньше, видны в сводке карточки.
                 //  Слойный элемент не помечаем — он уходит в «Источник», не в грид.
@@ -961,6 +990,151 @@ namespace AtSpecPlugin
             return seeds;
         }
 
+        // ═══ терморазрыв по геометрии (фидбэк Алексея 10.07-2) ═══
+        // Габариты вхождений по слоям (модельные мм, [x0,y0,x1,y1]) — кладёт сборщик
+        //  ReportCommand из тех же данных, что ГАБ_* для движка. null = данных нет
+        //  (winrepro/старые вызовы) — терморазрыв считаем ВОЗМОЖНЫМ (консервативно).
+        public Dictionary<string, List<double[]>> BoxesByLayer;
+
+        // Есть ли стык стоек (терморазрыв) хотя бы у одного вхождения слоёв checkLayers
+        //  («;»-список)? ЗЕРКАЛО движка _beads_expand (atspec_report.py, ТЗ 07.07):
+        //  X-прилегание с допуском 1.0, слитые Y-интервалы стоек (0.5), зазор СТРОГО
+        //  внутри Y-спана записи (0.5). Только булево «стык есть» — размеры не считаем.
+        //  Менять СИНХРОННО с движком; зеркальные проверки — winrepro Repro2.
+        internal static bool HasBreakJoint(Dictionary<string, List<double[]>> boxes,
+                                           string standsLayer, string checkLayers)
+        {
+            if (boxes == null || string.IsNullOrEmpty(standsLayer)) return false;
+            List<double[]> stands = null;
+            foreach (var kv in boxes)
+                if (SectionCard.NkEq(kv.Key, standsLayer)) { stands = kv.Value; break; }
+            if (stands == null || stands.Count == 0) return false;
+            var norm = new List<double[]>();
+            foreach (var b in stands)
+            {
+                if (b == null || b.Length < 4) continue;
+                norm.Add(new[] { Math.Min(b[0], b[2]), Math.Min(b[1], b[3]),
+                                 Math.Max(b[0], b[2]), Math.Max(b[1], b[3]) });
+            }
+            foreach (var one in SectionCard.SplitList(checkLayers ?? ""))
+            {
+                List<double[]> recsL = null;
+                foreach (var kv in boxes)
+                    if (SectionCard.NkEq(kv.Key, one)) { recsL = kv.Value; break; }
+                if (recsL == null) continue;
+                foreach (var rb in recsL)
+                {
+                    if (rb == null || rb.Length < 4) continue;
+                    double zx0 = Math.Min(rb[0], rb[2]), zy0 = Math.Min(rb[1], rb[3]),
+                           zx1 = Math.Max(rb[0], rb[2]), zy1 = Math.Max(rb[1], rb[3]);
+                    var ivs = new List<double[]>();
+                    foreach (var sb in norm)
+                        if (!(sb[2] < zx0 - 1.0 || sb[0] > zx1 + 1.0))
+                            ivs.Add(new[] { sb[1], sb[3] });
+                    ivs.Sort((a, b) => a[0] != b[0] ? a[0].CompareTo(b[0]) : a[1].CompareTo(b[1]));
+                    var merged = new List<double[]>();
+                    foreach (var iv in ivs)
+                    {
+                        if (merged.Count > 0 && iv[0] <= merged[merged.Count - 1][1] + 0.5)
+                            merged[merged.Count - 1][1] = Math.Max(merged[merged.Count - 1][1], iv[1]);
+                        else
+                            merged.Add(new[] { iv[0], iv[1] });
+                    }
+                    for (int i = 0; i + 1 < merged.Count; i++)
+                        if (zy0 + 0.5 < merged[i][1] && merged[i + 1][0] < zy1 - 0.5)
+                            return true;   // зазор строго внутри спана — стык
+                }
+            }
+            return false;
+        }
+
+        // Секция def ГАРАНТИРОВАННО пуста на чертеже? (для «Взять с табл.»: старые def
+        //  штапиков несут все 4 секции — терморазрыв-секции без стыков только смущают.)
+        //  Пустоту утверждаем ТОЛЬКО при уверенности; любая неопределённость — false.
+        private static bool SectionSurelyEmpty(object[] filt, string beadsLayer, string beadsSource,
+            Dictionary<string, List<double[]>> boxes, Func<string, string, List<string>> valuesFor)
+        {
+            string secLayer = "";
+            bool stykOne = false;   // фильтр «ШТ_СТЫК = 1»
+            if (filt != null)
+                foreach (var fo in filt)
+                {
+                    var fd = fo as Dictionary<string, object>;
+                    if (fd == null) continue;
+                    string f = Convert.ToString(fd.ContainsKey("field") ? fd["field"] : "") ?? "";
+                    string o = (Convert.ToString(fd.ContainsKey("op") ? fd["op"] : "") ?? "").Trim();
+                    string v = Convert.ToString(fd.ContainsKey("value") ? fd["value"] : "") ?? "";
+                    if (secLayer.Length == 0 &&
+                        string.Equals(f, "Слой", StringComparison.OrdinalIgnoreCase))
+                    {
+                        var pl = SectionCard.SplitList(v);
+                        secLayer = pl.Count > 0 ? pl[0] : "";
+                    }
+                    else if (SectionCard.NkEq(f, "ШТ_СТЫК") && o == "=" && SectionCard.NkEq(v, "1"))
+                        stykOne = true;
+                }
+            bool isCutLayer = string.Equals(secLayer, BeadsCutLayer, StringComparison.OrdinalIgnoreCase);
+            if (!isCutLayer && !stykOne) return false;      // обычная секция — не наш случай
+
+            // реальный атрибут/слой с таким именем на чертеже? — не рискуем
+            if (isCutLayer && boxes != null)
+                foreach (var kv in boxes)
+                    if (SectionCard.NkEq(kv.Key, secLayer) && kv.Value != null && kv.Value.Count > 0)
+                        return false;
+            if (stykOne && valuesFor != null)
+                try
+                {
+                    foreach (var v in valuesFor(secLayer, "ШТ_СТЫК"))
+                        if (SectionCard.NkEq(v, "1")) return false;
+                }
+                catch { }
+
+            // стойки не заданы — движок стыков не считает: обе ветки пусты гарантированно
+            if (string.IsNullOrEmpty(beadsLayer)) return true;
+            if (isCutLayer && string.IsNullOrEmpty(beadsSource)) return true;   // без source половин нет
+            if (boxes == null) return false;                // геометрии нет — не утверждаем
+            string chk = isCutLayer ? beadsSource : secLayer;
+            if (string.IsNullOrEmpty(chk)) return false;
+            return !HasBreakJoint(boxes, beadsLayer, chk);
+        }
+
+        // (фидбэк Алексея 10.07-2) Терморазрыв-секции пресета «Штапики» (3–4) не сеются,
+        //  если стыков стоек на чертеже ГАРАНТИРОВАННО нет (геометрия BoxesByLayer).
+        //  Любая неопределённость (нет боксов/стоек/слоя) — сеем как раньше: пустую
+        //  секцию таблица всё равно скроет (движок 10.07). Ограничение v1: смена
+        //  «Стоек» ПОСЛЕ посева секции не добавляет — пересейте шаблон.
+        private bool SkipEmptyBreakSeed(SectionSeed sd)
+        {
+            if (sd == null || BoxesByLayer == null) return false;
+            bool isCut = !string.IsNullOrEmpty(sd.SeedLayer) &&
+                         string.Equals(sd.SeedLayer, BeadsCutLayer, StringComparison.OrdinalIgnoreCase);
+            bool stykOne = false;
+            if (sd.AutoFilters != null)
+                foreach (var af in sd.AutoFilters)
+                    if (SectionCard.NkEq(Convert.ToString(af.ContainsKey("field") ? af["field"] : ""), "ШТ_СТЫК") &&
+                        SectionCard.NkEq(Convert.ToString(af.ContainsKey("value") ? af["value"] : ""), "1"))
+                        stykOne = true;
+            if (!isCut && !stykOne) return false;
+            string stands = PlannedStandsLayer();
+            if (string.IsNullOrEmpty(stands)) return false;
+            string chk = isCut ? "RF-заполнения" : sd.SeedLayer;   // источник половин пресета
+            if (string.IsNullOrEmpty(chk)) return false;
+            return !HasBreakJoint(BoxesByLayer, stands, chk);
+        }
+
+        // Слой стоек, который будет выбран: текущий выбор либо дефолт «RF-стойки»
+        //  (зеркало ApplyStandsDefault — тот срабатывает ПОСЛЕ посева секций).
+        private string PlannedStandsLayer()
+        {
+            try
+            {
+                if (cmbStands == null) return null;
+                if (cmbStands.SelectedIndex > 0) return Convert.ToString(cmbStands.SelectedItem);
+                return cmbStands.Items.IndexOf("RF-стойки") > 0 ? "RF-стойки" : null;
+            }
+            catch { return null; }
+        }
+
         // Значения поля на слое (объединение по «;»-списку слоёв) — для развёртки артикулов.
         private List<string> FormValuesFor(string layer, string field)
         {
@@ -995,7 +1169,7 @@ namespace AtSpecPlugin
             }
             catch { }
             string beadsLayer; List<string> notes;
-            var seeds = BuildCutSeedsFromDef(def, FormValuesFor, out beadsLayer, out notes);
+            var seeds = BuildCutSeedsFromDef(def, FormValuesFor, BoxesByLayer, out beadsLayer, out notes);
             if (seeds.Count == 0)
             {
                 MessageBox.Show(this, "Из выбранной таблицы нечего взять:\n— " +
@@ -1231,6 +1405,8 @@ namespace AtSpecPlugin
         private DataGridViewTextBoxColumn _colMm;       // скрытый: ширина столбца таблицы, мм (вариант Б)
         private DataGridViewColumn _colVal;             // «Значение» — combo DropDown на строковой ячейке (ValueComboCell)
         private ToolStripMenuItem _miInsert;
+        private ContextMenuStrip _exprMenu;   // (10.07-2) ▼ у «Выражения»: подсказки выпадашкой
+        private int _exprMenuRow = -1;        //  строка, для которой меню показано
         private readonly List<int[]> _merges = new List<int[]>();   // [s,e] 0-базово (по строкам грида)
         private readonly List<string> _exprSuggest = new List<string>();
         private bool _syncingGrp;       // защита от реентрантности при «единственной группе»
@@ -1464,6 +1640,7 @@ namespace AtSpecPlugin
             menu.Items.Add(new ToolStripSeparator());
             menu.Items.Add(miMerge); menu.Items.Add(miUnmerge);
             grid.ContextMenuStrip = menu;
+            _exprMenu = new ContextMenuStrip();   // (10.07-2) наполняется в RefreshContext
             Controls.Add(grid);
             y += 200;
 
@@ -1580,12 +1757,28 @@ namespace AtSpecPlugin
             RefreshSummary();
         }
 
+        private const int DdExprZone = 18;   // (10.07-2) клик-зона ▼ у «Выражения», px
+
         private void Grid_CellPainting(object sender, DataGridViewCellPaintingEventArgs e)
         {
             if (e.RowIndex < 0 || e.ColumnIndex < 0) return;
             string cn = grid.Columns[e.ColumnIndex].Name;
-            if (cn != "hdr" && cn != "val") return;
+            if (cn != "hdr" && cn != "val" && cn != "expr") return;
             if (grid.Rows[e.RowIndex].IsNewRow) return;
+            if (cn == "expr")
+            {
+                // (фидбэк Алексея 10.07-2) ▼ у правого края «Выражения» — список подсказок
+                if (e.CellBounds.Width < 60) return;
+                e.Paint(e.ClipBounds, DataGridViewPaintParts.All);
+                bool selX = (e.State & DataGridViewElementStates.Selected) != 0;
+                int cx = e.CellBounds.Right - DdExprZone / 2 - 2,
+                    cy = e.CellBounds.Top + e.CellBounds.Height / 2;
+                using (var brX = new SolidBrush(selX ? Color.White : Color.FromArgb(96, 96, 96)))
+                    e.Graphics.FillPolygon(brX, new[] {
+                        new Point(cx - 4, cy - 2), new Point(cx + 4, cy - 2), new Point(cx, cy + 3) });
+                e.Handled = true;
+                return;
+            }
             if (cn == "hdr" && !IsMergeHead(e.RowIndex)) return;   // hdr-глиф — только на объединённой шапке
             e.Paint(e.ClipBounds, DataGridViewPaintParts.All);
             bool sel = (e.State & DataGridViewElementStates.Selected) != 0;
@@ -1611,8 +1804,22 @@ namespace AtSpecPlugin
         {
             if (e.Button != MouseButtons.Left || e.RowIndex < 0 || e.ColumnIndex < 0) return;
             string cn = grid.Columns[e.ColumnIndex].Name;
-            if (cn != "hdr" && cn != "val") return;
+            if (cn != "hdr" && cn != "val" && cn != "expr") return;
             if (grid.Rows[e.RowIndex].IsNewRow) return;
+            if (cn == "expr")
+            {
+                // (10.07-2) клик по ▼ — выпадашка подсказок для этой строки
+                var rcX = grid.GetCellDisplayRectangle(e.ColumnIndex, e.RowIndex, false);
+                if (rcX.Width >= 60 && e.X > rcX.Width - DdExprZone &&
+                    _exprMenu != null && _exprMenu.Items.Count > 0)
+                {
+                    try { grid.EndEdit(); grid.CurrentCell = grid.Rows[e.RowIndex].Cells[e.ColumnIndex]; }
+                    catch { }
+                    _exprMenuRow = e.RowIndex;
+                    _exprMenu.Show(grid, new Point(rcX.Left, rcX.Bottom));
+                }
+                return;
+            }
             if (cn == "hdr" && !IsMergeHead(e.RowIndex)) return;
             var rect = grid.GetCellDisplayRectangle(e.ColumnIndex, e.RowIndex, false);
             if (e.X > rect.Width - PipZone)
@@ -2062,6 +2269,24 @@ namespace AtSpecPlugin
                     var it = new ToolStripMenuItem(sx);
                     it.Click += (s, e) => InsertExpr(val);
                     _miInsert.DropDownItems.Add(it);
+                }
+            }
+            // (фидбэк Алексея 10.07-2) тот же список — выпадашкой ▼ прямо в ячейке
+            //  «Выражение» («прикольная фишка» =Object." теперь без набора текста)
+            if (_exprMenu != null)
+            {
+                _exprMenu.Items.Clear();
+                foreach (var sx in _exprSuggest)
+                {
+                    string val = sx;
+                    var it2 = new ToolStripMenuItem(sx);
+                    it2.Click += (s, e) =>
+                    {
+                        int rw = _exprMenuRow; _exprMenuRow = -1;
+                        if (rw >= 0 && rw < grid.Rows.Count && !grid.Rows[rw].IsNewRow)
+                            grid.Rows[rw].Cells["expr"].Value = val;
+                    };
+                    _exprMenu.Items.Add(it2);
                 }
             }
         }

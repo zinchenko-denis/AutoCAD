@@ -52,6 +52,8 @@ namespace AtSpecPlugin
             // карта значений для контекстного фильтра: слой -> поле -> уникальные значения; "" = все блоки
             var valuesRaw = new Dictionary<string, Dictionary<string, HashSet<string>>>(StringComparer.OrdinalIgnoreCase);
             var styleSet = new SortedSet<string>(StringComparer.OrdinalIgnoreCase);   // текстстили чертежа -> «Шрифт»
+            // (10.07-2) габариты по слоям — форме, для проверки «есть ли терморазрыв»
+            var boxesByLayer = new Dictionary<string, List<double[]>>(StringComparer.OrdinalIgnoreCase);
             using (Transaction tr = db.TransactionManager.StartTransaction())
             {
                 foreach (SelectedObject so in sel.Value)
@@ -78,6 +80,7 @@ namespace AtSpecPlugin
                         }
                     }
                     AddGab(tr, br, attrs);   // габарит блока — для стыков штапиков (движок)
+                    AddBox(boxesByLayer, br.Layer, attrs);   // (10.07-2) и форме — терморазрыв
                     layerSet.Add(br.Layer);
                     string effName = EffectiveName(tr, br);
                     // накопить значения полей для контекстного фильтра (по слою и в общий "")
@@ -151,6 +154,7 @@ namespace AtSpecPlugin
 
             // --- 4. построитель отчёта (шаблон выбирается списком прямо в окне) ---
             var form = new ReportBuilderForm(layers, fields, valuesByLayer, textStyles);
+            form.BoxesByLayer = boxesByLayer;   // (10.07-2) геометрия для проверки терморазрыва
             if (AcApp.ShowModalDialog(form) != DialogResult.OK) { ed.WriteMessage("\nОтменено."); return; }
 
             // --- 5. payload: action=report + определение отчёта ---
@@ -244,9 +248,11 @@ namespace AtSpecPlugin
             // данные для выпадушек формы — со всех блоков чертежа
             List<string> layers, fields, textStyles;
             Dictionary<string, Dictionary<string, List<string>>> valuesByLayer;
-            GatherFormData(db, out layers, out fields, out valuesByLayer, out textStyles);
+            Dictionary<string, List<double[]>> boxesByLayer;
+            GatherFormData(db, out layers, out fields, out valuesByLayer, out textStyles, out boxesByLayer);
 
             var form = ReportBuilderForm.FromDef(def, layers, fields, valuesByLayer, textStyles);
+            form.BoxesByLayer = boxesByLayer;   // (10.07-2) геометрия для проверки терморазрыва
             if (AcApp.ShowModalDialog(form) != DialogResult.OK) { ed.WriteMessage("\nПравка отменена."); return; }
 
             // перезаписать определение и пересобрать на месте (реактор читает def из таблицы)
@@ -334,12 +340,14 @@ namespace AtSpecPlugin
         // Деталировочные поля (DOBL/…/UGR) вырезаются нормализованным сравнением (как в ATSPECREPORT).
         private static void GatherFormData(Database db,
             out List<string> layers, out List<string> fields,
-            out Dictionary<string, Dictionary<string, List<string>>> valuesByLayer, out List<string> textStyles)
+            out Dictionary<string, Dictionary<string, List<string>>> valuesByLayer, out List<string> textStyles,
+            out Dictionary<string, List<double[]>> boxesByLayer)
         {
             var layerSet = new SortedSet<string>(StringComparer.OrdinalIgnoreCase);
             var fieldSet = new SortedSet<string>(StringComparer.OrdinalIgnoreCase);
             var valuesRaw = new Dictionary<string, Dictionary<string, HashSet<string>>>(StringComparer.OrdinalIgnoreCase);
             var styleSet = new SortedSet<string>(StringComparer.OrdinalIgnoreCase);
+            boxesByLayer = new Dictionary<string, List<double[]>>(StringComparer.OrdinalIgnoreCase);
 
             using (Transaction tr = db.TransactionManager.StartTransaction())
             {
@@ -364,6 +372,7 @@ namespace AtSpecPlugin
                             fieldSet.Add(pn);
                         }
                     AddGab(tr, br, attrs);   // габарит блока — для стыков штапиков (движок)
+                    AddBox(boxesByLayer, br.Layer, attrs);   // (10.07-2) и форме — терморазрыв
                     layerSet.Add(br.Layer);
                     string effName = EffectiveName(tr, br);
                     AddVal(valuesRaw, br.Layer, "Слой", br.Layer);
@@ -640,6 +649,32 @@ namespace AtSpecPlugin
                 attrs["ГАБ_Y1"] = y1.ToString("0.###", ic);
             }
             catch { }   // блок без геометрии — записи просто не получат габарит (ШТ_СТЫК=0)
+        }
+
+        // (10.07-2) Габарит из только что заполненных ГАБ_* — в карту «слой -> боксы»
+        //  для формы: проверка «есть ли терморазрыв» (ReportBuilderForm.HasBreakJoint,
+        //  зеркало движка _beads_expand) решает, сеять ли терморазрыв-секции штапиков.
+        internal static void AddBox(Dictionary<string, List<double[]>> map, string layer,
+                                    Dictionary<string, object> attrs)
+        {
+            try
+            {
+                object v0, v1, v2, v3;
+                if (!attrs.TryGetValue("ГАБ_X0", out v0) || !attrs.TryGetValue("ГАБ_Y0", out v1) ||
+                    !attrs.TryGetValue("ГАБ_X1", out v2) || !attrs.TryGetValue("ГАБ_Y1", out v3)) return;
+                var ic = System.Globalization.CultureInfo.InvariantCulture;
+                var b = new[]
+                {
+                    double.Parse(Convert.ToString(v0), System.Globalization.NumberStyles.Float, ic),
+                    double.Parse(Convert.ToString(v1), System.Globalization.NumberStyles.Float, ic),
+                    double.Parse(Convert.ToString(v2), System.Globalization.NumberStyles.Float, ic),
+                    double.Parse(Convert.ToString(v3), System.Globalization.NumberStyles.Float, ic)
+                };
+                List<double[]> lst;
+                if (!map.TryGetValue(layer ?? "", out lst)) { lst = new List<double[]>(); map[layer ?? ""] = lst; }
+                lst.Add(b);
+            }
+            catch { }   // без габарита — блок просто не участвует в проверке
         }
 
         private static void AddVal(Dictionary<string, Dictionary<string, HashSet<string>>> map,

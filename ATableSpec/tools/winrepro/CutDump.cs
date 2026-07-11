@@ -37,6 +37,19 @@ static class CutDump
         var ser = new System.Web.Script.Serialization.JavaScriptSerializer { MaxJsonLength = int.MaxValue };
         var buildDef = form.GetType().GetMethod("BuildDef", BindingFlags.Instance | BindingFlags.NonPublic);
 
+        // (10.07-2) геометрия: стойки с зазором 10, заполнение поперёк зазора = стык ЕСТЬ
+        //  (пресет сеет все 4 секции — как на эталоне Проба_штапики_2)
+        var boxJoint = new Dictionary<string, List<double[]>> {
+            { "RF-стойки", new List<double[]> {
+                new double[] { 0.0, 0.0, 60.0, 2000.0 }, new double[] { 0.0, 2010.0, 60.0, 4000.0 } } },
+            { "RF-заполнения", new List<double[]> { new double[] { 60.0, 1900.0, 1060.0, 2110.0 } } } };
+        // заполнение целиком ниже зазора = стыка НЕТ (кейс Алексея «терморазрыва нет»)
+        var boxNo = new Dictionary<string, List<double[]>> {
+            { "RF-стойки", new List<double[]> {
+                new double[] { 0.0, 0.0, 60.0, 2000.0 }, new double[] { 0.0, 2010.0, 60.0, 4000.0 } } },
+            { "RF-заполнения", new List<double[]> { new double[] { 60.0, 100.0, 1060.0, 1900.0 } } } };
+        form.BoxesByLayer = boxJoint;
+
         // 1) пресет «Штапики» (авто-Yes на подтверждение пересева)
         cbTitle.SelectedIndex = cbTitle.Items.IndexOf("Штапики");
         Pump(500);
@@ -73,7 +86,38 @@ static class CutDump
         // 5) def раскроя
         buildDef.Invoke(form, null);
         File.WriteAllText("/tmp/atspec_cut_def.json", ser.Serialize(form.ReportDef));
-        Console.WriteLine("DUMPED spec+cut");
+
+        // ═══ (10.07-2) сценарий Алексея «терморазрыва нет» — вторая пара def'ов ═══
+        // 6) пресет «Штапики» при геометрии БЕЗ стыков: секции 3–4 не сеются
+        form.BoxesByLayer = boxNo;
+        cbTitle.SelectedIndex = cbTitle.Items.IndexOf("Штапики");
+        Pump(500);
+        Console.WriteLine("stage6 cards=" + cards.Count);
+        int arts2 = 0;
+        foreach (var c in cards)
+        {
+            var g = (DataGridView)F(c, "grid");
+            foreach (DataGridViewRow r in g.Rows)
+            {
+                if (r.IsNewRow) continue;
+                if (Convert.ToString(r.Cells["expr"].Value) == "Артикул")
+                { r.Cells["expr"].Value = "17_01_04"; arts2++; }
+            }
+        }
+        buildDef.Invoke(form, null);
+        File.WriteAllText("/tmp/atspec_spec_nobrk_def.json", ser.Serialize(form.ReportDef));
+
+        // 7) раскрой «Взять с табл.» из ПОЛНОЙ спецификации (4 секции) при том же
+        //    отсутствии стыков: разрезные секции должны быть пропущены
+        cbTitle.SelectedIndex = cbTitle.Items.IndexOf("Раскрой");
+        Pump(500);
+        form.GetType().GetMethod("TakeFromTable", BindingFlags.Instance | BindingFlags.NonPublic)
+            .Invoke(form, new object[] { cards[0], specJson });
+        Pump(400);
+        Console.WriteLine("stage7 cards=" + cards.Count);
+        buildDef.Invoke(form, null);
+        File.WriteAllText("/tmp/atspec_cut_nobrk_def.json", ser.Serialize(form.ReportDef));
+        Console.WriteLine("DUMPED spec+cut+nobrk");
         Environment.Exit(0);
     }
 }
