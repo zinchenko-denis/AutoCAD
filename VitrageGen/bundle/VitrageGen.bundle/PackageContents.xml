@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Манифест автозагрузки Autodesk (паттерн ATableSpec). Папку VitrageGen.bundle
+  кладут в %APPDATA%\Autodesk\ApplicationPlugins\ — AutoCAD подхватит сам.
+  Требование то же: установка = одна папка, запуск = одна команда.
+
+  Состав бандла при релиз-сборке:
+    Contents/net48/VitrageGenPlugin.dll   — C#-плагин
+    engine/vitrage_plan.exe               — замороженный py-движок (PyInstaller)
+-->
+<ApplicationPackage
+    SchemaVersion="1.0"
+    AutodeskProduct="AutoCAD"
+    Name="VitrageGen"
+    AppVersion="0.1.0"
+    ProductCode="{45674A89-F1F8-4122-A296-FFAB49F515C9}"
+    Description="Генератор витражей из блоков по чертежу АР"
+    Author="Denis Zinchenko">
+
+  <CompanyDetails Name="Denis Zinchenko" />
+
+  <!-- AutoCAD 2013–2024 : .NET Framework. R24.0 = AutoCAD 2021. -->
+  <Components Description="net48 (AutoCAD 2013-2024)">
+    <RuntimeRequirements OS="Win64" Platform="AutoCAD" SeriesMin="R19.0" SeriesMax="R24.3" />
+    <ComponentEntry
+        AppName="VitrageGen"
+        ModuleName="./Contents/net48/VitrageGenPlugin.dll"
+        AppType=".NET"
+        LoadOnCommandInvocation="False"
+        LoadOnAutoCADStartup="True">
+      <Commands GroupName="VitrageGenCommands">
+        <Command Global="ATVITRAGE" Local="ATVITRAGE" />
+      </Commands>
+    </ComponentEntry>
+  </Components>
+
+</ApplicationPackage>

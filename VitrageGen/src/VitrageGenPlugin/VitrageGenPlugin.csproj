@@ -1,0 +1,29 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net48</TargetFramework>
+    <LangVersion>latest</LangVersion>
+    <AssemblyName>VitrageGenPlugin</AssemblyName>
+    <RootNamespace>VitrageGenPlugin</RootNamespace>
+    <Platforms>x64</Platforms>
+    <PlatformTarget>x64</PlatformTarget>
+    <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Reference-сборки AutoCAD 2021 (24.0) из NuGet — сборка без AutoCAD,
+         в бандл попадает только VitrageGenPlugin.dll (паттерн ATableSpec). -->
+    <PackageReference Include="AutoCAD.NET" Version="24.0.0" />
+    <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.3">
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
+
+    <!-- JavaScriptSerializer (JSON без внешних зависимостей) -->
+    <Reference Include="System.Web.Extensions" />
+    <!-- Диалог параметров витража -->
+    <Reference Include="System.Windows.Forms" />
+    <Reference Include="System.Drawing" />
+  </ItemGroup>
+
+</Project>
