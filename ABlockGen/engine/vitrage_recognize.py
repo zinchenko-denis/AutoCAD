@@ -131,6 +131,51 @@ def covered(spans, a, b, min_frac):
     return total >= (b - a) * min_frac
 
 
+def strips_from_segments(segments, wmin, wmax):
+    """Э3-E (решение Дениса 13.07: закладывать заранее): сборка полос из
+    ГОЛЫХ ОТРЕЗКОВ — АР, нарисованный линиями, а не вставками.
+    Пара параллельных отрезков на расстоянии wmin..wmax с перекрытием
+    длиннее max(ширина, 50) → полоса-прямоугольник по зоне перекрытия.
+    Наклонные игнорируются; дубли (контур + осевые) сливаются."""
+    vert, horz = [], []
+    for s in segments:
+        x0, y0 = float(s["x0"]), float(s["y0"])
+        x1, y1 = float(s["x1"]), float(s["y1"])
+        if abs(x1 - x0) <= 0.5 and abs(y1 - y0) > 0.5:
+            vert.append(((x0 + x1) / 2.0, min(y0, y1), max(y0, y1)))
+        elif abs(y1 - y0) <= 0.5 and abs(x1 - x0) > 0.5:
+            horz.append(((y0 + y1) / 2.0, min(x0, x1), max(x0, x1)))
+    out = []
+
+    def pair_up(lines, make_box):
+        lines = sorted(lines)
+        for i in range(len(lines)):
+            a, alo, ahi = lines[i]
+            for j in range(i + 1, len(lines)):
+                b, blo, bhi = lines[j]
+                w = b - a
+                if w > wmax:
+                    break                      # sorted: дальше только шире
+                if w < wmin:
+                    continue
+                lo, hi = max(alo, blo), min(ahi, bhi)
+                if hi - lo < max(w, 50.0):     # перекрытие длиннее ширины
+                    continue
+                out.append(make_box(a, b, lo, hi))
+
+    pair_up(vert, lambda a, b, lo, hi: {"x0": a, "y0": lo, "x1": b, "y1": hi})
+    pair_up(horz, lambda a, b, lo, hi: {"x0": lo, "y0": a, "x1": hi, "y1": b})
+    ded = []
+    for s in out:
+        for t in ded:
+            if (abs(s["x0"] - t["x0"]) <= 1 and abs(s["y0"] - t["y0"]) <= 1 and
+                    abs(s["x1"] - t["x1"]) <= 1 and abs(s["y1"] - t["y1"]) <= 1):
+                break
+        else:
+            ded.append(s)
+    return ded
+
+
 # ─────────────── распознавание ───────────────
 
 def recognize(req):
@@ -144,6 +189,12 @@ def recognize(req):
     body_w = float(bs.get("body_w") or 0.0)   # 0/None → вывести из ширин полос АР
     stand_prof = bs.get("prof") or stand_name
     rigel_prof = br.get("prof") or rigel_name
+    # Э3-A (решение Дениса 13.07): опциональный образец ВЕРХНЕГО ригеля —
+    # ставится на самой верхней отметке В СВЕТУ между телами стоек
+    # (эталон «Проба 3»: Р31/Р33 из профиля стойки, 1660/395 при осевых 1710/445)
+    bt = blocks.get("rigel_top") or {}
+    top_name = bt.get("name")
+    top_prof = bt.get("prof") or top_name
 
     params = req.get("params") or {}
     wmin = float(params.get("strip_w_min", 40.0))
@@ -154,11 +205,17 @@ def recognize(req):
     m_stand = marks.get("stand", "С{n}")
     m_rigel = marks.get("rigel", "Р{n}")
 
-    strips = req.get("strips") or []
-    if not strips:
-        raise ValueError("strips пуст — в выборе нет прямоугольной графики АР")
-
+    strips = list(req.get("strips") or [])
     notes = []
+    segments = req.get("segments") or []
+    if segments:
+        built = strips_from_segments(segments, wmin, wmax)
+        if built:
+            notes.append("полос собрано из отрезков: %d" % len(built))
+        strips += built
+    if not strips:
+        raise ValueError("strips пуст — в выборе нет прямоугольной графики АР "
+                         "(и из отрезков полосы не собрались)")
     vert, horz, cube = classify_strips(strips, wmin, wmax)
     chains = chain_verticals(vert, cube)
     if len(chains) < 2:
@@ -229,10 +286,12 @@ def recognize(req):
                       "ПРОФ": stand_prof, "ДЛИНА": fmt_len(ln)},
         })
 
-    # ригели по отметкам × пролётам
+    # ригели по отметкам × пролётам; верхняя отметка — опц. спец-образцом В СВЕТУ
     n_rig = 0
     skipped_doors = 0
+    top_y = rails[-1]["y"] if rails else None
     for r in rails:
+        is_top = top_name and top_y is not None and abs(r["y"] - top_y) <= EPS
         for i in range(len(axes) - 1):
             a_in = axes[i] + body_w / 2.0       # свет пролёта
             b_in = axes[i + 1] - body_w / 2.0
@@ -241,15 +300,28 @@ def recognize(req):
             if door_blocks_rail(r["y"], a_in, b_in):
                 skipped_doors += 1
                 continue
-            span = axes[i + 1] - axes[i]
-            inserts.append({
-                "kind": "rigel", "block": rigel_name, "layer": "RF-ригеля",
-                "x": round(axes[i], 4), "y": round(r["y"], 4), "rot": 270,
-                "dyn": {"Длина": round(span, 4)},
-                "attrs": {"ИМЯ": mk_rigel((rigel_name, _rnd05(span * 10))),
-                          "ПРОФ": rigel_prof, "ДЛИНА": fmt_len(span)},
-            })
+            if is_top:
+                ln = b_in - a_in                 # в свету между телами
+                inserts.append({
+                    "kind": "rigel_top", "block": top_name, "layer": "RF-ригеля",
+                    "x": round(a_in, 4), "y": round(r["y"], 4), "rot": 270,
+                    "dyn": {"Длина": round(ln, 4)},
+                    "attrs": {"ИМЯ": mk_rigel((top_name, _rnd05(ln * 10))),
+                              "ПРОФ": top_prof, "ДЛИНА": fmt_len(ln)},
+                })
+            else:
+                span = axes[i + 1] - axes[i]     # осевой шаг
+                inserts.append({
+                    "kind": "rigel", "block": rigel_name, "layer": "RF-ригеля",
+                    "x": round(axes[i], 4), "y": round(r["y"], 4), "rot": 270,
+                    "dyn": {"Длина": round(span, 4)},
+                    "attrs": {"ИМЯ": mk_rigel((rigel_name, _rnd05(span * 10))),
+                              "ПРОФ": rigel_prof, "ДЛИНА": fmt_len(span)},
+                })
             n_rig += 1
+    if top_name and rails:
+        notes.append("верхняя отметка %.1f — ригель-образец «%s» в свету"
+                     % (top_y, top_name))
     if skipped_doors:
         notes.append("порогов под дверями пропущено: %d" % skipped_doors)
 
