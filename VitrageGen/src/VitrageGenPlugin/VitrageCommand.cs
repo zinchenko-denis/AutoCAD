@@ -21,7 +21,7 @@ namespace VitrageGenPlugin
 {
     /// <summary>
     /// ATVITRAGE (Э1): 2 точки прямоугольника проёма + диалог параметров →
-    /// JSON-запрос → движок vitrage_plan.exe → JSON-план → вставка вхождений
+    /// JSON-запрос → движок vitrage_engine.exe (op:plan) → JSON-план → вставка вхождений
     /// СУЩЕСТВУЮЩИХ определений блоков чертежа (стойки/ригели/заполнения).
     /// Свои определения блоков не создаются — только вхождения (как Алексей руками).
     /// </summary>
@@ -118,7 +118,7 @@ namespace VitrageGenPlugin
 
             // ── 5. вызов движка ──
             string baseDir = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
-            string engineExe = Path.GetFullPath(Path.Combine(baseDir, "..", "engine", "vitrage_plan.exe"));
+            string engineExe = Path.GetFullPath(Path.Combine(baseDir, "..", "engine", "vitrage_engine.exe"));
             if (!File.Exists(engineExe))
             { ed.WriteMessage("\nНе найден движок: " + engineExe); return; }
 
@@ -152,7 +152,7 @@ namespace VitrageGenPlugin
         }
 
         // ── вставка плана: одна транзакция = один undo ──
-        private static void InsertAll(Database db, Dictionary<string, object> plan,
+        internal static void InsertAll(Database db, Dictionary<string, object> plan,
                                       out int inserted, out int skipped)
         {
             inserted = 0; skipped = 0;
@@ -233,7 +233,7 @@ namespace VitrageGenPlugin
         }
 
         // ── вызов движка через временные файлы (паттерн ATableSpec) ──
-        private static string CallEngine(string engineExe, string reqJson)
+        internal static string CallEngine(string engineExe, string reqJson)
         {
             string tmpIn = Path.Combine(Path.GetTempPath(),
                 "vitrage_in_" + Guid.NewGuid().ToString("N") + ".json");
@@ -266,16 +266,16 @@ namespace VitrageGenPlugin
         private static void TryDelete(string p)
         { try { if (File.Exists(p)) File.Delete(p); } catch { } }
 
-        private static object Get(Dictionary<string, object> d, string key)
+        internal static object Get(Dictionary<string, object> d, string key)
         { object v; return (d != null && d.TryGetValue(key, out v)) ? v : null; }
 
-        private static bool GetBool(Dictionary<string, object> d, string key)
+        internal static bool GetBool(Dictionary<string, object> d, string key)
         { try { return Convert.ToBoolean(Get(d, key)); } catch { return false; } }
 
         private static double ToD(object o)
         { return Convert.ToDouble(o, CultureInfo.InvariantCulture); }
 
-        private static string SafeStr(object o)
+        internal static string SafeStr(object o)
         { return o == null ? "" : Convert.ToString(o, CultureInfo.InvariantCulture); }
     }
 }

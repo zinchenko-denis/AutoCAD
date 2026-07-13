@@ -62,3 +62,4 @@ jobs:
         run: |
           cd VitrageGen/engine
           python test_vitrage_plan.py
+          python test_vitrage_recognize.py
