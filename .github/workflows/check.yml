@@ -10,8 +10,8 @@ on:
     paths:
       - "ATableSpec/src/**"
       - "ATableSpec/engine/**"
-      - "VitrageGen/src/**"
-      - "VitrageGen/engine/**"
+      - "ABlockGen/src/**"
+      - "ABlockGen/engine/**"
       - ".github/workflows/check.yml"
   workflow_dispatch: {}
 
@@ -33,8 +33,8 @@ jobs:
       - name: Build plugin DLL (compile check)
         run: dotnet build ATableSpec/src/AtSpecPlugin/AtSpecPlugin.csproj -c Release -o build_dll
 
-      - name: Build VitrageGen DLL (compile check)
-        run: dotnet build VitrageGen/src/VitrageGenPlugin/VitrageGenPlugin.csproj -c Release -o build_vitrage_dll
+      - name: Build ABlockGen DLL (compile check)
+        run: dotnet build ABlockGen/src/ABlockGenPlugin/ABlockGenPlugin.csproj -c Release -o build_vitrage_dll
 
       - name: Setup Python
         uses: actions/setup-python@v5
@@ -54,12 +54,12 @@ jobs:
           python test_audit_scenarios.py
           python test_beads.py
 
-      - name: VitrageGen engine unit test
+      - name: ABlockGen engine unit test
         shell: bash
         env:
           PYTHONUTF8: "1"
           PYTHONIOENCODING: "utf-8"
         run: |
-          cd VitrageGen/engine
+          cd ABlockGen/engine
           python test_vitrage_plan.py
           python test_vitrage_recognize.py

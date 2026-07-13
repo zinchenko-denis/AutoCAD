@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""VitrageGen: единая точка входа движка (замораживается в vitrage_engine.exe).
+"""ABlockGen: единая точка входа движка (замораживается в vitrage_engine.exe).
 
 CLI: vitrage_engine.py <req.json|-> [out.json]
 Роутинг по req["op"]:

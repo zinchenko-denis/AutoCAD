@@ -1,4 +1,4 @@
-# Блочный контракт VitrageGen ↔ ATableSpec
+# Блочный контракт ABlockGen ↔ ATableSpec
 
 Эталон: `atspec-testdata/dxf/Проба_штапики_2.dxf` (разбор 13.07, ezdxf).
 Генератор обязан выпускать РОВНО эту номенклатуру — тогда ATableSpec ест

@@ -1,12 +1,12 @@
 using Autodesk.AutoCAD.Runtime;
 using AcApp = Autodesk.AutoCAD.ApplicationServices.Application;
 
-[assembly: ExtensionApplication(typeof(VitrageGenPlugin.Plugin))]
+[assembly: ExtensionApplication(typeof(ABlockGenPlugin.Plugin))]
 
-namespace VitrageGenPlugin
+namespace ABlockGenPlugin
 {
     /// <summary>
-    /// VitrageGen — отдельная программа (НЕ развитие ATableSpec): полуавтоматический
+    /// ABlockGen — отдельная программа (НЕ развитие ATableSpec): полуавтоматический
     /// синтез витража вхождениями существующих определений блоков чертежа.
     /// Блочный контракт совместим с ATableSpec: сгенерил витраж — сразу спецификация.
     /// </summary>
@@ -21,7 +21,7 @@ namespace VitrageGenPlugin
                 var doc = AcApp.DocumentManager.MdiActiveDocument;
                 if (doc != null)
                     doc.Editor.WriteMessage(
-                        "\nVitrageGen загружен. Команда: ATVITRAGE — построить витраж " +
+                        "\nABlockGen загружен. Команда: ATVITRAGE — построить витраж " +
                         "по прямоугольнику проёма (Этап 1, полуавтомат).\n");
             }
             catch { }

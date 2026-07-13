@@ -4,7 +4,7 @@ using System.Drawing;
 using System.Globalization;
 using System.Windows.Forms;
 
-namespace VitrageGenPlugin
+namespace ABlockGenPlugin
 {
     /// <summary>
     /// Диалог параметров витража (Э1). Все размеры — мм чертежа.
@@ -33,7 +33,7 @@ namespace VitrageGenPlugin
 
         public VitrageForm(IList<string> blockDefs, double openingW, double openingH)
         {
-            Text = "VitrageGen — параметры витража (Э1)";
+            Text = "ABlockGen — параметры витража (Э1)";
             FormBorderStyle = FormBorderStyle.FixedDialog;
             MaximizeBox = false; MinimizeBox = false;
             StartPosition = FormStartPosition.CenterParent;
@@ -82,7 +82,7 @@ namespace VitrageGenPlugin
             AcceptButton = okB; CancelButton = noB;
             ClientSize = new Size(430, y + 44);
 
-            okB.Click += (s, e) => { if (!ValidateInput(out var msg)) { MessageBox.Show(msg, "VitrageGen"); DialogResult = DialogResult.None; } };
+            okB.Click += (s, e) => { if (!ValidateInput(out var msg)) { MessageBox.Show(msg, "ABlockGen"); DialogResult = DialogResult.None; } };
         }
 
         private static void Preselect(ComboBox c, string name)

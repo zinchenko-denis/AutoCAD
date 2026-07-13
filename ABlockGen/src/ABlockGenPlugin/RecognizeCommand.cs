@@ -10,9 +10,9 @@ using Autodesk.AutoCAD.Geometry;
 using Autodesk.AutoCAD.Runtime;
 using AcApp = Autodesk.AutoCAD.ApplicationServices.Application;
 
-[assembly: CommandClass(typeof(VitrageGenPlugin.RecognizeCommand))]
+[assembly: CommandClass(typeof(ABlockGenPlugin.RecognizeCommand))]
 
-namespace VitrageGenPlugin
+namespace ABlockGenPlugin
 {
     /// <summary>
     /// ATVITRAGEAR (Э3): «Укажите блок стоек» → «Укажите блок ригелей» →

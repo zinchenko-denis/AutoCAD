@@ -15,9 +15,9 @@ using Autodesk.AutoCAD.Geometry;
 using Autodesk.AutoCAD.Runtime;
 using AcApp = Autodesk.AutoCAD.ApplicationServices.Application;
 
-[assembly: CommandClass(typeof(VitrageGenPlugin.VitrageCommand))]
+[assembly: CommandClass(typeof(ABlockGenPlugin.VitrageCommand))]
 
-namespace VitrageGenPlugin
+namespace ABlockGenPlugin
 {
     /// <summary>
     /// ATVITRAGE (Э1): 2 точки прямоугольника проёма + диалог параметров →
