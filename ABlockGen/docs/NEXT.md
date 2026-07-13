@@ -49,6 +49,8 @@
   D2-сверки — план с rigel_top воспроизводит ручной каркас Алексея
   ПОЛНОСТЬЮ (все 11 ригелей, включая верхние в свету, ДЛИНА байт-в-байт);
   R11 — тот же витраж «голыми линиями» распознаётся идентично.**
+
+## Этапность (решение 11.07; каждый этап — рабочий продукт)
 - **Э1 (ТЕКУЩИЙ): полуавтомат БЕЗ распознавания** — проём рамкой/контуром +
   диалог параметров (шаг стоек, отметки ригелей, ярусы, блоки) → сетка
   стоек/ригелей/заполнений ВХОЖДЕНИЯМИ существующих определений блоков чертежа
@@ -65,9 +67,12 @@
 - `src/ABlockGenPlugin/` → `ABlockGenPlugin.dll` (net48, AutoCAD.NET 24.0.0,
   JavaScriptSerializer, WinForms). Файлы: `Plugin.cs` (IExtensionApplication,
   минимум), `VitrageCommand.cs` (ATVITRAGE), `VitrageForm.cs` (диалог).
-- `engine/vitrage_plan.py` → при релизе замораживается в `vitrage_plan.exe`;
-  CLI: `vitrage_plan.exe <req.json> <out.json>`. Движок ЧИСТЫЙ (никакого DXF):
-  вся работа с чертежом — на стороне C#.
+- `engine/vitrage_engine.py` — единый CLI (op: plan → vitrage_plan.build_plan,
+  recognize → vitrage_recognize.recognize); при релизе замораживается в
+  `vitrage_engine.exe <req.json> <out.json>`. Движок ЧИСТЫЙ (никакого DXF):
+  вся работа с чертежом — на стороне C#. Файлы: `Plugin.cs`,
+  `VitrageCommand.cs` (ATVITRAGE, Э1), `RecognizeCommand.cs` (ATVITRAGEAR, Э3),
+  `VitrageForm.cs` (диалог Э1).
 - Поток ATVITRAGE: GetPoint+GetCorner (проём, UCS→WCS) → список определений
   блоков чертежа → диалог (предвыбор эталонных 17_07_24/17_06_01/СТП) →
   JSON-запрос → exe → JSON-план → вставка вхождений одной транзакцией
