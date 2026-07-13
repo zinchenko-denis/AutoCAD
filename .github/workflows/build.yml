@@ -1,8 +1,9 @@
 name: build-bundle
 
-# Собирает готовый ATableSpec.bundle.zip на Windows-раннере GitHub
-# (ничего ставить локально не нужно) и публикует его в релиз "latest".
-# Конструктор скачивает zip по ссылке и просто кладёт папку в AutoCAD.
+# Собирает готовые ATableSpec.bundle.zip и ABlockGen.bundle.zip на
+# Windows-раннере GitHub (ничего ставить локально не нужно) и публикует
+# ОБА в релиз "latest". Конструктор скачивает zip по ссылке и просто
+# кладёт папку в AutoCAD.
 
 on:
   push:
@@ -11,6 +12,9 @@ on:
       - "ATableSpec/src/**"
       - "ATableSpec/engine/**"
       - "ATableSpec/bundle/**"
+      - "ABlockGen/src/**"
+      - "ABlockGen/engine/**"
+      - "ABlockGen/bundle/**"
       - ".github/workflows/build.yml"
   workflow_dispatch: {}        # можно запускать вручную кнопкой в разделе Actions
 
@@ -62,18 +66,44 @@ jobs:
           }
           Compress-Archive -Path $b -DestinationPath "ATableSpec.bundle.zip" -Force
 
-      # 4a) Артефакт сборки (виден в разделе Actions; скачивание — для залогиненных)
+      # ── ABlockGen (генератор витражей из блоков) — вторая программа, свой бандл ──
+      - name: Build ABlockGen DLL
+        run: dotnet build ABlockGen/src/ABlockGenPlugin/ABlockGenPlugin.csproj -c Release -o build_abg_dll
+
+      - name: Freeze ABlockGen engine EXE
+        run: pyinstaller --onefile --name vitrage_engine --paths ABlockGen/engine ABlockGen/engine/vitrage_engine.py --distpath build_abg_exe
+
+      - name: Assemble ABlockGen bundle
+        shell: pwsh
+        run: |
+          $b = "ABlockGen.bundle"
+          New-Item -ItemType Directory -Force "$b/Contents/net48"  | Out-Null
+          New-Item -ItemType Directory -Force "$b/Contents/engine" | Out-Null
+          Copy-Item "ABlockGen/bundle/ABlockGen.bundle/PackageContents.xml" "$b/"
+          Copy-Item "build_abg_dll/ABlockGenPlugin.dll" "$b/Contents/net48/"
+          Copy-Item "build_abg_exe/vitrage_engine.exe"  "$b/Contents/engine/"
+          Compress-Archive -Path $b -DestinationPath "ABlockGen.bundle.zip" -Force
+
+      # 4a) Артефакты сборки (видны в разделе Actions; скачивание — для залогиненных)
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: ATableSpec.bundle
           path: ATableSpec.bundle.zip
 
-      # 4b) Релиз "latest" — постоянная прямая ссылка на скачивание для конструктора
+      - name: Upload ABlockGen artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ABlockGen.bundle
+          path: ABlockGen.bundle.zip
+
+      # 4b) Релиз "latest" — постоянные прямые ссылки на скачивание для конструктора
       - name: Publish to "latest" release
         uses: softprops/action-gh-release@v2
         with:
           tag_name: latest
-          name: "ATableSpec — последняя сборка"
-          body: "Готовый бандл. Скачать ATableSpec.bundle.zip, распаковать, папку ATableSpec.bundle положить в %APPDATA%\\Autodesk\\ApplicationPlugins\\, запустить AutoCAD, команда ATSPEC."
-          files: ATableSpec.bundle.zip
+          name: "ATableSpec + ABlockGen — последняя сборка"
+          body: "Готовые бандлы. ATableSpec.bundle.zip — спецификации/раскрой из блоков (команда ATSPEC). ABlockGen.bundle.zip — генератор витражей из блоков (команды ATVITRAGEAR, ATVITRAGE). Распаковать нужный zip, папку *.bundle положить в %APPDATA%\\Autodesk\\ApplicationPlugins\\, перезапустить AutoCAD."
+          files: |
+            ATableSpec.bundle.zip
+            ABlockGen.bundle.zip
