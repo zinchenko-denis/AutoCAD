@@ -67,7 +67,9 @@ REQ = {
     "grid": {"step_x": 705, "rail_y": [45, 595, 955, 2445, 2805],
              "tiers": [2715, 2990], "tier_gap": 10},
     "blocks": {"stand": {"name": "17_07_24", "body_w": 54.4},
-               "rigel": {"name": "17_06_01", "body_w": 45.6},
+               # 17_06_01 рисован ВЕРТИКАЛЬНО → его вставки в чертеже с rot=270;
+               # с 14.07 rot приходит от C# (мода вставок / образец), не хардкод
+               "rigel": {"name": "17_06_01", "body_w": 45.6, "rot": 270},
                "fill": {"name": "СТП", "fold": 15}},
 }
 plan = build_plan(REQ)
@@ -172,6 +174,35 @@ with open(rq, "w", encoding="utf-8") as f:
     json.dump({"opening": {"x0": 0, "y0": 0, "x1": 10, "y1": 10}}, f)
 rc = main(["vitrage_plan.py", rq, out])
 ok(rc == 1, "U11: ошибка входа должна давать rc 1")
+
+# ── U12: rot — с чертежа/образца, дефолт 0 (фикс 14.07: не хардкодить 270) ──
+p12 = build_plan({"opening": {"x0": 0, "y0": 0, "x1": 2050, "y1": 3000},
+                  "grid": {"step_x": 1000, "rail_y": [300]},
+                  "blocks": {"stand": {"name": "s", "body_w": 50},
+                             "rigel": {"name": "r"}}})
+ok(all(i["rot"] == 0 for i in p12["inserts"]), "U12: дефолт rot=0 для всех")
+ok(build_plan({"opening": {"x0": 0, "y0": 0, "x1": 2050, "y1": 3000},
+               "grid": {"step_x": 1000, "rail_y": [300]},
+               "blocks": {"stand": {"name": "s", "body_w": 50, "rot": 90},
+                          "rigel": {"name": "r", "rot": 270}}}
+              )["inserts"][0]["rot"] == 90, "U12: stand.rot прокинут")
+
+# ── U13: dims — габариты + межосевые цепочки (числа эталона) ──
+dm = plan["dims"]
+ok(len(dm) == 4, f"U13: dims {len(dm)} != 4")
+h_chain = [d for d in dm if d["dir"] == "h" and len(d["pts"]) > 2][0]
+segs13 = [round(b - a, 1) for a, b in zip(h_chain["pts"], h_chain["pts"][1:])]
+ok(segs13 == [705.0, 705.0, 705.0], f"U13: межосевые стоек {segs13}")
+h_ovr = [d for d in dm if d["dir"] == "h" and len(d["pts"]) == 2][0]
+ok(near(h_ovr["pts"][1] - h_ovr["pts"][0], 2169.4), f"U13: габарит ширины {h_ovr}")
+v_chain = [d for d in dm if d["dir"] == "v" and len(d["pts"]) > 2][0]
+ok(near(v_chain["pts"][0], 34739.5) and near(v_chain["pts"][-1], 40454.5) and
+   len(v_chain["pts"]) == 7, f"U13: верт. цепочка от габарита до габарита {v_chain['pts']}")
+v_ovr = [d for d in dm if d["dir"] == "v" and len(d["pts"]) == 2][0]
+ok(near(v_ovr["pts"][1] - v_ovr["pts"][0], 5715.0), "U13: габарит высоты")
+ok(h_chain["line"] < 34739.5 and v_chain["ref"] > 21400, "U13: линии снизу/справа")
+p13 = build_plan({**REQ, "params": {"dims": False}})
+ok(p13["dims"] == [], "U13: dims отключаемы")
 
 print(f"vitrage_plan: {PASS} проверок OK")
 

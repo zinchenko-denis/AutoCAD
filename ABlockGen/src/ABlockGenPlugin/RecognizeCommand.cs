@@ -31,17 +31,21 @@ namespace ABlockGenPlugin
             var ed = doc.Editor;
             var db = doc.Database;
 
-            // ── 1. образцы: блок стоек, блок ригелей, опц. ВЕРХНИЙ ригель ──
+            // ── 1. образцы: блок стоек, блок ригелей, опц. ВЕРХНИЙ ригель.
+            //    ПОВОРОТ каждого берётся С ОБРАЗЦА (фикс 14.07: поворот —
+            //    свойство определения; горизонтально рисованный ригель → 0,
+            //    вертикально рисованный → 270) ──
             string standName, standProf, rigelName, rigelProf, topName, topProf;
+            double standRot, rigelRot, topRot;
             if (!PickSample(ed, db, "\nУкажите блок стоек (образец): ",
-                            false, out standName, out standProf)) return;
+                            false, out standName, out standProf, out standRot)) return;
             if (!PickSample(ed, db, "\nУкажите блок ригелей (образец): ",
-                            false, out rigelName, out rigelProf)) return;
+                            false, out rigelName, out rigelProf, out rigelRot)) return;
             // Э3-A (решение Дениса): верхняя отметка может идти особым блоком
             // В СВЕТУ (эталон: Р31/Р33 из профиля стойки). Enter — обычный ригель.
             if (!PickSample(ed, db,
                 "\nУкажите блок ВЕРХНЕГО ригеля (в свету) <Enter — обычный>: ",
-                true, out topName, out topProf)) return;
+                true, out topName, out topProf, out topRot)) return;
 
             // ── 2. конструкция: АР-графика рамкой ──
             var pso = new PromptSelectionOptions
@@ -143,13 +147,13 @@ namespace ABlockGenPlugin
             var blocks = new Dictionary<string, object>
             {
                 { "stand", new Dictionary<string, object> {
-                    { "name", standName }, { "prof", standProf } } },
+                    { "name", standName }, { "prof", standProf }, { "rot", standRot } } },
                 { "rigel", new Dictionary<string, object> {
-                    { "name", rigelName }, { "prof", rigelProf } } }
+                    { "name", rigelName }, { "prof", rigelProf }, { "rot", rigelRot } } }
             };
             if (!string.IsNullOrEmpty(topName))
                 blocks["rigel_top"] = new Dictionary<string, object>
-                { { "name", topName }, { "prof", topProf } };
+                { { "name", topName }, { "prof", topProf }, { "rot", topRot } };
             var payload = new Dictionary<string, object>
             {
                 { "op", "recognize" },
@@ -177,9 +181,9 @@ namespace ABlockGenPlugin
             // ── 6. сдвиг в точку вставки (опора — левый низ каркаса) ──
             if (shift) ShiftPlan(plan, target);
 
-            // ── 7. вставка ──
-            int inserted, skipped;
-            try { VitrageCommand.InsertAll(db, plan, out inserted, out skipped); }
+            // ── 7. вставка вхождений + размеры ──
+            int inserted, skipped, dimsN;
+            try { VitrageCommand.InsertAll(db, plan, out inserted, out skipped, out dimsN); }
             catch (System.Exception ex)
             { ed.WriteMessage("\nОшибка вставки: " + ex.Message); return; }
 
@@ -187,18 +191,20 @@ namespace ABlockGenPlugin
             ed.WriteMessage("\nКаркас построен: вхождений " + inserted +
                 (skipped > 0 ? " (пропущено " + skipped + ")" : "") +
                 (sum != null ? " — стойки " + VitrageCommand.SafeStr(VitrageCommand.Get(sum, "stands")) +
-                               ", ригели " + VitrageCommand.SafeStr(VitrageCommand.Get(sum, "rigels")) : "") + ".");
+                               ", ригели " + VitrageCommand.SafeStr(VitrageCommand.Get(sum, "rigels")) : "") +
+                (dimsN > 0 ? "; размеров " + dimsN : "") + ".");
             var notes = VitrageCommand.Get(plan, "notes") as System.Collections.IList;
             if (notes != null)
                 foreach (var n in notes) ed.WriteMessage("\n  · " + VitrageCommand.SafeStr(n));
         }
 
-        // ── образец: BlockReference → эффективное имя + ПРОФ.
+        // ── образец: BlockReference → эффективное имя + ПРОФ + ПОВОРОТ (градусы).
         //    optional=true: Enter — пропуск (name=null, возврат true) ──
         private static bool PickSample(Editor ed, Database db, string msg,
-                                       bool optional, out string name, out string prof)
+                                       bool optional, out string name, out string prof,
+                                       out double rotDeg)
         {
-            name = null; prof = null;
+            name = null; prof = null; rotDeg = 0;
             var peo = new PromptEntityOptions(msg);
             peo.SetRejectMessage("\nНужен блок (вхождение).");
             peo.AddAllowedClass(typeof(BlockReference), false);
@@ -211,6 +217,7 @@ namespace ABlockGenPlugin
                 var br = tr.GetObject(res.ObjectId, OpenMode.ForRead) as BlockReference;
                 if (br == null) { ed.WriteMessage("\nЭто не блок."); return false; }
                 name = EffectiveName(tr, br);
+                rotDeg = NormDeg(br.Rotation);
                 foreach (ObjectId aid in br.AttributeCollection)
                 {
                     var ar = tr.GetObject(aid, OpenMode.ForRead) as AttributeReference;
@@ -221,6 +228,13 @@ namespace ABlockGenPlugin
             }
             if (string.IsNullOrEmpty(name)) { ed.WriteMessage("\nНе удалось прочитать имя блока."); return false; }
             return true;
+        }
+
+        // радианы → градусы [0..360), округление 0.1
+        internal static double NormDeg(double rad)
+        {
+            double d = Math.Round(rad * 180.0 / Math.PI, 1) % 360.0;
+            return d < 0 ? d + 360.0 : d;
         }
 
         // эффективное имя динблока (исходное определение, не *U…)
@@ -295,7 +309,8 @@ namespace ABlockGenPlugin
             { { "x0", x0 }, { "y0", y0 }, { "x1", x1 }, { "y1", y1 } };
         }
 
-        // сдвиг плана: левый-нижний угол каркаса (min ось X, min Y стоек) → target
+        // сдвиг плана: левый-нижний угол каркаса (min ось X, min Y стоек) → target;
+        // размерные цепочки (dims) едут вместе с каркасом
         private static void ShiftPlan(Dictionary<string, object> plan, Point3d target)
         {
             var items = VitrageCommand.Get(plan, "inserts") as System.Collections.IList;
@@ -317,6 +332,22 @@ namespace ABlockGenPlugin
                 if (it == null) continue;
                 it["x"] = Convert.ToDouble(VitrageCommand.Get(it, "x"), CultureInfo.InvariantCulture) + dx;
                 it["y"] = Convert.ToDouble(VitrageCommand.Get(it, "y"), CultureInfo.InvariantCulture) + dy;
+            }
+            var dims = VitrageCommand.Get(plan, "dims") as System.Collections.IList;
+            if (dims == null) return;
+            foreach (var o in dims)
+            {
+                var dd = o as Dictionary<string, object>;
+                if (dd == null) continue;
+                bool vert = VitrageCommand.SafeStr(VitrageCommand.Get(dd, "dir")) == "v";
+                double along = vert ? dy : dx;    // вдоль pts
+                double across = vert ? dx : dy;   // ref/line
+                dd["ref"] = Convert.ToDouble(VitrageCommand.Get(dd, "ref"), CultureInfo.InvariantCulture) + across;
+                dd["line"] = Convert.ToDouble(VitrageCommand.Get(dd, "line"), CultureInfo.InvariantCulture) + across;
+                var pts = VitrageCommand.Get(dd, "pts") as System.Collections.IList;
+                if (pts == null) continue;
+                for (int i = 0; i < pts.Count; i++)
+                    pts[i] = Convert.ToDouble(pts[i], CultureInfo.InvariantCulture) + along;
             }
         }
     }

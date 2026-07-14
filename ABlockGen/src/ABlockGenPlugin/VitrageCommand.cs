@@ -93,13 +93,18 @@ namespace ABlockGenPlugin
             };
             if (form.UseCols) grid["n_cols"] = form.NCols; else grid["step_x"] = form.StepX;
             if (form.Tiers.Count > 0) grid["tiers"] = form.Tiers;
+            // поворот вставки — «как принято в этом чертеже»: мода поворотов
+            // существующих вхождений выбранных определений (фикс 14.07)
+            double standRot = ModeRotation(db, form.StandBlock);
+            double rigelRot = form.RigelBlock.Length > 0 ? ModeRotation(db, form.RigelBlock) : 0;
             var blocks = new Dictionary<string, object>
             {
                 { "stand", new Dictionary<string, object> {
-                    { "name", form.StandBlock }, { "body_w", form.BodyStand } } },
+                    { "name", form.StandBlock }, { "body_w", form.BodyStand },
+                    { "rot", standRot } } },
                 { "rigel", new Dictionary<string, object> {
                     { "name", form.RigelBlock.Length > 0 ? (object)form.RigelBlock : null },
-                    { "body_w", form.BodyRigel } } },
+                    { "body_w", form.BodyRigel }, { "rot", rigelRot } } },
                 { "fill", new Dictionary<string, object> {
                     { "name", form.FillBlock.Length > 0 ? (object)form.FillBlock : null },
                     { "fold", form.Fold } } }
@@ -134,9 +139,9 @@ namespace ABlockGenPlugin
             if (plan == null || !GetBool(plan, "ok"))
             { ed.WriteMessage("\nПлан не построен: " + SafeStr(Get(plan, "error"))); return; }
 
-            // ── 6. вставка вхождений ──
-            int inserted, skipped;
-            try { InsertAll(db, plan, out inserted, out skipped); }
+            // ── 6. вставка вхождений + размеры ──
+            int inserted, skipped, dimsN;
+            try { InsertAll(db, plan, out inserted, out skipped, out dimsN); }
             catch (System.Exception ex)
             { ed.WriteMessage("\nОшибка вставки: " + ex.Message); return; }
 
@@ -145,17 +150,18 @@ namespace ABlockGenPlugin
                             (skipped > 0 ? " (пропущено " + skipped + ")" : "") +
                             (sum != null ? " — стойки " + SafeStr(Get(sum, "stands")) +
                                            ", ригели " + SafeStr(Get(sum, "rigels")) +
-                                           ", заполнения " + SafeStr(Get(sum, "fills")) : "") + ".");
+                                           ", заполнения " + SafeStr(Get(sum, "fills")) : "") +
+                            (dimsN > 0 ? "; размеров " + dimsN : "") + ".");
             var notes = Get(plan, "notes") as IList;
             if (notes != null)
                 foreach (var n in notes) ed.WriteMessage("\n  · " + SafeStr(n));
         }
 
-        // ── вставка плана: одна транзакция = один undo ──
+        // ── вставка плана: одна транзакция = один undo (блоки + размеры) ──
         internal static void InsertAll(Database db, Dictionary<string, object> plan,
-                                      out int inserted, out int skipped)
+                                      out int inserted, out int skipped, out int dimsN)
         {
-            inserted = 0; skipped = 0;
+            inserted = 0; skipped = 0; dimsN = 0;
             var items = Get(plan, "inserts") as IList;
             if (items == null) return;
             using (var tr = db.TransactionManager.StartTransaction())
@@ -218,8 +224,72 @@ namespace ABlockGenPlugin
                         }
                     inserted++;
                 }
+
+                // ── размеры (фидбэк Алексея 14.07): габаритные + межосевые
+                //    цепочки по стойкам и ригелям, RotatedDimension на слое
+                //    «Размеры», стиль — текущий стиль чертежа ──
+                var dims = Get(plan, "dims") as IList;
+                if (dims != null && dims.Count > 0)
+                {
+                    EnsureLayer(db, tr, "Размеры");
+                    foreach (var dObj in dims)
+                    {
+                        var dd = dObj as Dictionary<string, object>;
+                        if (dd == null) continue;
+                        bool vert = SafeStr(Get(dd, "dir")) == "v";
+                        double refc = ToD(Get(dd, "ref"));
+                        double line = ToD(Get(dd, "line"));
+                        var pts = Get(dd, "pts") as IList;
+                        if (pts == null || pts.Count < 2) continue;
+                        for (int i = 0; i + 1 < pts.Count; i++)
+                        {
+                            double a = Convert.ToDouble(pts[i], CultureInfo.InvariantCulture);
+                            double b = Convert.ToDouble(pts[i + 1], CultureInfo.InvariantCulture);
+                            RotatedDimension rd = vert
+                                ? new RotatedDimension(Math.PI / 2.0,
+                                    new Point3d(refc, a, 0), new Point3d(refc, b, 0),
+                                    new Point3d(line, (a + b) / 2.0, 0), null, db.Dimstyle)
+                                : new RotatedDimension(0.0,
+                                    new Point3d(a, refc, 0), new Point3d(b, refc, 0),
+                                    new Point3d((a + b) / 2.0, line, 0), null, db.Dimstyle);
+                            rd.SetDatabaseDefaults();
+                            rd.Layer = "Размеры";
+                            ms.AppendEntity(rd);
+                            tr.AddNewlyCreatedDBObject(rd, true);
+                            dimsN++;
+                        }
+                    }
+                }
                 tr.Commit();
             }
+        }
+
+        // мода поворота существующих вхождений определения в модели (Э1:
+        // образца нет — берём «как принято в этом чертеже»; нет вхождений → 0)
+        internal static double ModeRotation(Database db, string effName)
+        {
+            var counts = new Dictionary<double, int>();
+            using (var tr = db.TransactionManager.StartTransaction())
+            {
+                var bt = (BlockTable)tr.GetObject(db.BlockTableId, OpenMode.ForRead);
+                var ms = (BlockTableRecord)tr.GetObject(
+                    bt[BlockTableRecord.ModelSpace], OpenMode.ForRead);
+                foreach (ObjectId id in ms)
+                {
+                    var br = tr.GetObject(id, OpenMode.ForRead) as BlockReference;
+                    if (br == null) continue;
+                    if (!string.Equals(RecognizeCommand.EffectiveName(tr, br), effName,
+                                       StringComparison.OrdinalIgnoreCase)) continue;
+                    double deg = RecognizeCommand.NormDeg(br.Rotation);
+                    int c;
+                    counts[deg] = counts.TryGetValue(deg, out c) ? c + 1 : 1;
+                }
+                tr.Commit();
+            }
+            double best = 0; int bestC = 0;
+            foreach (var kv in counts)
+                if (kv.Value > bestC) { bestC = kv.Value; best = kv.Key; }
+            return best;
         }
 
         private static void EnsureLayer(Database db, Transaction tr, string name)

@@ -27,6 +27,8 @@ import json
 import math
 import sys
 
+from vitrage_plan import build_dims
+
 EPS = 1.0          # мм: допуск слияния координат АР
 COVER_MIN = 0.5    # доля света пролёта, которую должна покрыть отметка
 
@@ -189,12 +191,20 @@ def recognize(req):
     body_w = float(bs.get("body_w") or 0.0)   # 0/None → вывести из ширин полос АР
     stand_prof = bs.get("prof") or stand_name
     rigel_prof = br.get("prof") or rigel_name
+    # ПОВОРОТ ВСТАВКИ — С ОБРАЗЦА (фикс 14.07, фидбэк Алексея: ригели легли
+    # с 270 вместо 0). Поворот — свойство ОПРЕДЕЛЕНИЯ блока: горизонтально
+    # рисованный ригель (F50.02.03) вставляется с rot=0, вертикально
+    # рисованный (17_06_01 Проба_штапики, F50.01.07 как верхний) — с rot=270.
+    # Точка вставки инвариантна: (левый конец, ось) — доказано «Проба 3».
+    stand_rot = float(bs.get("rot") or 0.0)
+    rigel_rot = float(br.get("rot") or 0.0)
     # Э3-A (решение Дениса 13.07): опциональный образец ВЕРХНЕГО ригеля —
     # ставится на самой верхней отметке В СВЕТУ между телами стоек
     # (эталон «Проба 3»: Р31/Р33 из профиля стойки, 1660/395 при осевых 1710/445)
     bt = blocks.get("rigel_top") or {}
     top_name = bt.get("name")
     top_prof = bt.get("prof") or top_name
+    top_rot = float(bt.get("rot") or 0.0)
 
     params = req.get("params") or {}
     wmin = float(params.get("strip_w_min", 40.0))
@@ -280,7 +290,7 @@ def recognize(req):
         ln = c["y1"] - c["y0"]
         inserts.append({
             "kind": "stand", "block": stand_name, "layer": "RF-стойки",
-            "x": round(ax, 4), "y": round(c["y0"], 4), "rot": 0,
+            "x": round(ax, 4), "y": round(c["y0"], 4), "rot": stand_rot,
             "dyn": {"Длина": round(ln, 4)},
             "attrs": {"ИМЯ": mk_stand((stand_name, _rnd05(ln * 10))),
                       "ПРОФ": stand_prof, "ДЛИНА": fmt_len(ln)},
@@ -304,7 +314,7 @@ def recognize(req):
                 ln = b_in - a_in                 # в свету между телами
                 inserts.append({
                     "kind": "rigel_top", "block": top_name, "layer": "RF-ригеля",
-                    "x": round(a_in, 4), "y": round(r["y"], 4), "rot": 270,
+                    "x": round(a_in, 4), "y": round(r["y"], 4), "rot": top_rot,
                     "dyn": {"Длина": round(ln, 4)},
                     "attrs": {"ИМЯ": mk_rigel((top_name, _rnd05(ln * 10))),
                               "ПРОФ": top_prof, "ДЛИНА": fmt_len(ln)},
@@ -313,7 +323,7 @@ def recognize(req):
                 span = axes[i + 1] - axes[i]     # осевой шаг
                 inserts.append({
                     "kind": "rigel", "block": rigel_name, "layer": "RF-ригеля",
-                    "x": round(axes[i], 4), "y": round(r["y"], 4), "rot": 270,
+                    "x": round(axes[i], 4), "y": round(r["y"], 4), "rot": rigel_rot,
                     "dyn": {"Длина": round(span, 4)},
                     "attrs": {"ИМЯ": mk_rigel((rigel_name, _rnd05(span * 10))),
                               "ПРОФ": rigel_prof, "ДЛИНА": fmt_len(span)},
@@ -325,9 +335,22 @@ def recognize(req):
     if skipped_doors:
         notes.append("порогов под дверями пропущено: %d" % skipped_doors)
 
+    # размеры (фидбэк Алексея 14.07): габаритные + межосевые цепочки;
+    # вертикальная — по осям ФАКТИЧЕСКИ ПОСТАВЛЕННЫХ ригелей (порог двери
+    # в цепочку не попадает), от габарита до габарита
+    dims = []
+    if params.get("dims", True):
+        y_lo = min(c["y0"] for c in chains)
+        y_hi = max(c["y1"] for c in chains)
+        rail_used = sorted({round(i["y"], 1) for i in inserts
+                            if i["kind"] in ("rigel", "rigel_top")})
+        off = max(300.0, 8 * body_w)
+        dims = build_dims(axes, body_w, y_lo, y_hi, rail_used, off)
+
     return {
         "ok": True,
         "inserts": inserts,
+        "dims": dims,
         "summary": {"stands": len(axes), "rigels": n_rig,
                     "rails": len(rails),
                     "axes_x": [round(a, 2) for a in axes]},

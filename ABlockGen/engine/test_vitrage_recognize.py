@@ -121,8 +121,9 @@ ok(len(low) == 2 and near(low[0]["x"], 27108) and near(low[1]["x"], 29263) and
 # средний пролёт: длина = осевой шаг 1710
 mid = [r for r in rg if near(r["x"], 27553)]
 ok(len(mid) == 3 and all(r["dyn"]["Длина"] == 1710.0 for r in mid), "R5: центр 1710")
-ok(all(r["rot"] == 270 and r["layer"] == "RF-ригеля" and
-       r["attrs"]["ПРОФ"] == "F50.02.03" for r in rg), "R5: контракт ригелей")
+ok(all(r["rot"] == 0 and r["layer"] == "RF-ригеля" and
+       r["attrs"]["ПРОФ"] == "F50.02.03" for r in rg),
+   "R5: контракт ригелей (rot=0 — дефолт с 14.07, поворот приходит от образца)")
 # марки по типоразмерам: 445 и 1710 → две марки
 ok(len({r["attrs"]["ИМЯ"] for r in rg}) == 2, "R5: марки ригелей")
 ok(plan["summary"]["stands"] == 4 and plan["summary"]["rigels"] == 11, "R5: summary")
@@ -199,6 +200,30 @@ ok(all(s["attrs"]["ДЛИНА"] == "4185.00" for s in st11), "R11: длины с
 ok(not any(near(r["y"], 31489.8) for r in rg11), "R11: порог пропущен и на линиях")
 ok(any("полос собрано из отрезков" in n for n in p11["notes"]), "R11: note")
 
+# ── R12: rot с образца (фикс 14.07 — ригели Алексея легли с 270 вместо 0) ──
+req12 = {"strips": STRIPS, "panels": PANELS,
+         "blocks": {"stand": {"name": "S", "rot": 0},
+                    "rigel": {"name": "R", "rot": 0},
+                    "rigel_top": {"name": "T", "rot": 270}}}
+p12 = recognize(req12)
+ok(all(i["rot"] == 0 for i in p12["inserts"] if i["kind"] in ("stand", "rigel")),
+   "R12: стойки/ригели rot=0")
+ok(all(i["rot"] == 270 for i in p12["inserts"] if i["kind"] == "rigel_top"),
+   "R12: верхние rot=270 (вертикальное определение)")
+
+# ── R13: dims — вертикальная цепочка ФАКТИЧЕСКИХ ригелей (без порога) ──
+dm13 = p12["dims"]
+ok(len(dm13) == 4, f"R13: dims {len(dm13)} != 4")
+v13 = [d for d in dm13 if d["dir"] == "v" and len(d["pts"]) > 2][0]
+segs = [round(b - a, 1) for a, b in zip(v13["pts"], v13["pts"][1:])]
+ok(segs == [300.0, 2400.0, 900.0, 300.0, 285.0],
+   f"R13: цепочка от габарита по осям {segs} (порога 250 нет)")
+h13 = [d for d in dm13 if d["dir"] == "h" and len(d["pts"]) > 2][0]
+ok([round(b - a, 1) for a, b in zip(h13["pts"], h13["pts"][1:])] == [445.0, 1710.0, 445.0],
+   "R13: межосевые стоек 445/1710/445")
+o13 = [d for d in dm13 if d["dir"] == "h" and len(d["pts"]) == 2][0]
+ok(near(o13["pts"][1] - o13["pts"][0], 2650.0), f"R13: габарит ширины {o13}")
+
 print(f"vitrage_recognize: {PASS} проверок OK")
 
 # ── D2: живой файл «Проба 3» — план обязан совпасть с ручной конструкцией ──
@@ -252,16 +277,17 @@ if DXF:
                                "x1": bbx[2], "y1": bbx[3]})
             elif in_zone(bbx, GRN):
                 at = {a.dxf.tag: a.dxf.text for a in e.attribs}
-                rec = (bbx, at, e.dxf.layer)
+                rec = (bbx, at, e.dxf.layer, round(e.dxf.rotation, 1) % 360)
                 if e.dxf.layer == "RF-стойки": fact_st.append(rec)
                 elif e.dxf.layer == "RF-ригеля": fact_rg.append(rec)
 
         # с rigel_top (Э3-A) план обязан воспроизвести эталон ЦЕЛИКОМ:
-        # верхний ряд — Р31/Р33 в свету, нижние — осевые. Точный матч ВСЕХ.
+        # верхний ряд — Р31/Р33 в свету rot=270, нижние — осевые rot=0
+        # (повороты — факт эталона Алексея, 14.07). Точный матч ВСЕХ.
         plan = recognize({"strips": strips, "panels": panels,
-                          "blocks": {"stand": {"name": "S"},     # body_w — автовывод
-                                     "rigel": {"name": "R"},
-                                     "rigel_top": {"name": "T"}}})
+                          "blocks": {"stand": {"name": "S", "rot": 0},
+                                     "rigel": {"name": "R", "rot": 0},
+                                     "rigel_top": {"name": "T", "rot": 270}}})
         st = sorted((i for i in plan["inserts"] if i["kind"] == "stand"),
                     key=lambda z: z["x"])
         rg = [i for i in plan["inserts"] if i["kind"] in ("rigel", "rigel_top")]
@@ -271,13 +297,14 @@ if DXF:
         # смещение зон — по первой стойке (центр bbox эталона = ось)
         D = (fact_st[0][0][0] + fact_st[0][0][2]) / 2 - st[0]["x"]
         d = 0
-        for s, (fb, fa, _) in zip(st, fact_st):
+        for s, (fb, fa, _, frot) in zip(st, fact_st):
             assert near(s["x"] + D, (fb[0] + fb[2]) / 2, 0.5), \
                 f"D2: ось {s['x'] + D:.2f} vs {(fb[0]+fb[2])/2:.2f}"
             assert near(s["y"], fb[1], 0.5), f"D2: низ стойки {s['y']} vs {fb[1]}"
             assert fa["ДЛИНА"] == s["attrs"]["ДЛИНА"], \
                 f"D2: ДЛИНА {fa['ДЛИНА']} != {s['attrs']['ДЛИНА']}"
-            d += 3
+            assert s["rot"] == frot, f"D2: rot стойки {s['rot']} != {frot}"
+            d += 4
         matched = 0
         for r in rg:
             # и осевые (x = ось левой стойки), и верхние в свету (x = ось+25):
@@ -288,13 +315,15 @@ if DXF:
             assert len(hit) == 1, f"D2: ригель {r['x']:.1f},{r['y']:.1f} не найден в эталоне"
             assert hit[0][1]["ДЛИНА"] == r["attrs"]["ДЛИНА"], \
                 f"D2: ДЛИНА {hit[0][1]['ДЛИНА']} != {r['attrs']['ДЛИНА']} ({r['kind']})"
-            matched += 2
+            assert r["rot"] == hit[0][3], \
+                f"D2: rot {r['rot']} != {hit[0][3]} ({r['kind']} {r['attrs']['ДЛИНА']})"
+            matched += 3
         assert len(rg) == len(fact_rg) == 11, \
             f"D2: ригелей план {len(rg)} / факт {len(fact_rg)}"
         d += matched
         print(f"vitrage_recognize D2-эталон: {d} сверок OK — план с rigel_top "
-              f"воспроизводит ручной каркас Алексея ПОЛНОСТЬЮ (11 ригелей "
-              f"включая верхние в свету, байт-в-байт по ДЛИНА)")
+              f"воспроизводит ручной каркас Алексея ПОЛНОСТЬЮ (позиции, ДЛИНА "
+              f"байт-в-байт И ПОВОРОТЫ: ригели 0, верхние 270, как в его эталоне)")
     else:
         print("vitrage_recognize D2: ezdxf нет — пропуск")
 else:

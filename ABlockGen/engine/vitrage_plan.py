@@ -48,6 +48,30 @@ def size_attr(w_clear, h_clear, fold):
     return f"{_rnd(w_clear) + int(fold)}{X_CYR}{_rnd(h_clear) + int(fold)}"
 
 
+def build_dims(axes, body_w, y_lo, y_hi, rail_ys, off):
+    """Размерные цепочки (фидбэк Алексея 14.07): габаритные + межосевые
+    по стойкам и ригелям; вертикальная цепочка — ОТ ГАБАРИТА (низ стойки)
+    по осям ригелей до габарита (верх): 300/2400/900/300/285 на «Проба 3».
+    Возвращает dims[]: {"dir":"h"|"v", "ref":…, "line":…, "pts":[…]} —
+    C# строит RotatedDimension по последовательным парам pts; ref —
+    координата привязки по второй оси, line — положение размерной линии."""
+    dims = []
+    x_out0 = axes[0] - body_w / 2.0
+    x_out1 = axes[-1] + body_w / 2.0
+    if len(axes) >= 2:
+        dims.append({"dir": "h", "ref": y_lo, "line": y_lo - off,
+                     "pts": [round(a, 4) for a in axes]})
+    dims.append({"dir": "h", "ref": y_lo, "line": y_lo - 2 * off,
+                 "pts": [round(x_out0, 4), round(x_out1, 4)]})
+    v_pts = [y_lo] + sorted(rail_ys) + [y_hi]
+    if len(v_pts) > 2:
+        dims.append({"dir": "v", "ref": x_out1, "line": x_out1 + off,
+                     "pts": [round(v, 4) for v in v_pts]})
+    dims.append({"dir": "v", "ref": x_out1, "line": x_out1 + 2 * off,
+                 "pts": [round(y_lo, 4), round(y_hi, 4)]})
+    return dims
+
+
 # ───────────────────────── сетка ─────────────────────────
 
 def stand_axes(x0, x1, body_w, step_x=None, n_cols=None):
@@ -144,6 +168,11 @@ def build_plan(req):
     rigel_w = float(br.get("body_w", 45.6))
     fold = float(bf.get("fold", 15))
     min_fill = float(bf.get("min_fill", MIN_FILL_DEFAULT))
+    # поворот вставки — свойство ОПРЕДЕЛЕНИЯ блока (фикс 14.07, см.
+    # vitrage_recognize): C# передаёт моду поворотов существующих вхождений
+    # этого определения в чертеже; дефолт 0 (горизонтально рисованный ригель)
+    stand_rot = float(bs.get("rot") or 0.0)
+    rigel_rot = float(br.get("rot") or 0.0)
 
     marks = req.get("marks") or {}
     m_stand = marks.get("stand", "С{n}")
@@ -179,7 +208,7 @@ def build_plan(req):
         for (sy, ln) in segs:
             inserts.append({
                 "kind": "stand", "block": stand_name, "layer": "RF-стойки",
-                "x": round(ax, 4), "y": round(sy, 4), "rot": 0,
+                "x": round(ax, 4), "y": round(sy, 4), "rot": stand_rot,
                 "dyn": {"Длина": round(ln, 4)},
                 "attrs": {"ИМЯ": mk_stand((stand_name, _rnd(ln * 10))),
                           "ПРОФ": stand_name, "ДЛИНА": fmt_len(ln)},
@@ -193,7 +222,7 @@ def build_plan(req):
             span = axes[i + 1] - axes[i]
             inserts.append({
                 "kind": "rigel", "block": rigel_name, "layer": "RF-ригеля",
-                "x": round(axes[i], 4), "y": round(ay, 4), "rot": 270,
+                "x": round(axes[i], 4), "y": round(ay, 4), "rot": rigel_rot,
                 "dyn": {"Длина": round(span, 4)},
                 "attrs": {"ИМЯ": mk_rigel((rigel_name, _rnd(span * 10))),
                           "ПРОФ": rigel_name, "ДЛИНА": fmt_len(span)},
@@ -222,12 +251,20 @@ def build_plan(req):
     else:
         notes.append("blocks.fill.name не задан — заполнения не генерируются")
 
+    # размеры (фидбэк Алексея 14.07): габариты + межосевые цепочки
+    dims = []
+    if (req.get("params") or {}).get("dims", True):
+        off = max(300.0, 8 * body_w)
+        dims = build_dims(axes, body_w, y0, y1,
+                          sorted({round(a, 1) for a in rail_axes}), off)
+
     n_stand = len(axes) * len(segs)
     n_rigel = len(rail_axes) * (len(axes) - 1)
     return {
         "ok": True,
         "opening": {"x0": x0, "y0": y0, "x1": x1, "y1": y1, "w": W, "h": H},
         "inserts": inserts,
+        "dims": dims,
         "summary": {"stands": n_stand, "rigels": n_rigel, "fills": n_fills,
                     "axes_x": [round(a, 2) for a in axes]},
         "notes": notes,
