@@ -254,7 +254,7 @@ def build_plan(req):
     # размеры (фидбэк Алексея 14.07): габариты + межосевые цепочки
     dims = []
     if (req.get("params") or {}).get("dims", True):
-        off = max(300.0, 8 * body_w)
+        off = max(150.0, 4 * body_w)   # отступ вдвое меньше (фидбэк Алексея 15.07b)
         dims = build_dims(axes, body_w, y0, y1,
                           sorted({round(a, 1) for a in rail_axes}), off)
 

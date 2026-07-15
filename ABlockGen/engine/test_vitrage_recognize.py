@@ -227,7 +227,7 @@ o13 = [d for d in dm13 if d["dir"] == "h" and len(d["pts"]) == 2][0]
 ok(near(o13["pts"][1] - o13["pts"][0], 2650.0), f"R13: габарит ширины {o13}")
 
 # ── R14: «Образец 2» (15.07, АР-импровизация №2, Revit-вставки): рамки
-#    обрамления, импосты 150/200 (wmax 210), body_w с образца, оси крайних
+#    обрамления, импосты 150/200 (wmax 210), тело = унификация 50, оси крайних
 #    по внутренней грани, клэмп обвязки к рамке, дверь на подставке ──
 V14 = [(0, 0, 200, 2450), (0, 2450, 200, 3470),          # левый 200
        (865, 0, 935, 2450), (865, 2450, 935, 3470),      # внутр. 70
@@ -250,8 +250,8 @@ for x0, y0, x1, y1 in ((0, 0, 3100, 3470), (160, 136, 3010, 3470)):
              {"x0": x0, "y0": y1, "x1": x1, "y1": y1}]
 FR14.append({"x0": 3010, "y0": 136, "x1": 3300, "y1": 136})   # высотная отметка
 p14 = recognize({"strips": S14, "segments": FR14, "panels": P14,
-                 "blocks": {"stand": {"name": "S", "body_w": 50.0},
-                            "rigel": {"name": "R"}}})
+                 "blocks": {"stand": {"name": "S"}, "rigel": {"name": "R"}}})
+                 # body_w не задан: унификация min(50, полосы 70..200) = 50
 st14 = sorted((i for i in p14["inserts"] if i["kind"] == "stand"),
               key=lambda z: z["x"])
 ok(len(st14) == 4, f"R14: стоек {len(st14)} != 4")
@@ -291,8 +291,8 @@ _seg15(2300, 150, 2300, 2000); _seg15(2350, 150, 2350, 2000)  # дверная �
 _seg15(0, -600, 0, -110); _seg15(100, -600, 100, -110)        # выноски вниз
                                     # (зазор до «ушек» −75, как в Образце 1)
 p15 = recognize({"strips": [], "segments": S15,
-                 "blocks": {"stand": {"name": "S", "body_w": 50.0},
-                            "rigel": {"name": "R"}}})
+                 "blocks": {"stand": {"name": "S"}, "rigel": {"name": "R"}}})
+                 # body_w не задан: унификация min(50, полосы 100) = 50
 st15 = sorted((i for i in p15["inserts"] if i["kind"] == "stand"),
               key=lambda z: z["x"])
 ok(len(st15) == 3, f"R15: стоек {len(st15)} != 3 (коробка 50 мм — не стойка)")
@@ -456,8 +456,7 @@ def _d3_run(path, allow_top_dy):   # allow_top_dy сохранён для сиг
             segments.append({"x0": e.dxf.start.x, "y0": e.dxf.start.y,
                              "x1": e.dxf.end.x, "y1": e.dxf.end.y})
     plan = recognize({"strips": strips, "segments": segments, "panels": panels,
-                      "blocks": {"stand": {"name": "S", "rot": 0,
-                                           "body_w": 50.0},
+                      "blocks": {"stand": {"name": "S", "rot": 0},
                                  "rigel": {"name": "R", "rot": 0}}})
     st = sorted(((i["x"], i["y"], i["attrs"]["ДЛИНА"])
                  for i in plan["inserts"] if i["kind"] == "stand"))
