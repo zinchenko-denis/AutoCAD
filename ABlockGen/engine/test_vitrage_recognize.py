@@ -187,7 +187,9 @@ for s in STRIPS[:len(STRIPS) - 3]:      # без значков/стрелки �
              {"x0": x0, "y0": y0, "x1": x1, "y1": y0},   # нижний торец
              {"x0": x0, "y0": y1, "x1": x1, "y1": y1}]   # верхний
 built = strips_from_segments(SEGS, 40, 120)
-ok(len(built) >= len(STRIPS) - 3, f"R11: собрано полос {len(built)}")
+# 15.07 (union-сборка): сегменты колонны сливаются в ОДНУ полосу на цепочку —
+# полос меньше, чем в STRIPS-литерале, но покрытие то же: 4 колонны + отметки
+ok(len(built) >= 16, f"R11: собрано полос {len(built)}")
 p11 = recognize({"strips": [], "segments": SEGS, "panels": PANELS,
                  "blocks": {"stand": {"name": "S"}, "rigel": {"name": "R"}}})
 st11 = sorted((i for i in p11["inserts"] if i["kind"] == "stand"), key=lambda z: z["x"])
@@ -223,6 +225,88 @@ ok([round(b - a, 1) for a, b in zip(h13["pts"], h13["pts"][1:])] == [445.0, 1710
    "R13: межосевые стоек 445/1710/445")
 o13 = [d for d in dm13 if d["dir"] == "h" and len(d["pts"]) == 2][0]
 ok(near(o13["pts"][1] - o13["pts"][0], 2650.0), f"R13: габарит ширины {o13}")
+
+# ── R14: «Образец 2» (15.07, АР-импровизация №2, Revit-вставки): рамки
+#    обрамления, импосты 150/200 (wmax 210), body_w с образца, оси крайних
+#    по внутренней грани, клэмп обвязки к рамке, дверь на подставке ──
+V14 = [(0, 0, 200, 2450), (0, 2450, 200, 3470),          # левый 200
+       (865, 0, 935, 2450), (865, 2450, 935, 3470),      # внутр. 70
+       (2515, 0, 2585, 2450), (2515, 2450, 2585, 3470),  # внутр. 70
+       (2950, 0, 3100, 2450), (2950, 2450, 3100, 3470)]  # правый 150
+H14 = [(200, 0, 865, 200), (2585, 0, 2950, 200),         # низ 200
+       (935, 0, 2515, 150),                              # низ под дверью 150
+       (200, 2415, 865, 2485), (935, 2415, 2515, 2485),
+       (2585, 2415, 2950, 2485),                         # середина 70
+       (200, 3370, 865, 3470), (935, 3370, 2515, 3470),
+       (2585, 3370, 2950, 3470)]                         # верх 100
+S14 = [bb(*b) for b in V14 + H14]
+P14 = [{"name": "ADSK_Двери_Витражная_Двупольная_Ал",    # «Двери» ≠ «дверь»!
+        "x0": 935, "y0": 150, "x1": 2515, "y1": 2415}]
+FR14 = []                                                 # рамки обрамления
+for x0, y0, x1, y1 in ((0, 0, 3100, 3470), (160, 136, 3010, 3470)):
+    FR14 += [{"x0": x0, "y0": y0, "x1": x0, "y1": y1},
+             {"x0": x1, "y0": y0, "x1": x1, "y1": y1},
+             {"x0": x0, "y0": y0, "x1": x1, "y1": y0},
+             {"x0": x0, "y0": y1, "x1": x1, "y1": y1}]
+FR14.append({"x0": 3010, "y0": 136, "x1": 3300, "y1": 136})   # высотная отметка
+p14 = recognize({"strips": S14, "segments": FR14, "panels": P14,
+                 "blocks": {"stand": {"name": "S", "body_w": 50.0},
+                            "rigel": {"name": "R"}}})
+st14 = sorted((i for i in p14["inserts"] if i["kind"] == "stand"),
+              key=lambda z: z["x"])
+ok(len(st14) == 4, f"R14: стоек {len(st14)} != 4")
+for got, exp in zip((s["x"] for s in st14), (175.0, 900.0, 2550.0, 2975.0)):
+    ok(near(got, exp), f"R14: ось {got} != {exp} (грань∓25 у крайних, центры внутр.)")
+ok(all(s["y"] == 136.0 and s["attrs"]["ДЛИНА"] == "3334.00" for s in st14),
+   "R14: стойки по внутренней рамке (y=136, 3334), не по графике (3470)")
+rg14 = [i for i in p14["inserts"] if i["kind"] == "rigel"]
+ys14 = sorted({round(r["y"], 1) for r in rg14})
+ok(ys14 == [161.0, 2450.0, 3420.0],
+   f"R14: отметки {ys14} (низ 161 = рамка+25 — клэмп; 2450/3420 — оси полос)")
+low14 = sorted(r["x"] for r in rg14 if near(r["y"], 161.0))
+ok(low14 == [175.0, 2550.0],
+   f"R14: низ {low14} — только пролёты 1/3 (дверь на подставке глушит порог)")
+ok(len(rg14) == 8, f"R14: ригелей {len(rg14)} != 8")
+ok(any("обрамление АР" in n for n in p14["notes"]) and
+   any("обвязка вне обрамления" in n for n in p14["notes"]), "R14: notes рамки")
+
+# ── R15: «Образец 1» (15.07, АР-импровизация №1, голые линии): union
+#    дроблёных контуров, фантомы дверной коробки, хвосты выносок, габарит
+#    стоек сквозь обвязку, равноширинные крайние → оси по центрам ──
+S15 = []
+def _seg15(x0, y0, x1, y1): S15.append({"x0": x0, "y0": y0, "x1": x1, "y1": y1})
+_seg15(0, -75, 0, 2925)                     # левая грань-линия с «ушками»
+_seg15(100, 80, 100, 2100); _seg15(100, 2180, 100, 2750)   # правая грань дробно
+_seg15(1670, 80, 1670, 2100); _seg15(1670, 2180, 1670, 2750)
+_seg15(1770, 80, 1770, 2100); _seg15(1770, 2180, 1770, 2750)
+_seg15(3200, 80, 3200, 2100); _seg15(3200, 2180, 3200, 2750)
+_seg15(3300, -75, 3300, 2925)               # правая крайняя полная
+_seg15(0, 0, 3300, 0); _seg15(0, 2850, 3300, 2850)         # низ/верх габарита
+_seg15(100, 80, 1670, 80)                                  # верх нижнего ригеля
+_seg15(100, 2100, 1670, 2100); _seg15(1770, 2100, 3200, 2100)
+_seg15(100, 2180, 1670, 2180); _seg15(1770, 2180, 3200, 2180)
+_seg15(100, 2750, 1670, 2750); _seg15(1770, 2750, 3200, 2750)
+_seg15(2300, 150, 2300, 2000); _seg15(2350, 150, 2350, 2000)  # дверная коробка
+_seg15(0, -600, 0, -110); _seg15(100, -600, 100, -110)        # выноски вниз
+                                    # (зазор до «ушек» −75, как в Образце 1)
+p15 = recognize({"strips": [], "segments": S15,
+                 "blocks": {"stand": {"name": "S", "body_w": 50.0},
+                            "rigel": {"name": "R"}}})
+st15 = sorted((i for i in p15["inserts"] if i["kind"] == "stand"),
+              key=lambda z: z["x"])
+ok(len(st15) == 3, f"R15: стоек {len(st15)} != 3 (коробка 50 мм — не стойка)")
+for got, exp in zip((s["x"] for s in st15), (50.0, 1720.0, 3250.0)):
+    ok(near(got, exp), f"R15: ось {got} != {exp} (равноширинные крайние → центр)")
+ok(all(s["y"] == 0.0 and s["attrs"]["ДЛИНА"] == "2850.00" for s in st15),
+   f"R15: стойки 0..2850 сквозь обвязку (факт: {st15[0]['y']}, "
+   f"{st15[0]['attrs']['ДЛИНА']})")
+rg15 = [i for i in p15["inserts"] if i["kind"] == "rigel"]
+ys15 = sorted({round(r["y"], 1) for r in rg15})
+ok(ys15 == [40.0, 2140.0, 2800.0], f"R15: отметки {ys15} — оси пар линий")
+ok(len([r for r in rg15 if near(r["y"], 40.0)]) == 1,
+   "R15: нижний ригель только в пролёте 1 (в пролёте 2 линии порога нет)")
+ok(any("отброшена" in n for n in p15["notes"]), "R15: note про фантом коробки")
+ok(any("хвосты выносок" in n for n in p15["notes"]), "R15: note про выноски")
 
 print(f"vitrage_recognize: {PASS} проверок OK")
 
@@ -328,3 +412,92 @@ if DXF:
         print("vitrage_recognize D2: ezdxf нет — пропуск")
 else:
     print("vitrage_recognize D2: Проба_3.dxf недоступен — пропуск")
+
+# ── D3: живые «Образец 1/2» (15.07, АР-импровизации других архитекторов) —
+#    план сверяется с ручным RF-эталоном Алексея из ТОГО ЖЕ файла.
+#    Образец 1 — полное совпадение; Образец 2 — всё, кроме ВЕРХНЕЙ обвязки:
+#    её Алексей прижал к верху рамки (−25 от нашей оси полосы) — конвенция
+#    открыта (вопрос ему), фиксируем расхождение ТОЧНО −25. ──
+D3_DIRS = ["/home/claude/atspec-testdata/dxf/ar", "/home/claude/ar_samples"]
+
+
+def _d3_run(path, allow_top_dy):
+    import ezdxf
+    from ezdxf import bbox as ezbbox
+    skip = {"TEXT", "MTEXT", "ATTDEF", "DIMENSION", "HATCH"}
+    doc = ezdxf.readfile(path)
+    strips, panels, segments, f_st, f_rg = [], [], [], [], []
+    for e in doc.modelspace():
+        t = e.dxftype()
+        if t == "INSERT":
+            if e.dxf.layer.startswith("RF-"):
+                at = {a.dxf.tag: a.dxf.text for a in e.attribs}
+                rec = (e.dxf.insert.x, e.dxf.insert.y, at.get("ДЛИНА"))
+                (f_st if e.dxf.layer == "RF-стойки" else f_rg).append(rec)
+                continue
+            pts = [ezbbox.extents([v], fast=True) for v in e.virtual_entities()
+                   if v.dxftype() not in skip]
+            pts = [b for b in pts if b.has_data]
+            if not pts:
+                continue
+            bx = {"x0": min(b.extmin.x for b in pts),
+                  "y0": min(b.extmin.y for b in pts),
+                  "x1": max(b.extmax.x for b in pts),
+                  "y1": max(b.extmax.y for b in pts)}
+            strips.append(dict(bx))
+            p = dict(bx); p["name"] = e.dxf.name; panels.append(p)
+        elif t == "LINE":
+            segments.append({"x0": e.dxf.start.x, "y0": e.dxf.start.y,
+                             "x1": e.dxf.end.x, "y1": e.dxf.end.y})
+    plan = recognize({"strips": strips, "segments": segments, "panels": panels,
+                      "blocks": {"stand": {"name": "S", "rot": 0,
+                                           "body_w": 50.0},
+                                 "rigel": {"name": "R", "rot": 0}}})
+    st = sorted(((i["x"], i["y"], i["attrs"]["ДЛИНА"])
+                 for i in plan["inserts"] if i["kind"] == "stand"))
+    rg = sorted(((i["x"], i["y"], i["attrs"]["ДЛИНА"])
+                 for i in plan["inserts"] if i["kind"].startswith("rigel")),
+                key=lambda z: (round(z[1], 1), z[0]))
+    f_st.sort(); f_rg.sort(key=lambda z: (round(z[1], 1), z[0]))
+    assert len(st) == len(f_st), f"D3 {path}: стоек {len(st)}/{len(f_st)}"
+    assert len(rg) == len(f_rg), f"D3 {path}: ригелей {len(rg)}/{len(f_rg)}"
+    D = f_st[0][0] - st[0][0]
+    n = 0
+    for a, b in zip(st, f_st):
+        assert abs(a[0] + D - b[0]) <= 0.5 and abs(a[1] - b[1]) <= 0.5 \
+            and a[2] == b[2], f"D3 {path}: стойка {a} vs {b}"
+        n += 3
+    top_y = max(round(a[1], 1) for a in rg)
+    for a, b in zip(rg, f_rg):
+        dy = b[1] - a[1]
+        y_ok = (abs(dy) <= 0.5 or
+                (allow_top_dy and round(a[1], 1) == top_y and near(dy, 25.0)))
+        assert abs(a[0] + D - b[0]) <= 0.5 and y_ok and a[2] == b[2], \
+            f"D3 {path}: ригель {a} vs {b} (dy={dy:+.1f})"
+        n += 3
+    return n
+
+
+_d3_total = 0
+_d3_files = 0
+try:
+    import ezdxf  # noqa: F401
+    _have_ezdxf = True
+except ImportError:
+    _have_ezdxf = False
+if _have_ezdxf:
+    for _i, _top in ((1, False), (2, True)):
+        _p = next((os.path.join(d, "Образец_%d.dxf" % _i) for d in D3_DIRS
+                   if os.path.exists(os.path.join(d, "Образец_%d.dxf" % _i))),
+                  None)
+        if _p:
+            _d3_total += _d3_run(_p, _top)
+            _d3_files += 1
+    if _d3_files:
+        print("vitrage_recognize D3-эталоны: %d сверок OK по %d образцам "
+              "(Образец 1 — полный матч; Образец 2 — верхняя обвязка "
+              "эталона на −25, конвенция открыта)" % (_d3_total, _d3_files))
+    else:
+        print("vitrage_recognize D3: Образцы недоступны — пропуск")
+else:
+    print("vitrage_recognize D3: ezdxf нет — пропуск")

@@ -7,13 +7,20 @@
 Выход — ТОТ ЖЕ формат плана, что у vitrage_plan (Э1): inserts[] с
         block/layer/x/y/rot/dyn/attrs — C#-вставка общая.
 
-Правила (доказаны файлом «Проба 3.dxf», разбор 13.07 — docs/CONTRACT.md §Э3):
-  1. Вертикальные полосы толщиной strip_w (40..120) кластеризуются по
-     X-интервалу и сливаются по Y в цепочку → СТОЙКА на всю высоту цепочки
+Правила (доказаны «Проба 3.dxf» 13.07 + «Образец 1/2.dxf» 15.07 —
+docs/CONTRACT.md §Э3):
+  1. Вертикальные полосы толщиной strip_w (40..210; Revit-импосты до 200)
+     кластеризуются по X-интервалу и сливаются по Y в цепочку → СТОЙКА
      (АР рисует стойку сегментами между ригелями: 250+50+2400+900+300+285=4185).
+     При ≥2 отметках стойка тянется сквозь обвязку до общего габарита;
+     РАМКА ОБРАМЛЕНИЯ АР (замкнутый прямоугольник, охватывающий ≥50% полос)
+     жёстко задаёт низ/верх каркаса (Образец 2: 3334 при графике 3470) и
+     исключается из полос; сегментные цепочки, не несущие ≥2 отметок, —
+     фантомы (дверные коробки, выноски) и отбрасываются.
   2. Ось стойки: средняя полоса (w≈body_w) → центр; КРАЙНЯЯ полоса шире
-     body_w+5 («50мм + 25мм зазор» к откосу) → тело body_w прижато к
-     ВНУТРЕННЕЙ стороне: ось = внутренняя грань ∓ body_w/2.
+     ТИПИЧНОЙ ВНУТРЕННЕЙ +5 (фолбэк body_w+5; «50мм + 25мм зазор» к откосу)
+     → тело body_w прижато к ВНУТРЕННЕЙ стороне: ось = грань ∓ body_w/2;
+     body_w лучше слать с образца блока (C#), иначе выводится из АР.
   3. Горизонтальные полосы группируются по оси Y → ОТМЕТКА ригелей;
      ригель ставится в пролёте, если полосы отметки покрывают >50% его света.
   4. ДВЕРЬ (панель с именем под door_pat): в перекрытых ею пролётах
@@ -44,59 +51,68 @@ def fmt_len(v):
 # ─────────────── классификация полос ───────────────
 
 def classify_strips(strips, wmin, wmax):
-    """→ (verticals, horizontals, cubes): списки bbox-кортежей (x0,y0,x1,y1)."""
+    """→ (verticals, horizontals, cubes): списки bbox-кортежей
+    (x0,y0,x1,y1,seg); seg=1 — полоса собрана из отрезков (15.07)."""
     vert, horz, cube = [], [], []
     for s in strips:
         x0, y0, x1, y1 = (float(s["x0"]), float(s["y0"]),
                           float(s["x1"]), float(s["y1"]))
+        sg = 1 if s.get("seg") else 0
         if x1 < x0: x0, x1 = x1, x0
         if y1 < y0: y0, y1 = y1, y0
         w, h = x1 - x0, y1 - y0
         win = wmin <= w <= wmax
         hin = wmin <= h <= wmax
         if win and hin:
-            cube.append((x0, y0, x1, y1))       # стыковой кубик ~50×50
+            cube.append((x0, y0, x1, y1, sg))   # стыковой кубик ~50×50
         elif win and h > w:
-            vert.append((x0, y0, x1, y1))
+            vert.append((x0, y0, x1, y1, sg))
         elif hin and w > h:
-            horz.append((x0, y0, x1, y1))
+            horz.append((x0, y0, x1, y1, sg))
         # остальное (значки, стрелки, крупные панели) — не полосы, мимо
     return vert, horz, cube
 
 
 def chain_verticals(vert, cube):
     """Группировка вертикалей по X-интервалу (±EPS), слияние Y с кубиками.
-    → список {x0,x1,y0,y1,gaps} по возрастанию центра X."""
+    → список {x0,x1,y0,y1,gaps,pieces,from_seg} по возрастанию центра X;
+    from_seg — ВСЕ полосы цепочки собраны из отрезков (кандидат в фантомы)."""
     groups = []
     for b in vert:
         for g in groups:
             if abs(g["x0"] - b[0]) <= EPS and abs(g["x1"] - b[2]) <= EPS:
-                g["seg"].append((b[1], b[3])); break
+                g["seg"].append((b[1], b[3]))
+                g["from_seg"] = g["from_seg"] and bool(b[4]); break
         else:
-            groups.append({"x0": b[0], "x1": b[2], "seg": [(b[1], b[3])]})
+            groups.append({"x0": b[0], "x1": b[2], "seg": [(b[1], b[3])],
+                           "from_seg": bool(b[4])})
     for b in cube:  # кубики докидываются ТОЛЬКО в существующие X-группы
         for g in groups:
             if abs(g["x0"] - b[0]) <= EPS and abs(g["x1"] - b[2]) <= EPS:
-                g["seg"].append((b[1], b[3])); break
+                g["seg"].append((b[1], b[3]))
+                g["from_seg"] = g["from_seg"] and bool(b[4]); break
     out = []
     for g in groups:
-        seg = sorted(g["seg"])
-        y0, y1 = seg[0][0], seg[0][1]
-        gaps = []
-        for a, b in seg[1:]:
-            if a > y1 + EPS:
-                gaps.append((y1, a))
-            y1 = max(y1, b)
+        pieces = _merge_ivs(g["seg"])
+        y0, y1 = pieces[0][0], pieces[-1][1]
+        gaps = [(pieces[k][1], pieces[k + 1][0]) for k in range(len(pieces) - 1)]
         out.append({"x0": g["x0"], "x1": g["x1"], "y0": y0, "y1": y1,
-                    "gaps": gaps})
+                    "gaps": gaps, "pieces": pieces, "from_seg": g["from_seg"]})
     out.sort(key=lambda z: (z["x0"] + z["x1"]) / 2.0)
     return out
 
 
-def stand_axis(chain, body_w, is_left_edge, is_right_edge):
-    """Ось стойки по полосе цепочки (правило крайних: тело изнутри)."""
+def stand_axis(chain, body_w, is_left_edge, is_right_edge, typ_inner=0.0):
+    """Ось стойки по полосе цепочки (правило крайних: тело изнутри).
+    Крайняя полоса «широкая» (тело + зазор к откосу) сравнением с ТИПИЧНОЙ
+    шириной ВНУТРЕННИХ полос (15.07, Образец 1: все полосы 100 при теле 50 —
+    крайние НЕ шире внутренних → оси по центрам, как строит Алексей;
+    Образец 2/Проба 3: крайние 200/150/75 шире внутренних 70/50 → тело
+    прижато к внутренней грани). Без внутренних (2 стойки) — старый порог
+    body_w."""
     w = chain["x1"] - chain["x0"]
-    if w > body_w + 5.0:
+    ref = typ_inner if typ_inner > 0 else body_w
+    if w > ref + 5.0:
         if is_left_edge:
             return chain["x1"] - body_w / 2.0      # зазор снаружи (слева)
         if is_right_edge:
@@ -133,40 +149,113 @@ def covered(spans, a, b, min_frac):
     return total >= (b - a) * min_frac
 
 
-def strips_from_segments(segments, wmin, wmax):
-    """Э3-E (решение Дениса 13.07: закладывать заранее): сборка полос из
-    ГОЛЫХ ОТРЕЗКОВ — АР, нарисованный линиями, а не вставками.
-    Пара параллельных отрезков на расстоянии wmin..wmax с перекрытием
-    длиннее max(ширина, 50) → полоса-прямоугольник по зоне перекрытия.
-    Наклонные игнорируются; дубли (контур + осевые) сливаются."""
-    vert, horz = [], []
+def _merge_ivs(ivs):
+    """Слияние интервалов (union) с допуском EPS."""
+    ivs = sorted(ivs)
+    out = []
+    for a, b in ivs:
+        if out and a <= out[-1][1] + EPS:
+            if b > out[-1][1]:
+                out[-1][1] = b
+        else:
+            out.append([a, b])
+    return [(a, b) for a, b in out]
+
+
+def axis_lines(segments):
+    """Отрезки → осевые ЛИНИИ: (координата, union-интервалы вдоль).
+    Сегменты одной координаты (±0.5) сливаются в одну линию — раздробленный
+    в АР контур (стойка, разрезанная ригелями) снова становится сплошным.
+    → (vlines[(x, [(y0,y1)..])], hlines[(y, [(x0,x1)..])])."""
+    vraw, hraw = [], []
     for s in segments:
         x0, y0 = float(s["x0"]), float(s["y0"])
         x1, y1 = float(s["x1"]), float(s["y1"])
         if abs(x1 - x0) <= 0.5 and abs(y1 - y0) > 0.5:
-            vert.append(((x0 + x1) / 2.0, min(y0, y1), max(y0, y1)))
+            vraw.append(((x0 + x1) / 2.0, min(y0, y1), max(y0, y1)))
         elif abs(y1 - y0) <= 0.5 and abs(x1 - x0) > 0.5:
-            horz.append(((y0 + y1) / 2.0, min(x0, x1), max(x0, x1)))
+            hraw.append(((y0 + y1) / 2.0, min(x0, x1), max(x0, x1)))
+
+    def collect(raw):
+        raw.sort()
+        lines = []
+        for c, lo, hi in raw:
+            if lines and c - lines[-1][0] <= 0.5:
+                lines[-1][1].append((lo, hi))
+            else:
+                lines.append([c, [(lo, hi)]])
+        return [(c, _merge_ivs(ivs)) for c, ivs in lines]
+    return collect(vraw), collect(hraw)
+
+
+def _covers(ivs, a, b, tol=EPS):
+    return any(lo - tol <= a and b <= hi + tol for lo, hi in ivs)
+
+
+FRAME_MIN = 200.0   # сторона рамки обрамления короче — это полоса, не рамка
+
+
+def detect_frames(vlines, hlines):
+    """Рамки ОБРАМЛЕНИЯ АР (Образец 2, 15.07): замкнутые прямоугольники из
+    цельных линий (2 верт + 2 гориз, стороны ≥ FRAME_MIN). Кандидатность
+    (охват полос) проверяет вызывающий. → [(x0,y0,x1,y1)]."""
+    frames = []
+    for i in range(len(vlines)):
+        xa, va = vlines[i]
+        for j in range(i + 1, len(vlines)):
+            xb, vb = vlines[j]
+            if xb - xa < FRAME_MIN:
+                continue
+            for ya, ha in hlines:
+                if not _covers(ha, xa, xb):
+                    continue
+                for yb, hb in hlines:
+                    if yb - ya < FRAME_MIN or not _covers(hb, xa, xb):
+                        continue
+                    if _covers(va, ya, yb) and _covers(vb, ya, yb):
+                        frames.append((xa, ya, xb, yb))
+    return frames
+
+
+def strips_from_segments(segments, wmin, wmax, skip_v=(), skip_h=()):
+    """Э3-E (решение Дениса 13.07: закладывать заранее): сборка полос из
+    ГОЛЫХ ОТРЕЗКОВ — АР, нарисованный линиями, а не вставками.
+    Пара параллельных ЛИНИЙ (union сегментов каждой координаты — 15.07,
+    Образец 1: раздробленный контур стойки собирается) на расстоянии
+    wmin..wmax; каждый кусок пересечения union'ов длиннее max(ширина, 50) →
+    полоса-прямоугольник (помечена "seg":1 — сегментное происхождение).
+    skip_v/skip_h — координаты сторон рамок обрамления: пара, где ОБЕ линии
+    рамочные, полосой не становится (фантом 90/160 мм из рамок Образца 2).
+    Наклонные игнорируются; дубли (контур + осевые) сливаются."""
+    vlines, hlines = axis_lines(segments)
     out = []
 
-    def pair_up(lines, make_box):
-        lines = sorted(lines)
+    def near_any(c, coords):
+        return any(abs(c - q) <= 0.5 for q in coords)
+
+    def pair_up(lines, skip, make_box):
         for i in range(len(lines)):
-            a, alo, ahi = lines[i]
+            a, aivs = lines[i]
             for j in range(i + 1, len(lines)):
-                b, blo, bhi = lines[j]
+                b, bivs = lines[j]
                 w = b - a
                 if w > wmax:
                     break                      # sorted: дальше только шире
                 if w < wmin:
                     continue
-                lo, hi = max(alo, blo), min(ahi, bhi)
-                if hi - lo < max(w, 50.0):     # перекрытие длиннее ширины
-                    continue
-                out.append(make_box(a, b, lo, hi))
+                if near_any(a, skip) and near_any(b, skip):
+                    continue                   # обе линии — стороны рамок
+                for alo, ahi in aivs:
+                    for blo, bhi in bivs:
+                        lo, hi = max(alo, blo), min(ahi, bhi)
+                        if hi - lo < max(w, 50.0):
+                            continue           # перекрытие длиннее ширины
+                        out.append(make_box(a, b, lo, hi))
 
-    pair_up(vert, lambda a, b, lo, hi: {"x0": a, "y0": lo, "x1": b, "y1": hi})
-    pair_up(horz, lambda a, b, lo, hi: {"x0": lo, "y0": a, "x1": hi, "y1": b})
+    pair_up(vlines, skip_v,
+            lambda a, b, lo, hi: {"x0": a, "y0": lo, "x1": b, "y1": hi, "seg": 1})
+    pair_up(hlines, skip_h,
+            lambda a, b, lo, hi: {"x0": lo, "y0": a, "x1": hi, "y1": b, "seg": 1})
     ded = []
     for s in out:
         for t in ded:
@@ -208,8 +297,15 @@ def recognize(req):
 
     params = req.get("params") or {}
     wmin = float(params.get("strip_w_min", 40.0))
-    wmax = float(params.get("strip_w_max", 120.0))
-    door_pat = [p.lower() for p in (params.get("door_pat") or ["дверь", "door"])]
+    # wmax 120→210 (15.07, Образец 2: реальные Revit-импосты 150/200 мм).
+    # Для полос ИЗ ОТРЕЗКОВ порог строже (120): bbox вставки — достоверная
+    # деталь АР, а сегментная пара — гипотеза; на 150..210 голые линии
+    # дверных проёмов Образца 1 дают ложные отметки (28986/29136 → «150»)
+    wmax = float(params.get("strip_w_max", 210.0))
+    seg_wmax = min(wmax, float(params.get("seg_w_max", 120.0)))
+    # стем «двер» (15.07, Образец 2: «ADSK_Двери_Витражная…» — слово «Двери»
+    # НЕ содержит подстроку «дверь»)
+    door_pat = [p.lower() for p in (params.get("door_pat") or ["двер", "door"])]
 
     marks = req.get("marks") or {}
     m_stand = marks.get("stand", "С{n}")
@@ -218,8 +314,34 @@ def recognize(req):
     strips = list(req.get("strips") or [])
     notes = []
     segments = req.get("segments") or []
+    frames = []
     if segments:
-        built = strips_from_segments(segments, wmin, wmax)
+        # 1-й проход: полосы из всех линий; затем рамки ОБРАМЛЕНИЯ АР —
+        # прямоугольники, охватывающие ≥50% центров полос (Образец 2:
+        # контуры 3100×3470 и 2850×3334; грани полос самого витража
+        # прямоугольники тоже образуют, но ничего не охватывают);
+        # при кандидатах — 2-й проход БЕЗ пар «рамка×рамка» (фантомы 90/160)
+        built = strips_from_segments(segments, wmin, seg_wmax)
+        frames_all = detect_frames(*axis_lines(segments)) if built or strips else []
+        if frames_all:
+            # охват — по ВСЕМ полосам выбора: вставки + сегментные (Образец 2:
+            # без вставок-импостов внутренняя рамка не набирала 50%)
+            v0, h0, c0 = classify_strips(strips + built, wmin, wmax)
+            allb = v0 + h0 + c0
+            for f in frames_all:
+                inside = sum(1 for b in allb
+                             if f[0] - EPS <= (b[0] + b[2]) / 2 <= f[2] + EPS and
+                                f[1] - EPS <= (b[1] + b[3]) / 2 <= f[3] + EPS)
+                if allb and inside >= 0.5 * len(allb):
+                    frames.append(f)
+            if frames:
+                skip_v = sorted({f[0] for f in frames} | {f[2] for f in frames})
+                skip_h = sorted({f[1] for f in frames} | {f[3] for f in frames})
+                built = strips_from_segments(segments, wmin, seg_wmax,
+                                             skip_v, skip_h)
+                notes.append("обрамление АР: %d рамк(и), каркас по Y %.1f..%.1f"
+                             % (len(frames), max(f[1] for f in frames),
+                                min(f[3] for f in frames)))
         if built:
             notes.append("полос собрано из отрезков: %d" % len(built))
         strips += built
@@ -228,12 +350,61 @@ def recognize(req):
                          "(и из отрезков полосы не собрались)")
     vert, horz, cube = classify_strips(strips, wmin, wmax)
     chains = chain_verticals(vert, cube)
+    rails = group_rails(horz)
+
+    # фантом-фильтр (15.07, Образец 1: дверная коробка/полотно и линии
+    # выносок дают ложные вертикальные пары): цепочка, собранная ИЗ ОТРЕЗКОВ,
+    # обязана нести ≥2 ЯКОРЯ — горизонтальные полосы рядом по X, которые
+    # примыкают к торцу её куска (АР рвёт контур стойки на ригелях) или
+    # проходят сквозь кусок; дверная коробка обрывается «в поле» — якорей 0
+    if len(rails) >= 2:
+        need = 2
+        kept = []
+        for c in chains:
+            if c["from_seg"]:
+                anchors = 0
+                for hb in horz:
+                    if hb[2] < c["x0"] - 2.0 or hb[0] > c["x1"] + 2.0:
+                        continue               # полоса не рядом по X
+                    ax = (hb[1] + hb[3]) / 2.0
+                    touch = any(abs(p[0] - hb[3]) <= 2.0 or
+                                abs(p[1] - hb[1]) <= 2.0 for p in c["pieces"])
+                    inside = any(p[0] - EPS <= ax <= p[1] + EPS
+                                 for p in c["pieces"])
+                    if touch or inside:
+                        anchors += 1
+                if anchors < need:
+                    notes.append("сегментная вертикаль X=%.1f отброшена: "
+                                 "якорных отметок %d < %d (не стойка)"
+                                 % ((c["x0"] + c["x1"]) / 2.0, anchors, need))
+                    continue
+            kept.append(c)
+        chains = kept
     if len(chains) < 2:
         raise ValueError("распознано меньше двух вертикальных полос (стоек) — "
                          "витраж не собрать (вертикалей: %d)" % len(chains))
+
+    # куски сегментных цепочек ЦЕЛИКОМ вне пояса горизонтальных полос —
+    # хвосты размерных выносок (Образец 1), не стойка: отрезать
+    if rails:
+        h_lo = min(b[1] for b in horz)
+        h_hi = max(b[3] for b in horz)
+        for c in chains:
+            if not c["from_seg"]:
+                continue
+            good = [p for p in c["pieces"] if p[1] > h_lo - EPS and p[0] < h_hi + EPS]
+            if good and len(good) < len(c["pieces"]):
+                notes.append("вертикаль X=%.1f: хвосты выносок отрезаны"
+                             % ((c["x0"] + c["x1"]) / 2.0))
+                c["pieces"] = good
+                c["y0"], c["y1"] = good[0][0], good[-1][1]
+                c["gaps"] = [(good[k][1], good[k + 1][0])
+                             for k in range(len(good) - 1)]
+
     if body_w <= 0:
         # тело профиля = МИНИМАЛЬНАЯ ширина вертикальной цепочки (крайние полосы
-        # с зазором к откосу шире тела; доказано «Проба 3»: 50 при крайних 75)
+        # с зазором к откосу шире тела; доказано «Проба 3»: 50 при крайних 75).
+        # Надёжнее — body_w ОБРАЗЦА (C# шлёт поперечник графики блока, 15.07)
         body_w = min(c["x1"] - c["x0"] for c in chains)
         notes.append("тело профиля выведено из АР: %.1f мм" % body_w)
     for c in chains:
@@ -241,17 +412,63 @@ def recognize(req):
             notes.append("разрыв вертикали X=%.1f: %.1f..%.1f — слит"
                          % ((c["x0"] + c["x1"]) / 2.0, g0, g1))
 
+    # типичная ширина ВНУТРЕННИХ полос — эталон «крайняя шире» (Образец 1)
+    typ_inner = 0.0
+    if len(chains) > 2:
+        ws = sorted(c["x1"] - c["x0"] for c in chains[1:-1])
+        typ_inner = ws[len(ws) // 2]
     axes = []
     for i, c in enumerate(chains):
-        axes.append(stand_axis(c, body_w, i == 0, i == len(chains) - 1))
+        axes.append(stand_axis(c, body_w, i == 0, i == len(chains) - 1,
+                               typ_inner))
     for i in range(1, len(axes)):
         if axes[i] - axes[i - 1] < body_w:
             raise ValueError("оси стоек слишком близко: %.1f и %.1f"
                              % (axes[i - 1], axes[i]))
 
-    rails = group_rails(horz)
     if not rails:
         notes.append("горизонтальных полос не найдено — только стойки")
+
+    # габарит стоек: стойка тянется СКВОЗЬ обвязочные ригели до их внешних
+    # граней (Образец 1: цепочки рвутся на ригелях и не доходят до габарита);
+    # рамка обрамления, если есть, задаёт низ/верх ЖЁСТКО (Образец 2:
+    # высотная отметка = низ внутренней рамки, стойки 3334, не 3470)
+    if len(rails) >= 2:
+        y_lo = min(min(c["y0"] for c in chains), h_lo)
+        y_hi = max(max(c["y1"] for c in chains), h_hi)
+        for c in chains:
+            c["y0"], c["y1"] = y_lo, y_hi
+    if frames:
+        f_lo = max(f[1] for f in frames)
+        f_hi = min(f[3] for f in frames)
+        for c in chains:
+            c["y0"] = max(c["y0"], f_lo)
+            c["y1"] = min(c["y1"], f_hi)
+        # обвязочная отметка ВНЕ рамки (Образец 2: Revit-полоса низа торчит
+        # под рамкой) → ригель по краю рамки ± тело/2, как ставит Алексей
+        # (32868.7 = низ рамки + 25); совпавшие отметки сливаются.
+        # NB: отметка ВНУТРИ рамки не трогается (Образец 1: ось полосы),
+        # даже если полоса касается края — конвенция подтверждена эталоном 1
+        # и открыта по верхней обвязке эталона 2 (−25, вопрос Алексею)
+        moved = []
+        for r in rails:
+            if r["y"] < f_lo - EPS:
+                moved.append((r["y"], f_lo + body_w / 2.0))
+                r["y"] = f_lo + body_w / 2.0
+            elif r["y"] > f_hi + EPS:
+                moved.append((r["y"], f_hi - body_w / 2.0))
+                r["y"] = f_hi - body_w / 2.0
+        if moved:
+            notes.append("обвязка вне обрамления → к рамке: " +
+                         ", ".join("%.1f→%.1f" % m for m in moved))
+            merged = []
+            for r in sorted(rails, key=lambda z: z["y"]):
+                if merged and abs(merged[-1]["y"] - r["y"]) <= EPS:
+                    merged[-1]["spans"] = sorted(merged[-1]["spans"] +
+                                                 r["spans"])
+                else:
+                    merged.append(r)
+            rails = merged
 
     # двери: панели с именем под паттерн
     doors = []
@@ -264,13 +481,15 @@ def recognize(req):
         notes.append("дверей распознано: %d (пороги пропущены)" % len(doors))
 
     def door_blocks_rail(rail_y, a, b):
-        """Порог: отметка у низа двери (±60) или внутри её габарита,
-        в пролёте [a,b], перекрытом дверью >50% света."""
+        """Порог: отметка от (низ двери − wmax) до верха двери, в пролёте
+        [a,b], перекрытом дверью >50% света. Зона вниз расширена с 60 до
+        wmax (15.07, Образец 2: дверь на подставке — полоса порога на 75
+        ниже низа полотна)."""
         for dx0, dy0, dx1, dy1 in doors:
             lo, hi = max(a, dx0), min(b, dx1)
             if hi - lo < (b - a) * COVER_MIN:
                 continue
-            if abs(rail_y - dy0) <= 60.0 or (dy0 - EPS <= rail_y <= dy1 + EPS):
+            if dy0 - wmax - EPS <= rail_y <= dy1 + EPS:
                 return True
         return False
 
