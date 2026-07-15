@@ -16,17 +16,24 @@ namespace ABlockGenPlugin
         {
             // Компоненты — под своими try/catch (урок ATableSpec: исключение на старте
             // помечает DLL сбойной и команды не регистрируются).
+            RibbonUi.Init();    // вкладка ленты (фидбэк Алексея 15.07: кнопки)
+            ClassicUi.Init();   // меню + тулбар классического интерфейса
             try
             {
                 var doc = AcApp.DocumentManager.MdiActiveDocument;
                 if (doc != null)
                     doc.Editor.WriteMessage(
-                        "\nABlockGen загружен. Команда: ATVITRAGE — построить витраж " +
-                        "по прямоугольнику проёма (Этап 1, полуавтомат).\n");
+                        "\nABlockGen загружен. Команды: ATVITRAGEAR — каркас по " +
+                        "АР-чертежу (образцы стойки/ригеля → рамка); ATVITRAGE — " +
+                        "сетка по проёму. Кнопки: лента и тулбар «ABlockGen».\n");
             }
             catch { }
         }
 
-        public void Terminate() { }
+        public void Terminate()
+        {
+            ClassicUi.Cleanup();
+            RibbonUi.Cleanup();
+        }
     }
 }

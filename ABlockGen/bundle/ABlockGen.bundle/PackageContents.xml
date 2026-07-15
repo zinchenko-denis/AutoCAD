@@ -29,6 +29,7 @@
         LoadOnCommandInvocation="False"
         LoadOnAutoCADStartup="True">
       <Commands GroupName="ABlockGenCommands">
+        <Command Global="ATVITRAGEAR" Local="ATVITRAGEAR" />
         <Command Global="ATVITRAGE" Local="ATVITRAGE" />
       </Commands>
     </ComponentEntry>

@@ -31,21 +31,24 @@ namespace ABlockGenPlugin
             var ed = doc.Editor;
             var db = doc.Database;
 
-            // ── 1. образцы: блок стоек, блок ригелей, опц. ВЕРХНИЙ ригель.
-            //    ПОВОРОТ каждого берётся С ОБРАЗЦА (фикс 14.07: поворот —
-            //    свойство определения; горизонтально рисованный ригель → 0,
-            //    вертикально рисованный → 270) ──
-            string standName, standProf, rigelName, rigelProf, topName, topProf;
-            double standRot, rigelRot, topRot;
+            // ── 1. образцы: блок стоек и блок ригелей. ПОВОРОТ каждого
+            //    берётся С ОБРАЗЦА (фикс 14.07: поворот — свойство
+            //    определения; горизонтально рисованный ригель → 0,
+            //    вертикально рисованный → 270). ПОПЕРЕЧНИК стойки (body_w)
+            //    тоже с образца (15.07: тело 50 при АР-полосах 70..200).
+            //    Запрос ВЕРХНЕГО ригеля УБРАН по фидбэку Алексея 15.07
+            //    («делать по умолчанию как и остальные») — вся верхняя
+            //    отметка идёт обычным ригелем; функция rigel_top в движке
+            //    сохранена, вернуть — одним PickSample ──
+            string standName, standProf, rigelName, rigelProf;
+            double standRot, rigelRot, standBody;
             if (!PickSample(ed, db, "\nУкажите блок стоек (образец): ",
-                            false, out standName, out standProf, out standRot)) return;
+                            false, out standName, out standProf, out standRot,
+                            out standBody)) return;
+            double rigelBody;
             if (!PickSample(ed, db, "\nУкажите блок ригелей (образец): ",
-                            false, out rigelName, out rigelProf, out rigelRot)) return;
-            // Э3-A (решение Дениса): верхняя отметка может идти особым блоком
-            // В СВЕТУ (эталон: Р31/Р33 из профиля стойки). Enter — обычный ригель.
-            if (!PickSample(ed, db,
-                "\nУкажите блок ВЕРХНЕГО ригеля (в свету) <Enter — обычный>: ",
-                true, out topName, out topProf, out topRot)) return;
+                            false, out rigelName, out rigelProf, out rigelRot,
+                            out rigelBody)) return;
 
             // ── 2. конструкция: АР-графика рамкой ──
             var pso = new PromptSelectionOptions
@@ -144,16 +147,16 @@ namespace ABlockGenPlugin
             if (!File.Exists(engineExe))
             { ed.WriteMessage("\nНе найден движок: " + engineExe); return; }
 
+            var stand = new Dictionary<string, object> {
+                { "name", standName }, { "prof", standProf }, { "rot", standRot } };
+            if (standBody > 0)
+                stand["body_w"] = standBody;   // тело профиля с образца (15.07)
             var blocks = new Dictionary<string, object>
             {
-                { "stand", new Dictionary<string, object> {
-                    { "name", standName }, { "prof", standProf }, { "rot", standRot } } },
+                { "stand", stand },
                 { "rigel", new Dictionary<string, object> {
                     { "name", rigelName }, { "prof", rigelProf }, { "rot", rigelRot } } }
             };
-            if (!string.IsNullOrEmpty(topName))
-                blocks["rigel_top"] = new Dictionary<string, object>
-                { { "name", topName }, { "prof", topProf }, { "rot", topRot } };
             var payload = new Dictionary<string, object>
             {
                 { "op", "recognize" },
@@ -198,13 +201,14 @@ namespace ABlockGenPlugin
                 foreach (var n in notes) ed.WriteMessage("\n  · " + VitrageCommand.SafeStr(n));
         }
 
-        // ── образец: BlockReference → эффективное имя + ПРОФ + ПОВОРОТ (градусы).
+        // ── образец: BlockReference → эффективное имя + ПРОФ + ПОВОРОТ (градусы)
+        //    + ПОПЕРЕЧНИК графики определения (тело профиля, 15.07).
         //    optional=true: Enter — пропуск (name=null, возврат true) ──
         private static bool PickSample(Editor ed, Database db, string msg,
                                        bool optional, out string name, out string prof,
-                                       out double rotDeg)
+                                       out double rotDeg, out double bodyW)
         {
-            name = null; prof = null; rotDeg = 0;
+            name = null; prof = null; rotDeg = 0; bodyW = 0;
             var peo = new PromptEntityOptions(msg);
             peo.SetRejectMessage("\nНужен блок (вхождение).");
             peo.AddAllowedClass(typeof(BlockReference), false);
@@ -218,6 +222,7 @@ namespace ABlockGenPlugin
                 if (br == null) { ed.WriteMessage("\nЭто не блок."); return false; }
                 name = EffectiveName(tr, br);
                 rotDeg = NormDeg(br.Rotation);
+                bodyW = BodyWidth(tr, br);
                 foreach (ObjectId aid in br.AttributeCollection)
                 {
                     var ar = tr.GetObject(aid, OpenMode.ForRead) as AttributeReference;
@@ -228,6 +233,45 @@ namespace ABlockGenPlugin
             }
             if (string.IsNullOrEmpty(name)) { ed.WriteMessage("\nНе удалось прочитать имя блока."); return false; }
             return true;
+        }
+
+        // ── поперечник графики ОПРЕДЕЛЕНИЯ (тело профиля): min(w, h) bbox
+        //    без текстов/размеров/штриховок, в локальных координатах
+        //    определения (исходного — у динблока не зависит от растяжки).
+        //    0 — не удалось (движок выведет тело из АР, как раньше) ──
+        private static double BodyWidth(Transaction tr, BlockReference br)
+        {
+            try
+            {
+                var id = br.IsDynamicBlock ? br.DynamicBlockTableRecord
+                                           : br.BlockTableRecord;
+                var btr = tr.GetObject(id, OpenMode.ForRead) as BlockTableRecord;
+                if (btr == null) return 0;
+                double x0 = double.MaxValue, y0 = double.MaxValue,
+                       x1 = double.MinValue, y1 = double.MinValue;
+                bool any = false;
+                foreach (ObjectId eid in btr)
+                {
+                    var ent = tr.GetObject(eid, OpenMode.ForRead) as Entity;
+                    if (ent == null) continue;
+                    if (ent is DBText || ent is MText || ent is AttributeDefinition ||
+                        ent is Dimension || ent is Hatch) continue;
+                    try
+                    {
+                        Extents3d ex = ent.GeometricExtents;
+                        if (ex.MinPoint.X < x0) x0 = ex.MinPoint.X;
+                        if (ex.MinPoint.Y < y0) y0 = ex.MinPoint.Y;
+                        if (ex.MaxPoint.X > x1) x1 = ex.MaxPoint.X;
+                        if (ex.MaxPoint.Y > y1) y1 = ex.MaxPoint.Y;
+                        any = true;
+                    }
+                    catch { }
+                }
+                if (!any) return 0;
+                double w = x1 - x0, h = y1 - y0;
+                return w < h ? w : h;
+            }
+            catch { return 0; }
         }
 
         // радианы → градусы [0..360), округление 0.1

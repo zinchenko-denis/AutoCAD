@@ -82,6 +82,7 @@ jobs:
           Copy-Item "ABlockGen/bundle/ABlockGen.bundle/PackageContents.xml" "$b/"
           Copy-Item "build_abg_dll/ABlockGenPlugin.dll" "$b/Contents/net48/"
           Copy-Item "build_abg_exe/vitrage_engine.exe"  "$b/Contents/engine/"
+          Copy-Item "ABlockGen/bundle/ABlockGen.bundle/Contents/icons" "$b/Contents/" -Recurse
           Compress-Archive -Path $b -DestinationPath "ABlockGen.bundle.zip" -Force
 
       # 4a) Артефакты сборки (видны в разделе Actions; скачивание — для залогиненных)

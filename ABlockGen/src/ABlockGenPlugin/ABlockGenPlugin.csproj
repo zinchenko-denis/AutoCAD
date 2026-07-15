@@ -24,6 +24,13 @@
     <!-- Диалог параметров витража -->
     <Reference Include="System.Windows.Forms" />
     <Reference Include="System.Drawing" />
+    <!-- WPF: лента AutoCAD (Autodesk.Windows) и иконки кнопок (RibbonUi) -->
+    <Reference Include="PresentationCore" />
+    <Reference Include="PresentationFramework" />
+    <Reference Include="WindowsBase" />
+    <Reference Include="System.Xaml" />
+    <!-- dynamic (позднее связывание COM AcadApplication — ClassicUi) -->
+    <Reference Include="Microsoft.CSharp" />
   </ItemGroup>
 
 </Project>
