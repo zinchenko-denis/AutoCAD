@@ -122,15 +122,19 @@ def stand_axis(chain, body_w, is_left_edge, is_right_edge, typ_inner=0.0):
 
 def group_rails(horz):
     """Горизонтали → отметки: группировка по оси Y (±EPS), объединение
-    X-интервалов. → [{y, spans:[(x0,x1)]}] по возрастанию y."""
+    X-интервалов. → [{y, spans:[(x0,x1)], lo, hi}] по возрастанию y;
+    lo/hi — Y-габарит полос группы (для правила обвязки «по краю»)."""
     rails = []
     for b in horz:
         ax = (b[1] + b[3]) / 2.0
         for r in rails:
             if abs(r["y"] - ax) <= EPS:
-                r["spans"].append((b[0], b[2])); break
+                r["spans"].append((b[0], b[2]))
+                r["lo"] = min(r["lo"], b[1]); r["hi"] = max(r["hi"], b[3])
+                break
         else:
-            rails.append({"y": ax, "spans": [(b[0], b[2])]})
+            rails.append({"y": ax, "spans": [(b[0], b[2])],
+                          "lo": b[1], "hi": b[3]})
     for r in rails:
         r["spans"].sort()
     rails.sort(key=lambda z: z["y"])
@@ -444,28 +448,39 @@ def recognize(req):
         for c in chains:
             c["y0"] = max(c["y0"], f_lo)
             c["y1"] = min(c["y1"], f_hi)
-        # обвязочная отметка ВНЕ рамки (Образец 2: Revit-полоса низа торчит
-        # под рамкой) → ригель по краю рамки ± тело/2, как ставит Алексей
-        # (32868.7 = низ рамки + 25); совпавшие отметки сливаются.
-        # NB: отметка ВНУТРИ рамки не трогается (Образец 1: ось полосы),
-        # даже если полоса касается края — конвенция подтверждена эталоном 1
-        # и открыта по верхней обвязке эталона 2 (−25, вопрос Алексею)
+
+    # ОБВЯЗКА «ПО ГАБАРИТАМ» (решение Алексея 15.07 на вопрос конвенции:
+    # «по краю рамки ставить край блока, необходимые изменения потом
+    # вручную»): отметка, чья полоса ДОСТИГАЕТ края габарита каркаса
+    # (рамка обрамления или общий габарит стоек), ставится краем тела на
+    # край: ось = край ± body_w/2. Покрывает и полосы, торчащие ЗА рамку
+    # (Образец 2, низ на подставке: 32868.7 = рамка+25), и полосы, доходящие
+    # до края изнутри (Образец 2, верх: 36152.7 = рамка−25). Отметки в поле
+    # (порог двери «Проба 3», середины) не трогаются — оси полос АР.
+    # Совпавшие после клэмпа отметки сливаются. Старые ручные эталоны
+    # Алексея местами ставили обвязку по оси полосы (Образец 1: ±15..25) —
+    # по его решению расхождение допустимо, правится вручную.
+    if rails and len(chains) >= 2:
+        g_lo = min(c["y0"] for c in chains)
+        g_hi = max(c["y1"] for c in chains)
         moved = []
         for r in rails:
-            if r["y"] < f_lo - EPS:
-                moved.append((r["y"], f_lo + body_w / 2.0))
-                r["y"] = f_lo + body_w / 2.0
-            elif r["y"] > f_hi + EPS:
-                moved.append((r["y"], f_hi - body_w / 2.0))
-                r["y"] = f_hi - body_w / 2.0
+            if r["lo"] <= g_lo + EPS and abs(r["y"] - (g_lo + body_w / 2.0)) > EPS:
+                moved.append((r["y"], g_lo + body_w / 2.0))
+                r["y"] = g_lo + body_w / 2.0
+            elif r["hi"] >= g_hi - EPS and abs(r["y"] - (g_hi - body_w / 2.0)) > EPS:
+                moved.append((r["y"], g_hi - body_w / 2.0))
+                r["y"] = g_hi - body_w / 2.0
         if moved:
-            notes.append("обвязка вне обрамления → к рамке: " +
+            notes.append("обвязка по краю габарита (правило 15.07): " +
                          ", ".join("%.1f→%.1f" % m for m in moved))
             merged = []
             for r in sorted(rails, key=lambda z: z["y"]):
                 if merged and abs(merged[-1]["y"] - r["y"]) <= EPS:
                     merged[-1]["spans"] = sorted(merged[-1]["spans"] +
                                                  r["spans"])
+                    merged[-1]["lo"] = min(merged[-1]["lo"], r["lo"])
+                    merged[-1]["hi"] = max(merged[-1]["hi"], r["hi"])
                 else:
                     merged.append(r)
             rails = merged
