@@ -42,11 +42,13 @@ namespace ABlockGenPlugin
             //    вся верхняя отметка идёт обычным ригелем; функция rigel_top
             //    в движке сохранена, вернуть — одним PickSample ──
             string standName, standProf, rigelName, rigelProf;
-            double standRot, rigelRot;
+            double standRot, rigelRot, standW, rigelW;
             if (!PickSample(ed, db, "\nУкажите блок стоек (образец): ",
-                            false, out standName, out standProf, out standRot)) return;
+                            false, out standName, out standProf, out standRot,
+                            out standW)) return;
             if (!PickSample(ed, db, "\nУкажите блок ригелей (образец): ",
-                            false, out rigelName, out rigelProf, out rigelRot)) return;
+                            false, out rigelName, out rigelProf, out rigelRot,
+                            out rigelW)) return;
 
             // ── 2. конструкция: АР-графика рамкой ──
             var pso = new PromptSelectionOptions
@@ -130,6 +132,41 @@ namespace ABlockGenPlugin
             if (strips.Count == 0 && segments.Count == 0)
             { ed.WriteMessage("\nВ выборе нет пригодной АР-графики (вставки/полилинии/отрезки)."); return; }
 
+            // ── 3b. ТЕРМОРАЗРЫВ (сценарий Алексея 15.07c): конструкция выше
+            //    хлыста 6000 → две «резиновые» горизонтали (низ 1-го и 2-го
+            //    терморазрывов) + размер зазора (Enter = 5 мм) ──
+            double thL1 = 0, thL2 = 0, thGap = 5.0;
+            bool thermal = false;
+            {
+                double yMin = double.MaxValue, yMax = double.MinValue,
+                       xMin = double.MaxValue, xMax = double.MinValue;
+                foreach (var s in strips) { AccBox(s, ref xMin, ref yMin, ref xMax, ref yMax); }
+                foreach (var s in segments) { AccBox(s, ref xMin, ref yMin, ref xMax, ref yMax); }
+                if (yMax - yMin > 6000.0)
+                {
+                    ed.WriteMessage("\nКонструкция выше 6000 (хлыст стойки) — задайте терморазрывы.");
+                    if (!PickHLine(ed, xMin, xMax,
+                        "\nУкажите нижнюю линию ПЕРВОГО терморазрыва от низа конструкции: ",
+                        out thL1)) return;
+                    while (true)
+                    {
+                        if (!PickHLine(ed, xMin, xMax,
+                            "\nУкажите нижнюю линию ВТОРОГО терморазрыва (выше первого): ",
+                            out thL2)) return;
+                        if (thL2 > thL1 + 1.0) break;
+                        ed.WriteMessage("\nВторая линия должна быть ВЫШЕ первой.");
+                    }
+                    var pdo = new PromptDoubleOptions("\nРазмер терморазрыва <5>: ")
+                    { AllowNone = true, AllowNegative = false, AllowZero = false,
+                      DefaultValue = 5.0, UseDefaultValue = true };
+                    var dres = ed.GetDouble(pdo);
+                    if (dres.Status == PromptStatus.OK || dres.Status == PromptStatus.None)
+                        thGap = dres.Status == PromptStatus.OK ? dres.Value : 5.0;
+                    else { ed.WriteMessage("\nОтменено."); return; }
+                    thermal = true;
+                }
+            }
+
             // ── 4. точка вставки результата (Enter — на месте АР) ──
             var ppo = new PromptPointOptions(
                 "\nТочка вставки конструкции <Enter — на месте АР>: ")
@@ -145,13 +182,14 @@ namespace ABlockGenPlugin
             if (!File.Exists(engineExe))
             { ed.WriteMessage("\nНе найден движок: " + engineExe); return; }
 
+            var stand = new Dictionary<string, object> {
+                { "name", standName }, { "prof", standProf }, { "rot", standRot } };
+            if (standW > 0) stand["body_w"] = standW;   // атрибут ШИРИНА (15.07c)
+            var rigel = new Dictionary<string, object> {
+                { "name", rigelName }, { "prof", rigelProf }, { "rot", rigelRot } };
+            if (rigelW > 0) rigel["body_w"] = rigelW;   // посадка обвязки ±ШИРИНА/2
             var blocks = new Dictionary<string, object>
-            {
-                { "stand", new Dictionary<string, object> {
-                    { "name", standName }, { "prof", standProf }, { "rot", standRot } } },
-                { "rigel", new Dictionary<string, object> {
-                    { "name", rigelName }, { "prof", rigelProf }, { "rot", rigelRot } } }
-            };
+            { { "stand", stand }, { "rigel", rigel } };
             var payload = new Dictionary<string, object>
             {
                 { "op", "recognize" },
@@ -160,6 +198,10 @@ namespace ABlockGenPlugin
                 { "panels", panels },
                 { "blocks", blocks },
             };
+            if (thermal)
+                payload["params"] = new Dictionary<string, object>
+                { { "thermal", new Dictionary<string, object> {
+                    { "l1", thL1 }, { "l2", thL2 }, { "gap", thGap } } } };
             var ser = new JavaScriptSerializer { MaxJsonLength = int.MaxValue };
             Dictionary<string, object> plan;
             try
@@ -196,14 +238,17 @@ namespace ABlockGenPlugin
                 foreach (var n in notes) ed.WriteMessage("\n  · " + VitrageCommand.SafeStr(n));
         }
 
-        // ── образец: BlockReference → эффективное имя + ПРОФ + ПОВОРОТ (градусы).
-        //    optional=true: Enter — пропуск (name=null, возврат true).
-        //    Тело профиля тут НЕ меряется (bbox = обвес, урок 15.07b) ──
+        // ── образец: BlockReference → эффективное имя + ПРОФ + ПОВОРОТ (градусы)
+        //    + ТЕЛО ПРОФИЛЯ из атрибута «ШИРИНА» (подсказка Алексея 15.07c:
+        //    у его блоков есть скрытый атрибут; в «Проба 2» он КОНСТАНТНЫЙ —
+        //    живёт ATTDEF-ом в определении, во вставке ATTRIB'а нет — читаем
+        //    оба места). bbox НЕ меряется (обвес, урок 15.07b).
+        //    optional=true: Enter — пропуск (name=null, возврат true) ──
         private static bool PickSample(Editor ed, Database db, string msg,
                                        bool optional, out string name, out string prof,
-                                       out double rotDeg)
+                                       out double rotDeg, out double widthMm)
         {
-            name = null; prof = null; rotDeg = 0;
+            name = null; prof = null; rotDeg = 0; widthMm = 0;
             var peo = new PromptEntityOptions(msg);
             peo.SetRejectMessage("\nНужен блок (вхождение).");
             peo.AddAllowedClass(typeof(BlockReference), false);
@@ -220,13 +265,104 @@ namespace ABlockGenPlugin
                 foreach (ObjectId aid in br.AttributeCollection)
                 {
                     var ar = tr.GetObject(aid, OpenMode.ForRead) as AttributeReference;
-                    if (ar != null && string.Equals(ar.Tag, "ПРОФ", StringComparison.OrdinalIgnoreCase))
-                    { prof = ar.TextString; break; }
+                    if (ar == null) continue;
+                    if (string.Equals(ar.Tag, "ПРОФ", StringComparison.OrdinalIgnoreCase))
+                        prof = ar.TextString;
+                    else if (string.Equals(ar.Tag, "ШИРИНА", StringComparison.OrdinalIgnoreCase))
+                        widthMm = ParseMm(ar.TextString);
+                }
+                if (widthMm <= 0)
+                {
+                    // константный атрибут: ATTDEF в определении (Проба 2)
+                    var btr = tr.GetObject(br.BlockTableRecord, OpenMode.ForRead)
+                              as BlockTableRecord;
+                    if (btr != null)
+                        foreach (ObjectId eid in btr)
+                        {
+                            var ad = tr.GetObject(eid, OpenMode.ForRead)
+                                     as AttributeDefinition;
+                            if (ad != null && string.Equals(ad.Tag, "ШИРИНА",
+                                    StringComparison.OrdinalIgnoreCase))
+                            { widthMm = ParseMm(ad.TextString); break; }
+                        }
                 }
                 tr.Commit();
             }
             if (string.IsNullOrEmpty(name)) { ed.WriteMessage("\nНе удалось прочитать имя блока."); return false; }
             return true;
+        }
+
+        // аккумуляция bbox по словарю {x0,y0,x1,y1}
+        private static void AccBox(Dictionary<string, object> s,
+                                   ref double xMin, ref double yMin,
+                                   ref double xMax, ref double yMax)
+        {
+            double x0 = Convert.ToDouble(s["x0"], CultureInfo.InvariantCulture);
+            double y0 = Convert.ToDouble(s["y0"], CultureInfo.InvariantCulture);
+            double x1 = Convert.ToDouble(s["x1"], CultureInfo.InvariantCulture);
+            double y1 = Convert.ToDouble(s["y1"], CultureInfo.InvariantCulture);
+            if (Math.Min(x0, x1) < xMin) xMin = Math.Min(x0, x1);
+            if (Math.Min(y0, y1) < yMin) yMin = Math.Min(y0, y1);
+            if (Math.Max(x0, x1) > xMax) xMax = Math.Max(x0, x1);
+            if (Math.Max(y0, y1) > yMax) yMax = Math.Max(y0, y1);
+        }
+
+        // «резиновая» горизонталь через курсор поперёк АР (джиг) → Y (WCS)
+        private static bool PickHLine(Editor ed, double x0, double x1,
+                                      string msg, out double y)
+        {
+            y = 0;
+            var jig = new HLineJig(msg, x0 - 500.0, x1 + 500.0);
+            var res = ed.Drag(jig);
+            if (res.Status != PromptStatus.OK)
+            { ed.WriteMessage("\nОтменено."); return false; }
+            y = jig.Y;
+            return true;
+        }
+
+        private sealed class HLineJig : Autodesk.AutoCAD.EditorInput.DrawJig
+        {
+            private readonly string _msg;
+            private readonly double _x0, _x1;
+            private Point3d _pt = Point3d.Origin;
+            public double Y { get { return _pt.Y; } }
+            public HLineJig(string msg, double x0, double x1)
+            { _msg = msg; _x0 = x0; _x1 = x1; }
+
+            protected override SamplerStatus Sampler(JigPrompts prompts)
+            {
+                var opts = new JigPromptPointOptions(_msg)
+                {
+                    UserInputControls =
+                        UserInputControls.Accept3dCoordinates |
+                        UserInputControls.NullResponseAccepted
+                };
+                var res = prompts.AcquirePoint(opts);
+                if (res.Status != PromptStatus.OK) return SamplerStatus.Cancel;
+                if (res.Value.DistanceTo(_pt) < 1e-6) return SamplerStatus.NoChange;
+                _pt = res.Value;
+                return SamplerStatus.OK;
+            }
+
+            protected override bool WorldDraw(
+                Autodesk.AutoCAD.GraphicsInterface.WorldDraw draw)
+            {
+                draw.Geometry.WorldLine(new Point3d(_x0, _pt.Y, 0),
+                                        new Point3d(_x1, _pt.Y, 0));
+                return true;
+            }
+        }
+
+        // «53» / «52.5» / «52,5» → мм; мусор → 0
+        private static double ParseMm(string s)
+        {
+            if (string.IsNullOrEmpty(s)) return 0;
+            double v;
+            if (double.TryParse(s.Trim().Replace(',', '.'),
+                                System.Globalization.NumberStyles.Float,
+                                CultureInfo.InvariantCulture, out v) && v > 0)
+                return v;
+            return 0;
         }
 
         // радианы → градусы [0..360), округление 0.1

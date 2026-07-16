@@ -227,10 +227,20 @@ namespace ABlockGenPlugin
 
                 // ── размеры (фидбэк Алексея 14.07): габаритные + межосевые
                 //    цепочки по стойкам и ригелям, RotatedDimension на слое
-                //    «Размеры», стиль — текущий стиль чертежа ──
+                //    «Размеры», стиль — текущий стиль чертежа.
+                //    Глобальный масштаб (DIMSCALE) по умолчанию 40 (просьба
+                //    Алексея 15.07c) — объектным override на каждом размере;
+                //    если в чертеже DIMSCALE уже настроен (≠ 1), уважаем его ──
                 var dims = Get(plan, "dims") as IList;
                 if (dims != null && dims.Count > 0)
                 {
+                    double dimScale = 40.0;
+                    try
+                    {
+                        double cur = db.Dimscale;
+                        if (cur > 1.0 + 1e-9) dimScale = cur;
+                    }
+                    catch { }
                     EnsureLayer(db, tr, "Размеры");
                     foreach (var dObj in dims)
                     {
@@ -254,6 +264,7 @@ namespace ABlockGenPlugin
                                     new Point3d((a + b) / 2.0, line, 0), null, db.Dimstyle);
                             rd.SetDatabaseDefaults();
                             rd.Layer = "Размеры";
+                            try { rd.Dimscale = dimScale; } catch { }
                             ms.AppendEntity(rd);
                             tr.AddNewlyCreatedDBObject(rd, true);
                             dimsN++;
