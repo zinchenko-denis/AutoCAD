@@ -311,6 +311,70 @@ ok(len([r for r in rg15 if near(r["y"], 25.0)]) == 1,
 ok(any("отброшена" in n for n in p15["notes"]), "R15: note про фантом коробки")
 ok(any("хвосты выносок" in n for n in p15["notes"]), "R15: note про выноски")
 
+# ── R16: терморазрыв (сценарий Алексея 15.07c, Проба 2): ярусы стоек по
+#    L1/L2, этажи высотой яруса 2, верхний — остаток; отметка стыка гасится
+#    в верхнюю обвязку нижнего яруса; марки различают этажи ──
+from vitrage_recognize import thermal_tiers, panel_grid
+
+t16 = thermal_tiers(0.0, 14572.0, 2422.0, 5422.0, 5.0)
+ok([(round(b, 1), round(t, 1)) for b, t in t16] ==
+   [(0.0, 2422.0), (2427.0, 5422.0), (5427.0, 8422.0), (8427.0, 11422.0),
+    (11427.0, 14572.0)],
+   f"R16: ярусы Пробы-2-схемы {t16} (2422/2995/2995/2995/3145+ост)")
+t16b = thermal_tiers(0.0, 7000.0, 3000.0, 6000.0, 10.0)
+ok([(round(b, 1), round(t, 1)) for b, t in t16b] ==
+   [(0.0, 3000.0), (3010.0, 6000.0), (6010.0, 7000.0)],
+   f"R16: короткий остаток сверху {t16b}")
+try:
+    thermal_tiers(0.0, 5000.0, 4000.0, 3000.0, 5.0)
+    ok(False, "R16: L2 ниже L1 должен падать")
+except ValueError as e16:
+    ok("L2" in str(e16) or "терморазрыв" in str(e16), "R16: внятная ошибка L1/L2")
+# полный проход: 2 стойки-полосы + отметка на стыке → клэмп в верх яруса 1
+S16 = [bb(0, 0, 50, 6100), bb(1000, 0, 1050, 6100),
+       bb(50, 2975, 1000, 3025),                      # отметка у стыка (3000)
+       bb(50, 1475, 1000, 1525),                      # середина яруса 1
+       bb(50, 0, 1000, 50), bb(50, 6050, 1000, 6100)] # обвязки у краёв
+p16 = recognize({"strips": S16,
+                 "params": {"thermal": {"l1": 3000.0, "l2": 5500.0}},
+                 "blocks": {"stand": {"name": "S", "body_w": 50},
+                            "rigel": {"name": "R", "body_w": 60}}})
+st16 = sorted((i for i in p16["inserts"] if i["kind"] == "stand"),
+              key=lambda z: (z["x"], z["y"]))
+ok(len(st16) == 6 and p16["summary"]["stands"] == 6,
+   f"R16: стоек {len(st16)} (2 оси × 3 яруса)")
+ok([s["attrs"]["ДЛИНА"] for s in st16[:3]] == ["3000.00", "2495.00", "595.00"],
+   f"R16: ДЛИНЫ ярусов {[s['attrs']['ДЛИНА'] for s in st16[:3]]} "
+   f"(3000 / 2495 / 595: gap Enter=5)")
+ok(len({s["attrs"]["ИМЯ"] for s in st16}) == 3, "R16: марки по этажам разные")
+ys16 = sorted({round(r["y"], 1) for r in p16["inserts"] if r["kind"] == "rigel"})
+ok(ys16 == [30.0, 1500.0, 2970.0, 6070.0],
+   f"R16: отметки {ys16} — стыковая 3000 ушла в верх яруса 1 (2970 = "
+   f"3000−30, тело ригеля 60), середина 1500 на месте, края 30/6070")
+
+# ── R17: панельный АР (Проба 2): сетка из зазоров панелей; сквозной
+#    поручень игнорируется; крайние оси = грань ∓ gap/2 ──
+P17 = []
+for cx0 in (0.0, 1010.0, 2020.0):                     # 3 столбца, зазор 50
+    for cy0, cy1 in ((0.0, 1000.0), (1050.0, 2400.0), (2450.0, 3400.0)):
+        P17.append(bb(cx0, cy0, cx0 + 960.0, cy1))
+P17.append(bb(-200.0, 1500.0, 3200.0, 1600.0))        # сквозной поручень
+synth17, n17 = panel_grid(P17, 40, 210)
+ok(synth17 and any("панельный" in x for x in n17), "R17: сетка собралась")
+p17 = recognize({"strips": P17,
+                 "blocks": {"stand": {"name": "S", "body_w": 50},
+                            "rigel": {"name": "R", "body_w": 50}}})
+ax17 = p17["summary"]["axes_x"]
+ok([round(a, 1) for a in ax17] == [-25.0, 985.0, 1995.0, 3005.0],
+   f"R17: оси {ax17} (крайние = грань∓25, внутренние — центры зазоров)")
+st17 = [i for i in p17["inserts"] if i["kind"] == "stand"]
+ok(all(near(s["y"], -50.0) and s["attrs"]["ДЛИНА"] == "3450.00" for s in st17),
+   f"R17: стойки −50..3400 (низ = панели − зазор)")
+ys17 = sorted({round(r["y"], 1) for r in p17["inserts"] if r["kind"] == "rigel"})
+ok(ys17 == [-25.0, 1025.0, 2425.0, 3375.0],
+   f"R17: отметки {ys17} — обвязки края ±25, середины по центрам зазоров; "
+   f"поручень (1550) отметки НЕ дал")
+
 print(f"vitrage_recognize: {PASS} проверок OK")
 
 # ── D2: живой файл «Проба 3» — план обязан совпасть с ручной конструкцией ──
@@ -508,3 +572,102 @@ if _have_ezdxf:
         print("vitrage_recognize D3: Образцы недоступны — пропуск")
 else:
     print("vitrage_recognize D3: ezdxf нет — пропуск")
+
+# ── D4: живой «Проба 2» (15.07c) — ПАНЕЛЬНЫЙ АР (сетка из зазоров,
+#    сквозные поручни) + ТЕРМОРАЗРЫВ (5 ярусов, зазор 5, клики L1/L2 берём
+#    из эталонных ярусов файла). Жёстко сверяются: все 20 стоек (оси/низы/
+#    ДЛИНА; верхний ярус ±20 — верх у Алексея «вручную»), обвязки стыков
+#    (байт-в-байт), нижняя обвязка (байт), верхняя (±20). Отметки середин
+#    у Алексея ручные (615/1010/1340 от низа этажа) — не сверяются. ──
+
+
+def _d4_run(path):
+    import ezdxf
+    from ezdxf import bbox as ezbbox
+    skip = {"TEXT", "MTEXT", "ATTDEF", "DIMENSION", "HATCH"}
+    doc = ezdxf.readfile(path)
+    strips, panels, segments, f_st, f_rg = [], [], [], [], []
+    for e in doc.modelspace():
+        t = e.dxftype()
+        if t == "INSERT":
+            if e.dxf.layer.startswith("RF-"):
+                at = {a.dxf.tag: a.dxf.text for a in e.attribs}
+                rec = (e.dxf.insert.x, e.dxf.insert.y, at.get("ДЛИНА"))
+                (f_st if e.dxf.layer == "RF-стойки" else f_rg).append(rec)
+                continue
+            pts = [ezbbox.extents([v], fast=True) for v in e.virtual_entities()
+                   if v.dxftype() not in skip]
+            pts = [b for b in pts if b.has_data]
+            if not pts:
+                continue
+            bx = {"x0": min(b.extmin.x for b in pts),
+                  "y0": min(b.extmin.y for b in pts),
+                  "x1": max(b.extmax.x for b in pts),
+                  "y1": max(b.extmax.y for b in pts)}
+            strips.append(dict(bx))
+            p = dict(bx); p["name"] = e.dxf.name; panels.append(p)
+        elif t == "LINE":
+            segments.append({"x0": e.dxf.start.x, "y0": e.dxf.start.y,
+                             "x1": e.dxf.end.x, "y1": e.dxf.end.y})
+        elif t == "LWPOLYLINE":
+            pp = e.get_points("xy")
+            if e.closed and len(pp) <= 5:
+                xs = [q[0] for q in pp]; ys = [q[1] for q in pp]
+                strips.append({"x0": min(xs), "y0": min(ys),
+                               "x1": max(xs), "y1": max(ys)})
+    # ярусы эталона → «клики» конструктора (низ 1-го/2-го терморазрывов)
+    lvl = sorted({(round(y, 2), round(y + float(dl), 2)) for _, y, dl in f_st})
+    assert len(lvl) >= 3, f"D4 {path}: ярусов эталона {len(lvl)}"
+    l1, l2 = lvl[0][1], lvl[1][1]
+    plan = recognize({"strips": strips, "segments": segments, "panels": panels,
+                      "params": {"thermal": {"l1": l1, "l2": l2, "gap": 5}},
+                      "blocks": {"stand": {"name": "S", "rot": 0,
+                                           "body_w": 53.0},
+                                 "rigel": {"name": "R", "rot": 0,
+                                           "body_w": 52.0}}})
+    st = sorted(((i["x"], i["y"], float(i["attrs"]["ДЛИНА"]))
+                 for i in plan["inserts"] if i["kind"] == "stand"))
+    fs = sorted((x, y, float(dl)) for x, y, dl in f_st)
+    assert len(st) == len(fs), f"D4 {path}: стоек {len(st)}/{len(fs)}"
+    D = fs[0][0] - st[0][0]
+    y_top = max(t for _, t in lvl)
+    n = 0
+    for a, b in zip(st, fs):
+        top_tier = abs((b[1] + b[2]) - y_top) <= 25   # верхний ярус
+        tol = 20.0 if top_tier else 0.5
+        assert abs(a[0] + D - b[0]) <= 0.5 and abs(a[1] - b[1]) <= 0.5 \
+            and abs(a[2] - b[2]) <= tol, f"D4 {path}: стойка {a} vs {b}"
+        n += 3
+    # обвязки: стыки ярусов — байт-в-байт с эталоном; низ байт; верх ±20
+    rys = sorted({round(i["y"], 1) for i in plan["inserts"]
+                  if i["kind"] == "rigel"})
+    fys = sorted({round(y, 1) for _, y, _ in f_rg})
+    assert rys[0] == fys[0], f"D4 {path}: нижняя обвязка {rys[0]} vs {fys[0]}"
+    n += 1
+    for jt in [t for _, t in lvl[:-1]]:                 # верхи ярусов 1..4
+        want = round(jt - 26.0, 1)                      # тело ригеля 52
+        assert want in rys and want in fys, \
+            f"D4 {path}: стыковая обвязка {want} (план {want in rys} / " \
+            f"эталон {want in fys})"
+        n += 1
+    assert abs(rys[-1] - fys[-1]) <= 20, \
+        f"D4 {path}: верхняя обвязка {rys[-1]} vs {fys[-1]}"
+    n += 1
+    assert any("панельный АР" in x for x in plan["notes"]) and \
+        any("терморазрыв" in x for x in plan["notes"]), f"D4 {path}: notes"
+    n += 1
+    return n
+
+
+if _have_ezdxf:
+    _p4 = next((os.path.join(d, "Проба_2.dxf") for d in D3_DIRS
+                if os.path.exists(os.path.join(d, "Проба_2.dxf"))), None)
+    if _p4:
+        _n4 = _d4_run(_p4)
+        print("vitrage_recognize D4-эталон: %d сверок OK — Проба 2 "
+              "(панельный АР + терморазрыв: 20 стоек 5 ярусов, обвязки "
+              "низа/стыков байт-в-байт; середины у Алексея ручные)" % _n4)
+    else:
+        print("vitrage_recognize D4: Проба_2.dxf недоступен — пропуск")
+else:
+    print("vitrage_recognize D4: ezdxf нет — пропуск")

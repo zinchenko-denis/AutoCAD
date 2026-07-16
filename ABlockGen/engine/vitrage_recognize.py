@@ -143,6 +143,124 @@ def group_rails(horz):
     return rails
 
 
+def panel_grid(raw_strips, wmin, wmax):
+    """ПАНЕЛЬНЫЙ АР (Проба 2, 15.07c): импосты не нарисованы — сетка задана
+    ЗАЗОРАМИ между крупными панелями (стеклопакеты замкнутыми полилиниями,
+    зазор 50). Крупные прямоугольники (оба измерения > wmax не обязательно:
+    хотя бы одно >> полосы) кластеризуются по X и Y (merge пересечений —
+    дверные панели вложены), зазоры кластеров wmin..wmax → СИНТЕЗ-ПОЛОСЫ
+    зазоров + крайние полосы шириной в медианный зазор снаружи габарита
+    (эталон: ось крайней = грань панелей ∓ gap/2). Дальше полосы идут общим
+    пайплайном (chains/rails/оси/обвязка). → (synth_strips, notes)."""
+    rects = []
+    for s in raw_strips:
+        if s.get("seg"):
+            continue
+        x0, y0 = float(s["x0"]), float(s["y0"])
+        x1, y1 = float(s["x1"]), float(s["y1"])
+        if x1 < x0: x0, x1 = x1, x0
+        if y1 < y0: y0, y1 = y1, y0
+        w, h = x1 - x0, y1 - y0
+        if w > wmax and h > wmin:          # панель: широкая, не «полоска»
+            rects.append((x0, y0, x1, y1))
+    if len(rects) < 4:
+        return [], []
+
+    def clusters(ivs):
+        """merge пересекающихся/вложенных интервалов (щель < wmin — та же
+        панель: дверные вложения). Узкие добавляются первыми; интервал,
+        цепляющий ≥2 готовых кластера, — СКВОЗНОЙ элемент (поручень
+        ограждения во всю ширину, Проба 2) и пропускается."""
+        out = []
+        for a, b in sorted(ivs, key=lambda ab: ab[1] - ab[0]):
+            hits = [c for c in out if a < c[1] + wmin and b > c[0] - wmin]
+            if not hits:
+                out.append([a, b])
+            elif len(hits) == 1:
+                hits[0][0] = min(hits[0][0], a)
+                hits[0][1] = max(hits[0][1], b)
+            # ≥2 кластеров — сквозной, мимо
+        out.sort()
+        return out
+
+    cx = clusters([(r[0], r[2]) for r in rects])
+    if len(cx) < 2:
+        return [], []
+    # панель принадлежит РОВНО одному столбцу; сквозная графика (поручни
+    # ограждений во всю ширину, козырьки) пересекает ≥2 — вон из основы:
+    # иначе она растягивает габарит (низ/верх ±50 на Пробе 2) и дробит ряды
+    good = []
+    for r in rects:
+        hits = sum(1 for c in cx if r[0] < c[1] and r[2] > c[0])
+        if hits == 1:
+            good.append(r)
+    if len(good) < 4:
+        return [], []
+    cy = clusters([(r[1], r[3]) for r in good])
+    gx = [(cx[i][1], cx[i + 1][0]) for i in range(len(cx) - 1)]
+    gx = [g for g in gx if wmin <= g[1] - g[0] <= wmax]
+    if not gx:
+        return [], []
+    gaps = sorted(g[1] - g[0] for g in gx)
+    gap_med = gaps[len(gaps) // 2]
+    x_lo, x_hi = cx[0][0], cx[-1][1]
+    y_lo, y_hi = min(r[1] for r in good), max(r[3] for r in good)
+    rects = good
+    synth = []
+    # вертикали: зазоры между столбцами + крайние снаружи габарита панелей;
+    # низ стоек = панели − зазор (Проба 2: стартовый профиль под нижним
+    # рядом), верх = верх панелей (эталон)
+    for a, b in gx:
+        synth.append({"x0": a, "y0": y_lo - gap_med, "x1": b, "y1": y_hi})
+    synth.append({"x0": x_lo - gap_med, "y0": y_lo - gap_med,
+                  "x1": x_lo, "y1": y_hi})
+    synth.append({"x0": x_hi, "y0": y_lo - gap_med,
+                  "x1": x_hi + gap_med, "y1": y_hi})
+    # горизонтали: зазоры между рядами (спан — по паре смежных панелей)
+    n_rail = 0
+    for i in range(len(cy) - 1):
+        a, b = cy[i][1], cy[i + 1][0]
+        if not (wmin <= b - a <= wmax):
+            continue
+        for lo, hi in _merge_ivs(
+                [(max(r1[0], r2[0]), min(r1[2], r2[2]))
+                 for r1 in rects for r2 in rects
+                 if abs(r1[3] - a) <= EPS and abs(r2[1] - b) <= EPS
+                 and min(r1[2], r2[2]) - max(r1[0], r2[0]) > wmin]):
+            synth.append({"x0": lo, "y0": a, "x1": hi, "y1": b})
+            n_rail += 1
+    # краевые горизонтали ВНУТРЬ габарита стоек — дают обвязкам «полосу,
+    # достигающую края» для клэмпа край ± тело_ригеля/2
+    synth.append({"x0": x_lo, "y0": y_lo - gap_med, "x1": x_hi, "y1": y_lo})
+    synth.append({"x0": x_lo, "y0": y_hi - gap_med, "x1": x_hi, "y1": y_hi})
+    notes = ["панельный АР: сетка из зазоров (столбцов %d, осей %d, "
+             "отметочных зазоров %d, зазор %.0f); посторонняя графика "
+             "(ограждения и т.п.) в панельном режиме игнорируется"
+             % (len(cx), len(gx) + 2, n_rail, gap_med)]
+    return synth, notes
+
+
+def thermal_tiers(y_lo, y_hi, l1, l2, gap):
+    """Терморазрыв (сценарий Алексея 15.07c, витражи выше хлыста 6000):
+    ярус 1 — [низ..L1], ярус 2 — [L1+gap..L2], далее этажи высотой яруса 2;
+    последний ярус тянется до верха (остаток), если следующий полный этаж
+    не оставляет места ещё на один. → [(y0, y1)] снизу вверх."""
+    if not (y_lo + EPS < l1 < l2 < y_hi - EPS):
+        raise ValueError("терморазрыв: линии L1=%.1f, L2=%.1f должны лежать "
+                         "внутри конструкции %.1f..%.1f (L2 выше L1)"
+                         % (l1, l2, y_lo, y_hi))
+    h2 = l2 - (l1 + gap)
+    if h2 <= gap:
+        raise ValueError("терморазрыв: второй ярус вырожден (%.1f мм)" % h2)
+    tiers = [(y_lo, l1), (l1 + gap, l2)]
+    b = l2 + gap
+    while y_hi - b > h2 + gap + h2 - EPS:   # влезает полный этаж И ещё один
+        tiers.append((b, b + h2))
+        b += h2 + gap
+    tiers.append((b, y_hi))                  # верхний ряд — остаток
+    return tiers
+
+
 def covered(spans, a, b, min_frac):
     """Покрывают ли интервалы spans отрезок [a,b] хотя бы на min_frac?"""
     if b <= a:
@@ -356,6 +474,15 @@ def recognize(req):
                          "(и из отрезков полосы не собрались)")
     vert, horz, cube = classify_strips(strips, wmin, wmax)
     chains = chain_verticals(vert, cube)
+    if len(chains) < 2:
+        # полос-импостов нет — панельный АР (Проба 2): сетка из зазоров.
+        # Работаем ТОЛЬКО по синтез-полосам: посторонние полосы декора
+        # (поручни ограждений шагом этажа) дают ложные отметки
+        synth, pnotes = panel_grid(strips, wmin, wmax)
+        if synth:
+            notes.extend(pnotes)
+            vert, horz, cube = classify_strips(synth, wmin, wmax)
+            chains = chain_verticals(vert, cube)
     rails = group_rails(horz)
 
     # фантом-фильтр (15.07, Образец 1: дверная коробка/полотно и линии
@@ -454,14 +581,38 @@ def recognize(req):
             c["y0"] = max(c["y0"], f_lo)
             c["y1"] = min(c["y1"], f_hi)
 
+    # тело РИГЕЛЯ — посадка обвязки (Проба 2: обвязки на ±26 = 52/2 тела
+    # ригеля КП_45152-2 при теле стойки 53); не задано — тело стойки
+    rb = float(br.get("body_w") or 0.0)
+    if rb <= 0:
+        rb = body_w
+
+    # ТЕРМОРАЗРЫВ (сценарий Алексея 15.07c, витражи выше хлыста 6000):
+    # ярусы стоек по кликам L1/L2 + зазор (Enter=5); стыки ярусов гасят
+    # отметки своей зоны в ВЕРХНЮЮ обвязку нижнего яруса (Проба 2)
+    tiers = None
+    joints = []
+    th = params.get("thermal") or {}
+    if th.get("l1") is not None and th.get("l2") is not None:
+        t_gap = float(th.get("gap") or 5.0)
+        tiers = thermal_tiers(min(c["y0"] for c in chains),
+                              max(c["y1"] for c in chains),
+                              float(th["l1"]), float(th["l2"]), t_gap)
+        joints = [(tiers[i][1], tiers[i + 1][0])
+                  for i in range(len(tiers) - 1)]
+        notes.append("терморазрыв %.0f: ярусов %d (%s)"
+                     % (t_gap, len(tiers),
+                        "/".join("%.0f" % (t - b) for b, t in tiers)))
+
     # ОБВЯЗКА «ПО ГАБАРИТАМ» (решение Алексея 15.07 на вопрос конвенции:
     # «по краю рамки ставить край блока, необходимые изменения потом
     # вручную»): отметка, чья полоса ДОСТИГАЕТ края габарита каркаса
-    # (рамка обрамления или общий габарит стоек), ставится краем тела на
-    # край: ось = край ± body_w/2. Покрывает и полосы, торчащие ЗА рамку
-    # (Образец 2, низ на подставке: 32868.7 = рамка+25), и полосы, доходящие
-    # до края изнутри (Образец 2, верх: 36152.7 = рамка−25). Отметки в поле
-    # (порог двери «Проба 3», середины) не трогаются — оси полос АР.
+    # (рамка обрамления или общий габарит стоек), ставится краем ТЕЛА
+    # РИГЕЛЯ на край: ось = край ± rb/2. Покрывает и полосы, торчащие ЗА
+    # рамку (Образец 2, низ на подставке), и полосы, доходящие до края
+    # изнутри (Образец 2, верх). Отметки в поле (порог двери «Проба 3»,
+    # середины) не трогаются — оси полос АР. При терморазрыве отметка в
+    # зоне СТЫКА ярусов ложится верхней обвязкой нижнего яруса.
     # Совпавшие после клэмпа отметки сливаются. Старые ручные эталоны
     # Алексея местами ставили обвязку по оси полосы (Образец 1: ±15..25) —
     # по его решению расхождение допустимо, правится вручную.
@@ -470,14 +621,21 @@ def recognize(req):
         g_hi = max(c["y1"] for c in chains)
         moved = []
         for r in rails:
-            if r["lo"] <= g_lo + EPS and abs(r["y"] - (g_lo + body_w / 2.0)) > EPS:
-                moved.append((r["y"], g_lo + body_w / 2.0))
-                r["y"] = g_lo + body_w / 2.0
-            elif r["hi"] >= g_hi - EPS and abs(r["y"] - (g_hi - body_w / 2.0)) > EPS:
-                moved.append((r["y"], g_hi - body_w / 2.0))
-                r["y"] = g_hi - body_w / 2.0
+            if r["lo"] <= g_lo + EPS and abs(r["y"] - (g_lo + rb / 2.0)) > EPS:
+                moved.append((r["y"], g_lo + rb / 2.0))
+                r["y"] = g_lo + rb / 2.0
+            elif r["hi"] >= g_hi - EPS and abs(r["y"] - (g_hi - rb / 2.0)) > EPS:
+                moved.append((r["y"], g_hi - rb / 2.0))
+                r["y"] = g_hi - rb / 2.0
+            else:
+                for jt, jb in joints:
+                    if jt - rb - EPS <= r["y"] <= jb + rb + EPS:
+                        if abs(r["y"] - (jt - rb / 2.0)) > EPS:
+                            moved.append((r["y"], jt - rb / 2.0))
+                            r["y"] = jt - rb / 2.0
+                        break
         if moved:
-            notes.append("обвязка по краю габарита (правило 15.07): " +
+            notes.append("обвязка по краю габарита/стыка (правило 15.07): " +
                          ", ".join("%.1f→%.1f" % m for m in moved))
             merged = []
             for r in sorted(rails, key=lambda z: z["y"]):
@@ -524,16 +682,18 @@ def recognize(req):
         return mk
     mk_stand, mk_rigel = marker(m_stand), marker(m_rigel)
 
-    # стойки
+    # стойки (с терморазрывом — ярусами: марки по типоразмерам сами
+    # различат этажи разной высоты)
     for ax, c in zip(axes, chains):
-        ln = c["y1"] - c["y0"]
-        inserts.append({
-            "kind": "stand", "block": stand_name, "layer": "RF-стойки",
-            "x": round(ax, 4), "y": round(c["y0"], 4), "rot": stand_rot,
-            "dyn": {"Длина": round(ln, 4)},
-            "attrs": {"ИМЯ": mk_stand((stand_name, _rnd05(ln * 10))),
-                      "ПРОФ": stand_prof, "ДЛИНА": fmt_len(ln)},
-        })
+        for b, t in (tiers if tiers else [(c["y0"], c["y1"])]):
+            ln = t - b
+            inserts.append({
+                "kind": "stand", "block": stand_name, "layer": "RF-стойки",
+                "x": round(ax, 4), "y": round(b, 4), "rot": stand_rot,
+                "dyn": {"Длина": round(ln, 4)},
+                "attrs": {"ИМЯ": mk_stand((stand_name, _rnd05(ln * 10))),
+                          "ПРОФ": stand_prof, "ДЛИНА": fmt_len(ln)},
+            })
 
     # ригели по отметкам × пролётам; верхняя отметка — опц. спец-образцом В СВЕТУ
     n_rig = 0
@@ -590,7 +750,8 @@ def recognize(req):
         "ok": True,
         "inserts": inserts,
         "dims": dims,
-        "summary": {"stands": len(axes), "rigels": n_rig,
+        "summary": {"stands": len(axes) * (len(tiers) if tiers else 1),
+                    "rigels": n_rig,
                     "rails": len(rails),
                     "axes_x": [round(a, 2) for a in axes]},
         "notes": notes,
