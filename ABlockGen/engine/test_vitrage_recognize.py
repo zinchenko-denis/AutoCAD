@@ -436,13 +436,14 @@ ok([round(f["y"], 1) for f in fl20] == [60.0, 1530.0, 3000.0] and
    f"R20: сквозные ряды {[(f['y'], f['dyn']['Высота']) for f in fl20]}")
 
 # ── R21: «галочки» открывания АР → створка + dyn Visibility1 (17.07b):
-#    концы у грани = сторона петель (ГОСТ): концы слева → «Левое»;
+#    имя = сторона ОСТРИЯ (18.07d, по vis-наборам блока «Створки» Алексея:
+#    «Левое поворотное» рисует галочку остриём влево; концы = петли);
 #    вертикальная галочка в ячейке добавляет «-откидное»; галочка без
 #    образца RF-створки → заполнение + note ──
 S21 = [bb(0, 0, 50, 3000), bb(1000, 0, 1050, 3000),
        bb(50, 0, 1000, 50), bb(50, 1475, 1000, 1525), bb(50, 2950, 1000, 3000)]
-V21 = [{"p": [[50, 300], [900, 700], [50, 1100]]},        # низ: петли слева
-       {"p": [[1000, 1700], [100, 2200], [1000, 2700]]},  # верх: петли справа
+V21 = [{"p": [[50, 300], [900, 700], [50, 1100]]},        # низ: остриё вправо
+       {"p": [[1000, 1700], [100, 2200], [1000, 2700]]},  # верх: остриё влево
        {"p": [[100, 1600], [500, 2900], [900, 1600]]}]    # верх: откидная
 p21 = recognize({"strips": S21, "vees": V21,
                  "blocks": {"stand": {"name": "S", "body_w": 50},
@@ -453,12 +454,12 @@ sa21 = sorted((i for i in p21["inserts"] if i["kind"] == "sash"),
               key=lambda z: z["y"])
 ok(len(sa21) == 2 and p21["summary"]["fills"] == 0,
    f"R21: обе ячейки — створки ({len(sa21)})")
-ok(sa21[0]["dyn"].get("Visibility1") == "Левое поворотное" and
+ok(sa21[0]["dyn"].get("Visibility1") == "Правое поворотное" and
    near(sa21[0]["y"], 60.0),
-   f"R21: нижняя {sa21[0]['dyn']}")
-ok(sa21[1]["dyn"].get("Visibility1") == "Правое поворотно-откидное" and
+   f"R21: нижняя (остриё вправо) {sa21[0]['dyn']}")
+ok(sa21[1]["dyn"].get("Visibility1") == "Левое поворотно-откидное" and
    near(sa21[1]["y"], 1530.0),
-   f"R21: верхняя {sa21[1]['dyn']}")
+   f"R21: верхняя (остриё влево) {sa21[1]['dyn']}")
 p21b = recognize({"strips": S21, "vees": V21[:1],
                   "blocks": {"stand": {"name": "S", "body_w": 50},
                              "rigel": {"name": "R", "body_w": 60},
@@ -803,11 +804,71 @@ else:
 #    Контракт: точка = левый низ света (ось+ШИРИНА/2 — 22515=22488.5+26.5),
 #    РАЗМЕР_ЗАП = свет + fold из дефолта ATTDEF блока («20Х20» у КПС),
 #    МАРКИРОВКА-константа из дефолта («Ст»/«С01»), ряды СКВОЗЬ терморазрыв.
-#    Галочки (Тонкая_Пунктирная) → створки, Visibility1 «Левое поворотное»
-#    (все 5: концы на левой грани = петли слева). ИЗВЕСТНАЯ АНОМАЛИЯ:
+#    Галочки (Тонкая_Пунктирная) → створки, Visibility1 «Правое поворотное»
+#    (все 5 галочек АР — остриём вправо; имя = сторона ОСТРИЯ, конвенция
+#    ЖИВЬЁМ выводится из vis-наборов блока «Створки» и активных состояний
+#    эталонных *U — см. _d5_vis, 18.07d). ИЗВЕСТНАЯ АНОМАЛИЯ:
 #    нижняя галочка растянута на 2 ячейки (наследие дверного проёма) — наш
 #    «центр» кладёт створку в нижнюю (25749.9), эталон Алексея — в верхнюю
 #    (26884.9); пара меняется местами, вопрос конвенции задан Алексею. ──
+
+
+def _d5_vis(doc, path):
+    """Конвенция Л/П ЖИВЬЁМ из блока «Створки» (18.07d).
+
+    Из BLOCKVISIBILITYPARAMETER (сырые группы 303=имя состояния,
+    332=vis-хэндлы) родительского блока «Створки»: какую галочку рисует
+    каждое чистое поворотное состояние → мапа сторона-ОСТРИЯ→имя.
+    Из *U эталонных RF-створок: видимая (invisible=0) галочка → активное
+    состояние каждой эталонной створки Алексея."""
+    def apex_side(pts):
+        (x0, _), (x1, _), (x2, _) = pts
+        y0, y1, y2 = pts[0][1], pts[1][1], pts[2][1]
+        if abs(x0 - x2) <= abs(y0 - y2) * 0.5:
+            return "L" if x1 < (x0 + x2) / 2.0 else "R"
+        return None                       # вертикальная — не Л/П
+    vees = {}                             # handle → (block, side, invisible)
+    for bl in doc.blocks:
+        for be in bl:
+            if be.dxftype() == "LWPOLYLINE" and not be.closed:
+                q = [(p[0], p[1]) for p in be.get_points("xy")]
+                if len(q) == 3:
+                    s = apex_side(q)
+                    if s:
+                        vees[str(be.dxf.handle).upper()] = \
+                            (bl.name, s, be.dxf.get("invisible", 0))
+    side2name, raw = {}, open(path, encoding="utf-8",
+                              errors="replace").read().splitlines()
+    i = 0
+    while i < len(raw) - 1:
+        if raw[i].strip() == "100" and \
+                raw[i + 1].strip() == "AcDbBlockVisibilityParameter":
+            k, states, cur = i, [], None
+            while k < len(raw) - 1:
+                c, v = raw[k].strip(), raw[k + 1].strip()
+                if c == "0":
+                    break
+                if c == "303":
+                    cur = (v, []); states.append(cur)
+                if c == "332" and cur is not None:
+                    cur[1].append(v.upper())
+                k += 2
+            m = {}
+            for nm, hs in states:
+                sides = [vees[h][1] for h in hs
+                         if h in vees and vees[h][0] == "Створки"]
+                if len(sides) == 1 and "откидн" not in nm.lower():
+                    m[sides[0]] = nm
+            if len(m) == 2:
+                side2name = m
+            i = k
+        i += 1
+    def active(uname):
+        for h, (bn, s, inv) in vees.items():
+            if bn == uname and not inv:
+                return side2name.get(s)
+        return None
+    return side2name, active
 
 
 def _d5_run(path):
@@ -816,7 +877,7 @@ def _d5_run(path):
     skip = {"TEXT", "MTEXT", "ATTDEF", "DIMENSION", "HATCH"}
     doc = ezdxf.readfile(path)
     strips, panels, segments, vees = [], [], [], []
-    f_st, f_fill, f_sash = [], [], []
+    f_st, f_fill, f_sash, f_sash_u = [], [], [], []
     for e in doc.modelspace():
         t = e.dxftype()
         lay = e.dxf.layer
@@ -832,6 +893,7 @@ def _d5_run(path):
                                    at.get("РАЗМЕР_ЗАП")))
                 elif lay == "RF-створки":
                     f_sash.append(round(e.dxf.insert.y, 1))
+                    f_sash_u.append(e.dxf.name)
                 continue
             pts = [ezbbox.extents([v], fast=True) for v in e.virtual_entities()
                    if v.dxftype() not in skip]
@@ -912,14 +974,25 @@ def _d5_run(path):
     assert ys[0] == 25749.9 and len(ys) == len(et_s) + 1 and \
         all(abs(a - b) <= 40 for a, b in zip(ys[1:], et_s)), \
         f"D5 {path}: створки {ys} vs эталон {sorted(f_sash)}"
-    assert all(s["dyn"].get("Visibility1") == "Левое поворотное"
-               for s in sash), f"D5 {path}: Visibility1"
+    # конвенция Л/П — из САМОГО блока (не из головы): «Левое поворотное»
+    # рисует галочку остриём ВЛЕВО; активные состояния эталонных *U —
+    # все «Правое поворотное» (галочки АР остриём вправо)
+    side2name, active = _d5_vis(doc, path)
+    assert side2name == {"L": "Левое поворотное",
+                         "R": "Правое поворотное"}, \
+        f"D5 {path}: конвенция блока {side2name}"
+    et_states = [active(u) for u in f_sash_u]
+    assert et_states == ["Правое поворотное"] * len(f_sash_u), \
+        f"D5 {path}: активные состояния эталона {et_states}"
+    assert all(s["dyn"].get("Visibility1") == et_states[k]
+               for k, s in enumerate(sash)), \
+        f"D5 {path}: Visibility1 {[s['dyn'].get('Visibility1') for s in sash]}"
     for s in sash:
         want = "%dХ%d" % (round(s["dyn"]["Ширина"]) + 20,
                           round(s["dyn"]["Высота"]) + 20)
         assert s["attrs"]["РАЗМЕР_ЗАП"] == want and \
             s["attrs"]["МАРКИРОВКА"] == "С01", f"D5 {path}: контракт {s}"
-    n += 3 + 2 * len(sash)
+    n += 5 + 2 * len(sash)
     # 4) контракт: РАЗМЕР_ЗАП = свет + 20Х20, МАРКИРОВКА-константы
     for f in fills:
         want = "%dХ%d" % (round(f["dyn"]["Ширина"]) + 20,
@@ -941,7 +1014,8 @@ if _have_ezdxf:
         _n5 = _d5_run(_p5)
         print("vitrage_recognize D5-эталон: %d сверок OK — Проба 2.1 "
               "(42 заполнения + 5 створок: точки/РАЗМЕР_ЗАП (fold 20Х20)/"
-              "МАРКИРОВКА «Ст» байт-в-байт, Visibility1 «Левое поворотное»; "
+              "МАРКИРОВКА «Ст» байт-в-байт; Visibility1 «Правое поворотное» "
+              "— конвенция Л/П живьём из vis-наборов блока «Створки»; "
               "двухъячеечная галочка — известная аномалия)" % _n5)
     else:
         print("vitrage_recognize D5: Проба_2.1.dxf недоступен — пропуск")
