@@ -329,8 +329,8 @@ namespace ABlockGenPlugin
 
             // ── 7. вставка вхождений + размеры ──
             int inserted, skipped, dimsN;
-            List<string> dynMiss;
-            try { VitrageCommand.InsertAll(db, plan, out inserted, out skipped, out dimsN, out dynMiss); }
+            List<string> dynMiss, dynFb;
+            try { VitrageCommand.InsertAll(db, plan, out inserted, out skipped, out dimsN, out dynMiss, out dynFb); }
             catch (System.Exception ex)
             { ed.WriteMessage("\nОшибка вставки: " + ex.Message); return; }
 
@@ -348,6 +348,11 @@ namespace ABlockGenPlugin
                     dynMiss.Count + "): " + string.Join("; ",
                     dynMiss.GetRange(0, Math.Min(3, dynMiss.Count)).ToArray()) +
                     " — проверьте имя параметра/значения состояний блока.");
+            if (dynFb != null && dynFb.Count > 0)
+                ed.WriteMessage("\n  ! открывание распознано, но состояния нет " +
+                    "в Visibility1 блока (" + dynFb.Count + "): " +
+                    string.Join("; ", dynFb.ToArray()) +
+                    " — добавьте состояние в блок и переключите вручную.");
         }
 
         // ── образец из вставки (в открытой транзакции): эффективное имя +

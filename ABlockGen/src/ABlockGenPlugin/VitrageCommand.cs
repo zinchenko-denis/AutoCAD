@@ -141,8 +141,8 @@ namespace ABlockGenPlugin
 
             // ── 6. вставка вхождений + размеры ──
             int inserted, skipped, dimsN;
-            List<string> dynMiss;
-            try { InsertAll(db, plan, out inserted, out skipped, out dimsN, out dynMiss); }
+            List<string> dynMiss, dynFb;
+            try { InsertAll(db, plan, out inserted, out skipped, out dimsN, out dynMiss, out dynFb); }
             catch (System.Exception ex)
             { ed.WriteMessage("\nОшибка вставки: " + ex.Message); return; }
 
@@ -161,15 +161,21 @@ namespace ABlockGenPlugin
                     dynMiss.Count + "): " + string.Join("; ",
                     dynMiss.GetRange(0, Math.Min(3, dynMiss.Count)).ToArray()) +
                     " — проверьте имя параметра/значения состояний блока.");
+            if (dynFb != null && dynFb.Count > 0)
+                ed.WriteMessage("\n  ! открывание распознано, но состояния нет " +
+                    "в Visibility1 блока (" + dynFb.Count + "): " +
+                    string.Join("; ", dynFb.ToArray()) +
+                    " — добавьте состояние в блок и переключите вручную.");
         }
 
         // ── вставка плана: одна транзакция = один undo (блоки + размеры) ──
         internal static void InsertAll(Database db, Dictionary<string, object> plan,
                                       out int inserted, out int skipped, out int dimsN,
-                                      out List<string> dynMiss)
+                                      out List<string> dynMiss, out List<string> dynFb)
         {
             inserted = 0; skipped = 0; dimsN = 0;
             dynMiss = new List<string>();
+            dynFb = new List<string>();
             var items = Get(plan, "inserts") as IList;
             if (items == null) return;
             using (var tr = db.TransactionManager.StartTransaction())
@@ -245,9 +251,26 @@ namespace ABlockGenPlugin
                                     if (sv0 != null && AllowedHas(pr, sv0))
                                     { hit = kv.Key; v = kv.Value; break; }
                                 }
-                                if (hit == null || !TrySetDynProp(pr, v))
-                                    continue;
+                                if (hit == null) continue;
                                 var want = v as string;
+                                if (!TrySetDynProp(pr, v))
+                                {
+                                    // состояние распознано с АР, но в блоке
+                                    // его НЕТ («Откидное»/«Фрамуга» могут
+                                    // отсутствовать — просьба Алексея
+                                    // 18.07c): ставим «Левое поворотное»
+                                    // (или первое допустимое) + сообщение;
+                                    // конструктор доделает блок и переключит
+                                    if (want == null || AllowedHas(pr, want))
+                                        continue;      // иная причина → dynMiss
+                                    string fb = FallbackState(pr);
+                                    if (fb == null || !TrySetDynProp(pr, fb))
+                                        continue;
+                                    dynFb.Add("«" + want + "» → «" + fb + "» (" +
+                                              SafeStr(Get(it, "block")) + ")");
+                                    pending.Remove(hit);
+                                    continue;
+                                }
                                 if (want == null ||
                                     string.Equals(
                                         (pr.Value as string ?? "").Trim(),
@@ -358,6 +381,27 @@ namespace ABlockGenPlugin
                 return true;
             }
             catch { return false; }
+        }
+
+        // фолбэк-состояние (18.07c): «Левое поворотное», если есть среди
+        // допустимых, иначе первое строковое из GetAllowedValues
+        private static string FallbackState(DynamicBlockReferenceProperty pr)
+        {
+            try
+            {
+                string first = null;
+                foreach (object av in pr.GetAllowedValues())
+                {
+                    var s2 = av as string;
+                    if (s2 == null) continue;
+                    if (first == null) first = s2;
+                    if (string.Equals(s2.Trim(), "Левое поворотное",
+                            StringComparison.OrdinalIgnoreCase))
+                        return s2;
+                }
+                return first;
+            }
+            catch { return null; }
         }
 
         // есть ли значение (строка-состояние) среди допустимых значений

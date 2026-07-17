@@ -766,6 +766,10 @@ def recognize(req):
     # («Левое/Правое поворотное[-откидное]», просьба Алексея 17.07b):
     # концы у грани = сторона ПЕТЕЛЬ (ГОСТ): концы слева → «Левое»;
     # вертикальная галочка в той же ячейке добавляет «-откидное».
+    # Вертикальная галочка БЕЗ боковой (просьба Алексея 18.07c):
+    # остриё вверх/концы вниз → «Откидное», остриё вниз/концы вверх →
+    # «Фрамуга» — состояний может НЕ БЫТЬ в блоке: C# тогда ставит
+    # «Левое поворотное» с сообщением (конструктор доделает блок).
     n_fill = 0
     n_sash = 0
     if fill_name or sash_name:
@@ -797,7 +801,8 @@ def recognize(req):
                 hinge_left = (e1x + e2x) / 2.0 < ax
                 vees_side.append((cxv, cyv, hinge_left))
             elif abs(e1y - e2y) <= abs(e1x - e2x) * 0.5:
-                vees_tilt.append((cxv, cyv))     # откидная (концы на гориз.)
+                # вертикальная: остриё vs середина концов → вверх/вниз
+                vees_tilt.append((cxv, cyv, ay > (e1y + e2y) / 2.0))
 
         def sa_attr(wc, hc):
             return "%d%s%d" % (_rnd05(wc) + int(fold_w), "Х",
@@ -824,16 +829,23 @@ def recognize(req):
                     return (a_in - EPS <= px <= b_in + EPS and
                             lo - EPS <= py <= lo + hc + EPS)
                 vee = next((v for v in vees_side if in_cell(v[0], v[1])), None)
+                tiltv = next((t for t in vees_tilt
+                              if in_cell(t[0], t[1])), None)
                 is_sash = (any(in_cell(sx, sy) for sx, sy in sashes) or
-                           vee is not None)
+                           vee is not None or tiltv is not None)
                 sa = sa_attr(wc, hc)
                 if is_sash and sash_name:
                     dyn = {"Ширина": round(wc, 4), "Высота": round(hc, 4)}
                     if vee is not None:
-                        tilt = any(in_cell(tx, ty) for tx, ty in vees_tilt)
                         dyn["Visibility1"] = (
                             ("Левое" if vee[2] else "Правое") +
-                            (" поворотно-откидное" if tilt else " поворотное"))
+                            (" поворотно-откидное" if tiltv is not None
+                             else " поворотное"))
+                    elif tiltv is not None:
+                        # только вертикальная (18.07c): остриё вверх →
+                        # откидное, остриё вниз → фрамуга
+                        dyn["Visibility1"] = ("Откидное" if tiltv[2]
+                                              else "Фрамуга")
                     inserts.append({
                         "kind": "sash", "block": sash_name,
                         "layer": "RF-створки",
