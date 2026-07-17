@@ -751,14 +751,26 @@ def recognize(req):
 
     # ── заполнения и створки в СВЕТАХ ячеек (просьба Алексея 17.07) ──
     # Ячейка: пролёт (свет между телами стоек) × ряд (свет между телами
-    # ФАКТИЧЕСКИХ ригелей пролёта; контракт Э1: cell_rows/size_attr, fold=15,
-    # min_fill=50, точка вставки — левый низ света). При терморазрыве ряды
-    # считаются В ПРЕДЕЛАХ ЯРУСА. Ячейка двери (панель под door_pat кроет
-    # ≥50% света по X и Y) — ПРОПУСК: двери Алексей ставит сам (17.07).
-    # Ячейка с панелью-«створкой» (sash_pat, центр в ячейке) — блок створки.
+    # ФАКТИЧЕСКИХ ригелей пролёта; контракт Э1: cell_rows, точка вставки —
+    # левый низ света, min_fill=50). Ряды идут СКВОЗЬ терморазрыв —
+    # заполнение сидит на ригелях («Проба 2.1»: ячейка 618 через стык
+    # ярусов). РАЗМЕР_ЗАП = свет + fold_w/fold_h (у Алексея припуск живёт
+    # ДЕФОЛТОМ ATTDEF РАЗМЕР_ЗАП блока: «20Х20» у КПС; 15 — дефолт 17-й).
+    # МАРКИРОВКА: константа из дефолта ATTDEF образца («Ст»/«С01»,
+    # «Проба 2.1») или шаблон Сп{n}/Ств{n}. Ячейка двери — ПРОПУСК (двери
+    # Алексей ставит сам). Ячейка-СТВОРКА: панель sash_pat ИЛИ «галочка»
+    # открывания АР (vee: незамкнутая 3-точечная ломаная, «Проба 2/2.1» —
+    # Тонкая_Пунктирная); направление галочки → dyn Visibility1
+    # («Левое/Правое поворотное[-откидное]», просьба Алексея 17.07b):
+    # концы у грани = сторона ПЕТЕЛЬ (ГОСТ): концы слева → «Левое»;
+    # вертикальная галочка в той же ячейке добавляет «-откидное».
     n_fill = 0
     n_sash = 0
     if fill_name or sash_name:
+        fold_w = float(bf.get("fold_w", fold))
+        fold_h = float(bf.get("fold_h", fold))
+        mark_fill = (bf.get("mark") or "").strip()
+        mark_sash = (bsash.get("mark") or "").strip()
         sash_pat = [p.lower() for p in
                     (params.get("sash_pat") or ["створк", "sash"])]
         sashes = []
@@ -767,8 +779,30 @@ def recognize(req):
             if any(pat in nm for pat in sash_pat):
                 sashes.append(((float(p["x0"]) + float(p["x1"])) / 2.0,
                                (float(p["y0"]) + float(p["y1"])) / 2.0))
-        cell_tiers = tiers if tiers else [(min(c["y0"] for c in chains),
-                                           max(c["y1"] for c in chains))]
+        # галочки открывания: p[0]/p[2] — концы (петли), p[1] — вершина
+        vees_side, vees_tilt = [], []
+        for v in (req.get("vees") or []):
+            pp = v.get("p") or []
+            if len(pp) != 3:
+                continue
+            (e1x, e1y), (ax, ay), (e2x, e2y) = ((float(pp[0][0]), float(pp[0][1])),
+                                                (float(pp[1][0]), float(pp[1][1])),
+                                                (float(pp[2][0]), float(pp[2][1])))
+            cxv = (min(e1x, e2x, ax) + max(e1x, e2x, ax)) / 2.0
+            cyv = (min(e1y, e2y, ay) + max(e1y, e2y, ay)) / 2.0
+            if abs(e1x - e2x) <= abs(e1y - e2y) * 0.5:
+                # концы на одной вертикальной грани → поворотная
+                hinge_left = (e1x + e2x) / 2.0 < ax
+                vees_side.append((cxv, cyv, hinge_left))
+            elif abs(e1y - e2y) <= abs(e1x - e2x) * 0.5:
+                vees_tilt.append((cxv, cyv))     # откидная (концы на гориз.)
+
+        def sa_attr(wc, hc):
+            return "%d%s%d" % (_rnd05(wc) + int(fold_w), "Х",
+                               _rnd05(hc) + int(fold_h))
+
+        g_lo = min(c["y0"] for c in chains)
+        g_hi = max(c["y1"] for c in chains)
         for i in range(len(axes) - 1):
             a_in = axes[i] + body_w / 2.0
             b_in = axes[i + 1] - body_w / 2.0
@@ -776,44 +810,53 @@ def recognize(req):
             if wc < min_fill:
                 continue
             ys = sorted(rail_hits.get(i, []))
-            for tb, tt in cell_tiers:
-                rails_in = [y for y in ys if tb + EPS < y < tt - EPS]
-                for lo, hc in cell_rows(tb, tt, rails_in, rb, min_fill):
-                    hit_door = any(
-                        min(b_in, dx1) - max(a_in, dx0) >= wc * COVER_MIN and
-                        min(lo + hc, dy1) - max(lo, dy0) >= hc * COVER_MIN
-                        for dx0, dy0, dx1, dy1 in doors)
-                    if hit_door:
-                        continue
-                    is_sash = sash_name and any(
-                        a_in - EPS <= sx <= b_in + EPS and
-                        lo - EPS <= sy <= lo + hc + EPS for sx, sy in sashes)
+            for lo, hc in cell_rows(g_lo, g_hi, ys, rb, min_fill):
+                hit_door = any(
+                    min(b_in, dx1) - max(a_in, dx0) >= wc * COVER_MIN and
+                    min(lo + hc, dy1) - max(lo, dy0) >= hc * COVER_MIN
+                    for dx0, dy0, dx1, dy1 in doors)
+                if hit_door:
+                    continue
+
+                def in_cell(px, py):
+                    return (a_in - EPS <= px <= b_in + EPS and
+                            lo - EPS <= py <= lo + hc + EPS)
+                vee = next((v for v in vees_side if in_cell(v[0], v[1])), None)
+                is_sash = (any(in_cell(sx, sy) for sx, sy in sashes) or
+                           vee is not None)
+                sa = sa_attr(wc, hc)
+                if is_sash and sash_name:
+                    dyn = {"Ширина": round(wc, 4), "Высота": round(hc, 4)}
+                    if vee is not None:
+                        tilt = any(in_cell(tx, ty) for tx, ty in vees_tilt)
+                        dyn["Visibility1"] = (
+                            ("Левое" if vee[2] else "Правое") +
+                            (" поворотно-откидное" if tilt else " поворотное"))
+                    inserts.append({
+                        "kind": "sash", "block": sash_name,
+                        "layer": "RF-створки",
+                        "x": round(a_in, 4), "y": round(lo, 4),
+                        "rot": sash_rot, "dyn": dyn,
+                        "attrs": {"МАРКИРОВКА": mark_sash or mk_sash(sa),
+                                  "РАЗМЕР_ЗАП": sa},
+                    })
+                    n_sash += 1
+                elif fill_name:
                     if is_sash:
-                        sa = size_attr(wc, hc, fold)
-                        inserts.append({
-                            "kind": "sash", "block": sash_name,
-                            "layer": "RF-створки",
-                            "x": round(a_in, 4), "y": round(lo, 4),
-                            "rot": sash_rot,
-                            "dyn": {"Ширина": round(wc, 4),
-                                    "Высота": round(hc, 4)},
-                            "attrs": {"МАРКИРОВКА": mk_sash(sa),
-                                      "РАЗМЕР_ЗАП": sa},
-                        })
-                        n_sash += 1
-                    elif fill_name:
-                        sa = size_attr(wc, hc, fold)
-                        inserts.append({
-                            "kind": "fill", "block": fill_name,
-                            "layer": "RF-заполнения",
-                            "x": round(a_in, 4), "y": round(lo, 4),
-                            "rot": fill_rot,
-                            "dyn": {"Ширина": round(wc, 4),
-                                    "Высота": round(hc, 4)},
-                            "attrs": {"МАРКИРОВКА": mk_fill(sa),
-                                      "РАЗМЕР_ЗАП": sa},
-                        })
-                        n_fill += 1
+                        notes.append("ячейка створки (%.0f, %.0f) без "
+                                     "образца RF-створки — заполнение"
+                                     % (a_in, lo))
+                    inserts.append({
+                        "kind": "fill", "block": fill_name,
+                        "layer": "RF-заполнения",
+                        "x": round(a_in, 4), "y": round(lo, 4),
+                        "rot": fill_rot,
+                        "dyn": {"Ширина": round(wc, 4),
+                                "Высота": round(hc, 4)},
+                        "attrs": {"МАРКИРОВКА": mark_fill or mk_fill(sa),
+                                  "РАЗМЕР_ЗАП": sa},
+                    })
+                    n_fill += 1
         if n_fill or n_sash:
             notes.append("заполнений: %d, створок: %d (двери пропущены)"
                          % (n_fill, n_sash))

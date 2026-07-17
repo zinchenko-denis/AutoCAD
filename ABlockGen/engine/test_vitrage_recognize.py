@@ -415,7 +415,9 @@ ok(sa19[0]["layer"] == "RF-створки" and sa19[0]["block"] == "СТВ-1" an
    sa19[0]["attrs"]["МАРКИРОВКА"].startswith("Ств"),
    f"R19: створка в ячейке панели-«Створки» {sa19[0]}")
 
-# ── R20: заполнения при ТЕРМОРАЗРЫВЕ — ряды в пределах ЯРУСА ──
+# ── R20: заполнения при ТЕРМОРАЗРЫВЕ — ряды СКВОЗЬ стык, по ригелям
+#    (доказано «Проба 2.1»: ячейка 618 через терморазрыв ярусов;
+#    заполнение сидит на ригелях, а не на ярусах стоек) ──
 p20 = recognize({"strips": S16,
                  "params": {"thermal": {"l1": 3000.0, "l2": 5500.0}},
                  "blocks": {"stand": {"name": "S", "body_w": 50},
@@ -423,10 +425,57 @@ p20 = recognize({"strips": S16,
                             "fill": {"name": "СТП"}}})
 fl20 = sorted((i for i in p20["inserts"] if i["kind"] == "fill"),
               key=lambda z: z["y"])
-ok(len(fl20) == 4, f"R20: заполнений {len(fl20)} != 4 (2 в ярусе 1, 1+1 выше)")
-ok([round(f["y"], 1) for f in fl20] == [60.0, 1530.0, 3005.0, 5505.0] and
-   [round(f["dyn"]["Высота"], 1) for f in fl20] == [1410.0, 1410.0, 2495.0, 535.0],
-   f"R20: ряды по ярусам {[(f['y'], f['dyn']['Высота']) for f in fl20]}")
+ok(len(fl20) == 3, f"R20: заполнений {len(fl20)} != 3 (ряды сквозь стык)")
+ok([round(f["y"], 1) for f in fl20] == [60.0, 1530.0, 3000.0] and
+   [round(f["dyn"]["Высота"], 1) for f in fl20] == [1410.0, 1410.0, 3040.0],
+   f"R20: сквозные ряды {[(f['y'], f['dyn']['Высота']) for f in fl20]}")
+
+# ── R21: «галочки» открывания АР → створка + dyn Visibility1 (17.07b):
+#    концы у грани = сторона петель (ГОСТ): концы слева → «Левое»;
+#    вертикальная галочка в ячейке добавляет «-откидное»; галочка без
+#    образца RF-створки → заполнение + note ──
+S21 = [bb(0, 0, 50, 3000), bb(1000, 0, 1050, 3000),
+       bb(50, 0, 1000, 50), bb(50, 1475, 1000, 1525), bb(50, 2950, 1000, 3000)]
+V21 = [{"p": [[50, 300], [900, 700], [50, 1100]]},        # низ: петли слева
+       {"p": [[1000, 1700], [100, 2200], [1000, 2700]]},  # верх: петли справа
+       {"p": [[100, 1600], [500, 2900], [900, 1600]]}]    # верх: откидная
+p21 = recognize({"strips": S21, "vees": V21,
+                 "blocks": {"stand": {"name": "S", "body_w": 50},
+                            "rigel": {"name": "R", "body_w": 60},
+                            "fill": {"name": "СТП"},
+                            "sash": {"name": "СТВ"}}})
+sa21 = sorted((i for i in p21["inserts"] if i["kind"] == "sash"),
+              key=lambda z: z["y"])
+ok(len(sa21) == 2 and p21["summary"]["fills"] == 0,
+   f"R21: обе ячейки — створки ({len(sa21)})")
+ok(sa21[0]["dyn"].get("Visibility1") == "Левое поворотное" and
+   near(sa21[0]["y"], 60.0),
+   f"R21: нижняя {sa21[0]['dyn']}")
+ok(sa21[1]["dyn"].get("Visibility1") == "Правое поворотно-откидное" and
+   near(sa21[1]["y"], 1530.0),
+   f"R21: верхняя {sa21[1]['dyn']}")
+p21b = recognize({"strips": S21, "vees": V21[:1],
+                  "blocks": {"stand": {"name": "S", "body_w": 50},
+                             "rigel": {"name": "R", "body_w": 60},
+                             "fill": {"name": "СТП"}}})
+ok(p21b["summary"]["fills"] == 2 and p21b["summary"]["sashes"] == 0 and
+   any("без образца RF-створки" in n for n in p21b["notes"]),
+   "R21: галочка без образца створки → заполнение + note")
+
+# ── R22: fold_w/fold_h из блока («20Х20» у КПС, «Проба 2.1») и
+#    МАРКИРОВКА-константа из дефолта ATTDEF («Ст») ──
+p22 = recognize({"strips": S21,
+                 "blocks": {"stand": {"name": "S", "body_w": 53},
+                            "rigel": {"name": "R", "body_w": 52},
+                            "fill": {"name": "СТП", "fold_w": 20,
+                                     "fold_h": 20, "mark": "Ст"}}})
+fl22 = [i for i in p22["inserts"] if i["kind"] == "fill"]
+ok(all(f["attrs"]["МАРКИРОВКА"] == "Ст" for f in fl22),
+   "R22: МАРКИРОВКА-константа «Ст»")
+f0 = min(fl22, key=lambda z: z["y"])
+ok(f0["attrs"]["РАЗМЕР_ЗАП"] ==
+   "%dХ%d" % (round(f0["dyn"]["Ширина"]) + 20, round(f0["dyn"]["Высота"]) + 20),
+   f"R22: fold 20Х20 {f0['attrs']['РАЗМЕР_ЗАП']}")
 
 print(f"vitrage_recognize: {PASS} проверок OK")
 
@@ -724,3 +773,153 @@ if _have_ezdxf:
         print("vitrage_recognize D4: Проба_2.dxf недоступен — пропуск")
 else:
     print("vitrage_recognize D4: ezdxf нет — пропуск")
+
+# ── D5: живой «Проба 2.1» (17.07) — ЗАПОЛНЕНИЯ И СТВОРКИ поверх панельного
+#    АР с терморазрывом: 42 заполнения + 5 створок эталона Алексея.
+#    Контракт: точка = левый низ света (ось+ШИРИНА/2 — 22515=22488.5+26.5),
+#    РАЗМЕР_ЗАП = свет + fold из дефолта ATTDEF блока («20Х20» у КПС),
+#    МАРКИРОВКА-константа из дефолта («Ст»/«С01»), ряды СКВОЗЬ терморазрыв.
+#    Галочки (Тонкая_Пунктирная) → створки, Visibility1 «Левое поворотное»
+#    (все 5: концы на левой грани = петли слева). ИЗВЕСТНАЯ АНОМАЛИЯ:
+#    нижняя галочка растянута на 2 ячейки (наследие дверного проёма) — наш
+#    «центр» кладёт створку в нижнюю (25749.9), эталон Алексея — в верхнюю
+#    (26884.9); пара меняется местами, вопрос конвенции задан Алексею. ──
+
+
+def _d5_run(path):
+    import ezdxf
+    from ezdxf import bbox as ezbbox
+    skip = {"TEXT", "MTEXT", "ATTDEF", "DIMENSION", "HATCH"}
+    doc = ezdxf.readfile(path)
+    strips, panels, segments, vees = [], [], [], []
+    f_st, f_fill, f_sash = [], [], []
+    for e in doc.modelspace():
+        t = e.dxftype()
+        lay = e.dxf.layer
+        if t == "INSERT":
+            if lay.startswith("RF-"):
+                at = {a.dxf.tag: a.dxf.text for a in e.attribs}
+                if lay == "RF-стойки":
+                    f_st.append((e.dxf.insert.x, e.dxf.insert.y,
+                                 at.get("ДЛИНА")))
+                elif lay == "RF-заполнения":
+                    f_fill.append((round(e.dxf.insert.x, 1),
+                                   round(e.dxf.insert.y, 1),
+                                   at.get("РАЗМЕР_ЗАП")))
+                elif lay == "RF-створки":
+                    f_sash.append(round(e.dxf.insert.y, 1))
+                continue
+            pts = [ezbbox.extents([v], fast=True) for v in e.virtual_entities()
+                   if v.dxftype() not in skip]
+            pts = [b for b in pts if b.has_data]
+            if not pts:
+                continue
+            bx = {"x0": min(b.extmin.x for b in pts),
+                  "y0": min(b.extmin.y for b in pts),
+                  "x1": max(b.extmax.x for b in pts),
+                  "y1": max(b.extmax.y for b in pts)}
+            strips.append(dict(bx))
+            p = dict(bx); p["name"] = e.dxf.name; panels.append(p)
+        elif t == "LINE":
+            segments.append({"x0": e.dxf.start.x, "y0": e.dxf.start.y,
+                             "x1": e.dxf.end.x, "y1": e.dxf.end.y})
+        elif t == "LWPOLYLINE":
+            pp = e.get_points("xy")
+            if e.closed and len(pp) <= 5:
+                xs = [q[0] for q in pp]; ys = [q[1] for q in pp]
+                strips.append({"x0": min(xs), "y0": min(ys),
+                               "x1": max(xs), "y1": max(ys)})
+            elif not e.closed and len(pp) == 3 and all(
+                    abs(pp[k+1][0]-pp[k][0]) > 0.5 and
+                    abs(pp[k+1][1]-pp[k][1]) > 0.5 for k in range(2)):
+                vees.append({"p": [[q[0], q[1]] for q in pp]})   # галочка
+            else:
+                n = len(pp)
+                for k in range(n - 1):
+                    a, b = pp[k], pp[k+1]
+                    segments.append({"x0": a[0], "y0": a[1],
+                                     "x1": b[0], "y1": b[1]})
+    lvl = sorted({(round(y, 2), round(y + float(dl), 2)) for _, y, dl in f_st})
+    l1, l2 = lvl[0][1], lvl[1][1]
+    plan = recognize({"strips": strips, "segments": segments,
+                      "panels": panels, "vees": vees,
+                      "params": {"thermal": {"l1": l1, "l2": l2, "gap": 5}},
+                      "blocks": {
+                          "stand": {"name": "S", "rot": 0, "body_w": 53.0},
+                          "rigel": {"name": "R", "rot": 0, "body_w": 52.0},
+                          "fill": {"name": "СТП", "fold_w": 20, "fold_h": 20,
+                                   "mark": "Ст"},
+                          "sash": {"name": "СТВ", "mark": "С01"}}})
+    # сдвиг АР → эталон по первой стойке (как в D2/D4)
+    st_p = sorted((i["x"], i["y"]) for i in plan["inserts"]
+                  if i["kind"] == "stand")
+    fs = sorted((x, y) for x, y, _ in f_st)
+    D = fs[0][0] - st_p[0][0]
+    fills = [i for i in plan["inserts"] if i["kind"] == "fill"]
+    sash = sorted((i for i in plan["inserts"] if i["kind"] == "sash"),
+                  key=lambda z: z["y"])
+    n = 0
+    # 1) структура: счёт и точки базирования столбцов (ось + ШИРИНА/2).
+    #    41 vs 42 эталонных: в пролёте 3 у Алексея РУЧНОЙ ригель 38753.9
+    #    (панельные зазоры АР его не несут) — у нас одним рядом меньше;
+    #    класс «ручных отметок», как в D4
+    assert len(fills) == 41 and len(f_fill) == 42 and \
+        len(sash) == len(f_sash), \
+        f"D5 {path}: fills {len(fills)}/{len(f_fill)}, sash {len(sash)}/{len(f_sash)}"
+    cols_p = sorted({round(f["x"] + D, 1) for f in fills})
+    cols_e = sorted({x for x, _, _ in f_fill})
+    assert cols_p == cols_e, f"D5 {path}: столбцы {cols_p} vs {cols_e}"
+    n += 2 + len(cols_e)
+    # 2) якорные ряды (обвязки/стыки — НЕ ручные): Y эталона есть у нас
+    et_y = {round(y, 1) for _, y, _ in f_fill}
+    our_y = {round(f["y"], 1) for f in fills} | {round(s["y"], 1) for s in sash}
+    for anchor in (25749.9, 28119.9, 31119.9, 34119.9, 37119.9):   # низ+стыки (40074.9 — ручной ригель, не якорь)
+        assert anchor in et_y and anchor in our_y, \
+            f"D5 {path}: якорный ряд {anchor}"
+        n += 1
+    # 3) створки: столбец, число, Visibility1, высоты (аномалия нижней
+    #    двухъячеечной галочки: наша в 25749.9, эталон в 26884.9)
+    assert all(abs(s["x"] + D - 23525.0) <= 0.1 for s in sash), \
+        f"D5 {path}: столбец створок"
+    ys = [round(s["y"], 1) for s in sash]
+    et_s = sorted(set(f_sash) - {26884.9})
+    # первая — аномалия (свап ячейки); остальные на РУЧНЫХ отметках
+    # Алексея (наши панельные ±40, как середины в D4)
+    assert ys[0] == 25749.9 and len(ys) == len(et_s) + 1 and \
+        all(abs(a - b) <= 40 for a, b in zip(ys[1:], et_s)), \
+        f"D5 {path}: створки {ys} vs эталон {sorted(f_sash)}"
+    assert all(s["dyn"].get("Visibility1") == "Левое поворотное"
+               for s in sash), f"D5 {path}: Visibility1"
+    for s in sash:
+        want = "%dХ%d" % (round(s["dyn"]["Ширина"]) + 20,
+                          round(s["dyn"]["Высота"]) + 20)
+        assert s["attrs"]["РАЗМЕР_ЗАП"] == want and \
+            s["attrs"]["МАРКИРОВКА"] == "С01", f"D5 {path}: контракт {s}"
+    n += 3 + 2 * len(sash)
+    # 4) контракт: РАЗМЕР_ЗАП = свет + 20Х20, МАРКИРОВКА-константы
+    for f in fills:
+        want = "%dХ%d" % (round(f["dyn"]["Ширина"]) + 20,
+                          round(f["dyn"]["Высота"]) + 20)
+        assert f["attrs"]["РАЗМЕР_ЗАП"] == want and \
+            f["attrs"]["МАРКИРОВКА"] == "Ст", f"D5 {path}: контракт {f}"
+        n += 1
+    # 5) ширины светов столбцов: 957/847/957 (+20 → 977/867)
+    ws = sorted({round(f["dyn"]["Ширина"], 1) for f in fills})
+    assert ws == [847.0, 957.0], f"D5 {path}: света {ws}"
+    n += 1
+    return n
+
+
+if _have_ezdxf:
+    _p5 = next((os.path.join(d, "Проба_2.1.dxf") for d in D3_DIRS
+                if os.path.exists(os.path.join(d, "Проба_2.1.dxf"))), None)
+    if _p5:
+        _n5 = _d5_run(_p5)
+        print("vitrage_recognize D5-эталон: %d сверок OK — Проба 2.1 "
+              "(42 заполнения + 5 створок: точки/РАЗМЕР_ЗАП (fold 20Х20)/"
+              "МАРКИРОВКА «Ст» байт-в-байт, Visibility1 «Левое поворотное»; "
+              "двухъячеечная галочка — известная аномалия)" % _n5)
+    else:
+        print("vitrage_recognize D5: Проба_2.1.dxf недоступен — пропуск")
+else:
+    print("vitrage_recognize D5: ezdxf нет — пропуск")
