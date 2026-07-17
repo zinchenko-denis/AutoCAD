@@ -141,7 +141,8 @@ namespace ABlockGenPlugin
 
             // ── 6. вставка вхождений + размеры ──
             int inserted, skipped, dimsN;
-            try { InsertAll(db, plan, out inserted, out skipped, out dimsN); }
+            List<string> dynMiss;
+            try { InsertAll(db, plan, out inserted, out skipped, out dimsN, out dynMiss); }
             catch (System.Exception ex)
             { ed.WriteMessage("\nОшибка вставки: " + ex.Message); return; }
 
@@ -155,13 +156,20 @@ namespace ABlockGenPlugin
             var notes = Get(plan, "notes") as IList;
             if (notes != null)
                 foreach (var n in notes) ed.WriteMessage("\n  · " + SafeStr(n));
+            if (dynMiss != null && dynMiss.Count > 0)
+                ed.WriteMessage("\n  ! динсвойства не установлены (" +
+                    dynMiss.Count + "): " + string.Join("; ",
+                    dynMiss.GetRange(0, Math.Min(3, dynMiss.Count)).ToArray()) +
+                    " — проверьте имя параметра/значения состояний блока.");
         }
 
         // ── вставка плана: одна транзакция = один undo (блоки + размеры) ──
         internal static void InsertAll(Database db, Dictionary<string, object> plan,
-                                      out int inserted, out int skipped, out int dimsN)
+                                      out int inserted, out int skipped, out int dimsN,
+                                      out List<string> dynMiss)
         {
             inserted = 0; skipped = 0; dimsN = 0;
+            dynMiss = new List<string>();
             var items = Get(plan, "inserts") as IList;
             if (items == null) return;
             using (var tr = db.TransactionManager.StartTransaction())
@@ -191,19 +199,52 @@ namespace ABlockGenPlugin
 
                     // 1) динсвойства ДО атрибутов: растяжка меняет геометрию, атрибуты
                     //    потом сядут по обновлённому представлению динблока.
+                    //    ДВА ПРОХОДА (фикс 18.07 — «не переключился Visibility1»):
+                    //    растяжки Ширина/Высота пересоздают представление, и
+                    //    присваивание видимости на протухшей коллекции тихо
+                    //    умирало; второй проход берёт КОЛЛЕКЦИЮ ЗАНОВО. Имя
+                    //    параметра ищется без регистра, а если не найдено —
+                    //    ПО ЗНАЧЕНИЮ в GetAllowedValues (русский AutoCAD зовёт
+                    //    параметр «Видимость1», Алексей — «Visibility1»).
                     var dyn = Get(it, "dyn") as Dictionary<string, object>;
                     if (dyn != null && br.IsDynamicBlock)
+                    {
+                        var pending = new Dictionary<string, object>(
+                            dyn, StringComparer.OrdinalIgnoreCase);
                         foreach (DynamicBlockReferenceProperty pr in
                                  br.DynamicBlockReferencePropertyCollection)
                         {
                             if (pr.ReadOnly) continue;
                             object v;
-                            if (!dyn.TryGetValue(pr.PropertyName, out v) || v == null) continue;
-                            try
-                            { pr.Value = Convert.ChangeType(v, pr.Value.GetType(),
-                                                            CultureInfo.InvariantCulture); }
-                            catch { }
+                            if (!pending.TryGetValue(pr.PropertyName, out v) ||
+                                v == null) continue;
+                            if (TrySetDynProp(pr, v))
+                                pending.Remove(pr.PropertyName);
                         }
+                        if (pending.Count > 0)
+                            foreach (DynamicBlockReferenceProperty pr in
+                                     br.DynamicBlockReferencePropertyCollection)
+                            {
+                                if (pr.ReadOnly) continue;
+                                string hit = null;
+                                object v = null;
+                                foreach (var kv in pending)
+                                {
+                                    if (string.Equals(kv.Key, pr.PropertyName,
+                                            StringComparison.OrdinalIgnoreCase))
+                                    { hit = kv.Key; v = kv.Value; break; }
+                                    // матч по значению-состоянию (видимость)
+                                    var sv = kv.Value as string;
+                                    if (sv != null && AllowedHas(pr, sv))
+                                    { hit = kv.Key; v = kv.Value; break; }
+                                }
+                                if (hit != null && TrySetDynProp(pr, v))
+                                    pending.Remove(hit);
+                            }
+                        foreach (var kv in pending)
+                            dynMiss.Add(kv.Key + "=" + SafeStr(kv.Value) +
+                                        " (" + SafeStr(Get(it, "block")) + ")");
+                    }
 
                     // 2) атрибуты — из ТЕКУЩЕГО представления (после динрастяжки)
                     var attrs = Get(it, "attrs") as Dictionary<string, object>;
@@ -268,6 +309,57 @@ namespace ABlockGenPlugin
                 }
                 tr.Commit();
             }
+        }
+
+        // ── установка динсвойства с ЯВНЫМ результатом (фикс 18.07):
+        //    строка → точное значение из GetAllowedValues (без регистра,
+        //    trim), иначе как есть; числа → ChangeType. false = не удалось ──
+        private static bool TrySetDynProp(DynamicBlockReferenceProperty pr,
+                                          object v)
+        {
+            try
+            {
+                var sv = v as string;
+                if (sv != null)
+                {
+                    string want = sv.Trim();
+                    try
+                    {
+                        foreach (object av in pr.GetAllowedValues())
+                        {
+                            var s2 = av as string;
+                            if (s2 != null && string.Equals(s2.Trim(), want,
+                                    StringComparison.OrdinalIgnoreCase))
+                            { pr.Value = s2; return true; }
+                        }
+                    }
+                    catch { }
+                    pr.Value = want;
+                    return true;
+                }
+                pr.Value = Convert.ChangeType(v, pr.Value.GetType(),
+                                              CultureInfo.InvariantCulture);
+                return true;
+            }
+            catch { return false; }
+        }
+
+        // есть ли значение (строка-состояние) среди допустимых значений
+        private static bool AllowedHas(DynamicBlockReferenceProperty pr,
+                                       string want)
+        {
+            try
+            {
+                foreach (object av in pr.GetAllowedValues())
+                {
+                    var s2 = av as string;
+                    if (s2 != null && string.Equals(s2.Trim(), want.Trim(),
+                            StringComparison.OrdinalIgnoreCase))
+                        return true;
+                }
+            }
+            catch { }
+            return false;
         }
 
         // мода поворота существующих вхождений определения в модели (Э1:
