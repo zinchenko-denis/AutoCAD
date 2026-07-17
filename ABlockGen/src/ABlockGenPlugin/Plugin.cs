@@ -1,3 +1,6 @@
+using System;
+using System.IO;
+using System.Reflection;
 using Autodesk.AutoCAD.Runtime;
 using AcApp = Autodesk.AutoCAD.ApplicationServices.Application;
 
@@ -23,11 +26,25 @@ namespace ABlockGenPlugin
                 var doc = AcApp.DocumentManager.MdiActiveDocument;
                 if (doc != null)
                     doc.Editor.WriteMessage(
-                        "\nABlockGen загружен. Команды: ATVITRAGEAR — каркас по " +
-                        "АР-чертежу (образцы стойки/ригеля → рамка); ATVITRAGE — " +
-                        "сетка по проёму. Кнопки: лента и тулбар «ABlockGen».\n");
+                        "\nABlockGen загружен (сборка DLL от " + BuildStamp() +
+                        "). Команды: ATVITRAGEAR — каркас по АР-чертежу " +
+                        "(образцы одной рамкой); ATVITRAGE — сетка по проёму. " +
+                        "Кнопки: лента и тулбар «ABlockGen».\n");
             }
             catch { }
+        }
+
+        // дата файла DLL (mtime из zip бандла = момент сборки CI) —
+        // маркер версии в командной строке: «какая сборка у Алексея»
+        // больше не гадаем (урок 18.07)
+        internal static string BuildStamp()
+        {
+            try
+            {
+                string p = Assembly.GetExecutingAssembly().Location;
+                return File.GetLastWriteTime(p).ToString("dd.MM.yyyy HH:mm");
+            }
+            catch { return "?"; }
         }
 
         public void Terminate()

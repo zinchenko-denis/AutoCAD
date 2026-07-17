@@ -211,16 +211,24 @@ namespace ABlockGenPlugin
                     {
                         var pending = new Dictionary<string, object>(
                             dyn, StringComparer.OrdinalIgnoreCase);
+                        // проход 1: ТОЛЬКО числовые (растяжки). Строки-
+                        // состояния здесь НЕЛЬЗЯ: если Visibility идёт в
+                        // коллекции РАНЬШЕ Ширины/Высоты, растяжка следом
+                        // пересоздаёт представление и ОТКАТЫВАЕТ видимость
+                        // к дефолту — «успех» без результата (фикс 18.07b)
                         foreach (DynamicBlockReferenceProperty pr in
                                  br.DynamicBlockReferencePropertyCollection)
                         {
                             if (pr.ReadOnly) continue;
                             object v;
                             if (!pending.TryGetValue(pr.PropertyName, out v) ||
-                                v == null) continue;
+                                v == null || v is string) continue;
                             if (TrySetDynProp(pr, v))
                                 pending.Remove(pr.PropertyName);
                         }
+                        // проход 2: строки-состояния — СВЕЖЕЙ коллекцией
+                        // (после растяжек), имя без регистра либо матч по
+                        // GetAllowedValues; после записи — ПРОВЕРКА ЧТЕНИЕМ
                         if (pending.Count > 0)
                             foreach (DynamicBlockReferenceProperty pr in
                                      br.DynamicBlockReferencePropertyCollection)
@@ -233,14 +241,22 @@ namespace ABlockGenPlugin
                                     if (string.Equals(kv.Key, pr.PropertyName,
                                             StringComparison.OrdinalIgnoreCase))
                                     { hit = kv.Key; v = kv.Value; break; }
-                                    // матч по значению-состоянию (видимость)
-                                    var sv = kv.Value as string;
-                                    if (sv != null && AllowedHas(pr, sv))
+                                    var sv0 = kv.Value as string;
+                                    if (sv0 != null && AllowedHas(pr, sv0))
                                     { hit = kv.Key; v = kv.Value; break; }
                                 }
-                                if (hit != null && TrySetDynProp(pr, v))
+                                if (hit == null || !TrySetDynProp(pr, v))
+                                    continue;
+                                var want = v as string;
+                                if (want == null ||
+                                    string.Equals(
+                                        (pr.Value as string ?? "").Trim(),
+                                        want.Trim(),
+                                        StringComparison.OrdinalIgnoreCase))
                                     pending.Remove(hit);
                             }
+                        // контроль ПОСЛЕ всех установок: строковые значения
+                        // перечитываются свежей коллекцией — расхождение в лог
                         foreach (var kv in pending)
                             dynMiss.Add(kv.Key + "=" + SafeStr(kv.Value) +
                                         " (" + SafeStr(Get(it, "block")) + ")");
