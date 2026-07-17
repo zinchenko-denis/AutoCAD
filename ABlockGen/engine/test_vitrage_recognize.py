@@ -375,6 +375,59 @@ ok(ys17 == [-25.0, 1025.0, 2425.0, 3375.0],
    f"R17: отметки {ys17} — обвязки края ±25, середины по центрам зазоров; "
    f"поручень (1550) отметки НЕ дал")
 
+# ── R18: ЗАПОЛНЕНИЯ в светах ячеек (просьба Алексея 17.07) — контракт Э1:
+#    левый низ света, dyn Ширина/Высота, РАЗМЕР_ЗАП = свет+15 (Х кирилл.);
+#    ячейка двери ПРОПУСКАЕТСЯ (двери Алексей ставит сам) ──
+req18 = {"strips": STRIPS, "panels": [PANELS[0]],   # только дверь, без створки
+         "blocks": {"stand": {"name": "S", "body_w": 50},
+                    "rigel": {"name": "R"},
+                    "fill": {"name": "СТП"}}}
+p18 = recognize(req18)
+fl18 = [i for i in p18["inserts"] if i["kind"] == "fill"]
+ok(len(fl18) == 13 and p18["summary"]["fills"] == 13,
+   f"R18: заполнений {len(fl18)} != 13 (5+3+5: ряд двери в центре пропущен)")
+ok(all(f["layer"] == "RF-заполнения" and f["block"] == "СТП" for f in fl18),
+   "R18: слой/блок заполнений")
+c18 = [f for f in fl18 if near(f["x"], 27133.0) and near(f["y"], 31239.8)]
+ok(len(c18) == 1 and c18[0]["dyn"]["Ширина"] == 395.0 and
+   c18[0]["dyn"]["Высота"] == 275.0 and
+   c18[0]["attrs"]["РАЗМЕР_ЗАП"] == "410Х290",
+   f"R18: нижняя ячейка пролёта 1 {c18}")
+ok(not any(near(f["x"], 27578.0) and f["y"] < 33800 for f in fl18),
+   "R18: в центральном пролёте под дверью заполнения нет")
+ok(all("Х" in f["attrs"]["РАЗМЕР_ЗАП"] for f in fl18) and
+   len({f["attrs"]["МАРКИРОВКА"] for f in fl18}) ==
+   len({f["attrs"]["РАЗМЕР_ЗАП"] for f in fl18}),
+   "R18: РАЗМЕР_ЗАП кириллической Х, марки по типоразмерам")
+
+# ── R19: СТВОРКА по имени панели АР (sash_pat «створк») вместо заполнения ──
+req19 = {"strips": STRIPS, "panels": PANELS,        # + панель «Створка»
+         "blocks": {"stand": {"name": "S", "body_w": 50},
+                    "rigel": {"name": "R"},
+                    "fill": {"name": "СТП"}, "sash": {"name": "СТВ-1"}}}
+p19 = recognize(req19)
+fl19 = [i for i in p19["inserts"] if i["kind"] == "fill"]
+sa19 = [i for i in p19["inserts"] if i["kind"] == "sash"]
+ok(len(sa19) == 1 and len(fl19) == 12 and p19["summary"]["sashes"] == 1,
+   f"R19: створок {len(sa19)}/заполнений {len(fl19)} (было 13 fill)")
+ok(sa19[0]["layer"] == "RF-створки" and sa19[0]["block"] == "СТВ-1" and
+   near(sa19[0]["x"], 27133.0) and near(sa19[0]["y"], 33964.8) and
+   sa19[0]["attrs"]["МАРКИРОВКА"].startswith("Ств"),
+   f"R19: створка в ячейке панели-«Створки» {sa19[0]}")
+
+# ── R20: заполнения при ТЕРМОРАЗРЫВЕ — ряды в пределах ЯРУСА ──
+p20 = recognize({"strips": S16,
+                 "params": {"thermal": {"l1": 3000.0, "l2": 5500.0}},
+                 "blocks": {"stand": {"name": "S", "body_w": 50},
+                            "rigel": {"name": "R", "body_w": 60},
+                            "fill": {"name": "СТП"}}})
+fl20 = sorted((i for i in p20["inserts"] if i["kind"] == "fill"),
+              key=lambda z: z["y"])
+ok(len(fl20) == 4, f"R20: заполнений {len(fl20)} != 4 (2 в ярусе 1, 1+1 выше)")
+ok([round(f["y"], 1) for f in fl20] == [60.0, 1530.0, 3005.0, 5505.0] and
+   [round(f["dyn"]["Высота"], 1) for f in fl20] == [1410.0, 1410.0, 2495.0, 535.0],
+   f"R20: ряды по ярусам {[(f['y'], f['dyn']['Высота']) for f in fl20]}")
+
 print(f"vitrage_recognize: {PASS} проверок OK")
 
 # ── D2: живой файл «Проба 3» — план обязан совпасть с ручной конструкцией ──

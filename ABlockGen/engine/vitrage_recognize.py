@@ -36,7 +36,7 @@ import json
 import math
 import sys
 
-from vitrage_plan import build_dims
+from vitrage_plan import build_dims, cell_rows, size_attr
 
 EPS = 1.0          # мм: допуск слияния координат АР
 COVER_MIN = 0.5    # доля света пролёта, которую должна покрыть отметка
@@ -418,6 +418,16 @@ def recognize(req):
     top_name = bt.get("name")
     top_prof = bt.get("prof") or top_name
     top_rot = float(bt.get("rot") or 0.0)
+    # заполнения и створки (просьба Алексея 17.07: «сразу расставлять»;
+    # образцы приходят из единой выборки по слоям RF-заполнения/RF-створки)
+    bf = blocks.get("fill") or {}
+    fill_name = bf.get("name")
+    fill_rot = float(bf.get("rot") or 0.0)
+    fold = float(bf.get("fold", 15))
+    min_fill = float(bf.get("min_fill", 50.0))
+    bsash = blocks.get("sash") or {}
+    sash_name = bsash.get("name")
+    sash_rot = float(bsash.get("rot") or 0.0)
 
     params = req.get("params") or {}
     wmin = float(params.get("strip_w_min", 40.0))
@@ -434,6 +444,8 @@ def recognize(req):
     marks = req.get("marks") or {}
     m_stand = marks.get("stand", "С{n}")
     m_rigel = marks.get("rigel", "Р{n}")
+    m_fill = marks.get("fill", "Сп{n}")
+    m_sash = marks.get("sash", "Ств{n}")
 
     strips = list(req.get("strips") or [])
     notes = []
@@ -681,6 +693,7 @@ def recognize(req):
             return seen[key]
         return mk
     mk_stand, mk_rigel = marker(m_stand), marker(m_rigel)
+    mk_fill, mk_sash = marker(m_fill), marker(m_sash)
 
     # стойки (с терморазрывом — ярусами: марки по типоразмерам сами
     # различат этажи разной высоты)
@@ -698,6 +711,7 @@ def recognize(req):
     # ригели по отметкам × пролётам; верхняя отметка — опц. спец-образцом В СВЕТУ
     n_rig = 0
     skipped_doors = 0
+    rail_hits = {}                # пролёт → отсортированные Y его ригелей
     top_y = rails[-1]["y"] if rails else None
     for r in rails:
         is_top = top_name and top_y is not None and abs(r["y"] - top_y) <= EPS
@@ -709,6 +723,7 @@ def recognize(req):
             if door_blocks_rail(r["y"], a_in, b_in):
                 skipped_doors += 1
                 continue
+            rail_hits.setdefault(i, []).append(r["y"])
             if is_top:
                 ln = b_in - a_in                 # в свету между телами
                 inserts.append({
@@ -734,6 +749,75 @@ def recognize(req):
     if skipped_doors:
         notes.append("порогов под дверями пропущено: %d" % skipped_doors)
 
+    # ── заполнения и створки в СВЕТАХ ячеек (просьба Алексея 17.07) ──
+    # Ячейка: пролёт (свет между телами стоек) × ряд (свет между телами
+    # ФАКТИЧЕСКИХ ригелей пролёта; контракт Э1: cell_rows/size_attr, fold=15,
+    # min_fill=50, точка вставки — левый низ света). При терморазрыве ряды
+    # считаются В ПРЕДЕЛАХ ЯРУСА. Ячейка двери (панель под door_pat кроет
+    # ≥50% света по X и Y) — ПРОПУСК: двери Алексей ставит сам (17.07).
+    # Ячейка с панелью-«створкой» (sash_pat, центр в ячейке) — блок створки.
+    n_fill = 0
+    n_sash = 0
+    if fill_name or sash_name:
+        sash_pat = [p.lower() for p in
+                    (params.get("sash_pat") or ["створк", "sash"])]
+        sashes = []
+        for p in (req.get("panels") or []):
+            nm = (p.get("name") or "").lower()
+            if any(pat in nm for pat in sash_pat):
+                sashes.append(((float(p["x0"]) + float(p["x1"])) / 2.0,
+                               (float(p["y0"]) + float(p["y1"])) / 2.0))
+        cell_tiers = tiers if tiers else [(min(c["y0"] for c in chains),
+                                           max(c["y1"] for c in chains))]
+        for i in range(len(axes) - 1):
+            a_in = axes[i] + body_w / 2.0
+            b_in = axes[i + 1] - body_w / 2.0
+            wc = b_in - a_in
+            if wc < min_fill:
+                continue
+            ys = sorted(rail_hits.get(i, []))
+            for tb, tt in cell_tiers:
+                rails_in = [y for y in ys if tb + EPS < y < tt - EPS]
+                for lo, hc in cell_rows(tb, tt, rails_in, rb, min_fill):
+                    hit_door = any(
+                        min(b_in, dx1) - max(a_in, dx0) >= wc * COVER_MIN and
+                        min(lo + hc, dy1) - max(lo, dy0) >= hc * COVER_MIN
+                        for dx0, dy0, dx1, dy1 in doors)
+                    if hit_door:
+                        continue
+                    is_sash = sash_name and any(
+                        a_in - EPS <= sx <= b_in + EPS and
+                        lo - EPS <= sy <= lo + hc + EPS for sx, sy in sashes)
+                    if is_sash:
+                        sa = size_attr(wc, hc, fold)
+                        inserts.append({
+                            "kind": "sash", "block": sash_name,
+                            "layer": "RF-створки",
+                            "x": round(a_in, 4), "y": round(lo, 4),
+                            "rot": sash_rot,
+                            "dyn": {"Ширина": round(wc, 4),
+                                    "Высота": round(hc, 4)},
+                            "attrs": {"МАРКИРОВКА": mk_sash(sa),
+                                      "РАЗМЕР_ЗАП": sa},
+                        })
+                        n_sash += 1
+                    elif fill_name:
+                        sa = size_attr(wc, hc, fold)
+                        inserts.append({
+                            "kind": "fill", "block": fill_name,
+                            "layer": "RF-заполнения",
+                            "x": round(a_in, 4), "y": round(lo, 4),
+                            "rot": fill_rot,
+                            "dyn": {"Ширина": round(wc, 4),
+                                    "Высота": round(hc, 4)},
+                            "attrs": {"МАРКИРОВКА": mk_fill(sa),
+                                      "РАЗМЕР_ЗАП": sa},
+                        })
+                        n_fill += 1
+        if n_fill or n_sash:
+            notes.append("заполнений: %d, створок: %d (двери пропущены)"
+                         % (n_fill, n_sash))
+
     # размеры (фидбэк Алексея 14.07): габаритные + межосевые цепочки;
     # вертикальная — по осям ФАКТИЧЕСКИ ПОСТАВЛЕННЫХ ригелей (порог двери
     # в цепочку не попадает), от габарита до габарита
@@ -752,6 +836,7 @@ def recognize(req):
         "dims": dims,
         "summary": {"stands": len(axes) * (len(tiers) if tiers else 1),
                     "rigels": n_rig,
+                    "fills": n_fill, "sashes": n_sash,
                     "rails": len(rails),
                     "axes_x": [round(a, 2) for a in axes]},
         "notes": notes,
