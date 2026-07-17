@@ -48,9 +48,10 @@ namespace ABlockGenPlugin
 
             string standName = null, standProf = null,
                    rigelName = null, rigelProf = null,
-                   fillName = null, sashName = null;
+                   fillName = null, sashName = null,
+                   fillMark = null, sashMark = null;
             double standRot = 0, rigelRot = 0, fillRot = 0, sashRot = 0,
-                   standW = 0, rigelW = 0;
+                   standW = 0, rigelW = 0, foldW = 0, foldH = 0;
             bool doorsSeen = false;
             using (var tr = db.TransactionManager.StartTransaction())
             {
@@ -77,13 +78,24 @@ namespace ABlockGenPlugin
                     {
                         if (fillName != null) continue;
                         if (SampleFromBr(tr, br, out nm, out pf, out rt, out wd))
-                        { fillName = nm; fillRot = rt; }
+                        {
+                            fillName = nm; fillRot = rt;
+                            // припуск и марка живут ДЕФОЛТАМИ ATTDEF блока
+                            // («20Х20» в РАЗМЕР_ЗАП, «Ст» в МАРКИРОВКА —
+                            // «Проба 2.1», 17.07b)
+                            AttrDefaults(tr, br, out fillMark,
+                                         out foldW, out foldH);
+                        }
                     }
                     else if (lay.Equals("RF-створки", StringComparison.OrdinalIgnoreCase))
                     {
                         if (sashName != null) continue;
                         if (SampleFromBr(tr, br, out nm, out pf, out rt, out wd))
-                        { sashName = nm; sashRot = rt; }
+                        {
+                            sashName = nm; sashRot = rt;
+                            double fw, fh;
+                            AttrDefaults(tr, br, out sashMark, out fw, out fh);
+                        }
                     }
                     else if (lay.StartsWith("RF-двер", StringComparison.OrdinalIgnoreCase))
                         doorsSeen = true;
@@ -115,6 +127,7 @@ namespace ABlockGenPlugin
             var strips = new List<Dictionary<string, object>>();
             var panels = new List<Dictionary<string, object>>();
             var segments = new List<Dictionary<string, object>>();
+            var vees = new List<Dictionary<string, object>>();
             using (var tr = db.TransactionManager.StartTransaction())
             {
                 foreach (SelectedObject so in sel.Value)
@@ -145,6 +158,28 @@ namespace ABlockGenPlugin
                     var pl = ent as Polyline;
                     if (pl != null)
                     {
+                        // «галочка» открывания (17.07b): незамкнутая
+                        // 3-точечная ломаная, оба звена наклонные —
+                        // отдельным каналом vees (направление створки)
+                        if (!pl.Closed && pl.NumberOfVertices == 3)
+                        {
+                            var q0 = pl.GetPoint2dAt(0);
+                            var q1 = pl.GetPoint2dAt(1);
+                            var q2 = pl.GetPoint2dAt(2);
+                            bool sl1 = Math.Abs(q1.X - q0.X) > 0.5 &&
+                                       Math.Abs(q1.Y - q0.Y) > 0.5;
+                            bool sl2 = Math.Abs(q2.X - q1.X) > 0.5 &&
+                                       Math.Abs(q2.Y - q1.Y) > 0.5;
+                            if (sl1 && sl2)
+                            {
+                                vees.Add(new Dictionary<string, object>
+                                { { "p", new[] {
+                                    new[] { q0.X, q0.Y },
+                                    new[] { q1.X, q1.Y },
+                                    new[] { q2.X, q2.Y } } } });
+                                continue;
+                            }
+                        }
                         if (pl.Closed && pl.NumberOfVertices <= 5)
                         {
                             // простой замкнутый контур (≈прямоугольник) — полоса
@@ -245,17 +280,28 @@ namespace ABlockGenPlugin
             var blocks = new Dictionary<string, object>
             { { "stand", stand }, { "rigel", rigel } };
             if (fillName != null)                        // заполнения (17.07)
-                blocks["fill"] = new Dictionary<string, object>
+            {
+                var fl = new Dictionary<string, object>
                 { { "name", fillName }, { "rot", fillRot } };
+                if (foldW > 0) fl["fold_w"] = foldW;     // «20Х20» из блока
+                if (foldH > 0) fl["fold_h"] = foldH;
+                if (!string.IsNullOrEmpty(fillMark)) fl["mark"] = fillMark;
+                blocks["fill"] = fl;
+            }
             if (sashName != null)                        // створки (17.07)
-                blocks["sash"] = new Dictionary<string, object>
+            {
+                var sh = new Dictionary<string, object>
                 { { "name", sashName }, { "rot", sashRot } };
+                if (!string.IsNullOrEmpty(sashMark)) sh["mark"] = sashMark;
+                blocks["sash"] = sh;
+            }
             var payload = new Dictionary<string, object>
             {
                 { "op", "recognize" },
                 { "strips", strips },
                 { "segments", segments },
                 { "panels", panels },
+                { "vees", vees },
                 { "blocks", blocks },
             };
             if (thermal)
@@ -394,6 +440,52 @@ namespace ABlockGenPlugin
                                         new Point3d(_x1, _pt.Y, 0));
                 return true;
             }
+        }
+
+        // ── дефолты ATTDEF образца заполнения/створки (17.07b, «Проба 2.1»):
+        //    МАРКИРОВКА → марка-константа («Ст»/«С01»; пусто или с «#» —
+        //    не используется, движок нумерует шаблоном); РАЗМЕР_ЗАП вида
+        //    «20Х20» (Х кириллическая или латинская) → припуски fold_w/fold_h ──
+        private static void AttrDefaults(Transaction tr, BlockReference br,
+                                         out string mark,
+                                         out double foldW, out double foldH)
+        {
+            mark = null; foldW = 0; foldH = 0;
+            try
+            {
+                var btr = tr.GetObject(br.BlockTableRecord, OpenMode.ForRead)
+                          as BlockTableRecord;
+                if (btr == null) return;
+                foreach (ObjectId eid in btr)
+                {
+                    var ad = tr.GetObject(eid, OpenMode.ForRead)
+                             as AttributeDefinition;
+                    if (ad == null) continue;
+                    if (string.Equals(ad.Tag, "МАРКИРОВКА",
+                            StringComparison.OrdinalIgnoreCase))
+                    {
+                        string t = (ad.TextString ?? "").Trim();
+                        if (t.Length > 0 && t.IndexOf('#') < 0) mark = t;
+                    }
+                    else if (string.Equals(ad.Tag, "РАЗМЕР_ЗАП",
+                            StringComparison.OrdinalIgnoreCase))
+                    {
+                        string t = (ad.TextString ?? "").Trim()
+                                   .Replace('Х', 'X').Replace('х', 'X')
+                                   .Replace('x', 'X');
+                        var parts = t.Split('X');
+                        double a, b;
+                        if (parts.Length == 2 &&
+                            double.TryParse(parts[0], NumberStyles.Float,
+                                CultureInfo.InvariantCulture, out a) &&
+                            double.TryParse(parts[1], NumberStyles.Float,
+                                CultureInfo.InvariantCulture, out b) &&
+                            a > 0 && b > 0)
+                        { foldW = a; foldH = b; }
+                    }
+                }
+            }
+            catch { }
         }
 
         // «53» / «52.5» / «52,5» → мм; мусор → 0
