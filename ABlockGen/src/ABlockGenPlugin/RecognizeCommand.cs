@@ -31,24 +31,78 @@ namespace ABlockGenPlugin
             var ed = doc.Editor;
             var db = doc.Database;
 
-            // ── 1. образцы: блок стоек и блок ригелей. ПОВОРОТ каждого
-            //    берётся С ОБРАЗЦА (фикс 14.07: поворот — свойство
-            //    определения; горизонтально рисованный ригель → 0,
-            //    вертикально рисованный → 270). Тело профиля НЕ меряем по
-            //    образцу: bbox реального блока несёт обвес (183 при теле 50,
-            //    урок 15.07b — «91 мм наружу» в габарите) — движок берёт
-            //    унификацию 50/АР. Запрос ВЕРХНЕГО ригеля УБРАН по фидбэку
-            //    Алексея 15.07 («делать по умолчанию как и остальные») —
-            //    вся верхняя отметка идёт обычным ригелем; функция rigel_top
-            //    в движке сохранена, вернуть — одним PickSample ──
-            string standName, standProf, rigelName, rigelProf;
-            double standRot, rigelRot, standW, rigelW;
-            if (!PickSample(ed, db, "\nУкажите блок стоек (образец): ",
-                            false, out standName, out standProf, out standRot,
-                            out standW)) return;
-            if (!PickSample(ed, db, "\nУкажите блок ригелей (образец): ",
-                            false, out rigelName, out rigelProf, out rigelRot,
-                            out rigelW)) return;
+            // ── 1. образцы ОДНОЙ выборкой (просьба Алексея 17.07): «Укажите
+            //    блоки конструкции» — категория берётся ПО СЛОЮ вставки:
+            //    RF-стойки / RF-ригеля (обязательны), RF-заполнения /
+            //    RF-створки (опционально), RF-двери — пока пропускаются
+            //    (Алексей обдумывает). ПОВОРОТ и атрибут ШИРИНА — с образца
+            //    (14.07/15.07c); bbox не меряется (обвес, 15.07b) ──
+            var pso0 = new PromptSelectionOptions
+            { MessageForAdding = "\nУкажите блоки конструкции (образцы: " +
+                                 "стойка, ригель, заполнение, створка): " };
+            var selFilter = new SelectionFilter(new[]
+            { new TypedValue((int)DxfCode.Start, "INSERT") });
+            var res0 = ed.GetSelection(pso0, selFilter);
+            if (res0.Status != PromptStatus.OK)
+            { ed.WriteMessage("\nОтменено."); return; }
+
+            string standName = null, standProf = null,
+                   rigelName = null, rigelProf = null,
+                   fillName = null, sashName = null;
+            double standRot = 0, rigelRot = 0, fillRot = 0, sashRot = 0,
+                   standW = 0, rigelW = 0;
+            bool doorsSeen = false;
+            using (var tr = db.TransactionManager.StartTransaction())
+            {
+                foreach (SelectedObject so in res0.Value)
+                {
+                    var br = tr.GetObject(so.ObjectId, OpenMode.ForRead)
+                             as BlockReference;
+                    if (br == null) continue;
+                    string lay = br.Layer ?? "";
+                    string nm, pf; double rt, wd;
+                    if (lay.Equals("RF-стойки", StringComparison.OrdinalIgnoreCase))
+                    {
+                        if (standName != null) continue;    // первый образец слоя
+                        if (SampleFromBr(tr, br, out nm, out pf, out rt, out wd))
+                        { standName = nm; standProf = pf; standRot = rt; standW = wd; }
+                    }
+                    else if (lay.Equals("RF-ригеля", StringComparison.OrdinalIgnoreCase))
+                    {
+                        if (rigelName != null) continue;
+                        if (SampleFromBr(tr, br, out nm, out pf, out rt, out wd))
+                        { rigelName = nm; rigelProf = pf; rigelRot = rt; rigelW = wd; }
+                    }
+                    else if (lay.Equals("RF-заполнения", StringComparison.OrdinalIgnoreCase))
+                    {
+                        if (fillName != null) continue;
+                        if (SampleFromBr(tr, br, out nm, out pf, out rt, out wd))
+                        { fillName = nm; fillRot = rt; }
+                    }
+                    else if (lay.Equals("RF-створки", StringComparison.OrdinalIgnoreCase))
+                    {
+                        if (sashName != null) continue;
+                        if (SampleFromBr(tr, br, out nm, out pf, out rt, out wd))
+                        { sashName = nm; sashRot = rt; }
+                    }
+                    else if (lay.StartsWith("RF-двер", StringComparison.OrdinalIgnoreCase))
+                        doorsSeen = true;
+                }
+                tr.Commit();
+            }
+            if (string.IsNullOrEmpty(standName) || string.IsNullOrEmpty(rigelName))
+            {
+                ed.WriteMessage("\nВ выборке нужны блоки на слоях RF-стойки И " +
+                                "RF-ригеля (найдено: стойка " +
+                                (standName ?? "нет") + ", ригель " +
+                                (rigelName ?? "нет") + ").");
+                return;
+            }
+            ed.WriteMessage("\nОбразцы: стойка «" + standName + "», ригель «" +
+                rigelName + "»" +
+                (fillName != null ? ", заполнение «" + fillName + "»" : "") +
+                (sashName != null ? ", створка «" + sashName + "»" : "") +
+                (doorsSeen ? "; блоки дверей пока пропускаются" : "") + ".");
 
             // ── 2. конструкция: АР-графика рамкой ──
             var pso = new PromptSelectionOptions
@@ -190,6 +244,12 @@ namespace ABlockGenPlugin
             if (rigelW > 0) rigel["body_w"] = rigelW;   // посадка обвязки ±ШИРИНА/2
             var blocks = new Dictionary<string, object>
             { { "stand", stand }, { "rigel", rigel } };
+            if (fillName != null)                        // заполнения (17.07)
+                blocks["fill"] = new Dictionary<string, object>
+                { { "name", fillName }, { "rot", fillRot } };
+            if (sashName != null)                        // створки (17.07)
+                blocks["sash"] = new Dictionary<string, object>
+                { { "name", sashName }, { "rot", sashRot } };
             var payload = new Dictionary<string, object>
             {
                 { "op", "recognize" },
@@ -238,58 +298,41 @@ namespace ABlockGenPlugin
                 foreach (var n in notes) ed.WriteMessage("\n  · " + VitrageCommand.SafeStr(n));
         }
 
-        // ── образец: BlockReference → эффективное имя + ПРОФ + ПОВОРОТ (градусы)
-        //    + ТЕЛО ПРОФИЛЯ из атрибута «ШИРИНА» (подсказка Алексея 15.07c:
-        //    у его блоков есть скрытый атрибут; в «Проба 2» он КОНСТАНТНЫЙ —
-        //    живёт ATTDEF-ом в определении, во вставке ATTRIB'а нет — читаем
-        //    оба места). bbox НЕ меряется (обвес, урок 15.07b).
-        //    optional=true: Enter — пропуск (name=null, возврат true) ──
-        private static bool PickSample(Editor ed, Database db, string msg,
-                                       bool optional, out string name, out string prof,
-                                       out double rotDeg, out double widthMm)
+        // ── образец из вставки (в открытой транзакции): эффективное имя +
+        //    ПРОФ + ПОВОРОТ (градусы) + ТЕЛО из атрибута «ШИРИНА» (15.07c:
+        //    ATTRIB вставки ИЛИ константный ATTDEF определения — «Проба 2»).
+        //    bbox НЕ меряется (обвес, урок 15.07b) ──
+        private static bool SampleFromBr(Transaction tr, BlockReference br,
+                                         out string name, out string prof,
+                                         out double rotDeg, out double widthMm)
         {
-            name = null; prof = null; rotDeg = 0; widthMm = 0;
-            var peo = new PromptEntityOptions(msg);
-            peo.SetRejectMessage("\nНужен блок (вхождение).");
-            peo.AddAllowedClass(typeof(BlockReference), false);
-            if (optional) peo.AllowNone = true;
-            var res = ed.GetEntity(peo);
-            if (optional && (res.Status == PromptStatus.None)) return true;   // Enter — пропуск
-            if (res.Status != PromptStatus.OK) { ed.WriteMessage("\nОтменено."); return false; }
-            using (var tr = db.TransactionManager.StartTransaction())
+            name = EffectiveName(tr, br); prof = null;
+            rotDeg = NormDeg(br.Rotation); widthMm = 0;
+            foreach (ObjectId aid in br.AttributeCollection)
             {
-                var br = tr.GetObject(res.ObjectId, OpenMode.ForRead) as BlockReference;
-                if (br == null) { ed.WriteMessage("\nЭто не блок."); return false; }
-                name = EffectiveName(tr, br);
-                rotDeg = NormDeg(br.Rotation);
-                foreach (ObjectId aid in br.AttributeCollection)
-                {
-                    var ar = tr.GetObject(aid, OpenMode.ForRead) as AttributeReference;
-                    if (ar == null) continue;
-                    if (string.Equals(ar.Tag, "ПРОФ", StringComparison.OrdinalIgnoreCase))
-                        prof = ar.TextString;
-                    else if (string.Equals(ar.Tag, "ШИРИНА", StringComparison.OrdinalIgnoreCase))
-                        widthMm = ParseMm(ar.TextString);
-                }
-                if (widthMm <= 0)
-                {
-                    // константный атрибут: ATTDEF в определении (Проба 2)
-                    var btr = tr.GetObject(br.BlockTableRecord, OpenMode.ForRead)
-                              as BlockTableRecord;
-                    if (btr != null)
-                        foreach (ObjectId eid in btr)
-                        {
-                            var ad = tr.GetObject(eid, OpenMode.ForRead)
-                                     as AttributeDefinition;
-                            if (ad != null && string.Equals(ad.Tag, "ШИРИНА",
-                                    StringComparison.OrdinalIgnoreCase))
-                            { widthMm = ParseMm(ad.TextString); break; }
-                        }
-                }
-                tr.Commit();
+                var ar = tr.GetObject(aid, OpenMode.ForRead) as AttributeReference;
+                if (ar == null) continue;
+                if (string.Equals(ar.Tag, "ПРОФ", StringComparison.OrdinalIgnoreCase))
+                    prof = ar.TextString;
+                else if (string.Equals(ar.Tag, "ШИРИНА", StringComparison.OrdinalIgnoreCase))
+                    widthMm = ParseMm(ar.TextString);
             }
-            if (string.IsNullOrEmpty(name)) { ed.WriteMessage("\nНе удалось прочитать имя блока."); return false; }
-            return true;
+            if (widthMm <= 0)
+            {
+                // константный атрибут: ATTDEF в определении (Проба 2)
+                var btr = tr.GetObject(br.BlockTableRecord, OpenMode.ForRead)
+                          as BlockTableRecord;
+                if (btr != null)
+                    foreach (ObjectId eid in btr)
+                    {
+                        var ad = tr.GetObject(eid, OpenMode.ForRead)
+                                 as AttributeDefinition;
+                        if (ad != null && string.Equals(ad.Tag, "ШИРИНА",
+                                StringComparison.OrdinalIgnoreCase))
+                        { widthMm = ParseMm(ad.TextString); break; }
+                    }
+            }
+            return !string.IsNullOrEmpty(name);
         }
 
         // аккумуляция bbox по словарю {x0,y0,x1,y1}
