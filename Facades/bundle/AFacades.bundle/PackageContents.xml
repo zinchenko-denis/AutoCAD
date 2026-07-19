@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Манифест автозагрузки Autodesk (паттерн ATableSpec/ABlockGen). Папку
+  AFacades.bundle кладут в %APPDATA%\Autodesk\ApplicationPlugins\ —
+  AutoCAD подхватит сам. Установка = одна папка, запуск = одна команда.
+
+  Состав бандла при релиз-сборке:
+    Contents/net48/AFacadesPlugin.dll    — C#-плагин
+    Contents/engine/facades_engine.exe   — замороженный py-движок (PyInstaller)
+-->
+<ApplicationPackage
+    SchemaVersion="1.0"
+    AutodeskProduct="AutoCAD"
+    Name="AFacades"
+    AppVersion="0.1.0"
+    ProductCode="{9DEEFC84-1297-48DE-81BC-52D3B145F876}"
+    Description="Фасады (НВФ/СФТК): зоны облицовки, площади и погонажи"
+    Author="Denis Zinchenko">
+
+  <CompanyDetails Name="Denis Zinchenko" />
+
+  <!-- AutoCAD 2013–2024 : .NET Framework. R24.0 = AutoCAD 2021. -->
+  <Components Description="net48 (AutoCAD 2013-2024)">
+    <RuntimeRequirements OS="Win64" Platform="AutoCAD" SeriesMin="R19.0" SeriesMax="R24.3" />
+    <ComponentEntry
+        AppName="AFacades"
+        ModuleName="./Contents/net48/AFacadesPlugin.dll"
+        AppType=".NET"
+        LoadOnCommandInvocation="False"
+        LoadOnAutoCADStartup="True">
+      <Commands GroupName="AFacadesCommands">
+        <Command Global="ATFZONE" Local="ATFZONE" />
+      </Commands>
+    </ComponentEntry>
+  </Components>
+
+</ApplicationPackage>

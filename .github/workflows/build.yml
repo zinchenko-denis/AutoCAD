@@ -15,6 +15,9 @@ on:
       - "ABlockGen/src/**"
       - "ABlockGen/engine/**"
       - "ABlockGen/bundle/**"
+      - "Facades/src/**"
+      - "Facades/engine/**"
+      - "Facades/bundle/**"
       - ".github/workflows/build.yml"
   workflow_dispatch: {}        # можно запускать вручную кнопкой в разделе Actions
 
@@ -85,6 +88,24 @@ jobs:
           Copy-Item "ABlockGen/bundle/ABlockGen.bundle/Contents/icons" "$b/Contents/" -Recurse
           Compress-Archive -Path $b -DestinationPath "ABlockGen.bundle.zip" -Force
 
+      # ── AFacades (фасады: зоны облицовки) — третья программа, свой бандл ──
+      - name: Build AFacades DLL
+        run: dotnet build Facades/src/AFacadesPlugin/AFacadesPlugin.csproj -c Release -o build_afc_dll
+
+      - name: Freeze AFacades engine EXE
+        run: pyinstaller --onefile --name facades_engine --paths Facades/engine Facades/engine/facades_engine.py --distpath build_afc_exe
+
+      - name: Assemble AFacades bundle
+        shell: pwsh
+        run: |
+          $b = "AFacades.bundle"
+          New-Item -ItemType Directory -Force "$b/Contents/net48"  | Out-Null
+          New-Item -ItemType Directory -Force "$b/Contents/engine" | Out-Null
+          Copy-Item "Facades/bundle/AFacades.bundle/PackageContents.xml" "$b/"
+          Copy-Item "build_afc_dll/AFacadesPlugin.dll" "$b/Contents/net48/"
+          Copy-Item "build_afc_exe/facades_engine.exe" "$b/Contents/engine/"
+          Compress-Archive -Path $b -DestinationPath "AFacades.bundle.zip" -Force
+
       # 4a) Артефакты сборки (видны в разделе Actions; скачивание — для залогиненных)
       - name: Upload artifact
         uses: actions/upload-artifact@v4
@@ -98,13 +119,20 @@ jobs:
           name: ABlockGen.bundle
           path: ABlockGen.bundle.zip
 
+      - name: Upload AFacades artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: AFacades.bundle
+          path: AFacades.bundle.zip
+
       # 4b) Релиз "latest" — постоянные прямые ссылки на скачивание для конструктора
       - name: Publish to "latest" release
         uses: softprops/action-gh-release@v2
         with:
           tag_name: latest
-          name: "ATableSpec + ABlockGen — последняя сборка"
-          body: "Готовые бандлы. ATableSpec.bundle.zip — спецификации/раскрой из блоков (команда ATSPEC). ABlockGen.bundle.zip — генератор витражей из блоков (команды ATVITRAGEAR, ATVITRAGE). Распаковать нужный zip, папку *.bundle положить в %APPDATA%\\Autodesk\\ApplicationPlugins\\, перезапустить AutoCAD."
+          name: "ATableSpec + ABlockGen + AFacades — последняя сборка"
+          body: "Готовые бандлы. ATableSpec.bundle.zip — спецификации/раскрой из блоков (команда ATSPEC). ABlockGen.bundle.zip — генератор витражей из блоков (команды ATVITRAGEAR, ATVITRAGE). AFacades.bundle.zip — фасады: зоны облицовки, площади и погонажи (команда ATFZONE). Распаковать нужный zip, папку *.bundle положить в %APPDATA%\\Autodesk\\ApplicationPlugins\\, перезапустить AutoCAD."
           files: |
             ATableSpec.bundle.zip
             ABlockGen.bundle.zip
+            AFacades.bundle.zip

@@ -537,6 +537,66 @@ def _has_errors(issues):
     return any(i.level == "error" for i in issues)
 
 
+# ------------------------------------------------- кромки проёмов (отлив/откос)
+
+def _opening_edges_mm(zone, opening, outer_pts_mm, tol=GEO_TOL):
+    """Разложить периметр проёма по типам кромок (все длины в мм).
+
+    bottom — низ проёма (отлив), top — верх (откос+отсечка), sides — бока
+    (откос+отсечка), boundary — кромки, лежащие НА границе зоны (дверь до
+    низа зоны: порог без отлива).
+
+    Классификация по направлению обхода CCW-полигона проёма: интерьер
+    слева, поэтому сегмент вправо (|dy|<=|dx|, dx>0) — нижняя кромка,
+    влево — верхняя, остальное — бока. Дуги классифицируются мини-хордами
+    полигонизации (арочный верх уходит в top/sides по фактическим наклонам).
+    """
+    k = zone.to_mm()
+    out = {"bottom": 0.0, "top": 0.0, "sides": 0.0, "boundary": 0.0}
+    for p1, p2, b in opening.poly.segments():
+        if abs(b) > EPS:
+            chain = [p1] + _arc_points(p1, p2, b) + [p2]
+        else:
+            chain = [p1, p2]
+        for i in range(len(chain) - 1):
+            a = (chain[i][0] * k, chain[i][1] * k)
+            c = (chain[i + 1][0] * k, chain[i + 1][1] * k)
+            L = _dist(a, c)
+            if L < EPS:
+                continue
+            mid = ((a[0] + c[0]) / 2.0, (a[1] + c[1]) / 2.0)
+            if (_on_boundary(a, outer_pts_mm, tol) and
+                    _on_boundary(c, outer_pts_mm, tol) and
+                    _on_boundary(mid, outer_pts_mm, tol)):
+                out["boundary"] += L
+                continue
+            dx, dy = c[0] - a[0], c[1] - a[1]
+            if abs(dy) <= abs(dx):
+                out["bottom" if dx > 0 else "top"] += L
+            else:
+                out["sides"] += L
+    return out
+
+
+def _centroid(pts):
+    """Центроид полигона (по вершинам полигонизации)."""
+    a2 = 0.0
+    cx = cy = 0.0
+    n = len(pts)
+    for i in range(n):
+        x1, y1 = pts[i]
+        x2, y2 = pts[(i + 1) % n]
+        cr = x1 * y2 - x2 * y1
+        a2 += cr
+        cx += (x1 + x2) * cr
+        cy += (y1 + y2) * cr
+    if abs(a2) < EPS:
+        xs = [p[0] for p in pts]
+        ys = [p[1] for p in pts]
+        return (sum(xs) / n, sum(ys) / n)
+    return (cx / (3.0 * a2), cy / (3.0 * a2))
+
+
 # ------------------------------------------------------------------- отчёт
 
 def zone_report(zone, issues=None):
@@ -551,16 +611,25 @@ def zone_report(zone, issues=None):
     k = zone.to_mm()
     a_out = abs(zone.outer.signed_area()) * k * k / 1e6
     p_out = zone.outer.perimeter() * k / 1e3
+    outer_pts_mm = [(p[0] * k, p[1] * k) for p in zone.outer.polygonized()]
     ops = []
     a_ops = 0.0
     p_ops = 0.0
+    sills = jambs = on_bnd = 0.0
     for o in zone.openings:
         a = abs(o.poly.signed_area()) * k * k / 1e6
         p = o.poly.perimeter() * k / 1e3
         a_ops += a
         p_ops += p
+        e = _opening_edges_mm(zone, o, outer_pts_mm)
+        edges = {"bottom_m": e["bottom"] / 1e3, "top_m": e["top"] / 1e3,
+                 "sides_m": e["sides"] / 1e3,
+                 "on_boundary_m": e["boundary"] / 1e3}
+        sills += edges["bottom_m"]
+        jambs += edges["top_m"] + edges["sides_m"]
+        on_bnd += edges["on_boundary_m"]
         ops.append({"id": o.id, "kind": o.kind,
-                    "area_m2": a, "perimeter_m": p})
+                    "area_m2": a, "perimeter_m": p, "edges": edges})
     return {
         "schema": REPORT_SCHEMA,
         "zone_id": zone.id,
@@ -575,6 +644,9 @@ def zone_report(zone, issues=None):
         "openings_count": len(ops),
         "openings": ops,
         "openings_perimeter_total_m": p_ops,
+        "sills_total_m": sills,
+        "jambs_total_m": jambs,
+        "on_boundary_total_m": on_bnd,
         "warnings": [i.as_dict() for i in issues if i.level == "warning"],
     }
 
@@ -589,15 +661,130 @@ def report_text(rep):
     L.append("  брутто: %.3f м²; проёмы (%d): %.3f м²; НЕТТО: %.3f м²" %
              (rep["area_outer_m2"], rep["openings_count"],
               rep["openings_total_m2"], rep["area_net_m2"]))
-    L.append("  периметр контура: %.3f м; погонаж откосов (сумма периметров "
-             "проёмов): %.3f м" %
+    L.append("  периметр контура: %.3f м; периметры проёмов всего: %.3f м" %
              (rep["perimeter_outer_m"], rep["openings_perimeter_total_m"]))
+    L.append("  отливы (низ проёмов): %.3f м; откосы (верх+бока): %.3f м%s" %
+             (rep["sills_total_m"], rep["jambs_total_m"],
+              ("; кромок на границе зоны: %.3f м" % rep["on_boundary_total_m"])
+              if rep.get("on_boundary_total_m") else ""))
     for o in rep["openings"]:
         L.append("    %s [%s]: %.3f м², %.3f м" %
                  (o["id"], o["kind"], o["area_m2"], o["perimeter_m"]))
     for w in rep["warnings"]:
         L.append("  ! %s: %s" % (w["where"], w["msg"]))
     return "\n".join(L)
+
+
+# ------------------------------------ группировка контуров (ручной режим)
+
+def build_zones_from_contours(contours, cladding="", zone_prefix="Z-",
+                              start_index=1, units="mm", source=None):
+    """Плоский список контуров (из C#-выбора) -> зоны по вложенности.
+
+    contours: [{"id": любое, "pts": [[x,y],...], "bulges": [...]?}, ...]
+    Top-level контуры = зоны; вложенные 1-го уровня = проёмы; глубже —
+    ошибка E_NESTED_DEEP (контур пропускается).
+
+    Возвращает (zone_dicts, issues): zone_dicts — список dict facade_zone/1
+    (нумерация zone_prefix+N от start_index, в порядке убывания площади),
+    issues — глобальные проблемы разбора контуров (Issue).
+    """
+    if units not in _UNIT_TO_MM:
+        raise ZoneFormatError("units: только mm|m")
+    k = _UNIT_TO_MM[units]
+    issues = []
+    parsed = []  # (cid, Poly, pts_mm, area_mm2)
+    for i, c in enumerate(contours):
+        cid = str(c.get("id", i))
+        where = "contour:%s" % cid
+        try:
+            pts = c["pts"]
+            if not isinstance(pts, list) or len(pts) < 3:
+                raise ZoneFormatError("минимум 3 вершины")
+            # хвост с микрозазором к первой точке — слить
+            p0, pl = pts[0], pts[-1]
+            d = math.hypot((pl[0] - p0[0]) * k, (pl[1] - p0[1]) * k)
+            bulges = c.get("bulges")
+            if DUP_TOL < d <= GEO_TOL:
+                pts = pts[:-1]
+                if bulges is not None:
+                    bulges = bulges[:-1]
+            poly = Poly(pts, bulges)
+        except (ZoneFormatError, KeyError, TypeError, ValueError) as e:
+            issues.append(_err("E_BAD_CONTOUR", where, str(e)))
+            continue
+        if poly.n() < 3:
+            issues.append(_err("E_BAD_CONTOUR", where,
+                               "меньше 3 вершин после нормализации"))
+            continue
+        # нулевую/вырожденную площадь здесь НЕ отсеиваем: пусть контур станет
+        # зоной и провалит полную валидацию с внятным диагнозом
+        # (E_SELF_INTERSECT для «бабочки», E_ZERO_AREA для коллинеарного) —
+        # ошибка уйдёт в failed, а не потеряется среди issues разбора
+        area = abs(poly.signed_area()) * k * k
+        pts_mm = [(p[0] * k, p[1] * k) for p in poly.polygonized()]
+        parsed.append((cid, poly, pts_mm, area))
+
+    # минимальный по площади контейнер для каждого контура
+    n = len(parsed)
+    container = [-1] * n
+    for i in range(n):
+        best = -1
+        for j in range(n):
+            if i == j or parsed[j][3] <= parsed[i][3]:
+                continue
+            if _contains(parsed[j][2], parsed[i][2]):
+                if best < 0 or parsed[j][3] < parsed[best][3]:
+                    best = j
+        container[i] = best
+
+    def depth(i):
+        d, cur = 0, container[i]
+        while cur >= 0 and d <= n:
+            d += 1
+            cur = container[cur]
+        return d
+
+    zones = []   # индексы top-level
+    kids = {}
+    for i in range(n):
+        d = depth(i)
+        if d == 0:
+            zones.append(i)
+        elif d == 1:
+            kids.setdefault(container[i], []).append(i)
+        else:
+            issues.append(_err(
+                "E_NESTED_DEEP", "contour:%s" % parsed[i][0],
+                "контур вложен глубже проёма (уровень %d) — пропущен" % d))
+
+    zones.sort(key=lambda i: -parsed[i][3])  # крупные первыми
+    zone_dicts = []
+    num = start_index
+    for zi in zones:
+        cid, poly, _, _ = parsed[zi]
+        zd = {
+            "schema": SCHEMA,
+            "id": "%s%d" % (zone_prefix, num),
+            "name": cladding,
+            "cladding": cladding,
+            "system": None,
+            "units": units,
+            "outer": {"pts": [[p[0], p[1]] for p in poly.pts],
+                      "bulges": list(poly.bulges)},
+            "openings": [],
+            "source": source or {"method": "manual"},
+            "meta": {"outer_contour_id": cid},
+        }
+        for oi in kids.get(zi, []):
+            ocid, opoly, _, _ = parsed[oi]
+            zd["openings"].append({
+                "id": ocid, "kind": "window",
+                "poly": {"pts": [[p[0], p[1]] for p in opoly.pts],
+                         "bulges": list(opoly.bulges)}})
+        zone_dicts.append(zd)
+        num += 1
+    return zone_dicts, issues
 
 
 # --------------------------------------------------------------------- CLI

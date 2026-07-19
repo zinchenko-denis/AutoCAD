@@ -69,9 +69,19 @@ C#-команда обводки/чтения слоя появится посл
 - `engine/facade_zones.py` — движок зон: парс `facade_zone/1`, нормализация
   (CCW, дубли, автозамыкание хвоста ≤0.5 мм), валидация (самопересечения,
   проём вне зоны, пересечение/вложенность проёмов; касания разрешены),
-  площади/периметры с дугами (bulge как LWPOLYLINE), отчёт
-  `facade_zone_report/1` в м²/м, CLI `validate|report`.
-- `engine/test_facade_zones.py` — 35 юнитов (`PYTHONUTF8=1 python3 -m unittest`).
+  площади/периметры с дугами (bulge как LWPOLYLINE), кромки проёмов
+  (bottom=отлив / top+sides=откос / on_boundary=порог на границе зоны),
+  группировка плоского списка контуров по вложенности
+  (`build_zones_from_contours`), отчёт `facade_zone_report/1` в м²/м,
+  CLI `validate|report`.
+- `engine/facades_engine.py` — единый CLI движка для C# (паттерн
+  vitrage_engine: `facades_engine.exe in.json out.json`), op=`zones`.
+- `engine/test_facade_zones.py`, `engine/test_facades_engine.py` — 48
+  юнитов (`PYTHONUTF8=1 python3 -m unittest`).
+- `src/AFacadesPlugin/` — C#-плагин: `ZoneCommand.cs` (ATFZONE),
+  `ZoneForm.cs` (диалог), `Plugin.cs` (BuildStamp). Бандл:
+  `bundle/AFacades.bundle/PackageContents.xml`; CI: build.yml/check.yml
+  дополнены (AFacades.bundle.zip в latest, компиляция+юниты на ветках).
 - `docs/ZONE_FORMAT.md` — контракт формата зоны (вход движка, выход будущей
   C#-обводки и автораспознавания).
 - `examples/zone_example.json` — референс-пример (12×3 м, два окна + дверь;
@@ -144,6 +154,23 @@ nvf_layout.
 сообщением.)
 
 ## Статус
+- **18.07l — «Делаем»: ATFZONE реализована (движок+C#+бандл+CI).**
+  Движок: кромки проёмов (отливы/откосы/порог-на-границе; арки мини-хордами;
+  сумма кромок == периметру — юнит), `build_zones_from_contours`
+  (вложенность: top-level=зона, уровень 1=проём, глубже=E_NESTED_DEEP;
+  вырожденные НЕ отсеиваются на входе — уходят в failed с внятным
+  диагнозом), `facades_engine.py` op=zones (in/out-файлы, out пишется
+  всегда), label_pt=центроид. 48 юнитов зелёные. C#: ATFZONE — выбор
+  LWPOLYLINE (незамкнутые пропускаются с перечнем), форма (облицовка с
+  историей сессии, префикс/номер, штриховка+масштаб+ACI, высота текста,
+  галки таблицы/JSON), слой из наименования (чистка запрещённых символов),
+  HATCH с островами (Normal, associative), MText марка+площадь в центроиде,
+  таблица 7 колонок (брутто/проёмы/нетто/отливы/откосы + ИТОГО),
+  `<dwg>_fzones.json` merge по id. mcs --parse чистый; полная компиляция —
+  CI check на пуш ветки. РАНТАЙМ НЕ ПРОВЕРЯЛСЯ — нужен прогон Германа
+  (см. ГРАБЛЮ рантайма ABlockGen: форма/таблица/штриховка живьём).
+  Осознанные упрощения v1: только LWPOLYLINE (круги/эллипсы позже), без
+  ленты/классик-кнопок (после приёмки), таблица простой сеткой.
 - **18.07k — ТЗ Германа на этап 1 (переписка) → kb/german_stage1_spec.md.**
   Герман подтвердил модульность и описал воркфлоу ручного режима: контуры →
   слой с именем облицовки → штриховка с вычетом проёмов → атрибуты
