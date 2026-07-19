@@ -30,6 +30,7 @@
         LoadOnAutoCADStartup="True">
       <Commands GroupName="AFacadesCommands">
         <Command Global="ATFZONE" Local="ATFZONE" />
+        <Command Global="ATFTABLE" Local="ATFTABLE" />
       </Commands>
     </ComponentEntry>
   </Components>

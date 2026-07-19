@@ -216,7 +216,9 @@ namespace AFacadesPlugin
                             new ObjectIdCollection(new[] { loopIds[i] }));
                     hat.EvaluateHatch(true);
 
-                    // марка + площадь в центроиде
+                    // марка + площадь в центроиде (фидбэк Германа 19.07:
+                    // наименование облицовки в марке НЕ пишем — только
+                    // марка и S нетто; облицовка остаётся именем слоя)
                     var lp = Get(z, "label_pt") as object[];
                     double lx = lp != null ? ToD(lp[0]) : 0,
                            ly = lp != null ? ToD(lp[1]) : 0;
@@ -226,17 +228,37 @@ namespace AFacadesPlugin
                         TextHeight = form.TextHeight,
                         Layer = layer,
                         Attachment = AttachmentPoint.MiddleCenter,
-                        Contents = zoneId + @"\P" + form.Cladding +
-                                   @"\PS = " + F3(Get(rep, "area_net_m2")) +
-                                   " м²",
+                        Contents = zoneId + @"\PS = " +
+                                   F3(Get(rep, "area_net_m2")) + " м²",
                     };
                     btr.AppendEntity(mt);
                     tr.AddNewlyCreatedDBObject(mt, true);
+
+                    // данные зоны — в Xrecord штриховки И марки (фидбэк
+                    // Германа 19.07: отчёт должен собираться ПОТОМ командой
+                    // ATFTABLE по выбору штриховок/марок)
+                    string zdata = ser.Serialize(new Dictionary<string, object>
+                    {
+                        { "zone_id", zoneId },
+                        { "cladding", form.Cladding },
+                        { "report", rep },
+                    });
+                    StoreZoneData(tr, hat, zdata);
+                    StoreZoneData(tr, mt, zdata);
                     made++;
                 }
 
                 if (doTable)
-                    InsertTable(tr, db, btr, tablePt, zones, form);
+                {
+                    var rowsData = new List<Dictionary<string, object>>();
+                    foreach (var zo in zones)
+                    {
+                        var z = zo as Dictionary<string, object>;
+                        if (z != null) rowsData.Add(z);
+                    }
+                    InsertTable(tr, db, btr, tablePt, rowsData,
+                                form.TextHeight);
+                }
 
                 tr.Commit();
             }
@@ -254,12 +276,12 @@ namespace AFacadesPlugin
                 "; слой «" + layer + "»." + SkippedMsg(skipped));
         }
 
-        // ── таблица площадей и погонажей ──
-        private static void InsertTable(Transaction tr, Database db,
-            BlockTableRecord btr, Point3d pt, object[] zones, ZoneForm form)
+        // ── таблица площадей и погонажей (общая с ATFTABLE) ──
+        internal static void InsertTable(Transaction tr, Database db,
+            BlockTableRecord btr, Point3d pt,
+            List<Dictionary<string, object>> zones, double h)
         {
-            double h = form.TextHeight;
-            int rows = zones.Length + 3;        // title + header + zones + итого
+            int rows = zones.Count + 3;        // title + header + zones + итого
             var tb = new Table();
             tb.TableStyle = db.Tablestyle;
             tb.SetSize(rows, 7);
@@ -276,9 +298,9 @@ namespace AFacadesPlugin
                 tb.Cells[1, c].TextString = head[c];
 
             double tGross = 0, tOp = 0, tNet = 0, tSill = 0, tJamb = 0;
-            for (int i = 0; i < zones.Length; i++)
+            for (int i = 0; i < zones.Count; i++)
             {
-                var z = zones[i] as Dictionary<string, object>;
+                var z = zones[i];
                 var rep = Get(z, "report") as Dictionary<string, object>;
                 double g = ToD(Get(rep, "area_outer_m2")),
                        o = ToD(Get(rep, "openings_total_m2")),
@@ -355,6 +377,50 @@ namespace AFacadesPlugin
             {
                 ed.WriteMessage("\nJSON не записан: " + ex.Message);
             }
+        }
+
+        // ── Xrecord «ATFZONE» на объекте: JSON зоны чанками ≤250 символов ──
+
+        internal const string XKey = "ATFZONE";
+
+        internal static void StoreZoneData(Transaction tr, Entity ent,
+                                           string json)
+        {
+            if (ent.ExtensionDictionary.IsNull)
+                ent.CreateExtensionDictionary();
+            var ext = (DBDictionary)tr.GetObject(ent.ExtensionDictionary,
+                                                 OpenMode.ForWrite);
+            var rb = new ResultBuffer();
+            for (int i = 0; i < json.Length; i += 250)
+                rb.Add(new TypedValue((int)DxfCode.Text,
+                    json.Substring(i, Math.Min(250, json.Length - i))));
+            var xr = new Xrecord { Data = rb };
+            if (ext.Contains(XKey))
+            {
+                var old = (Xrecord)tr.GetObject(ext.GetAt(XKey),
+                                                OpenMode.ForWrite);
+                old.Data = rb;
+            }
+            else
+            {
+                ext.SetAt(XKey, xr);
+                tr.AddNewlyCreatedDBObject(xr, true);
+            }
+        }
+
+        internal static string ReadZoneData(Transaction tr, Entity ent)
+        {
+            if (ent.ExtensionDictionary.IsNull) return null;
+            var ext = (DBDictionary)tr.GetObject(ent.ExtensionDictionary,
+                                                 OpenMode.ForRead);
+            if (!ext.Contains(XKey)) return null;
+            var xr = (Xrecord)tr.GetObject(ext.GetAt(XKey), OpenMode.ForRead);
+            if (xr.Data == null) return null;
+            var sb = new StringBuilder();
+            foreach (TypedValue tv in xr.Data)
+                if (tv.TypeCode == (int)DxfCode.Text)
+                    sb.Append(SafeStr(tv.Value));
+            return sb.Length > 0 ? sb.ToString() : null;
         }
 
         // ── служебное ──

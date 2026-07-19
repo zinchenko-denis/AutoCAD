@@ -91,6 +91,7 @@ def op_zones(req):
             "outer_id": zd["meta"]["outer_contour_id"],
             "opening_ids": [o["id"] for o in zd["openings"]],
             "label_pt": [label[0], label[1]],
+            "bbox": zd["meta"]["bbox"],
             "report": rep,
         })
         zones_full.append(zd)

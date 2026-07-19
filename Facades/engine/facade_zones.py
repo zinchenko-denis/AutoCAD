@@ -758,11 +758,40 @@ def build_zones_from_contours(contours, cladding="", zone_prefix="Z-",
                 "E_NESTED_DEEP", "contour:%s" % parsed[i][0],
                 "контур вложен глубже проёма (уровень %d) — пропущен" % d))
 
-    zones.sort(key=lambda i: -parsed[i][3])  # крупные первыми
+    # нумерация по правилу Германа (фидбэк 19.07): СНИЗУ ВВЕРХ и СПРАВА
+    # НАЛЕВО. Ряды кластеризуются по minY с допуском 25% медианной высоты
+    # зон (этажные пояса ловятся, миллиметровый разброс внутри ряда — нет);
+    # внутри ряда — по убыванию maxX.
+    def _bb(i):
+        xs = [p[0] for p in parsed[i][2]]
+        ys = [p[1] for p in parsed[i][2]]
+        return (min(xs), min(ys), max(xs), max(ys))
+
+    bbs = {i: _bb(i) for i in zones}
+    if zones:
+        heights = sorted(bbs[i][3] - bbs[i][1] for i in zones)
+        med_h = heights[len(heights) // 2]
+        tol_row = max(1.0, 0.25 * med_h)
+        by_y = sorted(zones, key=lambda i: bbs[i][1])
+        rows, row, base = [], [], None
+        for i in by_y:
+            if base is None or bbs[i][1] - base <= tol_row:
+                row.append(i)
+                if base is None:
+                    base = bbs[i][1]
+            else:
+                rows.append(row)
+                row, base = [i], bbs[i][1]
+        if row:
+            rows.append(row)
+        zones = [i for r in rows
+                 for i in sorted(r, key=lambda i: -bbs[i][2])]
+
     zone_dicts = []
     num = start_index
     for zi in zones:
         cid, poly, _, _ = parsed[zi]
+        bb = bbs[zi]
         zd = {
             "schema": SCHEMA,
             "id": "%s%d" % (zone_prefix, num),
@@ -774,7 +803,8 @@ def build_zones_from_contours(contours, cladding="", zone_prefix="Z-",
                       "bulges": list(poly.bulges)},
             "openings": [],
             "source": source or {"method": "manual"},
-            "meta": {"outer_contour_id": cid},
+            "meta": {"outer_contour_id": cid,
+                     "bbox": [bb[0] / k, bb[1] / k, bb[2] / k, bb[3] / k]},
         }
         for oi in kids.get(zi, []):
             ocid, opoly, _, _ = parsed[oi]

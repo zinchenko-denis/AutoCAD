@@ -106,14 +106,16 @@ class TestBuildZones(unittest.TestCase):
             zone_prefix="Ф-", start_index=1)
         self.assertEqual(len(zds), 2)
         self.assertFalse(issues)
-        big = zds[0]   # крупная зона первой
-        self.assertEqual(big["id"], "Ф-1")
+        # оба контура в одном «ряду» (одинаковый minY) -> справа налево:
+        # B (x до 26000) правее A (x до 12000) -> Ф-1 = B
+        self.assertEqual(zds[0]["meta"]["outer_contour_id"], "B")
+        self.assertEqual(zds[0]["id"], "Ф-1")
+        self.assertEqual([o["id"] for o in zds[0]["openings"]], ["B1"])
+        big = zds[1]
         self.assertEqual(big["meta"]["outer_contour_id"], "A")
+        self.assertEqual(big["id"], "Ф-2")
         self.assertEqual(sorted(o["id"] for o in big["openings"]),
                          ["A1", "A2"])
-        small = zds[1]
-        self.assertEqual(small["meta"]["outer_contour_id"], "B")
-        self.assertEqual([o["id"] for o in small["openings"]], ["B1"])
         self.assertEqual(big["cladding"], "керамогранит 600х600")
         # результат — валидные facade_zone/1
         for zd in zds:
@@ -139,6 +141,34 @@ class TestBuildZones(unittest.TestCase):
         z = fz.load_zone(zds[0])
         self.assertAlmostEqual(abs(z.outer.signed_area()), 15e6, delta=1e3)
 
+    def test_numbering_bottom_up_right_to_left(self):
+        # правило Германа: снизу вверх, справа налево (2 ряда x 2 столбца,
+        # в ряду minY гуляет на 200 мм при высоте зон 3000 -> один ряд)
+        cs = [
+            {"id": "TL", "pts": rect(0, 3600, 5000, 3000)},
+            {"id": "BL", "pts": rect(0, 200, 5000, 3000)},
+            {"id": "BR", "pts": rect(6000, 0, 5000, 3000)},
+            {"id": "TR", "pts": rect(6000, 3400, 5000, 3000)},
+        ]
+        zds, _ = fz.build_zones_from_contours(cs, zone_prefix="Ф-")
+        order = [z["meta"]["outer_contour_id"] for z in zds]
+        self.assertEqual(order, ["BR", "BL", "TR", "TL"])
+        self.assertEqual([z["id"] for z in zds],
+                         ["Ф-1", "Ф-2", "Ф-3", "Ф-4"])
+
+    def test_numbering_stack_bottom_up(self):
+        # столбик этажных поясов как в «Пробе» Германа: строго снизу вверх
+        cs = [{"id": "E%d" % i,
+               "pts": rect(0, i * 2850, 7000, 2590)} for i in (3, 0, 2, 1, 4)]
+        zds, _ = fz.build_zones_from_contours(cs, zone_prefix="Ф-")
+        order = [z["meta"]["outer_contour_id"] for z in zds]
+        self.assertEqual(order, ["E0", "E1", "E2", "E3", "E4"])
+
+    def test_bbox_in_meta_and_engine(self):
+        zds, _ = fz.build_zones_from_contours(
+            [{"id": "A", "pts": rect(100, 200, 5000, 3000)}])
+        self.assertEqual(zds[0]["meta"]["bbox"], [100, 200, 5100, 3200])
+
 
 class TestEngineRun(unittest.TestCase):
     def req(self):
@@ -152,16 +182,18 @@ class TestEngineRun(unittest.TestCase):
         self.assertTrue(res["ok"], msg=str(res))
         self.assertEqual(res["summary"]["count"], 2)
         self.assertEqual(res["summary"]["openings_total"], 3)
+        # B правее A -> Ф-1 = B (правило снизу-вверх/справа-налево)
         z1 = res["zones"][0]
         self.assertEqual(z1["zone_id"], "Ф-1")
-        self.assertEqual(z1["outer_id"], "A")
-        # площадь: 36 - 2.25*2 = 31.5; зона B: 18 - 1.89 = 16.11
-        self.assertAlmostEqual(z1["report"]["area_net_m2"], 31.5, places=9)
+        self.assertEqual(z1["outer_id"], "B")
+        # площадь B: 18 - 1.89 = 16.11; зона A: 36 - 2.25*2 = 31.5
+        self.assertAlmostEqual(z1["report"]["area_net_m2"], 16.11, places=9)
         self.assertAlmostEqual(res["summary"]["area_net_total_m2"],
                                31.5 + 16.11, places=9)
-        # label внутри контура A
+        # label внутри контура B, bbox корректен
         lx, ly = z1["label_pt"]
-        self.assertTrue(0 < lx < 12000 and 0 < ly < 3000)
+        self.assertTrue(20000 < lx < 26000 and 0 < ly < 3000)
+        self.assertEqual(z1["bbox"], [20000, 0, 26000, 3000])
         self.assertEqual(len(res["zones_full"]), 2)
         self.assertEqual(res["failed"], [])
 
