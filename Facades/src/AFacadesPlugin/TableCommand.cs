@@ -113,29 +113,52 @@ namespace AFacadesPlugin
                 return string.CompareOrdinal(ia, ib);
             });
 
-            var pdo = new PromptDoubleOptions("\nВысота текста таблицы, мм: ")
-            { DefaultValue = 250.0, AllowNegative = false, AllowZero = false };
-            var hres = ed.GetDouble(pdo);
-            double textH = hres.Status == PromptStatus.OK ? hres.Value : 250.0;
+            // куда вывести (фидбэк Германа №2 п.2: выгрузка в Excel)
+            var pko = new PromptKeywordOptions(
+                "\nКуда вывести ведомость [Чертеж/Ексель/Оба] <Чертеж>: ");
+            pko.Keywords.Add("Drawing", "Чертеж", "Чертеж");
+            pko.Keywords.Add("Excel", "Ексель", "Ексель");
+            pko.Keywords.Add("Both", "Оба", "Оба");
+            pko.Keywords.Default = "Drawing";
+            pko.AllowNone = true;
+            var kres = ed.GetKeywords(pko);
+            string mode = (kres.Status == PromptStatus.OK &&
+                           kres.StringResult.Length > 0)
+                          ? kres.StringResult : "Drawing";
+            bool toDwg = mode != "Excel";
+            bool toXls = mode != "Drawing";
 
-            var ppr = ed.GetPoint("\nТочка вставки таблицы: ");
-            if (ppr.Status != PromptStatus.OK)
-            { ed.WriteMessage("\nОтменено."); return; }
+            // пометить изменённые зоны звёздочкой у марки
+            foreach (var z in zones)
+                if (z.ContainsKey("stale"))
+                    z["zone_id"] = ZoneCommand.SafeStr(
+                        ZoneCommand.Get(z, "zone_id")) + " *";
 
-            using (doc.LockDocument())
-            using (var tr = db.TransactionManager.StartTransaction())
+            if (toDwg)
             {
-                var btr = (BlockTableRecord)tr.GetObject(
-                    SymbolUtilityServices.GetBlockModelSpaceId(db),
-                    OpenMode.ForWrite);
-                // пометить изменённые зоны звёздочкой у марки
-                foreach (var z in zones)
-                    if (z.ContainsKey("stale"))
-                        z["zone_id"] = ZoneCommand.SafeStr(
-                            ZoneCommand.Get(z, "zone_id")) + " *";
-                ZoneCommand.InsertTable(tr, db, btr, ppr.Value, zones, textH);
-                tr.Commit();
+                var pdo = new PromptDoubleOptions(
+                    "\nВысота текста таблицы, мм: ")
+                { DefaultValue = 250.0, AllowNegative = false,
+                  AllowZero = false };
+                var hres = ed.GetDouble(pdo);
+                double textH = hres.Status == PromptStatus.OK
+                               ? hres.Value : 250.0;
+                var ppr = ed.GetPoint("\nТочка вставки таблицы: ");
+                if (ppr.Status != PromptStatus.OK)
+                { ed.WriteMessage("\nОтменено."); return; }
+                using (doc.LockDocument())
+                using (var tr = db.TransactionManager.StartTransaction())
+                {
+                    var btr = (BlockTableRecord)tr.GetObject(
+                        SymbolUtilityServices.GetBlockModelSpaceId(db),
+                        OpenMode.ForWrite);
+                    ZoneCommand.InsertTable(tr, db, btr, ppr.Value, zones,
+                                            textH);
+                    tr.Commit();
+                }
             }
+            if (toXls)
+                ExportXlsx(ed, db, zones);
 
             ed.WriteMessage("\nATFTABLE: строк " + zones.Count + "." +
                 (noData > 0 ? " Пропущено объектов без данных: " + noData + "."
@@ -149,10 +172,77 @@ namespace AFacadesPlugin
 
         private static int TailNum(string s)
         {
-            var m = Regex.Match(s ?? "", @"(\d+)\s*$");
+            var m = Regex.Match(s ?? "", @"(\d+)\s*\*?\s*$");
             int n;
             if (m.Success && int.TryParse(m.Groups[1].Value, out n)) return n;
             return int.MaxValue;
+        }
+
+        // ── выгрузка ведомости в .xlsx ──
+        private static void ExportXlsx(Editor ed, Database db,
+            List<Dictionary<string, object>> zones)
+        {
+            try
+            {
+                string dwg = db.Filename;
+                string defName = (string.IsNullOrEmpty(dwg)
+                    ? "ведомость" : System.IO.Path.GetFileNameWithoutExtension(
+                        dwg) + "_ведомость") + ".xlsx";
+                var sfd = new System.Windows.Forms.SaveFileDialog
+                {
+                    Filter = "Excel (*.xlsx)|*.xlsx",
+                    FileName = defName,
+                    InitialDirectory = string.IsNullOrEmpty(dwg)
+                        ? null : System.IO.Path.GetDirectoryName(dwg),
+                };
+                if (sfd.ShowDialog() !=
+                    System.Windows.Forms.DialogResult.OK) return;
+
+                var rows = new List<object[]>
+                {
+                    new object[] { "Марка", "Облицовка", "S участка, м²",
+                                   "S проёмов, м²", "S облицовки, м²",
+                                   "Отливы, м.п.", "Откосы, м.п." }
+                };
+                double tG = 0, tO = 0, tN = 0, tS = 0, tJ = 0;
+                foreach (var z in zones)
+                {
+                    var rep = ZoneCommand.Get(z, "report")
+                              as Dictionary<string, object>;
+                    double g = D(rep, "area_outer_m2"),
+                           o = D(rep, "openings_total_m2"),
+                           n = D(rep, "area_net_m2"),
+                           s = D(rep, "sills_total_m"),
+                           j = D(rep, "jambs_total_m");
+                    tG += g; tO += o; tN += n; tS += s; tJ += j;
+                    rows.Add(new object[]
+                    {
+                        ZoneCommand.SafeStr(ZoneCommand.Get(z, "zone_id")),
+                        ZoneCommand.SafeStr(ZoneCommand.Get(z, "cladding")),
+                        Math.Round(g, 3), Math.Round(o, 3), Math.Round(n, 3),
+                        Math.Round(s, 3), Math.Round(j, 3),
+                    });
+                }
+                rows.Add(new object[] { "ИТОГО", "", Math.Round(tG, 3),
+                                        Math.Round(tO, 3), Math.Round(tN, 3),
+                                        Math.Round(tS, 3), Math.Round(tJ, 3) });
+                XlsxWriter.Write(sfd.FileName, "Ведомость зон", rows);
+                ed.WriteMessage("\nВедомость выгружена: " + sfd.FileName);
+            }
+            catch (System.Exception ex)
+            {
+                ed.WriteMessage("\nExcel не записан: " + ex.Message);
+            }
+        }
+
+        private static double D(Dictionary<string, object> d, string key)
+        {
+            try
+            {
+                return Convert.ToDouble(ZoneCommand.Get(d, key),
+                                        CultureInfo.InvariantCulture);
+            }
+            catch { return 0.0; }
         }
     }
 }

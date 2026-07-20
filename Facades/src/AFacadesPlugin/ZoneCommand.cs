@@ -91,8 +91,54 @@ namespace AFacadesPlugin
                 return;
             }
 
-            // ── 2. параметры ──
+            // ── 2. параметры (кнопка «+ Добавить контуры» — фидбэк №2 п.3:
+            //    забыл контур — доклкнуть, не выбирая всё заново) ──
             ZoneForm form = new ZoneForm(contours.Count);
+            form.AddPicker = delegate ()
+            {
+                using (var ui = ed.StartUserInteraction(form))
+                {
+                    var psoAdd = new PromptSelectionOptions
+                    { MessageForAdding = "\nДобавьте контуры: " };
+                    var selAdd = ed.GetSelection(psoAdd, filter);
+                    if (selAdd.Status == PromptStatus.OK)
+                        using (var tr2 = db.TransactionManager
+                                           .StartTransaction())
+                        {
+                            foreach (SelectedObject so in selAdd.Value)
+                            {
+                                var pl = tr2.GetObject(so.ObjectId,
+                                    OpenMode.ForRead) as Polyline;
+                                if (pl == null) continue;
+                                string h = Hnd(pl);
+                                if (idByHandle.ContainsKey(h)) continue;
+                                int n = pl.NumberOfVertices;
+                                if (n < 3)
+                                { skipped.Add(h + " (<3 вершин)"); continue; }
+                                var pts = new List<object>();
+                                var bulges = new List<object>();
+                                for (int i = 0; i < n; i++)
+                                {
+                                    Point2d p = pl.GetPoint2dAt(i);
+                                    pts.Add(new[] { p.X, p.Y });
+                                    bulges.Add(pl.GetBulgeAt(i));
+                                }
+                                bool closed = pl.Closed ||
+                                    pl.GetPoint2dAt(0).GetDistanceTo(
+                                        pl.GetPoint2dAt(n - 1)) <= CloseTol;
+                                if (!closed)
+                                { skipped.Add(h + " (не замкнута)"); continue; }
+                                idByHandle[h] = pl.ObjectId;
+                                contours.Add(new Dictionary<string, object>
+                                { { "id", h }, { "pts", pts },
+                                  { "bulges", bulges } });
+                            }
+                            tr2.Commit();
+                        }
+                    ui.End();
+                }
+                return contours.Count;
+            };
             if (AcApp.ShowModalDialog(form) != DialogResult.OK)
             { ed.WriteMessage("\nОтменено."); return; }
 
@@ -106,6 +152,7 @@ namespace AFacadesPlugin
                 { "zone_prefix", form.Prefix },
                 { "start_index", form.StartIndex },
                 { "units", "mm" },
+                { "merge", form.MergeZones },
             };
             string baseDir = Path.GetDirectoryName(
                 Assembly.GetExecutingAssembly().Location) ?? ".";
@@ -177,26 +224,40 @@ namespace AFacadesPlugin
                     if (z == null) continue;
                     var rep = Get(z, "report") as Dictionary<string, object>;
                     string zoneId = SafeStr(Get(z, "zone_id"));
-                    string outerH = SafeStr(Get(z, "outer_id"));
-                    if (!idByHandle.ContainsKey(outerH)) continue;
 
-                    // контуры зоны — в слой облицовки
-                    var loopIds = new List<ObjectId> { idByHandle[outerH] };
+                    // внешние контуры (при объединении их несколько) и проёмы
+                    var outIds = new List<ObjectId>();
+                    var outHs = Get(z, "outer_ids") as object[];
+                    if (outHs != null)
+                        foreach (var oh in outHs)
+                        {
+                            string s = SafeStr(oh);
+                            if (idByHandle.ContainsKey(s))
+                                outIds.Add(idByHandle[s]);
+                        }
+                    if (outIds.Count == 0) continue;
+                    var holeIds = new List<ObjectId>();
                     var opIds = Get(z, "opening_ids") as object[];
                     if (opIds != null)
                         foreach (var oh in opIds)
                         {
                             string s = SafeStr(oh);
                             if (idByHandle.ContainsKey(s))
-                                loopIds.Add(idByHandle[s]);
+                                holeIds.Add(idByHandle[s]);
                         }
-                    foreach (var lid in loopIds)
+                    foreach (var lid in outIds)
+                    {
+                        var ent = (Entity)tr.GetObject(lid, OpenMode.ForWrite);
+                        ent.Layer = layer;
+                    }
+                    foreach (var lid in holeIds)
                     {
                         var ent = (Entity)tr.GetObject(lid, OpenMode.ForWrite);
                         ent.Layer = layer;
                     }
 
-                    // штриховка с вычетом проёмов (острова)
+                    // ЕДИНАЯ штриховка зоны (при объединении — все части
+                    // одной штриховкой, фидбэк №2 п.1) с вычетом проёмов
                     var hat = new Hatch();
                     btr.AppendEntity(hat);
                     tr.AddNewlyCreatedDBObject(hat, true);
@@ -209,11 +270,12 @@ namespace AFacadesPlugin
                         form.Pattern.Length > 0 ? form.Pattern : "ANSI31");
                     hat.HatchStyle = HatchStyle.Normal;
                     hat.Associative = true;
-                    hat.AppendLoop(HatchLoopTypes.External,
-                        new ObjectIdCollection(new[] { loopIds[0] }));
-                    for (int i = 1; i < loopIds.Count; i++)
+                    foreach (var oid in outIds)
+                        hat.AppendLoop(HatchLoopTypes.External,
+                            new ObjectIdCollection(new[] { oid }));
+                    foreach (var hid in holeIds)
                         hat.AppendLoop(HatchLoopTypes.Default,
-                            new ObjectIdCollection(new[] { loopIds[i] }));
+                            new ObjectIdCollection(new[] { hid }));
                     hat.EvaluateHatch(true);
 
                     // марка + площадь в центроиде (фидбэк Германа 19.07:
@@ -245,6 +307,16 @@ namespace AFacadesPlugin
                     });
                     StoreZoneData(tr, hat, zdata);
                     StoreZoneData(tr, mt, zdata);
+
+                    // линейные размеры по образцу Германа («Проба 4»):
+                    // высота каждой части; цепочка по низу + габарит — только
+                    // при разрывах нижней кромки (двери/проёмы в пол)
+                    if (form.MakeDims)
+                    {
+                        var dimsArr = Get(z, "dims") as object[];
+                        if (dimsArr != null)
+                            DrawDims(tr, db, btr, dimsArr, form.TextHeight);
+                    }
                     made++;
                 }
 
@@ -286,8 +358,9 @@ namespace AFacadesPlugin
             tb.TableStyle = db.Tablestyle;
             tb.SetSize(rows, 7);
             tb.Position = pt;
-            string[] head = { "Марка", "Облицовка", "S брутто, м²",
-                              "S проёмов, м²", "S нетто, м²",
+            // заголовки — терминология Германа (фидбэк №2 п.5)
+            string[] head = { "Марка", "Облицовка", "S участка, м²",
+                              "S проёмов, м²", "S облицовки, м²",
                               "Отливы, м.п.", "Откосы, м.п." };
             double[] w = { 6 * h, 18 * h, 7 * h, 7 * h, 7 * h, 7 * h, 7 * h };
             for (int c = 0; c < 7; c++) tb.Columns[c].Width = w[c];
@@ -377,6 +450,58 @@ namespace AFacadesPlugin
             {
                 ed.WriteMessage("\nJSON не записан: " + ex.Message);
             }
+        }
+
+        // ── линейные размеры зоны (слой «_РАЗМЕРЫ» — конвенция Германа) ──
+        private static void DrawDims(Transaction tr, Database db,
+            BlockTableRecord btr, object[] dimsArr, double h)
+        {
+            EnsureLayer(tr, db, "_РАЗМЕРЫ");
+            foreach (var dobj in dimsArr)
+            {
+                var d = dobj as Dictionary<string, object>;
+                if (d == null) continue;
+                var hd = Get(d, "height") as Dictionary<string, object>;
+                if (hd != null)
+                {
+                    double x = ToD(Get(hd, "x")),
+                           y0 = ToD(Get(hd, "y0")),
+                           y1 = ToD(Get(hd, "y1"));
+                    AddDim(tr, btr, db, Math.PI / 2.0,
+                        new Point3d(x, y0, 0), new Point3d(x, y1, 0),
+                        new Point3d(x - 2.0 * h, (y0 + y1) / 2.0, 0));
+                }
+                var bd = Get(d, "bottom") as Dictionary<string, object>;
+                if (bd != null)
+                {
+                    double y = ToD(Get(bd, "y"));
+                    var xso = Get(bd, "xs") as object[];
+                    if (xso == null || xso.Length < 3) continue;
+                    var xs = new List<double>();
+                    foreach (var xo in xso) xs.Add(ToD(xo));
+                    for (int i = 0; i + 1 < xs.Count; i++)
+                        AddDim(tr, btr, db, 0.0,
+                            new Point3d(xs[i], y, 0),
+                            new Point3d(xs[i + 1], y, 0),
+                            new Point3d((xs[i] + xs[i + 1]) / 2.0,
+                                        y - 2.2 * h, 0));
+                    AddDim(tr, btr, db, 0.0,
+                        new Point3d(xs[0], y, 0),
+                        new Point3d(xs[xs.Count - 1], y, 0),
+                        new Point3d((xs[0] + xs[xs.Count - 1]) / 2.0,
+                                    y - 4.4 * h, 0));
+                }
+            }
+        }
+
+        private static void AddDim(Transaction tr, BlockTableRecord btr,
+            Database db, double rot, Point3d p1, Point3d p2, Point3d dl)
+        {
+            var dim = new RotatedDimension(rot, p1, p2, dl, null,
+                                           db.Dimstyle)
+            { Layer = "_РАЗМЕРЫ" };
+            btr.AppendEntity(dim);
+            tr.AddNewlyCreatedDBObject(dim, true);
         }
 
         // ── Xrecord «ATFZONE» на объекте: JSON зоны чанками ≤250 символов ──

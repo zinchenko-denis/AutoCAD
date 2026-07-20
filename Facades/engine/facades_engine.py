@@ -45,6 +45,28 @@ def _issue_list(issues):
     return [i.as_dict() for i in issues]
 
 
+_SUM_KEYS = ("area_outer_m2", "openings_total_m2", "area_net_m2",
+             "perimeter_outer_m", "openings_perimeter_total_m",
+             "sills_total_m", "jambs_total_m", "on_boundary_total_m")
+
+
+def _merge_reports(reps):
+    """Сводный отчёт объединённой зоны = суммы частей (фидбэк №2 п.1)."""
+    out = dict(reps[0])
+    for key in _SUM_KEYS:
+        out[key] = sum(r.get(key, 0.0) for r in reps)
+    out["openings_count"] = sum(r.get("openings_count", 0) for r in reps)
+    ops = []
+    for r in reps:
+        ops.extend(r.get("openings", []))
+    out["openings"] = ops
+    warns = []
+    for r in reps:
+        warns.extend(r.get("warnings", []))
+    out["warnings"] = warns
+    return out
+
+
 def op_zones(req):
     contours = req.get("contours") or []
     if not isinstance(contours, list) or not contours:
@@ -56,15 +78,15 @@ def op_zones(req):
     except (TypeError, ValueError):
         start = 1
     units = req.get("units") or "mm"
+    merge = bool(req.get("merge"))
 
     zone_dicts, global_issues = fz.build_zones_from_contours(
         contours, cladding=cladding, zone_prefix=prefix,
         start_index=start, units=units,
         source={"method": "manual", "tool": "ATFZONE"})
 
-    zones_ok, zones_full, failed = [], [], []
-    tot_net = tot_sills = tot_jambs = 0.0
-    tot_ops = 0
+    parts = []   # (zd, Zone, issues, report, dims, label)
+    failed = []
     for zd in zone_dicts:
         try:
             z = fz.load_zone(zd)
@@ -83,22 +105,64 @@ def op_zones(req):
                            "issues": _issue_list(issues)})
             continue
         rep = fz.zone_report(z, issues)
-        k = z.to_mm()
         label = fz._centroid([(p[0], p[1]) for p in z.outer.polygonized()])
+        parts.append((zd, z, issues, rep, fz.zone_dims(z), label))
+
+    zones_ok, zones_full = [], []
+    tot_net = tot_sills = tot_jambs = 0.0
+    tot_ops = 0
+    if merge and parts:
+        # одна зона из всех валидных частей: сводный отчёт, марка у
+        # крупнейшей части, размеры по каждой части
+        zid = "%s%d" % (prefix, start)
+        big = max(parts, key=lambda p: p[3]["area_outer_m2"])
+        rep = _merge_reports([p[3] for p in parts])
+        bb = [min(p[0]["meta"]["bbox"][0] for p in parts),
+              min(p[0]["meta"]["bbox"][1] for p in parts),
+              max(p[0]["meta"]["bbox"][2] for p in parts),
+              max(p[0]["meta"]["bbox"][3] for p in parts)]
+        op_ids = []
+        for p in parts:
+            op_ids.extend(o["id"] for o in p[0]["openings"])
         zones_ok.append({
-            "zone_id": z.id,
+            "zone_id": zid,
             "cladding": cladding,
-            "outer_id": zd["meta"]["outer_contour_id"],
-            "opening_ids": [o["id"] for o in zd["openings"]],
-            "label_pt": [label[0], label[1]],
-            "bbox": zd["meta"]["bbox"],
+            "merged": True,
+            "part_count": len(parts),
+            "outer_ids": [p[0]["meta"]["outer_contour_id"] for p in parts],
+            "opening_ids": op_ids,
+            "label_pt": [big[5][0], big[5][1]],
+            "bbox": bb,
             "report": rep,
+            "dims": [p[4] for p in parts],
         })
-        zones_full.append(zd)
-        tot_net += rep["area_net_m2"]
-        tot_sills += rep["sills_total_m"]
-        tot_jambs += rep["jambs_total_m"]
-        tot_ops += rep["openings_count"]
+        for i, p in enumerate(parts):
+            zd = p[0]
+            zd["id"] = "%s.%d" % (zid, i + 1)
+            zd["meta"]["group"] = zid
+            zones_full.append(zd)
+        tot_net = rep["area_net_m2"]
+        tot_sills = rep["sills_total_m"]
+        tot_jambs = rep["jambs_total_m"]
+        tot_ops = rep["openings_count"]
+    else:
+        for zd, z, issues, rep, dims, label in parts:
+            zones_ok.append({
+                "zone_id": z.id,
+                "cladding": cladding,
+                "outer_id": zd["meta"]["outer_contour_id"],
+                "outer_ids": [zd["meta"]["outer_contour_id"]],
+                "opening_ids": [o["id"] for o in zd["openings"]],
+                "label_pt": [label[0], label[1]],
+                "bbox": zd["meta"]["bbox"],
+                "report": rep,
+                "dims": [dims],
+            })
+            zones_full.append(zd)
+            tot_net += rep["area_net_m2"]
+            tot_sills += rep["sills_total_m"]
+            tot_jambs += rep["jambs_total_m"]
+            tot_ops += rep["openings_count"]
 
     return {
         "ok": True,

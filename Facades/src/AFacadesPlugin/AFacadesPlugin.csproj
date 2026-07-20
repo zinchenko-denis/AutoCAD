@@ -24,6 +24,8 @@
     <!-- Диалог параметров зоны -->
     <Reference Include="System.Windows.Forms" />
     <Reference Include="System.Drawing" />
+    <!-- Минимальный .xlsx (ZipArchive) — выгрузка ведомости в Excel -->
+    <Reference Include="System.IO.Compression" />
   </ItemGroup>
 
 </Project>

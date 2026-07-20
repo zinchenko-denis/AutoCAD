@@ -675,6 +675,53 @@ def report_text(rep):
     return "\n".join(L)
 
 
+# ----------------------------------- размеры зоны (фидбэк Германа №2, п.4)
+
+def zone_dims(zone):
+    """Данные для линейных размеров зоны (образец Германа «Проба 4»):
+
+    - высота зоны — вертикальный размер слева по bbox;
+    - цепочка по НИЖНЕЙ границе — только если на ней есть разрывы
+      (вершины нижних сегментов контура + границы проёмов, касающихся
+      низа); плюс общий габарит ширины. Низ без разрывов — горизонтальных
+      размеров нет (правило снято с его файла: 10 высот + цепочка 5 + 1
+      габарит только у зоны с дверями).
+
+    Возвращает {"height": {...}, "bottom": {...}|None} в единицах зоны.
+    """
+    k = zone.to_mm()
+    tol = GEO_TOL / k
+    pts = zone.outer.polygonized()
+    xs_all = [p[0] for p in pts]
+    ys_all = [p[1] for p in pts]
+    x0, x1 = min(xs_all), max(xs_all)
+    y0, y1 = min(ys_all), max(ys_all)
+
+    cuts = set([x0, x1])
+    n = len(pts)
+    for i in range(n):
+        a, b = pts[i], pts[(i + 1) % n]
+        if abs(a[1] - y0) <= tol and abs(b[1] - y0) <= tol:
+            cuts.add(a[0])
+            cuts.add(b[0])
+    for o in zone.openings:
+        opts = o.poly.polygonized()
+        m = len(opts)
+        for i in range(m):
+            a, b = opts[i], opts[(i + 1) % m]
+            if abs(a[1] - y0) <= tol and abs(b[1] - y0) <= tol:
+                cuts.add(a[0])
+                cuts.add(b[0])
+
+    thr = max(tol, 1.0 / k)   # дедуп: 1 мм в единицах зоны
+    xs = []
+    for x in sorted(cuts):
+        if not xs or x - xs[-1] > thr:
+            xs.append(x)
+    bottom = {"y": y0, "xs": xs} if len(xs) >= 3 else None
+    return {"height": {"x": x0, "y0": y0, "y1": y1}, "bottom": bottom}
+
+
 # ------------------------------------ группировка контуров (ручной режим)
 
 def build_zones_from_contours(contours, cladding="", zone_prefix="Z-",

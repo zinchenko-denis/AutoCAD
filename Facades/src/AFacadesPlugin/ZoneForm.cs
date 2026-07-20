@@ -26,6 +26,13 @@ namespace AFacadesPlugin
         private readonly TextBox _textH = new TextBox();
         private readonly CheckBox _table = new CheckBox();
         private readonly CheckBox _json = new CheckBox();
+        private readonly CheckBox _merge = new CheckBox();
+        private readonly CheckBox _dims = new CheckBox();
+        private readonly Button _add = new Button();
+
+        /// <summary>Колбэк «+ Добавить контуры» (возвращает новое общее
+        /// число контуров); задаётся командой до показа формы.</summary>
+        internal Func<int> AddPicker;
 
         internal string Cladding { get { return _cladding.Text.Trim(); } }
         internal string Prefix { get { return _prefix.Text.Trim(); } }
@@ -45,6 +52,8 @@ namespace AFacadesPlugin
         internal double TextHeight { get { return ParseD(_textH.Text, 250.0); } }
         internal bool MakeTable { get { return _table.Checked; } }
         internal bool WriteJson { get { return _json.Checked; } }
+        internal bool MergeZones { get { return _merge.Checked; } }
+        internal bool MakeDims { get { return _dims.Checked; } }
 
         private static double ParseD(string s, double dflt)
         {
@@ -62,7 +71,7 @@ namespace AFacadesPlugin
             FormBorderStyle = FormBorderStyle.FixedDialog;
             MaximizeBox = false; MinimizeBox = false;
             StartPosition = FormStartPosition.CenterScreen;
-            ClientSize = new Size(430, 305);
+            ClientSize = new Size(430, 385);
             Font = new Font("Segoe UI", 9f);
 
             int y = 12;
@@ -99,6 +108,17 @@ namespace AFacadesPlugin
             Controls.Add(_pattern); Controls.Add(_scale); Controls.Add(_color);
             y += 34;
 
+            _merge.SetBounds(12, y, 406, 22);
+            _merge.Text = "Объединить выбранные контуры в ОДНУ зону " +
+                          "(общая площадь и откосы)";
+            _merge.Checked = false;
+            Controls.Add(_merge);
+            y += 26;
+            _dims.SetBounds(12, y, 406, 22);
+            _dims.Text = "Проставить линейные размеры (слой _РАЗМЕРЫ)";
+            _dims.Checked = false;
+            Controls.Add(_dims);
+            y += 26;
             _table.SetBounds(12, y, 406, 22);
             _table.Text = "Вставить таблицу площадей и погонажей";
             _table.Checked = true;
@@ -110,6 +130,10 @@ namespace AFacadesPlugin
             Controls.Add(_json);
             y += 34;
 
+            _add.Text = "+ Добавить контуры";
+            _add.SetBounds(12, y, 150, 28);
+            _add.Click += OnAddContours;
+            Controls.Add(_add);
             var ok = new Button
             { Text = "OK", DialogResult = DialogResult.OK };
             ok.SetBounds(222, y, 92, 28);
@@ -118,6 +142,21 @@ namespace AFacadesPlugin
             cancel.SetBounds(324, y, 94, 28);
             Controls.Add(ok); Controls.Add(cancel);
             AcceptButton = ok; CancelButton = cancel;
+        }
+
+        private void OnAddContours(object sender, EventArgs e)
+        {
+            if (AddPicker == null) return;
+            try
+            {
+                int n = AddPicker();
+                Text = "ATFZONE — зоны облицовки (контуров: " + n + ")";
+            }
+            catch (System.Exception ex)
+            {
+                MessageBox.Show("Не удалось добавить: " + ex.Message,
+                                "ATFZONE");
+            }
         }
 
         private void AddLabel(string text, int x, ref int y, bool advance = true)

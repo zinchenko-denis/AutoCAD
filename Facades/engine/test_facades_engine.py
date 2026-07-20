@@ -233,6 +233,51 @@ class TestEngineRun(unittest.TestCase):
             self.assertTrue(res["ok"])
             self.assertEqual(res["summary"]["count"], 2)
 
+    def test_merge_mode(self):
+        # 2 участка (у A два окна, у B дверь) -> одна зона, суммы
+        res = fe.run(dict(self.req(), merge=True))
+        self.assertTrue(res["ok"], msg=str(res))
+        self.assertEqual(res["summary"]["count"], 1)
+        z = res["zones"][0]
+        self.assertTrue(z["merged"])
+        self.assertEqual(z["part_count"], 2)
+        self.assertEqual(z["zone_id"], "Ф-1")
+        self.assertEqual(sorted(z["outer_ids"]), ["A", "B"])
+        rep = z["report"]
+        self.assertAlmostEqual(rep["area_outer_m2"], 36.0 + 18.0, places=9)
+        self.assertAlmostEqual(rep["area_net_m2"], 31.5 + 16.11, places=9)
+        self.assertEqual(rep["openings_count"], 3)
+        self.assertEqual(len(z["dims"]), 2)
+        # общий bbox
+        self.assertEqual(z["bbox"], [0, 0, 26000, 3000])
+        # части в zones_full со сгруппированными id
+        ids = [zd["id"] for zd in res["zones_full"]]
+        self.assertEqual(sorted(ids), ["Ф-1.1", "Ф-1.2"])
+        for zd in res["zones_full"]:
+            self.assertEqual(zd["meta"]["group"], "Ф-1")
+
+    def test_dims_rect_with_door(self):
+        # дверь на низу разрывает нижнюю кромку: цепочка 5000|900|6100 + высота
+        z = fz.load_zone({
+            "schema": fz.SCHEMA, "id": "Z", "units": "mm",
+            "outer": {"pts": rect(0, 0, 12000, 3000)},
+            "openings": [opening("D", rect(5000, 0, 900, 2100),
+                                 kind="door")]})
+        d = fz.zone_dims(z)
+        self.assertEqual(d["height"],
+                         {"x": 0.0, "y0": 0.0, "y1": 3000.0})
+        self.assertIsNotNone(d["bottom"])
+        self.assertEqual(d["bottom"]["xs"], [0.0, 5000.0, 5900.0, 12000.0])
+
+    def test_dims_rect_plain_no_bottom(self):
+        # низ без разрывов: горизонтальных размеров нет
+        z = fz.load_zone({
+            "schema": fz.SCHEMA, "id": "Z", "units": "mm",
+            "outer": {"pts": rect(0, 0, 12000, 3000)},
+            "openings": [opening("W", rect(1000, 900, 1500, 1500))]})
+        d = fz.zone_dims(z)
+        self.assertIsNone(d["bottom"])
+
     def test_cli_broken_input_writes_out(self):
         with tempfile.TemporaryDirectory() as td:
             fin = os.path.join(td, "in.json")
