@@ -154,19 +154,23 @@ nvf_layout.
 сообщением.)
 
 ## Статус
-- **18.07r — сборка v3 УПАЛА (скрин Actions Дениса: check #84/#85 и
-  build #68 красные) → фикс вслепую по прецедентам.** Логи раннера
-  недоступны (грабля). Диагностика: ZoneForm+XlsxWriter скомпилированы
-  полноценным mono (чисто) → ошибка в AutoCAD-зависимых; единственный
-  блок БЕЗ боевого прецедента — кейворды ATFTABLE
-  (Keywords.Add(3-арг)/Default/AllowNone). Фикс: классический конструктор
-  PromptKeywordOptions(messageAndKeywords, globals) с русскими
-  кейвордами; StartUserInteraction переписан байт-в-байт по прецеденту
-  ATableSpec (try/finally + End вместо using); RotatedDimension +=
-  SetDatabaseDefaults (паттерн ABlockGen). Урок в грабли: НОВЫЕ
-  AutoCAD-вызовы сверять с боевыми прецедентами соседей ДО пуша; mcs
-  --parse ловит только синтаксис; mono-devel компилит не-AutoCAD файлы
-  полноценно. Проверка фикса — check на пуш ветки (глазами Дениса).
+- **18.07r — сборка v3 падала: ИСТИННАЯ ПРИЧИНА НАЙДЕНА по логу Дениса
+  (телефон → текст шага).** `ZoneCommand.cs(103,26) CS0012: The type
+  'Window'... add reference to PresentationFramework` — это
+  `ed.StartUserInteraction(form)`: у него (и у ShowModalDialog) есть
+  перегрузка с WPF Window → для overload resolution компилятору нужен
+  тип Window. У соседей WPF-рефы в csproj есть (лента), в AFacades я их
+  «оптимизировал» — вот и CS0012. ФИКС: PresentationCore/
+  PresentationFramework/WindowsBase/System.Xaml в csproj. Первая
+  гипотеза (кейворды ATFTABLE) была НЕВЕРНА — но переписанный
+  классический конструктор PromptKeywordOptions оставлен (валиден и
+  проще). ГРАБЛЯ в копилку: (1) WPF-референсы обязательны в ЛЮБОМ
+  плагине, зовущем ShowModalDialog/StartUserInteraction — даже без
+  ленты; (2) точный текст ошибки CI Денис может дать с ТЕЛЕФОНА
+  (GitHub app → красный run → шаг → лог) — просить сразу, не гадать;
+  (3) Re-run старого красного run'а пересобирает СТАРЫЙ коммит —
+  бесполезен после фикса; (4) mono-devel в облаке полноценно компилит
+  не-AutoCAD файлы (ZoneForm/XlsxWriter прошли — сузило поиск).
 - **18.07q — «Собираем» v3:** build-trigger `7da798d` (один пуш), статус
   смотрит Денис в Actions; PDF-инструкция v3 отдана (новое: объединение,
   Ексель, +контуры, размеры, S участка/облицовки). Герману: заменить

@@ -26,6 +26,14 @@
     <Reference Include="System.Drawing" />
     <!-- Минимальный .xlsx (ZipArchive) — выгрузка ведомости в Excel -->
     <Reference Include="System.IO.Compression" />
+    <!-- WPF-сборки НУЖНЫ даже без ленты: у ShowModalDialog и
+         Editor.StartUserInteraction есть перегрузки с WPF Window, и для
+         разрешения перегрузки компилятору нужен тип Window (CS0012 —
+         урок 18.07r, лог Дениса) -->
+    <Reference Include="PresentationCore" />
+    <Reference Include="PresentationFramework" />
+    <Reference Include="WindowsBase" />
+    <Reference Include="System.Xaml" />
   </ItemGroup>
 
 </Project>
