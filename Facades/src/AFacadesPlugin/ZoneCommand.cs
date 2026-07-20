@@ -96,8 +96,11 @@ namespace AFacadesPlugin
             ZoneForm form = new ZoneForm(contours.Count);
             form.AddPicker = delegate ()
             {
-                using (var ui = ed.StartUserInteraction(form))
+                // паттерн ATableSpec (ReportBuilderForm): try/finally + End
+                EditorUserInteraction ui = null;
+                try
                 {
+                    ui = ed.StartUserInteraction(form);
                     var psoAdd = new PromptSelectionOptions
                     { MessageForAdding = "\nДобавьте контуры: " };
                     var selAdd = ed.GetSelection(psoAdd, filter);
@@ -135,8 +138,8 @@ namespace AFacadesPlugin
                             }
                             tr2.Commit();
                         }
-                    ui.End();
                 }
+                finally { if (ui != null) ui.End(); }
                 return contours.Count;
             };
             if (AcApp.ShowModalDialog(form) != DialogResult.OK)
@@ -498,8 +501,9 @@ namespace AFacadesPlugin
             Database db, double rot, Point3d p1, Point3d p2, Point3d dl)
         {
             var dim = new RotatedDimension(rot, p1, p2, dl, null,
-                                           db.Dimstyle)
-            { Layer = "_РАЗМЕРЫ" };
+                                           db.Dimstyle);
+            dim.SetDatabaseDefaults();
+            dim.Layer = "_РАЗМЕРЫ";
             btr.AppendEntity(dim);
             tr.AddNewlyCreatedDBObject(dim, true);
         }

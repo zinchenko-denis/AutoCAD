@@ -113,20 +113,20 @@ namespace AFacadesPlugin
                 return string.CompareOrdinal(ia, ib);
             });
 
-            // куда вывести (фидбэк Германа №2 п.2: выгрузка в Excel)
+            // куда вывести (фидбэк Германа №2 п.2: выгрузка в Excel);
+            // классический конструктор (messageAndKeywords, globals) —
+            // 18.07r: перегрузки Keywords.Add/Default/AllowNone уронили
+            // компиляцию v3
             var pko = new PromptKeywordOptions(
-                "\nКуда вывести ведомость [Чертеж/Ексель/Оба] <Чертеж>: ");
-            pko.Keywords.Add("Drawing", "Чертеж", "Чертеж");
-            pko.Keywords.Add("Excel", "Ексель", "Ексель");
-            pko.Keywords.Add("Both", "Оба", "Оба");
-            pko.Keywords.Default = "Drawing";
-            pko.AllowNone = true;
+                "\nКуда вывести ведомость [Чертеж/Ексель/Оба] <Чертеж>: ",
+                "Чертеж Ексель Оба");
             var kres = ed.GetKeywords(pko);
             string mode = (kres.Status == PromptStatus.OK &&
+                           kres.StringResult != null &&
                            kres.StringResult.Length > 0)
-                          ? kres.StringResult : "Drawing";
-            bool toDwg = mode != "Excel";
-            bool toXls = mode != "Drawing";
+                          ? kres.StringResult : "Чертеж";
+            bool toDwg = mode != "Ексель";
+            bool toXls = mode == "Ексель" || mode == "Оба";
 
             // пометить изменённые зоны звёздочкой у марки
             foreach (var z in zones)
