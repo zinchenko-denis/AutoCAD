@@ -289,6 +289,8 @@ def op_cladding(req):
         "datum": req.get("datum", 0.0),
         "mode": req.get("mode"),
     }
+    if req.get("origin") is not None:      # П3: точка привязки рустов
+        base["origin"] = req.get("origin")
     if req.get("min_cut") is not None:
         base["min_cut"] = req.get("min_cut")
 

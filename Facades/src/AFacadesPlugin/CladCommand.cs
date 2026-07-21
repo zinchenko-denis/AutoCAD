@@ -18,14 +18,18 @@ namespace AFacadesPlugin
     /// ATCLAD — этап 2 (ОТДЕЛЬНАЯ команда — требование Германа 21.07):
     /// раскладка облицовки универсальным блоком (кассетой) по зонам
     /// ATFZONE и/или замкнутым полилиниям. Сценарий Дениса 20.07 +
-    /// ответы Германа В1–В8 (Facades/docs/NEXT.md):
-    /// выбор зон/контуров → образец блока (размер камня и имена
-    /// динпараметров «ширина»/«высота» читаются с образца, В7; параметр
-    /// видимости НЕ трогаем, В8) → отметка старта (общий горизонт) →
-    /// русты → способ раскладки (от проёмов / от края) → вставки блока
-    /// на слое образца; параметры и хэндлы вставок пишутся ключом
-    /// «ATCLAD» в extension dictionary штриховки/марки зоны (повторный
-    /// запуск по той же зоне удаляет прежние камни — перегенерация).
+    /// ответы Германа В1–В8 + фидбэк теста 21.07-2 (Facades/docs/
+    /// NEXT.md): выбор зон/контуров → образец блока (размер камня и
+    /// имена динпараметров «ширина»/«высота» читаются с образца, В7;
+    /// видимость НЕ трогаем, В8) → тип облицовки → СВОЙ слой
+    /// «Облицовка <тип>» (камни и образец переводятся в него, п.2) →
+    /// точка привязки сетки рустов (через неё вертикальный и
+    /// горизонтальный русты; уровень точки — низ первого ряда, п.3) →
+    /// русты → способ (от проёмов / от края); от проёмов камни везде
+    /// отступают на руст (п.4 — швы вокруг проёмов, в движке).
+    /// Параметры и хэндлы вставок пишутся ключом «ATCLAD» в extension
+    /// dictionary штриховки/марки зоны (повторный запуск по той же
+    /// зоне удаляет прежние камни — перегенерация).
     /// </summary>
     public class CladCommand
     {
@@ -254,16 +258,46 @@ namespace AFacadesPlugin
             }
             else
                 ed.WriteMessage("\nКамень с образца: " + F0(tileW) + "×" +
-                    F0(tileH) + " мм, блок «" + blockName + "», слой «" +
-                    blockLayer + "».");
+                    F0(tileH) + " мм, блок «" + blockName + "».");
 
-            // ── 4. отметка старта (общий горизонт), русты, способ ──
+            // ── 3а. тип облицовки → СВОЙ слой камней (фидбэк Германа
+            // 21.07-2 п.2; раньше камни ложились на слой образца).
+            // Дефолт — вид облицовки из выбранной зоны ATFZONE ──
+            string cladType = cladDefault.Length > 0 ? cladDefault
+                                                     : blockLayer;
+            if (cladType == null || cladType.Trim().Length == 0)
+                cladType = "керамогранит 600х600";
+            var psoT = new PromptStringOptions("\nТип облицовки: ")
+            {
+                AllowSpaces = true,
+                DefaultValue = cladType,
+                UseDefaultValue = true,
+            };
+            var rT = ed.GetString(psoT);
+            if (rT.Status != PromptStatus.OK)
+            { ed.WriteMessage("\nОтменено."); return; }
+            if (rT.StringResult != null &&
+                rT.StringResult.Trim().Length > 0)
+                cladType = rT.StringResult.Trim();
+            string cladLayer = ZoneCommand.LayerName(
+                cladType.ToLowerInvariant().StartsWith("облицовка")
+                    ? cladType : "Облицовка " + cladType);
+            ed.WriteMessage("\nСлой камней: «" + cladLayer + "».");
+
+            // ── 4. точка привязки сетки рустов (фидбэк 21.07-2 п.3:
+            // через точку проходят вертикальный И горизонтальный русты),
+            // затем русты и способ. Уровень точки — низ первого ряда
+            // (ниже не кладётся, В1); X точки — вертикальная грань
+            // камня (правая грань верт. руста) ──
             var ppr = ed.GetPoint(
-                "\nТочка уровня старта облицовки (низ первого ряда): ");
+                "\nТочка привязки сетки рустов (через неё проходят " +
+                "вертикальный и горизонтальный русты; её уровень — низ " +
+                "первого ряда): ");
             if (ppr.Status != PromptStatus.OK)
             { ed.WriteMessage("\nОтменено."); return; }
-            double datum = ppr.Value.Y;
-            ed.WriteMessage("\nОтметка старта: Y = " + F0(datum) + " мм.");
+            double originX = ppr.Value.X, originY = ppr.Value.Y;
+            ed.WriteMessage("\nПривязка: X = " + F0(originX) + ", низ " +
+                "первого ряда Y = " + F0(originY) + " мм.");
 
             var pgv = new PromptDoubleOptions(
                 "\nВертикальный руст (шов между камнями в ряду), мм: ")
@@ -294,7 +328,8 @@ namespace AFacadesPlugin
                     { { "w", tileW }, { "h", tileH } } },
                 { "gap", new Dictionary<string, object>
                     { { "v", rgv.Value }, { "h", rgh.Value } } },
-                { "datum", datum },
+                { "origin", new Dictionary<string, object>
+                    { { "x", originX }, { "y", originY } } },
                 { "mode", mode },
                 // min_cut не передаём: дефолт движка 150 (В4, Герман)
                 { "zones", zonesPayload },
@@ -348,6 +383,15 @@ namespace AFacadesPlugin
                 }
                 var ms = (BlockTableRecord)tr.GetObject(
                     bt[BlockTableRecord.ModelSpace], OpenMode.ForWrite);
+                EnsureLayer(tr, db, cladLayer);
+                // П2: и образец переводим в слой облицовки
+                try
+                {
+                    var smp = (Entity)tr.GetObject(pres.ObjectId,
+                                                   OpenMode.ForWrite);
+                    smp.Layer = cladLayer;
+                }
+                catch { }
 
                 // прежние камни этой зоны/контура (перегенерация)
                 if (oldHandles.Count > 0)
@@ -379,7 +423,7 @@ namespace AFacadesPlugin
 
                     var br = new BlockReference(new Point3d(x, y, 0),
                                                 bt[blockName]);
-                    br.Layer = blockLayer;
+                    br.Layer = cladLayer;
                     ms.AppendEntity(br);
                     tr.AddNewlyCreatedDBObject(br, true);
 
@@ -434,14 +478,16 @@ namespace AFacadesPlugin
                     var meta = new Dictionary<string, object>
                     {
                         { "zone_id", root },
+                        { "cladding", cladType },
                         { "tile", new Dictionary<string, object>
                             { { "w", tileW }, { "h", tileH } } },
                         { "gap", new Dictionary<string, object>
                             { { "v", rgv.Value }, { "h", rgh.Value } } },
-                        { "datum", datum },
+                        { "origin", new Dictionary<string, object>
+                            { { "x", originX }, { "y", originY } } },
                         { "mode", mode },
                         { "block", blockName },
-                        { "layer", blockLayer },
+                        { "layer", cladLayer },
                         { "tiles", kv.Value.Count },
                         { "handles", kv.Value },
                     };
@@ -480,7 +526,7 @@ namespace AFacadesPlugin
                 " (целых " + ZoneCommand.SafeStr(ZoneCommand.Get(sum, "full")) +
                 ", подрезных " + ZoneCommand.SafeStr(ZoneCommand.Get(sum, "cut")) +
                 ")" + (erased > 0 ? "; прежних удалено " + erased : "") +
-                "; блок «" + blockName + "», слой «" + blockLayer + "».");
+                "; блок «" + blockName + "», слой «" + cladLayer + "».");
             var perZone = ZoneCommand.Get(res, "per_zone") as object[];
             if (perZone != null && perZone.Length > 1)
                 foreach (var pz in AggregateByRoot(perZone, partToRoot))
@@ -617,6 +663,18 @@ namespace AFacadesPlugin
                 return true;
             }
             catch { return false; }
+        }
+
+        private static void EnsureLayer(Transaction tr, Database db,
+                                        string name)
+        {
+            var lt = (LayerTable)tr.GetObject(db.LayerTableId,
+                                              OpenMode.ForRead);
+            if (lt.Has(name)) return;
+            lt.UpgradeOpen();
+            var rec = new LayerTableRecord { Name = name };
+            lt.Add(rec);
+            tr.AddNewlyCreatedDBObject(rec, true);
         }
 
         private static double ToD(object o)

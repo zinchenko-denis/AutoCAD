@@ -11,6 +11,16 @@
   целая плитка в середине, два равных подрезных по краям;
 - В9 (ОТКРЫТ): подрезка < min_cut пропускается с note (по В4).
 
+Фидбэк теста Германа 21.07 (пп.3–4):
+- П4: от проёмов ВЕЗДЕ отступ на руст — вокруг проёма шов (слева/
+  справа gv, сверху/снизу gh), камни к проёму не прилипают; в
+  openings анкерные швы [A-gv,A]/[B,B+gv] действуют на всю высоту
+  (В2), поэтому вертикальные швы сквозные и между камнями соседних
+  пролётов всегда есть руст;
+- П3: origin {x, y} — точка привязки сетки рустов: y = низ первого
+  ряда (фаза рядов + старт, В1), x = вертикальная грань камня
+  (модульная сетка в edge и в пролётах без проёмов).
+
 Вход/выход — JSON-словари (как vitrage_*): контуры — ортогональные
 замкнутые полилинии (outer) с дырами-проёмами (holes), глобальная
 сетка рядов от датума, два режима раскладки («edge» — от левого края,
@@ -98,16 +108,69 @@ def strip_bands(polys, y0, y1):
     return bands
 
 
-def contour_anchors(holes):
-    """X-границы ВСЕХ проёмов контура — по ответу Германа В2 (20.07)
-    вертикальные швы продолжаются от границ проёмов и в рядах выше/ниже
-    них: якоря действуют на всю высоту контура, не только в полосе
-    самого проёма."""
-    anch = set()
+PROBE = 0.25   # мм: проба стороны для отступов от проёмов (П4, 21.07)
+
+
+def _hole_joints(holes, gv, y0=None, y1=None):
+    """Вертикальные ШВЫ вокруг проёмов (фидбэк Германа 21.07 п.4:
+    отступ от внутренних областей на величину руста): у левой грани A
+    проёма шов [A-gv, A] (снаружи), у правой B — [B, B+gv]. y0/y1
+    заданы — только проёмы, пересекающие полосу (режим edge); без них
+    — все проёмы контура (режим openings: В2 — швы от границ проёмов
+    действуют на всю высоту)."""
+    js = []
     for h in holes:
-        anch.add(min(p[0] for p in h))
-        anch.add(max(p[0] for p in h))
-    return anch
+        if y0 is not None:
+            hy0 = min(p[1] for p in h)
+            hy1 = max(p[1] for p in h)
+            if min(hy1, y1) - max(hy0, y0) <= EPS:
+                continue
+        A = min(p[0] for p in h)
+        B = max(p[0] for p in h)
+        js.append((A - gv, A))
+        js.append((B, B + gv))
+    return js
+
+
+def _cut_spans(a, b, joints):
+    """Интервал [a,b] минус швы → пролёты [s0, s1, la, ra]; la/ra=True
+    — край рождён швом (якорный: камень кладётся впритык к шву)."""
+    spans = [[a, b, False, False]]
+    for j0, j1 in joints:
+        nxt = []
+        for s0, s1, la, ra in spans:
+            c0, c1 = max(s0, j0), min(s1, j1)
+            if c1 - c0 <= EPS:
+                nxt.append([s0, s1, la, ra])
+                continue
+            if c0 - s0 > EPS:
+                nxt.append([s0, c0, la, True])
+            if s1 - c1 > EPS:
+                nxt.append([c1, s1, True, ra])
+        spans = nxt
+    return spans
+
+
+def _pt_in_poly(poly, x, y):
+    """Чёт-нечет лучом вправо; probe-точки отстоят от граней на PROBE,
+    касания вершин не критичны."""
+    n = len(poly)
+    inside = False
+    for i in range(n):
+        x1, y1 = poly[i]
+        x2, y2 = poly[(i + 1) % n]
+        if (y1 > y) != (y2 > y):
+            xi = x1 + (y - y1) * (x2 - x1) / (y2 - y1)
+            if xi > x:
+                inside = not inside
+    return inside
+
+
+def _in_holes(holes, x, y):
+    for h in holes:
+        if _pt_in_poly(h, x, y):
+            return True
+    return False
 
 
 def _put(out, notes, x, wc, min_cut):
@@ -204,29 +267,22 @@ def _seg_anchored(out, notes, a, b, w, gv, min_cut, from_right):
              min(rem, w), min_cut)
 
 
-def _row_openings(a, b, anchors, w, gv, min_cut, notes):
-    """Режим «от проёмов»: якоря — X-границы проёмов КОНТУРА (все, В2:
-    швы простенков продолжаются в рядах над/под проёмами). Интервал
-    режется внутренними якорями на сегменты; сегмент между якорями —
-    простенок (В5), с якорем с одной стороны — целые от якоря и
-    подрезка у края контура. Совсем без якорей — от левого края."""
-    la = any(abs(a - x) < EPS for x in anchors)
-    ra = any(abs(b - x) < EPS for x in anchors)
-    inner = sorted(x for x in anchors if a + EPS < x < b - EPS)
+def _row_openings(a, b, joints, ox, w, gv, min_cut, notes):
+    """Режим «от проёмов»: интервал минус анкерные ШВЫ (грани проёмов
+    на всю высоту контура — В2; шов снаружи проёма — П4) → пролёты.
+    Пролёт между двумя швами — простенок (В5 двухвариантный); шов с
+    одной стороны — целые от него, подрезка у края контура; пролёт
+    без швов (контур без проёмов) — модульная сетка от точки привязки
+    рустов (П3, origin.x) либо от левого края пролёта."""
     out = []
-    if not inner and not la and not ra:
-        _seg_anchored(out, notes, a, b, w, gv, min_cut, False)
-        return out
-    cuts = [a] + inner + [b]
-    last = len(cuts) - 2
-    for i in range(last + 1):
-        s0, s1 = cuts[i], cuts[i + 1]
-        sl = la if i == 0 else True       # внутренний разрез = якорь
-        sr = ra if i == last else True
-        if sl and sr:
+    for s0, s1, la, ra in _cut_spans(a, b, joints):
+        if la and ra:
             _seg_wall(out, notes, s0, s1, w, gv, min_cut)
+        elif la or ra:
+            _seg_anchored(out, notes, s0, s1, w, gv, min_cut, ra)
         else:
-            _seg_anchored(out, notes, s0, s1, w, gv, min_cut, sr)
+            out.extend(_row_edge(s0, s1, s0 if ox is None else ox,
+                                 w, gv, min_cut, notes))
     out.sort()
     return out
 
@@ -239,7 +295,17 @@ def cladding_plan(req):
     gap = req.get("gap") or {}
     gv = float(gap.get("v", 0.0))
     gh = float(gap.get("h", 0.0))
-    datum = float(req.get("datum", 0.0))
+    # П3 (21.07): точка привязки сетки рустов. origin.y — низ первого
+    # ряда (фаза рядов И отметка старта, В1: ниже не кладём); origin.x
+    # — вертикальная грань камня (правая грань верт. руста): модульная
+    # сетка столбцов в режиме edge и в пролётах без проёмов. Нет
+    # origin.x — сетка от левого края контура (старое поведение);
+    # datum поддержан как синоним origin.y.
+    origin = req.get("origin") or {}
+    datum = float(origin.get("y", req.get("datum", 0.0)))
+    ox = origin.get("x")
+    if ox is not None:
+        ox = float(ox)
     mode = (req.get("mode") or "edge").strip().lower()
     # В4 (Герман, 20.07): минимальная подрезка 150 мм
     min_cut = float(req.get("min_cut", 150.0))
@@ -265,9 +331,10 @@ def cladding_plan(req):
         if y_lo < datum - EPS:
             notes.append("контур %d ниже отметки старта на %.0f мм — "
                          "ниже не облицовывается" % (ci + 1, datum - y_lo))
-        # якоря проёмов — на ВЕСЬ контур (В2: швы сквозные по высоте)
-        anchors = contour_anchors(holes) if mode == "openings" else set()
-        # глобальная сетка рядов от датума (общий горизонт всех контуров)
+        # анкерные швы проёмов — на ВЕСЬ контур (В2: сквозные по высоте)
+        joints_all = _hole_joints(holes, gv) if mode == "openings" else []
+        x_phase = x_min if ox is None else ox
+        # глобальная сетка рядов от origin.y (общий горизонт контуров)
         i = 0
         while True:
             y = datum + i * (h + gh)
@@ -279,15 +346,39 @@ def cladding_plan(req):
                     notes.append("контур %d: ряд на отм. %.0f высотой "
                                  "%.0f < min_cut" % (ci + 1, sy0, hc))
                     continue
+                # в edge отступ-шов только у проёмов ЭТОЙ полосы (П4);
+                # в openings швы уже глобальные (В2)
+                joints = joints_all if mode == "openings" else \
+                    _hole_joints(holes, gv, sy0, sy1)
                 for a, b in ivs:
-                    row = (_row_openings(a, b, anchors, w, gv, min_cut,
-                                         notes)
-                           if mode == "openings" else
-                           _row_edge(a, b, x_min, w, gv, min_cut, notes))
+                    if mode == "openings":
+                        row = _row_openings(a, b, joints, ox, w, gv,
+                                            min_cut, notes)
+                    else:
+                        row = []
+                        for s0, s1, _la, _ra in _cut_spans(a, b, joints):
+                            row.extend(_row_edge(s0, s1, x_phase, w, gv,
+                                                 min_cut, notes))
                     for x, wc in row:
+                        # П4 по вертикали: камень над/под проёмом
+                        # отступает от его кромки на горизонтальный
+                        # руст (проба в центре камня)
+                        y0, y1 = sy0, sy1
+                        xc = x + wc / 2.0
+                        if _in_holes(holes, xc, sy0 - PROBE):
+                            y0 += gh
+                        if _in_holes(holes, xc, sy1 + PROBE):
+                            y1 -= gh
+                        hc2 = y1 - y0
+                        if hc2 <= EPS:
+                            continue
+                        if hc2 < min_cut:
+                            notes.append("подрезка по высоте %.0f < "
+                                         "min_cut" % hc2)
+                            continue
                         inserts.append({
-                            "x": round(x, 4), "y": round(sy0, 4),
-                            "w": round(wc, 4), "h": round(hc, 4)})
+                            "x": round(x, 4), "y": round(y0, 4),
+                            "w": round(wc, 4), "h": round(hc2, 4)})
             n_rows += 1
             i += 1
     full = sum(1 for t in inserts

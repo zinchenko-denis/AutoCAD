@@ -350,7 +350,7 @@ class TestOpCladding(unittest.TestCase):
         self.assertEqual(res["summary"]["tiles"], 10)
 
     def test_zone_with_window_openings_mode(self):
-        # окно в зоне → в режиме «от проёмов» швы от границ окна (В2)
+        # окно в зоне → «от проёмов»: анкерные швы вокруг окон (В2+П4)
         z = zone_dict(rect(0, 0, 3000, 600),
                       [opening("W1", rect(200, 0, 600, 600)),
                        opening("W2", rect(2200, 0, 600, 600))],
@@ -359,9 +359,20 @@ class TestOpCladding(unittest.TestCase):
                                zones=[{"zone_id": "Ф-3", "zone": z}]))
         self.assertTrue(res["ok"])
         row = sorted((t["x"], t["w"]) for t in res["inserts"])
-        self.assertEqual(row, [(0.0, 200.0), (800.0, 390.0),
-                               (1200.0, 600.0), (1810.0, 390.0),
-                               (2800.0, 200.0)])
+        self.assertEqual(row, [(0.0, 190.0), (810.0, 380.0),
+                               (1200.0, 600.0), (1810.0, 380.0),
+                               (2810.0, 190.0)])
+
+    def test_origin_passthrough(self):
+        # П3: origin пробрасывается в раскладку (столбцы от точки)
+        z = zone_dict(rect(0, 0, 3040, 600), zid="Ф-8")
+        res = fe.run(self._req(zones=[{"zone_id": "Ф-8", "zone": z}],
+                               origin={"x": 305.0, "y": 0.0}))
+        self.assertTrue(res["ok"])
+        xs = sorted({t["x"] for t in res["inserts"]})
+        self.assertEqual(xs[0], 0.0)
+        self.assertEqual(xs[1], 305.0)
+        self.assertEqual(res["summary"]["cut"], 2)
 
     def test_zone_with_arc_skipped(self):
         # дуга в проёме — зона пропускается с внятной note
@@ -386,9 +397,10 @@ class TestOpCladding(unittest.TestCase):
         self.assertEqual(res["summary"]["zones"], 1)
         self.assertEqual(res["per_zone"][0]["outer_id"], "AAA")
         # окно сидит в модульной сетке (610×600 от [1220,610]) — вычет
-        # ровно одного камня: 15 целых - 1 = 14 (C3b движка)
+        # одного камня; справа от окна камень поджат швом окна (П4,
+        # 21.07) → одна подрезка 590 (C3b движка)
         self.assertEqual(res["summary"]["tiles"], 14)
-        self.assertEqual(res["summary"]["cut"], 0)
+        self.assertEqual(res["summary"]["cut"], 1)
 
     def test_zones_and_contours_together(self):
         z = zone_dict(rect(0, 0, 1220, 600), zid="Ф-6")
