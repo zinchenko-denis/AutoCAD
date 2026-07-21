@@ -190,9 +190,10 @@ class TestEngineRun(unittest.TestCase):
         self.assertAlmostEqual(z1["report"]["area_net_m2"], 16.11, places=9)
         self.assertAlmostEqual(res["summary"]["area_net_total_m2"],
                                31.5 + 16.11, places=9)
-        # label внутри контура B, bbox корректен
+        # label = правый верхний угол области (фидбэк 21.07 п.1)
         lx, ly = z1["label_pt"]
-        self.assertTrue(20000 < lx < 26000 and 0 < ly < 3000)
+        self.assertAlmostEqual(lx, 26000.0, places=9)
+        self.assertAlmostEqual(ly, 3000.0, places=9)
         self.assertEqual(z1["bbox"], [20000, 0, 26000, 3000])
         self.assertEqual(len(res["zones_full"]), 2)
         self.assertEqual(res["failed"], [])
@@ -294,6 +295,32 @@ class TestEngineRun(unittest.TestCase):
                 res = json.load(f)
             self.assertFalse(res["ok"])
             self.assertIn("ошибка", res["error"])
+
+
+class TestLabelAnchor(unittest.TestCase):
+    """Марка зоны — правый верхний угол ОБЛАСТИ (фидбэк 21.07 п.1)."""
+
+    def test_rect(self):
+        self.assertEqual(fz.label_anchor(rect(0, 0, 12000, 3000)),
+                         (12000, 3000))
+
+    def test_l_shape_cutout_top_right(self):
+        # Г-образный контур, вырез сверху-справа: якорь — правый конец
+        # верхней кромки (1220, 1210), НЕ угол bbox (2440, 1210)
+        pts = [[0, 0], [2440, 0], [2440, 900], [1220, 900],
+               [1220, 1210], [0, 1210]]
+        self.assertEqual(fz.label_anchor(pts), (1220, 1210))
+
+    def test_merged_zone_label(self):
+        # merge: якорь объединения = правый верх верхней части
+        req = {"op": "zones", "merge": True, "units": "mm",
+               "cladding": "к", "zone_prefix": "Ф-", "start_index": 1,
+               "contours": [
+                   {"id": "LO", "pts": rect(0, 0, 6000, 3000)},
+                   {"id": "HI", "pts": rect(1000, 3200, 4000, 3000)}]}
+        res = fe.run(req)
+        self.assertTrue(res["ok"], msg=str(res))
+        self.assertEqual(res["zones"][0]["label_pt"], [5000, 6200])
 
 
 class TestOpCladding(unittest.TestCase):

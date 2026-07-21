@@ -96,13 +96,33 @@ namespace AFacadesPlugin
             ZoneForm form = new ZoneForm(contours.Count);
             form.AddPicker = delegate ()
             {
-                // паттерн ATableSpec (ReportBuilderForm): try/finally + End
+                // паттерн ATableSpec (ReportBuilderForm): try/finally + End.
+                // Фидбэк Германа 21.07 п.3: прежний выбор НЕ пропадает —
+                // накапливается (дедуп по хэндлу); чтобы это было ВИДНО,
+                // уже выбранные контуры подсвечиваются на время добора,
+                // а подсказка называет их число
                 EditorUserInteraction ui = null;
+                var lit = new List<ObjectId>(idByHandle.Values);
                 try
                 {
                     ui = ed.StartUserInteraction(form);
+                    using (var trH = db.TransactionManager.StartTransaction())
+                    {
+                        foreach (var hid in lit)
+                            try
+                            {
+                                ((Entity)trH.GetObject(hid,
+                                    OpenMode.ForRead)).Highlight();
+                            }
+                            catch { }
+                        trH.Commit();
+                    }
                     var psoAdd = new PromptSelectionOptions
-                    { MessageForAdding = "\nДобавьте контуры: " };
+                    {
+                        MessageForAdding = "\nУже выбрано контуров: " +
+                            contours.Count + " (подсвечены, сохраняются)" +
+                            " — укажите добавляемые: "
+                    };
                     var selAdd = ed.GetSelection(psoAdd, filter);
                     if (selAdd.Status == PromptStatus.OK)
                         using (var tr2 = db.TransactionManager
@@ -139,7 +159,23 @@ namespace AFacadesPlugin
                             tr2.Commit();
                         }
                 }
-                finally { if (ui != null) ui.End(); }
+                finally
+                {
+                    // снять временную подсветку прежних
+                    using (var trH = db.TransactionManager
+                                       .StartTransaction())
+                    {
+                        foreach (var hid in lit)
+                            try
+                            {
+                                ((Entity)trH.GetObject(hid,
+                                    OpenMode.ForRead)).Unhighlight();
+                            }
+                            catch { }
+                        trH.Commit();
+                    }
+                    if (ui != null) ui.End();
+                }
                 return contours.Count;
             };
             if (AcApp.ShowModalDialog(form) != DialogResult.OK)
@@ -269,8 +305,22 @@ namespace AFacadesPlugin
                     hat.ColorIndex = form.ColorAci;
                     if (form.Pattern != "SOLID")
                         hat.PatternScale = form.PatternScale;
-                    hat.SetHatchPattern(HatchPatternType.PreDefined,
-                        form.Pattern.Length > 0 ? form.Pattern : "ANSI31");
+                    // имя образца может быть введено руками и отсутствовать
+                    // в acad.pat/acadiso.pat — фолбэк ANSI31 (21.07 п.2)
+                    try
+                    {
+                        hat.SetHatchPattern(HatchPatternType.PreDefined,
+                            form.Pattern.Length > 0 ? form.Pattern
+                                                    : "ANSI31");
+                    }
+                    catch
+                    {
+                        hat.SetHatchPattern(HatchPatternType.PreDefined,
+                                            "ANSI31");
+                        ed.WriteMessage("\nШтриховка «" + form.Pattern +
+                            "» не найдена среди образцов — применена " +
+                            "ANSI31.");
+                    }
                     hat.HatchStyle = HatchStyle.Normal;
                     hat.Associative = true;
                     foreach (var oid in outIds)
@@ -281,18 +331,22 @@ namespace AFacadesPlugin
                             new ObjectIdCollection(new[] { hid }));
                     hat.EvaluateHatch(true);
 
-                    // марка + площадь в центроиде (фидбэк Германа 19.07:
-                    // наименование облицовки в марке НЕ пишем — только
-                    // марка и S нетто; облицовка остаётся именем слоя)
+                    // марка + площадь у ПРАВОГО ВЕРХНЕГО угла области
+                    // (фидбэк Германа 21.07 п.1, было — центроид): движок
+                    // отдаёт правый верхний угол контура, текст прижат к
+                    // нему изнутри (TopRight + отступ полвысоты текста).
+                    // Наименование облицовки в марке НЕ пишем (19.07) —
+                    // только марка и S нетто; облицовка = имя слоя
                     var lp = Get(z, "label_pt") as object[];
                     double lx = lp != null ? ToD(lp[0]) : 0,
                            ly = lp != null ? ToD(lp[1]) : 0;
+                    double off = 0.5 * form.TextHeight;
                     var mt = new MText
                     {
-                        Location = new Point3d(lx, ly, 0),
+                        Location = new Point3d(lx - off, ly - off, 0),
                         TextHeight = form.TextHeight,
                         Layer = layer,
-                        Attachment = AttachmentPoint.MiddleCenter,
+                        Attachment = AttachmentPoint.TopRight,
                         Contents = zoneId + @"\PS = " +
                                    F3(Get(rep, "area_net_m2")) + " м²",
                     };

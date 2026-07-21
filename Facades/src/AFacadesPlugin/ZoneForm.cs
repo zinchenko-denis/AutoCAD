@@ -100,8 +100,26 @@ namespace AFacadesPlugin
             AddLabel("Цвет (ACI 1–255):", 280, ref y);
             _pattern.SetBounds(12, y, 120, 24);
             _pattern.DropDownStyle = ComboBoxStyle.DropDown;
+            // полный стандартный набор образцов AutoCAD (acadiso.pat) —
+            // фидбэк Германа 21.07 п.2; ходовые сверху, дальше алфавит;
+            // свободный ввод любого имени остаётся (DropDown)
             _pattern.Items.AddRange(new object[]
-            { "SOLID", "ANSI31", "ANSI32", "ANSI37", "NET", "DOTS", "LINE" });
+            {
+                "ANSI31", "SOLID", "NET", "DOTS", "LINE",
+                "ANGLE", "ANSI32", "ANSI33", "ANSI34", "ANSI35",
+                "ANSI36", "ANSI37", "ANSI38",
+                "AR-B816", "AR-B816C", "AR-B88", "AR-BRELM", "AR-BRSTD",
+                "AR-CONC", "AR-HBONE", "AR-PARQ1", "AR-RROOF", "AR-RSHKE",
+                "AR-SAND",
+                "BOX", "BRASS", "BRICK", "BRSTONE", "CLAY", "CORK",
+                "CROSS", "DASH", "DOLMIT", "EARTH", "ESCHER", "FLEX",
+                "GOST_GLASS", "GOST_GROUND", "GOST_WOOD",
+                "GRASS", "GRATE", "GRAVEL", "HEX", "HONEY", "HOUND",
+                "INSUL", "MUDST", "NET3", "PLAST", "PLASTI", "SACNCR",
+                "SQUARE", "STARS", "STEEL", "SWAMP", "TRANS", "TRIANG",
+                "ZIGZAG",
+            });
+            _pattern.DropDownHeight = 320;
             _pattern.Text = "ANSI31";
             _scale.SetBounds(150, y, 110, 24); _scale.Text = "25";
             _color.SetBounds(280, y, 138, 24); _color.Text = "8";

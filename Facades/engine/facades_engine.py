@@ -26,7 +26,7 @@ op="cladding" — этап 2 (ATCLAD, отдельная команда по т�
 {
   "ok": true,
   "zones": [ { "zone_id", "cladding", "outer_id", "opening_ids": [...],
-               "label_pt": [x, y],                // центроид, исходные единицы
+               "label_pt": [x, y],  // правый верхний угол области (21.07 п.1)
                "report": {facade_zone_report/1} } ],
   "zones_full": [ {facade_zone/1} ],              // для *_fzones.json
   "failed": [ { "zone_id", "outer_id", "issues": [...] } ],
@@ -110,17 +110,20 @@ def op_zones(req):
                            "issues": _issue_list(issues)})
             continue
         rep = fz.zone_report(z, issues)
-        label = fz._centroid([(p[0], p[1]) for p in z.outer.polygonized()])
+        # марка — правый верхний угол области (фидбэк Германа 21.07 п.1)
+        label = fz.label_anchor([(p[0], p[1])
+                                 for p in z.outer.polygonized()])
         parts.append((zd, z, issues, rep, fz.zone_dims(z), label))
 
     zones_ok, zones_full = [], []
     tot_net = tot_sills = tot_jambs = 0.0
     tot_ops = 0
     if merge and parts:
-        # одна зона из всех валидных частей: сводный отчёт, марка у
-        # крупнейшей части, размеры по каждой части
+        # одна зона из всех валидных частей: сводный отчёт, марка в
+        # правом верхнем углу объединения (экстремум якорей частей),
+        # размеры по каждой части
         zid = "%s%d" % (prefix, start)
-        big = max(parts, key=lambda p: p[3]["area_outer_m2"])
+        anchor = fz.label_anchor([p[5] for p in parts])
         rep = _merge_reports([p[3] for p in parts])
         bb = [min(p[0]["meta"]["bbox"][0] for p in parts),
               min(p[0]["meta"]["bbox"][1] for p in parts),
@@ -136,7 +139,7 @@ def op_zones(req):
             "part_count": len(parts),
             "outer_ids": [p[0]["meta"]["outer_contour_id"] for p in parts],
             "opening_ids": op_ids,
-            "label_pt": [big[5][0], big[5][1]],
+            "label_pt": [anchor[0], anchor[1]],
             "bbox": bb,
             "report": rep,
             "dims": [p[4] for p in parts],
