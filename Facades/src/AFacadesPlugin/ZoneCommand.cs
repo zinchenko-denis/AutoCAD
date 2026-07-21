@@ -508,12 +508,18 @@ namespace AFacadesPlugin
             tr.AddNewlyCreatedDBObject(dim, true);
         }
 
-        // ── Xrecord «ATFZONE» на объекте: JSON зоны чанками ≤250 символов ──
+        // ── Xrecord на объекте: JSON чанками ≤250 символов. Ключ «ATFZONE»
+        //    — данные зоны; «ATCLAD» (CladCommand) — параметры раскладки
+        //    рядом в том же extension dictionary (стык этапа 2, NEXT §Стык) ──
 
         internal const string XKey = "ATFZONE";
 
         internal static void StoreZoneData(Transaction tr, Entity ent,
                                            string json)
+        { StoreZoneData(tr, ent, json, XKey); }
+
+        internal static void StoreZoneData(Transaction tr, Entity ent,
+                                           string json, string key)
         {
             if (ent.ExtensionDictionary.IsNull)
                 ent.CreateExtensionDictionary();
@@ -524,26 +530,30 @@ namespace AFacadesPlugin
                 rb.Add(new TypedValue((int)DxfCode.Text,
                     json.Substring(i, Math.Min(250, json.Length - i))));
             var xr = new Xrecord { Data = rb };
-            if (ext.Contains(XKey))
+            if (ext.Contains(key))
             {
-                var old = (Xrecord)tr.GetObject(ext.GetAt(XKey),
+                var old = (Xrecord)tr.GetObject(ext.GetAt(key),
                                                 OpenMode.ForWrite);
                 old.Data = rb;
             }
             else
             {
-                ext.SetAt(XKey, xr);
+                ext.SetAt(key, xr);
                 tr.AddNewlyCreatedDBObject(xr, true);
             }
         }
 
         internal static string ReadZoneData(Transaction tr, Entity ent)
+        { return ReadZoneData(tr, ent, XKey); }
+
+        internal static string ReadZoneData(Transaction tr, Entity ent,
+                                            string key)
         {
             if (ent.ExtensionDictionary.IsNull) return null;
             var ext = (DBDictionary)tr.GetObject(ent.ExtensionDictionary,
                                                  OpenMode.ForRead);
-            if (!ext.Contains(XKey)) return null;
-            var xr = (Xrecord)tr.GetObject(ext.GetAt(XKey), OpenMode.ForRead);
+            if (!ext.Contains(key)) return null;
+            var xr = (Xrecord)tr.GetObject(ext.GetAt(key), OpenMode.ForRead);
             if (xr.Data == null) return null;
             var sb = new StringBuilder();
             foreach (TypedValue tv in xr.Data)

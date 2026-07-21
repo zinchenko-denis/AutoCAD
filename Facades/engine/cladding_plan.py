@@ -1,11 +1,21 @@
 # -*- coding: utf-8 -*-
 """Фаза 2 — облицовка: раскладка универсального блока в контурах.
 
-Формализация — docs/CLADDING.md. Вход/выход — JSON-словари (как
-vitrage_*): контуры — ортогональные замкнутые полилинии (outer) с
-дырами-проёмами (holes), глобальная сетка рядов от датума, два режима
-раскладки («edge» — от левого края, «openings» — от границ проёмов).
-Только stdlib (движок замораживается PyInstaller).
+Формализация — docs/CLADDING.md; правила уточнены ответами Германа
+В1–В8 (20.07, Facades/docs/NEXT.md §ОТВЕТЫ ГЕРМАНА):
+- В1: ниже отметки старта (datum) не кладём (note);
+- В2: якоря проёмов действуют на ВСЮ высоту контура — вертикальные
+  швы продолжаются от границ проёмов в рядах над/под ними;
+- В4: min_cut = 150 мм (дефолт);
+- В5: остаток простенка ≥300 — один подрезной в середине; <300 —
+  целая плитка в середине, два равных подрезных по краям;
+- В9 (ОТКРЫТ): подрезка < min_cut пропускается с note (по В4).
+
+Вход/выход — JSON-словари (как vitrage_*): контуры — ортогональные
+замкнутые полилинии (outer) с дырами-проёмами (holes), глобальная
+сетка рядов от датума, два режима раскладки («edge» — от левого края,
+«openings» — от границ проёмов). Только stdlib (движок замораживается
+PyInstaller).
 """
 
 EPS = 1e-6
@@ -88,15 +98,15 @@ def strip_bands(polys, y0, y1):
     return bands
 
 
-def hole_anchors(holes, y0, y1):
-    """X-границы проёмов, чей Y-диапазон пересекает полосу [y0,y1]."""
+def contour_anchors(holes):
+    """X-границы ВСЕХ проёмов контура — по ответу Германа В2 (20.07)
+    вертикальные швы продолжаются от границ проёмов и в рядах выше/ниже
+    них: якоря действуют на всю высоту контура, не только в полосе
+    самого проёма."""
     anch = set()
     for h in holes:
-        hy0 = min(p[1] for p in h)
-        hy1 = max(p[1] for p in h)
-        if min(hy1, y1) - max(hy0, y0) > EPS:
-            anch.add(min(p[0] for p in h))
-            anch.add(max(p[0] for p in h))
+        anch.add(min(p[0] for p in h))
+        anch.add(max(p[0] for p in h))
     return anch
 
 
@@ -107,6 +117,20 @@ def _put(out, notes, x, wc, min_cut):
         out.append((x, wc))
     else:
         notes.append("подрезка %.0f < min_cut" % wc)
+
+
+def _dedup_notes(notes):
+    """Одинаковые заметки схлопываются со счётчиком «(×N)» — при
+    min_cut=150 однотипных пропусков может быть много."""
+    count, order = {}, []
+    for n in notes:
+        if n in count:
+            count[n] += 1
+        else:
+            count[n] = 1
+            order.append(n)
+    return [n if count[n] == 1 else "%s (×%d)" % (n, count[n])
+            for n in order]
 
 
 def _row_edge(a, b, x_min, w, gv, min_cut, notes):
@@ -126,47 +150,84 @@ def _row_edge(a, b, x_min, w, gv, min_cut, notes):
     return out
 
 
-def _row_openings(a, b, anchors, w, gv, min_cut, notes):
-    """Режим «от проёмов»: целые камни от якорных границ (вертикальные
-    швы совпадают с границами проёмов), подрезка уводится от проёма —
-    в середину простенка либо к краю контура. Без якорей — от левого
-    края интервала."""
-    la = any(abs(a - x) < EPS for x in anchors)
-    ra = any(abs(b - x) < EPS for x in anchors)
+# В5 (ответ Германа 20.07): остаток простенка ≥ CENTER_FULL_MIN —
+# один подрезной камень в середине; меньше — ЦЕЛАЯ плитка в середине,
+# два равных подрезных по краям (каждый = (остаток+камень)/2 ≥ 300
+# при 600-м камне).
+CENTER_FULL_MIN = 300.0
+
+
+def _seg_wall(out, notes, a, b, w, gv, min_cut):
+    """Простенок [a,b] — якоря с ОБЕИХ сторон (границы проёмов).
+
+    В5 двухвариантный: n целых максимум, остаток rem = L - n·(w+gv);
+    rem ≥ 300 — целые навстречу (слева на один больше при нечётном),
+    остаток одним камнем в середине; rem < 300 — блок из n-1 целых
+    центрируется, по краям два равных подрезных (rem+w)/2."""
     step = w + gv
     L = b - a
-    out = []
-    if la and ra:
-        # простенок: n целых максимум, фронты навстречу (слева на один
-        # больше при нечётном), остаток ОДНИМ камнем в середине;
-        # остаток > w (щель < шва) — целый, излишек уходит в швы
-        n = int((L + gv + EPS) // step)
+    n = int((L + gv + EPS) // step)
+    if n == 0:
+        # простенок уже камня: один подрезной на всю ширину
+        _put(out, notes, a, min(L, w), min_cut)
+        return
+    rem = L - n * step
+    if rem <= EPS or rem >= CENTER_FULL_MIN - EPS:
         nl = (n + 1) // 2
-        rem = L - n * step
         for k in range(nl):
             out.append((a + k * step, w))
         if rem > EPS:
             _put(out, notes, a + nl * step, min(rem, w), min_cut)
         for k in range(n - nl):
             out.append((b - w - k * step, w))
-        out.sort()
-    elif ra:
-        # якорь справа: целые от правой границы, подрезка у левого края
-        n = int((L + gv + EPS) // step)
-        for k in range(n):
-            out.append((b - w - k * step, w))
-        rem = L - n * step
-        if rem > EPS:
-            _put(out, notes, a, min(rem, w), min_cut)
-        out.sort()
     else:
-        # якорь слева либо якорей нет: целые слева направо
-        n = int((L + gv + EPS) // step)
-        for k in range(n):
-            out.append((a + k * step, w))
-        rem = L - n * step
-        if rem > EPS:
-            _put(out, notes, a + n * step, min(rem, w), min_cut)
+        cut = (rem + w) / 2.0
+        _put(out, notes, a, cut, min_cut)
+        x = a + cut + gv
+        for k in range(n - 1):
+            out.append((x, w))
+            x += step
+        _put(out, notes, b - cut, cut, min_cut)
+
+
+def _seg_anchored(out, notes, a, b, w, gv, min_cut, from_right):
+    """Сегмент с якорем с ОДНОЙ стороны: целые от якоря, подрезка у
+    противоположного (контурного) края."""
+    step = w + gv
+    L = b - a
+    n = int((L + gv + EPS) // step)
+    for k in range(n):
+        out.append(((b - w - k * step) if from_right else (a + k * step), w))
+    rem = L - n * step
+    if rem > EPS:
+        _put(out, notes, a if from_right else (a + n * step),
+             min(rem, w), min_cut)
+
+
+def _row_openings(a, b, anchors, w, gv, min_cut, notes):
+    """Режим «от проёмов»: якоря — X-границы проёмов КОНТУРА (все, В2:
+    швы простенков продолжаются в рядах над/под проёмами). Интервал
+    режется внутренними якорями на сегменты; сегмент между якорями —
+    простенок (В5), с якорем с одной стороны — целые от якоря и
+    подрезка у края контура. Совсем без якорей — от левого края."""
+    la = any(abs(a - x) < EPS for x in anchors)
+    ra = any(abs(b - x) < EPS for x in anchors)
+    inner = sorted(x for x in anchors if a + EPS < x < b - EPS)
+    out = []
+    if not inner and not la and not ra:
+        _seg_anchored(out, notes, a, b, w, gv, min_cut, False)
+        return out
+    cuts = [a] + inner + [b]
+    last = len(cuts) - 2
+    for i in range(last + 1):
+        s0, s1 = cuts[i], cuts[i + 1]
+        sl = la if i == 0 else True       # внутренний разрез = якорь
+        sr = ra if i == last else True
+        if sl and sr:
+            _seg_wall(out, notes, s0, s1, w, gv, min_cut)
+        else:
+            _seg_anchored(out, notes, s0, s1, w, gv, min_cut, sr)
+    out.sort()
     return out
 
 
@@ -180,7 +241,8 @@ def cladding_plan(req):
     gh = float(gap.get("h", 0.0))
     datum = float(req.get("datum", 0.0))
     mode = (req.get("mode") or "edge").strip().lower()
-    min_cut = float(req.get("min_cut", 20.0))
+    # В4 (Герман, 20.07): минимальная подрезка 150 мм
+    min_cut = float(req.get("min_cut", 150.0))
     notes, inserts = [], []
     if w < EPS or h < EPS:
         return {"ok": False, "error": "нулевой размер камня"}
@@ -203,6 +265,8 @@ def cladding_plan(req):
         if y_lo < datum - EPS:
             notes.append("контур %d ниже отметки старта на %.0f мм — "
                          "ниже не облицовывается" % (ci + 1, datum - y_lo))
+        # якоря проёмов — на ВЕСЬ контур (В2: швы сквозные по высоте)
+        anchors = contour_anchors(holes) if mode == "openings" else set()
         # глобальная сетка рядов от датума (общий горизонт всех контуров)
         i = 0
         while True:
@@ -215,8 +279,6 @@ def cladding_plan(req):
                     notes.append("контур %d: ряд на отм. %.0f высотой "
                                  "%.0f < min_cut" % (ci + 1, sy0, hc))
                     continue
-                anchors = hole_anchors(holes, sy0, sy1) if \
-                    mode == "openings" else set()
                 for a, b in ivs:
                     row = (_row_openings(a, b, anchors, w, gv, min_cut,
                                          notes)
@@ -230,6 +292,6 @@ def cladding_plan(req):
             i += 1
     full = sum(1 for t in inserts
                if abs(t["w"] - w) < EPS and abs(t["h"] - h) < EPS)
-    return {"ok": True, "inserts": inserts, "notes": notes,
+    return {"ok": True, "inserts": inserts, "notes": _dedup_notes(notes),
             "summary": {"tiles": len(inserts), "full": full,
                         "cut": len(inserts) - full, "rows": n_rows}}

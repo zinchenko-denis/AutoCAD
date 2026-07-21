@@ -8,6 +8,10 @@
 op="zones" — ручной режим Германа (этап 1): плоский список контуров из
 выбора в AutoCAD -> зоны по вложенности -> валидация -> площади/погонажи.
 
+op="cladding" — этап 2 (ATCLAD, отдельная команда по требованию
+Германа): раскладка облицовки универсальным блоком по зонам ATFZONE
+и/или голым полилиниям — см. op_cladding.__doc__ и docs/CLADDING.md.
+
 Вход:
 {
   "op": "zones",
@@ -38,6 +42,7 @@ import json
 import sys
 import traceback
 
+import cladding_plan as cp
 import facade_zones as fz
 
 
@@ -180,11 +185,150 @@ def op_zones(req):
     }
 
 
+_ARC_EPS = 1e-9
+
+
+def _zone_to_contour(zd, notes, zone_id):
+    """facade_zone/1 → контур cladding_plan {outer, holes} в мм.
+
+    Дуги (bulge != 0) кассетной раскладке не поддаются — зона
+    пропускается с note (вопрос Герману в очереди)."""
+    units = zd.get("units") or "mm"
+    k = {"mm": 1.0, "m": 1000.0}.get(units)
+    if k is None:
+        notes.append("%s: неизвестные единицы %r — пропуск" % (zone_id, units))
+        return None
+
+    def _poly(obj):
+        pts = [[float(p[0]) * k, float(p[1]) * k] for p in obj["pts"]]
+        bulges = obj.get("bulges") or []
+        arc = any(abs(float(b)) > _ARC_EPS for b in bulges)
+        return pts, arc
+
+    try:
+        outer, arc = _poly(zd["outer"])
+        holes = []
+        for o in zd.get("openings") or []:
+            hp, ha = _poly(o["poly"])
+            arc = arc or ha
+            holes.append(hp)
+    except (KeyError, TypeError, ValueError, IndexError) as e:
+        notes.append("%s: негодная геометрия зоны (%s) — пропуск"
+                     % (zone_id, e))
+        return None
+    if arc:
+        notes.append("%s: контур с дугами — раскладка кассетами не "
+                     "выполняется, зона пропущена" % zone_id)
+        return None
+    return {"outer": outer, "holes": holes}
+
+
+def op_cladding(req):
+    """op="cladding" — этап 2 (ATCLAD): раскладка облицовки по зонам
+    ATFZONE и/или голым замкнутым полилиниям.
+
+    Вход:
+    {
+      "op": "cladding",
+      "tile": {"w", "h"}, "gap": {"v", "h"}, "datum": <мм>,
+      "mode": "openings"|"edge", "min_cut"?: <мм, дефолт 150>,
+      "zones":    [{"zone_id", "zone": {facade_zone/1}}, ...],
+      "contours": [{"id", "pts", "bulges"?}, ...]   // голые полилинии
+    }
+    Голые контуры группируются по вложенности (контур в контуре =
+    проём) — тем же кодом, что ATFZONE.
+
+    Выход: {"ok", "inserts": [{x,y,w,h,zone}], "notes",
+            "per_zone": [{"zone_id","outer_id"?,"tiles","full","cut",
+                          "rows"}],
+            "summary": {"tiles","full","cut","zones"}}
+
+    Раскладка позонная, горизонт общий: сетка рядов везде от datum —
+    результат не зависит от разбиения на вызовы."""
+    notes = []
+    items = []   # (zone_id, outer_id|None, contour)
+
+    for zrec in req.get("zones") or []:
+        if not isinstance(zrec, dict):
+            continue
+        zone_id = str(zrec.get("zone_id") or "?")
+        zd = zrec.get("zone")
+        if not isinstance(zd, dict):
+            notes.append("%s: нет геометрии зоны — пропуск" % zone_id)
+            continue
+        c = _zone_to_contour(zd, notes, zone_id)
+        if c is not None:
+            items.append((zone_id, None, c))
+
+    raw = req.get("contours") or []
+    if raw:
+        zone_dicts, issues = fz.build_zones_from_contours(
+            raw, zone_prefix="контур-", start_index=1, units="mm",
+            source={"method": "manual", "tool": "ATCLAD"})
+        for i in issues:
+            d = i.as_dict()
+            notes.append("%s: %s" % (d.get("where"), d.get("msg")))
+        for zd in zone_dicts:
+            outer_id = zd.get("meta", {}).get("outer_contour_id", "?")
+            zone_id = "контур %s" % outer_id
+            c = _zone_to_contour(zd, notes, zone_id)
+            if c is not None:
+                items.append((zone_id, outer_id, c))
+
+    if not items:
+        return {"ok": False,
+                "error": "нет пригодных зон/контуров для раскладки",
+                "notes": notes}
+
+    base = {
+        "tile": req.get("tile"),
+        "gap": req.get("gap"),
+        "datum": req.get("datum", 0.0),
+        "mode": req.get("mode"),
+    }
+    if req.get("min_cut") is not None:
+        base["min_cut"] = req.get("min_cut")
+
+    inserts, per_zone = [], []
+    tot_full = tot_cut = 0
+    for zone_id, outer_id, contour in items:
+        creq = dict(base)
+        creq["contours"] = [contour]
+        res = cp.cladding_plan(creq)
+        if not res.get("ok"):
+            return {"ok": False, "error": res.get("error"), "notes": notes}
+        for t in res["inserts"]:
+            t["zone"] = zone_id
+            inserts.append(t)
+        for n in res["notes"]:
+            notes.append("%s: %s" % (zone_id, n))
+        s = res["summary"]
+        pz = {"zone_id": zone_id, "tiles": s["tiles"], "full": s["full"],
+              "cut": s["cut"], "rows": s["rows"]}
+        if outer_id is not None:
+            pz["outer_id"] = outer_id
+        per_zone.append(pz)
+        tot_full += s["full"]
+        tot_cut += s["cut"]
+
+    return {
+        "ok": True,
+        "inserts": inserts,
+        "notes": notes,
+        "per_zone": per_zone,
+        "summary": {"tiles": len(inserts), "full": tot_full,
+                    "cut": tot_cut, "zones": len(per_zone)},
+    }
+
+
 def run(req):
     op = (req or {}).get("op")
     if op == "zones":
         return op_zones(req)
-    return {"ok": False, "error": "неизвестный op: %r (ожидается zones)" % op}
+    if op == "cladding":
+        return op_cladding(req)
+    return {"ok": False,
+            "error": "неизвестный op: %r (ожидается zones|cladding)" % op}
 
 
 def main(argv):
