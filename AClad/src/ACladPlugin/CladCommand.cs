@@ -10,29 +10,25 @@ using Autodesk.AutoCAD.Geometry;
 using Autodesk.AutoCAD.Runtime;
 using AcApp = Autodesk.AutoCAD.ApplicationServices.Application;
 
-[assembly: CommandClass(typeof(AFacadesPlugin.CladCommand))]
+[assembly: CommandClass(typeof(ACladPlugin.CladCommand))]
 
-namespace AFacadesPlugin
+namespace ACladPlugin
 {
     /// <summary>
-    /// ATCLAD — этап 2 (ОТДЕЛЬНАЯ команда — требование Германа 21.07):
-    /// раскладка облицовки универсальным блоком (кассетой) по зонам
-    /// ATFZONE и/или замкнутым полилиниям. Сценарий Дениса 20.07 +
-    /// ответы Германа В1–В8 + фидбэк теста 21.07-2 (Facades/docs/
-    /// NEXT.md): выбор зон/контуров → образец блока (размер камня и
-    /// имена динпараметров «ширина»/«высота» читаются с образца, В7;
-    /// видимость НЕ трогаем, В8) → тип облицовки → СВОЙ слой
-    /// «Облицовка <тип>» (камни и образец переводятся в него, п.2) →
-    /// точка привязки сетки рустов (через неё вертикальный и
-    /// горизонтальный русты; уровень точки — низ первого ряда, п.3) →
-    /// русты → способ (от проёмов / от края); от проёмов камни везде
-    /// отступают на руст (п.4 — швы вокруг проёмов, в движке).
-    /// Параметры и хэндлы вставок пишутся ключом «ATCLAD» в extension
-    /// dictionary штриховки/марки зоны (повторный запуск по той же
-    /// зоне удаляет прежние камни — перегенерация).
+    /// ATCLAD — раскладка облицовки (этап 2, ОТДЕЛЬНЫЙ бандл AClad —
+    /// просьба Германа 22.07: боевой этап 1 (AFacades: ATFZONE/ATFTABLE)
+    /// ставится один раз, раскладка переустанавливается сколько угодно).
+    /// Данные зон читаются из Xrecord «ATFZONE» (пишет AFacades) и
+    /// <dwg>_fzones.json — контракт общий, реализация продублирована
+    /// сознательно (модули развязаны). Правила и диалог — ТЗ Германа
+    /// 22.07 пп.1.1–1.6/2.1–2.6 (AClad/docs/CLADDING.md), движок
+    /// clad_engine.exe. Параметры и хэндлы вставок пишутся ключом
+    /// «ATCLAD» рядом с данными зоны (повторный запуск по той же зоне
+    /// удаляет прежние камни — перегенерация).
     /// </summary>
     public class CladCommand
     {
+        internal const string XKeyZone = "ATFZONE";
         internal const string XKeyClad = "ATCLAD";
         private const double CloseTol = 0.5;   // мм: зазор «замкнутости»
 
@@ -45,7 +41,8 @@ namespace AFacadesPlugin
             var db = doc.Database;
             var ser = new JavaScriptSerializer { MaxJsonLength = int.MaxValue };
 
-            // ── 1. выбор зон ATFZONE (штриховки/марки) и/или контуров ──
+            // ── 1. выбор зон ATFZONE (штриховки/марки) и/или контуров
+            //    (ТЗ 2.3: «выбрать контура или маркеры») ──
             var pso = new PromptSelectionOptions
             {
                 MessageForAdding = "\nВыберите зоны облицовки (штриховки/" +
@@ -63,8 +60,6 @@ namespace AFacadesPlugin
             if (sel.Status != PromptStatus.OK)
             { ed.WriteMessage("\nОтменено."); return; }
 
-            // зоны: zone_id → объекты зоны (для меток/удаления старого);
-            // полилинии: handle → (id, pts, bulges) — кандидаты в контуры
             var zoneObjs = new Dictionary<string, List<ObjectId>>();
             var zoneStale = new List<string>();
             var polyByHandle = new Dictionary<string, ObjectId>();
@@ -104,36 +99,34 @@ namespace AFacadesPlugin
                         continue;
                     }
 
-                    // штриховка/марка зоны ATFZONE
-                    string json = ZoneCommand.ReadZoneData(tr, ent);
+                    // штриховка/марка зоны ATFZONE (пишет AFacades)
+                    string json = ReadData(tr, ent, XKeyZone);
                     if (json == null) continue;
                     var z = ser.DeserializeObject(json)
                             as Dictionary<string, object>;
                     if (z == null) continue;
-                    string zid = ZoneCommand.SafeStr(
-                        ZoneCommand.Get(z, "zone_id"));
+                    string zid = SafeStr(Get(z, "zone_id"));
                     if (zid.Length == 0) continue;
                     if (cladDefault.Length == 0)
-                        cladDefault = ZoneCommand.SafeStr(
-                            ZoneCommand.Get(z, "cladding"));
+                        cladDefault = SafeStr(Get(z, "cladding"));
                     if (!zoneObjs.ContainsKey(zid))
                         zoneObjs[zid] = new List<ObjectId>();
                     if (!zoneObjs[zid].Contains(ent.ObjectId))
                         zoneObjs[zid].Add(ent.ObjectId);
                     CollectOldHandles(tr, ser, ent, oldHandles);
 
-                    // сверка с фактом (паттерн ATFTABLE): контур двигали
-                    // после ATFZONE → раскладка легла бы мимо
+                    // сверка с фактом: контур двигали после ATFZONE →
+                    // раскладка легла бы мимо
                     var hat = ent as Hatch;
                     if (hat != null)
                     {
-                        var rep = ZoneCommand.Get(z, "report")
+                        var rep = Get(z, "report")
                                   as Dictionary<string, object>;
                         try
                         {
                             double fact = hat.Area / 1e6;
                             double stored = Convert.ToDouble(
-                                ZoneCommand.Get(rep, "area_net_m2"),
+                                Get(rep, "area_net_m2"),
                                 CultureInfo.InvariantCulture);
                             if (Math.Abs(fact - stored) > 0.001 &&
                                 !zoneStale.Contains(zid))
@@ -153,13 +146,12 @@ namespace AFacadesPlugin
             foreach (var kv in zoneObjs)
             {
                 string zid = kv.Key;
-                if (zoneStale.Contains(zid)) continue;   // сообщение ниже
+                if (zoneStale.Contains(zid)) continue;
                 var parts = FindZoneParts(fz, zid);
                 if (parts.Count == 0) { zoneMissing.Add(zid); continue; }
                 foreach (var part in parts)
                 {
-                    string pid = ZoneCommand.SafeStr(
-                        ZoneCommand.Get(part, "id"));
+                    string pid = SafeStr(Get(part, "id"));
                     partToRoot[pid] = zid;
                     zonesPayload.Add(new Dictionary<string, object>
                     { { "zone_id", pid }, { "zone", part } });
@@ -167,14 +159,13 @@ namespace AFacadesPlugin
                     // иначе та же зона раскладывалась бы дважды
                     string oid = MetaStr(part, "outer_contour_id");
                     if (oid != null) { polyData.Remove(oid); }
-                    var ops = ZoneCommand.Get(part, "openings") as object[];
+                    var ops = Get(part, "openings") as object[];
                     if (ops != null)
                         foreach (var o in ops)
                         {
                             var od = o as Dictionary<string, object>;
                             if (od != null)
-                                polyData.Remove(ZoneCommand.SafeStr(
-                                    ZoneCommand.Get(od, "id")));
+                                polyData.Remove(SafeStr(Get(od, "id")));
                         }
                 }
             }
@@ -237,37 +228,31 @@ namespace AFacadesPlugin
             if (dynW == null || dynH == null)
                 ed.WriteMessage("\nУ блока «" + blockName + "» не найдены " +
                     "динпараметры «ширина»/«высота» — камни будут " +
-                    "вставлены без подгонки размеров, размер запрошу " +
-                    "числами.");
-            if (tileW < 1 || tileH < 1)
-            {
-                var pw = new PromptDoubleOptions(
-                    "\nШирина камня, мм: ")
-                { DefaultValue = 600.0, AllowNegative = false,
-                  AllowZero = false };
-                var rw = ed.GetDouble(pw);
-                if (rw.Status != PromptStatus.OK) return;
-                tileW = rw.Value;
-                var ph = new PromptDoubleOptions(
-                    "\nВысота камня, мм: ")
-                { DefaultValue = 600.0, AllowNegative = false,
-                  AllowZero = false };
-                var rh = ed.GetDouble(ph);
-                if (rh.Status != PromptStatus.OK) return;
-                tileH = rh.Value;
-            }
-            else
-                ed.WriteMessage("\nКамень с образца: " + F0(tileW) + "×" +
-                    F0(tileH) + " мм, блок «" + blockName + "».");
+                    "вставлены без подгонки размеров.");
 
-            // ── 3а. тип облицовки → СВОЙ слой камней (фидбэк Германа
-            // 21.07-2 п.2; раньше камни ложились на слой образца).
-            // Дефолт — вид облицовки из выбранной зоны ATFZONE ──
+            // ── 3а. максимальный размер облицовки (ТЗ 2.2): дефолт — с
+            //    образца; введённое программа выставит и образцу ──
+            var pw = new PromptDoubleOptions(
+                "\nМаксимальная ШИРИНА камня, мм: ")
+            { DefaultValue = tileW >= 1 ? tileW : 600.0,
+              AllowNegative = false, AllowZero = false };
+            var rw = ed.GetDouble(pw);
+            if (rw.Status != PromptStatus.OK) return;
+            tileW = rw.Value;
+            var ph = new PromptDoubleOptions(
+                "\nМаксимальная ВЫСОТА камня, мм: ")
+            { DefaultValue = tileH >= 1 ? tileH : 600.0,
+              AllowNegative = false, AllowZero = false };
+            var rh = ed.GetDouble(ph);
+            if (rh.Status != PromptStatus.OK) return;
+            tileH = rh.Value;
+
+            // ── 3б. наименование облицовки → СВОЙ слой камней (ТЗ 2.1) ──
             string cladType = cladDefault.Length > 0 ? cladDefault
                                                      : blockLayer;
             if (cladType == null || cladType.Trim().Length == 0)
                 cladType = "керамогранит 600х600";
-            var psoT = new PromptStringOptions("\nТип облицовки: ")
+            var psoT = new PromptStringOptions("\nНаименование облицовки: ")
             {
                 AllowSpaces = true,
                 DefaultValue = cladType,
@@ -279,26 +264,23 @@ namespace AFacadesPlugin
             if (rT.StringResult != null &&
                 rT.StringResult.Trim().Length > 0)
                 cladType = rT.StringResult.Trim();
-            string cladLayer = ZoneCommand.LayerName(
+            string cladLayer = LayerName(
                 cladType.ToLowerInvariant().StartsWith("облицовка")
                     ? cladType : "Облицовка " + cladType);
             ed.WriteMessage("\nСлой камней: «" + cladLayer + "».");
 
-            // ── 4. точка привязки сетки рустов (фидбэк 21.07-2 п.3:
-            // через точку проходят вертикальный И горизонтальный русты),
-            // затем русты и способ. Уровень точки — низ первого ряда
-            // (ниже не кладётся, В1); X точки — вертикальная грань
-            // камня (правая грань верт. руста) ──
+            // ── 4. точка старта (ТЗ 1.1/2.4): низ первого ряда, общий
+            //    горизонт — горизонтальные русты всех участков совпадают ──
             var ppr = ed.GetPoint(
-                "\nТочка привязки сетки рустов (через неё проходят " +
-                "вертикальный и горизонтальный русты; её уровень — низ " +
-                "первого ряда): ");
+                "\nТочка старта раскладки (её уровень — низ первого " +
+                "ряда; горизонтальные русты всех участков — от неё): ");
             if (ppr.Status != PromptStatus.OK)
             { ed.WriteMessage("\nОтменено."); return; }
-            double originX = ppr.Value.X, originY = ppr.Value.Y;
-            ed.WriteMessage("\nПривязка: X = " + F0(originX) + ", низ " +
-                "первого ряда Y = " + F0(originY) + " мм.");
+            double originY = ppr.Value.Y;
+            ed.WriteMessage("\nНиз первого ряда: Y = " + F0(originY) +
+                            " мм.");
 
+            // ── 4а. русты (ТЗ 1.5) ──
             var pgv = new PromptDoubleOptions(
                 "\nВертикальный руст (шов между камнями в ряду), мм: ")
             { DefaultValue = 8.0, AllowNegative = false };
@@ -310,15 +292,22 @@ namespace AFacadesPlugin
             var rgh = ed.GetDouble(pgh);
             if (rgh.Status != PromptStatus.OK) return;
 
-            // классический конструктор (messageAndKeywords, globals) —
-            // грабля 18.07r
-            var pko = new PromptKeywordOptions(
-                "\nСпособ раскладки [Проемы/Край] <Проемы>: ",
-                "Проемы Край");
-            var kres = ed.GetKeywords(pko);
-            if (kres.Status == PromptStatus.Cancel) return;
-            string mode = (kres.Status == PromptStatus.OK &&
-                           kres.StringResult == "Край") ? "edge" : "openings";
+            // ── 4б. точки вертикальных рустов (ТЗ 2.5, по желанию):
+            //    через каждую точку пройдёт вертикальный руст (ось шва);
+            //    точки режут раскладку на независимые участки ──
+            var vjoints = new List<object>();
+            while (true)
+            {
+                var ppo = new PromptPointOptions(
+                    "\nТочка вертикального руста (Enter — продолжить): ")
+                { AllowNone = true };
+                var pv = ed.GetPoint(ppo);
+                if (pv.Status != PromptStatus.OK) break;
+                vjoints.Add(pv.Value.X);
+                ed.WriteMessage("\n  вертикальный руст по X = " +
+                                F0(pv.Value.X) + " (всего " +
+                                vjoints.Count + ")");
+            }
 
             // ── 5. движок ──
             var payload = new Dictionary<string, object>
@@ -329,8 +318,8 @@ namespace AFacadesPlugin
                 { "gap", new Dictionary<string, object>
                     { { "v", rgv.Value }, { "h", rgh.Value } } },
                 { "origin", new Dictionary<string, object>
-                    { { "x", originX }, { "y", originY } } },
-                { "mode", mode },
+                    { { "y", originY } } },
+                { "vjoints", vjoints },
                 // min_cut не передаём: дефолт движка 150 (В4, Герман)
                 { "zones", zonesPayload },
                 { "contours", contoursPayload },
@@ -339,11 +328,11 @@ namespace AFacadesPlugin
                 System.Reflection.Assembly.GetExecutingAssembly().Location)
                 ?? ".";
             string engineExe = Path.GetFullPath(Path.Combine(
-                baseDir, "..", "engine", "facades_engine.exe"));
+                baseDir, "..", "engine", "clad_engine.exe"));
             Dictionary<string, object> res;
             try
             {
-                res = ser.DeserializeObject(ZoneCommand.CallEngine(
+                res = ser.DeserializeObject(CallEngine(
                     engineExe, ser.Serialize(payload)))
                     as Dictionary<string, object>;
             }
@@ -352,18 +341,18 @@ namespace AFacadesPlugin
                 ed.WriteMessage("\nОшибка движка: " + ex.Message);
                 return;
             }
-            if (res == null || !ZoneCommand.GetBool(res, "ok"))
+            if (res == null || !GetBool(res, "ok"))
             {
-                ed.WriteMessage("\nДвижок отказал: " + ZoneCommand.SafeStr(
-                    ZoneCommand.Get(res, "error")));
-                PrintNotes(ed, ZoneCommand.Get(res, "notes") as object[]);
+                ed.WriteMessage("\nДвижок отказал: " + SafeStr(
+                    Get(res, "error")));
+                PrintNotes(ed, Get(res, "notes") as object[]);
                 return;
             }
-            var inserts = ZoneCommand.Get(res, "inserts") as object[];
+            var inserts = Get(res, "inserts") as object[];
             if (inserts == null || inserts.Length == 0)
             {
                 ed.WriteMessage("\nРаскладка пуста (см. замечания).");
-                PrintNotes(ed, ZoneCommand.Get(res, "notes") as object[]);
+                PrintNotes(ed, Get(res, "notes") as object[]);
                 return;
             }
 
@@ -384,12 +373,23 @@ namespace AFacadesPlugin
                 var ms = (BlockTableRecord)tr.GetObject(
                     bt[BlockTableRecord.ModelSpace], OpenMode.ForWrite);
                 EnsureLayer(tr, db, cladLayer);
-                // П2: и образец переводим в слой облицовки
+                // ТЗ 2.1/2.2: образец — в слой облицовки, размеры
+                // образцу — введённые максимальные
                 try
                 {
-                    var smp = (Entity)tr.GetObject(pres.ObjectId,
+                    var smp = (BlockReference)tr.GetObject(pres.ObjectId,
                                                    OpenMode.ForWrite);
                     smp.Layer = cladLayer;
+                    if (dynW != null && dynH != null && smp.IsDynamicBlock)
+                        foreach (DynamicBlockReferenceProperty pr in
+                                 smp.DynamicBlockReferencePropertyCollection)
+                        {
+                            if (pr.ReadOnly) continue;
+                            if (pr.PropertyName == dynW)
+                                TrySetNum(pr, tileW);
+                            else if (pr.PropertyName == dynH)
+                                TrySetNum(pr, tileH);
+                        }
                 }
                 catch { }
 
@@ -416,10 +416,10 @@ namespace AFacadesPlugin
                 {
                     var it = itObj as Dictionary<string, object>;
                     if (it == null) continue;
-                    double x = ToD(ZoneCommand.Get(it, "x")),
-                           y = ToD(ZoneCommand.Get(it, "y")),
-                           w = ToD(ZoneCommand.Get(it, "w")),
-                           h = ToD(ZoneCommand.Get(it, "h"));
+                    double x = ToD(Get(it, "x")),
+                           y = ToD(Get(it, "y")),
+                           w = ToD(Get(it, "w")),
+                           h = ToD(Get(it, "h"));
 
                     var br = new BlockReference(new Point3d(x, y, 0),
                                                 bt[blockName]);
@@ -460,8 +460,7 @@ namespace AFacadesPlugin
                             tr.AddNewlyCreatedDBObject(ar, true);
                         }
 
-                    string pid = ZoneCommand.SafeStr(
-                        ZoneCommand.Get(it, "zone"));
+                    string pid = SafeStr(Get(it, "zone"));
                     string root;
                     if (!partToRoot.TryGetValue(pid, out root)) root = pid;
                     if (!handlesByRoot.ContainsKey(root))
@@ -484,8 +483,8 @@ namespace AFacadesPlugin
                         { "gap", new Dictionary<string, object>
                             { { "v", rgv.Value }, { "h", rgh.Value } } },
                         { "origin", new Dictionary<string, object>
-                            { { "x", originX }, { "y", originY } } },
-                        { "mode", mode },
+                            { { "y", originY } } },
+                        { "vjoints", vjoints },
                         { "block", blockName },
                         { "layer", cladLayer },
                         { "tiles", kv.Value.Count },
@@ -498,8 +497,7 @@ namespace AFacadesPlugin
                         {
                             var te = (Entity)tr.GetObject(tid,
                                 OpenMode.ForWrite);
-                            ZoneCommand.StoreZoneData(tr, te, mjson,
-                                                      XKeyClad);
+                            StoreData(tr, te, mjson, XKeyClad);
                         }
                     else
                     {
@@ -511,8 +509,7 @@ namespace AFacadesPlugin
                         {
                             var te = (Entity)tr.GetObject(pid2,
                                 OpenMode.ForWrite);
-                            ZoneCommand.StoreZoneData(tr, te, mjson,
-                                                      XKeyClad);
+                            StoreData(tr, te, mjson, XKeyClad);
                         }
                     }
                 }
@@ -520,14 +517,13 @@ namespace AFacadesPlugin
             }
 
             // ── 7. отчёт ──
-            var sum = ZoneCommand.Get(res, "summary")
-                      as Dictionary<string, object>;
+            var sum = Get(res, "summary") as Dictionary<string, object>;
             ed.WriteMessage("\nATCLAD: камней " + made +
-                " (целых " + ZoneCommand.SafeStr(ZoneCommand.Get(sum, "full")) +
-                ", подрезных " + ZoneCommand.SafeStr(ZoneCommand.Get(sum, "cut")) +
+                " (целых " + SafeStr(Get(sum, "full")) +
+                ", подрезных " + SafeStr(Get(sum, "cut")) +
                 ")" + (erased > 0 ? "; прежних удалено " + erased : "") +
                 "; блок «" + blockName + "», слой «" + cladLayer + "».");
-            var perZone = ZoneCommand.Get(res, "per_zone") as object[];
+            var perZone = Get(res, "per_zone") as object[];
             if (perZone != null && perZone.Length > 1)
                 foreach (var pz in AggregateByRoot(perZone, partToRoot))
                     ed.WriteMessage("\n  " + pz);
@@ -535,7 +531,7 @@ namespace AFacadesPlugin
                 ed.WriteMessage("\n  ! у " + dynFail + " вставок не " +
                     "выставились «ширина»/«высота» — проверьте параметры " +
                     "блока.");
-            PrintNotes(ed, ZoneCommand.Get(res, "notes") as object[]);
+            PrintNotes(ed, Get(res, "notes") as object[]);
         }
 
         // ── прежние камни: хэндлы из метки ATCLAD выбранного объекта ──
@@ -544,13 +540,13 @@ namespace AFacadesPlugin
         {
             try
             {
-                string j = ZoneCommand.ReadZoneData(tr, ent, XKeyClad);
+                string j = ReadData(tr, ent, XKeyClad);
                 if (j == null) return;
                 var d = ser.DeserializeObject(j) as Dictionary<string, object>;
-                var hs = ZoneCommand.Get(d, "handles") as object[];
+                var hs = Get(d, "handles") as object[];
                 if (hs == null) return;
                 foreach (var h in hs)
-                    into.Add(ZoneCommand.SafeStr(h));
+                    into.Add(SafeStr(h));
             }
             catch { }
         }
@@ -576,7 +572,7 @@ namespace AFacadesPlugin
                 {
                     var zd = z as Dictionary<string, object>;
                     if (zd == null) continue;
-                    string id = ZoneCommand.SafeStr(ZoneCommand.Get(zd, "id"));
+                    string id = SafeStr(Get(zd, "id"));
                     if (id.Length > 0) map[id] = zd;
                 }
             }
@@ -606,10 +602,10 @@ namespace AFacadesPlugin
         private static string MetaStr(Dictionary<string, object> zd,
                                       string key)
         {
-            var meta = ZoneCommand.Get(zd, "meta") as Dictionary<string, object>;
+            var meta = Get(zd, "meta") as Dictionary<string, object>;
             if (meta == null) return null;
-            object v = ZoneCommand.Get(meta, key);
-            return v == null ? null : ZoneCommand.SafeStr(v);
+            object v = Get(meta, key);
+            return v == null ? null : SafeStr(v);
         }
 
         // per_zone частей merge-зон агрегируются к корневой марке
@@ -624,7 +620,7 @@ namespace AFacadesPlugin
             {
                 var d = o as Dictionary<string, object>;
                 if (d == null) continue;
-                string pid = ZoneCommand.SafeStr(ZoneCommand.Get(d, "zone_id"));
+                string pid = SafeStr(Get(d, "zone_id"));
                 string root;
                 if (!partToRoot.TryGetValue(pid, out root)) root = pid;
                 if (!tiles.ContainsKey(root))
@@ -632,9 +628,9 @@ namespace AFacadesPlugin
                     order.Add(root);
                     tiles[root] = 0; full[root] = 0; cut[root] = 0;
                 }
-                tiles[root] += ToI(ZoneCommand.Get(d, "tiles"));
-                full[root] += ToI(ZoneCommand.Get(d, "full"));
-                cut[root] += ToI(ZoneCommand.Get(d, "cut"));
+                tiles[root] += ToI(Get(d, "tiles"));
+                full[root] += ToI(Get(d, "full"));
+                cut[root] += ToI(Get(d, "cut"));
             }
             var outp = new List<string>();
             foreach (var r in order)
@@ -648,7 +644,7 @@ namespace AFacadesPlugin
             if (notes == null || notes.Length == 0) return;
             ed.WriteMessage("\nЗамечания:");
             foreach (var n in notes)
-                ed.WriteMessage("\n  · " + ZoneCommand.SafeStr(n));
+                ed.WriteMessage("\n  · " + SafeStr(n));
         }
 
         // числовое динсвойство — ChangeType к типу значения (паттерн
@@ -665,6 +661,53 @@ namespace AFacadesPlugin
             catch { return false; }
         }
 
+        // ── Xrecord на объекте: JSON чанками ≤250 символов. Контракт
+        //    общий с AFacades (ключ ATFZONE читаем, ATCLAD пишем);
+        //    реализация продублирована сознательно — модули развязаны ──
+
+        internal static void StoreData(Transaction tr, Entity ent,
+                                       string json, string key)
+        {
+            if (ent.ExtensionDictionary.IsNull)
+                ent.CreateExtensionDictionary();
+            var ext = (DBDictionary)tr.GetObject(ent.ExtensionDictionary,
+                                                 OpenMode.ForWrite);
+            var rb = new ResultBuffer();
+            for (int i = 0; i < json.Length; i += 250)
+                rb.Add(new TypedValue((int)DxfCode.Text,
+                    json.Substring(i, Math.Min(250, json.Length - i))));
+            var xr = new Xrecord { Data = rb };
+            if (ext.Contains(key))
+            {
+                var old = (Xrecord)tr.GetObject(ext.GetAt(key),
+                                                OpenMode.ForWrite);
+                old.Data = rb;
+            }
+            else
+            {
+                ext.SetAt(key, xr);
+                tr.AddNewlyCreatedDBObject(xr, true);
+            }
+        }
+
+        internal static string ReadData(Transaction tr, Entity ent,
+                                        string key)
+        {
+            if (ent.ExtensionDictionary.IsNull) return null;
+            var ext = (DBDictionary)tr.GetObject(ent.ExtensionDictionary,
+                                                 OpenMode.ForRead);
+            if (!ext.Contains(key)) return null;
+            var xr = (Xrecord)tr.GetObject(ext.GetAt(key), OpenMode.ForRead);
+            if (xr.Data == null) return null;
+            var sb = new StringBuilder();
+            foreach (TypedValue tv in xr.Data)
+                if (tv.TypeCode == (int)DxfCode.Text)
+                    sb.Append(SafeStr(tv.Value));
+            return sb.Length > 0 ? sb.ToString() : null;
+        }
+
+        // ── служебное (паттерн ZoneCommand/ABlockGen) ──
+
         private static void EnsureLayer(Transaction tr, Database db,
                                         string name)
         {
@@ -676,6 +719,60 @@ namespace AFacadesPlugin
             lt.Add(rec);
             tr.AddNewlyCreatedDBObject(rec, true);
         }
+
+        internal static string LayerName(string cladding)
+        {
+            var bad = new char[] { '<', '>', '/', '\\', '"', ':', ';',
+                                   '?', '*', '|', ',', '=', '`' };
+            var sb = new StringBuilder();
+            foreach (char c in cladding)
+                sb.Append(Array.IndexOf(bad, c) >= 0 ? '_' : c);
+            string s = sb.ToString().Trim();
+            if (s.Length == 0) s = "ОБЛИЦОВКА";
+            if (s.Length > 200) s = s.Substring(0, 200);
+            return s;
+        }
+
+        // вызов движка через временные файлы (паттерн ATableSpec/ABlockGen)
+        internal static string CallEngine(string engineExe, string reqJson)
+        {
+            string tmpIn = Path.Combine(Path.GetTempPath(),
+                "aclad_in_" + Guid.NewGuid().ToString("N") + ".json");
+            string tmpOut = Path.Combine(Path.GetTempPath(),
+                "aclad_out_" + Guid.NewGuid().ToString("N") + ".json");
+            try
+            {
+                File.WriteAllText(tmpIn, reqJson, new UTF8Encoding(false));
+                var psi = new System.Diagnostics.ProcessStartInfo
+                {
+                    FileName = engineExe,
+                    Arguments = "\"" + tmpIn + "\" \"" + tmpOut + "\"",
+                    UseShellExecute = false,
+                    CreateNoWindow = true,
+                    RedirectStandardError = true
+                };
+                using (var p = System.Diagnostics.Process.Start(psi))
+                {
+                    string err = p.StandardError.ReadToEnd();
+                    p.WaitForExit();
+                    if (!File.Exists(tmpOut))
+                        throw new ApplicationException(
+                            err.Length > 0 ? err
+                            : "движок вернул код " + p.ExitCode);
+                }
+                return File.ReadAllText(tmpOut, Encoding.UTF8);
+            }
+            finally { TryDelete(tmpIn); TryDelete(tmpOut); }
+        }
+
+        private static void TryDelete(string p)
+        { try { if (File.Exists(p)) File.Delete(p); } catch { } }
+
+        internal static object Get(Dictionary<string, object> d, string key)
+        { object v; return (d != null && d.TryGetValue(key, out v)) ? v : null; }
+
+        internal static bool GetBool(Dictionary<string, object> d, string key)
+        { try { return Convert.ToBoolean(Get(d, key)); } catch { return false; } }
 
         private static double ToD(object o)
         {

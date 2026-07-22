@@ -14,6 +14,8 @@ on:
       - "ABlockGen/engine/**"
       - "Facades/src/**"
       - "Facades/engine/**"
+      - "AClad/src/**"
+      - "AClad/engine/**"
       - ".github/workflows/check.yml"
   workflow_dispatch: {}
 
@@ -40,6 +42,9 @@ jobs:
 
       - name: Build AFacades DLL (compile check)
         run: dotnet build Facades/src/AFacadesPlugin/AFacadesPlugin.csproj -c Release -o build_afc_dll
+
+      - name: Build AClad DLL (compile check)
+        run: dotnet build AClad/src/ACladPlugin/ACladPlugin.csproj -c Release -o build_acl_dll
 
       - name: Setup Python
         uses: actions/setup-python@v5
@@ -79,3 +84,13 @@ jobs:
           cd Facades/engine
           python test_facade_zones.py
           python test_facades_engine.py
+
+      - name: AClad engine unit test
+        shell: bash
+        env:
+          PYTHONUTF8: "1"
+          PYTHONIOENCODING: "utf-8"
+        run: |
+          cd AClad/engine
+          python test_cladding_plan.py
+          python test_clad_engine.py

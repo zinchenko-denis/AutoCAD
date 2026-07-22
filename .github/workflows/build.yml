@@ -18,6 +18,9 @@ on:
       - "Facades/src/**"
       - "Facades/engine/**"
       - "Facades/bundle/**"
+      - "AClad/src/**"
+      - "AClad/engine/**"
+      - "AClad/bundle/**"
       - ".github/workflows/build.yml"
   workflow_dispatch: {}        # можно запускать вручную кнопкой в разделе Actions
 
@@ -106,6 +109,26 @@ jobs:
           Copy-Item "build_afc_exe/facades_engine.exe" "$b/Contents/engine/"
           Compress-Archive -Path $b -DestinationPath "AFacades.bundle.zip" -Force
 
+      # ── AClad (раскладка облицовки, этап 2) — четвёртая программа,
+      #    СВОЙ бандл: боевой AFacades не переустанавливается при
+      #    итерациях раскладки (просьба Германа 22.07) ──
+      - name: Build AClad DLL
+        run: dotnet build AClad/src/ACladPlugin/ACladPlugin.csproj -c Release -o build_acl_dll
+
+      - name: Freeze AClad engine EXE
+        run: pyinstaller --onefile --name clad_engine --paths AClad/engine AClad/engine/clad_engine.py --distpath build_acl_exe
+
+      - name: Assemble AClad bundle
+        shell: pwsh
+        run: |
+          $b = "AClad.bundle"
+          New-Item -ItemType Directory -Force "$b/Contents/net48"  | Out-Null
+          New-Item -ItemType Directory -Force "$b/Contents/engine" | Out-Null
+          Copy-Item "AClad/bundle/AClad.bundle/PackageContents.xml" "$b/"
+          Copy-Item "build_acl_dll/ACladPlugin.dll" "$b/Contents/net48/"
+          Copy-Item "build_acl_exe/clad_engine.exe" "$b/Contents/engine/"
+          Compress-Archive -Path $b -DestinationPath "AClad.bundle.zip" -Force
+
       # 4a) Артефакты сборки (видны в разделе Actions; скачивание — для залогиненных)
       - name: Upload artifact
         uses: actions/upload-artifact@v4
@@ -125,14 +148,21 @@ jobs:
           name: AFacades.bundle
           path: AFacades.bundle.zip
 
+      - name: Upload AClad artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: AClad.bundle
+          path: AClad.bundle.zip
+
       # 4b) Релиз "latest" — постоянные прямые ссылки на скачивание для конструктора
       - name: Publish to "latest" release
         uses: softprops/action-gh-release@v2
         with:
           tag_name: latest
-          name: "ATableSpec + ABlockGen + AFacades — последняя сборка"
-          body: "Готовые бандлы. ATableSpec.bundle.zip — спецификации/раскрой из блоков (команда ATSPEC). ABlockGen.bundle.zip — генератор витражей из блоков (команды ATVITRAGEAR, ATVITRAGE). AFacades.bundle.zip — фасады: зоны облицовки, площади и погонажи (команда ATFZONE). Распаковать нужный zip, папку *.bundle положить в %APPDATA%\\Autodesk\\ApplicationPlugins\\, перезапустить AutoCAD."
+          name: "ATableSpec + ABlockGen + AFacades + AClad — последняя сборка"
+          body: "Готовые бандлы. ATableSpec.bundle.zip — спецификации/раскрой из блоков (команда ATSPEC). ABlockGen.bundle.zip — генератор витражей из блоков (команды ATVITRAGEAR, ATVITRAGE). AFacades.bundle.zip — фасады, этап 1: зоны облицовки, площади и погонажи (команды ATFZONE, ATFTABLE; ставится один раз). AClad.bundle.zip — фасады, этап 2: раскладка облицовки кассетами (команда ATCLAD; обновляется часто, AFacades не трогает). Распаковать нужный zip, папку *.bundle положить в %APPDATA%\\Autodesk\\ApplicationPlugins\\, перезапустить AutoCAD."
           files: |
             ATableSpec.bundle.zip
             ABlockGen.bundle.zip
             AFacades.bundle.zip
+            AClad.bundle.zip

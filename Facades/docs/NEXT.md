@@ -233,6 +233,21 @@ extension dictionary штриховки зоны (паттерн StoreZoneData �
 сообщением.)
 
 ## Статус
+- **22.07a — РАСКЛАДКА ВЫДЕЛЕНА В МОДУЛЬ AClad (просьба Германа через
+  Дениса: этап 1 принят и в бою, ставится один раз; раскладка
+  итерируется часто — свой бандл, переустановка не трогает этап 1).**
+  Из Facades изъяты: CladCommand.cs (→ AClad/src/ACladPlugin,
+  самодостаточен), op=cladding из facades_engine (→ AClad/engine/
+  clad_engine.py со СВОЕЙ группировкой контуров — от facade_zones не
+  зависит), cladding_plan.py+тесты, CLADDING.md+ATCLAD_manual.md (→
+  AClad/docs). Facades: 57 юнитов ✓, приветствие без ATCLAD; Xrecord-
+  контракт «ATFZONE»/fzones.json общий (AClad читает). CI: 4-й бандл
+  AClad.bundle.zip в build.yml/check.yml. ОДНОВРЕМЕННО в AClad —
+  НОВОЕ ТЗ Германа 22.07 (1.1–1.6/2.1–2.6): центрирование, от угла
+  целыми, точки верт. рустов; подробности и открытые 1.4/2.6 —
+  **AClad/docs/NEXT.md** (мандат раскладки теперь ТАМ). ⚠ Установка у
+  Германа: заменить ОБА бандла (старый AFacades с ATCLAD + новый
+  AClad = две команды ATCLAD).
 - **21.07f — «Собираем» №3 (Денис).** build-trigger `8b90b06` =
   71f6da1 (фидбэк теста ATCLAD, 4 пункта) + патч build.yml, один
   force-push; инструкция Герману — ТЕКСТОМ в чат Денису (его просьба,

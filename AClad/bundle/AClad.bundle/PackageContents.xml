@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Манифест автозагрузки Autodesk (паттерн ATableSpec/ABlockGen/AFacades).
+  Папку AClad.bundle кладут в %APPDATA%\Autodesk\ApplicationPlugins\ —
+  AutoCAD подхватит сам. Установка = одна папка, запуск = одна команда.
+
+  Состав бандла при релиз-сборке:
+    Contents/net48/ACladPlugin.dll    — C#-плагин
+    Contents/engine/clad_engine.exe   — замороженный py-движок (PyInstaller)
+
+  ОТДЕЛЬНЫЙ бандл от AFacades (просьба Германа 22.07): этап 1 (зоны)
+  ставится один раз, раскладка переустанавливается при каждой итерации.
+-->
+<ApplicationPackage
+    SchemaVersion="1.0"
+    AutodeskProduct="AutoCAD"
+    Name="AClad"
+    AppVersion="0.1.0"
+    ProductCode="{7C1A4E2B-93D5-4A86-B0F1-2E64C9A7D318}"
+    Description="Раскладка облицовки НВФ (этап 2): кассеты по зонам/контурам"
+    Author="Denis Zinchenko">
+
+  <CompanyDetails Name="Denis Zinchenko" />
+
+  <!-- AutoCAD 2013–2024 : .NET Framework. R24.0 = AutoCAD 2021. -->
+  <Components Description="net48 (AutoCAD 2013-2024)">
+    <RuntimeRequirements OS="Win64" Platform="AutoCAD" SeriesMin="R19.0" SeriesMax="R24.3" />
+    <ComponentEntry
+        AppName="AClad"
+        ModuleName="./Contents/net48/ACladPlugin.dll"
+        AppType=".NET"
+        LoadOnCommandInvocation="False"
+        LoadOnAutoCADStartup="True">
+      <Commands GroupName="ACladCommands">
+        <Command Global="ATCLAD" Local="ATCLAD" />
+      </Commands>
+    </ComponentEntry>
+  </Components>
+
+</ApplicationPackage>
