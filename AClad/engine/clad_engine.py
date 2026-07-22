@@ -159,6 +159,7 @@ def op_cladding(req):
       "tile": {"w", "h"}, "gap": {"v", "h"},
       "origin": {"y": <низ первого ряда, мм>},
       "vjoints": [x, ...],   // точки вертикальных рустов (ТЗ 2.5)
+      "hjoints": [y, ...],   // точки горизонтальных рустов (2.6/Г3)
       "min_cut"?: <мм, дефолт 150>,
       "zones":    [{"zone_id", "zone": {facade_zone/1}}, ...],
       "contours": [{"id", "pts", "bulges"?}, ...]
@@ -198,7 +199,8 @@ def op_cladding(req):
         "tile": req.get("tile"),
         "gap": req.get("gap"),
     }
-    for key in ("origin", "datum", "mode", "min_cut", "vjoints"):
+    for key in ("origin", "datum", "mode", "min_cut", "vjoints",
+                "hjoints"):
         if req.get(key) is not None:
             base[key] = req.get(key)
 

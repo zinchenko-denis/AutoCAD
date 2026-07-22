@@ -16,11 +16,19 @@
   вертикальный руст (ось шва по точке, на всю высоту);
 - В4: min_cut = 150 мм (дефолт); меньшие куски — note.
 
-ЕЩЁ НЕ РЕАЛИЗОВАНО из ТЗ 22.07 (см. NEXT): 1.4/2.6 — локальные
-вертикальные датумы над окнами (точки горизонтальных рустов);
-1.3-хвост — целая кассета ШИРЕ окна над/под ним (перекрытие соседних
-пролётов). Прежний В5 (20.07) и режимы «Проемы/Край» диалога
-упразднены новым ТЗ; mode="edge" сохранён в движке как запасной.
+Ответы Германа Г1–Г3 (22.07, вторая итерация):
+- Г1: подрезка у окна от угла < 300 — плитка перед ней в половину
+  (w/2), подрезка увеличивается до rem+w/2 (_seg_from_corner);
+- Г2: плитка НЕ шире проёма — над/под узким окном камень уменьшается
+  до ширины окна (даёт _seg_centered при L ≤ w);
+- Г3 (= 1.4/2.6): hjoints — точки горизонтальных рустов, действуют
+  на ВЕСЬ участок: точка = НИЗ руста [py, py+gh]; снизу облицовка
+  приходит к русту с подрезкой, выше руста — панели стандартной
+  высоты (пояса с новой фазой рядов). Клик по верху окна = руст над
+  окном (п.1.4: привязка к верху проёма).
+
+Прежний В5 (20.07) и режимы «Проемы/Край» диалога упразднены новым
+ТЗ; mode="edge" сохранён в движке как запасной.
 
 Вход/выход — JSON-словари (как vitrage_*): контуры — ортогональные
 замкнутые полилинии (outer) с дырами-проёмами (holes), глобальная
@@ -257,15 +265,31 @@ def _seg_centered(out, notes, a, b, w, gv, min_cut):
 def _seg_from_corner(out, notes, a, b, w, gv, min_cut, corner_left):
     """Сегмент между краем контура и швом проёма — ТЗ 22.07 п.1.6:
     от ВНЕШНЕГО УГЛА (края контура) ЦЕЛЫМИ, подрезка у шва проёма.
-    (Прежде было наоборот: целые от проёма, подрезка у края.)"""
+
+    Г1 (ответ Германа 22.07): подрезка у окна «маленькая» (<300) —
+    плитка ПЕРЕД подрезкой делается в половину (w/2), а подрезка
+    увеличивается на освободившееся (rem + w/2): оба куска ≥300 при
+    600-м камне, дыр у окна не бывает."""
     step = w + gv
     L = b - a
     n = int((L + gv + EPS) // step)
-    for k in range(n):
+    rem = L - n * step
+    half = n >= 1 and EPS < rem < CENTER_SHIFT_MIN - EPS
+    n_full = n - 1 if half else n
+    for k in range(n_full):
         out.append(((a + k * step) if corner_left
                     else (b - w - k * step), w))
-    rem = L - n * step
-    if rem > EPS:
+    if half:
+        if corner_left:
+            x_half = a + n_full * step
+            _put(out, notes, x_half, w / 2.0, min_cut)
+            _put(out, notes, x_half + w / 2.0 + gv, rem + w / 2.0,
+                 min_cut)
+        else:
+            r_half = b - n_full * step        # правый край полуплитки
+            _put(out, notes, r_half - w / 2.0, w / 2.0, min_cut)
+            _put(out, notes, a, rem + w / 2.0, min_cut)
+    elif rem > EPS:
         _put(out, notes, (a + n * step) if corner_left else a,
              min(rem, w), min_cut)
 
@@ -326,6 +350,18 @@ def cladding_plan(req):
         except (TypeError, ValueError):
             continue
         user_joints.append((px - gv / 2.0, px + gv / 2.0))
+    # ТЗ 2.6 + Г3 (ответ Германа 22.07): точки горизонтальных рустов —
+    # действуют на ВЕСЬ участок: точка = НИЗ руста [py, py+gh]; снизу
+    # облицовка приходит к русту С ПОДРЕЗКОЙ, выше руста — панели
+    # стандартной высоты (новая фаза рядов от py+gh). Клик по верху
+    # окна даёт руст сразу над окном — п.1.4 (привязка к верху проёма)
+    hjoints = []
+    for py in req.get("hjoints") or []:
+        try:
+            hjoints.append(float(py))
+        except (TypeError, ValueError):
+            continue
+    hjoints = sorted(set(hjoints))
     notes, inserts = [], []
     if w < EPS or h < EPS:
         return {"ok": False, "error": "нулевой размер камня"}
@@ -353,53 +389,67 @@ def cladding_plan(req):
         joints_all = (_hole_joints(holes, gv) + user_joints) \
             if mode == "openings" else []
         x_phase = x_min if ox is None else ox
-        # глобальная сетка рядов от origin.y (общий горизонт контуров)
-        i = 0
-        while True:
-            y = datum + i * (h + gh)
-            if y >= y_hi - EPS:
-                break
-            for sy0, sy1, ivs in strip_bands(polys, y, min(y + h, y_hi)):
-                hc = sy1 - sy0
-                if hc < min_cut:
-                    notes.append("контур %d: ряд на отм. %.0f высотой "
-                                 "%.0f < min_cut" % (ci + 1, sy0, hc))
-                    continue
-                # в edge отступ-шов только у проёмов ЭТОЙ полосы (П4);
-                # в openings швы уже глобальные (В2)
-                joints = joints_all if mode == "openings" else \
-                    _hole_joints(holes, gv, sy0, sy1)
-                for a, b in ivs:
-                    if mode == "openings":
-                        row = _row_openings(a, b, joints, ox, w, gv,
-                                            min_cut, notes)
-                    else:
-                        row = []
-                        for s0, s1, _la, _ra in _cut_spans(a, b, joints):
-                            row.extend(_row_edge(s0, s1, x_phase, w, gv,
-                                                 min_cut, notes))
-                    for x, wc in row:
-                        # П4 по вертикали: камень над/под проёмом
-                        # отступает от его кромки на горизонтальный
-                        # руст (проба в центре камня)
-                        y0, y1 = sy0, sy1
-                        xc = x + wc / 2.0
-                        if _in_holes(holes, xc, sy0 - PROBE):
-                            y0 += gh
-                        if _in_holes(holes, xc, sy1 + PROBE):
-                            y1 -= gh
-                        hc2 = y1 - y0
-                        if hc2 <= EPS:
-                            continue
-                        if hc2 < min_cut:
-                            notes.append("подрезка по высоте %.0f < "
-                                         "min_cut" % hc2)
-                            continue
-                        inserts.append({
-                            "x": round(x, 4), "y": round(y0, 4),
-                            "w": round(wc, 4), "h": round(hc2, 4)})
-            n_rows += 1
-            i += 1
+        # пояса по точкам горизонтальных рустов (Г3): нижний — от
+        # origin.y (общий горизонт), каждый следующий — от py + gh
+        # (панели стандартной высоты над рустом); к русту снизу
+        # облицовка приходит с подрезкой (клип пояса на py)
+        belts = []
+        start = datum
+        for py in hjoints:
+            if start + EPS < py < y_hi - EPS:
+                belts.append((start, py))
+                start = py + gh
+        belts.append((start, y_hi))
+        for b_lo, b_hi in belts:
+            i = 0
+            while True:
+                y = b_lo + i * (h + gh)
+                if y >= b_hi - EPS:
+                    break
+                i += 1
+                for sy0, sy1, ivs in strip_bands(polys, y,
+                                                 min(y + h, b_hi)):
+                    hc = sy1 - sy0
+                    if hc < min_cut:
+                        notes.append("контур %d: ряд на отм. %.0f "
+                                     "высотой %.0f < min_cut"
+                                     % (ci + 1, sy0, hc))
+                        continue
+                    # в edge отступ-шов только у проёмов ЭТОЙ полосы
+                    # (П4); в openings швы уже глобальные (В2)
+                    joints = joints_all if mode == "openings" else \
+                        _hole_joints(holes, gv, sy0, sy1)
+                    for a, b in ivs:
+                        if mode == "openings":
+                            row = _row_openings(a, b, joints, ox, w, gv,
+                                                min_cut, notes)
+                        else:
+                            row = []
+                            for s0, s1, _la, _ra in \
+                                    _cut_spans(a, b, joints):
+                                row.extend(_row_edge(s0, s1, x_phase, w,
+                                                     gv, min_cut, notes))
+                        for x, wc in row:
+                            # П4 по вертикали: камень над/под проёмом
+                            # отступает от его кромки на гориз. руст
+                            # (проба в центре камня)
+                            y0, y1 = sy0, sy1
+                            xc = x + wc / 2.0
+                            if _in_holes(holes, xc, sy0 - PROBE):
+                                y0 += gh
+                            if _in_holes(holes, xc, sy1 + PROBE):
+                                y1 -= gh
+                            hc2 = y1 - y0
+                            if hc2 <= EPS:
+                                continue
+                            if hc2 < min_cut:
+                                notes.append("подрезка по высоте %.0f "
+                                             "< min_cut" % hc2)
+                                continue
+                            inserts.append({
+                                "x": round(x, 4), "y": round(y0, 4),
+                                "w": round(wc, 4), "h": round(hc2, 4)})
+                n_rows += 1
     full = sum(1 for t in inserts
                if abs(t["w"] - w) < EPS and abs(t["h"] - h) < EPS)
     return {"ok": True, "inserts": inserts, "notes": _dedup_notes(notes),

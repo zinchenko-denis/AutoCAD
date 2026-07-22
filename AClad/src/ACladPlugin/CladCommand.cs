@@ -309,6 +309,24 @@ namespace ACladPlugin
                                 vjoints.Count + ")");
             }
 
+            // ── 4в. точки горизонтальных рустов (ТЗ 2.6 + Г3): точка =
+            //    НИЗ руста, действует на весь участок: снизу облицовка
+            //    приходит к русту С ПОДРЕЗКОЙ, выше руста — панели
+            //    стандартной высоты (клик по верху окна = п.1.4) ──
+            var hjoints = new List<object>();
+            while (true)
+            {
+                var pho = new PromptPointOptions(
+                    "\nТочка горизонтального руста (Enter — разложить): ")
+                { AllowNone = true };
+                var pv = ed.GetPoint(pho);
+                if (pv.Status != PromptStatus.OK) break;
+                hjoints.Add(pv.Value.Y);
+                ed.WriteMessage("\n  горизонтальный руст по Y = " +
+                                F0(pv.Value.Y) + " (всего " +
+                                hjoints.Count + ")");
+            }
+
             // ── 5. движок ──
             var payload = new Dictionary<string, object>
             {
@@ -320,6 +338,8 @@ namespace ACladPlugin
                 { "origin", new Dictionary<string, object>
                     { { "y", originY } } },
                 { "vjoints", vjoints },
+                        { "hjoints", hjoints },
+                { "hjoints", hjoints },
                 // min_cut не передаём: дефолт движка 150 (В4, Герман)
                 { "zones", zonesPayload },
                 { "contours", contoursPayload },
