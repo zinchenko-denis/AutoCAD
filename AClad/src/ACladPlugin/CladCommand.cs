@@ -794,6 +794,9 @@ namespace ACladPlugin
         internal static bool GetBool(Dictionary<string, object> d, string key)
         { try { return Convert.ToBoolean(Get(d, key)); } catch { return false; } }
 
+        internal static string SafeStr(object o)
+        { return o == null ? "" : Convert.ToString(o, CultureInfo.InvariantCulture); }
+
         private static double ToD(object o)
         {
             try
