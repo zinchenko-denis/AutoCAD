@@ -37,6 +37,24 @@ namespace ACladPlugin
         {
             var doc = AcApp.DocumentManager.MdiActiveDocument;
             if (doc == null) return;
+            // рантайм-ошибка не должна ронять AutoCAD краш-окном
+            // (прецедент 23.07: дубль ключа payload у Германа) —
+            // печатаем стек копируемым текстом в командную строку
+            try { RunCore(doc); }
+            catch (System.Exception ex)
+            {
+                try
+                {
+                    doc.Editor.WriteMessage(
+                        "\nATCLAD: внутренняя ошибка — сообщите " +
+                        "разработчику текст ниже.\n" + ex.ToString() + "\n");
+                }
+                catch { }
+            }
+        }
+
+        private void RunCore(Autodesk.AutoCAD.ApplicationServices.Document doc)
+        {
             var ed = doc.Editor;
             var db = doc.Database;
             var ser = new JavaScriptSerializer { MaxJsonLength = int.MaxValue };
@@ -338,7 +356,6 @@ namespace ACladPlugin
                 { "origin", new Dictionary<string, object>
                     { { "y", originY } } },
                 { "vjoints", vjoints },
-                        { "hjoints", hjoints },
                 { "hjoints", hjoints },
                 // min_cut не передаём: дефолт движка 150 (В4, Герман)
                 { "zones", zonesPayload },
@@ -505,6 +522,7 @@ namespace ACladPlugin
                         { "origin", new Dictionary<string, object>
                             { { "y", originY } } },
                         { "vjoints", vjoints },
+                        { "hjoints", hjoints },
                         { "block", blockName },
                         { "layer", cladLayer },
                         { "tiles", kv.Value.Count },
