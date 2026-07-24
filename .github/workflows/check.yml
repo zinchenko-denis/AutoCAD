@@ -16,6 +16,7 @@ on:
       - "Facades/engine/**"
       - "AClad/src/**"
       - "AClad/engine/**"
+      - "AFrame/src/**"
       - "AFrame/engine/**"
       - ".github/workflows/check.yml"
   workflow_dispatch: {}
@@ -46,6 +47,9 @@ jobs:
 
       - name: Build AClad DLL (compile check)
         run: dotnet build AClad/src/ACladPlugin/ACladPlugin.csproj -c Release -o build_acl_dll
+
+      - name: Build AFrame DLL (compile check)
+        run: dotnet build AFrame/src/AFramePlugin/AFramePlugin.csproj -c Release -o build_afr_dll
 
       - name: Setup Python
         uses: actions/setup-python@v5

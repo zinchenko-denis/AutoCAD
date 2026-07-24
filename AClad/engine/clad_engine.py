@@ -205,6 +205,7 @@ def op_cladding(req):
             base[key] = req.get(key)
 
     inserts, per_zone = [], []
+    jx_all, ry_all = set(), set()
     tot_full = tot_cut = 0
     for zone_id, outer_id, contour in items:
         creq = dict(base)
@@ -212,6 +213,8 @@ def op_cladding(req):
         res = cp.cladding_plan(creq)
         if not res.get("ok"):
             return {"ok": False, "error": res.get("error"), "notes": notes}
+        jx_all.update(res.get("joints_x") or [])
+        ry_all.update(res.get("rows_y") or [])
         for t in res["inserts"]:
             t["zone"] = zone_id
             inserts.append(t)
@@ -231,6 +234,10 @@ def op_cladding(req):
         "inserts": inserts,
         "notes": notes,
         "per_zone": per_zone,
+        # мост к AFrame (24.07): оси стоек и центры горизонтальных
+        # швов всего прогона — пишутся C#-командой в метку ATCLAD
+        "joints_x": sorted(jx_all),
+        "rows_y": sorted(ry_all),
         "summary": {"tiles": len(inserts), "full": tot_full,
                     "cut": tot_cut, "zones": len(per_zone)},
     }

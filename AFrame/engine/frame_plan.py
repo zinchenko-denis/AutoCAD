@@ -47,6 +47,7 @@ clamps[{x,y,kind:"стартовый"|"рядовой"}], summary, notes.
 import json
 import math
 import os
+import sys
 
 EPS = 1e-6
 
@@ -81,12 +82,29 @@ def _sub_y(spans, lo, hi):
     return out
 
 
+def _systems_path(base_dir=None):
+    """systems.json: рядом с exe (бандл, PyInstaller-onefile: __file__
+    уходит в temp!), в _MEIPASS, рядом с .py (разработка)."""
+    cands = []
+    if base_dir:
+        cands.append(base_dir)
+    if getattr(sys, "frozen", False):
+        cands.append(os.path.dirname(sys.executable))
+        if hasattr(sys, "_MEIPASS"):
+            cands.append(sys._MEIPASS)
+    cands.append(os.path.dirname(os.path.abspath(__file__)))
+    for d in cands:
+        p = os.path.join(d, "systems.json")
+        if os.path.exists(p):
+            return p
+    raise OSError("systems.json не найден рядом с движком (%s)"
+                  % "; ".join(cands))
+
+
 def load_system(name_or_dict, base_dir=None):
     """Система по имени из systems.json рядом с движком; dict —
     переопределение поверх имени в ключе "name" (или чистый dict)."""
-    path = os.path.join(base_dir or os.path.dirname(
-        os.path.abspath(__file__)), "systems.json")
-    with open(path, "r", encoding="utf-8") as f:
+    with open(_systems_path(base_dir), "r", encoding="utf-8") as f:
         allsys = json.load(f)["systems"]
     if isinstance(name_or_dict, dict):
         name = name_or_dict.get("name")
@@ -237,6 +255,8 @@ def frame_plan(req):
 
     lm = sum(r["len"] for r in rails) / 1000.0
     stock = float(system.get("rail_stock") or 0.0)
+    system_used = {k: v for k, v in system.items()
+                   if not k.startswith("_src")}
     summary = {
         "system": system.get("_name", "?"),
         "rails": len(rails),
@@ -253,4 +273,5 @@ def frame_plan(req):
                           if cl["kind"] == "рядовой"),
     }
     return {"ok": True, "rails": rails, "brackets": brackets,
-            "clamps": clamps, "summary": summary, "notes": notes}
+            "clamps": clamps, "summary": summary, "notes": notes,
+            "system_used": system_used}

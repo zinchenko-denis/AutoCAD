@@ -11,7 +11,8 @@
       "rail_gap": 10.0,
       "rail_stock": 6000.0,
       "min_from_corner": 150.0,
-      "min_from_defshov": 100.0
+      "min_from_defshov": 100.0,
+      "rail_width": 60.0
     },
     "Standart": {
       "_src": "Ленпроспект-2026 (КАФТ): NL/NM несущие + S опорный; анкеры верт. шаг 800; стойки 602.5-605 (2 на плиту 1200); терморазрыв 10; кронштейн min 150 от угла; факт DWG: первый кронштейн ~300 от низа",
@@ -23,7 +24,8 @@
       "rail_gap": 10.0,
       "rail_stock": 6000.0,
       "min_from_corner": 150.0,
-      "min_from_defshov": 100.0
+      "min_from_defshov": 100.0,
+      "rail_width": 40.0
     },
     "Межэтажная": {
       "_src": "заготовка (Денис 24.07: крепление только в перекрытия, направляющие массивнее); рядовых нет — bracket_step null",
@@ -35,7 +37,8 @@
       "rail_gap": 10.0,
       "rail_stock": 6000.0,
       "min_from_corner": 150.0,
-      "min_from_defshov": 100.0
+      "min_from_defshov": 100.0,
+      "rail_width": 60.0
     }
   }
 }

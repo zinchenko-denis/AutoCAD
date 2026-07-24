@@ -1,0 +1,34 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net48</TargetFramework>
+    <LangVersion>latest</LangVersion>
+    <AssemblyName>AFramePlugin</AssemblyName>
+    <RootNamespace>AFramePlugin</RootNamespace>
+    <Platforms>x64</Platforms>
+    <PlatformTarget>x64</PlatformTarget>
+    <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Reference-сборки AutoCAD 2021 (24.0) из NuGet — сборка без AutoCAD,
+         в бандл попадает только AFramePlugin.dll (паттерн соседей). -->
+    <PackageReference Include="AutoCAD.NET" Version="24.0.0" />
+    <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.3">
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
+
+    <!-- JavaScriptSerializer (JSON без внешних зависимостей) -->
+    <Reference Include="System.Web.Extensions" />
+    <!-- WPF-сборки: у ShowModalDialog/StartUserInteraction есть перегрузки
+         с WPF Window — для overload resolution нужен тип Window (CS0012,
+         урок 18.07r). Диалогов у AClad пока нет, но грабля кровью —
+         рефы держим. -->
+    <Reference Include="PresentationCore" />
+    <Reference Include="PresentationFramework" />
+    <Reference Include="WindowsBase" />
+    <Reference Include="System.Xaml" />
+  </ItemGroup>
+
+</Project>

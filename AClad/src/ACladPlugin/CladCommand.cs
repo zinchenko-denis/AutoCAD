@@ -523,6 +523,10 @@ namespace ACladPlugin
                             { { "y", originY } } },
                         { "vjoints", vjoints },
                         { "hjoints", hjoints },
+                        // мост к этапу 3 (ATFRAME): оси стоек и
+                        // центры горизонтальных швов — из движка
+                        { "joints_x", Get(res, "joints_x") },
+                        { "rows_y", Get(res, "rows_y") },
                         { "block", blockName },
                         { "layer", cladLayer },
                         { "tiles", kv.Value.Count },

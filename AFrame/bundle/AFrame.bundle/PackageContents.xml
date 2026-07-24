@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Манифест автозагрузки Autodesk (паттерн ATableSpec/ABlockGen/
+  AFacades/AClad). Папку AFrame.bundle кладут в
+  %APPDATA%\Autodesk\ApplicationPlugins\ — AutoCAD подхватит сам.
+
+  Состав бандла при релиз-сборке:
+    Contents/net48/AFramePlugin.dll     — C#-плагин
+    Contents/engine/frame_engine.exe    — замороженный py-движок
+    Contents/engine/systems.json        — справочник систем НВФ
+
+  ОТДЕЛЬНЫЙ бандл (этап 3 фасадного направления): подсистема
+  итерационная, переустанавливается часто; AFacades/AClad не трогает.
+-->
+<ApplicationPackage
+    SchemaVersion="1.0"
+    AutodeskProduct="AutoCAD"
+    Name="AFrame"
+    AppVersion="0.1.0"
+    ProductCode="{A7F3D821-4C56-4E09-9B12-8D5A16C3F742}"
+    Description="Подсистема НВФ (этап 3): кронштейны, направляющие, кляммеры по раскладке ATCLAD"
+    Author="Denis Zinchenko">
+
+  <CompanyDetails Name="Denis Zinchenko" />
+
+  <!-- AutoCAD 2013–2024 : .NET Framework. R24.0 = AutoCAD 2021. -->
+  <Components Description="net48 (AutoCAD 2013-2024)">
+    <RuntimeRequirements OS="Win64" Platform="AutoCAD" SeriesMin="R19.0" SeriesMax="R24.3" />
+    <ComponentEntry
+        AppName="AFrame"
+        ModuleName="./Contents/net48/AFramePlugin.dll"
+        AppType=".NET"
+        LoadOnCommandInvocation="False"
+        LoadOnAutoCADStartup="True">
+      <Commands GroupName="AFrameCommands">
+        <Command Global="ATFRAME" Local="ATFRAME" />
+      </Commands>
+    </ComponentEntry>
+  </Components>
+
+</ApplicationPackage>

@@ -402,6 +402,8 @@ def cladding_plan(req):
     if w < EPS or h < EPS:
         return {"ok": False, "error": "нулевой размер камня"}
     n_rows = 0
+    joint_axes = set()   # оси вертикальных швов у граней проёмов/юзер-
+                         # рустов — мост к этапу 3 (AFrame, 24.07)
     for ci, c in enumerate(req.get("contours") or []):
         outer = _closed(c.get("outer") or [])
         if len(outer) < 4:
@@ -430,6 +432,8 @@ def cladding_plan(req):
               if not any(j[0] < k[1] + EPS and k[0] < j[1] + EPS
                          for k in hole_js)]
         joints_all = (hole_js + uj) if mode == "openings" else []
+        for j0, j1 in (hole_js + (uj if mode == "openings" else [])):
+            joint_axes.add(round((j0 + j1) / 2.0, 2))
         hole_boxes = [_bbox(hh) for hh in holes]
         x_phase = x_min if ox is None else ox
         # пояса по точкам горизонтальных рустов (Г3): нижний — от
@@ -517,6 +521,21 @@ def cladding_plan(req):
                 n_rows += 1
     full = sum(1 for t in inserts
                if abs(t["w"] - w) < EPS and abs(t["h"] - h) < EPS)
+    # мост к этапу 3 (AFrame): оси вертикальных швов (стойки
+    # подсистемы) и центры горизонтальных (кляммеры) — из фактических
+    # стыков камней + граней проёмов/юзер-рустов
+    jx = set(joint_axes)
+    lefts = set(round(t["x"], 2) for t in inserts)
+    lows = set(round(t["y"], 2) for t in inserts)
+    ry = set()
+    for t in inserts:
+        xr = round(t["x"] + t["w"], 2)
+        if round(xr + gv, 2) in lefts:
+            jx.add(round(xr + gv / 2.0, 2))
+        yt = round(t["y"] + t["h"], 2)
+        if round(yt + gh, 2) in lows:
+            ry.add(round(yt + gh / 2.0, 2))
     return {"ok": True, "inserts": inserts, "notes": _dedup_notes(notes),
+            "joints_x": sorted(jx), "rows_y": sorted(ry),
             "summary": {"tiles": len(inserts), "full": full,
                         "cut": len(inserts) - full, "rows": n_rows}}
