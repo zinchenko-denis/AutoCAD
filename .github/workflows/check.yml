@@ -16,6 +16,7 @@ on:
       - "Facades/engine/**"
       - "AClad/src/**"
       - "AClad/engine/**"
+      - "AFrame/engine/**"
       - ".github/workflows/check.yml"
   workflow_dispatch: {}
 
@@ -94,3 +95,12 @@ jobs:
           cd AClad/engine
           python test_cladding_plan.py
           python test_clad_engine.py
+
+      - name: AFrame engine unit test
+        shell: bash
+        env:
+          PYTHONUTF8: "1"
+          PYTHONIOENCODING: "utf-8"
+        run: |
+          cd AFrame/engine
+          python test_frame_plan.py
