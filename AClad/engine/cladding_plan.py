@@ -457,11 +457,14 @@ def cladding_plan(req):
                 for sy0, sy1, ivs in strip_bands([outer], y,
                                                  min(y + h, b_hi)):
                     hc = sy1 - sy0
+                    # В12 (ответ Дениса 24.07): мелкие куски ПО ВЫСОТЕ
+                    # ставим (принцип раскладки; тонкую полоску позже
+                    # прикроет отлив) — min_cut остаётся порогом только
+                    # по ШИРИНЕ (В4). Note — информативная.
                     if hc < min_cut:
-                        notes.append("контур %d: ряд на отм. %.0f "
-                                     "высотой %.0f < min_cut"
+                        notes.append("контур %d: мелкий ряд на отм. "
+                                     "%.0f высотой %.0f мм"
                                      % (ci + 1, sy0, hc))
-                        continue
                     # проёмы, накрывающие полосу по высоте (с рустами):
                     # их X-диапазон мёртв для этой полосы целиком
                     dead_x = [(bx0, bx1) for bx0, by0, bx1, by1
@@ -500,10 +503,12 @@ def cladding_plan(req):
                                 hc2 = y1c - y0c
                                 if hc2 <= EPS:
                                     continue
+                                # В12: мелкий остаток под/над проёмом
+                                # СТАВИМ (note информативная)
                                 if hc2 < min_cut:
-                                    notes.append("подрезка по высоте "
-                                                 "%.0f < min_cut" % hc2)
-                                    continue
+                                    notes.append("мелкая подрезка по "
+                                                 "высоте %.0f мм у "
+                                                 "проёма" % hc2)
                                 inserts.append({
                                     "x": round(x, 4),
                                     "y": round(y0c, 4),
