@@ -35,14 +35,23 @@ atspec-testdata/dxf/facades/frame_lenprospekt/frame_ps.json):
 Выход: rails[{x,y0,y1,len}], brackets[{x,y,kind:"несущий"|"рядовой"}],
 clamps[{x,y,kind:"стартовый"|"рядовой"}], summary, notes.
 
-Стойка по оси jx рвётся проёмами, ПЕРЕКРЫВАЮЩИМИ jx по X (bbox);
-оси у ГРАНЕЙ проёмов (грань ± полруста) в bbox не попадают — стойка
-сбоку окна сплошная. Сегменты стойки режутся отметками перекрытий:
-направляющая = кусок между стыками (зазор rail_gap центрован на
-отметке). Кронштейны: несущий на каждой отметке внутри сегмента;
-рядовые — равномерно в промежутках (первый — bracket_start_offset от
-низа стойки), шаг ≤ bracket_step (в угловой зоне — bracket_step_corner).
-Только stdlib (движок замораживается PyInstaller).
+Стойка по оси jx рвётся проёмами, ПЕРЕКРЫВАЮЩИМИ jx по X (bbox).
+Фидбэк Германа 26.07 (первый прогон ATFRAME):
+- ось БЛИЖЕ edge_offset (100, «не ближе 100 мм от края — бетон
+  колется») к грани проёма → на высоте проёма стойка идёт ОТДЕЛЬНЫМ
+  куском, смещённым на ось «грань − edge_offset» (слева) /
+  «грань + edge_offset» (справа); кронштейны и кляммеры куска — на
+  смещённой оси; под/над проёмом — по оси руста;
+- floors_y пуст, но задан floor_step → отметки перекрытий
+  генерируются от низа контура шагом floor_step (этаж ~3000):
+  направляющие не бывают «бесконечными»;
+- направляющая длиннее rail_stock — note (хлыст 6000).
+Сегменты стойки режутся отметками перекрытий: направляющая = кусок
+между стыками (зазор rail_gap центрован на отметке). Кронштейны:
+несущий на каждой отметке внутри сегмента; рядовые — равномерно в
+промежутках (первый — bracket_start_offset от низа куска), шаг ≤
+bracket_step (в угловой зоне — bracket_step_corner). Только stdlib
+(движок замораживается PyInstaller).
 """
 import json
 import math
@@ -143,6 +152,15 @@ def frame_plan(req):
     start_off = system.get("bracket_start_offset")
     corner_zone = float(system.get("corner_zone") or 0.0)
     gap = float(system.get("rail_gap") or 0.0)
+    edge_off = float(system.get("edge_offset") or 0.0)
+    stock = float(system.get("rail_stock") or 0.0)
+    floor_step = None
+    try:
+        fs = req.get("floor_step")
+        if fs is not None and float(fs) > EPS:
+            floor_step = float(fs)
+    except (TypeError, ValueError):
+        floor_step = None
 
     joints = []
     for x in req.get("joints_x") or []:
@@ -181,6 +199,19 @@ def frame_plan(req):
         holes = [_closed(h) for h in (c.get("holes") or [])]
         x0, y0, x1, y1 = _bbox(outer)
         hole_boxes = [_bbox(h) for h in holes]
+        # отметки перекрытий: заданные, либо автогенерация шагом
+        # этажа от низа контура (фидбэк Германа 26.07)
+        floors_c = floors
+        if not floors and floor_step:
+            floors_c = []
+            f = y0 + floor_step
+            while f < y1 - EPS:
+                floors_c.append(f)
+                f += floor_step
+            if floors_c:
+                notes.append(
+                    "контур %d: перекрытия автоматически шагом %.0f "
+                    "(%d шт)" % (ci + 1, floor_step, len(floors_c)))
 
         for jx in joints:
             if jx < x0 - EPS or jx > x1 + EPS:
@@ -191,16 +222,42 @@ def frame_plan(req):
                 x1 - jx <= corner_zone + EPS)
             step = step_corner if in_corner else step_main
 
-            # стойка рвётся проёмами, накрывающими ось по X
-            spans = [(y0, y1)]
+            # куски стойки (lo, hi, ось): проём, накрывающий ось по X,
+            # ВЫРЕЗАЕТ диапазон; ось ближе edge_offset к грани проёма —
+            # на высоте проёма кусок СМЕЩАЕТСЯ от грани (26.07: крепёж
+            # не ближе 100 мм от края проёма)
+            pieces = [(y0, y1, jx)]
             for bx0, by0, bx1, by1 in hole_boxes:
-                if bx0 - EPS < jx < bx1 + EPS:
-                    spans = _sub_y(spans, by0, by1)
+                inside = bx0 - EPS < jx < bx1 + EPS
+                sx = None
+                if not inside and edge_off > EPS:
+                    if jx <= bx0 + EPS and bx0 - jx < edge_off - EPS:
+                        sx = bx0 - edge_off      # слева от проёма
+                    elif jx >= bx1 - EPS and jx - bx1 < edge_off - EPS:
+                        sx = bx1 + edge_off      # справа от проёма
+                if not inside and sx is None:
+                    continue
+                nxt = []
+                for lo, hi, xe in pieces:
+                    c0, c1 = max(lo, by0), min(hi, by1)
+                    if c1 - c0 <= EPS or (xe != jx):
+                        # не пересекает по высоте / кусок уже смещён
+                        nxt.append((lo, hi, xe))
+                        continue
+                    if c0 - lo > EPS:
+                        nxt.append((lo, c0, xe))
+                    if inside:
+                        pass                     # вырез
+                    else:
+                        nxt.append((c0, c1, sx))
+                    if hi - c1 > EPS:
+                        nxt.append((c1, hi, xe))
+                pieces = nxt
 
-            for s_lo, s_hi in spans:
+            for s_lo, s_hi, s_x in pieces:
                 if s_hi - s_lo <= EPS:
                     continue
-                fl_in = [f for f in floors
+                fl_in = [f for f in floors_c
                          if s_lo + EPS < f < s_hi - EPS]
                 # направляющие: куски между стыками (стык центрован
                 # на отметке перекрытия, зазор gap — В15/В18)
@@ -212,16 +269,21 @@ def frame_plan(req):
                                        else 0.0)
                     if b - a <= EPS:
                         continue
-                    rails.append({"x": round(jx, 4),
+                    if stock > EPS and b - a > stock + EPS:
+                        notes.append(
+                            "направляющая X=%.0f длиной %.0f > хлыста "
+                            "%.0f — задайте перекрытия" % (s_x, b - a,
+                                                           stock))
+                    rails.append({"x": round(s_x, 4),
                                   "y0": round(a, 4),
                                   "y1": round(b, 4),
                                   "len": round(b - a, 4)})
                 # кронштейны: несущий на каждой отметке (В15 — центр)
                 for f in fl_in:
-                    brackets.append({"x": round(jx, 4),
+                    brackets.append({"x": round(s_x, 4),
                                      "y": round(f, 4),
                                      "kind": "несущий"})
-                # рядовые: якорь снизу — start_offset от низа стойки
+                # рядовые: якорь снизу — start_offset от низа куска
                 # (факт DWG: ~300), дальше равномерно между несущими
                 if step is not None and start_off is not None:
                     first = s_lo + float(start_off)
@@ -229,7 +291,7 @@ def frame_plan(req):
                         anchors = [first] + fl_in
                         tops = fl_in + [s_hi]
                         if not fl_in or first < fl_in[0] - EPS:
-                            brackets.append({"x": round(jx, 4),
+                            brackets.append({"x": round(s_x, 4),
                                              "y": round(first, 4),
                                              "kind": "рядовой"})
                         else:
@@ -237,19 +299,20 @@ def frame_plan(req):
                             tops = fl_in[1:] + [s_hi]
                         for a, b in zip(anchors, tops):
                             for y in _row_positions(a, b, float(step)):
-                                brackets.append({"x": round(jx, 4),
+                                brackets.append({"x": round(s_x, 4),
                                                  "y": round(y, 4),
                                                  "kind": "рядовой"})
                 # кляммеры (по горизонтальным швам раскладки):
-                # стартовый на низе сегмента (низ зоны / над проёмом),
-                # рядовой — на каждом шве внутри сегмента
+                # стартовый на низе куска (низ зоны / над проёмом),
+                # рядовой — на каждом шве внутри куска; у смещённого
+                # куска — на смещённой оси (26.07: «смещается кляммер»)
                 if rows:
-                    clamps.append({"x": round(jx, 4),
+                    clamps.append({"x": round(s_x, 4),
                                    "y": round(s_lo, 4),
                                    "kind": "стартовый"})
                     for ry in rows:
                         if s_lo + EPS < ry < s_hi - EPS:
-                            clamps.append({"x": round(jx, 4),
+                            clamps.append({"x": round(s_x, 4),
                                            "y": round(ry, 4),
                                            "kind": "рядовой"})
 

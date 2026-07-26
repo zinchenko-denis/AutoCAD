@@ -120,7 +120,8 @@ def op_frame(req):
     base = {"system": req.get("system"),
             "joints_x": req.get("joints_x"),
             "floors_y": req.get("floors_y"),
-            "rows_y": req.get("rows_y")}
+            "rows_y": req.get("rows_y"),
+            "floor_step": req.get("floor_step")}
     rails, brackets, clamps, per_zone = [], [], [], []
     system_used = None
     for zone_id, contour in items:

@@ -43,6 +43,16 @@ class TestFrameEngine(unittest.TestCase):
         self.assertEqual(res["summary"]["brackets_main"], 1)
         self.assertEqual(res["summary"]["rails"], 2)
 
+    def test_floor_step_passthrough(self):
+        """floor_step доезжает до frame_plan (26.07)."""
+        res = fe.run({
+            "op": "frame", "system": "Standart",
+            "contours": [{"id": "A", "pts": rect(0, 0, 1220, 6100)}],
+            "joints_x": [610], "floor_step": 3000})
+        self.assertTrue(res["ok"], res)
+        self.assertEqual(res["summary"]["rails"], 3)
+        self.assertEqual(res["summary"]["brackets_main"], 2)
+
     def test_bad_op_and_empty(self):
         self.assertFalse(fe.run({"op": "nope"})["ok"])
         self.assertFalse(fe.run({"op": "frame", "system": "Standart",

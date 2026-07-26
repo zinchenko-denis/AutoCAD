@@ -120,6 +120,48 @@ p = frame_plan({"system": "НЕТ-ТАКОЙ", "joints_x": [1],
                 "contours": [{"outer": rect(0, 0, 610, 600)}]})
 ok(not p["ok"], "FR6b: неизвестная система — отказ")
 
+# ── FR7 (фидбэк Германа 26.07): ось у грани окна (996 при грани
+#    1000) — на высоте окна кусок СМЕЩЁН на грань−100=900 вместе с
+#    кронштейнами; под/над окном — по оси руста ──
+p = frame_plan({"system": "Standart",
+                "contours": [{"outer": rect(0, 0, 3000, 5000),
+                              "holes": [rect(1000, 2000, 2000, 3500)]}],
+                "joints_x": [996]})
+r996 = sorted((r["y0"], r["y1"]) for r in p["rails"]
+              if near(r["x"], 996))
+r900 = sorted((r["y0"], r["y1"]) for r in p["rails"]
+              if near(r["x"], 900))
+ok(r996 == [(0.0, 2000.0), (3500.0, 5000.0)] and
+   r900 == [(2000.0, 3500.0)],
+   "FR7: стойка у грани окна смещена на высоте окна (996→900) "
+   "(%s / %s)" % (r996, r900))
+b900 = sorted(b["y"] for b in p["brackets"] if near(b["x"], 900))
+ok(b900 == [2300.0, 2900.0],
+   "FR7b: кронштейны смещённого куска — 300 от низа куска + "
+   "равномерно (%s)" % b900)
+ok(not any(near(b["x"], 996) and 2000 < b["y"] < 3500
+           for b in p["brackets"]),
+   "FR7c: на оси руста в высоте окна кронштейнов нет")
+
+# ── FR8 (26.07): floors пуст + floor_step — перекрытия сами шагом
+#    этажа: направляющие не «бесконечные» ──
+p = frame_plan({"system": "Standart",
+                "contours": [{"outer": rect(0, 0, 1220, 6100)}],
+                "joints_x": [610], "floor_step": 3000})
+r = sorted((x["y0"], x["y1"]) for x in p["rails"])
+ok(r == [(0.0, 2995.0), (3005.0, 5995.0), (6005.0, 6100.0)],
+   "FR8: автоперекрытия 3000/6000, стыки с зазором (%s)" % r)
+ok(p["summary"]["brackets_main"] == 2 and
+   any("автоматически шагом 3000" in n for n in p["notes"]),
+   "FR8b: несущие на автоотметках + note")
+
+# ── FR9: направляющая длиннее хлыста — предупреждение ──
+p = frame_plan({"system": "Standart",
+                "contours": [{"outer": rect(0, 0, 1220, 7000)}],
+                "joints_x": [610]})
+ok(any("хлыста" in n for n in p["notes"]),
+   "FR9: note про хлыст 6000 (%s)" % p["notes"])
+
 # ── FR-D: факты боевого эталона Ленпроспекта (skip без testdata) ──
 ETALON = "/home/claude/atspec-testdata/dxf/facades/frame_lenprospekt/" \
          "frame_ps.json"

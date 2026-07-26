@@ -93,29 +93,40 @@ namespace AFramePlugin
             int oldMeta = 0;
             using (var tr = db.TransactionManager.StartTransaction())
             {
+                int metas = 0;
                 foreach (SelectedObject so in sel.Value)
                 {
                     var ent = tr.GetObject(so.ObjectId, OpenMode.ForRead)
                               as Entity;
                     if (ent == null) continue;
                     string mjson = ReadData(tr, ent, XKeyClad);
-                    if (mjson == null) { noClad++; continue; }
-                    var m = ser.DeserializeObject(mjson)
-                            as Dictionary<string, object>;
-                    if (m == null) { noClad++; continue; }
-                    var jx = Get(m, "joints_x") as object[];
-                    var ry = Get(m, "rows_y") as object[];
-                    if (jx == null)
+                    var m = mjson == null ? null
+                        : ser.DeserializeObject(mjson)
+                          as Dictionary<string, object>;
+                    if (m != null)
                     {
-                        // метка сборки до 24.07 — осей нет
-                        oldMeta++;
-                        continue;
+                        var jx = Get(m, "joints_x") as object[];
+                        var ry = Get(m, "rows_y") as object[];
+                        if (jx == null)
+                        {
+                            oldMeta++;   // метка сборки до 24.07
+                        }
+                        else
+                        {
+                            metas++;
+                            foreach (var v in jx) joints.Add(ToD(v));
+                            if (ry != null)
+                                foreach (var v in ry)
+                                    rowsY.Add(ToD(v));
+                        }
                     }
-                    foreach (var v in jx) joints.Add(ToD(v));
-                    if (ry != null)
-                        foreach (var v in ry) rowsY.Add(ToD(v));
+                    else noClad++;
+                    // прежняя подсистема (метка ATFRAME) — с любого
                     CollectOldHandles(tr, ser, ent, oldHandles);
 
+                    // замкнутые полилинии — геометрия ВСЕГДА, метка не
+                    // нужна (26.07: окна-полилинии без метки выпадали
+                    // → стойки и кронштейны шли сквозь проёмы!)
                     var pl = ent as Polyline;
                     if (pl != null)
                     {
@@ -137,6 +148,7 @@ namespace AFramePlugin
                         { { "id", h }, { "pts", pts } };
                         continue;
                     }
+                    if (m == null) continue;
                     string zid = SafeStr(Get(m, "zone_id"));
                     if (zid.Length == 0) continue;
                     if (!zoneObjs.ContainsKey(zid))
@@ -145,14 +157,22 @@ namespace AFramePlugin
                         zoneObjs[zid].Add(ent.ObjectId);
                 }
                 tr.Commit();
+                if (metas == 0)
+                {
+                    if (oldMeta > 0)
+                        ed.WriteMessage("\nМетки ATCLAD старой сборки " +
+                            "(без осей рустов) — перегенерируйте " +
+                            "раскладку ATCLAD новой сборкой и повторите.");
+                    else
+                        ed.WriteMessage("\nСреди выбранного нет ни " +
+                            "одной метки ATCLAD — сначала раскладка.");
+                    return;
+                }
             }
-            if (noClad > 0)
-                ed.WriteMessage("\nБез метки ATCLAD: " + noClad +
-                    " объект(ов) — пропущены (сначала раскладка ATCLAD).");
             if (oldMeta > 0)
-                ed.WriteMessage("\nМетка ATCLAD старой сборки (без осей " +
-                    "рустов): " + oldMeta + " объект(ов) — перегенерируйте " +
-                    "раскладку ATCLAD новой сборкой и повторите ATFRAME.");
+                ed.WriteMessage("\nМетка ATCLAD старой сборки: " + oldMeta +
+                    " объект(ов) — их оси не учтены (перегенерируйте " +
+                    "ATCLAD).");
             if (zoneObjs.Count == 0 && polyData.Count == 0)
             { ed.WriteMessage("\nНет пригодных зон."); return; }
 
@@ -250,9 +270,16 @@ namespace AFramePlugin
                 ed.WriteMessage("\n  перекрытие Y = " + F0(pv.Value.Y) +
                                 " (всего " + floors.Count + ")");
             }
-            if (floors.Count == 0 && !interFloor)
-                ed.WriteMessage("\nБез отметок перекрытий несущих не " +
-                    "будет — только рядовые от низа стойки.");
+            // 26.07 (фидбэк Германа): без отметок направляющие выходили
+            // «бесконечными» — предлагаем автоперекрытия шагом этажа
+            double floorStep = 0.0;
+            if (floors.Count == 0)
+            {
+                floorStep = AskD(ed, "Отметок нет. Высота этажа для " +
+                    "автоматических перекрытий, мм (0 — без перекрытий)",
+                    3000.0);
+                if (floorStep < 1) floorStep = 0.0;
+            }
 
             // ── 5. движок ──
             joints.Sort();
@@ -266,6 +293,7 @@ namespace AFramePlugin
                 { "joints_x", joints },
                 { "floors_y", floors },
                 { "rows_y", rowsY },
+                { "floor_step", floorStep },
             };
             string baseDir = Path.GetDirectoryName(
                 System.Reflection.Assembly.GetExecutingAssembly().Location)
