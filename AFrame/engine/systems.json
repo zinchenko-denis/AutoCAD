@@ -34,10 +34,10 @@
       "mid_rail_over": 650.0
     },
     "Межэтажная": {
-      "_src": "заготовка (Денис 24.07: крепление только в перекрытия, направляющие массивнее); рядовых нет — bracket_step null",
+      "_src": "ТЗ Германа 26.07: кронштейны по центру КАЖДОГО перекрытия с шагом ПО ГОРИЗОНТАЛИ (углы 1500 чаще); НГП горизонтальный; НСП1/НСП2 в русты (без смещения у окон); ШП-60-20 над/под окнами; СП-60-40 в подоконной зоне на скобах С1",
       "rail_rule": "every_joint",
-      "bracket_step": null,
-      "bracket_step_corner": null,
+      "bracket_step": 800.0,
+      "bracket_step_corner": 800.0,
       "bracket_start_offset": null,
       "corner_zone": 1500.0,
       "rail_gap": 10.0,
@@ -48,6 +48,24 @@
       "edge_offset": 100.0,
       "edge_overhang": 50.0,
       "mid_rail_over": null
+    },
+    "Ортогональная": {
+      "_src": "ТЗ Германа 26.07: сетка кронштейнов (верт. 600 / гориз. расчётный, углы 1500); удлинители; горизонтальный ГП-40-40; вертикальные ШП-60-20 по центрам рустов, зазор 10, консольный свес ≤300; у окон Z-образные (+100 длины, выступ 50/50)",
+      "rail_rule": "every_joint",
+      "bracket_step": 800.0,
+      "bracket_step_corner": 800.0,
+      "bracket_start_offset": 300.0,
+      "corner_zone": 1500.0,
+      "rail_gap": 10.0,
+      "rail_stock": 6000.0,
+      "min_from_corner": 150.0,
+      "min_from_defshov": 100.0,
+      "rail_width": 60.0,
+      "edge_offset": 100.0,
+      "edge_overhang": 50.0,
+      "mid_rail_over": null,
+      "ortho_v_step": 600.0,
+      "ortho_max_overhang": 300.0
     }
   }
 }

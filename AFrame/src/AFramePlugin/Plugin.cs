@@ -31,6 +31,7 @@ namespace AFramePlugin
                         "раскладке ATCLAD.\n");
             }
             catch { }
+            try { FacadesRibbon.Init(); } catch { }   // панель «Фасады»
         }
 
         // маркер версии сборки (урок ABlockGen: «какая сборка у
@@ -45,6 +46,6 @@ namespace AFramePlugin
             catch { return "?"; }
         }
 
-        public void Terminate() { }
+        public void Terminate() { try { FacadesRibbon.Cleanup(); } catch { } }
     }
 }

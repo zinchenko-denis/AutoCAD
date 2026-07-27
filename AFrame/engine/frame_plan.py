@@ -130,6 +130,37 @@ def load_system(name_or_dict, base_dir=None):
     return s
 
 
+def _span_points(a, b, step):
+    """Точки от a до b ВКЛЮЧИТЕЛЬНО, равномерно с шагом ≤ step."""
+    L = b - a
+    if L <= EPS:
+        return [a]
+    k = max(1, int(math.ceil((L - EPS) / step)))
+    return [a + L * j / k for j in range(k + 1)]
+
+
+def _hpos(x0, x1, margin, czone, step_main, step_corner):
+    """Горизонтальные позиции кронштейнов (межэтажная/ортогональная,
+    ТЗ 26.07): от margin до margin от краёв; в угловых зонах (czone от
+    края) шаг ≤ step_corner, в середине ≤ step_main; равномерно по
+    интервалам, границы зон — общие точки."""
+    a, b = x0 + margin, x1 - margin
+    if b - a <= EPS:
+        return [(a + b) / 2.0]
+    la, rb = x0 + czone, x1 - czone
+    if la >= rb - EPS:                     # узкий фасад — всё угловое
+        return _span_points(a, b, step_corner)
+    pts = _span_points(a, la, step_corner)
+    pts += _span_points(la, rb, step_main)[1:]
+    pts += _span_points(rb, b, step_corner)[1:]
+    return pts
+
+
+def _in_boxes(boxes, x, y):
+    return any(bx0 - EPS < x < bx1 + EPS and by0 - EPS < y < by1 + EPS
+               for bx0, by0, bx1, by1 in boxes)
+
+
 def _rail_brackets(a, b, start_off, step):
     """Кронштейны ОДНОЙ направляющей [a, b] — ТЗ Германа 26.07:
     первый 300 от НИЗА, последний 300 от ВЕРХА, между ними равномерно
@@ -142,6 +173,28 @@ def _rail_brackets(a, b, start_off, step):
     lo, hi = a + start_off, b - start_off
     k = max(1, int(math.ceil((hi - lo - EPS) / step))) if step else 1
     return [lo + (hi - lo) * j / k for j in range(k + 1)]
+
+
+def _piece_clamps(clamps, rows, s_lo, s_hi, s_x, side, fl_in):
+    """Кляммеры куска стойки (ТЗ 26.07): боковой на оконных
+    (смещённых/Z) стойках и их низе (примыкание к окну/отливу);
+    стартовый на низе обычного куска (низ зоны / над откосом);
+    рядовой на шве; КОМБИНИРОВАННЫЙ на первом шве выше каждого
+    стыка-термошва."""
+    if not rows:
+        return
+    clamps.append({"x": round(s_x, 4), "y": round(s_lo, 4),
+                   "kind": "боковой" if side else "стартовый"})
+    for ry in rows:
+        if not (s_lo + EPS < ry < s_hi - EPS):
+            continue
+        kind = "боковой" if side else "рядовой"
+        if not side and any(
+                f < ry and not any(f < r2 < ry for r2 in rows)
+                for f in fl_in):
+            kind = "комбинированный"
+        clamps.append({"x": round(s_x, 4), "y": round(ry, 4),
+                       "kind": kind})
 
 
 def frame_plan(req):
@@ -190,7 +243,15 @@ def frame_plan(req):
             continue
     rows = sorted(set(rows))
 
+    # тип подсистемы (ТЗ Германа 26.07): вертикальная (дефолт) /
+    # межэтажная / ортогональная; комбинации — разными запусками
+    sub = (req.get("sub_type") or "vertical").strip().lower()
+    min_corner = float(system.get("min_from_corner") or 150.0)
+    ortho_v = float(system.get("ortho_v_step") or 600.0)
+    ortho_oh = float(system.get("ortho_max_overhang") or 300.0)
+
     notes, rails, brackets, clamps = [], [], [], []
+    hrails, fittings = [], []
     if not joints:
         return {"ok": False,
                 "error": "нет осей стоек (joints_x) — раскладка "
@@ -219,6 +280,198 @@ def frame_plan(req):
                     "контур %d: перекрытия автоматически шагом %.0f "
                     "(%d шт)" % (ci + 1, floor_step, len(floors_c)))
 
+        # ── МЕЖЭТАЖНАЯ (ТЗ 26.07 §2) ──
+        if sub == "interfloor":
+            if not floors_c:
+                notes.append("контур %d: межэтажная без отметок "
+                             "перекрытий — задайте точки или шаг "
+                             "этажа" % (ci + 1))
+                continue
+            step_m = float(step_main or 800.0)
+            step_c = float(step_corner or step_m)
+            for f in floors_c:
+                # кронштейны по центру перекрытия, шаг по горизонтали
+                for px in _hpos(x0, x1, min_corner, corner_zone,
+                                step_m, step_c):
+                    if _in_boxes(hole_boxes, px, f):
+                        continue          # точка попала в проём
+                    brackets.append({"x": round(px, 4),
+                                     "y": round(f, 4),
+                                     "kind": "несущий"})
+                # НГП — горизонтальный несущий профиль (рвётся окнами)
+                segs = [(x0, x1)]
+                for bx0, by0, bx1, by1 in hole_boxes:
+                    if by0 - EPS < f < by1 + EPS:
+                        segs = [(sa2, sb2) for sa, sb in segs
+                                for sa2, sb2 in
+                                (((sa, min(sb, bx0)),
+                                  (max(sa, bx1), sb)))
+                                if sb2 - sa2 > EPS]
+                for sa, sb in segs:
+                    if stock > EPS and sb - sa > stock + EPS:
+                        notes.append("НГП на отм. %.0f длиной %.0f > "
+                                     "хлыста %.0f" % (f, sb - sa,
+                                                      stock))
+                    hrails.append({"y": round(f, 4),
+                                   "x0": round(sa, 4),
+                                   "x1": round(sb, 4),
+                                   "len": round(sb - sa, 4),
+                                   "kind": "НГП"})
+            # вертикальные профили по рустам (центр руста, БЕЗ
+            # смещения у окон): между перекрытиями НСП; куски над/под
+            # окнами — ШП-60-20
+            for jx in joints:
+                if jx < x0 - EPS or jx > x1 + EPS:
+                    continue
+                spans = [(y0, y1)]
+                touch = []
+                for bx0, by0, bx1, by1 in hole_boxes:
+                    if bx0 - EPS < jx < bx1 + EPS:
+                        spans = _sub_y(spans, by0, by1)
+                        touch += [by0, by1]
+                for s_lo, s_hi in spans:
+                    if s_hi - s_lo <= EPS:
+                        continue
+                    is_shp = any(abs(s_lo - t) < 1 or abs(s_hi - t) < 1
+                                 for t in touch)
+                    fl_in = [f for f in floors_c
+                             if s_lo + EPS < f < s_hi - EPS]
+                    cuts = [s_lo] + fl_in + [s_hi]
+                    for i in range(len(cuts) - 1):
+                        a2 = cuts[i] + (gap / 2.0 if i > 0 else 0.0)
+                        b2 = cuts[i + 1] - (gap / 2.0
+                                            if i + 1 < len(cuts) - 1
+                                            else 0.0)
+                        if b2 - a2 <= EPS:
+                            continue
+                        rails.append({"x": round(jx, 4),
+                                      "y0": round(a2, 4),
+                                      "y1": round(b2, 4),
+                                      "len": round(b2 - a2, 4),
+                                      "kind": "ШП-60-20" if is_shp
+                                      else "НСП"})
+                    if not is_shp:
+                        # вставки (ВС-300/В-70) на стыках НСП с НГП
+                        for f in fl_in:
+                            fittings.append({"x": round(jx, 4),
+                                             "y": round(f, 4),
+                                             "kind": "вставка"})
+                    _piece_clamps(clamps, rows, s_lo, s_hi, jx,
+                                  False, fl_in)
+            # СП-60-40 в подоконной зоне на скобах С1 к крайним
+            # межэтажным профилям
+            jset = [j for j in joints if x0 - EPS <= j <= x1 + EPS]
+            for bx0, by0, bx1, by1 in hole_boxes:
+                left = [j for j in jset if j < bx0 - EPS]
+                right = [j for j in jset if j > bx1 + EPS]
+                if not left or not right:
+                    continue
+                la2, ra2 = max(left), min(right)
+                hrails.append({"y": round(by0, 4),
+                               "x0": round(la2, 4),
+                               "x1": round(ra2, 4),
+                               "len": round(ra2 - la2, 4),
+                               "kind": "СП-60-40"})
+                fittings.append({"x": round(la2, 4),
+                                 "y": round(by0, 4),
+                                 "kind": "скоба С1"})
+                fittings.append({"x": round(ra2, 4),
+                                 "y": round(by0, 4),
+                                 "kind": "скоба С1"})
+            continue
+
+        # ── ОРТОГОНАЛЬНАЯ (ТЗ 26.07 §3) ──
+        if sub == "ortho":
+            step_m = float(step_main or 800.0)
+            step_c = float(step_corner or step_m)
+            xs_g = _hpos(x0, x1, min_corner, corner_zone,
+                         step_m, step_c)
+            ys_g = []
+            yy = y0 + float(start_off or 300.0)
+            while yy < y1 - EPS:
+                ys_g.append(yy)
+                yy += ortho_v
+            # сетка кронштейнов (кроме проёмов)
+            for yy in ys_g:
+                for px in xs_g:
+                    if _in_boxes(hole_boxes, px, yy):
+                        continue
+                    brackets.append({"x": round(px, 4),
+                                     "y": round(yy, 4),
+                                     "kind": "рядовой"})
+                # ГП-40-40 горизонтальный на каждом ряду сетки
+                segs = [(x0, x1)]
+                for bx0, by0, bx1, by1 in hole_boxes:
+                    if by0 - EPS < yy < by1 + EPS:
+                        segs = [(sa2, sb2) for sa, sb in segs
+                                for sa2, sb2 in
+                                (((sa, min(sb, bx0)),
+                                  (max(sa, bx1), sb)))
+                                if sb2 - sa2 > EPS]
+                for sa, sb in segs:
+                    hrails.append({"y": round(yy, 4),
+                                   "x0": round(sa, 4),
+                                   "x1": round(sb, 4),
+                                   "len": round(sb - sa, 4),
+                                   "kind": "ГП-40-40"})
+            top_y = max(ys_g) if ys_g else y0
+            # вертикальные ШП по рустам; у окон — Z-образные со
+            # смещением 100 и выступом 50 (как вертикальная)
+            for jx in joints:
+                if jx < x0 - EPS or jx > x1 + EPS:
+                    continue
+                pieces = [(y0, y1, jx)]
+                for bx0, by0, bx1, by1 in hole_boxes:
+                    inside = bx0 - EPS < jx < bx1 + EPS
+                    sx = None
+                    if not inside and edge_off > EPS:
+                        if jx <= bx0 + EPS and \
+                                bx0 - jx < edge_off - EPS:
+                            sx = bx0 - edge_off
+                        elif jx >= bx1 - EPS and \
+                                jx - bx1 < edge_off - EPS:
+                            sx = bx1 + edge_off
+                    if not inside and sx is None:
+                        continue
+                    sy0 = by0 - (overhang if sx is not None else 0.0)
+                    sy1 = by1 + (overhang if sx is not None else 0.0)
+                    nxt = []
+                    for lo, hi, xe in pieces:
+                        c0 = max(lo, sy0 if sx is not None else by0)
+                        c1 = min(hi, sy1 if sx is not None else by1)
+                        if c1 - c0 <= EPS or (xe != jx):
+                            nxt.append((lo, hi, xe))
+                            continue
+                        if c0 - lo > EPS:
+                            nxt.append((lo, c0, xe))
+                        if not inside:
+                            nxt.append((c0, c1, sx))
+                        if hi - c1 > EPS:
+                            nxt.append((c1, hi, xe))
+                    pieces = nxt
+                for s_lo, s_hi, s_x in pieces:
+                    if s_hi - s_lo <= EPS:
+                        continue
+                    side = abs(s_x - jx) > EPS
+                    if stock > EPS and s_hi - s_lo > stock + EPS:
+                        notes.append("ШП X=%.0f длиной %.0f > хлыста "
+                                     "%.0f" % (s_x, s_hi - s_lo,
+                                               stock))
+                    if not side and s_hi - top_y > ortho_oh + EPS:
+                        notes.append("ШП X=%.0f: консольный свес "
+                                     "%.0f > %.0f" %
+                                     (s_x, s_hi - top_y, ortho_oh))
+                    rails.append({"x": round(s_x, 4),
+                                  "y0": round(s_lo, 4),
+                                  "y1": round(s_hi, 4),
+                                  "len": round(s_hi - s_lo, 4),
+                                  "kind": "Z-профиль" if side
+                                  else "ШП-60-20"})
+                    _piece_clamps(clamps, rows, s_lo, s_hi, s_x,
+                                  side, [])
+            continue
+
+        # ── ВЕРТИКАЛЬНАЯ (дефолт; ТЗ 26.07 §1) ──
         # доп. направляющая по центру плиты шире 600 (ТЗ 26.07):
         # пролёт между соседними осями больше порога → ось в середине
         jx_all = [j for j in joints if x0 - EPS <= j <= x1 + EPS]
@@ -302,7 +555,8 @@ def frame_plan(req):
                     rails.append({"x": round(s_x, 4),
                                   "y0": round(a, 4),
                                   "y1": round(b, 4),
-                                  "len": round(b - a, 4)})
+                                  "len": round(b - a, 4),
+                                  "kind": "направляющая"})
                     if step is not None and start_off is not None:
                         pos = _rail_brackets(a, b, float(start_off),
                                              float(step))
@@ -319,37 +573,21 @@ def frame_plan(req):
                         brackets.append({"x": round(s_x, 4),
                                          "y": round(f, 4),
                                          "kind": "несущий"})
-                # кляммеры по швам раскладки (ТЗ 26.07): на оконных
-                # (смещённых) стойках — БОКОВЫЕ (примыкание к окну/
-                # отливу; закрыт и В-а); первый шов над стыком
-                # направляющих (термошов) — КОМБИНИРОВАННЫЙ; старт
-                # зоны и над верхним откосом — стартовый
-                if rows:
-                    clamps.append({"x": round(s_x, 4),
-                                   "y": round(s_lo, 4),
-                                   "kind": "боковой" if side
-                                   else "стартовый"})
-                    for ry in rows:
-                        if not (s_lo + EPS < ry < s_hi - EPS):
-                            continue
-                        kind = "боковой" if side else "рядовой"
-                        if not side and any(
-                                f < ry and not any(
-                                    f < r2 < ry for r2 in rows)
-                                for f in fl_in):
-                            kind = "комбинированный"
-                        clamps.append({"x": round(s_x, 4),
-                                       "y": round(ry, 4),
-                                       "kind": kind})
+                _piece_clamps(clamps, rows, s_lo, s_hi, s_x, side,
+                              fl_in)
 
     lm = sum(r["len"] for r in rails) / 1000.0
-    stock = float(system.get("rail_stock") or 0.0)
+    hlm = sum(r["len"] for r in hrails) / 1000.0
     system_used = {k: v for k, v in system.items()
                    if not k.startswith("_src")}
     summary = {
         "system": system.get("_name", "?"),
+        "sub_type": sub,
         "rails": len(rails),
         "rails_lm": round(lm, 2),
+        "hrails": len(hrails),
+        "hrails_lm": round(hlm, 2),
+        "fittings": len(fittings),
         "rail_stock_est": (int(math.ceil(lm * 1000.0 / stock))
                            if stock > EPS else None),
         "brackets_main": sum(1 for b in brackets
@@ -365,6 +603,7 @@ def frame_plan(req):
         "clamps_combo": sum(1 for cl in clamps
                             if cl["kind"] == "комбинированный"),
     }
-    return {"ok": True, "rails": rails, "brackets": brackets,
-            "clamps": clamps, "summary": summary, "notes": notes,
+    return {"ok": True, "rails": rails, "hrails": hrails,
+            "brackets": brackets, "clamps": clamps,
+            "fittings": fittings, "summary": summary, "notes": notes,
             "system_used": system_used}

@@ -33,6 +33,7 @@
         LoadOnAutoCADStartup="True">
       <Commands GroupName="ACladCommands">
         <Command Global="ATCLAD" Local="ATCLAD" />
+        <Command Global="ATCLADDIM" Local="ATCLADDIM" />
       </Commands>
     </ComponentEntry>
   </Components>

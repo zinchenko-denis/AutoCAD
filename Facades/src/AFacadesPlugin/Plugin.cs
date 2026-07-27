@@ -31,6 +31,7 @@ namespace AFacadesPlugin
                         "Раскладка (ATCLAD) — отдельный бандл AClad.\n");
             }
             catch { }
+            try { FacadesRibbon.Init(); } catch { }   // панель «Фасады»
         }
 
         // маркер версии сборки в командной строке (урок ABlockGen 18.07:
@@ -45,6 +46,6 @@ namespace AFacadesPlugin
             catch { return "?"; }
         }
 
-        public void Terminate() { }
+        public void Terminate() { try { FacadesRibbon.Cleanup(); } catch { } }
     }
 }

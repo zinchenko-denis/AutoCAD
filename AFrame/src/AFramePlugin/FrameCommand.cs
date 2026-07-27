@@ -202,34 +202,37 @@ namespace AFramePlugin
             if (zonesPayload.Count == 0 && contoursPayload.Count == 0)
             { ed.WriteMessage("\nНет геометрии зон."); return; }
 
-            // ── 3. система (справочник движка). Классический
-            //    конструктор, дефолт по не-OK/пустому — грабля 18.07r:
-            //    Keywords.Add/Default роняли компиляцию ──
+            // ── 3. ТИП подсистемы (ТЗ Германа 26.07: вертикальная /
+            //    межэтажная / ортогональная; комбинации — разными
+            //    запусками). Классический конструктор кейвордов,
+            //    дефолт по не-OK — грабля 18.07r ──
             var pko = new PromptKeywordOptions(
-                "\nСистема подсистемы НВФ [Вектор1/Стандарт/" +
-                "Межэтажная] <Стандарт>: ",
-                "Вектор1 Стандарт Межэтажная");
+                "\nТип подсистемы [Вертикальная/Межэтажная/" +
+                "Ортогональная] <Вертикальная>: ",
+                "Вертикальная Межэтажная Ортогональная");
             var rk = ed.GetKeywords(pko);
-            string sysKey = (rk.Status == PromptStatus.OK &&
+            string typKey = (rk.Status == PromptStatus.OK &&
                              rk.StringResult != null &&
                              rk.StringResult.Length > 0)
-                            ? rk.StringResult : "Стандарт";
-            string sysName = sysKey == "Вектор1" ? "Вектор-1"
-                : sysKey == "Межэтажная" ? "Межэтажная"
-                : "Standart";
+                            ? rk.StringResult : "Вертикальная";
+            bool interFloor = typKey == "Межэтажная";
+            bool ortho = typKey == "Ортогональная";
+            string subType = interFloor ? "interfloor"
+                : ortho ? "ortho" : "vertical";
+            string sysName = interFloor ? "Межэтажная"
+                : ortho ? "Ортогональная" : "Standart";
 
             // дефолты для подтверждения (дублируют systems.json —
             // источник истины движок, тут только стартовые значения
             // диалога; расчётный модуль этапа 4 заменит их)
-            double stepMain = sysName == "Вектор-1" ? 1200.0 : 800.0;
+            double stepMain = 800.0;
             double stepCorner = 800.0;
             double railGap = 10.0;
             double startOff = 300.0;
-            double cornerZone = sysName == "Вектор-1" ? 608.0 : 605.0;
-            bool interFloor = sysName == "Межэтажная";
+            double cornerZone = 1500.0;
 
             var pkc = new PromptKeywordOptions(
-                "\nШаги «" + sysName + "»: рядовой " + F0(stepMain) +
+                "\nШаги «" + typKey + "»: расчётный " + F0(stepMain) +
                 ", угловой " + F0(stepCorner) + ", старт " + F0(startOff) +
                 ", зазор стыка " + F0(railGap) + ", угловая зона " +
                 F0(cornerZone) + " [Принять/Изменить] <Принять>: ",
@@ -238,9 +241,9 @@ namespace AFramePlugin
             var sysOverride = new Dictionary<string, object>
             { { "name", sysName } };
             if (rkc.Status == PromptStatus.OK &&
-                rkc.StringResult == "Изменить" && !interFloor)
+                rkc.StringResult == "Изменить")
             {
-                stepMain = AskD(ed, "Шаг рядовых кронштейнов, мм",
+                stepMain = AskD(ed, "Расчётный шаг кронштейнов, мм",
                                 stepMain);
                 stepCorner = AskD(ed, "Шаг в угловой зоне, мм",
                                   stepCorner);
@@ -255,6 +258,45 @@ namespace AFramePlugin
                 sysOverride["bracket_start_offset"] = startOff;
                 sysOverride["rail_gap"] = railGap;
                 sysOverride["corner_zone"] = cornerZone;
+            }
+
+            // ── 3а. знаки: условные или ОБРАЗЦЫ боевых блоков
+            //    Германа с чертежа (ТЗ 26.07 п.3: тип и длина
+            //    кронштейна в имени блока, «Кронш КР1-70-100») ──
+            ObjectId smpMain = ObjectId.Null, smpRow = ObjectId.Null;
+            var pks = new PromptKeywordOptions(
+                "\nЗнаки кронштейнов [Условные/Образцы] <Условные>: ",
+                "Условные Образцы");
+            var rks = ed.GetKeywords(pks);
+            if (rks.Status == PromptStatus.OK &&
+                rks.StringResult == "Образцы")
+            {
+                var pe1 = new PromptEntityOptions(
+                    "\nОбразец НЕСУЩЕГО кронштейна: ");
+                pe1.SetRejectMessage("\nЭто не вхождение блока.");
+                pe1.AddAllowedClass(typeof(BlockReference), false);
+                var re1 = ed.GetEntity(pe1);
+                var pe2 = new PromptEntityOptions(
+                    "\nОбразец ОПОРНОГО (рядового) кронштейна: ");
+                pe2.SetRejectMessage("\nЭто не вхождение блока.");
+                pe2.AddAllowedClass(typeof(BlockReference), false);
+                var re2 = ed.GetEntity(pe2);
+                if (re1.Status == PromptStatus.OK &&
+                    re2.Status == PromptStatus.OK)
+                    using (var tr0 = db.TransactionManager
+                           .StartTransaction())
+                    {
+                        var b1 = (BlockReference)tr0.GetObject(
+                            re1.ObjectId, OpenMode.ForRead);
+                        var b2 = (BlockReference)tr0.GetObject(
+                            re2.ObjectId, OpenMode.ForRead);
+                        smpMain = b1.DynamicBlockTableRecord;
+                        smpRow = b2.DynamicBlockTableRecord;
+                        tr0.Commit();
+                    }
+                else
+                    ed.WriteMessage("\nОбразцы не указаны — будут " +
+                                    "условные знаки.");
             }
 
             // ── 4. отметки перекрытий (несущие; стык направляющих) ──
@@ -297,6 +339,7 @@ namespace AFramePlugin
             var payload = new Dictionary<string, object>
             {
                 { "op", "frame" },
+                { "sub_type", subType },
                 { "system", sysOverride },
                 { "zones", zonesPayload },
                 { "contours", contoursPayload },
@@ -330,8 +373,10 @@ namespace AFramePlugin
                 return;
             }
             var rails = Get(res, "rails") as object[];
+            var hrails = Get(res, "hrails") as object[];
             var brackets = Get(res, "brackets") as object[];
             var clamps = Get(res, "clamps") as object[];
+            var fittings = Get(res, "fittings") as object[];
             var sysUsed = Get(res, "system_used")
                           as Dictionary<string, object>;
             double railW = sysUsed != null ? ToD(Get(sysUsed, "rail_width"))
@@ -351,12 +396,18 @@ namespace AFramePlugin
                 EnsureLayer(tr, db, LayerRails);
                 EnsureLayer(tr, db, LayerBrackets);
                 EnsureLayer(tr, db, LayerClamps);
-                ObjectId blkMain = EnsureSignBlock(tr, db, BlkMain, true);
-                ObjectId blkRow = EnsureSignBlock(tr, db, BlkRow, false);
+                ObjectId blkMain = smpMain.IsNull
+                    ? EnsureSignBlock(tr, db, BlkMain, true) : smpMain;
+                ObjectId blkRow = smpRow.IsNull
+                    ? EnsureSignBlock(tr, db, BlkRow, false) : smpRow;
                 ObjectId clStart = EnsureClampBlock(tr, db, BlkClampStart,
                                                     true);
                 ObjectId clRow = EnsureClampBlock(tr, db, BlkClampRow,
                                                   false);
+                ObjectId fitIns = EnsureFitBlock(tr, db,
+                                                 "AFRAME_ВСТАВКА", true);
+                ObjectId fitSc = EnsureFitBlock(tr, db,
+                                                "AFRAME_СКОБА", false);
 
                 // прежняя подсистема этих зон (перегенерация)
                 if (oldHandles.Count > 0)
@@ -405,12 +456,72 @@ namespace AFramePlugin
                         made++;
                     }
 
-                // кронштейны и кляммеры — блоки-знаки
+                // горизонтальные профили (НГП/ГП/СП межэтажной и
+                // ортогональной) — прямоугольники по оси
+                if (hrails != null)
+                    foreach (var ro in hrails)
+                    {
+                        var r = ro as Dictionary<string, object>;
+                        if (r == null) continue;
+                        double y = ToD(Get(r, "y")),
+                               hx0 = ToD(Get(r, "x0")),
+                               hx1 = ToD(Get(r, "x1"));
+                        var pl = new Polyline();
+                        pl.AddVertexAt(0, new Point2d(hx0, y - railW / 2),
+                                       0, 0, 0);
+                        pl.AddVertexAt(1, new Point2d(hx1, y - railW / 2),
+                                       0, 0, 0);
+                        pl.AddVertexAt(2, new Point2d(hx1, y + railW / 2),
+                                       0, 0, 0);
+                        pl.AddVertexAt(3, new Point2d(hx0, y + railW / 2),
+                                       0, 0, 0);
+                        pl.Closed = true;
+                        pl.Layer = LayerRails;
+                        ms.AppendEntity(pl);
+                        tr.AddNewlyCreatedDBObject(pl, true);
+                        Remember(handlesByRoot, partToRoot,
+                                 SafeStr(Get(r, "zone")),
+                                 pl.Handle.ToString());
+                        made++;
+                    }
+
+                // кронштейны — блоки-знаки или образцы Германа
                 InsertSigns(tr, ms, brackets, blkMain, blkRow,
                             "несущий", LayerBrackets, handlesByRoot,
                             partToRoot, ref made);
-                InsertSigns(tr, ms, clamps, clStart, clRow,
-                            "стартовый", LayerClamps, handlesByRoot,
+                // кляммеры: 4 вида (ТЗ 26.07)
+                var clampBlk = new Dictionary<string, ObjectId>
+                {
+                    { "стартовый", clStart },
+                    { "рядовой", clRow },
+                    { "боковой", EnsureClampBlock(tr, db,
+                        "AFRAME_КЛЯММЕР_БОК", false, true) },
+                    { "комбинированный", EnsureClampBlock(tr, db,
+                        "AFRAME_КЛЯММЕР_КОМБИ", true, true) },
+                };
+                if (clamps != null)
+                    foreach (var io2 in clamps)
+                    {
+                        var it = io2 as Dictionary<string, object>;
+                        if (it == null) continue;
+                        ObjectId bid;
+                        if (!clampBlk.TryGetValue(
+                                SafeStr(Get(it, "kind")), out bid))
+                            bid = clRow;
+                        var br2 = new BlockReference(
+                            new Point3d(ToD(Get(it, "x")),
+                                        ToD(Get(it, "y")), 0), bid);
+                        br2.Layer = LayerClamps;
+                        ms.AppendEntity(br2);
+                        tr.AddNewlyCreatedDBObject(br2, true);
+                        Remember(handlesByRoot, partToRoot,
+                                 SafeStr(Get(it, "zone")),
+                                 br2.Handle.ToString());
+                        made++;
+                    }
+                // метизы межэтажной: вставки и скобы С1
+                InsertSigns(tr, ms, fittings, fitIns, fitSc,
+                            "вставка", LayerBrackets, handlesByRoot,
                             partToRoot, ref made);
 
                 // метка ATFRAME на объекты зоны / контуры
@@ -452,14 +563,20 @@ namespace AFramePlugin
 
             // ── 7. отчёт ──
             var sum = Get(res, "summary") as Dictionary<string, object>;
-            ed.WriteMessage("\nATFRAME: направляющих " +
+            ed.WriteMessage("\nATFRAME (" + typKey + "): вертикальных " +
                 SafeStr(Get(sum, "rails")) + " (" +
                 SafeStr(Get(sum, "rails_lm")) + " м.п., хлыстов ~" +
-                SafeStr(Get(sum, "rail_stock_est")) + "), кронштейнов " +
-                "несущих " + SafeStr(Get(sum, "brackets_main")) +
+                SafeStr(Get(sum, "rail_stock_est")) +
+                "), горизонтальных " + SafeStr(Get(sum, "hrails")) +
+                " (" + SafeStr(Get(sum, "hrails_lm")) + " м.п.)" +
+                ", кронштейнов несущих " +
+                SafeStr(Get(sum, "brackets_main")) +
                 " / рядовых " + SafeStr(Get(sum, "brackets_row")) +
                 ", кляммеров " + SafeStr(Get(sum, "clamps_start")) +
-                "+" + SafeStr(Get(sum, "clamps_row")) +
+                "+" + SafeStr(Get(sum, "clamps_row")) + "+" +
+                SafeStr(Get(sum, "clamps_side")) + "+" +
+                SafeStr(Get(sum, "clamps_combo")) + ", метизов " +
+                SafeStr(Get(sum, "fittings")) +
                 (erased > 0 ? "; прежних удалено " + erased : "") + ".");
             PrintNotes(ed, Get(res, "notes") as object[]);
         }
@@ -535,7 +652,7 @@ namespace AFramePlugin
         }
 
         private static ObjectId EnsureClampBlock(Transaction tr,
-            Database db, string name, bool start)
+            Database db, string name, bool start, bool second = false)
         {
             var bt = (BlockTable)tr.GetObject(db.BlockTableId,
                                               OpenMode.ForRead);
@@ -547,6 +664,33 @@ namespace AFramePlugin
             AddPoly(tr, btr, true, -50, -6, 50, -6, 50, 6, -50, 6);
             if (start)
                 AddPoly(tr, btr, false, 0, -6, 0, -40);
+            if (second)
+                // боковой — ножка вбок; комбинированный — вниз и вбок
+                AddPoly(tr, btr, false, 50, 0, 84, 0);
+            return id;
+        }
+
+        // метизы: «вставка» (квадрат 40 с диагоналями) и «скоба С1»
+        // (Г-уголок) — знаки межэтажной подсистемы
+        private static ObjectId EnsureFitBlock(Transaction tr,
+            Database db, string name, bool ins)
+        {
+            var bt = (BlockTable)tr.GetObject(db.BlockTableId,
+                                              OpenMode.ForRead);
+            if (bt.Has(name)) return bt[name];
+            bt.UpgradeOpen();
+            var btr = new BlockTableRecord { Name = name };
+            ObjectId id = bt.Add(btr);
+            tr.AddNewlyCreatedDBObject(btr, true);
+            if (ins)
+            {
+                AddPoly(tr, btr, true, -20, -20, 20, -20, 20, 20,
+                        -20, 20);
+                AddPoly(tr, btr, false, -20, -20, 20, 20);
+                AddPoly(tr, btr, false, -20, 20, 20, -20);
+            }
+            else
+                AddPoly(tr, btr, false, -25, 25, -25, -25, 25, -25);
             return id;
         }
 

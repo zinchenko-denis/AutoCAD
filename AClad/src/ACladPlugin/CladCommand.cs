@@ -576,6 +576,132 @@ namespace ACladPlugin
             PrintNotes(ed, Get(res, "notes") as object[]);
         }
 
+        // ══ ATCLADDIM — «размеры облицовки» (просьба Германа 26.07):
+        //    указать камень → программа проставляет ширины всех камней
+        //    его РЯДА (или высоты СТОЛБЦА) размерной цепочкой на слое
+        //    _РАЗМЕРЫ_ОБЛ (конвенция листов Германа). Паттерн размеров —
+        //    AddDim ZoneCommand («Проба 4»), bbox — GeometricExtents
+        //    (прецедент ReportCommand) ══
+
+        [CommandMethod("ATCLADDIM", CommandFlags.Modal)]
+        public void RunDim()
+        {
+            var doc = AcApp.DocumentManager.MdiActiveDocument;
+            if (doc == null) return;
+            try { RunDimCore(doc); }
+            catch (System.Exception ex)
+            {
+                try
+                {
+                    doc.Editor.WriteMessage(
+                        "\nATCLADDIM: внутренняя ошибка — сообщите " +
+                        "разработчику.\n" + ex.ToString() + "\n");
+                }
+                catch { }
+            }
+        }
+
+        private void RunDimCore(
+            Autodesk.AutoCAD.ApplicationServices.Document doc)
+        {
+            var ed = doc.Editor;
+            var db = doc.Database;
+            var pk = new PromptKeywordOptions(
+                "\nЧто образмерить [Ряд/Столбец] <Ряд>: ",
+                "Ряд Столбец");
+            var rk = ed.GetKeywords(pk);
+            bool byRow = !(rk.Status == PromptStatus.OK &&
+                           rk.StringResult == "Столбец");
+
+            var peo = new PromptEntityOptions(
+                "\nУкажите камень раскладки: ");
+            peo.SetRejectMessage("\nЭто не вхождение блока.");
+            peo.AddAllowedClass(typeof(BlockReference), false);
+            var pres = ed.GetEntity(peo);
+            if (pres.Status != PromptStatus.OK)
+            { ed.WriteMessage("\nОтменено."); return; }
+
+            int madeD = 0;
+            using (doc.LockDocument())
+            using (var tr = db.TransactionManager.StartTransaction())
+            {
+                var smp = (BlockReference)tr.GetObject(pres.ObjectId,
+                                                       OpenMode.ForRead);
+                ObjectId defId = smp.DynamicBlockTableRecord;
+                string layer = smp.Layer;
+                Extents3d e0 = smp.GeometricExtents;
+                double lo0 = byRow ? e0.MinPoint.Y : e0.MinPoint.X;
+                double hi0 = byRow ? e0.MaxPoint.Y : e0.MaxPoint.X;
+
+                var bt = (BlockTable)tr.GetObject(db.BlockTableId,
+                                                  OpenMode.ForRead);
+                var ms = (BlockTableRecord)tr.GetObject(
+                    bt[BlockTableRecord.ModelSpace], OpenMode.ForWrite);
+                // камни того же определения/слоя, чей центр попадает в
+                // полосу кликнутого (ряд — по Y, столбец — по X)
+                var cells = new List<Extents3d>();
+                foreach (ObjectId oid in ms)
+                {
+                    Entity oe;
+                    try
+                    {
+                        oe = tr.GetObject(oid, OpenMode.ForRead)
+                             as Entity;
+                    }
+                    catch { continue; }
+                    var br = oe as BlockReference;
+                    if (br == null || br.Layer != layer) continue;
+                    if (br.DynamicBlockTableRecord != defId) continue;
+                    Extents3d e;
+                    try { e = br.GeometricExtents; }
+                    catch { continue; }
+                    double c = byRow
+                        ? (e.MinPoint.Y + e.MaxPoint.Y) / 2.0
+                        : (e.MinPoint.X + e.MaxPoint.X) / 2.0;
+                    if (c > lo0 - 1 && c < hi0 + 1)
+                        cells.Add(e);
+                }
+                if (cells.Count == 0)
+                { ed.WriteMessage("\nКамни не найдены."); return; }
+                EnsureLayer(tr, db, "_РАЗМЕРЫ_ОБЛ");
+                // базовая линия размеров: ниже ряда / левее столбца
+                double baseLo = double.MaxValue;
+                foreach (var e in cells)
+                    baseLo = Math.Min(baseLo, byRow ? e.MinPoint.Y
+                                                    : e.MinPoint.X);
+                double dl = baseLo - 300.0;
+                foreach (var e in cells)
+                {
+                    Point3d p1, p2, dlp;
+                    if (byRow)
+                    {
+                        p1 = new Point3d(e.MinPoint.X, e.MinPoint.Y, 0);
+                        p2 = new Point3d(e.MaxPoint.X, e.MinPoint.Y, 0);
+                        dlp = new Point3d(
+                            (e.MinPoint.X + e.MaxPoint.X) / 2.0, dl, 0);
+                    }
+                    else
+                    {
+                        p1 = new Point3d(e.MinPoint.X, e.MinPoint.Y, 0);
+                        p2 = new Point3d(e.MinPoint.X, e.MaxPoint.Y, 0);
+                        dlp = new Point3d(dl,
+                            (e.MinPoint.Y + e.MaxPoint.Y) / 2.0, 0);
+                    }
+                    var dim = new RotatedDimension(
+                        byRow ? 0.0 : Math.PI / 2.0, p1, p2, dlp,
+                        null, db.Dimstyle);
+                    dim.SetDatabaseDefaults();
+                    dim.Layer = "_РАЗМЕРЫ_ОБЛ";
+                    ms.AppendEntity(dim);
+                    tr.AddNewlyCreatedDBObject(dim, true);
+                    madeD++;
+                }
+                tr.Commit();
+            }
+            ed.WriteMessage("\nATCLADDIM: размеров " + madeD +
+                (byRow ? " (ширины ряда)." : " (высоты столбца)."));
+        }
+
         // ── прежние камни: хэндлы из метки ATCLAD выбранного объекта ──
         private static void CollectOldHandles(Transaction tr,
             JavaScriptSerializer ser, Entity ent, HashSet<string> into)

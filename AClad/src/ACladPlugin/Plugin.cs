@@ -29,6 +29,7 @@ namespace ACladPlugin
                         "кассетами по зонам ATFZONE/контурам.\n");
             }
             catch { }
+            try { FacadesRibbon.Init(); } catch { }   // панель «Фасады»
         }
 
         // маркер версии сборки в командной строке (урок ABlockGen 18.07:
@@ -43,6 +44,6 @@ namespace ACladPlugin
             catch { return "?"; }
         }
 
-        public void Terminate() { }
+        public void Terminate() { try { FacadesRibbon.Cleanup(); } catch { } }
     }
 }

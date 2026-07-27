@@ -110,6 +110,10 @@ jobs:
           Copy-Item "Facades/bundle/AFacades.bundle/PackageContents.xml" "$b/"
           Copy-Item "build_afc_dll/AFacadesPlugin.dll" "$b/Contents/net48/"
           Copy-Item "build_afc_exe/facades_engine.exe" "$b/Contents/engine/"
+          if (Test-Path "Facades/bundle/AFacades.bundle/Contents/icons") {
+            New-Item -ItemType Directory -Force "$b/Contents/icons" | Out-Null
+            Copy-Item "Facades/bundle/AFacades.bundle/Contents/icons/*" "$b/Contents/icons/" -Recurse -Force
+          }
           Compress-Archive -Path $b -DestinationPath "AFacades.bundle.zip" -Force
 
       # ── AClad (раскладка облицовки, этап 2) — четвёртая программа,
@@ -130,6 +134,10 @@ jobs:
           Copy-Item "AClad/bundle/AClad.bundle/PackageContents.xml" "$b/"
           Copy-Item "build_acl_dll/ACladPlugin.dll" "$b/Contents/net48/"
           Copy-Item "build_acl_exe/clad_engine.exe" "$b/Contents/engine/"
+          if (Test-Path "AClad/bundle/AClad.bundle/Contents/icons") {
+            New-Item -ItemType Directory -Force "$b/Contents/icons" | Out-Null
+            Copy-Item "AClad/bundle/AClad.bundle/Contents/icons/*" "$b/Contents/icons/" -Recurse -Force
+          }
           Compress-Archive -Path $b -DestinationPath "AClad.bundle.zip" -Force
 
       # ── AFrame (подсистема НВФ: кронштейны/направляющие/кляммеры,
@@ -151,6 +159,10 @@ jobs:
           Copy-Item "build_afr_dll/AFramePlugin.dll" "$b/Contents/net48/"
           Copy-Item "build_afr_exe/frame_engine.exe" "$b/Contents/engine/"
           Copy-Item "AFrame/engine/systems.json" "$b/Contents/engine/"
+          if (Test-Path "AFrame/bundle/AFrame.bundle/Contents/icons") {
+            New-Item -ItemType Directory -Force "$b/Contents/icons" | Out-Null
+            Copy-Item "AFrame/bundle/AFrame.bundle/Contents/icons/*" "$b/Contents/icons/" -Recurse -Force
+          }
           Compress-Archive -Path $b -DestinationPath "AFrame.bundle.zip" -Force
 
       # 4a) Артефакты сборки (видны в разделе Actions; скачивание — для залогиненных)
