@@ -197,6 +197,98 @@ def _piece_clamps(clamps, rows, s_lo, s_hi, s_x, side, fl_in):
                        "kind": kind})
 
 
+def _median_gap(vals, default):
+    """Медиана интервалов сортированного списка (грузовая ширина из
+    осей рустов / шаг перекрытий из отметок)."""
+    if len(vals) < 2:
+        return default
+    iv = sorted(vals[i + 1] - vals[i] for i in range(len(vals) - 1))
+    return iv[len(iv) // 2]
+
+
+def _apply_calc(calc_req, system, sub, joints, floors, floor_step):
+    """Подбор шагов кронштейнов расчётом frame_calc (этап 4).
+
+    Возвращает (report, err, (step_main, step_corner)). Пресет
+    системы (systems.json "calc") перекрывается полями calc_req;
+    обязательные от конструктора: terrain, height, q_clad, offset,
+    na_max, wind_region|w0.
+    """
+    import frame_calc
+    p = dict(system.get("calc") or {})
+    p.update({k: v for k, v in calc_req.items() if v is not None})
+    for f in ("terrain", "height", "q_clad", "offset", "na_max"):
+        if p.get(f) in (None, ""):
+            return None, "расчёт: не задано поле «%s»" % f, None
+    if not p.get("w0") and not p.get("wind_region"):
+        return None, "расчёт: не задан ветровой район", None
+    if not p.get("bracket") or not p.get("profile"):
+        return None, ("расчёт: для системы нет расчётного пресета "
+                      "(кронштейн/профиль) — systems.json calc"), None
+    b = float(p.get("b") or _median_gap(joints, 600.0))
+    rail_len = float(p.get("rail_len") or floor_step or
+                     _median_gap(floors, 3000.0))
+    scheme = p.get("scheme") or \
+        {"vertical": "vertical", "interfloor": "interfloor",
+         "ortho": "ortho"}.get(sub, "vertical")
+    inp = dict(scheme=scheme, terrain=str(p["terrain"]),
+               height=float(p["height"]), q_clad=float(p["q_clad"]),
+               gamma_clad=float(p.get("gamma_clad") or 1.1),
+               q_rails=float(p.get("q_rails") or 0.0),
+               offset=float(p["offset"]), na_max=float(p["na_max"]),
+               bracket=str(p["bracket"]),
+               extender=p.get("extender") or None,
+               profile=p["profile"], b_row=b,
+               b_corner=float(p.get("b_corner") or b),
+               rail_len=rail_len,
+               max_step=float(p.get("max_step") or 800.0),
+               n_rivets=int(p.get("n_rivets") or 2))
+    if p.get("wind_region"):
+        inp["wind_region"] = str(p["wind_region"])
+    if p.get("w0"):
+        inp["w0"] = float(p["w0"])
+    if p.get("ice_region"):
+        inp["ice_region"] = str(p["ice_region"])
+    for k in ("e1", "e2", "e3", "e4", "ry"):
+        if p.get(k) is not None:
+            inp[k] = float(p[k])
+    if scheme == "ortho":
+        inp["v_step"] = float(p.get("v_step") or
+                              system.get("ortho_v_step") or 600.0)
+    try:
+        rep = frame_calc.report(inp)
+    except (KeyError, TypeError, ValueError) as e:
+        return None, "расчёт: %s" % e, None
+    for zone, name in (("row", "рядовой"), ("corner", "угловой")):
+        if not rep[zone]["step"]:
+            fails = []
+            tried = rep[zone].get("tried") or []
+            if tried:
+                # падающие проверки на минимальном кандидате
+                last = frame_calc.calc_chain(inp, tried[0][0],
+                                             zone)
+                fails = [c["name"] for c in last["checks"]
+                         if not c["ok"]]
+            hint = ("уменьшите шаг направляющих (b_corner) или "
+                    "усильте профиль" if any("профиль" in f
+                                             for f in fails)
+                    else "усильте систему (кронштейн/профиль/анкер)")
+            return None, ("расчёт: в %s зоне ни один шаг до %.0f мм "
+                          "не проходит (%s) — %s"
+                          % (name, inp["max_step"],
+                             ", ".join(fails) or "все проверки",
+                             hint)), None
+    out = {"row": rep["row"]["chain"], "corner": rep["corner"]["chain"],
+           "steps": {"main": rep["row"]["step"],
+                     "corner": rep["corner"]["step"]},
+           "scheme": scheme,
+           "inputs": {k: inp[k] for k in
+                      ("terrain", "height", "q_clad", "offset",
+                       "na_max", "b_row", "rail_len", "max_step")}}
+    return out, None, (float(rep["row"]["step"]),
+                       float(rep["corner"]["step"]))
+
+
 def frame_plan(req):
     try:
         system = load_system(req.get("system") or "Standart",
@@ -256,6 +348,25 @@ def frame_plan(req):
         return {"ok": False,
                 "error": "нет осей стоек (joints_x) — раскладка "
                          "ATCLAD не выбрана и оси не заданы"}
+
+    # ── ЭТАП 4: шаги ПО РАСЧЁТУ (frame_calc), а не из справочника.
+    # req["calc"] = исходные от конструктора (район/местность/высота/
+    # вес облицовки/вынос/анкер); пресет системы systems.json["calc"]
+    # даёт кронштейн/удлинитель/профиль/вес направляющих. Целевой
+    # порядок Дениса 24.07: расчёт → шаги → расстановка.
+    calc_rep = None
+    if req.get("calc") is not None:
+        calc_rep, cerr, csteps = _apply_calc(
+            req.get("calc") or {}, system, sub, joints, floors,
+            floor_step)
+        if cerr:
+            return {"ok": False, "error": cerr}
+        step_main, step_corner = csteps
+        notes.append(
+            "шаги кронштейнов ПО РАСЧЁТУ: рядовая %.0f / угловая %.0f "
+            "(W_p=%.1f/%.1f кг/м²)"
+            % (step_main, step_corner, calc_rep["row"]["w_p"],
+               calc_rep["corner"]["w_p"]))
 
     for ci, c in enumerate(req.get("contours") or []):
         outer = _closed(c.get("outer") or [])
@@ -603,7 +714,11 @@ def frame_plan(req):
         "clamps_combo": sum(1 for cl in clamps
                             if cl["kind"] == "комбинированный"),
     }
-    return {"ok": True, "rails": rails, "hrails": hrails,
-            "brackets": brackets, "clamps": clamps,
-            "fittings": fittings, "summary": summary, "notes": notes,
-            "system_used": system_used}
+    out = {"ok": True, "rails": rails, "hrails": hrails,
+           "brackets": brackets, "clamps": clamps,
+           "fittings": fittings, "summary": summary, "notes": notes,
+           "system_used": system_used}
+    if calc_rep is not None:
+        out["calc_report"] = calc_rep
+        summary["calc_steps"] = calc_rep["steps"]
+    return out

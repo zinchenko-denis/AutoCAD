@@ -279,4 +279,86 @@ if os.path.exists(ETALON):
 else:
     print("FR-D: эталон не найден — пропуск (нужен atspec-testdata)")
 
+# ── FR-C (этап 4): шаги ПО РАСЧЁТУ (frame_calc) вместо справочника ──
+# C1: республиканская-кейс (h=41.2, вынос 230, анкер 1880, ШП-60-20-20)
+# → их выводы 800/450; в угловой зоне кронштейны чаще
+CALC_RESP = {"wind_region": "II", "terrain": "B", "height": 41.2,
+             "q_clad": 25, "offset": 230, "na_max": 1880,
+             "profile": "ШП-60-20-20-1,2", "q_rails": 1.21}
+p = frame_plan({"system": "Вектор-1", "contours":
+                [{"outer": rect(0, 0, 5000, 6000)}],
+                "joints_x": [i * 608.0 + 304 for i in range(8)],
+                "floors_y": [3000], "calc": CALC_RESP})
+ok(p["ok"], "FR-C1: ok")
+ok(p["summary"]["calc_steps"] == {"main": 800, "corner": 450},
+   "FR-C1: шаги по расчёту 800/450 — как выводы республиканской (%s)"
+   % p["summary"].get("calc_steps"))
+ok(any("ПО РАСЧЁТУ" in n for n in p["notes"]), "FR-C1: note о расчёте")
+ok(p["calc_report"]["row"]["passed"] and
+   p["calc_report"]["corner"]["passed"] and
+   len(p["calc_report"]["row"]["checks"]) >= 7,
+   "FR-C1: calc_report с цепочкой проверок")
+mid = [b for b in p["brackets"] if 2000 < b["x"] < 3000]
+ys = sorted(set(round(b["y"]) for b in mid))
+dl = [ys[i + 1] - ys[i] for i in range(len(ys) - 1)]
+ok(dl and max(dl) <= 800 + 1, "FR-C1: шаг кронштейнов в поле <=800")
+
+# C2: расчёт не проходит (анкер 300 Н) → честный отказ
+p = frame_plan({"system": "Вектор-1", "contours":
+                [{"outer": rect(0, 0, 3000, 3000)}],
+                "joints_x": [608, 1216],
+                "calc": dict(CALC_RESP, na_max=300)})
+ok(not p["ok"] and "не проходит" in p["error"],
+   "FR-C2: анкер 300 Н — отказ с подсказкой (%s)" % p.get("error"))
+
+# C3: неполные исходные → отказ с именем поля
+p = frame_plan({"system": "Вектор-1", "contours":
+                [{"outer": rect(0, 0, 3000, 3000)}],
+                "joints_x": [608], "calc": {"terrain": "B"}})
+ok(not p["ok"] and "height" in p["error"],
+   "FR-C3: нет высоты — отказ (%s)" % p.get("error"))
+
+# C4: РЕГРЕСС — без calc шаги из справочника (Вектор-1: 1200/800)
+p = frame_plan({"system": "Вектор-1", "contours":
+                [{"outer": rect(0, 0, 5000, 6000)}],
+                "joints_x": [i * 608.0 + 304 for i in range(8)],
+                "floors_y": [3000]})
+ok(p["ok"] and "calc_report" not in p and
+   "calc_steps" not in p["summary"],
+   "FR-C4: без calc — прежнее поведение")
+
+# C5: межэтажная Нижнекаменская-кейс (61.2 м, кассеты 8) →
+# гориз. шаг 350 (ограничитель — удлинитель УК-85, как их верхний
+# диапазон 45..65 м)
+p = frame_plan({"system": "Межэтажная", "sub_type": "interfloor",
+                "contours": [{"outer": rect(0, 0, 5000, 9000)}],
+                "joints_x": [i * 800.0 + 400 for i in range(6)],
+                "floor_step": 2930,
+                "calc": {"wind_region": "II", "terrain": "B",
+                         "height": 61.2, "q_clad": 8,
+                         "gamma_clad": 1.05, "offset": 280,
+                         "na_max": 3960, "b_corner": 450}})
+ok(p["ok"], "FR-C5: ok (%s)" % p.get("error"))
+ok(p["summary"]["calc_steps"]["main"] == 350,
+   "FR-C5: межэтажная 61.2 м — гориз. шаг ПО РАСЧЁТУ 350 (как "
+   "Нижнекаменская 45..65 м) (%s)" % p["summary"].get("calc_steps"))
+xs = sorted(b["x"] for b in p["brackets"]
+            if abs(b["y"] - 2930) < 1 and 1500 < b["x"] < 3500)
+dxs = [xs[i + 1] - xs[i] for i in range(len(xs) - 1)]
+ok(dxs and max(dxs) <= 350 + 1,
+   "FR-C5: кронштейны по перекрытию с шагом <=350")
+
+# C6: ортогональная Новгород-кейс (район I, анкер 1280, вынос 260)
+p = frame_plan({"system": "Ортогональная", "sub_type": "ortho",
+                "contours": [{"outer": rect(0, 0, 3000, 2400)}],
+                "joints_x": [608, 1216, 1824, 2432],
+                "calc": {"wind_region": "I", "terrain": "B",
+                         "height": 10, "q_clad": 25, "offset": 260,
+                         "na_max": 1280, "e3": 12, "e4": 25,
+                         "v_step": 400, "max_step": 600}})
+ok(p["ok"], "FR-C6: ok (%s)" % p.get("error"))
+ok(p["summary"]["calc_steps"] == {"main": 600, "corner": 600},
+   "FR-C6: ортогональная — 600/600 (конструктивный max 600, как "
+   "выводы Новгород-260) (%s)" % p["summary"].get("calc_steps"))
+
 print("frame_plan: %d проверок OK" % _n)

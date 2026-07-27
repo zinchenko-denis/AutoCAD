@@ -118,12 +118,15 @@ def op_frame(req):
                 "error": "нет пригодных зон/контуров", "notes": notes}
 
     base = {"system": req.get("system"),
+            "sub_type": req.get("sub_type"),
             "joints_x": req.get("joints_x"),
             "floors_y": req.get("floors_y"),
             "rows_y": req.get("rows_y"),
-            "floor_step": req.get("floor_step")}
+            "floor_step": req.get("floor_step"),
+            "calc": req.get("calc")}
     rails, brackets, clamps, per_zone = [], [], [], []
-    system_used = None
+    hrails, fittings = [], []
+    system_used, calc_report = None, None
     for zone_id, contour in items:
         creq = dict(base)
         creq["contours"] = [contour]
@@ -132,9 +135,12 @@ def op_frame(req):
             return {"ok": False, "error": res.get("error"),
                     "notes": notes}
         system_used = res.get("system_used") or system_used
+        calc_report = res.get("calc_report") or calc_report
         for coll, dst in ((res["rails"], rails),
                           (res["brackets"], brackets),
-                          (res["clamps"], clamps)):
+                          (res["clamps"], clamps),
+                          (res.get("hrails") or [], hrails),
+                          (res.get("fittings") or [], fittings)):
             for t in coll:
                 t = dict(t)
                 t["zone"] = zone_id
@@ -147,25 +153,37 @@ def op_frame(req):
                          "brackets_main": s["brackets_main"],
                          "brackets_row": s["brackets_row"]})
     lm = sum(r["len"] for r in rails) / 1000.0
+    hlm = sum(r["len"] for r in hrails) / 1000.0
     stock = float((system_used or {}).get("rail_stock") or 0.0)
     import math
-    return {
-        "ok": True, "rails": rails, "brackets": brackets,
-        "clamps": clamps, "per_zone": per_zone, "notes": notes,
-        "system_used": system_used,
-        "summary": {
-            "rails": len(rails), "rails_lm": round(lm, 2),
-            "rail_stock_est": (int(math.ceil(lm * 1000.0 / stock))
-                               if stock > EPS else None),
-            "brackets_main": sum(1 for b in brackets
-                                 if b["kind"] == "несущий"),
-            "brackets_row": sum(1 for b in brackets
-                                if b["kind"] == "рядовой"),
-            "clamps_start": sum(1 for c in clamps
-                                if c["kind"] == "стартовый"),
-            "clamps_row": sum(1 for c in clamps
-                              if c["kind"] == "рядовой"),
-            "zones": len(per_zone)}}
+    summary = {
+        "rails": len(rails), "rails_lm": round(lm, 2),
+        "hrails": len(hrails), "hrails_lm": round(hlm, 2),
+        "fittings": len(fittings),
+        "rail_stock_est": (int(math.ceil(lm * 1000.0 / stock))
+                           if stock > EPS else None),
+        "brackets_main": sum(1 for b in brackets
+                             if b["kind"] == "несущий"),
+        "brackets_row": sum(1 for b in brackets
+                            if b["kind"] == "рядовой"),
+        "clamps_start": sum(1 for c in clamps
+                            if c["kind"] == "стартовый"),
+        "clamps_row": sum(1 for c in clamps
+                          if c["kind"] == "рядовой"),
+        "clamps_side": sum(1 for c in clamps
+                           if c["kind"] == "боковой"),
+        "clamps_combo": sum(1 for c in clamps
+                            if c["kind"] == "комбинированный"),
+        "zones": len(per_zone)}
+    out = {
+        "ok": True, "rails": rails, "hrails": hrails,
+        "brackets": brackets, "clamps": clamps,
+        "fittings": fittings, "per_zone": per_zone, "notes": notes,
+        "system_used": system_used, "summary": summary}
+    if calc_report is not None:
+        out["calc_report"] = calc_report
+        summary["calc_steps"] = calc_report["steps"]
+    return out
 
 
 def run(req):

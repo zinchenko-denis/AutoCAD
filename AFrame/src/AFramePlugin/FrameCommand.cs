@@ -222,42 +222,94 @@ namespace AFramePlugin
             string sysName = interFloor ? "Межэтажная"
                 : ortho ? "Ортогональная" : "Standart";
 
-            // дефолты для подтверждения (дублируют systems.json —
-            // источник истины движок, тут только стартовые значения
-            // диалога; расчётный модуль этапа 4 заменит их)
-            double stepMain = 800.0;
-            double stepCorner = 800.0;
-            double railGap = 10.0;
-            double startOff = 300.0;
-            double cornerZone = 1500.0;
-
-            var pkc = new PromptKeywordOptions(
-                "\nШаги «" + typKey + "»: расчётный " + F0(stepMain) +
-                ", угловой " + F0(stepCorner) + ", старт " + F0(startOff) +
-                ", зазор стыка " + F0(railGap) + ", угловая зона " +
-                F0(cornerZone) + " [Принять/Изменить] <Принять>: ",
-                "Принять Изменить");
-            var rkc = ed.GetKeywords(pkc);
+            // ── 3р. ЭТАП 4 (целевой порядок Дениса 24.07): шаги
+            //    кронштейнов СЧИТАЮТСЯ модулем расчёта несущей
+            //    способности (frame_calc, методика «Вектор фасад») —
+            //    конструктор даёт только исходные. «Вручную» —
+            //    прежний путь со справочником/правкой шагов ──
             var sysOverride = new Dictionary<string, object>
             { { "name", sysName } };
-            if (rkc.Status == PromptStatus.OK &&
-                rkc.StringResult == "Изменить")
+            Dictionary<string, object> calcDict = null;
+            var pkr = new PromptKeywordOptions(
+                "\nШаги кронштейнов [Расчет/Вручную] <Расчет>: ",
+                "Расчет Вручную");
+            var rkr = ed.GetKeywords(pkr);
+            bool manual = rkr.Status == PromptStatus.OK &&
+                          rkr.StringResult == "Вручную";
+            if (!manual)
             {
-                stepMain = AskD(ed, "Расчётный шаг кронштейнов, мм",
-                                stepMain);
-                stepCorner = AskD(ed, "Шаг в угловой зоне, мм",
-                                  stepCorner);
-                startOff = AskD(ed, "Первый кронштейн от низа стойки, мм",
-                                startOff);
-                railGap = AskD(ed, "Зазор стыка направляющих, мм",
-                               railGap);
-                cornerZone = AskD(ed, "Ширина угловой зоны, мм",
-                                  cornerZone);
-                sysOverride["bracket_step"] = stepMain;
-                sysOverride["bracket_step_corner"] = stepCorner;
-                sysOverride["bracket_start_offset"] = startOff;
-                sysOverride["rail_gap"] = railGap;
-                sysOverride["corner_zone"] = cornerZone;
+                var pkw = new PromptKeywordOptions(
+                    "\nВетровой район [Ia/I/II/III/IV/V] <II>: ",
+                    "Ia I II III IV V");
+                var rw = ed.GetKeywords(pkw);
+                string windReg = (rw.Status == PromptStatus.OK &&
+                                  rw.StringResult != null &&
+                                  rw.StringResult.Length > 0)
+                                 ? rw.StringResult : "II";
+                var pkt = new PromptKeywordOptions(
+                    "\nТип местности по СП 20.13330 [A/B/C] <B>: ",
+                    "A B C");
+                var rt = ed.GetKeywords(pkt);
+                string terr = (rt.Status == PromptStatus.OK &&
+                               rt.StringResult != null &&
+                               rt.StringResult.Length > 0)
+                              ? rt.StringResult : "B";
+                double hgt = AskD(ed, "Высота здания, м", 30.0);
+                double qcl = AskD(ed, "Вес облицовки, кг/м2",
+                                  interFloor ? 8.0 : 25.0);
+                double off = AskD(ed, "Вынос облицовки, мм", 230.0);
+                double na = AskD(ed, "Усилие вырыва анкера по ТС/" +
+                                     "акту, Н", 3000.0);
+                calcDict = new Dictionary<string, object>
+                {
+                    { "wind_region", windReg },
+                    { "terrain", terr },
+                    { "height", hgt },
+                    { "q_clad", qcl },
+                    { "offset", off },
+                    { "na_max", na },
+                };
+                if (interFloor)
+                    calcDict["b_corner"] = AskD(ed, "Шаг направляющих " +
+                        "в угловой зоне, мм", 450.0);
+            }
+            else
+            {
+                // дефолты для подтверждения (источник истины движок,
+                // тут только стартовые значения диалога)
+                double stepMain = 800.0;
+                double stepCorner = 800.0;
+                double railGap = 10.0;
+                double startOff = 300.0;
+                double cornerZone = 1500.0;
+
+                var pkc = new PromptKeywordOptions(
+                    "\nШаги «" + typKey + "»: расчётный " + F0(stepMain) +
+                    ", угловой " + F0(stepCorner) + ", старт " +
+                    F0(startOff) + ", зазор стыка " + F0(railGap) +
+                    ", угловая зона " + F0(cornerZone) +
+                    " [Принять/Изменить] <Принять>: ",
+                    "Принять Изменить");
+                var rkc = ed.GetKeywords(pkc);
+                if (rkc.Status == PromptStatus.OK &&
+                    rkc.StringResult == "Изменить")
+                {
+                    stepMain = AskD(ed, "Расчётный шаг кронштейнов, мм",
+                                    stepMain);
+                    stepCorner = AskD(ed, "Шаг в угловой зоне, мм",
+                                      stepCorner);
+                    startOff = AskD(ed, "Первый кронштейн от низа " +
+                                        "стойки, мм", startOff);
+                    railGap = AskD(ed, "Зазор стыка направляющих, мм",
+                                   railGap);
+                    cornerZone = AskD(ed, "Ширина угловой зоны, мм",
+                                      cornerZone);
+                    sysOverride["bracket_step"] = stepMain;
+                    sysOverride["bracket_step_corner"] = stepCorner;
+                    sysOverride["bracket_start_offset"] = startOff;
+                    sysOverride["rail_gap"] = railGap;
+                    sysOverride["corner_zone"] = cornerZone;
+                }
             }
 
             // ── 3а. знаки: условные или ОБРАЗЦЫ боевых блоков
@@ -348,6 +400,7 @@ namespace AFramePlugin
                 { "rows_y", rowsY },
                 { "floor_step", floorStep },
             };
+            if (calcDict != null) payload["calc"] = calcDict;
             string baseDir = Path.GetDirectoryName(
                 System.Reflection.Assembly.GetExecutingAssembly().Location)
                 ?? ".";
@@ -578,7 +631,51 @@ namespace AFramePlugin
                 SafeStr(Get(sum, "clamps_combo")) + ", метизов " +
                 SafeStr(Get(sum, "fittings")) +
                 (erased > 0 ? "; прежних удалено " + erased : "") + ".");
+            PrintCalcReport(ed, Get(res, "calc_report")
+                            as Dictionary<string, object>);
             PrintNotes(ed, Get(res, "notes") as object[]);
+        }
+
+        // отчёт этапа 4: шаги по расчёту + цепочка проверок с
+        // запасами («условие выполнено» — как в статрасчётах
+        // «Вектор фасад»)
+        private static void PrintCalcReport(Editor ed,
+            Dictionary<string, object> rep)
+        {
+            if (rep == null) return;
+            var steps = Get(rep, "steps") as Dictionary<string, object>;
+            if (steps != null)
+                ed.WriteMessage("\nРАСЧЁТ ШАГОВ (несущая способность): " +
+                    "рядовая зона " + SafeStr(Get(steps, "main")) +
+                    " / угловая " + SafeStr(Get(steps, "corner")) +
+                    " мм.");
+            foreach (var zk in new[] { "row", "corner" })
+            {
+                var ch = Get(rep, zk) as Dictionary<string, object>;
+                if (ch == null) continue;
+                var checks = Get(ch, "checks") as object[];
+                if (checks == null) continue;
+                var sb = new StringBuilder();
+                sb.Append(zk == "row" ? "\n  рядовая (W_p="
+                          : "\n  угловая (W_p=");
+                sb.Append(SafeStr(Get(ch, "w_p")));
+                sb.Append(" кг/м2): ");
+                bool first = true;
+                foreach (var co in checks)
+                {
+                    var c = co as Dictionary<string, object>;
+                    if (c == null) continue;
+                    if (!first) sb.Append("; ");
+                    first = false;
+                    sb.Append(SafeStr(Get(c, "name")));
+                    sb.Append(" ");
+                    sb.Append(SafeStr(Get(c, "value")));
+                    sb.Append("/");
+                    sb.Append(SafeStr(Get(c, "limit")));
+                }
+                sb.Append(" — условия выполнены.");
+                ed.WriteMessage(sb.ToString());
+            }
         }
 
         // вставка блоков-знаков (kind mainKind → блок main, иначе row)

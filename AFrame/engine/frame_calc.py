@@ -263,7 +263,7 @@ def pick_step(inp, zone, candidates=None):
     предел системы). Возвращает (step|None, chain|None, отчёт по всем).
     """
     if candidates is None:
-        top = inp.get("max_step", 800)
+        top = int(round(float(inp.get("max_step", 800))))
         candidates = list(range(200, top + 1, 50))
     best, best_chain, log = None, None, []
     for s in sorted(candidates):

@@ -58,6 +58,39 @@ class TestFrameEngine(unittest.TestCase):
         self.assertFalse(fe.run({"op": "frame", "system": "Standart",
                                  "joints_x": [1]})["ok"])
 
+
+    def test_calc_passthrough(self):
+        """Этап 4: блок calc пробрасывается, шаги по расчёту, отчёт
+        в выходе (кейс республиканской: 800/450)."""
+        res = fe.run({
+            "op": "frame", "system": "Вектор-1",
+            "contours": [{"id": "A", "pts": rect(0, 0, 5000, 6000)}],
+            "joints_x": [i * 608.0 + 304 for i in range(8)],
+            "floors_y": [3000],
+            "calc": {"wind_region": "II", "terrain": "B",
+                     "height": 41.2, "q_clad": 25, "offset": 230,
+                     "na_max": 1880, "profile": "ШП-60-20-20-1,2",
+                     "q_rails": 1.21}})
+        self.assertTrue(res["ok"], res)
+        self.assertEqual(res["summary"]["calc_steps"],
+                         {"main": 800, "corner": 450})
+        self.assertEqual(len(res["calc_report"]["row"]["checks"]), 8)
+        self.assertTrue(any("РАСЧЁТУ" in n for n in res["notes"]))
+
+    def test_interfloor_hrails_via_cli(self):
+        """Регресс 27.07: sub_type/hrails/fittings терялись в
+        CLI-обёртке (26.07d правил только frame_plan)."""
+        res = fe.run({
+            "op": "frame", "system": "Межэтажная",
+            "sub_type": "interfloor",
+            "contours": [{"id": "A", "pts": rect(0, 0, 5000, 7000)}],
+            "joints_x": [800, 1600, 2400, 3200, 4000],
+            "floors_y": [3000, 6000], "rows_y": []})
+        self.assertTrue(res["ok"], res)
+        self.assertTrue(res["summary"]["hrails"] >= 2,
+                        res["summary"])
+        self.assertIn("hrails_lm", res["summary"])
+
     def test_cli_files(self):
         d = tempfile.mkdtemp()
         pin = os.path.join(d, "in.json")
