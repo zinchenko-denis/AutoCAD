@@ -130,15 +130,18 @@ def load_system(name_or_dict, base_dir=None):
     return s
 
 
-def _row_positions(lo, hi, step):
-    """Рядовые кронштейны в промежутке (lo, hi), где на КОНЦАХ уже
-    есть кронштейны (или верх без кронштейна): равномерно, шаг ≤ step
-    (В16 — «размазывая длину»). Возвращает внутренние позиции."""
-    L = hi - lo
-    if step is None or L <= step + EPS:
-        return []
-    k = int(math.ceil((L - EPS) / step))
-    return [lo + L * j / k for j in range(1, k)]
+def _rail_brackets(a, b, start_off, step):
+    """Кронштейны ОДНОЙ направляющей [a, b] — ТЗ Германа 26.07:
+    первый 300 от НИЗА, последний 300 от ВЕРХА, между ними равномерно
+    с шагом ≤ расчётного (3000 → 300-800-800-800-300 = 4 шт);
+    нестандартная длина — крайние 300/300, между ними ≤ шага;
+    короче 2×300 — один кронштейн в центре."""
+    L = b - a
+    if L <= 2 * start_off + EPS:
+        return [a + L / 2.0]
+    lo, hi = a + start_off, b - start_off
+    k = max(1, int(math.ceil((hi - lo - EPS) / step))) if step else 1
+    return [lo + (hi - lo) * j / k for j in range(k + 1)]
 
 
 def frame_plan(req):
@@ -153,6 +156,9 @@ def frame_plan(req):
     corner_zone = float(system.get("corner_zone") or 0.0)
     gap = float(system.get("rail_gap") or 0.0)
     edge_off = float(system.get("edge_offset") or 0.0)
+    overhang = float(system.get("edge_overhang") or 0.0)
+    mid_over = system.get("mid_rail_over")
+    mid_over = float(mid_over) if mid_over else None
     stock = float(system.get("rail_stock") or 0.0)
     floor_step = None
     try:
@@ -213,9 +219,17 @@ def frame_plan(req):
                     "контур %d: перекрытия автоматически шагом %.0f "
                     "(%d шт)" % (ci + 1, floor_step, len(floors_c)))
 
-        for jx in joints:
-            if jx < x0 - EPS or jx > x1 + EPS:
-                continue
+        # доп. направляющая по центру плиты шире 600 (ТЗ 26.07):
+        # пролёт между соседними осями больше порога → ось в середине
+        jx_all = [j for j in joints if x0 - EPS <= j <= x1 + EPS]
+        if mid_over and len(jx_all) >= 2:
+            mids = []
+            for i in range(len(jx_all) - 1):
+                if jx_all[i + 1] - jx_all[i] > mid_over + EPS:
+                    mids.append((jx_all[i] + jx_all[i + 1]) / 2.0)
+            jx_all = sorted(jx_all + mids)
+
+        for jx in jx_all:
             # угловая зона (В17: типовой случай — полоса у краёв зоны)
             in_corner = corner_zone > EPS and (
                 jx - x0 <= corner_zone + EPS or
@@ -238,8 +252,14 @@ def frame_plan(req):
                 if not inside and sx is None:
                     continue
                 nxt = []
+                # смещённый оконный кусок выступает за проём на
+                # overhang сверху и снизу (ТЗ 26.07: длина = сторона
+                # окна + 100, выступ 50/50)
+                sy0 = by0 - (overhang if sx is not None else 0.0)
+                sy1 = by1 + (overhang if sx is not None else 0.0)
                 for lo, hi, xe in pieces:
-                    c0, c1 = max(lo, by0), min(hi, by1)
+                    c0, c1 = max(lo, sy0 if sx is not None else by0), \
+                             min(hi, sy1 if sx is not None else by1)
                     if c1 - c0 <= EPS or (xe != jx):
                         # не пересекает по высоте / кусок уже смещён
                         nxt.append((lo, hi, xe))
@@ -257,10 +277,15 @@ def frame_plan(req):
             for s_lo, s_hi, s_x in pieces:
                 if s_hi - s_lo <= EPS:
                     continue
+                side = abs(s_x - jx) > EPS       # оконный (смещённый)
                 fl_in = [f for f in floors_c
                          if s_lo + EPS < f < s_hi - EPS]
                 # направляющие: куски между стыками (стык центрован
-                # на отметке перекрытия, зазор gap — В15/В18)
+                # на отметке перекрытия, зазор gap — В15/В18);
+                # кронштейны — НА КАЖДУЮ направляющую: 300 от низа,
+                # 300 от верха, между ними равномерно ≤ шага (ТЗ
+                # Германа 26.07); первый кронштейн направляющей,
+                # начавшейся стыком на перекрытии, — «несущий» (В-е)
                 cuts = [s_lo] + fl_in + [s_hi]
                 for i in range(len(cuts) - 1):
                     a = cuts[i] + (gap / 2.0 if i > 0 else 0.0)
@@ -278,43 +303,44 @@ def frame_plan(req):
                                   "y0": round(a, 4),
                                   "y1": round(b, 4),
                                   "len": round(b - a, 4)})
-                # кронштейны: несущий на каждой отметке (В15 — центр)
-                for f in fl_in:
-                    brackets.append({"x": round(s_x, 4),
-                                     "y": round(f, 4),
-                                     "kind": "несущий"})
-                # рядовые: якорь снизу — start_offset от низа куска
-                # (факт DWG: ~300), дальше равномерно между несущими
-                if step is not None and start_off is not None:
-                    first = s_lo + float(start_off)
-                    if first < s_hi - EPS:
-                        anchors = [first] + fl_in
-                        tops = fl_in + [s_hi]
-                        if not fl_in or first < fl_in[0] - EPS:
+                    if step is not None and start_off is not None:
+                        pos = _rail_brackets(a, b, float(start_off),
+                                             float(step))
+                        for pi, y in enumerate(pos):
+                            kind = ("несущий" if i > 0 and pi == 0
+                                    else "рядовой")
                             brackets.append({"x": round(s_x, 4),
-                                             "y": round(first, 4),
-                                             "kind": "рядовой"})
-                        else:
-                            anchors = fl_in
-                            tops = fl_in[1:] + [s_hi]
-                        for a, b in zip(anchors, tops):
-                            for y in _row_positions(a, b, float(step)):
-                                brackets.append({"x": round(s_x, 4),
-                                                 "y": round(y, 4),
-                                                 "kind": "рядовой"})
-                # кляммеры (по горизонтальным швам раскладки):
-                # стартовый на низе куска (низ зоны / над проёмом),
-                # рядовой — на каждом шве внутри куска; у смещённого
-                # куска — на смещённой оси (26.07: «смещается кляммер»)
+                                             "y": round(y, 4),
+                                             "kind": kind})
+                # заглушка межэтажной (bracket_step null): несущие
+                # на отметках — до своего генератора (FRAME_TZ §2)
+                if step is None or start_off is None:
+                    for f in fl_in:
+                        brackets.append({"x": round(s_x, 4),
+                                         "y": round(f, 4),
+                                         "kind": "несущий"})
+                # кляммеры по швам раскладки (ТЗ 26.07): на оконных
+                # (смещённых) стойках — БОКОВЫЕ (примыкание к окну/
+                # отливу; закрыт и В-а); первый шов над стыком
+                # направляющих (термошов) — КОМБИНИРОВАННЫЙ; старт
+                # зоны и над верхним откосом — стартовый
                 if rows:
                     clamps.append({"x": round(s_x, 4),
                                    "y": round(s_lo, 4),
-                                   "kind": "стартовый"})
+                                   "kind": "боковой" if side
+                                   else "стартовый"})
                     for ry in rows:
-                        if s_lo + EPS < ry < s_hi - EPS:
-                            clamps.append({"x": round(s_x, 4),
-                                           "y": round(ry, 4),
-                                           "kind": "рядовой"})
+                        if not (s_lo + EPS < ry < s_hi - EPS):
+                            continue
+                        kind = "боковой" if side else "рядовой"
+                        if not side and any(
+                                f < ry and not any(
+                                    f < r2 < ry for r2 in rows)
+                                for f in fl_in):
+                            kind = "комбинированный"
+                        clamps.append({"x": round(s_x, 4),
+                                       "y": round(ry, 4),
+                                       "kind": kind})
 
     lm = sum(r["len"] for r in rails) / 1000.0
     stock = float(system.get("rail_stock") or 0.0)
@@ -334,6 +360,10 @@ def frame_plan(req):
                             if cl["kind"] == "стартовый"),
         "clamps_row": sum(1 for cl in clamps
                           if cl["kind"] == "рядовой"),
+        "clamps_side": sum(1 for cl in clamps
+                           if cl["kind"] == "боковой"),
+        "clamps_combo": sum(1 for cl in clamps
+                            if cl["kind"] == "комбинированный"),
     }
     return {"ok": True, "rails": rails, "brackets": brackets,
             "clamps": clamps, "summary": summary, "notes": notes,

@@ -270,6 +270,16 @@ namespace AFramePlugin
                 ed.WriteMessage("\n  перекрытие Y = " + F0(pv.Value.Y) +
                                 " (всего " + floors.Count + ")");
             }
+            // ТЗ Германа 26.07 п.5: кляммеры — только для керамогранита,
+            // решает конструктор (классический конструктор кейвордов)
+            var pkl = new PromptKeywordOptions(
+                "\nРаскладывать кляммеры (только для керамогранита) " +
+                "[Да/Нет] <Да>: ", "Да Нет");
+            var rkl = ed.GetKeywords(pkl);
+            if (rkl.Status == PromptStatus.OK &&
+                rkl.StringResult == "Нет")
+                rowsY.Clear();
+
             // 26.07 (фидбэк Германа): без отметок направляющие выходили
             // «бесконечными» — предлагаем автоперекрытия шагом этажа
             double floorStep = 0.0;
