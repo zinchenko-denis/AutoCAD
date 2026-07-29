@@ -108,15 +108,14 @@ namespace AFacadesPlugin
             RibbonTab tab = FindOrCreateTab(rc);
             var src = new RibbonPanelSource
             { Title = "Зоны", Id = PanelId };
-            var panel = new RibbonPanel { Source = src };
-            tab.Panels.Add(panel);
-            src.Items.Add(MakeButton("Зоны", "ATFZONE",
+src.Items.Add(MakeButton("Зоны", "ATFZONE",
                 "ATFZONE — зоны облицовки: контуры, площади, отливы/" +
                 "откосы, размеры.", "afc_zone"));
             src.Items.Add(MakeButton("Ведомость", "ATFTABLE",
                 "ATFTABLE — ведомость зон (чертёж/Excel).",
                 "afc_table"));
-        }
+            var panel = new RibbonPanel { Source = src };
+            tab.Panels.Add(panel);}
 
         private static RibbonButton MakeButton(string text, string cmd,
                                                string tip, string icon)

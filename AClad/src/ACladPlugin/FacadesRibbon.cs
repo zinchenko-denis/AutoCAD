@@ -108,15 +108,14 @@ namespace ACladPlugin
             RibbonTab tab = FindOrCreateTab(rc);
             var src = new RibbonPanelSource
             { Title = "Раскладка", Id = PanelId };
-            var panel = new RibbonPanel { Source = src };
-            tab.Panels.Add(panel);
-            src.Items.Add(MakeButton("Раскладка", "ATCLAD",
+src.Items.Add(MakeButton("Раскладка", "ATCLAD",
                 "ATCLAD — раскладка облицовки кассетами по зонам/" +
                 "контурам.", "acl_clad"));
             src.Items.Add(MakeButton("Размеры", "ATCLADDIM",
                 "ATCLADDIM — размеры облицовки: ширины ряда / высоты " +
                 "столбца.", "acl_dim"));
-        }
+            var panel = new RibbonPanel { Source = src };
+            tab.Panels.Add(panel);}
 
         private static RibbonButton MakeButton(string text, string cmd,
                                                string tip, string icon)

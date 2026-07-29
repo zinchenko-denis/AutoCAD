@@ -139,20 +139,62 @@ def _span_points(a, b, step):
     return [a + L * j / k for j in range(k + 1)]
 
 
-def _hpos(x0, x1, margin, czone, step_main, step_corner):
+def _corner_ivals(x0, x1, czone, corners):
+    """Интервалы угловых зон на [x0, x1]. corners=None — прежнее
+    поведение (оба края контура); corners=[] — углов НЕТ (фидбэк
+    Германа 27.07: угловая зона отсчитывается от УКАЗАННЫХ внешних
+    углов здания, а не от краёв зоны); corners=[x..] — полосы czone
+    в обе стороны от каждого угла."""
+    if czone <= EPS:
+        return []
+    if corners is None:
+        return [(x0, x0 + czone), (x1 - czone, x1)]
+    out = []
+    for c in corners:
+        a, b = max(x0, c - czone), min(x1, c + czone)
+        if b - a > EPS:
+            out.append((a, b))
+    out.sort()
+    merged = []
+    for a, b in out:
+        if merged and a <= merged[-1][1] + EPS:
+            merged[-1] = (merged[-1][0], max(merged[-1][1], b))
+        else:
+            merged.append((a, b))
+    return merged
+
+
+def _in_corner(x, x0, x1, czone, corners):
+    return any(a - EPS <= x <= b + EPS
+               for a, b in _corner_ivals(x0, x1, czone, corners))
+
+
+def _hpos(x0, x1, margin, czone, step_main, step_corner,
+          corners=None):
     """Горизонтальные позиции кронштейнов (межэтажная/ортогональная,
-    ТЗ 26.07): от margin до margin от краёв; в угловых зонах (czone от
-    края) шаг ≤ step_corner, в середине ≤ step_main; равномерно по
-    интервалам, границы зон — общие точки."""
+    ТЗ 26.07): от margin до margin от краёв; в угловых зонах шаг ≤
+    step_corner, вне — ≤ step_main; равномерно по интервалам, границы
+    зон — общие точки."""
     a, b = x0 + margin, x1 - margin
     if b - a <= EPS:
         return [(a + b) / 2.0]
-    la, rb = x0 + czone, x1 - czone
-    if la >= rb - EPS:                     # узкий фасад — всё угловое
-        return _span_points(a, b, step_corner)
-    pts = _span_points(a, la, step_corner)
-    pts += _span_points(la, rb, step_main)[1:]
-    pts += _span_points(rb, b, step_corner)[1:]
+    ivals = [(max(a, ia), min(b, ib))
+             for ia, ib in _corner_ivals(x0, x1, czone, corners)
+             if min(b, ib) - max(a, ia) > EPS]
+    bounds = [a]
+    for ia, ib in ivals:
+        for v in (ia, ib):
+            if a + EPS < v < b - EPS:
+                bounds.append(v)
+    bounds.append(b)
+    bounds = sorted(set(bounds))
+    pts = []
+    for i in range(len(bounds) - 1):
+        sa, sb = bounds[i], bounds[i + 1]
+        mid = (sa + sb) / 2.0
+        in_c = any(ia - EPS <= mid <= ib + EPS for ia, ib in ivals)
+        seg = _span_points(sa, sb, step_corner if in_c else step_main)
+        pts += seg if not pts else seg[1:]
     return pts
 
 
@@ -206,7 +248,8 @@ def _median_gap(vals, default):
     return iv[len(iv) // 2]
 
 
-def _apply_calc(calc_req, system, sub, joints, floors, floor_step):
+def _apply_calc(calc_req, system, sub, joints, floors, floor_step,
+                corners=None):
     """Подбор шагов кронштейнов расчётом frame_calc (этап 4).
 
     Возвращает (report, err, (step_main, step_corner)). Пресет
@@ -239,10 +282,34 @@ def _apply_calc(calc_req, system, sub, joints, floors, floor_step):
                bracket=str(p["bracket"]),
                extender=p.get("extender") or None,
                profile=p["profile"], b_row=b,
-               b_corner=float(p.get("b_corner") or b),
+               b_corner=float(p.get("b_corner") or 0) or None,
                rail_len=rail_len,
                max_step=float(p.get("max_step") or 800.0),
                n_rivets=int(p.get("n_rivets") or 2))
+    bc_note = None
+    if not inp["b_corner"]:
+        if scheme == "vertical":
+            inp["b_corner"] = b
+        else:
+            bc = None
+            czone = float(system.get("corner_zone") or 1500.0)
+            if corners:
+                cj = [j for j in joints
+                      if any(abs(j - c) <= czone for c in corners)]
+                if len(cj) >= 3:
+                    iv = sorted(cj[i + 1] - cj[i]
+                                for i in range(len(cj) - 1))
+                    bc = iv[len(iv) // 2]
+            if bc:
+                inp["b_corner"] = bc
+                bc_note = ("шаг направляющих в угловой зоне взят из "
+                           "осей раскладки: %.0f" % bc)
+            else:
+                inp["b_corner"] = min(b, 450.0)
+                bc_note = ("шаг направляющих в угловой зоне принят "
+                           "%.0f (осей в угловой полосе нет) — "
+                           "проверьте по раскладке"
+                           % inp["b_corner"])
     if p.get("wind_region"):
         inp["wind_region"] = str(p["wind_region"])
     if p.get("w0"):
@@ -284,7 +351,9 @@ def _apply_calc(calc_req, system, sub, joints, floors, floor_step):
            "scheme": scheme,
            "inputs": {k: inp[k] for k in
                       ("terrain", "height", "q_clad", "offset",
-                       "na_max", "b_row", "rail_len", "max_step")}}
+                       "na_max", "b_row", "b_corner", "rail_len",
+                       "max_step")},
+           "bc_note": bc_note}
     return out, None, (float(rep["row"]["step"]),
                        float(rep["corner"]["step"]))
 
@@ -327,6 +396,15 @@ def frame_plan(req):
         except (TypeError, ValueError):
             continue
     floors = sorted(set(floors))
+    corners = None
+    if req.get("corners_x") is not None:
+        corners = []
+        for x in req.get("corners_x") or []:
+            try:
+                corners.append(float(x))
+            except (TypeError, ValueError):
+                continue
+        corners = sorted(set(corners))
     rows = []
     for y in req.get("rows_y") or []:
         try:
@@ -358,7 +436,7 @@ def frame_plan(req):
     if req.get("calc") is not None:
         calc_rep, cerr, csteps = _apply_calc(
             req.get("calc") or {}, system, sub, joints, floors,
-            floor_step)
+            floor_step, corners)
         if cerr:
             return {"ok": False, "error": cerr}
         step_main, step_corner = csteps
@@ -367,6 +445,8 @@ def frame_plan(req):
             "(W_p=%.1f/%.1f кг/м²)"
             % (step_main, step_corner, calc_rep["row"]["w_p"],
                calc_rep["corner"]["w_p"]))
+        if calc_rep.get("bc_note"):
+            notes.append(calc_rep["bc_note"])
 
     for ci, c in enumerate(req.get("contours") or []):
         outer = _closed(c.get("outer") or [])
@@ -403,7 +483,7 @@ def frame_plan(req):
             for f in floors_c:
                 # кронштейны по центру перекрытия, шаг по горизонтали
                 for px in _hpos(x0, x1, min_corner, corner_zone,
-                                step_m, step_c):
+                                step_m, step_c, corners):
                     if _in_boxes(hole_boxes, px, f):
                         continue          # точка попала в проём
                     brackets.append({"x": round(px, 4),
@@ -496,7 +576,7 @@ def frame_plan(req):
             step_m = float(step_main or 800.0)
             step_c = float(step_corner or step_m)
             xs_g = _hpos(x0, x1, min_corner, corner_zone,
-                         step_m, step_c)
+                         step_m, step_c, corners)
             ys_g = []
             yy = y0 + float(start_off or 300.0)
             while yy < y1 - EPS:
@@ -595,9 +675,8 @@ def frame_plan(req):
 
         for jx in jx_all:
             # угловая зона (В17: типовой случай — полоса у краёв зоны)
-            in_corner = corner_zone > EPS and (
-                jx - x0 <= corner_zone + EPS or
-                x1 - jx <= corner_zone + EPS)
+            in_corner = _in_corner(jx, x0, x1, corner_zone,
+                                   corners)
             step = step_corner if in_corner else step_main
 
             # куски стойки (lo, hi, ось): проём, накрывающий ось по X,

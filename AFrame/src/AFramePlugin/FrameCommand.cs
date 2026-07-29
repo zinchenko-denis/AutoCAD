@@ -157,16 +157,98 @@ namespace AFramePlugin
                         zoneObjs[zid].Add(ent.ObjectId);
                 }
                 tr.Commit();
+                // фидбэк Германа 27.07 (главный): ATFRAME должна
+                // работать БЕЗ AClad (раскладка старой сборки, чужой
+                // файл, переустановка) — оси задаются шагом или
+                // точками по геометрии контуров
                 if (metas == 0)
                 {
                     if (oldMeta > 0)
-                        ed.WriteMessage("\nМетки ATCLAD старой сборки " +
-                            "(без осей рустов) — перегенерируйте " +
-                            "раскладку ATCLAD новой сборкой и повторите.");
-                    else
-                        ed.WriteMessage("\nСреди выбранного нет ни " +
-                            "одной метки ATCLAD — сначала раскладка.");
-                    return;
+                        ed.WriteMessage("\nМетки ATCLAD старой " +
+                            "сборки (без осей рустов).");
+                    else if (polyData.Count > 0)
+                        ed.WriteMessage("\nМеток ATCLAD нет — " +
+                            "работаем по контурам без раскладки.");
+                    if (polyData.Count == 0)
+                    {
+                        ed.WriteMessage("\nНет ни меток ATCLAD, ни " +
+                            "замкнутых контуров — выберите контуры " +
+                            "зоны или сделайте раскладку.");
+                        return;
+                    }
+                }
+            }
+            if (joints.Count == 0)
+            {
+                double bbx0 = double.MaxValue, bbx1 = double.MinValue;
+                double bby0 = double.MaxValue, bby1 = double.MinValue;
+                foreach (var pd in polyData.Values)
+                {
+                    var pts0 = pd["pts"] as List<object>;
+                    if (pts0 == null) continue;
+                    foreach (var po in pts0)
+                    {
+                        var xy = po as double[];
+                        if (xy == null || xy.Length < 2) continue;
+                        if (xy[0] < bbx0) bbx0 = xy[0];
+                        if (xy[0] > bbx1) bbx1 = xy[0];
+                        if (xy[1] < bby0) bby0 = xy[1];
+                        if (xy[1] > bby1) bby1 = xy[1];
+                    }
+                }
+                var pkj = new PromptKeywordOptions(
+                    "\nОси стоек [Шаг/Точки/Отмена] <Шаг>: ",
+                    "Шаг Точки Отмена");
+                var rkj = ed.GetKeywords(pkj);
+                string jkey = (rkj.Status == PromptStatus.OK &&
+                               rkj.StringResult != null &&
+                               rkj.StringResult.Length > 0)
+                              ? rkj.StringResult : "Шаг";
+                if (jkey == "Отмена") return;
+                if (jkey == "Точки")
+                {
+                    while (true)
+                    {
+                        var pjo = new PromptPointOptions(
+                            "\nТочка на оси стойки (Enter — дальше): ")
+                        { AllowNone = true };
+                        var pjv = ed.GetPoint(pjo);
+                        if (pjv.Status != PromptStatus.OK) break;
+                        joints.Add(pjv.Value.X);
+                        ed.WriteMessage("\n  ось X = " +
+                            F0(pjv.Value.X) + " (всего " +
+                            joints.Count + ")");
+                    }
+                }
+                else
+                {
+                    var pfo = new PromptPointOptions(
+                        "\nТочка ПЕРВОЙ оси стойки: ");
+                    var pfv = ed.GetPoint(pfo);
+                    if (pfv.Status != PromptStatus.OK) return;
+                    double jstep = AskD(ed,
+                        "Шаг осей (плита + шов), мм", 608.0);
+                    if (jstep < 50) jstep = 608.0;
+                    double margin = 150.0;
+                    for (double jx0 = pfv.Value.X;
+                         jx0 >= bbx0 + margin; jx0 -= jstep)
+                        joints.Add(jx0);
+                    for (double jx0 = pfv.Value.X + jstep;
+                         jx0 <= bbx1 - margin; jx0 += jstep)
+                        joints.Add(jx0);
+                    ed.WriteMessage("\n  осей по шагу " + F0(jstep) +
+                        ": " + joints.Count);
+                }
+                if (joints.Count == 0)
+                { ed.WriteMessage("\nОсей нет — отмена."); return; }
+                if (rowsY.Count == 0)
+                {
+                    double rstep = AskD(ed, "Шаг горизонтальных швов " +
+                        "для кляммеров, мм (0 — без кляммеров)", 605.0);
+                    if (rstep >= 50)
+                        for (double ry0 = bby0 + rstep;
+                             ry0 < bby1; ry0 += rstep)
+                            rowsY.Add(ry0);
                 }
             }
             if (oldMeta > 0)
@@ -222,6 +304,25 @@ namespace AFramePlugin
             string sysName = interFloor ? "Межэтажная"
                 : ortho ? "Ортогональная" : "Standart";
 
+            // углы здания (фидбэк Германа 27.07): угловая зона
+            // (1500) отсчитывается от УКАЗАННЫХ внешних углов, а не
+            // от краёв зоны; Enter без точек — по краям контуров
+            var cornersX = new List<object>();
+            while (true)
+            {
+                var pco = new PromptPointOptions(
+                    "\nТочка на ВНЕШНЕМ углу здания (Enter — дальше): ")
+                { AllowNone = true };
+                var pcv = ed.GetPoint(pco);
+                if (pcv.Status != PromptStatus.OK) break;
+                cornersX.Add(pcv.Value.X);
+                ed.WriteMessage("\n  угол X = " + F0(pcv.Value.X) +
+                                " (всего " + cornersX.Count + ")");
+            }
+            if (cornersX.Count == 0)
+                ed.WriteMessage("\n  углы не указаны — угловые зоны " +
+                    "по краям контуров.");
+
             // ── 3р. ЭТАП 4 (целевой порядок Дениса 24.07): шаги
             //    кронштейнов СЧИТАЮТСЯ модулем расчёта несущей
             //    способности (frame_calc, методика «Вектор фасад») —
@@ -260,6 +361,12 @@ namespace AFramePlugin
                 double off = AskD(ed, "Вынос облицовки, мм", 230.0);
                 double na = AskD(ed, "Усилие вырыва анкера по ТС/" +
                                      "акту, Н", 3000.0);
+                if (subType == "vertical")
+                {
+                    sysOverride["name"] = "Вектор-1";
+                    ed.WriteMessage("\n  расчётный пресет: Вектор-1 " +
+                        "(КР2-70 + УК-70-1,2 + ГП-40-40-1,2).");
+                }
                 calcDict = new Dictionary<string, object>
                 {
                     { "wind_region", windReg },
@@ -269,9 +376,6 @@ namespace AFramePlugin
                     { "offset", off },
                     { "na_max", na },
                 };
-                if (interFloor)
-                    calcDict["b_corner"] = AskD(ed, "Шаг направляющих " +
-                        "в угловой зоне, мм", 450.0);
             }
             else
             {
@@ -283,29 +387,27 @@ namespace AFramePlugin
                 double startOff = 300.0;
                 double cornerZone = 1500.0;
 
+                stepMain = AskD(ed, "Шаг кронштейнов в РЯДОВОЙ " +
+                                "зоне, мм", stepMain);
+                stepCorner = AskD(ed, "Шаг кронштейнов в УГЛОВОЙ " +
+                                  "зоне (1500 от угла), мм", stepCorner);
+                sysOverride["bracket_step"] = stepMain;
+                sysOverride["bracket_step_corner"] = stepCorner;
                 var pkc = new PromptKeywordOptions(
-                    "\nШаги «" + typKey + "»: расчётный " + F0(stepMain) +
-                    ", угловой " + F0(stepCorner) + ", старт " +
-                    F0(startOff) + ", зазор стыка " + F0(railGap) +
-                    ", угловая зона " + F0(cornerZone) +
-                    " [Принять/Изменить] <Принять>: ",
+                    "\nПрочее: старт " + F0(startOff) + ", зазор " +
+                    "стыка " + F0(railGap) + ", угловая зона " +
+                    F0(cornerZone) + " [Принять/Изменить] <Принять>: ",
                     "Принять Изменить");
                 var rkc = ed.GetKeywords(pkc);
                 if (rkc.Status == PromptStatus.OK &&
                     rkc.StringResult == "Изменить")
                 {
-                    stepMain = AskD(ed, "Расчётный шаг кронштейнов, мм",
-                                    stepMain);
-                    stepCorner = AskD(ed, "Шаг в угловой зоне, мм",
-                                      stepCorner);
                     startOff = AskD(ed, "Первый кронштейн от низа " +
                                         "стойки, мм", startOff);
                     railGap = AskD(ed, "Зазор стыка направляющих, мм",
                                    railGap);
                     cornerZone = AskD(ed, "Ширина угловой зоны, мм",
                                       cornerZone);
-                    sysOverride["bracket_step"] = stepMain;
-                    sysOverride["bracket_step_corner"] = stepCorner;
                     sysOverride["bracket_start_offset"] = startOff;
                     sysOverride["rail_gap"] = railGap;
                     sysOverride["corner_zone"] = cornerZone;
@@ -316,6 +418,11 @@ namespace AFramePlugin
             //    Германа с чертежа (ТЗ 26.07 п.3: тип и длина
             //    кронштейна в имени блока, «Кронш КР1-70-100») ──
             ObjectId smpMain = ObjectId.Null, smpRow = ObjectId.Null;
+            ObjectId smpClampRow = ObjectId.Null,
+                     smpClampStart = ObjectId.Null,
+                     smpClampSide = ObjectId.Null,
+                     smpClampCombo = ObjectId.Null,
+                     smpRail = ObjectId.Null;
             var pks = new PromptKeywordOptions(
                 "\nЗнаки кронштейнов [Условные/Образцы] <Условные>: ",
                 "Условные Образцы");
@@ -323,32 +430,25 @@ namespace AFramePlugin
             if (rks.Status == PromptStatus.OK &&
                 rks.StringResult == "Образцы")
             {
-                var pe1 = new PromptEntityOptions(
-                    "\nОбразец НЕСУЩЕГО кронштейна: ");
-                pe1.SetRejectMessage("\nЭто не вхождение блока.");
-                pe1.AddAllowedClass(typeof(BlockReference), false);
-                var re1 = ed.GetEntity(pe1);
-                var pe2 = new PromptEntityOptions(
-                    "\nОбразец ОПОРНОГО (рядового) кронштейна: ");
-                pe2.SetRejectMessage("\nЭто не вхождение блока.");
-                pe2.AddAllowedClass(typeof(BlockReference), false);
-                var re2 = ed.GetEntity(pe2);
-                if (re1.Status == PromptStatus.OK &&
-                    re2.Status == PromptStatus.OK)
-                    using (var tr0 = db.TransactionManager
-                           .StartTransaction())
-                    {
-                        var b1 = (BlockReference)tr0.GetObject(
-                            re1.ObjectId, OpenMode.ForRead);
-                        var b2 = (BlockReference)tr0.GetObject(
-                            re2.ObjectId, OpenMode.ForRead);
-                        smpMain = b1.DynamicBlockTableRecord;
-                        smpRow = b2.DynamicBlockTableRecord;
-                        tr0.Commit();
-                    }
-                else
-                    ed.WriteMessage("\nОбразцы не указаны — будут " +
-                                    "условные знаки.");
+                // фидбэк Германа 27.07 (п.4): образцы и для
+                // кляммеров, и для направляющей (его библиотека
+                // блоков); Enter по любому — условный знак
+                smpMain = PickBlock(ed, db,
+                    "\nОбразец НЕСУЩЕГО кронштейна (Enter — усл.): ");
+                smpRow = PickBlock(ed, db,
+                    "\nОбразец ОПОРНОГО кронштейна (Enter — усл.): ");
+                smpClampRow = PickBlock(ed, db,
+                    "\nОбразец кляммера РЯДОВОГО (Enter — усл.): ");
+                smpClampStart = PickBlock(ed, db,
+                    "\nОбразец кляммера СТАРТОВОГО (Enter — усл.): ");
+                smpClampSide = PickBlock(ed, db,
+                    "\nОбразец кляммера БОКОВОГО (Enter — усл.): ");
+                smpClampCombo = PickBlock(ed, db,
+                    "\nОбразец кляммера КОМБИНИРОВАННОГО " +
+                    "(Enter — усл.): ");
+                smpRail = PickBlock(ed, db,
+                    "\nОбразец НАПРАВЛЯЮЩЕЙ — динамический блок " +
+                    "(Enter — прямоугольники): ");
             }
 
             // ── 4. отметки перекрытий (несущие; стык направляющих) ──
@@ -401,6 +501,7 @@ namespace AFramePlugin
                 { "floor_step", floorStep },
             };
             if (calcDict != null) payload["calc"] = calcDict;
+            if (cornersX.Count > 0) payload["corners_x"] = cornersX;
             string baseDir = Path.GetDirectoryName(
                 System.Reflection.Assembly.GetExecutingAssembly().Location)
                 ?? ".";
@@ -453,10 +554,12 @@ namespace AFramePlugin
                     ? EnsureSignBlock(tr, db, BlkMain, true) : smpMain;
                 ObjectId blkRow = smpRow.IsNull
                     ? EnsureSignBlock(tr, db, BlkRow, false) : smpRow;
-                ObjectId clStart = EnsureClampBlock(tr, db, BlkClampStart,
-                                                    true);
-                ObjectId clRow = EnsureClampBlock(tr, db, BlkClampRow,
-                                                  false);
+                ObjectId clStart = smpClampStart.IsNull
+                    ? EnsureClampBlock(tr, db, BlkClampStart, true)
+                    : smpClampStart;
+                ObjectId clRow = smpClampRow.IsNull
+                    ? EnsureClampBlock(tr, db, BlkClampRow, false)
+                    : smpClampRow;
                 ObjectId fitIns = EnsureFitBlock(tr, db,
                                                  "AFRAME_ВСТАВКА", true);
                 ObjectId fitSc = EnsureFitBlock(tr, db,
@@ -490,6 +593,18 @@ namespace AFramePlugin
                         double x = ToD(Get(r, "x")),
                                y0 = ToD(Get(r, "y0")),
                                y1 = ToD(Get(r, "y1"));
+                        if (!smpRail.IsNull)
+                        {
+                            string rh = InsertRailBlock(tr, ms, smpRail,
+                                x, y0, y1 - y0, LayerRails);
+                            if (rh != null)
+                            {
+                                Remember(handlesByRoot, partToRoot,
+                                         SafeStr(Get(r, "zone")), rh);
+                                made++;
+                                continue;
+                            }
+                        }
                         var pl = new Polyline();
                         pl.AddVertexAt(0, new Point2d(x - railW / 2, y0),
                                        0, 0, 0);
@@ -547,10 +662,14 @@ namespace AFramePlugin
                 {
                     { "стартовый", clStart },
                     { "рядовой", clRow },
-                    { "боковой", EnsureClampBlock(tr, db,
-                        "AFRAME_КЛЯММЕР_БОК", false, true) },
-                    { "комбинированный", EnsureClampBlock(tr, db,
-                        "AFRAME_КЛЯММЕР_КОМБИ", true, true) },
+                    { "боковой", smpClampSide.IsNull
+                        ? EnsureClampBlock(tr, db,
+                            "AFRAME_КЛЯММЕР_БОК", false, true)
+                        : smpClampSide },
+                    { "комбинированный", smpClampCombo.IsNull
+                        ? EnsureClampBlock(tr, db,
+                            "AFRAME_КЛЯММЕР_КОМБИ", true, true)
+                        : smpClampCombo },
                 };
                 if (clamps != null)
                     foreach (var io2 in clamps)
@@ -802,6 +921,56 @@ namespace AFramePlugin
             pl.Layer = "0";
             btr.AppendEntity(pl);
             tr.AddNewlyCreatedDBObject(pl, true);
+        }
+
+        // выбор образца-блока; Enter/Esc — ObjectId.Null (условный)
+        private static ObjectId PickBlock(Editor ed, Database db,
+                                          string prompt)
+        {
+            var pe = new PromptEntityOptions(prompt);
+            pe.SetRejectMessage("\nЭто не вхождение блока.");
+            pe.AddAllowedClass(typeof(BlockReference), false);
+            var re = ed.GetEntity(pe);
+            if (re.Status != PromptStatus.OK) return ObjectId.Null;
+            using (var tr0 = db.TransactionManager.StartTransaction())
+            {
+                var b = (BlockReference)tr0.GetObject(
+                    re.ObjectId, OpenMode.ForRead);
+                ObjectId id = b.DynamicBlockTableRecord;
+                tr0.Commit();
+                return id;
+            }
+        }
+
+        // вставка направляющей динблоком Германа (база низ-центр,
+        // 3000): растяжка = Double-свойство с НАИБОЛЬШИМ текущим
+        // значением (имена динпараметров у всех свои — эвристика;
+        // не нашли/ошибка — null → прямоугольник)
+        private static string InsertRailBlock(Transaction tr,
+            BlockTableRecord ms, ObjectId btrId, double x, double y0,
+            double len, string layer)
+        {
+            try
+            {
+                var br = new BlockReference(
+                    new Point3d(x, y0, 0), btrId) { Layer = layer };
+                ms.AppendEntity(br);
+                tr.AddNewlyCreatedDBObject(br, true);
+                DynamicBlockReferenceProperty best = null;
+                foreach (DynamicBlockReferenceProperty pr in
+                         br.DynamicBlockReferencePropertyCollection)
+                {
+                    if (pr.ReadOnly) continue;
+                    if (!(pr.Value is double)) continue;
+                    if (best == null ||
+                        (double)pr.Value > (double)best.Value)
+                        best = pr;
+                }
+                if (best != null)
+                    try { best.Value = len; } catch { }
+                return br.Handle.ToString();
+            }
+            catch { return null; }
         }
 
         private static double AskD(Editor ed, string prompt, double def)

@@ -91,6 +91,23 @@ class TestFrameEngine(unittest.TestCase):
                         res["summary"])
         self.assertIn("hrails_lm", res["summary"])
 
+
+    def test_corners_passthrough(self):
+        """Фидбэк Германа 27.07: corners_x пробрасывается — угловая
+        зона только у указанного угла."""
+        res = fe.run({
+            "op": "frame", "system": "Вектор-1",
+            "contours": [{"id": "A", "pts": rect(0, 0, 6000, 3000)}],
+            "joints_x": [304 + i * 608.0 for i in range(10)],
+            "floors_y": [], "corners_x": [0.0]})
+        self.assertTrue(res["ok"], res)
+        def steps(x):
+            ys = sorted(b["y"] for b in res["brackets"]
+                        if abs(b["x"] - x) < 1)
+            return [ys[i + 1] - ys[i] for i in range(len(ys) - 1)]
+        self.assertLessEqual(max(steps(304.0)), 801)
+        self.assertGreater(max(steps(304 + 9 * 608.0)), 801)
+
     def test_cli_files(self):
         d = tempfile.mkdtemp()
         pin = os.path.join(d, "in.json")

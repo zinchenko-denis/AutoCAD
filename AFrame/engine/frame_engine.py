@@ -123,6 +123,7 @@ def op_frame(req):
             "floors_y": req.get("floors_y"),
             "rows_y": req.get("rows_y"),
             "floor_step": req.get("floor_step"),
+            "corners_x": req.get("corners_x"),
             "calc": req.get("calc")}
     rails, brackets, clamps, per_zone = [], [], [], []
     hrails, fittings = [], []

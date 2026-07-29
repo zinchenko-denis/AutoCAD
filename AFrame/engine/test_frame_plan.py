@@ -361,4 +361,61 @@ ok(p["summary"]["calc_steps"] == {"main": 600, "corner": 600},
    "FR-C6: ортогональная — 600/600 (конструктивный max 600, как "
    "выводы Новгород-260) (%s)" % p["summary"].get("calc_steps"))
 
+
+# ── FR-G (фидбэк Германа 27.07): угловые зоны от УКАЗАННЫХ углов ──
+# G1: угол только слева (corners_x=[0]) — справа шаг рядовой
+p = frame_plan({"system": "Вектор-1", "contours":
+                [{"outer": rect(0, 0, 6000, 3000)}],
+                "joints_x": [304 + i * 608.0 for i in range(10)],
+                "floors_y": [], "corners_x": [0.0]})
+ok(p["ok"], "FR-G1: ok")
+def _steps_at(p, x):
+    ys = sorted(b["y"] for b in p["brackets"] if abs(b["x"] - x) < 1)
+    return [ys[i + 1] - ys[i] for i in range(len(ys) - 1)]
+left = _steps_at(p, 304.0)          # в угловой полосе 1500
+right = _steps_at(p, 304 + 9 * 608.0)   # далеко от угла
+ok(left and max(left) <= 800 + 1,
+   "FR-G1: слева (угол) шаг <=800 (%s)" % max(left or [0]))
+ok(right and max(right) > 800 + 1,
+   "FR-G1: справа шаг рядовой 1200 (%s)" % max(right or [0]))
+
+# G2: corners_x=[] — угловых зон нет вовсе
+p = frame_plan({"system": "Вектор-1", "contours":
+                [{"outer": rect(0, 0, 6000, 3000)}],
+                "joints_x": [304 + i * 608.0 for i in range(10)],
+                "floors_y": [], "corners_x": []})
+ok(p["ok"] and max(_steps_at(p, 304.0)) > 800 + 1,
+   "FR-G2: corners_x=[] — весь фасад рядовой")
+
+# G3: межэтажная + расчёт БЕЗ b_corner — авто 450 + note
+p = frame_plan({"system": "Межэтажная", "sub_type": "interfloor",
+                "contours": [{"outer": rect(0, 0, 5000, 9000)}],
+                "joints_x": [i * 800.0 + 400 for i in range(6)],
+                "floor_step": 2930,
+                "calc": {"wind_region": "II", "terrain": "B",
+                         "height": 61.2, "q_clad": 8,
+                         "gamma_clad": 1.05, "offset": 280,
+                         "na_max": 3960}})
+ok(p["ok"], "FR-G3: ok (%s)" % p.get("error"))
+ok(p["calc_report"]["inputs"]["b_corner"] == 450.0 and
+   any("принят 450" in n for n in p["notes"]),
+   "FR-G3: b_corner авто 450 + note (%s)" %
+   p["calc_report"]["inputs"].get("b_corner"))
+
+# G4: межэтажная + углы + оси чаще в углу — b_corner из осей
+jx = [200, 650, 1100, 1550] + [2400 + i * 800.0 for i in range(4)]
+p = frame_plan({"system": "Межэтажная", "sub_type": "interfloor",
+                "contours": [{"outer": rect(0, 0, 6000, 9000)}],
+                "joints_x": jx, "floor_step": 2930,
+                "corners_x": [0.0],
+                "calc": {"wind_region": "II", "terrain": "B",
+                         "height": 61.2, "q_clad": 8,
+                         "gamma_clad": 1.05, "offset": 280,
+                         "na_max": 3960}})
+ok(p["ok"], "FR-G4: ok (%s)" % p.get("error"))
+ok(abs(p["calc_report"]["inputs"]["b_corner"] - 450.0) < 1 and
+   any("из осей раскладки" in n for n in p["notes"]),
+   "FR-G4: b_corner из осей в угловой полосе = 450 (%s)" %
+   p["calc_report"]["inputs"].get("b_corner"))
+
 print("frame_plan: %d проверок OK" % _n)

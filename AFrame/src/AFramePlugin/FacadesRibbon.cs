@@ -108,13 +108,12 @@ namespace AFramePlugin
             RibbonTab tab = FindOrCreateTab(rc);
             var src = new RibbonPanelSource
             { Title = "Подсистема", Id = PanelId };
-            var panel = new RibbonPanel { Source = src };
-            tab.Panels.Add(panel);
-            src.Items.Add(MakeButton("Подсистема", "ATFRAME",
+src.Items.Add(MakeButton("Подсистема", "ATFRAME",
                 "ATFRAME — кронштейны/направляющие/кляммеры по " +
                 "раскладке ATCLAD (вертикальная, межэтажная, " +
                 "ортогональная).", "afr_frame"));
-        }
+            var panel = new RibbonPanel { Source = src };
+            tab.Panels.Add(panel);}
 
         private static RibbonButton MakeButton(string text, string cmd,
                                                string tip, string icon)
