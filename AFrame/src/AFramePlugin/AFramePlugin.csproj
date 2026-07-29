@@ -21,6 +21,7 @@
 
     <!-- JavaScriptSerializer (JSON без внешних зависимостей) -->
     <Reference Include="System.Web.Extensions" />
+    <Reference Include="Microsoft.CSharp" />
     <!-- WPF-сборки: у ShowModalDialog/StartUserInteraction есть перегрузки
          с WPF Window — для overload resolution нужен тип Window (CS0012,
          урок 18.07r). Диалогов у AClad пока нет, но грабля кровью —

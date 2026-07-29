@@ -21,6 +21,7 @@
 
     <!-- JavaScriptSerializer (JSON без внешних зависимостей) -->
     <Reference Include="System.Web.Extensions" />
+    <Reference Include="Microsoft.CSharp" />
     <!-- Диалог параметров зоны -->
     <Reference Include="System.Windows.Forms" />
     <Reference Include="System.Drawing" />
