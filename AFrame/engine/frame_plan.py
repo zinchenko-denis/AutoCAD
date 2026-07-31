@@ -59,6 +59,9 @@ import os
 import sys
 
 EPS = 1e-6
+CLAMP_MERGE = 100.0  # мм: ближе — один кляммер (кромка откоса
+                     # и шов раскладки почти совпали, 30.07 п.5)
+WIN_NEAR = 200.0     # мм: стойка «принадлежит» грани проёма
 
 
 def _closed(pts):
@@ -217,7 +220,79 @@ def _rail_brackets(a, b, start_off, step):
     return [lo + (hi - lo) * j / k for j in range(k + 1)]
 
 
-def _piece_clamps(clamps, rows, s_lo, s_hi, s_x, side, fl_in):
+def _win_edges(holes, axes, edge_off=0.0):
+    """Оконные стойки — где разрешён БОКОВОЙ кляммер (Герман 30.07 п.4:
+    только в пределах высоты окна). Берём ось у самой грани (ближе
+    WIN_NEAR) и смещённые позиции грань∓edge_off вертикальной.
+    В межэтажной смещения нет (ТЗ §2) и ось может стоять далеко от
+    откоса — тогда боковых не будет: ОТКРЫТЫЙ ВОПРОС В-ц Герману."""
+    out = []
+    for bx0, by0, bx1, by1 in holes:
+        cand = []
+        left = [a for a in axes if a <= bx0 + EPS and bx0 - a < WIN_NEAR]
+        right = [a for a in axes if a >= bx1 - EPS and a - bx1 < WIN_NEAR]
+        if left:
+            cand.append(max(left))
+        if right:
+            cand.append(min(right))
+        if edge_off > EPS:
+            cand += [bx0 - edge_off, bx1 + edge_off]
+        for cx in cand:
+            out.append((cx, by0, by1))
+    return out
+
+
+def _at_window(wedges, x, y):
+    return any(abs(wx - x) < EPS and wy0 - EPS <= y <= wy1 + EPS
+               for wx, wy0, wy1 in wedges)
+
+
+_CL_RANK = {"боковой": 3, "стартовый": 2, "комбинированный": 1,
+            "рядовой": 0}
+
+
+def _merge_clamps(clamps, tol=CLAMP_MERGE):
+    """Слияние ЗАДВОЕННЫХ кляммеров (Герман 30.07: «и стартовый стоит,
+    и рядовой»). Причина найдена прогоном: верх откоса проёма лежит
+    чуть НИЖЕ ближайшего шва раскладки — стартовый садится на кромку,
+    рядовой на шов в нескольких см выше. Ближе tol по одной оси —
+    один кляммер, приоритет боковой > стартовый > комбинированный >
+    рядовой (координата приоритетного = низ ряда облицовки)."""
+    by_x = {}
+    for cl in clamps:
+        by_x.setdefault(round(cl["x"], 1), []).append(cl)
+    out = []
+    for x in sorted(by_x):
+        cur = []
+        for cl in sorted(by_x[x], key=lambda c: c["y"]):
+            if cur and cl["y"] - cur[-1]["y"] < tol - EPS:
+                cur.append(cl)
+                continue
+            if cur:
+                out.append(max(cur, key=lambda c:
+                               _CL_RANK.get(c["kind"], 0)))
+            cur = [cl]
+        if cur:
+            out.append(max(cur, key=lambda c: _CL_RANK.get(c["kind"], 0)))
+    return out
+
+
+def _cut_by_len(lo, hi, std, gap):
+    """Резка направляющей по СТАНДАРТНОЙ ДЛИНЕ (Герман 30.07 п.11:
+    профиль 3000, стык ПОСЕРЕДИНЕ между кронштейнами — при сетке 600
+    середина попадает ровно на кратное 3000, свес остаётся 300)."""
+    out = []
+    a0 = lo
+    while hi - a0 > std + EPS:
+        cut = a0 + std
+        out.append((a0, cut - gap / 2.0))
+        a0 = cut + gap / 2.0
+    if hi - a0 > EPS:
+        out.append((a0, hi))
+    return out
+
+
+def _piece_clamps(clamps, rows, s_lo, s_hi, s_x, side, fl_in, wedges=()):
     """Кляммеры куска стойки (ТЗ 26.07): боковой на оконных
     (смещённых/Z) стойках и их низе (примыкание к окну/отливу);
     стартовый на низе обычного куска (низ зоны / над откосом);
@@ -225,12 +300,16 @@ def _piece_clamps(clamps, rows, s_lo, s_hi, s_x, side, fl_in):
     стыка-термошва."""
     if not rows:
         return
-    clamps.append({"x": round(s_x, 4), "y": round(s_lo, 4),
-                   "kind": "боковой" if side else "стартовый"})
+    k0 = "боковой" if side else "стартовый"
+    if k0 == "стартовый" and _at_window(wedges, s_x, s_lo):
+        k0 = "боковой"                     # п.4: кромка в пределах окна
+    clamps.append({"x": round(s_x, 4), "y": round(s_lo, 4), "kind": k0})
     for ry in rows:
         if not (s_lo + EPS < ry < s_hi - EPS):
             continue
         kind = "боковой" if side else "рядовой"
+        if kind == "рядовой" and _at_window(wedges, s_x, ry):
+            kind = "боковой"               # п.4: у грани окна, в высоту
         if not side and any(
                 f < ry and not any(f < r2 < ry for r2 in rows)
                 for f in fl_in):
@@ -419,6 +498,7 @@ def frame_plan(req):
     min_corner = float(system.get("min_from_corner") or 150.0)
     ortho_v = float(system.get("ortho_v_step") or 600.0)
     ortho_oh = float(system.get("ortho_max_overhang") or 300.0)
+    rail_std = float(system.get("rail_std") or 3000.0)
 
     notes, rails, brackets, clamps = [], [], [], []
     hrails, fittings = [], []
@@ -457,6 +537,9 @@ def frame_plan(req):
         holes = [_closed(h) for h in (c.get("holes") or [])]
         x0, y0, x1, y1 = _bbox(outer)
         hole_boxes = [_bbox(h) for h in holes]
+        wedges = _win_edges(hole_boxes,
+                            [j for j in joints if x0 - EPS <= j <= x1 + EPS],
+                            edge_off)
         # отметки перекрытий: заданные, либо автогенерация шагом
         # этажа от низа контура (фидбэк Германа 26.07)
         floors_c = floors
@@ -527,7 +610,8 @@ def frame_plan(req):
                                  for t in touch)
                     fl_in = [f for f in floors_c
                              if s_lo + EPS < f < s_hi - EPS]
-                    cuts = [s_lo] + fl_in + [s_hi]
+                    cuts = ([s_lo, s_hi] if s_hi - s_lo <= rail_std + EPS
+                            else [s_lo] + fl_in + [s_hi])
                     for i in range(len(cuts) - 1):
                         a2 = cuts[i] + (gap / 2.0 if i > 0 else 0.0)
                         b2 = cuts[i + 1] - (gap / 2.0
@@ -548,7 +632,7 @@ def frame_plan(req):
                                              "y": round(f, 4),
                                              "kind": "вставка"})
                     _piece_clamps(clamps, rows, s_lo, s_hi, jx,
-                                  False, fl_in)
+                                  False, fl_in, wedges)
             # СП-60-40 в подоконной зоне на скобах С1 к крайним
             # межэтажным профилям
             jset = [j for j in joints if x0 - EPS <= j <= x1 + EPS]
@@ -659,7 +743,7 @@ def frame_plan(req):
                                   "kind": "Z-профиль" if side
                                   else "ШП-60-20"})
                     _piece_clamps(clamps, rows, s_lo, s_hi, s_x,
-                                  side, [])
+                                  side, [], wedges)
             continue
 
         # ── ВЕРТИКАЛЬНАЯ (дефолт; ТЗ 26.07 §1) ──
@@ -729,7 +813,8 @@ def frame_plan(req):
                 # 300 от верха, между ними равномерно ≤ шага (ТЗ
                 # Германа 26.07); первый кронштейн направляющей,
                 # начавшейся стыком на перекрытии, — «несущий» (В-е)
-                cuts = [s_lo] + fl_in + [s_hi]
+                cuts = ([s_lo, s_hi] if s_hi - s_lo <= rail_std + EPS
+                        else [s_lo] + fl_in + [s_hi])
                 for i in range(len(cuts) - 1):
                     a = cuts[i] + (gap / 2.0 if i > 0 else 0.0)
                     b = cuts[i + 1] - (gap / 2.0
@@ -764,8 +849,9 @@ def frame_plan(req):
                                          "y": round(f, 4),
                                          "kind": "несущий"})
                 _piece_clamps(clamps, rows, s_lo, s_hi, s_x, side,
-                              fl_in)
+                              fl_in, wedges)
 
+    clamps = _merge_clamps(clamps)
     lm = sum(r["len"] for r in rails) / 1000.0
     hlm = sum(r["len"] for r in hrails) / 1000.0
     system_used = {k: v for k, v in system.items()

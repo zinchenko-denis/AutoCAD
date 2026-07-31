@@ -418,4 +418,72 @@ ok(abs(p["calc_report"]["inputs"]["b_corner"] - 450.0) < 1 and
    "FR-G4: b_corner из осей в угловой полосе = 450 (%s)" %
    p["calc_report"]["inputs"].get("b_corner"))
 
+# ── FR-H (фидбэк Германа 30.07, ответы по сборке №10) ──
+# H1/H2: ЗАДВОЕНИЕ КЛЯММЕРОВ. Причина найдена прогоном: верх откоса
+# проёма лежит чуть НИЖЕ ближайшего шва раскладки → стартовый садится
+# на кромку, рядовой на шов в нескольких см выше («и стартовый стоит,
+# и рядовой»). Слияние ближе CLAMP_MERGE, приоритет у стартового.
+_rows = [605.0 * i for i in range(0, 12)]
+
+
+def _win_case(top, sub="interfloor", sysname="Межэтажная"):
+    return frame_plan({"system": sysname, "sub_type": sub,
+                       "contours": [{"outer": rect(0, 0, 3000, 6000),
+                                     "holes": [rect(1000, 2000, 2000, top)]}],
+                       "joints_x": [500, 1500, 2500],
+                       "floors_y": [3000], "rows_y": _rows})
+
+
+def _tight_pairs(p, tol=100.0):
+    by = {}
+    for c in p["clamps"]:
+        by.setdefault(round(c["x"], 1), []).append(c["y"])
+    n = 0
+    for ys in by.values():
+        ys.sort()
+        n += sum(1 for a, b in zip(ys, ys[1:]) if b - a < tol - 1e-9)
+    return n
+
+
+for _sub, _sys in (("interfloor", "Межэтажная"), ("vertical", "Вектор-1"),
+                   ("ortho", "Вектор-1")):
+    for _top in (3500.0, 3600.0, 3630.0):
+        _p = _win_case(_top, _sub, _sys)
+        ok(_tight_pairs(_p) == 0,
+           "FR-H1: %s верх окна %.0f — задвоенные кляммеры (%d пар)" %
+           (_sub, _top, _tight_pairs(_p)))
+
+# H2: при слиянии выживает СТАРТОВЫЙ (кромка откоса), рядовой на шве
+# в 30 мм выше исчезает; общее число падает ровно на слитые
+p_a = _win_case(3630.0)      # кромка совпала со швом — эталон
+p_b = _win_case(3600.0)      # кромка на 30 мм ниже шва
+c15b = [c for c in p_b["clamps"] if near(c["x"], 1500)]
+ok(any(near(c["y"], 3600.0) and c["kind"] == "стартовый" for c in c15b),
+   "FR-H2: стартовый остался на кромке откоса 3600")
+ok(not any(near(c["y"], 3630.0) for c in c15b),
+   "FR-H2: рядовой на шве 3630 слит со стартовым")
+ok(len(p_b["clamps"]) == len(p_a["clamps"]),
+   "FR-H2: после слияния столько же, сколько при совпавшей кромке "
+   "(%d vs %d)" % (len(p_b["clamps"]), len(p_a["clamps"])))
+
+# H3: БОКОВОЙ только в пределах высоты окна (п.4). Вертикальная:
+# смещённая стойка грань−100, окно по высоте 2000..3500
+p_v = frame_plan({"system": "Вектор-1",
+                  "contours": [{"outer": rect(0, 0, 3000, 6000),
+                                "holes": [rect(1000, 2000, 2000, 3500)]}],
+                  "joints_x": [950, 1500, 2050],
+                  "floors_y": [3000], "rows_y": _rows})
+side_cl = [c for c in p_v["clamps"] if c["kind"] == "боковой"]
+# диапазон = высота окна + выступ 50/50 (низ смещённой стойки — отлив,
+# там боковой по ТЗ 26.07; п.4 30.07 ограничивает сверху и снизу окном)
+ok(side_cl and all(1950.0 - 1e-6 <= c["y"] <= 3550.0 + 1e-6
+                   for c in side_cl),
+   "FR-H3: боковые кляммеры только в высоту окна+выступ (%s)" %
+   sorted({round(c["y"]) for c in side_cl}))
+ok(not any(c["kind"] == "боковой" and c["y"] > 3550.0
+           for c in p_v["clamps"]),
+   "FR-H3: выше окна боковых нет — обычные рядовые")
+ok(all(any(near(c["x"], e) for e in (900.0, 2100.0)) for c in side_cl),
+   "FR-H3: боковые — на смещённых оконных стойках грань∓100")
+
 print("frame_plan: %d проверок OK" % _n)
