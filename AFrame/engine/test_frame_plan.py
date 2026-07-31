@@ -486,4 +486,44 @@ ok(not any(c["kind"] == "боковой" and c["y"] > 3550.0
 ok(all(any(near(c["x"], e) for e in (900.0, 2100.0)) for c in side_cl),
    "FR-H3: боковые — на смещённых оконных стойках грань∓100")
 
+# H4 (п.11): ОРТОГОНАЛЬНАЯ — вертикальный ШП режется по стандартным
+# 3000, стык ПОСЕРЕДИНЕ между кронштейнами сетки (300 + 600k), свес
+# крайнего кронштейна ≤300. Раньше клали одним куском на всю высоту —
+# динблок столько не растягивался («профилей выше первого этажа нет»).
+p_o = frame_plan({"system": "Вектор-1", "sub_type": "ortho",
+                  "contours": [{"outer": rect(0, 0, 3000, 15000)}],
+                  "joints_x": [500, 1500, 2500],
+                  "rows_y": [605.0 * i for i in range(25)]})
+shp = sorted((r for r in p_o["rails"] if near(r["x"], 1500)),
+             key=lambda r: r["y0"])
+ok(len(shp) == 5 and all(r["len"] <= 3000.0 + 1e-6 for r in shp),
+   "FR-H4: ШП режется по 3000 (%d кусков, max %.0f)" %
+   (len(shp), max(r["len"] for r in shp)))
+_joints = [round((shp[i]["y1"] + shp[i + 1]["y0"]) / 2.0)
+           for i in range(len(shp) - 1)]
+ok(_joints == [3000, 6000, 9000, 12000],
+   "FR-H4: стыки посередине между кронштейнами 2700/3300 (%s)" % _joints)
+_br = sorted(b["y"] for b in p_o["brackets"] if near(b["x"], 1500))
+ok(_br and near(_br[0], 300.0) and
+   all(near(b - a, 600.0) for a, b in zip(_br, _br[1:])),
+   "FR-H4: сетка кронштейнов 300 + 600k не тронута (%s…)" % _br[:4])
+
+# H5 (п.3): короткая направляющая (под окном / над откосом) НЕ режется
+# отметкой перекрытия — «терморазрыв здесь не нужен, она меньше 3 м»
+p_s = frame_plan({"system": "Вектор-1",
+                  "contours": [{"outer": rect(0, 0, 3000, 6000),
+                                "holes": [rect(1000, 2500, 2000, 4000)]}],
+                  "joints_x": [500, 1500, 2500],
+                  "floors_y": [1500, 3000],
+                  "rows_y": [605.0 * i for i in range(11)]})
+low = [r for r in p_s["rails"]
+       if near(r["x"], 1500) and r["y1"] <= 2500.0 + 1e-6]
+ok(len(low) == 1 and near(low[0]["y0"], 0.0) and near(low[0]["y1"], 2500.0),
+   "FR-H5: подоконный кусок 2500 мм — ОДНА направляющая без стыка "
+   "на отметке 1500 (%s)" % [(r["y0"], r["y1"]) for r in low])
+tall = [r for r in p_s["rails"] if near(r["x"], 500)]
+ok(len(tall) > 1,
+   "FR-H5: сплошная стойка 6000 по-прежнему режется отметками (%d)" %
+   len(tall))
+
 print("frame_plan: %d проверок OK" % _n)

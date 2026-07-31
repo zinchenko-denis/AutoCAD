@@ -282,13 +282,16 @@ def _cut_by_len(lo, hi, std, gap):
     профиль 3000, стык ПОСЕРЕДИНЕ между кронштейнами — при сетке 600
     середина попадает ровно на кратное 3000, свес остаётся 300)."""
     out = []
-    a0 = lo
-    while hi - a0 > std + EPS:
-        cut = a0 + std
-        out.append((a0, cut - gap / 2.0))
-        a0 = cut + gap / 2.0
-    if hi - a0 > EPS:
-        out.append((a0, hi))
+    n = 0
+    while True:
+        a = lo + n * std + (gap / 2.0 if n > 0 else 0.0)
+        if hi - a <= EPS:
+            break
+        if lo + (n + 1) * std >= hi - EPS:      # последний кусок
+            out.append((a, hi))
+            break
+        out.append((a, lo + (n + 1) * std - gap / 2.0))
+        n += 1
     return out
 
 
@@ -736,12 +739,18 @@ def frame_plan(req):
                         notes.append("ШП X=%.0f: консольный свес "
                                      "%.0f > %.0f" %
                                      (s_x, s_hi - top_y, ortho_oh))
-                    rails.append({"x": round(s_x, 4),
-                                  "y0": round(s_lo, 4),
-                                  "y1": round(s_hi, 4),
-                                  "len": round(s_hi - s_lo, 4),
-                                  "kind": "Z-профиль" if side
-                                  else "ШП-60-20"})
+                    # п.11 (Герман 30.07): профиль стандартный 3000,
+                    # свес ≤300, стык ПОСЕРЕДИНЕ между кронштейнами.
+                    # Раньше клали ОДНИМ куском на всю высоту зоны —
+                    # динблок столько не растягивался («профилей нет
+                    # выше первого этажа», фидбэк по сборке №10)
+                    for za, zb in _cut_by_len(s_lo, s_hi, rail_std, gap):
+                        rails.append({"x": round(s_x, 4),
+                                      "y0": round(za, 4),
+                                      "y1": round(zb, 4),
+                                      "len": round(zb - za, 4),
+                                      "kind": "Z-профиль" if side
+                                      else "ШП-60-20"})
                     _piece_clamps(clamps, rows, s_lo, s_hi, s_x,
                                   side, [], wedges)
             continue
