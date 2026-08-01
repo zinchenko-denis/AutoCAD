@@ -655,8 +655,8 @@ namespace AFramePlugin
 
                 // кронштейны — блоки-знаки или образцы Германа
                 InsertSigns(tr, ms, brackets, blkMain, blkRow,
-                            "несущий", LayerBrackets, handlesByRoot,
-                            partToRoot, ref made);
+                            "несущий", "кронштейн ", LayerBrackets,
+                            handlesByRoot, partToRoot, ref made);
                 // кляммеры: 4 вида (ТЗ 26.07)
                 var clampBlk = new Dictionary<string, ObjectId>
                 {
@@ -676,9 +676,9 @@ namespace AFramePlugin
                     {
                         var it = io2 as Dictionary<string, object>;
                         if (it == null) continue;
+                        string ck = SafeStr(Get(it, "kind"));
                         ObjectId bid;
-                        if (!clampBlk.TryGetValue(
-                                SafeStr(Get(it, "kind")), out bid))
+                        if (!clampBlk.TryGetValue(ck, out bid))
                             bid = clRow;
                         var br2 = new BlockReference(
                             new Point3d(ToD(Get(it, "x")),
@@ -686,6 +686,7 @@ namespace AFramePlugin
                         br2.Layer = LayerClamps;
                         ms.AppendEntity(br2);
                         tr.AddNewlyCreatedDBObject(br2, true);
+                        FillAttrs(tr, br2, ("кляммер " + ck).Trim());
                         Remember(handlesByRoot, partToRoot,
                                  SafeStr(Get(it, "zone")),
                                  br2.Handle.ToString());
@@ -693,8 +694,8 @@ namespace AFramePlugin
                     }
                 // метизы межэтажной: вставки и скобы С1
                 InsertSigns(tr, ms, fittings, fitIns, fitSc,
-                            "вставка", LayerBrackets, handlesByRoot,
-                            partToRoot, ref made);
+                            "вставка", "", LayerBrackets,
+                            handlesByRoot, partToRoot, ref made);
 
                 // метка ATFRAME на объекты зоны / контуры
                 foreach (var kv in handlesByRoot)
@@ -823,10 +824,12 @@ namespace AFramePlugin
             }
         }
 
-        // вставка блоков-знаков (kind mainKind → блок main, иначе row)
+        // вставка блоков-знаков (kind mainKind → блок main, иначе row);
+        // МАРКИРОВКА = markPrefix + kind движка («кронштейн несущий»,
+        // «вставка», «скоба С1»)
         private static void InsertSigns(Transaction tr,
             BlockTableRecord ms, object[] items, ObjectId blkA,
-            ObjectId blkB, string kindA, string layer,
+            ObjectId blkB, string kindA, string markPrefix, string layer,
             Dictionary<string, List<string>> handlesByRoot,
             Dictionary<string, string> partToRoot, ref int made)
         {
@@ -836,7 +839,8 @@ namespace AFramePlugin
                 var it = io as Dictionary<string, object>;
                 if (it == null) continue;
                 double x = ToD(Get(it, "x")), y = ToD(Get(it, "y"));
-                bool isA = SafeStr(Get(it, "kind")) == kindA;
+                string kind = SafeStr(Get(it, "kind"));
+                bool isA = kind == kindA;
                 var br = new BlockReference(new Point3d(x, y, 0),
                                             isA ? blkA : blkB);
                 br.Layer = layer;
@@ -847,10 +851,64 @@ namespace AFramePlugin
                 br.ScaleFactors = new Scale3d(1.0, 1.0, 1.0);
                 ms.AppendEntity(br);
                 tr.AddNewlyCreatedDBObject(br, true);
+                FillAttrs(tr, br, (markPrefix + kind).Trim());
                 Remember(handlesByRoot, partToRoot,
                          SafeStr(Get(it, "zone")), br.Handle.ToString());
                 made++;
             }
+        }
+
+        // атрибуты знака: ATTDEF'ы определения → ATTRIB'ы вставки
+        // (паттерн ABlockGen/AClad, «из текущего представления»);
+        // МАРКИРОВКА получает вид элемента — по нему ATableSpec
+        // собирает ведомость подсистемы (Count по слоям _01_ПС_*).
+        // ЗАХВАТКА отложена (Денис 01.08) — заполнится здесь же.
+        private static void FillAttrs(Transaction tr, BlockReference br,
+                                      string mark)
+        {
+            var rbtr = (BlockTableRecord)tr.GetObject(
+                br.BlockTableRecord, OpenMode.ForRead);
+            if (!rbtr.HasAttributeDefinitions) return;
+            foreach (ObjectId aid in rbtr)
+            {
+                var ad = tr.GetObject(aid, OpenMode.ForRead)
+                         as AttributeDefinition;
+                if (ad == null || ad.Constant) continue;
+                var ar = new AttributeReference();
+                ar.SetAttributeFromBlock(ad, br.BlockTransform);
+                if (ad.Tag.Trim().ToUpperInvariant() == "МАРКИРОВКА")
+                    ar.TextString = mark;
+                br.AttributeCollection.AppendAttribute(ar);
+                tr.AddNewlyCreatedDBObject(ar, true);
+            }
+        }
+
+        // ATTDEF «МАРКИРОВКА» в НАШЕМ определении знака (невидимый —
+        // вид знаков не меняется; значение ставит FillAttrs). Старому
+        // чертежу атрибут домешивается в определение; определения
+        // ОБРАЗЦОВ (блоки Германа) НЕ правим — чужие блоки, у них
+        // заполняется только уже имеющийся атрибут.
+        private static void EnsureMarkDef(Transaction tr, Database db,
+                                          ObjectId btrId)
+        {
+            var btr = (BlockTableRecord)tr.GetObject(btrId,
+                                                     OpenMode.ForRead);
+            foreach (ObjectId id in btr)
+            {
+                var ad0 = tr.GetObject(id, OpenMode.ForRead)
+                          as AttributeDefinition;
+                if (ad0 != null &&
+                    ad0.Tag.Trim().ToUpperInvariant() == "МАРКИРОВКА")
+                    return;
+            }
+            btr.UpgradeOpen();
+            var ad = new AttributeDefinition(Point3d.Origin, "",
+                "МАРКИРОВКА", "Маркировка", db.Textstyle);
+            ad.Invisible = true;
+            ad.Height = 35.0;
+            ad.Layer = "0";
+            btr.AppendEntity(ad);
+            tr.AddNewlyCreatedDBObject(ad, true);
         }
 
         private static void Remember(
@@ -873,7 +931,12 @@ namespace AFramePlugin
         {
             var bt = (BlockTable)tr.GetObject(db.BlockTableId,
                                               OpenMode.ForRead);
-            if (bt.Has(name)) return bt[name];
+            if (bt.Has(name))
+            {
+                ObjectId ex = bt[name];
+                EnsureMarkDef(tr, db, ex);
+                return ex;
+            }
             bt.UpgradeOpen();
             var btr = new BlockTableRecord { Name = name };
             ObjectId id = bt.Add(btr);
@@ -895,6 +958,7 @@ namespace AFramePlugin
             ci.Layer = "0";
             btr.AppendEntity(ci);
             tr.AddNewlyCreatedDBObject(ci, true);
+            EnsureMarkDef(tr, db, id);
             return id;
         }
 
@@ -903,7 +967,12 @@ namespace AFramePlugin
         {
             var bt = (BlockTable)tr.GetObject(db.BlockTableId,
                                               OpenMode.ForRead);
-            if (bt.Has(name)) return bt[name];
+            if (bt.Has(name))
+            {
+                ObjectId ex = bt[name];
+                EnsureMarkDef(tr, db, ex);
+                return ex;
+            }
             bt.UpgradeOpen();
             var btr = new BlockTableRecord { Name = name };
             ObjectId id = bt.Add(btr);
@@ -914,6 +983,7 @@ namespace AFramePlugin
             if (second)
                 // боковой — ножка вбок; комбинированный — вниз и вбок
                 AddPoly(tr, btr, false, 50, 0, 84, 0);
+            EnsureMarkDef(tr, db, id);
             return id;
         }
 
@@ -924,7 +994,12 @@ namespace AFramePlugin
         {
             var bt = (BlockTable)tr.GetObject(db.BlockTableId,
                                               OpenMode.ForRead);
-            if (bt.Has(name)) return bt[name];
+            if (bt.Has(name))
+            {
+                ObjectId ex = bt[name];
+                EnsureMarkDef(tr, db, ex);
+                return ex;
+            }
             bt.UpgradeOpen();
             var btr = new BlockTableRecord { Name = name };
             ObjectId id = bt.Add(btr);
@@ -938,6 +1013,7 @@ namespace AFramePlugin
             }
             else
                 AddPoly(tr, btr, false, -25, 25, -25, -25, 25, -25);
+            EnsureMarkDef(tr, db, id);
             return id;
         }
 
