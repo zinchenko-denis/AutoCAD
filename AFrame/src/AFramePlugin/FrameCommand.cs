@@ -768,6 +768,32 @@ namespace AFramePlugin
                     "рядовая зона " + SafeStr(Get(steps, "main")) +
                     " / угловая " + SafeStr(Get(steps, "corner")) +
                     " мм.");
+            // п.2 (Герман 30.07): подобранный профиль и ЧТО режет шаг.
+            // На боевых числах узкое место — анкер, а не сечение:
+            // конструктору важно видеть это, иначе он думает, что
+            // кронштейнов много из-за слабого профиля.
+            var prof = Get(rep, "profile") as Dictionary<string, object>;
+            if (prof != null)
+                ed.WriteMessage("\n  профиль подобран: рядовая " +
+                    SafeStr(Get(prof, "row")) + " / угловая " +
+                    SafeStr(Get(prof, "corner")) + ".");
+            var bind = Get(rep, "binding") as Dictionary<string, object>;
+            if (bind != null)
+                foreach (var zk2 in new[] { "row", "corner" })
+                {
+                    var bo = Get(bind, zk2) as object[];
+                    string zn = zk2 == "row" ? "рядовой" : "угловой";
+                    if (bo == null || bo.Length < 3)
+                    {
+                        ed.WriteMessage("\n  в " + zn + " зоне шаг упёрся " +
+                            "в конструктивный предел системы.");
+                        continue;
+                    }
+                    ed.WriteMessage("\n  в " + zn + " зоне шаг ограничен: " +
+                        SafeStr(bo[0]) + " (" + SafeStr(bo[1]) + " при " +
+                        "допустимых " + SafeStr(bo[2]) + ") — увеличить " +
+                        "шаг можно только усилив этот узел.");
+                }
             foreach (var zk in new[] { "row", "corner" })
             {
                 var ch = Get(rep, zk) as Dictionary<string, object>;
@@ -814,6 +840,11 @@ namespace AFramePlugin
                 var br = new BlockReference(new Point3d(x, y, 0),
                                             isA ? blkA : blkB);
                 br.Layer = layer;
+                // п.12 (Герман 30.07, «знаки разного размера — сбой»):
+                // масштаб вставки жёстко 1:1. Если знаки всё равно
+                // разной величины — различаются САМИ ОБРАЗЦЫ (блоки
+                // нарисованы в разном масштабе), лечится образцами.
+                br.ScaleFactors = new Scale3d(1.0, 1.0, 1.0);
                 ms.AppendEntity(br);
                 tr.AddNewlyCreatedDBObject(br, true);
                 Remember(handlesByRoot, partToRoot,
