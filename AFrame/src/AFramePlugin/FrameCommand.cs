@@ -677,6 +677,7 @@ namespace AFramePlugin
                         var it = io2 as Dictionary<string, object>;
                         if (it == null) continue;
                         string ck = SafeStr(Get(it, "kind"));
+                        string cpid = SafeStr(Get(it, "zone"));
                         ObjectId bid;
                         if (!clampBlk.TryGetValue(ck, out bid))
                             bid = clRow;
@@ -686,9 +687,9 @@ namespace AFramePlugin
                         br2.Layer = LayerClamps;
                         ms.AppendEntity(br2);
                         tr.AddNewlyCreatedDBObject(br2, true);
-                        FillAttrs(tr, br2, ("кляммер " + ck).Trim());
-                        Remember(handlesByRoot, partToRoot,
-                                 SafeStr(Get(it, "zone")),
+                        FillAttrs(tr, br2, ("кляммер " + ck).Trim(),
+                                  RootOf(partToRoot, cpid));
+                        Remember(handlesByRoot, partToRoot, cpid,
                                  br2.Handle.ToString());
                         made++;
                     }
@@ -840,6 +841,7 @@ namespace AFramePlugin
                 if (it == null) continue;
                 double x = ToD(Get(it, "x")), y = ToD(Get(it, "y"));
                 string kind = SafeStr(Get(it, "kind"));
+                string pid = SafeStr(Get(it, "zone"));
                 bool isA = kind == kindA;
                 var br = new BlockReference(new Point3d(x, y, 0),
                                             isA ? blkA : blkB);
@@ -851,20 +853,22 @@ namespace AFramePlugin
                 br.ScaleFactors = new Scale3d(1.0, 1.0, 1.0);
                 ms.AppendEntity(br);
                 tr.AddNewlyCreatedDBObject(br, true);
-                FillAttrs(tr, br, (markPrefix + kind).Trim());
-                Remember(handlesByRoot, partToRoot,
-                         SafeStr(Get(it, "zone")), br.Handle.ToString());
+                FillAttrs(tr, br, (markPrefix + kind).Trim(),
+                          RootOf(partToRoot, pid));
+                Remember(handlesByRoot, partToRoot, pid,
+                         br.Handle.ToString());
                 made++;
             }
         }
 
         // атрибуты знака: ATTDEF'ы определения → ATTRIB'ы вставки
         // (паттерн ABlockGen/AClad, «из текущего представления»);
-        // МАРКИРОВКА получает вид элемента — по нему ATableSpec
-        // собирает ведомость подсистемы (Count по слоям _01_ПС_*).
-        // ЗАХВАТКА отложена (Денис 01.08) — заполнится здесь же.
+        // МАРКИРОВКА = вид элемента, ЗАХВАТКА = зона этапа 1 (ответ
+        // Дениса 01.08: захватка — участок, обведённый и обсчитанный
+        // в ATFZONE; id тот же, что в сводной таблице ATFTABLE, так
+        // что ведомость подсистемы по захваткам бьётся с площадями).
         private static void FillAttrs(Transaction tr, BlockReference br,
-                                      string mark)
+                                      string mark, string zahv)
         {
             var rbtr = (BlockTableRecord)tr.GetObject(
                 br.BlockTableRecord, OpenMode.ForRead);
@@ -876,39 +880,53 @@ namespace AFramePlugin
                 if (ad == null || ad.Constant) continue;
                 var ar = new AttributeReference();
                 ar.SetAttributeFromBlock(ad, br.BlockTransform);
-                if (ad.Tag.Trim().ToUpperInvariant() == "МАРКИРОВКА")
-                    ar.TextString = mark;
+                string tag = ad.Tag.Trim().ToUpperInvariant();
+                if (tag == "МАРКИРОВКА") ar.TextString = mark;
+                else if (tag == "ЗАХВАТКА") ar.TextString = zahv;
                 br.AttributeCollection.AppendAttribute(ar);
                 tr.AddNewlyCreatedDBObject(ar, true);
             }
         }
 
-        // ATTDEF «МАРКИРОВКА» в НАШЕМ определении знака (невидимый —
-        // вид знаков не меняется; значение ставит FillAttrs). Старому
-        // чертежу атрибут домешивается в определение; определения
-        // ОБРАЗЦОВ (блоки Германа) НЕ правим — чужие блоки, у них
-        // заполняется только уже имеющийся атрибут.
+        private static string RootOf(
+            Dictionary<string, string> partToRoot, string pid)
+        {
+            string root;
+            return partToRoot.TryGetValue(pid, out root) ? root : pid;
+        }
+
+        // ATTDEF «МАРКИРОВКА» и «ЗАХВАТКА» в НАШЕМ определении знака
+        // (невидимые — вид знаков не меняется; значения ставит
+        // FillAttrs). Старому чертежу недостающие домешиваются;
+        // определения ОБРАЗЦОВ (блоки Германа) НЕ правим — чужие
+        // блоки, у них заполняются только уже имеющиеся атрибуты.
         private static void EnsureMarkDef(Transaction tr, Database db,
                                           ObjectId btrId)
         {
             var btr = (BlockTableRecord)tr.GetObject(btrId,
                                                      OpenMode.ForRead);
+            var have = new HashSet<string>();
             foreach (ObjectId id in btr)
             {
                 var ad0 = tr.GetObject(id, OpenMode.ForRead)
                           as AttributeDefinition;
-                if (ad0 != null &&
-                    ad0.Tag.Trim().ToUpperInvariant() == "МАРКИРОВКА")
-                    return;
+                if (ad0 != null)
+                    have.Add(ad0.Tag.Trim().ToUpperInvariant());
             }
-            btr.UpgradeOpen();
-            var ad = new AttributeDefinition(Point3d.Origin, "",
-                "МАРКИРОВКА", "Маркировка", db.Textstyle);
-            ad.Invisible = true;
-            ad.Height = 35.0;
-            ad.Layer = "0";
-            btr.AppendEntity(ad);
-            tr.AddNewlyCreatedDBObject(ad, true);
+            bool up = false;
+            foreach (string tag in new[] { "МАРКИРОВКА", "ЗАХВАТКА" })
+            {
+                if (have.Contains(tag)) continue;
+                if (!up) { btr.UpgradeOpen(); up = true; }
+                var ad = new AttributeDefinition(Point3d.Origin, "",
+                    tag, tag == "МАРКИРОВКА" ? "Маркировка"
+                                             : "Захватка", db.Textstyle);
+                ad.Invisible = true;
+                ad.Height = 35.0;
+                ad.Layer = "0";
+                btr.AppendEntity(ad);
+                tr.AddNewlyCreatedDBObject(ad, true);
+            }
         }
 
         private static void Remember(

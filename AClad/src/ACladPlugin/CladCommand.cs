@@ -481,8 +481,16 @@ namespace ACladPlugin
                         if (!okW || !okH) dynFail++;
                     }
 
+                    string pid = SafeStr(Get(it, "zone"));
+                    string root;
+                    if (!partToRoot.TryGetValue(pid, out root)) root = pid;
+
                     // атрибуты (МАРКИРОВКА/ЗАХВАТКА) — из ТЕКУЩЕГО
-                    // представления, ПОСЛЕ динрастяжек (паттерн ABlockGen)
+                    // представления, ПОСЛЕ динрастяжек (паттерн ABlockGen).
+                    // ЗАХВАТКА = зона этапа 1 (ответ Дениса 01.08: захватка
+                    // — участок, обведённый и обсчитанный в ATFZONE; id тот
+                    // же, что в сводной таблице ATFTABLE). МАРКИРОВКА камня
+                    // — открытый В10 (типоразмер? ждём Германа), не трогаем.
                     var rbtr = (BlockTableRecord)tr.GetObject(
                         br.BlockTableRecord, OpenMode.ForRead);
                     if (rbtr.HasAttributeDefinitions)
@@ -493,13 +501,13 @@ namespace ACladPlugin
                             if (ad == null || ad.Constant) continue;
                             var ar = new AttributeReference();
                             ar.SetAttributeFromBlock(ad, br.BlockTransform);
+                            if (ad.Tag.Trim().ToUpperInvariant()
+                                == "ЗАХВАТКА")
+                                ar.TextString = root;
                             br.AttributeCollection.AppendAttribute(ar);
                             tr.AddNewlyCreatedDBObject(ar, true);
                         }
 
-                    string pid = SafeStr(Get(it, "zone"));
-                    string root;
-                    if (!partToRoot.TryGetValue(pid, out root)) root = pid;
                     if (!handlesByRoot.ContainsKey(root))
                         handlesByRoot[root] = new List<string>();
                     handlesByRoot[root].Add(br.Handle.ToString());
