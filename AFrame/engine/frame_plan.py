@@ -242,6 +242,10 @@ def _win_edges(holes, axes, edge_off=0.0):
     return out
 
 
+def near_pt(b, x, y, tol=1.0):
+    return abs(b["x"] - x) < tol and abs(b["y"] - y) < tol
+
+
 def _at_window(wedges, x, y):
     return any(abs(wx - x) < EPS and wy0 - EPS <= y <= wy1 + EPS
                for wx, wy0, wy1 in wedges)
@@ -502,6 +506,7 @@ def frame_plan(req):
     ortho_v = float(system.get("ortho_v_step") or 600.0)
     ortho_oh = float(system.get("ortho_max_overhang") or 300.0)
     rail_std = float(system.get("rail_std") or 3000.0)
+    edge_rail = float(system.get("edge_rail_off") or 100.0)
 
     notes, rails, brackets, clamps = [], [], [], []
     hrails, fittings = [], []
@@ -559,6 +564,14 @@ def frame_plan(req):
 
         # ── МЕЖЭТАЖНАЯ (ТЗ 26.07 §2) ──
         if sub == "interfloor":
+            # п.10 (Герман 30.07): в УГЛОВОЙ и КРАЕВОЙ зоне ставим
+            # межэтажный профиль в 100 мм от края замкнутой области
+            # (краевая = край захватки, углом не помеченный)
+            for ex in (x0 + edge_rail, x1 - edge_rail):
+                if x0 - EPS < ex < x1 + EPS and \
+                        not any(abs(ex - j) < edge_rail - EPS
+                                for j in joints):
+                    joints = sorted(joints + [ex])
             if not floors_c:
                 notes.append("контур %d: межэтажная без отметок "
                              "перекрытий — задайте точки или шаг "
@@ -640,8 +653,12 @@ def frame_plan(req):
             # межэтажным профилям
             jset = [j for j in joints if x0 - EPS <= j <= x1 + EPS]
             for bx0, by0, bx1, by1 in hole_boxes:
-                left = [j for j in jset if j < bx0 - EPS]
-                right = [j for j in jset if j > bx1 + EPS]
+                # п.7 (Герман 30.07): «крепится к ближайшим/крайним
+                # профилям около окна». Ось, СОВПАВШАЯ с гранью проёма,
+                # раньше отбрасывалась (строгое <) и СП тянулся до
+                # следующей — «соединяет СП со следующими направляющими»
+                left = [j for j in jset if j <= bx0 + EPS]
+                right = [j for j in jset if j >= bx1 - EPS]
                 if not left or not right:
                     continue
                 la2, ra2 = max(left), min(right)
@@ -669,6 +686,36 @@ def frame_plan(req):
             while yy < y1 - EPS:
                 ys_g.append(yy)
                 yy += ortho_v
+            # п.9 (Герман 30.07): ДОП. КРОНШТЕЙНЫ У ПРОЁМОВ. Сетка сама
+            # по себе нанесена верно, но если от ближайшего кронштейна
+            # до грани окна больше ortho_oh (300) — ставим дополнительный
+            # в edge_rail (100) от грани. Сбоку — только в пределах
+            # ВЫСОТЫ окна, сверху — только в пределах ЕГО ШИРИНЫ.
+            add_br = []
+            for bx0, by0, bx1, by1 in hole_boxes:
+                ys_in = [yy for yy in ys_g if by0 - EPS < yy < by1 + EPS]
+                lf = [px for px in xs_g if px <= bx0 + EPS]
+                rt = [px for px in xs_g if px >= bx1 - EPS]
+                if ys_in and lf and bx0 - max(lf) > ortho_oh + EPS:
+                    add_br += [(bx0 - edge_rail, yy) for yy in ys_in]
+                if ys_in and rt and min(rt) - bx1 > ortho_oh + EPS:
+                    add_br += [(bx1 + edge_rail, yy) for yy in ys_in]
+                up = [yy for yy in ys_g if yy >= by1 - EPS]
+                xs_in = [px for px in xs_g if bx0 - EPS < px < bx1 + EPS]
+                if up and xs_in and min(up) - by1 > ortho_oh + EPS:
+                    add_br += [(px, by1 + edge_rail) for px in xs_in]
+            n_add = 0
+            for px, yy in add_br:
+                if _in_boxes(hole_boxes, px, yy):
+                    continue
+                if any(near_pt(b, px, yy) for b in brackets):
+                    continue
+                brackets.append({"x": round(px, 4), "y": round(yy, 4),
+                                 "kind": "рядовой"})
+                n_add += 1
+            if n_add:
+                notes.append("доп. кронштейнов у проёмов: %d" % n_add)
+
             # сетка кронштейнов (кроме проёмов)
             for yy in ys_g:
                 for px in xs_g:
