@@ -9,6 +9,7 @@ test_frame_calc.py. ВСЕ эталонные числа — из 13 боевы�
   АКП местность A; FC8 pick_step/report."""
 import sys
 from frame_calc import (wind_peak, ice_load, spans_const, calc_chain,
+                        pick_profile_step, binding_check, PROFILES,
                         pick_step, report, WIND_REGIONS)
 
 _n = 0
@@ -297,5 +298,46 @@ rep2 = report(NIZH, candidates=[200, 250, 300, 350, 400, 450, 500])
 ok(rep2["row"]["step"] >= 350 and rep2["corner"]["step"] >= 200,
    "FC8: Нижнекаменская: >=350/>=200 на верхнем диапазоне (%s/%s)" % (
        rep2["row"]["step"], rep2["corner"]["step"]))
+
+# ── FC-H (п.2 Германа 30.07: таблицы «профиль → шаг» нет, профиль
+#    считается на несущую способность ВМЕСТЕ с шагом) ──
+_base = dict(scheme="vertical", wind_region="IV", terrain="B",
+             height=57.0, q_clad=180.0, gamma_clad=1.1, q_rails=2.5,
+             offset=250.0, na_max=3000.0, bracket="КР1-85",
+             extender="УК-85-1,2", profile="ГП-40-40-1,2",
+             b_row=600.0, b_corner=450.0, rail_len=3000.0, max_step=800)
+
+_name, _step, _chain, _vars = pick_profile_step(_base, "row")
+ok(_name is not None and _step is not None,
+   "FC-H1: подбор нашёл пару профиль+шаг")
+_okv = [v for v in _vars if v["step"] is not None]
+ok(all(v["kg_m2"] >= _vars[0]["kg_m2"] for v in _okv),
+   "FC-H1: варианты отсортированы по расходу стали на м²")
+ok(_name == min(_okv, key=lambda v: v["kg_m2"])["profile"],
+   "FC-H1: выбран минимальный по кг/м² (%s)" % _name)
+
+# H2: узкое место — АНКЕР, а не профиль: у самого мощного сечения шаг
+# тот же, что у самого лёгкого (проверено на боевых числах)
+_heavy = dict(_base, profile="НСП-95-70-1,2")
+_light = dict(_base, profile="ЗП-40-20-1,2")
+ok(pick_step(_heavy, "row")[0] == pick_step(_light, "row")[0],
+   "FC-H2: мощный и лёгкий профиль дают ОДИН шаг — режет не профиль")
+_b = binding_check(_base, "row", pick_step(_base, "row")[0])
+ok(_b is not None and "анкер" in _b[0],
+   "FC-H2: ограничивающая проверка — анкер (%s)" % (_b,))
+_strong = dict(_base, na_max=9000.0)
+ok(pick_step(_strong, "row")[0] == 800 and
+   binding_check(_strong, "row", 800) is None,
+   "FC-H2: сильный анкер → шаг упирается в конструктивный предел 800")
+
+# H3: report с auto_profile отдаёт профиль, варианты и binding
+_r = report(dict(_base, auto_profile=True))["row"]
+ok(_r.get("profile") and _r.get("variants") and "binding" in _r,
+   "FC-H3: отчёт с подбором несёт профиль/варианты/ограничение")
+ok(len(_r["variants"]) == len([k for k, v in PROFILES.items()
+                               if v.get("Wx") and v.get("Jx")
+                               and v.get("A")]),
+   "FC-H3: в таблице все расчётные профили справочника (%d)" %
+   len(_r["variants"]))
 
 print("frame_calc: %d проверок OK" % _n)

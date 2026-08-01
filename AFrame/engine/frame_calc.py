@@ -274,11 +274,95 @@ def pick_step(inp, zone, candidates=None):
     return best, best_chain, log
 
 
+M_BRACKET = 0.5      # кг: приведённая масса кронштейнового узла
+                     # (кронштейн + удлинитель + крепёж) для критерия
+                     # выбора пары «профиль + шаг». Уточнить у Германа.
+
+
+def pick_profile_step(inp, zone, profiles=None, candidates=None):
+    """ПОДБОР ПРОФИЛЯ ВМЕСТЕ С ШАГОМ — п.2 Германа 30.07: «такой таблицы
+    нет, профиль насчитывается на несущую способность, вместе с ним
+    подбирается шаг кронштейнов».
+
+    Раньше профиль был ЖЁСТКО задан пресетом системы, и подбирался
+    только шаг — из-за чего на слабом ГП-40-40 шаг проваливался до 600
+    и кронштейнов выходило избыточно много (фидбэк по сборке №10).
+
+    Перебираем справочник: для каждого профиля — максимальный шаг,
+    проходящий все проверки. Выбор пары по МИНИМУМУ СТАЛИ НА м² фасада:
+        q_профиля / b  +  M_BRACKET / (b * шаг)
+    Возврат: (name, step, chain, variants) — variants со всеми парами,
+    чтобы конструктор видел альтернативы и мог задать вручную."""
+    if profiles is None:
+        profiles = [k for k, v in PROFILES.items()
+                    if v.get("Wx") and v.get("Jx") and v.get("A")]
+    b = (inp["b_row"] if zone == "row" else inp["b_corner"]) / 1000.0
+    variants = []
+    for name in profiles:
+        trial = dict(inp)
+        trial["profile"] = name
+        step, chain, _ = pick_step(trial, zone, candidates)
+        if step is None:
+            variants.append(dict(profile=name, step=None, kg_m2=None,
+                                 chain=None))
+            continue
+        kg = (PROFILES[name]["q"] / b +
+              M_BRACKET / (b * (step / 1000.0)))
+        variants.append(dict(profile=name, step=step,
+                             kg_m2=round(kg, 3), chain=chain))
+    okv = [v for v in variants if v["step"] is not None]
+    variants.sort(key=lambda v: (v["kg_m2"] is None, v["kg_m2"]))
+    if not okv:
+        return None, None, None, variants
+    best = min(okv, key=lambda v: v["kg_m2"])
+    return best["profile"], best["step"], best["chain"], variants
+
+
+def binding_check(inp, zone, step, candidates=None):
+    """ЧТО ИМЕННО ограничивает шаг. Проверено на боевых числах: при
+    тяжёлой облицовке шаг режет АНКЕР (у профиля запас 10×, прогиб
+    0.1 из 5.3 мм) — то есть «избыточность кронштейнов» лечится
+    несущей способностью анкера/выносом, а не сечением профиля.
+    Берём следующий шаг вверх и возвращаем первую непрошедшую
+    проверку: (name, value, limit) или None (упёрлись в max_step)."""
+    if step is None:
+        ch = calc_chain(inp, 200, zone)
+        bad = [c for c in ch["checks"] if not c["ok"]]
+        return (bad[0]["name"], bad[0]["value"], bad[0]["limit"]) \
+            if bad else None
+    if candidates is None:
+        top = int(round(float(inp.get("max_step", 800))))
+        candidates = list(range(200, top + 1, 50))
+    nxt = [c for c in sorted(candidates) if c > step]
+    if not nxt:
+        return None                      # конструктивный предел системы
+    ch = calc_chain(inp, nxt[0], zone)
+    bad = [c for c in ch["checks"] if not c["ok"]]
+    return (bad[0]["name"], bad[0]["value"], bad[0]["limit"]) \
+        if bad else None
+
+
 def report(inp, candidates=None):
     """Отчёт по обеим зонам: {'row': {...}, 'corner': {...}}."""
     out = {}
+    auto = bool(inp.get("auto_profile"))
     for zone in ("row", "corner"):
+        if auto:
+            # п.2 (30.07): профиль подбирается вместе с шагом
+            name, step, chain, variants = pick_profile_step(
+                inp, zone, inp.get("profile_candidates"), candidates)
+            out[zone] = dict(step=step, chain=chain, profile=name,
+                             variants=[{k: v[k] for k in
+                                        ("profile", "step", "kg_m2")}
+                                       for v in variants],
+                             binding=binding_check(
+                                 dict(inp, profile=name or inp["profile"]),
+                                 zone, step, candidates),
+                             tried=[])
+            continue
         step, chain, log = pick_step(inp, zone, candidates)
         out[zone] = dict(step=step, chain=chain,
+                         profile=inp.get("profile"),
+                         binding=binding_check(inp, zone, step, candidates),
                          tried=[(c["step"], c["passed"]) for c in log])
     return out

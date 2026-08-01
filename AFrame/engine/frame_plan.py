@@ -371,7 +371,10 @@ def _apply_calc(calc_req, system, sub, joints, floors, floor_step,
                b_corner=float(p.get("b_corner") or 0) or None,
                rail_len=rail_len,
                max_step=float(p.get("max_step") or 800.0),
-               n_rivets=int(p.get("n_rivets") or 2))
+               n_rivets=int(p.get("n_rivets") or 2),
+               # п.2 (30.07): подбирать профиль вместе с шагом
+               auto_profile=bool(p.get("auto_profile", True)),
+               profile_candidates=p.get("profile_candidates"))
     bc_note = None
     if not inp["b_corner"]:
         if scheme == "vertical":
@@ -439,6 +442,14 @@ def _apply_calc(calc_req, system, sub, joints, floors, floor_step,
                       ("terrain", "height", "q_clad", "offset",
                        "na_max", "b_row", "b_corner", "rail_len",
                        "max_step")},
+           # п.2 (30.07): подобранный профиль, ограничивающий узел и
+           # таблица вариантов — чтобы конструктор видел, ЧТО режет шаг
+           # (на боевых числах это анкер, а не сечение профиля)
+           "profile": {"row": rep["row"].get("profile"),
+                       "corner": rep["corner"].get("profile")},
+           "binding": {"row": rep["row"].get("binding"),
+                       "corner": rep["corner"].get("binding")},
+           "variants": rep["row"].get("variants"),
            "bc_note": bc_note}
     return out, None, (float(rep["row"]["step"]),
                        float(rep["corner"]["step"]))
