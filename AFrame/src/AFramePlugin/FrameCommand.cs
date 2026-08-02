@@ -323,6 +323,37 @@ namespace AFramePlugin
                 ed.WriteMessage("\n  углы не указаны — угловые зоны " +
                     "по краям контуров.");
 
+            // ── 3п. ПРОФИЛЬ направляющих (письмо Германа 01.08 п.2):
+            //    видимость динблока = марка профиля. Вертикальная:
+            //    Авто (подбор расчётом по допустимым В-ш) или явный
+            //    выбор; межэтажная: НСП-1/НСП-2; ортогональная: ШП/
+            //    ZП ставятся движком автоматом ──
+            string railProfile = null, nspType = null;
+            if (subType == "vertical")
+            {
+                var pkp = new PromptKeywordOptions(
+                    "\nПрофиль направляющей — Авто(подбор), ГП-40-40, " +
+                    "ГП-60-40, ШП-60-20 [Авто/ГП40/ГП60/ШП60] <Авто>: ",
+                    "Авто ГП40 ГП60 ШП60");
+                var rpk = ed.GetKeywords(pkp);
+                string kp = rpk.Status == PromptStatus.OK &&
+                            rpk.StringResult != null
+                            ? rpk.StringResult : "";
+                if (kp == "ГП40") railProfile = "ГП-40-40";
+                else if (kp == "ГП60") railProfile = "ГП-60-40";
+                else if (kp == "ШП60") railProfile = "ШП-60-20";
+            }
+            else if (interFloor)
+            {
+                var pkp = new PromptKeywordOptions(
+                    "\nВертикальный профиль межэтажной [НСП1/НСП2] " +
+                    "<НСП1>: ", "НСП1 НСП2");
+                var rpk = ed.GetKeywords(pkp);
+                nspType = (rpk.Status == PromptStatus.OK &&
+                           rpk.StringResult == "НСП2")
+                          ? "НСП-2" : "НСП-1";
+            }
+
             // ── 3р. ЭТАП 4 (целевой порядок Дениса 24.07): шаги
             //    кронштейнов СЧИТАЮТСЯ модулем расчёта несущей
             //    способности (frame_calc, методика «Вектор фасад») —
@@ -499,6 +530,8 @@ namespace AFramePlugin
                 { "floors_y", floors },
                 { "rows_y", rowsY },
                 { "floor_step", floorStep },
+                { "rail_profile", railProfile },
+                { "nsp_type", nspType },
             };
             if (calcDict != null) payload["calc"] = calcDict;
             if (cornersX.Count > 0) payload["corners_x"] = cornersX;
@@ -593,10 +626,11 @@ namespace AFramePlugin
                         double x = ToD(Get(r, "x")),
                                y0 = ToD(Get(r, "y0")),
                                y1 = ToD(Get(r, "y1"));
+                        string rprof = SafeStr(Get(r, "profile"));
                         if (!smpRail.IsNull)
                         {
                             string rh = InsertRailBlock(tr, ms, smpRail,
-                                x, y0, y1 - y0, LayerRails);
+                                x, y0, y1 - y0, LayerRails, rprof);
                             if (rh != null)
                             {
                                 Remember(handlesByRoot, partToRoot,
@@ -1068,12 +1102,14 @@ namespace AFramePlugin
         }
 
         // вставка направляющей динблоком Германа (база низ-центр,
-        // 3000): растяжка = Double-свойство с НАИБОЛЬШИМ текущим
-        // значением (имена динпараметров у всех свои — эвристика;
-        // не нашли/ошибка — null → прямоугольник)
+        // 3000): СНАЧАЛА видимость = марка профиля (письмо Германа
+        // 01.08: «в названии видимости прописаны чёткие названия
+        // направляющих»), ПОТОМ растяжка = Double-свойство с
+        // НАИБОЛЬШИМ текущим значением (имена динпараметров у всех
+        // свои — эвристика; не нашли/ошибка — null → прямоугольник)
         private static string InsertRailBlock(Transaction tr,
             BlockTableRecord ms, ObjectId btrId, double x, double y0,
-            double len, string layer)
+            double len, string layer, string profile)
         {
             try
             {
@@ -1081,6 +1117,41 @@ namespace AFramePlugin
                     new Point3d(x, y0, 0), btrId) { Layer = layer };
                 ms.AppendEntity(br);
                 tr.AddNewlyCreatedDBObject(br, true);
+                // видимость: свойство ищем ПО ЗНАЧЕНИЯМ (в чьих
+                // AllowedValues есть марка) — сопоставление
+                // нормализованное (регистр/дефисы/лат-кир, Z↔З;
+                // «ГП-40-40-1,2» ~ состояние «ГП-40-40»; точное
+                // совпадение важнее, из префиксных — кратчайшее,
+                // чтобы ШП-60-20 не взял ШП-60-20-20)
+                string want = Norm(profile);
+                if (want.Length > 0)
+                    foreach (DynamicBlockReferenceProperty pr in
+                             br.DynamicBlockReferencePropertyCollection)
+                    {
+                        if (pr.ReadOnly) continue;
+                        object[] av;
+                        try { av = pr.GetAllowedValues(); }
+                        catch { continue; }
+                        if (av == null || av.Length == 0) continue;
+                        object bestV = null;
+                        int bestScore = int.MinValue;
+                        foreach (object v in av)
+                        {
+                            string nv = Norm(SafeStr(v));
+                            if (nv.Length == 0) continue;
+                            if (nv != want && !want.StartsWith(nv) &&
+                                !nv.StartsWith(want)) continue;
+                            int score = nv == want
+                                ? int.MaxValue : -nv.Length;
+                            if (score > bestScore)
+                            { bestScore = score; bestV = v; }
+                        }
+                        if (bestV != null)
+                        {
+                            try { pr.Value = bestV; } catch { }
+                            break;
+                        }
+                    }
                 DynamicBlockReferenceProperty best = null;
                 foreach (DynamicBlockReferenceProperty pr in
                          br.DynamicBlockReferencePropertyCollection)
@@ -1098,12 +1169,145 @@ namespace AFramePlugin
             catch { return null; }
         }
 
+        // нормализация марки: верхний регистр, только буквы/цифры,
+        // латинские двойники → кириллица (в т.ч. Z→З: «ZП-40-20»
+        // Германа = расчётный «ЗП-40-20»)
+        private static string Norm(string s)
+        {
+            if (s == null) return "";
+            const string lat = "ABCEHKMOPTXZ";
+            const string cyr = "АВСЕНКМОРТХЗ";
+            var sb = new StringBuilder();
+            foreach (char c0 in s.ToUpperInvariant())
+            {
+                char c = c0;
+                int i = lat.IndexOf(c);
+                if (i >= 0) c = cyr[i];
+                if (char.IsLetterOrDigit(c)) sb.Append(c);
+            }
+            return sb.ToString();
+        }
+
         private static double AskD(Editor ed, string prompt, double def)
         {
             var po = new PromptDoubleOptions("\n" + prompt + ": ")
             { DefaultValue = def, AllowNegative = false };
             var r = ed.GetDouble(po);
             return r.Status == PromptStatus.OK ? r.Value : def;
+        }
+
+        // ══ ATFRAMEDIM — размеры между ЦЕНТРАМИ кронштейнов столбца/
+        //    ряда (письмо Германа 01.08 п.3, по аналогии с ATCLADDIM).
+        //    Центр знака = точка вставки; берутся вставки ТОГО ЖЕ
+        //    определения на ТОМ ЖЕ слое в полосе ±100 мм от кликнутого
+        //    (минимальный шаг осей на полигоне 225 — не зацепим
+        //    соседнюю ось). Размеры цепочкой на слое _РАЗМЕРЫ_ПС ══
+        [CommandMethod("ATFRAMEDIM", CommandFlags.Modal)]
+        public void RunDim()
+        {
+            var doc = AcApp.DocumentManager.MdiActiveDocument;
+            if (doc == null) return;
+            try { RunDimCore(doc); }
+            catch (System.Exception ex)
+            {
+                try
+                {
+                    doc.Editor.WriteMessage(
+                        "\nATFRAMEDIM: внутренняя ошибка — сообщите " +
+                        "разработчику.\n" + ex.ToString() + "\n");
+                }
+                catch { }
+            }
+        }
+
+        private void RunDimCore(
+            Autodesk.AutoCAD.ApplicationServices.Document doc)
+        {
+            var ed = doc.Editor;
+            var db = doc.Database;
+            var pk = new PromptKeywordOptions(
+                "\nЧто образмерить [Столбец/Ряд] <Столбец>: ",
+                "Столбец Ряд");
+            var rk = ed.GetKeywords(pk);
+            bool byCol = !(rk.Status == PromptStatus.OK &&
+                           rk.StringResult == "Ряд");
+            var peo = new PromptEntityOptions(
+                "\nУкажите кронштейн (знак): ");
+            peo.SetRejectMessage("\nЭто не вхождение блока.");
+            peo.AddAllowedClass(typeof(BlockReference), false);
+            var pres = ed.GetEntity(peo);
+            if (pres.Status != PromptStatus.OK)
+            { ed.WriteMessage("\nОтменено."); return; }
+
+            const double TOL = 100.0;
+            int made = 0;
+            using (doc.LockDocument())
+            using (var tr = db.TransactionManager.StartTransaction())
+            {
+                var smp = (BlockReference)tr.GetObject(pres.ObjectId,
+                                                       OpenMode.ForRead);
+                ObjectId defId = smp.DynamicBlockTableRecord;
+                string layer = smp.Layer;
+                Point3d p0 = smp.Position;
+                var bt = (BlockTable)tr.GetObject(db.BlockTableId,
+                                                  OpenMode.ForRead);
+                var ms = (BlockTableRecord)tr.GetObject(
+                    bt[BlockTableRecord.ModelSpace], OpenMode.ForWrite);
+                var pts = new List<Point3d>();
+                foreach (ObjectId oid in ms)
+                {
+                    Entity oe;
+                    try
+                    {
+                        oe = tr.GetObject(oid, OpenMode.ForRead)
+                             as Entity;
+                    }
+                    catch { continue; }
+                    var br = oe as BlockReference;
+                    if (br == null || br.Layer != layer) continue;
+                    if (br.DynamicBlockTableRecord != defId) continue;
+                    Point3d p = br.Position;
+                    double d = byCol ? Math.Abs(p.X - p0.X)
+                                     : Math.Abs(p.Y - p0.Y);
+                    if (d <= TOL) pts.Add(p);
+                }
+                if (pts.Count < 2)
+                {
+                    ed.WriteMessage("\nВ этой полосе меньше двух " +
+                                    "кронштейнов.");
+                    return;
+                }
+                pts.Sort((a, b) => byCol ? a.Y.CompareTo(b.Y)
+                                         : a.X.CompareTo(b.X));
+                EnsureLayer(tr, db, "_РАЗМЕРЫ_ПС");
+                double baseLo = double.MaxValue;
+                foreach (var p in pts)
+                    baseLo = Math.Min(baseLo, byCol ? p.X : p.Y);
+                double dl = baseLo - 300.0;
+                for (int i = 0; i + 1 < pts.Count; i++)
+                {
+                    double dist = byCol ? pts[i + 1].Y - pts[i].Y
+                                        : pts[i + 1].X - pts[i].X;
+                    if (dist < 1.0) continue;   // задвоенный знак
+                    Point3d dlp = byCol
+                        ? new Point3d(dl,
+                            (pts[i].Y + pts[i + 1].Y) / 2.0, 0)
+                        : new Point3d(
+                            (pts[i].X + pts[i + 1].X) / 2.0, dl, 0);
+                    var dim = new RotatedDimension(
+                        byCol ? Math.PI / 2.0 : 0.0,
+                        pts[i], pts[i + 1], dlp, null, db.Dimstyle);
+                    dim.SetDatabaseDefaults();
+                    dim.Layer = "_РАЗМЕРЫ_ПС";
+                    ms.AppendEntity(dim);
+                    tr.AddNewlyCreatedDBObject(dim, true);
+                    made++;
+                }
+                tr.Commit();
+            }
+            ed.WriteMessage("\nATFRAMEDIM: размеров " + made +
+                (byCol ? " (столбец, между центрами)."
+                       : " (ряд, между центрами)."));
         }
 
         // ── прежняя подсистема: хэндлы из метки ATFRAME выбранного ──
