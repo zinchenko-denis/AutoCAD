@@ -375,6 +375,17 @@ def _apply_calc(calc_req, system, sub, joints, floors, floor_step,
                # п.2 (30.07): подбирать профиль вместе с шагом
                auto_profile=bool(p.get("auto_profile", True)),
                profile_candidates=p.get("profile_candidates"))
+    # В-ш (ЗАКРЫТ письмом Германа 01.08): допустимые сечения
+    # ВЕРТИКАЛЬНЫХ направляющих по типу системы — подбор больше не
+    # гуляет по всему справочнику (НСП/НШП в вертикальной).
+    _VERT_ALLOWED = {
+        "vertical": ["ГП-40-40-1,2", "ШП-60-20-1,2",
+                     "ШП-60-20-20-1,2"],
+        "ortho": ["ШП-60-20-1,2", "ШП-60-20-20-1,2",
+                  "ЗП-40-20-1,2"],
+    }
+    if inp["auto_profile"] and not inp.get("profile_candidates"):
+        inp["profile_candidates"] = _VERT_ALLOWED.get(scheme)
     bc_note = None
     if not inp["b_corner"]:
         if scheme == "vertical":
@@ -532,9 +543,31 @@ def frame_plan(req):
     # даёт кронштейн/удлинитель/профиль/вес направляющих. Целевой
     # порядок Дениса 24.07: расчёт → шаги → расстановка.
     calc_rep = None
-    if req.get("calc") is not None:
+    # 01.08 (письмо Германа, п.2): явный выбор профиля вертикальной
+    # направляющей сужает подбор до этого сечения. ГП-60-40 в
+    # расчётном справочнике НЕТ — считаем по ГП-40-40 (в запас),
+    # рисуем выбранную видимость.
+    _USER_PROF = {
+        "ГП-40-40": ["ГП-40-40-1,2"],
+        "ГП-60-40": ["ГП-40-40-1,2"],
+        "ШП-60-20": ["ШП-60-20-1,2", "ШП-60-20-20-1,2"],
+    }
+    rail_prof_req = (str(req.get("rail_profile") or "").strip()
+                     or None)
+    calc_in = req.get("calc")
+    if rail_prof_req and calc_in is not None:
+        cands = _USER_PROF.get(rail_prof_req)
+        if cands:
+            calc_in = dict(calc_in or {})
+            calc_in.setdefault("profile_candidates", cands)
+            if rail_prof_req == "ГП-60-40":
+                notes.append(
+                    "сечения ГП-60-40 нет в расчётном справочнике — "
+                    "несущая способность посчитана по ГП-40-40 "
+                    "(в запас); нужны характеристики профиля")
+    if calc_in is not None:
         calc_rep, cerr, csteps = _apply_calc(
-            req.get("calc") or {}, system, sub, joints, floors,
+            calc_in or {}, system, sub, joints, floors,
             floor_step, corners)
         if cerr:
             return {"ok": False, "error": cerr}
@@ -753,6 +786,7 @@ def frame_plan(req):
             top_y = max(ys_g) if ys_g else y0
             # вертикальные ШП по рустам; у окон — Z-образные со
             # смещением 100 и выступом 50 (как вертикальная)
+            zone_side = set()
             for jx in joints:
                 if jx < x0 - EPS or jx > x1 + EPS:
                     continue
@@ -789,6 +823,8 @@ def frame_plan(req):
                     if s_hi - s_lo <= EPS:
                         continue
                     side = abs(s_x - jx) > EPS
+                    if side:
+                        zone_side.add(round(s_x, 4))
                     if stock > EPS and s_hi - s_lo > stock + EPS:
                         notes.append("ШП X=%.0f длиной %.0f > хлыста "
                                      "%.0f" % (s_x, s_hi - s_lo,
@@ -811,6 +847,32 @@ def frame_plan(req):
                                       else "ШП-60-20"})
                     _piece_clamps(clamps, rows, s_lo, s_hi, s_x,
                                   side, [], wedges)
+            # 02.08 (замечание №1 Дениса/полигон): Z-образные у КАЖДОЙ
+            # грани окна ВСЕГДА (ТЗ §3: «у окон Z-образные, длина =
+            # сторона окна + 100») — раньше Z возникал, лишь если ось
+            # сетки случайно стояла ближе edge_off СНАРУЖИ грани, и
+            # доп. кронштейны п.9 висели без профиля.
+            if edge_off > EPS:
+                for bx0, by0, bx1, by1 in hole_boxes:
+                    for zx in (bx0 - edge_off, bx1 + edge_off):
+                        if any(abs(zx - m) <= EPS for m in zone_side):
+                            continue
+                        if zx < x0 - EPS or zx > x1 + EPS:
+                            continue
+                        z0 = max(by0 - overhang, y0)
+                        z1 = min(by1 + overhang, y1)
+                        if z1 - z0 <= EPS:
+                            continue
+                        zone_side.add(round(zx, 4))
+                        for za, zb in _cut_by_len(z0, z1, rail_std,
+                                                  gap):
+                            rails.append({"x": round(zx, 4),
+                                          "y0": round(za, 4),
+                                          "y1": round(zb, 4),
+                                          "len": round(zb - za, 4),
+                                          "kind": "Z-профиль"})
+                        _piece_clamps(clamps, rows, z0, z1, zx,
+                                      True, [], wedges)
             continue
 
         # ── ВЕРТИКАЛЬНАЯ (дефолт; ТЗ 26.07 §1) ──
@@ -824,6 +886,7 @@ def frame_plan(req):
                     mids.append((jx_all[i] + jx_all[i + 1]) / 2.0)
             jx_all = sorted(jx_all + mids)
 
+        zone_side = set()
         for jx in jx_all:
             # угловая зона (В17: типовой случай — полоса у краёв зоны)
             in_corner = _in_corner(jx, x0, x1, corner_zone,
@@ -872,6 +935,8 @@ def frame_plan(req):
                 if s_hi - s_lo <= EPS:
                     continue
                 side = abs(s_x - jx) > EPS       # оконный (смещённый)
+                if side:
+                    zone_side.add(round(s_x, 4))
                 fl_in = [f for f in floors_c
                          if s_lo + EPS < f < s_hi - EPS]
                 # направляющие: куски между стыками (стык центрован
@@ -918,7 +983,61 @@ def frame_plan(req):
                 _piece_clamps(clamps, rows, s_lo, s_hi, s_x, side,
                               fl_in, wedges)
 
+        # 02.08 (замечание №1 Дениса/полигон): оконные стойки у
+        # КАЖДОЙ грани проёма ВСЕГДА (ТЗ §1: «направляющие слева/
+        # справа на 100 от края, длина = сторона окна + 100»), даже
+        # если рядом нет оси руста — раньше окно, стоящее между
+        # осями, оставалось без стоек и без боковых кляммеров.
+        # Межэтажную НЕ трогаем (В-ц: у окна по центру руста).
+        if sub == "vertical" and edge_off > EPS:
+            for bx0, by0, bx1, by1 in hole_boxes:
+                for zx in (bx0 - edge_off, bx1 + edge_off):
+                    if any(abs(zx - m) <= EPS for m in zone_side):
+                        continue
+                    if zx < x0 - EPS or zx > x1 + EPS:
+                        continue
+                    z0 = max(by0 - overhang, y0)
+                    z1 = min(by1 + overhang, y1)
+                    if z1 - z0 <= EPS:
+                        continue
+                    zone_side.add(round(zx, 4))
+                    rails.append({"x": round(zx, 4),
+                                  "y0": round(z0, 4),
+                                  "y1": round(z1, 4),
+                                  "len": round(z1 - z0, 4),
+                                  "kind": "направляющая"})
+                    in_c = _in_corner(zx, x0, x1, corner_zone,
+                                      corners)
+                    stp = step_corner if in_c else step_main
+                    if stp is not None and start_off is not None:
+                        for y in _rail_brackets(z0, z1,
+                                                float(start_off),
+                                                float(stp)):
+                            brackets.append({"x": round(zx, 4),
+                                             "y": round(y, 4),
+                                             "kind": "рядовой"})
+                    _piece_clamps(clamps, rows, z0, z1, zx,
+                                  True, [], wedges)
+
     clamps = _merge_clamps(clamps)
+    # 01.08 (письмо Германа, п.2): марка профиля для СОСТОЯНИЯ
+    # ВИДИМОСТИ динблока (C# ставит видимость по этому полю).
+    # «направляющая» вертикальной системы: явный выбор пользователя →
+    # подобранный расчётом → пресет системы. НСП межэтажной: выбор
+    # НСП-1/НСП-2 (критерий выбора — вопрос Герману). Z ортогональной
+    # → ZП-40-20 (написание Германа 01.08).
+    rail_prof = rail_prof_req
+    if not rail_prof and calc_rep is not None:
+        rail_prof = (calc_rep.get("profile") or {}).get("row")
+    if not rail_prof:
+        rail_prof = (system.get("calc") or {}).get("profile")
+    nsp = str(req.get("nsp_type") or "НСП-1")
+    _pm = {"направляющая": rail_prof or "направляющая",
+           "НСП": nsp, "Z-профиль": "ZП-40-20"}
+    for r in rails:
+        r["profile"] = _pm.get(r["kind"], r["kind"])
+    for r in hrails:
+        r["profile"] = r["kind"]
     lm = sum(r["len"] for r in rails) / 1000.0
     hlm = sum(r["len"] for r in hrails) / 1000.0
     system_used = {k: v for k, v in system.items()

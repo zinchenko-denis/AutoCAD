@@ -124,6 +124,10 @@ def op_frame(req):
             "rows_y": req.get("rows_y"),
             "floor_step": req.get("floor_step"),
             "corners_x": req.get("corners_x"),
+            # 01.08: выбор профиля (видимость динблока) — ГРАБЛЯ-13:
+            # новые поля req пробрасывать в base ЯВНО
+            "rail_profile": req.get("rail_profile"),
+            "nsp_type": req.get("nsp_type"),
             "calc": req.get("calc")}
     rails, brackets, clamps, per_zone = [], [], [], []
     hrails, fittings = [], []

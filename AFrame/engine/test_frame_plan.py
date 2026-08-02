@@ -188,10 +188,14 @@ p = frame_plan({"system": "Ортогональная", "sub_type": "ortho",
                 "contours": [{"outer": rect(0, 0, 3000, 5000),
                               "holes": [rect(1000, 2000, 2000, 3500)]}],
                 "joints_x": [996]})
-z = [r for r in p["rails"] if r["kind"] == "Z-профиль"]
-ok(len(z) == 1 and near(z[0]["x"], 900) and
-   near(z[0]["y0"], 1950) and near(z[0]["y1"], 3550),
-   "FR13: Z-профиль у окна 900, [1950..3550] (%s)" % z)
+z = sorted([r for r in p["rails"] if r["kind"] == "Z-профиль"],
+           key=lambda r: r["x"])
+# УТОЧНЕНО 02.08 (замечание №1): Z у ОБЕИХ граней окна всегда —
+# раньше правая грань (2100) оставалась без профиля, если рядом не
+# было оси сетки, и доп. кронштейны п.9 висели в воздухе
+ok(len(z) == 2 and near(z[0]["x"], 900) and near(z[1]["x"], 2100) and
+   all(near(r["y0"], 1950) and near(r["y1"], 3550) for r in z),
+   "FR13: Z-профили у окна 900 И 2100, [1950..3550] (%s)" % z)
 
 # ── FR5: система-переопределение поверх пресета ──
 p = frame_plan({"system": {"name": "Вектор-1", "rail_gap": 8.0},
@@ -578,5 +582,77 @@ ok(len(_sp) == 1 and near(_sp[0]["x0"], 1800.0) and
    near(_sp[0]["x1"], 4200.0),
    "FR-H7: СП между осями НА гранях окна, не до следующих (%s)" %
    [(h["x0"], h["x1"]) for h in _sp])
+
+# ── FR-P (письмо Германа 01.08, п.2): марка профиля в rails[] для
+#    состояния ВИДИМОСТИ динблока; В-ш закрыт списками допустимых ──
+
+# P1: межэтажная — НСП по умолчанию НСП-1, ШП-куски и hrails с марками
+p_p = frame_plan({"system": "Межэтажная", "sub_type": "interfloor",
+                  "contours": [{"outer": rect(0, 0, 1220, 6000)}],
+                  "joints_x": [610], "floors_y": [3000]})
+ok(all(r["profile"] == "НСП-1" for r in p_p["rails"]
+       if r["kind"] == "НСП") and
+   all(h["profile"] == h["kind"] for h in p_p["hrails"]),
+   "FR-P1: межэтажная — НСП-1 по умолчанию, hrails несут kind "
+   "(%s)" % sorted({r["profile"] for r in p_p["rails"]}))
+
+# P2: nsp_type=НСП-2 подхватывается
+p_p2 = frame_plan({"system": "Межэтажная", "sub_type": "interfloor",
+                   "nsp_type": "НСП-2",
+                   "contours": [{"outer": rect(0, 0, 1220, 6000)}],
+                   "joints_x": [610], "floors_y": [3000]})
+ok(all(r["profile"] == "НСП-2" for r in p_p2["rails"]
+       if r["kind"] == "НСП"),
+   "FR-P2: nsp_type=НСП-2 → марка НСП-2 у межэтажных стоек")
+
+# P3: ортогональная — ШП-60-20 и ZП-40-20 (написание Германа)
+p_p3 = frame_plan({"system": "Ортогональная", "sub_type": "ortho",
+                   "contours": [{"outer": rect(0, 0, 1800, 3600),
+                                 "holes": [rect(500, 1200, 1300,
+                                                2400)]}],
+                   "joints_x": [300, 900, 1500], "floors_y": [3000]})
+_zk = {r["kind"]: r["profile"] for r in p_p3["rails"]}
+ok(_zk.get("ШП-60-20") == "ШП-60-20" and
+   _zk.get("Z-профиль") == "ZП-40-20",
+   "FR-P3: орто — ШП-60-20/ZП-40-20 (%s)" % _zk)
+
+# P4: вертикальная без расчёта — профиль из пресета системы
+# (Вектор-1: calc.profile = ГП-40-40-1,2; у Standart пресета нет —
+# там остаётся нейтральная «направляющая»)
+p_p4 = frame_plan({"system": "Вектор-1", "sub_type": "vertical",
+                   "contours": [{"outer": rect(0, 0, 1200, 3000)}],
+                   "joints_x": [600], "floors_y": [3000]})
+ok(all(r["profile"] == "ГП-40-40-1,2" for r in p_p4["rails"]),
+   "FR-P4: вертикальная без калка — марка из пресета системы (%s)"
+   % sorted({r["profile"] for r in p_p4["rails"]}))
+
+# P5: явный выбор ГП-60-40 — видимость ГП-60-40, расчёт по ГП-40-40
+# (в запас) + note; кандидаты подбора сужены
+_CALC = dict(wind_region="IV", terrain="B", height=30.0, q_clad=50.0,
+             offset=150.0, na_max=6000.0)
+p_p5 = frame_plan({"system": "Вектор-1", "sub_type": "vertical",
+                   "rail_profile": "ГП-60-40", "calc": dict(_CALC),
+                   "contours": [{"outer": rect(0, 0, 1200, 3000)}],
+                   "joints_x": [600], "floors_y": [3000]})
+ok(all(r["profile"] == "ГП-60-40" for r in p_p5["rails"]) and
+   any("ГП-60-40" in n for n in p_p5["notes"]) and
+   p_p5["calc_report"]["profile"]["row"] == "ГП-40-40-1,2",
+   "FR-P5: ГП-60-40 — видимость своя, расчёт по ГП-40-40 в запас "
+   "(%s)" % p_p5["calc_report"]["profile"])
+
+# P6: авто-подбор вертикальной гуляет ТОЛЬКО по допустимым (В-ш)
+p_p6 = frame_plan({"system": "Вектор-1", "sub_type": "vertical",
+                   "calc": dict(_CALC),
+                   "contours": [{"outer": rect(0, 0, 1200, 3000)}],
+                   "joints_x": [600], "floors_y": [3000]})
+_vars = {v["profile"] for v in
+         p_p6["calc_report"]["variants"]["row"]} \
+    if isinstance(p_p6["calc_report"].get("variants"), dict) \
+    else {v["profile"] for v in p_p6["calc_report"]["variants"]}
+ok(_vars <= {"ГП-40-40-1,2", "ШП-60-20-1,2", "ШП-60-20-20-1,2"},
+   "FR-P6: кандидаты вертикальной ограничены В-ш (%s)" % _vars)
+ok(all(r["profile"] == p_p6["calc_report"]["profile"]["row"]
+       for r in p_p6["rails"]),
+   "FR-P6b: марка направляющих = подобранному профилю")
 
 print("frame_plan: %d проверок OK" % _n)
