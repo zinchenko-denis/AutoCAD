@@ -17,17 +17,46 @@ namespace AFramePlugin
         private static readonly string[][] Items =
         {
             new[] { "Подсистема (ATFRAME)", "ATFRAME" },
+            new[] { "Размеры кронштейнов (ATFRAMEDIM)", "ATFRAMEDIM" },
         };
+
+        private static bool _quitHooked;
 
         public static void Init()
         {
-            try { Build(); }
+            try
+            {
+                Build();
+                // 03.08 (скрин Германа): запись «ACAD:Фасады» в
+                // профиле menubar давала «Ошибка при загрузке
+                // элемента меню» при КАЖДОМ старте — профиль
+                // восстанавливает menubar РАНЬШЕ загрузки DLL.
+                // Перед выходом снимаем меню с menubar (см. Cleanup),
+                // для чего цепляемся к BeginQuit.
+                if (!_quitHooked)
+                {
+                    AcApp.BeginQuit += delegate { Cleanup(); };
+                    // выход отменён (диалог сохранения) — вернуть
+                    // пункты и меню на место
+                    AcApp.QuitAborted += delegate { Init(); };
+                    _quitHooked = true;
+                }
+            }
             catch { /* классика не обязательна */ }
         }
 
         public static void Cleanup()
         {
-            try { RemoveMyItems(FindMenu(false)); }
+            try
+            {
+                dynamic menu = FindMenu(false);
+                if (menu == null) return;
+                RemoveMyItems(menu);
+                // пустое меню снимаем с menubar — профиль остаётся
+                // чистым, Init() следующего запуска вставит заново
+                if ((int)menu.Count == 0)
+                    try { menu.RemoveFromMenuBar(); } catch { }
+            }
             catch { }
         }
 

@@ -112,6 +112,10 @@ src.Items.Add(MakeButton("Подсистема", "ATFRAME",
                 "ATFRAME — кронштейны/направляющие/кляммеры по " +
                 "раскладке ATCLAD (вертикальная, межэтажная, " +
                 "ортогональная).", "afr_frame"));
+            src.Items.Add(MakeButton("Размеры", "ATFRAMEDIM",
+                "ATFRAMEDIM — размеры между центрами кронштейнов " +
+                "столбца или ряда (письмо Германа 01.08).",
+                "afr_frame"));
             var panel = new RibbonPanel { Source = src };
             tab.Panels.Add(panel);}
 
