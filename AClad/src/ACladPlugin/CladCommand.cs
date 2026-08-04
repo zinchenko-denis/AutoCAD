@@ -609,6 +609,102 @@ namespace ACladPlugin
             }
         }
 
+        // Габарит КАМНЯ (модельные координаты) для размеров.
+        //
+        // ГРАБЛЯ (04.08, баг Дениса: «панель >1250 — размер верный,
+        // меньше — ерунда»). `br.GeometricExtents` берёт ВСЁ содержимое
+        // вставки, а не только контур камня: тексты атрибутов
+        // (с 01.08b ATCLAD дописывает в кассету МАРКИРОВКА/ЗАХВАТКА),
+        // заливки-видимости, вспомогательную графику. В универсальном
+        // блоке «кассета 2» (testdata/dxf/facades/blocks) контур =
+        // LWPOLYLINE 1240×1377 и он растягивается корректно
+        // (представление *U4 — 1150×1205), но рядом лежат ATTDEF
+        // МАРКИРОВКА (h=130) и 12 объектов на слоях «цвет 2..12».
+        // Габарит, раздутый чем-то из этого до ~1240, объясняет ровно
+        // тот порог, который видит Денис: пока камень крупнее
+        // «залипшего» габарита — размер верный, как только мельче —
+        // размер показывает залипшую величину, а полоса отбора ряда
+        // (она строится по габариту кликнутого) цепляет ещё и камни
+        // соседних рядов.
+        //
+        // Поэтому берём БЕЛЫЙ СПИСОК: габарит считаем только по
+        // КРИВЫМ (Curve — полилинии/линии/дуги/окружности/сплайны)
+        // текущего, уже растянутого определения, трансформированным
+        // BlockTransform. Тексты, атрибуты, размеры, штриховки и
+        // солиды-заливки в габарит камня не входят по определению.
+        // Паттерн — ATableSpec.ReportCommand.AddGab (там та же грабля
+        // ловилась чёрным списком); фолбэк — сырой GeometricExtents,
+        // если кривых в блоке нет вовсе.
+        private static Extents3d CellExtents(Transaction tr,
+                                             BlockReference br)
+        {
+            double x0 = double.MaxValue, y0 = double.MaxValue;
+            double x1 = double.MinValue, y1 = double.MinValue;
+            bool any = false;
+            try
+            {
+                var btr = tr.GetObject(br.BlockTableRecord,
+                                       OpenMode.ForRead)
+                          as BlockTableRecord;
+                if (btr != null)
+                {
+                    Matrix3d m = br.BlockTransform;
+                    foreach (ObjectId eid in btr)
+                    {
+                        var ent = tr.GetObject(eid, OpenMode.ForRead)
+                                  as Entity;
+                        if (!(ent is Curve)) continue;
+                        try
+                        {
+                            Extents3d ex = ent.GeometricExtents;
+                            ex.TransformBy(m);
+                            if (ex.MinPoint.X < x0) x0 = ex.MinPoint.X;
+                            if (ex.MinPoint.Y < y0) y0 = ex.MinPoint.Y;
+                            if (ex.MaxPoint.X > x1) x1 = ex.MaxPoint.X;
+                            if (ex.MaxPoint.Y > y1) y1 = ex.MaxPoint.Y;
+                            any = true;
+                        }
+                        catch { }   // кривая без экстентов
+                    }
+                }
+            }
+            catch { }
+            if (!any) return br.GeometricExtents;
+            return new Extents3d(new Point3d(x0, y0, 0),
+                                 new Point3d(x1, y1, 0));
+        }
+
+        // Диагностика к тому же багу: печатает оба габарита кликнутого
+        // камня. Файл Дениса не влезает в чат, поэтому причину называет
+        // сам AutoCAD — если «сырой» габарит заметно больше габарита по
+        // контуру, виновата НЕ наша арифметика, а содержимое блока
+        // (какой именно объект — видно по разнице).
+        private static void ReportCellGab(
+            Autodesk.AutoCAD.EditorInput.Editor ed,
+            Transaction tr, BlockReference br)
+        {
+            try
+            {
+                Extents3d c = CellExtents(tr, br);
+                double cw = c.MaxPoint.X - c.MinPoint.X;
+                double ch = c.MaxPoint.Y - c.MinPoint.Y;
+                string raw = "недоступен";
+                try
+                {
+                    Extents3d r = br.GeometricExtents;
+                    raw = string.Format(CultureInfo.InvariantCulture,
+                        "{0:0.#} x {1:0.#}",
+                        r.MaxPoint.X - r.MinPoint.X,
+                        r.MaxPoint.Y - r.MinPoint.Y);
+                }
+                catch { }
+                ed.WriteMessage(string.Format(CultureInfo.InvariantCulture,
+                    "\nATCLADDIM: камень по контуру {0:0.#} x {1:0.#}; " +
+                    "весь блок (с текстами/заливками) {2}.", cw, ch, raw));
+            }
+            catch { }
+        }
+
         private void RunDimCore(
             Autodesk.AutoCAD.ApplicationServices.Document doc)
         {
@@ -637,7 +733,8 @@ namespace ACladPlugin
                                                        OpenMode.ForRead);
                 ObjectId defId = smp.DynamicBlockTableRecord;
                 string layer = smp.Layer;
-                Extents3d e0 = smp.GeometricExtents;
+                Extents3d e0 = CellExtents(tr, smp);
+                ReportCellGab(ed, tr, smp);
                 double lo0 = byRow ? e0.MinPoint.Y : e0.MinPoint.X;
                 double hi0 = byRow ? e0.MaxPoint.Y : e0.MaxPoint.X;
 
@@ -661,7 +758,7 @@ namespace ACladPlugin
                     if (br == null || br.Layer != layer) continue;
                     if (br.DynamicBlockTableRecord != defId) continue;
                     Extents3d e;
-                    try { e = br.GeometricExtents; }
+                    try { e = CellExtents(tr, br); }
                     catch { continue; }
                     double c = byRow
                         ? (e.MinPoint.Y + e.MaxPoint.Y) / 2.0
