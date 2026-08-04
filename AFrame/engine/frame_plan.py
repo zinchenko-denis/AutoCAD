@@ -798,6 +798,7 @@ def frame_plan(req):
             # вертикальные ШП по рустам; у окон — Z-образные со
             # смещением 100 и выступом 50 (как вертикальная)
             zone_side = set()
+            n0_rails = len(rails)
             for jx in joints:
                 if jx < x0 - EPS or jx > x1 + EPS:
                     continue
@@ -886,12 +887,20 @@ def frame_plan(req):
                         z1 = min(by1 + overhang, y1)
                         if z1 - z0 <= EPS:
                             continue
-                        # 03.08 (аудит): Z не идёт сквозь соседний
-                        # проём — режем чужими окнами
+                        # 03.08 (аудит): Z режется чужими окнами
+                        # и МИНУС существующие куски этой оси (±50) —
+                        # ни дублей, ни Z сквозь проём; осколки <100
+                        # не ставим (В-аг)
                         spans = [(z0, z1)]
                         for ox0, oy0, ox1, oy1 in hole_boxes:
                             if ox0 + EPS < zx < ox1 - EPS:
                                 spans = _sub_y(spans, oy0, oy1)
+                        for rr in rails[n0_rails:]:
+                            if abs(rr["x"] - zx) <= 50.0:
+                                spans = _sub_y(spans, rr["y0"],
+                                               rr["y1"])
+                        spans = [(a5, b5) for a5, b5 in spans
+                                 if b5 - a5 > 100.0]
                         if not spans:
                             continue
                         zone_side.add(round(zx, 4))
@@ -919,6 +928,7 @@ def frame_plan(req):
             jx_all = sorted(jx_all + mids)
 
         zone_side = set()
+        n0_rails = len(rails)
         for jx in jx_all:
             # угловая зона (В17: типовой случай — полоса у краёв зоны)
             in_corner = _in_corner(jx, x0, x1, corner_zone,
@@ -1045,13 +1055,22 @@ def frame_plan(req):
                     z1 = min(by1 + overhang, y1)
                     if z1 - z0 <= EPS:
                         continue
-                    # 03.08 (аудит): гарантированная стойка тоже
-                    # режется ЧУЖИМИ окнами (не идёт сквозь соседний
-                    # проём)
+                    # 03.08 (аудит): гарантированная стойка
+                    # режется ЧУЖИМИ окнами и МИНУС уже существующие
+                    # куски этой же оси (±50: ось руста ровно в
+                    # edge_off от грани, пересекающиеся окна) —
+                    # ни дублей, ни стоек сквозь проём; осколки
+                    # короче 100 не ставим. Стойка в 50..300 от
+                    # грани — В-аг
                     spans = [(z0, z1)]
                     for ox0, oy0, ox1, oy1 in hole_boxes:
                         if ox0 + EPS < zx < ox1 - EPS:
                             spans = _sub_y(spans, oy0, oy1)
+                    for rr in rails[n0_rails:]:
+                        if abs(rr["x"] - zx) <= 50.0:
+                            spans = _sub_y(spans, rr["y0"], rr["y1"])
+                    spans = [(a5, b5) for a5, b5 in spans
+                             if b5 - a5 > 100.0]
                     if not spans:
                         continue
                     zone_side.add(round(zx, 4))

@@ -687,4 +687,41 @@ ok(len(_tb) > 0 and all(2899.0 <= b["x"] <= 4101.0 for b in _tb),
    "FR-A2b: верхние доп. кронштейны лежат на перемычке (%s)"
    % sorted(round(b["x"]) for b in _tb))
 
+# A3: ось руста ровно в edge_off (100) от грани окна → гарантированная
+# стойка не дублирует её (наложения кусков на оси)
+p_a3 = frame_plan({"system": "Вектор-1", "sub_type": "vertical",
+                   "contours": [{"outer": rect(0, 0, 5400, 6600),
+                                 "holes": [rect(1400, 1200, 2600,
+                                                2400)]}],
+                   "joints_x": [300 + 600 * i for i in range(9)],
+                   "floors_y": [3300, 6600]})
+import collections as _cc
+_byx = _cc.defaultdict(list)
+for r in p_a3["rails"]:
+    _byx[round(r["x"], 1)].append((r["y0"], r["y1"]))
+_ov = 0
+for _xx, _lst in _byx.items():
+    _lst.sort()
+    for _q1, _q2 in zip(_lst, _lst[1:]):
+        if _q2[0] < _q1[1] - 0.5:
+            _ov += 1
+ok(_ov == 0,
+   "FR-A3: наложений кусков нет при русте ровно в 100 от грани (%d)"
+   % _ov)
+
+# A4: ПЕРЕСЕКАЮЩИЕСЯ окна — стойки не идут сквозь проёмы и без дублей
+p_a4 = frame_plan({"system": "Вектор-1", "sub_type": "vertical",
+                   "contours": [{"outer": rect(0, 0, 4800, 5400),
+                                 "holes": [rect(0, 650, 2000, 2850),
+                                           rect(600, 1900, 2800,
+                                                3200)]}],
+                   "joints_x": [300 + 600 * i for i in range(8)],
+                   "floors_y": [3000]})
+_bad4 = [r for r in p_a4["rails"]
+         for bb in ((0, 650, 2000, 2850), (600, 1900, 2800, 3200))
+         if bb[0] + 1 < r["x"] < bb[2] - 1 and
+         r["y0"] < bb[3] - 1 and r["y1"] > bb[1] + 1]
+ok(not _bad4,
+   "FR-A4: пересекающиеся окна — стойки не в проёмах (%s)" % _bad4)
+
 print("frame_plan: %d проверок OK" % _n)
