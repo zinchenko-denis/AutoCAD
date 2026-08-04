@@ -655,4 +655,36 @@ ok(all(r["profile"] == p_p6["calc_report"]["profile"]["row"]
        for r in p_p6["rails"]),
    "FR-P6b: марка направляющих = подобранному профилю")
 
+# ── FR-A (краш-аудит 03.08): стойки не идут сквозь соседние окна;
+#    верхние доп. кронштейны орто держат перемычку ГП ──
+p_a1 = frame_plan({"system": "Вектор-1", "sub_type": "vertical",
+                   "contours": [{"outer": rect(0, 0, 4000, 4000),
+                                 "holes": [rect(300, 400, 1250, 1400),
+                                           rect(1300, 300, 2500,
+                                                1500)]}],
+                   "joints_x": [600, 1800, 3000], "floors_y": [3000]})
+_bad = [r for r in p_a1["rails"]
+        for bx0, by0, bx1, by1 in ((300, 400, 1250, 1400),
+                                   (1300, 300, 2500, 1500))
+        if bx0 + 1 < r["x"] < bx1 - 1 and
+        r["y0"] < by1 - 1 and r["y1"] > by0 + 1]
+ok(not _bad,
+   "FR-A1: стойка одного окна не идёт сквозь соседнее (%s)" % _bad)
+
+p_a2 = frame_plan({"system": "Вектор-1", "sub_type": "ortho",
+                   "contours": [{"outer": rect(0, 0, 6000, 6000),
+                                 "holes": [rect(3000, 1000, 4000,
+                                                2950)]}],
+                   "joints_x": [600.0 * i for i in range(11)],
+                   "rows_y": [600.0 * i for i in range(11)]})
+_per = [h for h in p_a2["hrails"] if near(h["y"], 3050.0)]
+ok(len(_per) == 1 and near(_per[0]["x0"], 2900.0) and
+   near(_per[0]["x1"], 4100.0),
+   "FR-A2: перемычка ГП над окном 2900..4100 на отметке 3050 (%s)"
+   % _per)
+_tb = [b for b in p_a2["brackets"] if near(b["y"], 3050.0)]
+ok(len(_tb) > 0 and all(2899.0 <= b["x"] <= 4101.0 for b in _tb),
+   "FR-A2b: верхние доп. кронштейны лежат на перемычке (%s)"
+   % sorted(round(b["x"]) for b in _tb))
+
 print("frame_plan: %d проверок OK" % _n)

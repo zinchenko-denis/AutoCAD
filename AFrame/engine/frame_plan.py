@@ -748,6 +748,17 @@ def frame_plan(req):
                 xs_in = [px for px in xs_g if bx0 - EPS < px < bx1 + EPS]
                 if up and xs_in and min(up) - by1 > ortho_oh + EPS:
                     add_br += [(px, by1 + edge_rail) for px in xs_in]
+                    # 03.08 (аудит): верхние доп. кронштейны должны
+                    # ДЕРЖАТЬ профиль — перемычка ГП над окном между
+                    # осями Z-профилей (раньше кронштейны висели в
+                    # воздухе: ряда сетки на этой отметке нет)
+                    hx0 = max(bx0 - edge_off, x0)
+                    hx1 = min(bx1 + edge_off, x1)
+                    hrails.append({"y": round(by1 + edge_rail, 4),
+                                   "x0": round(hx0, 4),
+                                   "x1": round(hx1, 4),
+                                   "len": round(hx1 - hx0, 4),
+                                   "kind": "ГП-40-40"})
             n_add = 0
             for px, yy in add_br:
                 if _in_boxes(hole_boxes, px, yy):
@@ -819,6 +830,18 @@ def frame_plan(req):
                         if hi - c1 > EPS:
                             nxt.append((c1, hi, xe))
                     pieces = nxt
+                # 03.08 (аудит): ось, накрытая ЧУЖИМ окном по X, —
+                # режем его высотой (стойка не идёт сквозь соседний
+                # проём)
+                cut2 = []
+                for lo, hi, xe in pieces:
+                    spans = [(lo, hi)]
+                    for ox0, oy0, ox1, oy1 in hole_boxes:
+                        if ox0 + EPS < xe < ox1 - EPS:
+                            spans = _sub_y(spans, oy0, oy1)
+                    for a4, b4 in spans:
+                        cut2.append((a4, b4, xe))
+                pieces = cut2
                 for s_lo, s_hi, s_x in pieces:
                     if s_hi - s_lo <= EPS:
                         continue
@@ -863,16 +886,25 @@ def frame_plan(req):
                         z1 = min(by1 + overhang, y1)
                         if z1 - z0 <= EPS:
                             continue
+                        # 03.08 (аудит): Z не идёт сквозь соседний
+                        # проём — режем чужими окнами
+                        spans = [(z0, z1)]
+                        for ox0, oy0, ox1, oy1 in hole_boxes:
+                            if ox0 + EPS < zx < ox1 - EPS:
+                                spans = _sub_y(spans, oy0, oy1)
+                        if not spans:
+                            continue
                         zone_side.add(round(zx, 4))
-                        for za, zb in _cut_by_len(z0, z1, rail_std,
-                                                  gap):
-                            rails.append({"x": round(zx, 4),
-                                          "y0": round(za, 4),
-                                          "y1": round(zb, 4),
-                                          "len": round(zb - za, 4),
-                                          "kind": "Z-профиль"})
-                        _piece_clamps(clamps, rows, z0, z1, zx,
-                                      True, [], wedges)
+                        for sa, sb in spans:
+                            for za, zb in _cut_by_len(sa, sb,
+                                                      rail_std, gap):
+                                rails.append({"x": round(zx, 4),
+                                              "y0": round(za, 4),
+                                              "y1": round(zb, 4),
+                                              "len": round(zb - za, 4),
+                                              "kind": "Z-профиль"})
+                            _piece_clamps(clamps, rows, sa, sb, zx,
+                                          True, [], wedges)
             continue
 
         # ── ВЕРТИКАЛЬНАЯ (дефолт; ТЗ 26.07 §1) ──
@@ -930,6 +962,19 @@ def frame_plan(req):
                     if hi - c1 > EPS:
                         nxt.append((c1, hi, xe))
                 pieces = nxt
+
+            # 03.08 (аудит): кусок, чья ОСЬ накрыта ЧУЖИМ окном по X,
+            # режется его высотой — раньше смещённая стойка окна А
+            # (и гарантированная 02.08) шла СКВОЗЬ соседнее окно Б
+            cut2 = []
+            for lo, hi, xe in pieces:
+                spans = [(lo, hi)]
+                for ox0, oy0, ox1, oy1 in hole_boxes:
+                    if ox0 + EPS < xe < ox1 - EPS:
+                        spans = _sub_y(spans, oy0, oy1)
+                for a4, b4 in spans:
+                    cut2.append((a4, b4, xe))
+            pieces = cut2
 
             for s_lo, s_hi, s_x in pieces:
                 if s_hi - s_lo <= EPS:
@@ -1000,24 +1045,34 @@ def frame_plan(req):
                     z1 = min(by1 + overhang, y1)
                     if z1 - z0 <= EPS:
                         continue
+                    # 03.08 (аудит): гарантированная стойка тоже
+                    # режется ЧУЖИМИ окнами (не идёт сквозь соседний
+                    # проём)
+                    spans = [(z0, z1)]
+                    for ox0, oy0, ox1, oy1 in hole_boxes:
+                        if ox0 + EPS < zx < ox1 - EPS:
+                            spans = _sub_y(spans, oy0, oy1)
+                    if not spans:
+                        continue
                     zone_side.add(round(zx, 4))
-                    rails.append({"x": round(zx, 4),
-                                  "y0": round(z0, 4),
-                                  "y1": round(z1, 4),
-                                  "len": round(z1 - z0, 4),
-                                  "kind": "направляющая"})
                     in_c = _in_corner(zx, x0, x1, corner_zone,
                                       corners)
                     stp = step_corner if in_c else step_main
-                    if stp is not None and start_off is not None:
-                        for y in _rail_brackets(z0, z1,
-                                                float(start_off),
-                                                float(stp)):
-                            brackets.append({"x": round(zx, 4),
-                                             "y": round(y, 4),
-                                             "kind": "рядовой"})
-                    _piece_clamps(clamps, rows, z0, z1, zx,
-                                  True, [], wedges)
+                    for za, zb in spans:
+                        rails.append({"x": round(zx, 4),
+                                      "y0": round(za, 4),
+                                      "y1": round(zb, 4),
+                                      "len": round(zb - za, 4),
+                                      "kind": "направляющая"})
+                        if stp is not None and start_off is not None:
+                            for y in _rail_brackets(za, zb,
+                                                    float(start_off),
+                                                    float(stp)):
+                                brackets.append({"x": round(zx, 4),
+                                                 "y": round(y, 4),
+                                                 "kind": "рядовой"})
+                        _piece_clamps(clamps, rows, za, zb, zx,
+                                      True, [], wedges)
 
     clamps = _merge_clamps(clamps)
     # 01.08 (письмо Германа, п.2): марка профиля для СОСТОЯНИЯ
