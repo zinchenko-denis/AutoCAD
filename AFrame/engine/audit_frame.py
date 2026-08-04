@@ -55,6 +55,16 @@ def check(tag, req, p):
             errs.append("%s: ДУБЛЬ КЛЯММЕРА в %s (%s+%s)"
                         % (tag, k, pts[k], c["kind"]))
         pts[k] = c["kind"]
+    # R4b (04.08): дубли КРОНШТЕЙНОВ в точке — раньше чекера не было,
+    # а на полигоне Германа их набралось 64 (смещённая оконная стойка
+    # легла на собственную ось руста, стоящую ровно в edge_offset)
+    ptb = {}
+    for b in br:
+        k = (round(b["x"]), round(b["y"]))
+        if k in ptb:
+            errs.append("%s: ДУБЛЬ КРОНШТЕЙНА в %s (%s+%s)"
+                        % (tag, k, ptb[k], b["kind"]))
+        ptb[k] = b["kind"]
     # R5: шаги кронштейнов на куске ≤ заявленного (вертикальная), крайние ~300
     if sub == "vertical":
         su = p.get("system_used") or {}
@@ -145,6 +155,23 @@ for i in range(120):
                {"system": sysn, "sub_type": sub,
                 "contours": [{"outer": rect(0, 0, w, h), "holes": holes}],
                 "joints_x": joints, "rows_y": rows, "floors_y": floors}))
+
+# ── 04.08 (D-сверка полигона): ПАРЫ БЛИЗКИХ ОСЕЙ У ГРАНИ ПРОЁМА ──
+# Пропуск прежних 141: ось руста ровно в edge_offset (100) от грани —
+# она же цель смещения соседней оси, стоящей ближе. Дают одну X.
+# На полигоне такие пары идут с шагом 96 мм (16 осей из 39).
+for _d in (4.0, 40.0, 96.0, 99.0):
+    for _sub, _sys in (("vertical", "Вектор-1"), ("vertical", "Standart")):
+        SC.append(("пара осей у грани Δ=%.0f %s" % (_d, _sys),
+                   {"system": _sys, "sub_type": _sub,
+                    "contours": [{"outer": rect(0, 0, 4000, 6000),
+                                  "holes": [rect(1000, 500, 2800, 2700),
+                                            rect(1000, 3500, 2800,
+                                                 5700)]}],
+                    "joints_x": [900.0, 1000.0 - _d, 2800.0 + _d,
+                                 2900.0, 3500.0],
+                    "rows_y": [600.0 * i for i in range(11)],
+                    "floors_y": [3000.0]}))
 
 allerrs = []
 crash = 0

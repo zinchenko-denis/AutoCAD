@@ -724,4 +724,54 @@ _bad4 = [r for r in p_a4["rails"]
 ok(not _bad4,
    "FR-A4: пересекающиеся окна — стойки не в проёмах (%s)" % _bad4)
 
+
+# A5/A6 (04.08, D-сверка полигона): ось руста стоит РОВНО в edge_offset
+# от грани проёма — она же цель смещения соседней оси, стоящей ближе
+# грани. Раньше собственный кусок и смещённый ложились на одну X: два
+# профиля в одном месте и дубли кронштейнов (на полигоне 64 шт).
+# Проверяем ОБЕ стороны окна: порядком обхода осей это не лечится.
+def _dubl(pp):
+    import collections as _cc
+    cb = _cc.Counter((round(b["x"], 1), round(b["y"], 1))
+                     for b in pp["brackets"])
+    cr = _cc.Counter((round(r["x"], 1), round(r["y0"], 1),
+                      round(r["y1"], 1)) for r in pp["rails"])
+    ov = 0
+    byx = {}
+    for r in pp["rails"]:
+        byx.setdefault(round(r["x"], 1), []).append((r["y0"], r["y1"]))
+    for lst in byx.values():
+        lst.sort()
+        ov += sum(1 for a, b in zip(lst, lst[1:]) if b[0] < a[1] - 1)
+    return (sum(1 for v in cb.values() if v > 1),
+            sum(1 for v in cr.values() if v > 1), ov)
+
+
+for _tag, _jx in (("слева", [900.0, 996.0]),
+                  ("справа", [2804.0, 2900.0]),
+                  ("с обеих", [900.0, 996.0, 2804.0, 2900.0])):
+    _pa5 = frame_plan({"system": "Standart", "sub_type": "vertical",
+                       "contours": [{"outer": rect(0, 0, 4000, 3000),
+                                     "holes": [rect(1000, 500,
+                                                    2800, 2700)]}],
+                       "joints_x": list(_jx), "floors_y": []})
+    _db, _dr, _ov = _dubl(_pa5)
+    ok(_db == 0 and _dr == 0 and _ov == 0,
+       "FR-A5 (%s): руст ровно в 100 от грани — ни дублей, ни "
+       "наложений (кронш=%d, кусков=%d, наложений=%d)"
+       % (_tag, _db, _dr, _ov))
+
+# A6: смещённый кусок не съедает собственную ось целиком — профиль на
+# высоте окна остаётся ровно один и покрывает окно + выступ 50/50
+_pa6 = frame_plan({"system": "Standart", "sub_type": "vertical",
+                   "contours": [{"outer": rect(0, 0, 4000, 3000),
+                                 "holes": [rect(1000, 500, 2800,
+                                                2700)]}],
+                   "joints_x": [900.0, 996.0], "floors_y": []})
+_at900 = [r for r in _pa6["rails"] if abs(r["x"] - 900.0) < 1]
+_cover = [r for r in _at900 if r["y0"] <= 450 + 1 and r["y1"] >= 2750 - 1]
+ok(len(_cover) == 1,
+   "FR-A6: на оси 900 ровно один профиль перекрывает высоту окна (%d)"
+   % len(_cover))
+
 print("frame_plan: %d проверок OK" % _n)

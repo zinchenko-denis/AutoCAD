@@ -94,6 +94,45 @@ def _sub_y(spans, lo, hi):
     return out
 
 
+def _dedup_pieces(staged, min_frag=100.0):
+    """Куски стоек, сведённые по ОСИ X (04.08, D-сверка полигона).
+
+    Смещённая оконная стойка одной оси и СОБСТВЕННАЯ ось руста могут
+    дать одну и ту же координату X: ось, стоящая ровно в edge_offset
+    от грани проёма, — цель смещения соседней оси (с ЛЮБОЙ стороны
+    окна, поэтому порядком обхода не лечится). Раньше оба куска
+    ложились в rails → два профиля в одном месте, дубли кронштейнов
+    и кляммеров (полигон Германа: 4 оси × 16 позиций = 64 дубля).
+
+    Приоритет — собственная ось (x == jx), затем смещённые в порядке
+    появления; от смещённого остаётся только незанятая часть, осколки
+    короче min_frag не ставим (порог фикса 03.08c).
+    """
+    by, order = {}, []
+    for it in staged:
+        k = round(it[2], 4)
+        if k not in by:
+            by[k] = []
+            order.append(k)
+        by[k].append(it)
+    out = []
+    for k in order:
+        # стабильная сортировка: False (собственные) раньше True
+        items = sorted(by[k], key=lambda t: abs(t[2] - t[3]) > EPS)
+        taken = []
+        for lo, hi, x, jx, step in items:
+            spans = [(lo, hi)]
+            for a, b in taken:
+                spans = _sub_y(spans, a, b)
+            moved = abs(x - jx) > EPS
+            for a, b in spans:
+                if b - a <= (min_frag if moved else EPS):
+                    continue
+                out.append((a, b, x, jx, step))
+                taken.append((a, b))
+    return out
+
+
 def _systems_path(base_dir=None):
     """systems.json: рядом с exe (бандл, PyInstaller-onefile: __file__
     уходит в temp!), в _MEIPASS, рядом с .py (разработка)."""
@@ -929,6 +968,7 @@ def frame_plan(req):
 
         zone_side = set()
         n0_rails = len(rails)
+        staged = []
         for jx in jx_all:
             # угловая зона (В17: типовой случай — полоса у краёв зоны)
             in_corner = _in_corner(jx, x0, x1, corner_zone,
@@ -986,7 +1026,18 @@ def frame_plan(req):
                     cut2.append((a4, b4, xe))
             pieces = cut2
 
-            for s_lo, s_hi, s_x in pieces:
+            # 04.08 (D-сверка полигона): укладка кусков отложена —
+            # смещённая оконная стойка одной оси и СОБСТВЕННАЯ ось
+            # руста, стоящая ровно в edge_off от грани, дают ОДНУ
+            # координату X → два профиля в одном месте (на полигоне
+            # 4 оси × 16 позиций = 64 дубля кронштейнов). Сначала
+            # копим, потом дедуп по оси (приоритет — собственная).
+            for _p in pieces:
+                if _p[1] - _p[0] > EPS:
+                    staged.append((_p[0], _p[1], _p[2], jx, step))
+
+        for s_lo, s_hi, s_x, jx, step in _dedup_pieces(staged):
+            if True:
                 if s_hi - s_lo <= EPS:
                     continue
                 side = abs(s_x - jx) > EPS       # оконный (смещённый)
