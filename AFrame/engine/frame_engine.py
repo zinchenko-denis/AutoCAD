@@ -128,6 +128,8 @@ def op_frame(req):
             # новые поля req пробрасывать в base ЯВНО
             "rail_profile": req.get("rail_profile"),
             "nsp_type": req.get("nsp_type"),
+            # 04.08 (Герман п.1): ручной шаг ставится буквально
+            "exact_step": req.get("exact_step"),
             "calc": req.get("calc")}
     rails, brackets, clamps, per_zone = [], [], [], []
     hrails, fittings = [], []

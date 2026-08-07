@@ -245,17 +245,37 @@ def _in_boxes(boxes, x, y):
                for bx0, by0, bx1, by1 in boxes)
 
 
-def _rail_brackets(a, b, start_off, step):
+def _rail_brackets(a, b, start_off, step, exact=False):
     """Кронштейны ОДНОЙ направляющей [a, b] — ТЗ Германа 26.07:
     первый 300 от НИЗА, последний 300 от ВЕРХА, между ними равномерно
     с шагом ≤ расчётного (3000 → 300-800-800-800-300 = 4 шт);
     нестандартная длина — крайние 300/300, между ними ≤ шага;
-    короче 2×300 — один кронштейн в центре."""
+    короче 2×300 — один кронштейн в центре.
+
+    exact=True — фидбэк Германа 04.08 п.1: «при ручной установке шага
+    800 программа ставит кронштейны через 798». Так и было задумано
+    (В16, решение Дениса 24.07: «размазывая длину между перекрытиями»
+    — на куске 2990 остаётся 2390 между крайними, что при трёх
+    пролётах даёт 796.7), но ЗАДАННЫЙ РУКАМИ шаг конструктор ожидает
+    видеть буквально. В этом режиме идём от низа ровно шагом, а
+    неполный остаток добираем последним кронштейном в 300 от верха —
+    короче шага получается только последний пролёт."""
     L = b - a
     if L <= 2 * start_off + EPS:
         return [a + L / 2.0]
     lo, hi = a + start_off, b - start_off
-    k = max(1, int(math.ceil((hi - lo - EPS) / step))) if step else 1
+    if not step:
+        return [lo, hi]
+    if exact:
+        out = [lo]
+        y = lo + step
+        while y < hi - EPS:
+            out.append(y)
+            y += step
+        if hi - out[-1] > EPS:
+            out.append(hi)
+        return out
+    k = max(1, int(math.ceil((hi - lo - EPS) / step)))
     return [lo + (hi - lo) * j / k for j in range(k + 1)]
 
 
@@ -511,6 +531,9 @@ def frame_plan(req):
                              req.get("_systems_dir"))
     except (KeyError, OSError, ValueError) as e:
         return {"ok": False, "error": str(e)}
+    # 04.08 (Герман п.1): шаг, ЗАДАННЫЙ РУКАМИ в диалоге, ставится
+    # буквально (без «размазывания» В16) — C# шлёт exact_step=true
+    exact_step = bool(req.get("exact_step"))
     step_main = system.get("bracket_step")
     step_corner = system.get("bracket_step_corner")
     start_off = system.get("bracket_start_offset")
@@ -838,7 +861,20 @@ def frame_plan(req):
             # смещением 100 и выступом 50 (как вертикальная)
             zone_side = set()
             n0_rails = len(rails)
-            for jx in joints:
+            # 04.08 (фидбэк Германа, п.4): «при ортогональной не
+            # рисуются профили по середине плитки, если она более
+            # 600 мм; в вертикальной и межэтажной нормально». Причина:
+            # mid_rail_over применялся ТОЛЬКО в вертикальной ветке, а
+            # у Ортогональной он и вовсе стоял null в systems.json.
+            # Промежуточный ШП ставится там же, где в вертикальной, —
+            # посередине пролёта шире mid_rail_over.
+            jx_o = sorted(set(joints))
+            if mid_over and len(jx_o) >= 2:
+                mids_o = [(jx_o[i] + jx_o[i + 1]) / 2.0
+                          for i in range(len(jx_o) - 1)
+                          if jx_o[i + 1] - jx_o[i] > mid_over + EPS]
+                jx_o = sorted(jx_o + mids_o)
+            for jx in jx_o:
                 if jx < x0 - EPS or jx > x1 + EPS:
                     continue
                 pieces = [(y0, y1, jx)]
@@ -1072,7 +1108,7 @@ def frame_plan(req):
                                   "kind": "направляющая"})
                     if step is not None and start_off is not None:
                         pos = _rail_brackets(a, b, float(start_off),
-                                             float(step))
+                                             float(step), exact_step)
                         for pi, y in enumerate(pos):
                             kind = ("несущий" if i > 0 and pi == 0
                                     else "рядовой")
@@ -1137,7 +1173,8 @@ def frame_plan(req):
                         if stp is not None and start_off is not None:
                             for y in _rail_brackets(za, zb,
                                                     float(start_off),
-                                                    float(stp)):
+                                                    float(stp),
+                                                    exact_step):
                                 brackets.append({"x": round(zx, 4),
                                                  "y": round(y, 4),
                                                  "kind": "рядовой"})

@@ -774,4 +774,36 @@ ok(len(_cover) == 1,
    "FR-A6: на оси 900 ровно один профиль перекрывает высоту окна (%d)"
    % len(_cover))
 
+# ── A7 (04.08, Герман п.1): ручной шаг ставится БУКВАЛЬНО ──
+# «задал 800 — программа ставит 798»: В16 размазывал остаток по всем
+# пролётам, теперь при exact_step короче только последний пролёт.
+_pa7 = frame_plan({"system": "Standart", "sub_type": "vertical",
+                   "exact_step": True,
+                   "contours": [{"outer": rect(0, 0, 610, 9000)}],
+                   "joints_x": [305], "floors_y": [3000, 6000]})
+_ys = sorted(round(b["y"], 3) for b in _pa7["brackets"])
+_d = [round(b - a, 3) for a, b in zip(_ys, _ys[1:])]
+# шаги внутри куска: 800 у всех, кроме доборного и межкускового
+_full = [v for v in _d if abs(v - 800.0) < 0.01]
+ok(len(_full) >= 4 and all(v <= 800.0 + 0.01 for v in _d),
+   "A7: ручной шаг 800 ставится ровно (шаги %s)" % _d[:6])
+_pa7b = frame_plan({"system": "Standart", "sub_type": "vertical",
+                    "contours": [{"outer": rect(0, 0, 610, 9000)}],
+                    "joints_x": [305], "floors_y": [3000, 6000]})
+_ysb = sorted(round(b["y"], 3) for b in _pa7b["brackets"])
+_db = [round(b - a, 3) for a, b in zip(_ysb, _ysb[1:])]
+ok(not any(abs(v - 800.0) < 0.01 for v in _db),
+   "A7b: без exact_step прежнее поведение В16 (шаги %s)" % _db[:4])
+
+# ── A8 (04.08, Герман п.4): ортогональная ставит промежуточный
+#    профиль посередине пролёта шире 650, как вертикальная ──
+_A8 = {"contours": [{"outer": rect(0, 0, 2440, 3000)}],
+       "joints_x": [0, 1220, 2440], "floors_y": []}
+_o = frame_plan(dict(_A8, system="Ортогональная", sub_type="ortho"))
+_v = frame_plan(dict(_A8, system="Вектор-1", sub_type="vertical"))
+_ox = sorted(set(round(r["x"], 1) for r in _o["rails"]))
+_vx = sorted(set(round(r["x"], 1) for r in _v["rails"]))
+ok(_ox == _vx and 610.0 in _ox and 1830.0 in _ox,
+   "A8: ортогональная — средний профиль в пролёте 1220 (%s)" % _ox)
+
 print("frame_plan: %d проверок OK" % _n)

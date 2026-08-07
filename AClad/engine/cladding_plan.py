@@ -73,6 +73,55 @@ def _is_ortho(poly):
                for a, b in _edges(poly))
 
 
+def _ortho_err(poly):
+    """Максимальное отклонение рёбер от ортогональности, мм."""
+    worst = 0.0
+    for a, b in _edges(poly):
+        d = min(abs(a[0] - b[0]), abs(a[1] - b[1]))
+        if d > worst:
+            worst = d
+    return worst
+
+
+def _ortho_snap(poly, tol):
+    """Выпрямить ПОЧТИ ортогональные рёбра (фидбэк Германа 04.08:
+    «программа очень чувствительна к ортогональности сторон и из-за
+    этого не может делать раскладку»).
+
+    Контур из АР почти никогда не идеален: прежний критерий требовал
+    точности 1e-6 мм, поэтому отклонение в СОТУЮ ДОЛЮ миллиметра
+    роняло раскладку всего контура. Здесь ребро, у которого меньшая
+    проекция не превышает tol, притягивается к оси: обе вершины
+    получают общее X (почти вертикальное) или общее Y (почти
+    горизонтальное). Соседние рёбра — общие вершины, поэтому идём
+    двумя проходами: первый ловит явные, второй — те, что стали
+    ортогональными после сдвига соседа.
+
+    Возвращает (новый_контур, максимальная_поправка). Реально
+    наклонные рёбра (скос, арка) не трогаются — контур останется
+    неортогональным, и вызывающий код честно его отклонит.
+    """
+    pts = [list(p) for p in poly]
+    n = len(pts)
+    moved = 0.0
+    for _ in range(2):
+        for i in range(n):
+            j = (i + 1) % n
+            dx = abs(pts[i][0] - pts[j][0])
+            dy = abs(pts[i][1] - pts[j][1])
+            if dx < EPS or dy < EPS:
+                continue        # уже ортогонально
+            if dx <= dy and dx <= tol:
+                m = (pts[i][0] + pts[j][0]) / 2.0
+                moved = max(moved, abs(pts[i][0] - m))
+                pts[i][0] = pts[j][0] = m
+            elif dy < dx and dy <= tol:
+                m = (pts[i][1] + pts[j][1]) / 2.0
+                moved = max(moved, abs(pts[i][1] - m))
+                pts[i][1] = pts[j][1] = m
+    return [tuple(p) for p in pts], moved
+
+
 def _xs_at(polys, y):
     """X-пересечения горизонтали y с вертикальными рёбрами полигонов
     (чётно-нечётное правило) → отсортированные интервалы внутренности."""
@@ -375,6 +424,8 @@ def cladding_plan(req):
     # дефолт — основной режим по ТЗ 22.07 (центрирование/от угла);
     # "edge" сохранён как запасной (модульная сетка на всю высоту)
     mode = (req.get("mode") or "openings").strip().lower()
+    # допуск выпрямления почти-ортогональных рёбер контура, мм
+    ortho_tol = float(req.get("ortho_tol", 5.0))
     # В4 (Герман, 20.07): минимальная подрезка 150 мм
     min_cut = float(req.get("min_cut", 150.0))
     # ТЗ 2.5: точки, через которые ТОЧНО проходит вертикальный руст —
@@ -410,12 +461,32 @@ def cladding_plan(req):
             notes.append("контур %d: меньше 4 вершин — пропуск" % (ci + 1))
             continue
         holes = [_closed(hh) for hh in (c.get("holes") or [])]
+        # 04.08 (фидбэк Германа): контур из АР почти никогда не
+        # идеально ортогонален — выпрямляем рёбра в пределах ortho_tol
+        # (дефолт 5 мм) и раскладываем; отклоняем только реально
+        # наклонные, назвав ребро и величину — раньше сотая доля
+        # миллиметра роняла раскладку всего контура молча.
+        snapped = 0.0
+        outer, mv = _ortho_snap(outer, ortho_tol)
+        snapped = max(snapped, mv)
+        fixed_holes = []
+        for hh in holes:
+            hh2, mv = _ortho_snap(hh, ortho_tol)
+            snapped = max(snapped, mv)
+            fixed_holes.append(hh2)
+        holes = fixed_holes
         polys = [outer] + holes
         bad = [p for p in polys if not _is_ortho(p)]
         if bad:
-            notes.append("контур %d: неортогональные рёбра — пропуск"
-                         % (ci + 1))
+            notes.append(
+                "контур %d: неортогональные рёбра (максимальное "
+                "отклонение %.1f мм при допуске %.1f) — пропуск; "
+                "выровняйте контур или увеличьте допуск"
+                % (ci + 1, max(_ortho_err(p) for p in bad), ortho_tol))
             continue
+        if snapped > EPS:
+            notes.append("контур %d: рёбра выпрямлены до ортогональных "
+                         "(поправка до %.1f мм)" % (ci + 1, snapped))
         y_lo = min(p[1] for p in outer)
         y_hi = max(p[1] for p in outer)
         x_min = min(p[0] for p in outer)
