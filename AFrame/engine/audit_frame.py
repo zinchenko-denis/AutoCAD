@@ -173,6 +173,24 @@ for _d in (4.0, 40.0, 96.0, 99.0):
                     "rows_y": [600.0 * i for i in range(11)],
                     "floors_y": [3000.0]}))
 
+# ── 04.08 (Герман п.2): УГЛОВЫЕ И КРАЕВЫЕ ЗОНЫ ──
+# новые оси стоек не должны нарушать инварианты (в воздухе, сквозь
+# окно, наложения, дубли) — гоняем с углами и без, с шагом и без
+for _cx, _cs in ((None, None), ([], None), ([0.0], 600.0),
+                 ([0.0, 6000.0], 500.0), ([3000.0], 700.0)):
+    _r = {"system": "Вектор-1", "sub_type": "vertical",
+          "contours": [{"outer": rect(0, 0, 6000, 6000),
+                        "holes": [rect(1000, 500, 2800, 2700),
+                                  rect(3500, 3000, 5300, 5200)]}],
+          "joints_x": [600 * i for i in range(1, 10)],
+          "rows_y": [600.0 * i for i in range(11)],
+          "floors_y": [3000.0]}
+    if _cx is not None:
+        _r["corners_x"] = _cx
+    if _cs:
+        _r["rail_step_corner"] = _cs
+    SC.append(("зоны углы=%s шаг=%s" % (_cx, _cs), _r))
+
 allerrs = []
 crash = 0
 for tag, req in SC:

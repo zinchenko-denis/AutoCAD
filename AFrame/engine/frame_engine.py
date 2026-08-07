@@ -130,6 +130,10 @@ def op_frame(req):
             "nsp_type": req.get("nsp_type"),
             # 04.08 (Герман п.1): ручной шаг ставится буквально
             "exact_step": req.get("exact_step"),
+            # 04.08 (Герман п.2): стойки угловых/краевых зон
+            "rail_step_corner": req.get("rail_step_corner"),
+            "rail_step_main": req.get("rail_step_main"),
+            "edge_rail_off": req.get("edge_rail_off"),
             "calc": req.get("calc")}
     rails, brackets, clamps, per_zone = [], [], [], []
     hrails, fittings = [], []

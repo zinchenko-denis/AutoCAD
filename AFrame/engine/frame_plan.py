@@ -181,6 +181,52 @@ def _span_points(a, b, step):
     return [a + L * j / k for j in range(k + 1)]
 
 
+def _zone_rail_axes(x0, x1, corners, czone, step_corner, step_main,
+                    off=100.0, tol=50.0):
+    """Оси стоек в УГЛОВЫХ и КРАЕВЫХ зонах (фидбэк Германа 04.08 п.2:
+    «программа не дорисовывает профиль и кронштейны в угловых и
+    краевых зонах»).
+
+    Причина пропуска: стойки ставились ТОЛЬКО по осям рустов раскладки
+    (rail_rule=every_joint), а у внешнего угла и у края облицовки
+    рустов может не быть вовсе — там оставалась пустота.
+
+    Правило Германа:
+    - от указанного внешнего угла идёт угловая зона шириной czone;
+      ПЕРВАЯ стойка в `off` (100 мм) от угла, дальше с шагом угловой
+      зоны до конца зоны;
+    - в КРАЕВОЙ зоне (внутренний угол здания или конец облицовки —
+      то есть край области, где угол не указан) ПОСЛЕДНЯЯ стойка в
+      `off` от границы, остальное как в рядовой.
+
+    Возвращает список осей; вызывающий код сливает их с осями рустов,
+    отбрасывая совпавшие ближе tol (иначе у угла вышел бы сдвоенный
+    профиль).
+    """
+    out = []
+    st_c = float(step_corner or step_main or 0.0)
+    for c in (corners or []):
+        for sgn in (1.0, -1.0):
+            a = c + sgn * off
+            if a < x0 - EPS or a > x1 + EPS:
+                continue
+            out.append(a)
+            if st_c <= EPS:
+                continue
+            lim = c + sgn * czone
+            x = a + sgn * st_c
+            while (x <= lim + EPS if sgn > 0 else x >= lim - EPS) and \
+                    x0 - EPS <= x <= x1 + EPS:
+                out.append(x)
+                x += sgn * st_c
+    # краевые зоны: край области, у которого нет указанного угла
+    for edge, sgn in ((x0, 1.0), (x1, -1.0)):
+        if any(abs(edge - c) <= czone + EPS for c in (corners or [])):
+            continue
+        out.append(edge + sgn * off)
+    return sorted(set(round(v, 4) for v in out))
+
+
 def _corner_ivals(x0, x1, czone, corners):
     """Интервалы угловых зон на [x0, x1]. corners=None — прежнее
     поведение (оба края контура); corners=[] — углов НЕТ (фидбэк
@@ -538,6 +584,17 @@ def frame_plan(req):
     step_corner = system.get("bracket_step_corner")
     start_off = system.get("bracket_start_offset")
     corner_zone = float(system.get("corner_zone") or 0.0)
+    # 04.08 (Герман п.2): горизонтальный шаг СТОЕК в угловой зоне
+    # и отступ первой/последней стойки от угла и края области
+    rail_step_corner = req.get("rail_step_corner") or \
+        system.get("rail_step_corner")
+    rail_step_corner = float(rail_step_corner) if rail_step_corner \
+        else None
+    rail_step_main = req.get("rail_step_main") or \
+        system.get("rail_step_main")
+    rail_step_main = float(rail_step_main) if rail_step_main else None
+    edge_rail_off = float(req.get("edge_rail_off") or
+                          system.get("edge_rail_off") or 100.0)
     gap = float(system.get("rail_gap") or 0.0)
     edge_off = float(system.get("edge_offset") or 0.0)
     overhang = float(system.get("edge_overhang") or 0.0)
@@ -995,6 +1052,22 @@ def frame_plan(req):
         # доп. направляющая по центру плиты шире 600 (ТЗ 26.07):
         # пролёт между соседними осями больше порога → ось в середине
         jx_all = [j for j in joints if x0 - EPS <= j <= x1 + EPS]
+        # 04.08 (Герман п.2): стойки угловых и краевых зон. Раньше
+        # стойки шли только по осям рустов, поэтому у внешнего угла и
+        # у конца облицовки профиля с кронштейнами не появлялось.
+        # Включается наличием указанных углов (corners_x) или явным
+        # rail_step_corner; совпавшие с рустом ближе 50 мм отбрасываем,
+        # чтобы не получить сдвоенный профиль.
+        if corners is not None or rail_step_corner:
+            extra = _zone_rail_axes(x0, x1, corners, corner_zone,
+                                    rail_step_corner, rail_step_main,
+                                    edge_rail_off)
+            add_ax = [e for e in extra
+                      if not any(abs(e - j) <= 50.0 for j in jx_all)]
+            if add_ax:
+                jx_all = sorted(jx_all + add_ax)
+                notes.append("стоек в угловых/краевых зонах добавлено: "
+                             "%d" % len(add_ax))
         if mid_over and len(jx_all) >= 2:
             mids = []
             for i in range(len(jx_all) - 1):
