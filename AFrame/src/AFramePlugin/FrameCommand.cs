@@ -723,6 +723,7 @@ namespace AFramePlugin
                             "AFRAME_КЛЯММЕР_КОМБИ", true, true)
                         : smpClampCombo },
                 };
+                var clampDx = new Dictionary<ObjectId, double>();
                 if (clamps != null)
                     foreach (var io2 in clamps)
                     {
@@ -733,8 +734,16 @@ namespace AFramePlugin
                         ObjectId bid;
                         if (!clampBlk.TryGetValue(ck, out bid))
                             bid = clRow;
+                        // знак центрируем по оси профиля: у блоков
+                        // Германа база кляммера не в центре (04.08)
+                        double cdx;
+                        if (!clampDx.TryGetValue(bid, out cdx))
+                        {
+                            cdx = CenterOffsetX(tr, bid);
+                            clampDx[bid] = cdx;
+                        }
                         var br2 = new BlockReference(
-                            new Point3d(ToD(Get(it, "x")),
+                            new Point3d(ToD(Get(it, "x")) - cdx,
                                         ToD(Get(it, "y")), 0), bid);
                         br2.Layer = LayerClamps;
                         ms.AppendEntity(br2);
@@ -880,6 +889,52 @@ namespace AFramePlugin
         // вставка блоков-знаков (kind mainKind → блок main, иначе row);
         // МАРКИРОВКА = markPrefix + kind движка («кронштейн несущий»,
         // «вставка», «скоба С1»)
+        /// <summary>
+        /// Смещение геометрического ЦЕНТРА определения блока по X от
+        /// его базовой точки (04.08, замечание Германа: «рядовые
+        /// кляммеры рисуются со смещением от центра профиля»).
+        ///
+        /// В его библиотеке база кляммера стоит НЕ в центре: у
+        /// «рядовой!КЛР-1-н» геометрия идёт X 0..112.5 (центр 56.25),
+        /// у «стартовый!КЛС-1-н» — X 13.5..99.0 (центр 56.3), а у
+        /// углового и комбинированного база уже в центре. На его
+        /// полигоне вставки рядовых и стартовых стоят ровно на −56.3
+        /// от оси профиля, угловые и комбинированные — на нуле: то
+        /// есть он центрирует ЗНАК по оси, компенсируя базу вручную.
+        /// Мы ставили блок точкой вставки на ось, поэтому знак уезжал
+        /// вправо на пол-ширины. Считаем по КРИВЫМ определения (тексты
+        /// и атрибуты в центр знака не входят) и сдвигаем вставку на
+        /// −dx. Только по X: по Y у профилей Германа база «низ-центр»
+        /// осмысленная, её трогать нельзя.
+        /// </summary>
+        private static double CenterOffsetX(Transaction tr, ObjectId blkId)
+        {
+            if (blkId.IsNull) return 0.0;
+            try
+            {
+                var btr = tr.GetObject(blkId, OpenMode.ForRead)
+                          as BlockTableRecord;
+                if (btr == null) return 0.0;
+                double x0 = double.MaxValue, x1 = double.MinValue;
+                foreach (ObjectId eid in btr)
+                {
+                    var ent = tr.GetObject(eid, OpenMode.ForRead)
+                              as Entity;
+                    if (!(ent is Curve)) continue;
+                    try
+                    {
+                        Extents3d ex = ent.GeometricExtents;
+                        if (ex.MinPoint.X < x0) x0 = ex.MinPoint.X;
+                        if (ex.MaxPoint.X > x1) x1 = ex.MaxPoint.X;
+                    }
+                    catch { }
+                }
+                if (x1 < x0) return 0.0;
+                return (x0 + x1) / 2.0;
+            }
+            catch { return 0.0; }
+        }
+
         private static void InsertSigns(Transaction tr,
             BlockTableRecord ms, object[] items, ObjectId blkA,
             ObjectId blkB, string kindA, string markPrefix, string layer,
