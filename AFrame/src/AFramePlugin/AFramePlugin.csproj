@@ -30,6 +30,10 @@
     <Reference Include="PresentationFramework" />
     <Reference Include="WindowsBase" />
     <Reference Include="System.Xaml" />
+    <!-- 04.08: форма параметров размеров (выбор слоя списком —
+         просьба Германа); WinForms, без дизайнера и .resx -->
+    <Reference Include="System.Windows.Forms" />
+    <Reference Include="System.Drawing" />
   </ItemGroup>
 
 </Project>

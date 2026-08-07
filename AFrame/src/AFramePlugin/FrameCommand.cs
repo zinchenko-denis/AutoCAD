@@ -323,6 +323,9 @@ namespace AFramePlugin
                 ed.WriteMessage("\n  углы не указаны — угловые зоны " +
                     "по краям контуров.");
 
+            double? railStepCorner = null;
+            bool manualStep = false;
+
             // ── 3п. ПРОФИЛЬ направляющих (письмо Германа 01.08 п.2):
             //    видимость динблока = марка профиля. Вертикальная:
             //    Авто (подбор расчётом по допустимым В-ш) или явный
@@ -424,6 +427,17 @@ namespace AFramePlugin
                                   "зоне (1500 от угла), мм", stepCorner);
                 sysOverride["bracket_step"] = stepMain;
                 sysOverride["bracket_step_corner"] = stepCorner;
+                // 04.08 (Герман п.1): шаг, заданный РУКАМИ, ставится
+                // буквально — без «размазывания» остатка по пролётам
+                // (В16 давал 798 вместо заданных 800)
+                manualStep = true;
+                // 04.08 (Герман п.2): шаг СТОЕК в угловой зоне —
+                // первая в 100 мм от указанного угла, дальше этим
+                // шагом; Enter — стойки только по осям рустов
+                double railStepC = AskD(ed, "Шаг СТОЕК в УГЛОВОЙ зоне, "
+                                        + "мм (0 — только по рустам)",
+                                        0.0);
+                if (railStepC > 1.0) railStepCorner = railStepC;
                 var pkc = new PromptKeywordOptions(
                     "\nПрочее: старт " + F0(startOff) + ", зазор " +
                     "стыка " + F0(railGap) + ", угловая зона " +
@@ -535,6 +549,10 @@ namespace AFramePlugin
             };
             if (calcDict != null) payload["calc"] = calcDict;
             if (cornersX.Count > 0) payload["corners_x"] = cornersX;
+            // ГРАБЛЯ-13: новые поля запроса пробрасывать ЯВНО
+            if (railStepCorner.HasValue)
+                payload["rail_step_corner"] = railStepCorner.Value;
+            if (manualStep) payload["exact_step"] = true;
             string baseDir = Path.GetDirectoryName(
                 System.Reflection.Assembly.GetExecutingAssembly().Location)
                 ?? ".";
@@ -1225,12 +1243,56 @@ namespace AFramePlugin
         {
             var ed = doc.Editor;
             var db = doc.Database;
-            var pk = new PromptKeywordOptions(
-                "\nЧто образмерить [Столбец/Ряд] <Столбец>: ",
-                "Столбец Ряд");
-            var rk = ed.GetKeywords(pk);
-            bool byCol = !(rk.Status == PromptStatus.OK &&
-                           rk.StringResult == "Ряд");
+            // 04.08 (Герман): те же два замечания, что и к ATCLADDIM —
+            // размеры ставились по ВСЕМУ чертежу и слой был жёстким.
+            // Сначала область (Enter — весь чертёж), затем форма с
+            // выбором слоя из существующих.
+            var area = new HashSet<ObjectId>();
+            var pso = new PromptSelectionOptions
+            {
+                MessageForAdding = "\nВыберите область (рамкой) — " +
+                                   "или Enter, чтобы взять весь чертёж: "
+            };
+            var asel = ed.GetSelection(pso, new SelectionFilter(
+                new[] { new TypedValue((int)DxfCode.Start, "INSERT") }));
+            if (asel.Status == PromptStatus.OK)
+                foreach (SelectedObject so in asel.Value)
+                    if (so != null) area.Add(so.ObjectId);
+            ed.WriteMessage(area.Count > 0
+                ? "\nОбласть: {0} вхождений."
+                : "\nОбласть не задана — весь чертёж.",
+                area.Count);
+
+            var layers = new List<string>();
+            using (var trl = db.TransactionManager.StartTransaction())
+            {
+                var lt = (LayerTable)trl.GetObject(db.LayerTableId,
+                                                   OpenMode.ForRead);
+                foreach (ObjectId lid in lt)
+                {
+                    var ltr = trl.GetObject(lid, OpenMode.ForRead)
+                              as LayerTableRecord;
+                    if (ltr != null) layers.Add(ltr.Name);
+                }
+                trl.Commit();
+            }
+            layers.Sort(StringComparer.CurrentCultureIgnoreCase);
+            bool byCol;
+            string dimLayer;
+            using (var f = new DimForm("Размеры подсистемы", layers,
+                                       "_РАЗМЕРЫ_ПС"))
+            {
+                // в форме первым пунктом «Ряд» — для подсистемы
+                // привычнее столбец, поэтому переставляем выбор
+                f.SelectColumnFirst();
+                var dr = AcApp.ShowModalDialog(f);
+                if (dr != System.Windows.Forms.DialogResult.OK)
+                { ed.WriteMessage("\nОтменено."); return; }
+                byCol = !f.ByRow;
+                dimLayer = f.LayerName;
+            }
+            if (dimLayer.Length == 0) dimLayer = "_РАЗМЕРЫ_ПС";
+
             var peo = new PromptEntityOptions(
                 "\nУкажите кронштейн (знак): ");
             peo.SetRejectMessage("\nЭто не вхождение блока.");
@@ -1266,6 +1328,7 @@ namespace AFramePlugin
                     var br = oe as BlockReference;
                     if (br == null || br.Layer != layer) continue;
                     if (br.DynamicBlockTableRecord != defId) continue;
+                    if (area.Count > 0 && !area.Contains(oid)) continue;
                     Point3d p = br.Position;
                     double d = byCol ? Math.Abs(p.X - p0.X)
                                      : Math.Abs(p.Y - p0.Y);
@@ -1279,7 +1342,7 @@ namespace AFramePlugin
                 }
                 pts.Sort((a, b) => byCol ? a.Y.CompareTo(b.Y)
                                          : a.X.CompareTo(b.X));
-                EnsureLayer(tr, db, "_РАЗМЕРЫ_ПС");
+                EnsureLayer(tr, db, dimLayer);
                 double baseLo = double.MaxValue;
                 foreach (var p in pts)
                     baseLo = Math.Min(baseLo, byCol ? p.X : p.Y);
@@ -1298,7 +1361,7 @@ namespace AFramePlugin
                         byCol ? Math.PI / 2.0 : 0.0,
                         pts[i], pts[i + 1], dlp, null, db.Dimstyle);
                     dim.SetDatabaseDefaults();
-                    dim.Layer = "_РАЗМЕРЫ_ПС";
+                    dim.Layer = dimLayer;
                     ms.AppendEntity(dim);
                     tr.AddNewlyCreatedDBObject(dim, true);
                     made++;

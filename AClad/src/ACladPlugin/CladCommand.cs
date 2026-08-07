@@ -710,12 +710,55 @@ namespace ACladPlugin
         {
             var ed = doc.Editor;
             var db = doc.Database;
-            var pk = new PromptKeywordOptions(
-                "\nЧто образмерить [Ряд/Столбец] <Ряд>: ",
-                "Ряд Столбец");
-            var rk = ed.GetKeywords(pk);
-            bool byRow = !(rk.Status == PromptStatus.OK &&
-                           rk.StringResult == "Столбец");
+
+            // 04.08 (Герман): «команда ставит размеры на всём чертеже,
+            // а не в заданной области» — сначала ОБЛАСТЬ. Рамкой
+            // выделяются камни, среди которых и ищется ряд/столбец;
+            // Enter без выбора — прежнее поведение (весь чертёж).
+            var area = new HashSet<ObjectId>();
+            var pso = new PromptSelectionOptions
+            {
+                MessageForAdding = "\nВыберите область (рамкой) — " +
+                                   "или Enter, чтобы взять весь чертёж: "
+            };
+            var asel = ed.GetSelection(pso, new SelectionFilter(
+                new[] { new TypedValue((int)DxfCode.Start, "INSERT") }));
+            if (asel.Status == PromptStatus.OK)
+                foreach (SelectedObject so in asel.Value)
+                    if (so != null) area.Add(so.ObjectId);
+            ed.WriteMessage(area.Count > 0
+                ? "\nОбласть: {0} вхождений."
+                : "\nОбласть не задана — весь чертёж.",
+                area.Count);
+
+            // параметры: тип и слой списком существующих (просьба
+            // Германа о «раскрывающемся меню»)
+            var layers = new List<string>();
+            using (var trl = db.TransactionManager.StartTransaction())
+            {
+                var lt = (LayerTable)trl.GetObject(db.LayerTableId,
+                                                   OpenMode.ForRead);
+                foreach (ObjectId lid in lt)
+                {
+                    var ltr = trl.GetObject(lid, OpenMode.ForRead)
+                              as LayerTableRecord;
+                    if (ltr != null) layers.Add(ltr.Name);
+                }
+                trl.Commit();
+            }
+            layers.Sort(StringComparer.CurrentCultureIgnoreCase);
+            bool byRow;
+            string dimLayer;
+            using (var f = new DimForm("Размеры облицовки", layers,
+                                       "_РАЗМЕРЫ_ОБЛ"))
+            {
+                var dr = AcApp.ShowModalDialog(f);
+                if (dr != System.Windows.Forms.DialogResult.OK)
+                { ed.WriteMessage("\nОтменено."); return; }
+                byRow = f.ByRow;
+                dimLayer = f.LayerName;
+            }
+            if (dimLayer.Length == 0) dimLayer = "_РАЗМЕРЫ_ОБЛ";
 
             var peo = new PromptEntityOptions(
                 "\nУкажите камень раскладки: ");
@@ -757,6 +800,8 @@ namespace ACladPlugin
                     var br = oe as BlockReference;
                     if (br == null || br.Layer != layer) continue;
                     if (br.DynamicBlockTableRecord != defId) continue;
+                    // область задана — за её пределы не выходим
+                    if (area.Count > 0 && !area.Contains(oid)) continue;
                     Extents3d e;
                     try { e = CellExtents(tr, br); }
                     catch { continue; }
@@ -768,7 +813,7 @@ namespace ACladPlugin
                 }
                 if (cells.Count == 0)
                 { ed.WriteMessage("\nКамни не найдены."); return; }
-                EnsureLayer(tr, db, "_РАЗМЕРЫ_ОБЛ");
+                EnsureLayer(tr, db, dimLayer);
                 // базовая линия размеров: ниже ряда / левее столбца
                 double baseLo = double.MaxValue;
                 foreach (var e in cells)
@@ -796,7 +841,7 @@ namespace ACladPlugin
                         byRow ? 0.0 : Math.PI / 2.0, p1, p2, dlp,
                         null, db.Dimstyle);
                     dim.SetDatabaseDefaults();
-                    dim.Layer = "_РАЗМЕРЫ_ОБЛ";
+                    dim.Layer = dimLayer;
                     ms.AppendEntity(dim);
                     tr.AddNewlyCreatedDBObject(dim, true);
                     madeD++;
