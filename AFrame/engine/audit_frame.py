@@ -191,6 +191,18 @@ for _cx, _cs in ((None, None), ([], None), ([0.0], 600.0),
         _r["rail_step_corner"] = _cs
     SC.append(("зоны углы=%s шаг=%s" % (_cx, _cs), _r))
 
+# ── 07.08 (ответ Германа В-ад): ХЛЫСТОВЫЙ РЕЖИМ (floors_y пуст) ──
+# те же инварианты для раскладки хлыстами от низа зоны; вертикальная
+# и орто (межэтажной отметки нужны — без них она отказывает штатно)
+_lash_base = [sc for sc in SC
+              if not sc[0].startswith("fuzz") and
+              sc[1].get("sub_type") in ("vertical", "ortho")]
+for _tag, _req in list(_lash_base)[:40]:
+    _r2 = dict(_req)
+    _r2["floors_y"] = []
+    _r2.pop("floor_step", None)
+    SC.append(("ХЛЫСТЫ " + _tag, _r2))
+
 allerrs = []
 crash = 0
 for tag, req in SC:
