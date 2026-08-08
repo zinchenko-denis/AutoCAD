@@ -44,14 +44,23 @@ class TestFrameEngine(unittest.TestCase):
         self.assertEqual(res["summary"]["rails"], 2)
 
     def test_floor_step_passthrough(self):
-        """floor_step доезжает до frame_plan (26.07)."""
+        """floor_step доезжает до frame_plan; вертикальная БЕЗ
+        отметок работает хлыстами — несущих нет (07.08a, В-ад)."""
         res = fe.run({
             "op": "frame", "system": "Standart",
             "contours": [{"id": "A", "pts": rect(0, 0, 1220, 6100)}],
             "joints_x": [610], "floor_step": 3000})
         self.assertTrue(res["ok"], res)
         self.assertEqual(res["summary"]["rails"], 3)
-        self.assertEqual(res["summary"]["brackets_main"], 2)
+        self.assertEqual(res["summary"]["brackets_main"], 0)
+        # межэтажной floor_step по-прежнему строит отметки
+        res2 = fe.run({
+            "op": "frame", "system": "Межэтажная",
+            "sub_type": "interfloor",
+            "contours": [{"id": "A", "pts": rect(0, 0, 2440, 6100)}],
+            "joints_x": [610, 1830], "floor_step": 3000})
+        self.assertTrue(res2["ok"], res2)
+        self.assertGreater(res2["summary"]["brackets_main"], 0)
 
     def test_bad_op_and_empty(self):
         self.assertFalse(fe.run({"op": "nope"})["ok"])

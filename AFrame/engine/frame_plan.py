@@ -192,9 +192,10 @@ def _zone_rail_axes(x0, x1, corners, czone, step_corner, step_main,
     рустов может не быть вовсе — там оставалась пустота.
 
     Правило Германа:
-    - от указанного внешнего угла идёт угловая зона шириной czone;
-      ПЕРВАЯ стойка в `off` (100 мм) от угла, дальше с шагом угловой
-      зоны до конца зоны;
+    - от указанного внешнего угла идёт угловая зона шириной czone
+      ВНУТРЬ области (07.08, В-аз: «только во внутрь»); ПЕРВАЯ стойка
+      в `off` (100 мм) от угла, дальше с шагом угловой зоны до конца
+      зоны;
     - в КРАЕВОЙ зоне (внутренний угол здания или конец облицовки —
       то есть край области, где угол не указан) ПОСЛЕДНЯЯ стойка в
       `off` от границы, остальное как в рядовой.
@@ -206,19 +207,19 @@ def _zone_rail_axes(x0, x1, corners, czone, step_corner, step_main,
     out = []
     st_c = float(step_corner or step_main or 0.0)
     for c in (corners or []):
-        for sgn in (1.0, -1.0):
-            a = c + sgn * off
-            if a < x0 - EPS or a > x1 + EPS:
-                continue
-            out.append(a)
-            if st_c <= EPS:
-                continue
-            lim = c + sgn * czone
-            x = a + sgn * st_c
-            while (x <= lim + EPS if sgn > 0 else x >= lim - EPS) and \
-                    x0 - EPS <= x <= x1 + EPS:
-                out.append(x)
-                x += sgn * st_c
+        sgn = 1.0 if c - x0 <= x1 - c else -1.0
+        a = c + sgn * off
+        if a < x0 - EPS or a > x1 + EPS:
+            continue
+        out.append(a)
+        if st_c <= EPS:
+            continue
+        lim = c + sgn * czone
+        x = a + sgn * st_c
+        while (x <= lim + EPS if sgn > 0 else x >= lim - EPS) and \
+                x0 - EPS <= x <= x1 + EPS:
+            out.append(x)
+            x += sgn * st_c
     # краевые зоны: край области, у которого нет указанного угла
     for edge, sgn in ((x0, 1.0), (x1, -1.0)):
         if any(abs(edge - c) <= czone + EPS for c in (corners or [])):
@@ -231,15 +232,21 @@ def _corner_ivals(x0, x1, czone, corners):
     """Интервалы угловых зон на [x0, x1]. corners=None — прежнее
     поведение (оба края контура); corners=[] — углов НЕТ (фидбэк
     Германа 27.07: угловая зона отсчитывается от УКАЗАННЫХ внешних
-    углов здания, а не от краёв зоны); corners=[x..] — полосы czone
-    в обе стороны от каждого угла."""
+    углов здания, а не от краёв зоны); corners=[x..] — полоса czone
+    от угла ВНУТРЬ области (Герман 07.08, В-аз: «угловая зона только
+    во внутрь»). Внутрь = в сторону дальнего края области; для угла
+    на краю это единственная сторона, для угла в середине берём
+    направление от ближайшего края."""
     if czone <= EPS:
         return []
     if corners is None:
         return [(x0, x0 + czone), (x1 - czone, x1)]
     out = []
     for c in corners:
-        a, b = max(x0, c - czone), min(x1, c + czone)
+        if c - x0 <= x1 - c:
+            a, b = max(x0, c), min(x1, c + czone)
+        else:
+            a, b = max(x0, c - czone), min(x1, c)
         if b - a > EPS:
             out.append((a, b))
     out.sort()
@@ -404,30 +411,71 @@ def _cut_by_len(lo, hi, std, gap):
     return out
 
 
-def _piece_clamps(clamps, rows, s_lo, s_hi, s_x, side, fl_in, wedges=()):
-    """Кляммеры куска стойки (ТЗ 26.07): боковой на оконных
-    (смещённых/Z) стойках и их низе (примыкание к окну/отливу);
-    стартовый на низе обычного куска (низ зоны / над откосом);
-    рядовой на шве; КОМБИНИРОВАННЫЙ на первом шве выше каждого
-    стыка-термошва."""
+def _piece_clamps(clamps, rows, s_lo, s_hi, s_x, side, fl_in, wedges=(),
+                  on_seam=True):
+    """Кляммеры куска стойки (ТЗ 26.07 + ответ Германа 07.08, В-аа):
+    тип определяется положением ОСИ относительно ПЛИТ облицовки.
+
+    - боковой (угловой КЛУ-1.1): оконные смещённые/Z стойки (side) и
+      ЛЮБАЯ ось ВНЕ вертикального шва — середина плитки шире 600,
+      стойка угловой/краевой зоны (on_seam=False). Установка
+      ВЕРТИКАЛЬНО (orient="v"), «вдоль оконных боковых откосов и
+      боковых границ замкнутой области»;
+    - рядовой: ось НА вертикальном шве (руст, плиты с обеих сторон);
+    - стартовый: низ обычного куска (низ зоны / над откосом);
+    - комбинированный: первый шов выше стыка-термошва (fl_in) — только
+      на рустах; на осях в поле плиты ряд над стыком по полигону
+      Германа ПУСТ (столбики КЛУ с пропусками 1216).
+    Держатели верхних кромок (под отливом / последний ряд) ставит
+    вызывающий код — им нужен контекст проёмов и верха зоны."""
     if not rows:
         return
     k0 = "боковой" if side else "стартовый"
     if k0 == "стартовый" and _at_window(wedges, s_x, s_lo):
         k0 = "боковой"                     # п.4: кромка в пределах окна
-    clamps.append({"x": round(s_x, 4), "y": round(s_lo, 4), "kind": k0})
+    c0 = {"x": round(s_x, 4), "y": round(s_lo, 4), "kind": k0}
+    if k0 == "боковой":
+        c0["orient"] = "v"
+    clamps.append(c0)
     for ry in rows:
         if not (s_lo + EPS < ry < s_hi - EPS):
             continue
-        kind = "боковой" if side else "рядовой"
-        if kind == "рядовой" and _at_window(wedges, s_x, ry):
-            kind = "боковой"               # п.4: у грани окна, в высоту
-        if not side and any(
-                f < ry and not any(f < r2 < ry for r2 in rows)
-                for f in fl_in):
-            kind = "комбинированный"
-        clamps.append({"x": round(s_x, 4), "y": round(ry, 4),
-                       "kind": kind})
+        over_seam = any(
+            f < ry and not any(f < r2 < ry for r2 in rows)
+            for f in fl_in)
+        if side:
+            kind = "боковой"
+        elif not on_seam:
+            if over_seam:
+                continue       # полигон: над стыком вне руста — пусто
+            kind = "боковой"
+        else:
+            kind = "рядовой"
+            if _at_window(wedges, s_x, ry):
+                kind = "боковой"           # п.4: у грани окна, в высоту
+            elif over_seam:
+                kind = "комбинированный"
+        cl = {"x": round(s_x, 4), "y": round(ry, 4), "kind": kind}
+        if kind == "боковой":
+            cl["orient"] = "v"
+        clamps.append(cl)
+
+
+def _edge_top_clamps(clamps, rows, s_lo, s_hi, s_x, y_top, hole_boxes):
+    """Боковые кляммеры ГОРИЗОНТАЛЬНОЙ установки (Герман 07.08,
+    ответ 1): «под отливом» (верх куска стойки упёрся в низ проёма)
+    и «последним рядом по высоте» (верх куска = верх замкнутой
+    области). На полигоне — КЛУ-1.1 с rot=0 на верхних кромках
+    подоконных плит (орто: 4 X × 20 = 80) и верхнего ряда (27)."""
+    if not rows:
+        return
+    at_top = abs(s_hi - y_top) <= 1.0
+    at_sill = any(abs(s_hi - by0) <= 1.0 and
+                  bx0 - EPS <= s_x <= bx1 + EPS
+                  for bx0, by0, bx1, by1 in hole_boxes)
+    if at_top or at_sill:
+        clamps.append({"x": round(s_x, 4), "y": round(s_hi, 4),
+                       "kind": "боковой", "orient": "h"})
 
 
 def _median_gap(vals, default):
@@ -623,6 +671,16 @@ def frame_plan(req):
         except (TypeError, ValueError):
             continue
     floors = sorted(set(floors))
+    # Герман 07.08 (ответ 2, В-ад ЗАКРЫТ): обе схемы верны. Точки
+    # перекрытий УКАЗАНЫ → стык направляющих центрован на отметке,
+    # несущий кронштейн на центре перекрытия (В15). НЕ указаны →
+    # «установка идёт снизу вверх с заданным шагом»: хлысты rail_std
+    # от низа зоны с зазором, кронштейны «300 от торцов + ≤ шага»,
+    # ВСЕ ОДНОГО ТИПА («у меня разложено для случая, когда везде
+    # монолит»). Прежняя автогенерация виртуальных отметок шагом
+    # floor_step (26.07) остаётся ТОЛЬКО у межэтажной — ей отметки
+    # нужны конструктивно.
+    lash = not floors
     corners = None
     if req.get("corners_x") is not None:
         corners = []
@@ -639,6 +697,13 @@ def frame_plan(req):
         except (TypeError, ValueError):
             continue
     rows = sorted(set(rows))
+    # снапшот ОСЕЙ-РУСТОВ до всех добавок (mid/угловые/краевые):
+    # тип кляммера на оси зависит от того, руст это или ось в поле
+    # плиты (В-аа, ответ Германа 07.08)
+    seam_axes = list(joints)
+
+    def _on_seam(jx, tol=2.0):
+        return any(abs(jx - j0) <= tol for j0 in seam_axes)
 
     # тип подсистемы (ТЗ Германа 26.07): вертикальная (дефолт) /
     # межэтажная / ортогональная; комбинации — разными запусками
@@ -711,10 +776,12 @@ def frame_plan(req):
         wedges = _win_edges(hole_boxes,
                             [j for j in joints if x0 - EPS <= j <= x1 + EPS],
                             edge_off)
-        # отметки перекрытий: заданные, либо автогенерация шагом
-        # этажа от низа контура (фидбэк Германа 26.07)
+        # отметки перекрытий: заданные, либо (ТОЛЬКО межэтажная —
+        # ей отметки нужны конструктивно) автогенерация шагом этажа
+        # от низа контура (26.07). Вертикальная без отметок работает
+        # ХЛЫСТАМИ от низа (Герман 07.08, ответ 2).
         floors_c = floors
-        if not floors and floor_step:
+        if not floors and floor_step and sub == "interfloor":
             floors_c = []
             f = y0 + floor_step
             while f < y1 - EPS:
@@ -811,7 +878,10 @@ def frame_plan(req):
                                              "y": round(f, 4),
                                              "kind": "вставка"})
                     _piece_clamps(clamps, rows, s_lo, s_hi, jx,
-                                  False, fl_in, wedges)
+                                  False, fl_in, wedges,
+                                  on_seam=_on_seam(jx))
+                    _edge_top_clamps(clamps, rows, s_lo, s_hi, jx,
+                                     y1, hole_boxes)
             # СП-60-40 в подоконной зоне на скобах С1 к крайним
             # межэтажным профилям
             jset = [j for j in joints if x0 - EPS <= j <= x1 + EPS]
@@ -994,15 +1064,23 @@ def frame_plan(req):
                     # Раньше клали ОДНИМ куском на всю высоту зоны —
                     # динблок столько не растягивался («профилей нет
                     # выше первого этажа», фидбэк по сборке №10)
-                    for za, zb in _cut_by_len(s_lo, s_hi, rail_std, gap):
+                    segs_o = _cut_by_len(s_lo, s_hi, rail_std, gap)
+                    for za, zb in segs_o:
                         rails.append({"x": round(s_x, 4),
                                       "y0": round(za, 4),
                                       "y1": round(zb, 4),
                                       "len": round(zb - za, 4),
                                       "kind": "Z-профиль" if side
                                       else "ШП-60-20"})
+                    # стыки кусков ШП → комбинированный на первом шве
+                    # выше (полигон: КОМБ 61 на орто стоят над стыками)
+                    seams_o = [zb for za, zb in segs_o[:-1]]
                     _piece_clamps(clamps, rows, s_lo, s_hi, s_x,
-                                  side, [], wedges)
+                                  side, seams_o, wedges,
+                                  on_seam=_on_seam(jx))
+                    if not side:
+                        _edge_top_clamps(clamps, rows, s_lo, s_hi,
+                                         s_x, y1, hole_boxes)
             # 02.08 (замечание №1 Дениса/полигон): Z-образные у КАЖДОЙ
             # грани окна ВСЕГДА (ТЗ §3: «у окон Z-образные, длина =
             # сторона окна + 100») — раньше Z возникал, лишь если ось
@@ -1154,26 +1232,43 @@ def frame_plan(req):
                     zone_side.add(round(s_x, 4))
                 fl_in = [f for f in floors_c
                          if s_lo + EPS < f < s_hi - EPS]
-                # направляющие: куски между стыками (стык центрован
-                # на отметке перекрытия, зазор gap — В15/В18);
-                # кронштейны — НА КАЖДУЮ направляющую: 300 от низа,
-                # 300 от верха, между ними равномерно ≤ шага (ТЗ
-                # Германа 26.07); первый кронштейн направляющей,
-                # начавшейся стыком на перекрытии, — «несущий» (В-е)
-                cuts = ([s_lo, s_hi] if s_hi - s_lo <= rail_std + EPS
-                        else [s_lo] + fl_in + [s_hi])
-                for i in range(len(cuts) - 1):
-                    a = cuts[i] + (gap / 2.0 if i > 0 else 0.0)
-                    b = cuts[i + 1] - (gap / 2.0
-                                       if i + 1 < len(cuts) - 1
-                                       else 0.0)
-                    if b - a <= EPS:
-                        continue
-                    if stock > EPS and b - a > stock + EPS:
-                        notes.append(
-                            "направляющая X=%.0f длиной %.0f > хлыста "
-                            "%.0f — задайте перекрытия" % (s_x, b - a,
-                                                           stock))
+                # направляющие. Отметки УКАЗАНЫ: куски между стыками
+                # (стык центрован на отметке, зазор gap — В15/В18),
+                # первый кронштейн куска, начавшегося стыком на
+                # перекрытии, — «несущий» (В-е). Отметок НЕТ (lash,
+                # Герман 07.08 ответ 2): хлысты РОВНО rail_std от
+                # низа куска, зазор gap МЕЖДУ хлыстами (полигон: низы
+                # 24070.3+3010n), последний обрезается, кронштейны
+                # все одного типа. В обоих режимах на каждую
+                # направляющую: 300 от торцов + равномерно ≤ шага
+                # (ТЗ 26.07), короткая — один в центре.
+                segs2 = []
+                if lash:
+                    yq = s_lo
+                    while s_hi - yq > EPS:
+                        ce = min(yq + rail_std, s_hi)
+                        segs2.append((yq, ce, False))
+                        yq = ce + gap
+                    seams_in = [b for _a, b, _f in segs2[:-1]]
+                else:
+                    cuts = ([s_lo, s_hi]
+                            if s_hi - s_lo <= rail_std + EPS
+                            else [s_lo] + fl_in + [s_hi])
+                    for i in range(len(cuts) - 1):
+                        a = cuts[i] + (gap / 2.0 if i > 0 else 0.0)
+                        b = cuts[i + 1] - (gap / 2.0
+                                           if i + 1 < len(cuts) - 1
+                                           else 0.0)
+                        if b - a <= EPS:
+                            continue
+                        if stock > EPS and b - a > stock + EPS:
+                            notes.append(
+                                "направляющая X=%.0f длиной %.0f > "
+                                "хлыста %.0f — задайте перекрытия"
+                                % (s_x, b - a, stock))
+                        segs2.append((a, b, i > 0))
+                    seams_in = fl_in
+                for a, b, joined in segs2:
                     rails.append({"x": round(s_x, 4),
                                   "y0": round(a, 4),
                                   "y1": round(b, 4),
@@ -1183,7 +1278,7 @@ def frame_plan(req):
                         pos = _rail_brackets(a, b, float(start_off),
                                              float(step), exact_step)
                         for pi, y in enumerate(pos):
-                            kind = ("несущий" if i > 0 and pi == 0
+                            kind = ("несущий" if joined and pi == 0
                                     else "рядовой")
                             brackets.append({"x": round(s_x, 4),
                                              "y": round(y, 4),
@@ -1196,7 +1291,10 @@ def frame_plan(req):
                                          "y": round(f, 4),
                                          "kind": "несущий"})
                 _piece_clamps(clamps, rows, s_lo, s_hi, s_x, side,
-                              fl_in, wedges)
+                              seams_in, wedges, on_seam=_on_seam(jx))
+                if not side:
+                    _edge_top_clamps(clamps, rows, s_lo, s_hi, s_x,
+                                     y1, hole_boxes)
 
         # 02.08 (замечание №1 Дениса/полигон): оконные стойки у
         # КАЖДОЙ грани проёма ВСЕГДА (ТЗ §1: «направляющие слева/
