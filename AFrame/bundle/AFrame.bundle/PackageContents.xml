@@ -34,6 +34,8 @@
         LoadOnAutoCADStartup="True">
       <Commands GroupName="AFrameCommands">
         <Command Global="ATFRAME" Local="ATFRAME" />
+        <Command Global="ATFRAMEDIM" Local="ATFRAMEDIM" />
+        <Command Global="ATDEDUP" Local="ATDEDUP" />
       </Commands>
     </ComponentEntry>
   </Components>

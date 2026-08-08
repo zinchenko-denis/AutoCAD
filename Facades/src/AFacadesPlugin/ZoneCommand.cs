@@ -92,8 +92,24 @@ namespace AFacadesPlugin
             }
 
             // ── 2. параметры (кнопка «+ Добавить контуры» — фидбэк №2 п.3:
-            //    забыл контур — доклкнуть, не выбирая всё заново) ──
-            ZoneForm form = new ZoneForm(contours.Count);
+            //    забыл контур — доклкнуть, не выбирая всё заново).
+            //    07.08 (просьба Германа): в комбо наименования — ещё и
+            //    существующие слои чертежа (выбор слоя из списка) ──
+            var layerNames = new List<string>();
+            using (var trl = db.TransactionManager.StartTransaction())
+            {
+                var ltz = (LayerTable)trl.GetObject(db.LayerTableId,
+                                                    OpenMode.ForRead);
+                foreach (ObjectId lid in ltz)
+                {
+                    var ltr = trl.GetObject(lid, OpenMode.ForRead)
+                              as LayerTableRecord;
+                    if (ltr != null) layerNames.Add(ltr.Name);
+                }
+                trl.Commit();
+            }
+            layerNames.Sort(StringComparer.CurrentCultureIgnoreCase);
+            ZoneForm form = new ZoneForm(contours.Count, layerNames);
             form.AddPicker = delegate ()
             {
                 // паттерн ATableSpec (ReportBuilderForm): try/finally + End.

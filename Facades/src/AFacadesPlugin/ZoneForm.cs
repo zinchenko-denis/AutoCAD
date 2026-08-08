@@ -65,7 +65,8 @@ namespace AFacadesPlugin
             return dflt;
         }
 
-        internal ZoneForm(int contourCount)
+        internal ZoneForm(int contourCount,
+                          IEnumerable<string> layerNames = null)
         {
             Text = "ATFZONE — зоны облицовки (контуров: " + contourCount + ")";
             FormBorderStyle = FormBorderStyle.FixedDialog;
@@ -79,6 +80,13 @@ namespace AFacadesPlugin
             _cladding.SetBounds(12, y, 406, 24);
             _cladding.DropDownStyle = ComboBoxStyle.DropDown;
             foreach (var h in History) _cladding.Items.Add(h);
+            // 07.08 (просьба Германа): существующие слои чертежа в
+            // списке — история сессии сверху, слои ниже
+            if (layerNames != null)
+                foreach (var ln in layerNames)
+                    if (!string.IsNullOrEmpty(ln) &&
+                        !_cladding.Items.Contains(ln))
+                        _cladding.Items.Add(ln);
             if (History.Count > 0) _cladding.Text = History[0];
             else _cladding.Text = "керамогранит 600х600";
             Controls.Add(_cladding);

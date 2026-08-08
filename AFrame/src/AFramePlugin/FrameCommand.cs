@@ -519,15 +519,25 @@ namespace AFramePlugin
                 rkl.StringResult == "Нет")
                 rowsY.Clear();
 
-            // 26.07 (фидбэк Германа): без отметок направляющие выходили
-            // «бесконечными» — предлагаем автоперекрытия шагом этажа
+            // Ответ Германа 07.08 (В-ад): обе схемы верны. Отметки
+            // УКАЗАНЫ — несущий кронштейн на центре перекрытия, стык
+            // направляющих на отметке. НЕ указаны — движок кладёт
+            // ХЛЫСТЫ снизу вверх (кронштейны 300 от торцов + шаг,
+            // все одного типа). Автоперекрытия шагом этажа остались
+            // только у межэтажной — ей отметки нужны конструктивно.
             double floorStep = 0.0;
             if (floors.Count == 0)
             {
-                floorStep = AskD(ed, "Отметок нет. Высота этажа для " +
-                    "автоматических перекрытий, мм (0 — без перекрытий)",
-                    3000.0);
-                if (floorStep < 1) floorStep = 0.0;
+                if (interFloor)
+                {
+                    floorStep = AskD(ed, "Отметок нет. Высота этажа " +
+                        "для автоматических перекрытий, мм", 3000.0);
+                    if (floorStep < 1) floorStep = 0.0;
+                }
+                else
+                    ed.WriteMessage("\nОтметки не указаны — " +
+                        "направляющие хлыстами от низа зоны, " +
+                        "кронштейны одного типа (300 от торцов).");
             }
 
             // ── 5. движок ──
@@ -742,9 +752,22 @@ namespace AFramePlugin
                             cdx = CenterOffsetX(tr, bid);
                             clampDx[bid] = cdx;
                         }
+                        // ответ Германа 07.08 (В-аа): «установка
+                        // бокового кляммера вертикально» — вдоль
+                        // откосов/границ/середин плит знак повёрнут
+                        // (на полигоне rot=270); БОКОВОЙ с orient="h"
+                        // (под отливом, последний ряд по высоте)
+                        // остаётся горизонтальным
+                        bool vert = ck == "боковой" &&
+                                    SafeStr(Get(it, "orient")) != "h";
+                        double cx2 = ToD(Get(it, "x")),
+                               cy2 = ToD(Get(it, "y"));
+                        // центрирование в осях знака: при повороте
+                        // 270° смещение базы уходит в Y
+                        if (vert) cy2 += cdx; else cx2 -= cdx;
                         var br2 = new BlockReference(
-                            new Point3d(ToD(Get(it, "x")) - cdx,
-                                        ToD(Get(it, "y")), 0), bid);
+                            new Point3d(cx2, cy2, 0), bid);
+                        if (vert) br2.Rotation = 1.5 * Math.PI;
                         br2.Layer = LayerClamps;
                         ms.AppendEntity(br2);
                         tr.AddNewlyCreatedDBObject(br2, true);
@@ -1619,5 +1642,122 @@ namespace AFramePlugin
 
         private static string F0(double v)
         { return v.ToString("0", CultureInfo.InvariantCulture); }
+
+        // ── ATDEDUP (ответ Германа 07.08, п.5): «проверить, чтоб не
+        // было участков, где кронштейн или направляющая выставлена
+        // два раза в одно и то же место; полностью совпадающие
+        // координаты — оставить только один». На его же полигоне
+        // таких 84 (слой _01_ПС_НАПРАВЛЯЮЩИЕ: 614 вставок, 530
+        // уникальных позиций). Область рамкой, Enter — весь чертёж;
+        // сравниваем ВХОЖДЕНИЯ БЛОКОВ по (определение, слой, X, Y,
+        // поворот, масштаб) с допуском 0.1 мм / 0.1° ──
+        [CommandMethod("ATDEDUP", CommandFlags.Modal)]
+        public void RunDedup()
+        {
+            var doc = AcApp.DocumentManager.MdiActiveDocument;
+            if (doc == null) return;
+            try { RunDedupCore(doc); }
+            catch (System.Exception ex)
+            {
+                try
+                {
+                    doc.Editor.WriteMessage(
+                        "\nATDEDUP: внутренняя ошибка — сообщите " +
+                        "разработчику.\n" + ex.ToString() + "\n");
+                }
+                catch { }
+            }
+        }
+
+        private void RunDedupCore(
+            Autodesk.AutoCAD.ApplicationServices.Document doc)
+        {
+            var ed = doc.Editor;
+            var db = doc.Database;
+            var area = new List<ObjectId>();
+            var pso = new PromptSelectionOptions
+            {
+                MessageForAdding = "\nОбласть проверки дублей " +
+                    "(рамкой) — или Enter, чтобы проверить весь " +
+                    "чертёж: "
+            };
+            var asel = ed.GetSelection(pso, new SelectionFilter(
+                new[] { new TypedValue((int)DxfCode.Start, "INSERT") }));
+            if (asel.Status == PromptStatus.OK)
+                foreach (SelectedObject so in asel.Value)
+                    if (so != null) area.Add(so.ObjectId);
+            int removed = 0, seenCnt = 0;
+            var byName = new Dictionary<string, int>();
+            using (doc.LockDocument())
+            using (var tr = db.TransactionManager.StartTransaction())
+            {
+                var ids = new List<ObjectId>(area);
+                if (ids.Count == 0)
+                {
+                    var bt = (BlockTable)tr.GetObject(
+                        db.BlockTableId, OpenMode.ForRead);
+                    var ms = (BlockTableRecord)tr.GetObject(
+                        bt[BlockTableRecord.ModelSpace],
+                        OpenMode.ForRead);
+                    foreach (ObjectId oid in ms) ids.Add(oid);
+                }
+                var seen = new HashSet<string>();
+                foreach (var oid in ids)
+                {
+                    BlockReference br;
+                    try
+                    {
+                        br = tr.GetObject(oid, OpenMode.ForRead)
+                             as BlockReference;
+                    }
+                    catch { continue; }
+                    if (br == null) continue;
+                    seenCnt++;
+                    string key = br.DynamicBlockTableRecord.Handle
+                        + "|" + br.Layer
+                        + "|" + Math.Round(br.Position.X, 1)
+                            .ToString(CultureInfo.InvariantCulture)
+                        + "|" + Math.Round(br.Position.Y, 1)
+                            .ToString(CultureInfo.InvariantCulture)
+                        + "|" + Math.Round(
+                            br.Rotation * 180.0 / Math.PI, 1)
+                            .ToString(CultureInfo.InvariantCulture)
+                        + "|" + Math.Round(br.ScaleFactors.X, 3)
+                            .ToString(CultureInfo.InvariantCulture);
+                    if (seen.Add(key)) continue;
+                    string nm;
+                    try
+                    {
+                        var btr = (BlockTableRecord)tr.GetObject(
+                            br.DynamicBlockTableRecord,
+                            OpenMode.ForRead);
+                        nm = btr.Name;
+                    }
+                    catch { nm = "?"; }
+                    br.UpgradeOpen();
+                    br.Erase();
+                    removed++;
+                    int c0;
+                    byName.TryGetValue(nm, out c0);
+                    byName[nm] = c0 + 1;
+                }
+                tr.Commit();
+            }
+            if (removed == 0)
+            {
+                ed.WriteMessage("\nПроверено вхождений: " + seenCnt +
+                    " — задвоенных нет.");
+                return;
+            }
+            var sb = new StringBuilder();
+            sb.Append("\nУдалено задвоенных вхождений: ")
+              .Append(removed).Append(" (проверено ").Append(seenCnt)
+              .Append("):");
+            foreach (var kv in byName)
+                sb.Append("\n  ").Append(kv.Key).Append(": ")
+                  .Append(kv.Value);
+            sb.Append("\nОтменить можно командой ОТМЕНИТЬ (U).");
+            ed.WriteMessage(sb.ToString());
+        }
     }
 }

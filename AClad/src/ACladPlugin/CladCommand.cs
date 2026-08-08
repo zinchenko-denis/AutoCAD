@@ -265,23 +265,37 @@ namespace ACladPlugin
             if (rh.Status != PromptStatus.OK) return;
             tileH = rh.Value;
 
-            // ── 3б. наименование облицовки → СВОЙ слой камней (ТЗ 2.1) ──
+            // ── 3б. наименование облицовки → СВОЙ слой камней (ТЗ 2.1).
+            //    07.08 (просьба Германа): выбор слоя из списка
+            //    существующих (форма; свободный ввод остаётся) ──
             string cladType = cladDefault.Length > 0 ? cladDefault
                                                      : blockLayer;
             if (cladType == null || cladType.Trim().Length == 0)
                 cladType = "керамогранит 600х600";
-            var psoT = new PromptStringOptions("\nНаименование облицовки: ")
+            var layerNames = new List<string>();
+            using (var trl = db.TransactionManager.StartTransaction())
             {
-                AllowSpaces = true,
-                DefaultValue = cladType,
-                UseDefaultValue = true,
-            };
-            var rT = ed.GetString(psoT);
-            if (rT.Status != PromptStatus.OK)
-            { ed.WriteMessage("\nОтменено."); return; }
-            if (rT.StringResult != null &&
-                rT.StringResult.Trim().Length > 0)
-                cladType = rT.StringResult.Trim();
+                var lt = (LayerTable)trl.GetObject(db.LayerTableId,
+                                                   OpenMode.ForRead);
+                foreach (ObjectId lid in lt)
+                {
+                    var ltr = trl.GetObject(lid, OpenMode.ForRead)
+                              as LayerTableRecord;
+                    if (ltr != null) layerNames.Add(ltr.Name);
+                }
+                trl.Commit();
+            }
+            layerNames.Sort(StringComparer.CurrentCultureIgnoreCase);
+            using (var lf = new LayerPickForm(
+                "ATCLAD — облицовка",
+                "Наименование облицовки (= слой камней):",
+                layerNames, cladType))
+            {
+                var lr = AcApp.ShowModalDialog(lf);
+                if (lr != System.Windows.Forms.DialogResult.OK)
+                { ed.WriteMessage("\nОтменено."); return; }
+                if (lf.LayerName.Length > 0) cladType = lf.LayerName;
+            }
             string cladLayer = LayerName(
                 cladType.ToLowerInvariant().StartsWith("облицовка")
                     ? cladType : "Облицовка " + cladType);
