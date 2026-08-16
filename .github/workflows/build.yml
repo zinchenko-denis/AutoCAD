@@ -209,3 +209,22 @@ jobs:
             AFacades.bundle.zip
             AClad.bundle.zip
             AFrame.bundle.zip
+
+      # 4c) НЕИЗМЕНЯЕМЫЙ снимок сборки (07.08e, рецензия организации
+      # репо): latest перезаписывается, и историческую сборку было
+      # не воспроизвести/не откатить. Каждый прогон дополнительно
+      # публикует релиз build-<run_number> с теми же пятью архивами
+      # и SHA кода. Ссылки конструкторам НЕ меняются — им latest.
+      - name: Publish immutable "build-N" release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: build-${{ github.run_number }}
+          name: "build-${{ github.run_number }} (${{ github.sha }})"
+          body: "Неизменяемый снимок сборки №${{ github.run_number }} с коммита ${{ github.sha }}. Для установки конструкторами используется релиз latest; этот — для отката и воспроизведения истории."
+          make_latest: false
+          files: |
+            ATableSpec.bundle.zip
+            ABlockGen.bundle.zip
+            AFacades.bundle.zip
+            AClad.bundle.zip
+            AFrame.bundle.zip

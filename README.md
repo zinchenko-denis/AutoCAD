@@ -1,41 +1,60 @@
 # AutoCAD — надстройки и автоматизация
 
-Сборник инструментов автоматизации AutoCAD. Каждая надстройка — в своей подпапке,
-самодостаточна (исходники, сборка, инструкция).
+Монорепо инструментов автоматизации AutoCAD: спецификации, генерация
+конструкций, фасадное направление (НВФ). Каждый модуль — в своей
+подпапке, самодостаточен (исходники, движок, сборка, документация) и
+ставится отдельным бандлом.
 
-## Готовая сборка — скачать и поставить (без установки пакетов)
+## Модули
 
-Готовый бандл собирается автоматически (GitHub Actions) и лежит здесь:
-**[Releases → latest](https://github.com/zinchenko-denis/AutoCAD/releases/latest)** —
-файл `ATableSpec.bundle.zip`.
+| Модуль | Что делает | Команды | Статус |
+|---|---|---|---|
+| [`ATableSpec/`](ATableSpec/) | Ведомости/спецификации из блоков без СПДС, раскрой, авто-пересчёт | `ATSPEC`, `ATSPECREPORT`, `ATSPECEDIT`, `ATSPECEXPORT`, `ATSPECUPDATE` | боевой (Алексей) |
+| [`ABlockGen/`](ABlockGen/) | Витражи/конструкции из блоков по чертежу АР | `ATVITRAGE`, `ATVITRAGEAR` | боевой (Алексей) |
+| [`Facades/`](Facades/) | НВФ этап 1: зоны фасадов, площади, сводная | `ATFZONE`, `ATFTABLE` | боевой (Герман) |
+| [`AClad/`](AClad/) | НВФ этап 2: раскладка облицовки | `ATCLAD`, `ATCLADDIM` | пилот (Герман) |
+| [`AFrame/`](AFrame/) | НВФ этапы 3–4: подсистема (кронштейны, направляющие, кляммеры) + расчёт несущей способности | `ATFRAME`, `ATFRAMEDIM`, `ATDEDUP` | пилот (Герман) |
 
-Установка (на машине нужен только AutoCAD, больше ничего):
-1. Скачать и распаковать `ATableSpec.bundle.zip`.
-2. Папку `ATableSpec.bundle` положить в `%APPDATA%\Autodesk\ApplicationPlugins\`.
-3. Запустить AutoCAD, набрать команду `ATSPEC`.
+Архитектура всех модулей — гибрид: тонкий C#-плагин (.NET Framework
+4.8, AutoCAD 2013–2024) + замороженный Python-движок (PyInstaller,
+stdlib-only), обмен JSON через временные файлы. Установка = одна папка
+бандла в `%APPDATA%\Autodesk\ApplicationPlugins\`, без доустановки
+софта.
 
-Подробная инструкция с диагностикой: [`ATableSpec/docs/ATableSpec_install.pdf`](ATableSpec/docs/ATableSpec_install.pdf).
+## Готовые сборки
 
-## Инструменты
+Релиз **[latest](https://github.com/zinchenko-denis/AutoCAD/releases/tag/latest)**
+несёт пять независимых архивов (обновляется при каждой сборке):
 
-### ATableSpec — спецификации из блоков без СПДС
-Подпапка [`ATableSpec/`](ATableSpec/). Плагин AutoCAD: читает выбранные блоки
-(стойки, ригели, заполнения, створки, кронштейны, ограждения), агрегирует их
-данные внешним Python-движком и вставляет ведомость таблицей в чертёж.
-Команда — `ATSPEC`.
+- `ATableSpec.bundle.zip`
+- `ABlockGen.bundle.zip`
+- `AFacades.bundle.zip`
+- `AClad.bundle.zip`
+- `AFrame.bundle.zip`
 
-- Сборка и установка: [`ATableSpec/docs/ATableSpec_install.pdf`](ATableSpec/docs/ATableSpec_install.pdf)
-- Краткое описание: [`ATableSpec/README.md`](ATableSpec/README.md)
-- Архитектура и контракт обмена: [`ATableSpec/docs/HYBRID.md`](ATableSpec/docs/HYBRID.md)
+Каждая сборка дополнительно публикуется неизменяемым релизом
+`build-N` (номер прогона CI) — для отката и воспроизведения истории.
 
-Целевые версии AutoCAD: 2013–2024 (сборка net48); ветка под 2025+ (.NET 8)
-заготовлена.
+Установка: скачать нужный архив → распаковать папку `*.bundle` в
+`%APPDATA%\Autodesk\ApplicationPlugins\` → перезапустить AutoCAD.
+Три фасадных бандла (AFacades/AClad/AFrame) обновлять вместе — меню
+общее.
+
+## Ветки
+
+- `main` — релизные срезы (стабильное состояние);
+- `feat/auto-reactor` — рабочая ветка всех модулей (HEAD разработки);
+- `build-trigger` — техническая ветка запуска сборки (CI).
+
+## Документация
+
+Состояние и журнал каждого модуля — `<Модуль>/docs/NEXT.md` (читать
+первым). Инструкции пользователям — PDF в `<Модуль>/docs/`. Правила
+среды/сборки/CI — `ATableSpec/docs/NEXT.md` §грабли.
 
 ## Как скачать
+
 Кнопка **Code → Download ZIP** вверху страницы, либо:
 ```
 git clone https://github.com/zinchenko-denis/AutoCAD.git
 ```
-
-## Статус
-Пилот. Новые надстройки добавляются отдельными подпапками.
