@@ -7,7 +7,7 @@ name: build-bundle
 
 on:
   push:
-    branches: [ main ]
+    branches: [ main, build-trigger ]
     paths:
       - "ATableSpec/src/**"
       - "ATableSpec/engine/**"
