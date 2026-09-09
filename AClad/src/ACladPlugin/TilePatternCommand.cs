@@ -21,16 +21,21 @@ namespace ACladPlugin
     ///
     /// Отличие от ATCLAD (кассеты): камень мелкий, много типов-цветов,
     /// рисунок задаёт нарисованный образец (6×10 и т.п.), ряды сдвинуты
-    /// на долю модуля, датум — угол ОСНОВНОЙ стены (целые плитки на
-    /// стену, подрезка на выступы/откосы). Движок — тот же
-    /// clad_engine.exe, op="tile_pattern" (tile_pattern.py). Родилось
-    /// из задания Германа 09.09 (бетонная плитка 290×82, руст 7).
+    /// на долю модуля. Правила по ответам Германа 09.09: датум — угол
+    /// габарита зоны (буквально «справа налево, снизу вверх»; «Стена»
+    /// и «Точка» — по выбору), смежные контуры — одна плоскость с общей
+    /// сеткой, полоски тоньше порога поглощаются рустами, заготовки под
+    /// подрезку — раскроем кусков из целых плиток с отходами отдельной
+    /// строкой. Движок — тот же clad_engine.exe, op="tile_pattern"
+    /// (tile_pattern.py). Родилось из задания Германа 09.09 (бетонная
+    /// плитка 290×82, руст 7).
     ///
     /// Поток: выбрать образец (крашеные плитки) → размеры плитки и русты
     /// → способ отсчёта датума → выбрать зоны (ATFZONE и/или полилинии)
     /// → движок → крашеные плитки по слоям типов, подрезка отдельно,
-    /// полоски &lt;порога на свой слой, сводка. Метка «ATTILE» с
-    /// параметрами и хэндлами — на объекты зоны (перегенерация).
+    /// полоски тоньше порога поглощены рустами (в чертёж не идут),
+    /// сводка с раскроем. Метка «ATTILE» с параметрами и хэндлами — на
+    /// объекты зоны (перегенерация).
     /// </summary>
     public class TilePatternCommand
     {
@@ -145,27 +150,40 @@ namespace ACladPlugin
             var rgh = ed.GetDouble(pgh);
             if (rgh.Status != PromptStatus.OK) return;
 
+            // полоски тоньше порога ПОГЛОЩАЮТСЯ рустами — в раскладку не
+            // идут (ответ Германа 09.09, В3)
             var pmp = new PromptDoubleOptions(
-                "\nПорог тонкой полоски (меньший габарит куска — на свой " +
-                "слой, вне счёта плиток), мм: ")
+                "\nПорог полоски, поглощаемой рустом (кусок тоньше — " +
+                "не кладётся), мм: ")
             { DefaultValue = 10.0, AllowNegative = false };
             var rmp = ed.GetDouble(pmp);
             if (rmp.Status != PromptStatus.OK) return;
             double minPiece = rmp.Value;
 
-            // ── 3. датум: угол Стены (целые на стену), Габарит (буквально
-            //    справа-снизу) или общая Точка (общий горизонт зон) ──
+            // пропил при раскрое подрезки (заготовки считаются укладкой
+            // кусков в целые плитки — ответ Германа 09.09 про отходы)
+            var pkf = new PromptDoubleOptions(
+                "\nПропил при раскрое подрезки, мм: ")
+            { DefaultValue = 3.0, AllowNegative = false };
+            var rkf = ed.GetDouble(pkf);
+            if (rkf.Status != PromptStatus.OK) return;
+            double kerf = rkf.Value;
+
+            // ── 3. датум: Габарит (правый-низ габарита зоны — буквальное
+            //    «справа налево, снизу вверх», ДЕФОЛТ по ответу Германа
+            //    09.09), Стена (угол основной стены, целые на стену) или
+            //    общая Точка (общий горизонт зон) ──
             var pko = new PromptKeywordOptions(
                 "\nОтсчёт раскладки от: ")
             { AllowNone = false };
-            pko.Keywords.Add("Стена");
             pko.Keywords.Add("Габарит");
+            pko.Keywords.Add("Стена");
             pko.Keywords.Add("Точка");
-            pko.Keywords.Default = "Стена";
+            pko.Keywords.Default = "Габарит";
             var pk = ed.GetKeywords(pko);
             if (pk.Status != PromptStatus.OK) return;
-            string mode = pk.StringResult == "Габарит" ? "bbox"
-                        : pk.StringResult == "Точка" ? "point" : "wall";
+            string mode = pk.StringResult == "Стена" ? "wall"
+                        : pk.StringResult == "Точка" ? "point" : "bbox";
             var datum = new Dictionary<string, object> { { "mode", mode } };
             if (mode == "point")
             {
@@ -176,6 +194,18 @@ namespace ACladPlugin
                 datum["x"] = ppt.Value.X;
                 datum["y"] = ppt.Value.Y;
             }
+
+            // ── 3а. смежные контуры (стык по ребру) — одна плоскость с
+            //    общей сеткой (ответ Германа 09.09, В2: стены не независимы) ──
+            var pkm = new PromptKeywordOptions(
+                "\nСмежные контуры считать одной плоскостью (общая сетка)? ")
+            { AllowNone = false };
+            pkm.Keywords.Add("Да");
+            pkm.Keywords.Add("Нет");
+            pkm.Keywords.Default = "Да";
+            var pkmr = ed.GetKeywords(pkm);
+            if (pkmr.Status != PromptStatus.OK) return;
+            bool mergeTouching = pkmr.StringResult != "Нет";
 
             // ── 4. зоны: ATFZONE (штриховки/марки) и/или замкнутые контуры ──
             var psZ = new PromptSelectionOptions
@@ -267,6 +297,8 @@ namespace ACladPlugin
                 { "sample", sample },
                 { "datum", datum },
                 { "min_piece", minPiece },
+                { "kerf", kerf },
+                { "merge_touching", mergeTouching },
                 { "zones", zonesPayload },
                 { "contours", contoursPayload },
             };
@@ -400,6 +432,7 @@ namespace ACladPlugin
                         { "gap", new Dictionary<string, object>
                             { { "v", rgv.Value }, { "h", rgh.Value } } },
                         { "datum", datum }, { "min_piece", minPiece },
+                        { "kerf", kerf }, { "merge_touching", mergeTouching },
                         { "pattern", CladCommand.Get(res, "summary") is Dictionary<string, object> sm
                             ? CladCommand.Get(sm, "pattern") : null },
                         { "handles", kv.Value },
@@ -427,12 +460,20 @@ namespace ACladPlugin
 
             // ── 7. сводка ──
             var sum = CladCommand.Get(res, "summary") as Dictionary<string, object>;
+            var absorbed = CladCommand.Get(sum, "absorbed") as Dictionary<string, object>;
             ed.WriteMessage("\nATTILE: объектов " + made +
                 "; целых " + CladCommand.SafeStr(CladCommand.Get(sum, "full")) +
-                ", подрезка " + CladCommand.SafeStr(CladCommand.Get(sum, "cut")) +
-                ", полосок <" + F0(minPiece) + " " +
-                CladCommand.SafeStr(CladCommand.Get(sum, "tiny")) +
+                ", кусков подрезки " + CladCommand.SafeStr(CladCommand.Get(sum, "cut")) +
+                "; полосок <" + F0(minPiece) + " мм поглощено рустами: " +
+                CladCommand.SafeStr(CladCommand.Get(absorbed, "count")) +
                 (erased > 0 ? "; прежних удалено " + erased : "") + ".");
+            ed.WriteMessage("\n  ПЛИТОК ВСЕГО (целые + заготовки после раскроя): " +
+                CladCommand.SafeStr(CladCommand.Get(sum, "tiles_total")) +
+                " (по площади минимум " +
+                CladCommand.SafeStr(CladCommand.Get(sum, "tiles_by_area")) +
+                "); отходы раскроя " +
+                ToD(CladCommand.Get(sum, "waste_pct")).ToString("0.0", CultureInfo.InvariantCulture) +
+                " % (пропил " + F0(kerf) + " мм). Запас на бой/брак — добавить отдельно.");
             PrintByType(ed, sum);
             PrintNotes(ed, CladCommand.Get(res, "notes") as object[]);
             ed.WriteMessage("\nСпецификацию снять командой ATSPEC по слоям " +
@@ -608,8 +649,10 @@ namespace ACladPlugin
                 if (d == null) continue;
                 ed.WriteMessage("\n  " + kv.Key + ": целых " +
                     CladCommand.SafeStr(CladCommand.Get(d, "full")) +
-                    ", подрезка " + CladCommand.SafeStr(CladCommand.Get(d, "cut")) +
-                    ", заготовок " + CladCommand.SafeStr(CladCommand.Get(d, "blanks")));
+                    ", кусков " + CladCommand.SafeStr(CladCommand.Get(d, "cut")) +
+                    ", заготовок на подрезку " + CladCommand.SafeStr(CladCommand.Get(d, "blanks_cut")) +
+                    ", итого плиток " + CladCommand.SafeStr(CladCommand.Get(d, "tiles_total")) +
+                    ", отходы " + ToD(CladCommand.Get(d, "waste_pct")).ToString("0.0", CultureInfo.InvariantCulture) + " %");
             }
         }
 

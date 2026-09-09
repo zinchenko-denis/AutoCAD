@@ -45,11 +45,24 @@
   (сокращение внутренних рёбер). Куски получаются прямоугольные
   (подрезка по ширине/высоте) или фигурные (Г-образные у углов
   проёмов);
-- полоски: кусок с меньшим габаритом < min_piece (дефолт 10 мм) —
-  флаг tiny (отдельный слой в чертеже, в счёт плиток не входит: на
-  объекте поглощается рустами); < 0.1 мм — численный мусор, кусок
-  отбрасывается; заготовки: 1 плитка на кусок, половинки полной
-  высоты шириной w − |s|·MX парами (2 из одной плитки).
+- полоски: кусок с меньшим габаритом < min_piece (дефолт 10 мм)
+  ПОГЛОЩАЕТСЯ рустами — в раскладку не идёт (ответ Германа 09.09,
+  tiny_mode="absorb"; tiny_mode="layer" — прежнее поведение: кусок
+  остаётся с флагом tiny под отдельный слой). < 0.1 мм — численный
+  мусор, отбрасывается всегда;
+- раскрой (ответ Германа 09.09 — «как учтены обрезки и отходы»):
+  заготовки под подрезку считаются НЕ «плитка на кусок», а укладкой
+  кусков в целые плитки (nest_pieces): полосы полной высоты — по
+  ширине, полосы полной ширины — по высоте, first-fit-decreasing с
+  пропилом kerf (дефолт 3 мм); фигурные (Г у угла окна) — плитка на
+  кусок. Отходы = площадь заготовок − площадь кусков, отдельной
+  строкой в сводке;
+- смежные контуры одной плоскости (ответ Германа 09.09 на В2: стены
+  Б4–Б7 — не независимые) — outer-контуры, касающиеся по ребру,
+  объединяются в одну зону с общей сеткой (merge_touching, дефолт
+  True; допуск стыка merge_tol 1 мм);
+- датум по умолчанию — "bbox" (ответ Германа 09.09 на В1: как у GPT —
+  правый-низ габарита зоны, буквальное «справа налево, снизу вверх»).
 
 Только stdlib.
 """
@@ -60,8 +73,12 @@ from cladding_plan import _closed, _edges, _is_ortho, _ortho_err, \
     _ortho_snap, EPS
 
 NOISE_MM = 0.1        # кусок тоньше — численный мусор (ребро зоны на линии сетки)
-MIN_PIECE_MM = 10.0   # дефолт порога «полоски»
+MIN_PIECE_MM = 10.0   # дефолт порога «полоски» (поглощаются рустами)
 AREA_TOL = 1e-6       # относительный допуск «плитка покрыта целиком»
+QUANT_TOL = 0.1       # мм: кластеризация координат после _ortho_snap
+MERGE_TOL = 1.0       # мм: допуск стыка смежных контуров одной плоскости
+KERF_MM = 3.0         # мм: пропил при раскрое подрезки
+DEFAULT_DATUM = "bbox"  # ответ Германа 09.09 (В1)
 
 
 # ────────────────────────────────────────────── геометрия: ортогональная зона
@@ -84,7 +101,19 @@ class OrthoRegion(object):
     горизонтальным рёбрам всех колец, накрывающим полосу)."""
 
     def __init__(self, outer, holes=()):
-        rings = [list(outer)] + [list(h) for h in holes]
+        self._init_rings([list(outer)], [list(h) for h in holes])
+
+    @classmethod
+    def from_rings(cls, outers, holes=()):
+        """Зона из нескольких внешних контуров (объединённая плоскость)
+        — чёт-нечёт по горизонтальным рёбрам всех колец; контуры не
+        должны перекрываться (стыки — по общему ребру)."""
+        self = cls.__new__(cls)
+        self._init_rings([list(o) for o in outers], [list(h) for h in holes])
+        return self
+
+    def _init_rings(self, outers, holes):
+        rings = outers + holes
         xs = sorted(set(x for ring in rings for x, _y in ring))
         self.xs = xs
         hedges = []
@@ -109,7 +138,7 @@ class OrthoRegion(object):
                     self.area += (xs[k + 1] - xs[k]) * (ys[m + 1] - ys[m])
             self.slabs.append((xs[k], xs[k + 1], ivs))
         bx0, bx1 = (xs[0], xs[-1]) if xs else (0.0, 0.0)
-        ally = [y for _x, y in outer]
+        ally = [y for o in outers for _x, y in o]
         self.bounds = (bx0, min(ally), bx1, max(ally))
 
     def clip_rect(self, tx0, ty0, tx1, ty1):
@@ -251,44 +280,63 @@ def union_outline(rects):
 
 # ────────────────────────────────────────────── датум и образец
 
-def datum_wall(outer):
+def datum_wall(outers):
     """Правый нижний угол основной стены: доминирующее (по суммарной
     длине) правое вертикальное ребро и нижнее горизонтальное ребро
-    внешнего контура. Значения — точные координаты рёбер."""
-    pts = outer if signed_area(outer) > 0 else outer[::-1]   # CCW: интерьер слева
-    # бакеты по 0.1 мм: рёбра одной стены после _ortho_snap могут
-    # различаться на сотые мм и НЕ должны попадать в разные бакеты
-    # (иначе длинная нижняя грань стены дробится и проигрывает «ножке»).
+    ВНЕШНЕЙ границы. outers — один или несколько внешних контуров
+    (объединённая зона): внутренние швы между смежными контурами
+    взаимно сокращаются (_cancel), в счёт идёт только наружная кромка.
+    Значения — точные координаты рёбер."""
+    if outers and not isinstance(outers[0][0], (tuple, list)):
+        outers = [outers]
+    vsegs, hsegs = [], []
+    for outer in outers:
+        pts = outer if signed_area(outer) > 0 else outer[::-1]   # CCW: интерьер слева
+        for (x1, y1), (x2, y2) in _edges(pts):
+            dx, dy = x2 - x1, y2 - y1
+            if abs(dx) < EPS and abs(dy) > EPS:
+                # вверх → интерьер слева → правая кромка (+1); вниз → левая (−1)
+                vsegs.append((round(x1, 1), min(y1, y2), max(y1, y2), 1 if dy > 0 else -1))
+            elif abs(dy) < EPS and abs(dx) > EPS:
+                # вправо → интерьер сверху → низ (+1); влево → верх (−1)
+                hsegs.append((round(y1, 1), min(x1, x2), max(x1, x2), 1 if dx > 0 else -1))
     right, bottom = {}, {}
-    for (x1, y1), (x2, y2) in _edges(pts):
-        dx, dy = x2 - x1, y2 - y1
-        if abs(dx) < EPS and dy > 0:            # вверх → интерьер слева → правая кромка
-            k = round(x1, 1)
-            tot, ex = right.get(k, (0.0, x1))
-            right[k] = (tot + dy, ex)
-        elif abs(dy) < EPS and dx > 0:          # вправо → интерьер сверху → низ
-            k = round(y1, 1)
-            tot, ex = bottom.get(k, (0.0, y1))
-            bottom[k] = (tot + dx, ex)
-    xs = [p[0] for p in pts]
-    ys = [p[1] for p in pts]
-    R = max(right.values(), key=lambda v: v[0])[1] if right else max(xs)
-    B = max(bottom.values(), key=lambda v: v[0])[1] if bottom else min(ys)
+    for x, lo, hi, d in _cancel(vsegs):
+        if d > 0:
+            right[x] = right.get(x, 0.0) + (hi - lo)
+    for y, lo, hi, d in _cancel(hsegs):
+        if d > 0:
+            bottom[y] = bottom.get(y, 0.0) + (hi - lo)
+    xs = [p[0] for o in outers for p in o]
+    ys = [p[1] for o in outers for p in o]
+    if right:
+        kx = max(right.items(), key=lambda kv: kv[1])[0]
+        R = min((x for x in xs if abs(x - kx) <= 0.06), key=lambda x: abs(x - kx), default=kx)
+    else:
+        R = max(xs)
+    if bottom:
+        ky = max(bottom.items(), key=lambda kv: kv[1])[0]
+        B = min((y for y in ys if abs(y - ky) <= 0.06), key=lambda y: abs(y - ky), default=ky)
+    else:
+        B = min(ys)
     return R, B
 
 
-def datum_for(outer, spec):
-    """spec: {"mode": "wall"|"bbox"|"point", "x"?, "y"?} → (R, B)."""
+def datum_for(outers, spec):
+    """spec: {"mode": "wall"|"bbox"|"point", "x"?, "y"?} → (R, B).
+    outers — внешние контуры зоны (несколько — объединённая зона)."""
     spec = spec or {}
-    mode = str(spec.get("mode") or "wall")
-    xs = [p[0] for p in outer]
-    ys = [p[1] for p in outer]
-    if mode == "bbox":
-        R, B = max(xs), min(ys)
+    if outers and not isinstance(outers[0][0], (tuple, list)):
+        outers = [outers]
+    mode = str(spec.get("mode") or DEFAULT_DATUM)
+    xs = [p[0] for o in outers for p in o]
+    ys = [p[1] for o in outers for p in o]
+    if mode == "wall":
+        R, B = datum_wall(outers)
     elif mode == "point":
         R, B = float(spec.get("x", max(xs))), float(spec.get("y", min(ys)))
     else:
-        R, B = datum_wall(outer)
+        R, B = max(xs), min(ys)
     if spec.get("x") is not None and mode != "point":
         R = float(spec["x"])
     if spec.get("y") is not None and mode != "point":
@@ -367,11 +415,14 @@ def default_pattern(types, nrows=2, shift=0.5):
 
 # ────────────────────────────────────────────── раскладка одной зоны
 
+
 def layout_zone(region, R, B, tile_w, tile_h, gap_v, gap_h, pattern,
-                min_piece=MIN_PIECE_MM):
-    """Плитки одной зоны. Возвращает список кусков:
-    {"i","j","type","full","x","y","w","h","rect","tiny","area","rings"?}
-    (rings — только у фигурных кусков; для прямоугольных x,y,w,h)."""
+                min_piece=MIN_PIECE_MM, tiny_mode="absorb"):
+    """Плитки одной зоны. Возвращает (pieces, absorbed):
+    pieces — {"i","j","type","full","x","y","w","h","rect","tiny","area","rings"?}
+    (rings — только у фигурных кусков; прямоугольные — x,y,w,h);
+    absorbed — {"count","area"}: полоски тоньше min_piece, поглощённые
+    рустами (tiny_mode="absorb") — в pieces их нет."""
     MX = tile_w + gap_v
     MY = tile_h + gap_h
     rows = pattern["rows"]
@@ -386,6 +437,7 @@ def layout_zone(region, R, B, tile_w, tile_h, gap_v, gap_h, pattern,
     j_max = int(math.ceil((maxy - B) / MY)) + 1
     full_area = tile_w * tile_h
     pieces = []
+    absorbed = {"count": 0, "area": 0.0}
     for j in range(j_min, j_max + 1):
         y0 = B + j * MY
         y1 = y0 + tile_h
@@ -417,16 +469,20 @@ def layout_zone(region, R, B, tile_w, tile_h, gap_v, gap_h, pattern,
                 w, h = bx1 - bx0, by1 - by0
                 if min(w, h) < NOISE_MM or area < 1.0:
                     continue
+                tiny = min(w, h) < min_piece
+                if tiny and tiny_mode == "absorb":
+                    absorbed["count"] += 1
+                    absorbed["area"] += area
+                    continue
                 is_rect = len(comp) == 1 or abs(area - w * h) <= AREA_TOL * w * h
                 piece = {"i": i, "j": j, "type": ttype, "full": False,
                          "x": bx0, "y": by0, "w": w, "h": h,
-                         "rect": is_rect, "tiny": min(w, h) < min_piece,
-                         "area": area}
+                         "rect": is_rect, "tiny": tiny, "area": area}
                 if not is_rect:
                     piece["rings"] = [[[round(x, 3), round(y, 3)] for x, y in ring]
                                       for ring in union_outline(comp)]
                 pieces.append(piece)
-    return pieces
+    return pieces, absorbed
 
 
 def classify(piece, tile_w, tile_h, half_w):
@@ -443,6 +499,57 @@ def classify(piece, tile_w, tile_h, half_w):
     if abs(w - tile_w) < 0.05:
         return "рез по высоте"
     return "рез по ширине и высоте"
+
+
+# ────────────────────────────────────────────── раскрой подрезки
+
+def _ffd(sizes, capacity, kerf):
+    """First-fit-decreasing: сколько заготовок длины capacity нужно,
+    чтобы нарезать куски sizes с пропилом kerf между соседними."""
+    bins = []
+    for sz in sorted(sizes, reverse=True):
+        placed = False
+        for b in bins:
+            need = sz + (kerf if b["n"] else 0.0)
+            if b["used"] + need <= capacity + EPS:
+                b["used"] += need
+                b["n"] += 1
+                placed = True
+                break
+        if not placed:
+            bins.append({"used": sz, "n": 1})
+    return len(bins)
+
+
+def nest_pieces(pieces, tile_w, tile_h, kerf=KERF_MM):
+    """Раскрой кусков подрезки из целых плиток (ответ Германа 09.09 —
+    «как учтены обрезки»). Возвращает {"blanks", "by_kind": {...},
+    "pieces": n, "area": Σплощадь кусков}.
+
+    Правила: полоса полной высоты (рез только по ширине) — укладка по
+    ширине плитки; полоса полной ширины (рез по высоте) — укладка по
+    высоте; кусок, резаный в обоих направлениях, — укладывается как
+    полоса полной высоты (консервативно: второй рез не переиспользуем);
+    фигурный (Г у угла проёма) — плитка на кусок."""
+    widths, heights, shaped = [], [], 0
+    area = 0.0
+    for p in pieces:
+        if p["full"]:
+            continue
+        area += p["area"]
+        if not p["rect"]:
+            shaped += 1
+        elif abs(p["h"] - tile_h) < 0.05:
+            widths.append(p["w"])
+        elif abs(p["w"] - tile_w) < 0.05:
+            heights.append(p["h"])
+        else:
+            widths.append(p["w"])
+    b_w = _ffd(widths, tile_w, kerf)
+    b_h = _ffd(heights, tile_h, kerf)
+    return {"blanks": b_w + b_h + shaped,
+            "by_kind": {"по ширине": b_w, "по высоте": b_h, "фигурные": shaped},
+            "pieces": len(widths) + len(heights) + shaped, "area": area}
 
 
 def _cluster_map(vals, tol):
@@ -510,7 +617,7 @@ def _prep_contour(contour, ortho_tol, notes, zone_id):
         snapped.append(r)
     # свести остаточную невязку (сотые мм) к точным орто-координатам;
     # порог кластеризации — доля допуска, чтобы не слить реальные грани
-    snapped = _quantize(snapped, max(ortho_tol * 0.2, 0.05))
+    snapped = _quantize(snapped, QUANT_TOL)
     bad = [p for p in snapped if len(p) < 3 or not _is_ortho(p)]
     if bad:
         worst = max((_ortho_err(p) for p in bad if len(p) >= 3), default=0.0)
@@ -530,12 +637,97 @@ def _prep_contour(contour, ortho_tol, notes, zone_id):
     return outer2, fixed
 
 
+
+
+# ────────────────────────────────────────────── объединение смежных контуров
+
+def _touch(a, b, tol):
+    """Касаются ли контуры a и b по ребру (общий вертикальный или
+    горизонтальный отрезок длиной > tol при расстоянии между рёбрами
+    ≤ tol). Возвращает список (axis, ca, cb): координаты стыкующихся
+    рёбер, чтобы свести их к общему значению."""
+    seams = []
+    ea = [((x1, y1), (x2, y2)) for (x1, y1), (x2, y2) in _edges(a)]
+    eb = [((x1, y1), (x2, y2)) for (x1, y1), (x2, y2) in _edges(b)]
+    for (ax1, ay1), (ax2, ay2) in ea:
+        av = abs(ax1 - ax2) < EPS
+        ah = abs(ay1 - ay2) < EPS
+        if not (av or ah):
+            continue
+        for (bx1, by1), (bx2, by2) in eb:
+            if av and abs(bx1 - bx2) < EPS and abs(ax1 - bx1) <= tol:
+                ov = min(max(ay1, ay2), max(by1, by2)) - max(min(ay1, ay2), min(by1, by2))
+                if ov > tol:
+                    seams.append(("x", ax1, bx1))
+            elif ah and abs(by1 - by2) < EPS and abs(ay1 - by1) <= tol:
+                ov = min(max(ax1, ax2), max(bx1, bx2)) - max(min(ax1, ax2), min(bx1, bx2))
+                if ov > tol:
+                    seams.append(("y", ay1, by1))
+    return seams
+
+
+def merge_touching(zones, tol=MERGE_TOL):
+    """zones: [{"id", "outer", "holes"}] (уже выпрямленные) → группы
+    смежных контуров объединены в одну зону: {"id": "A+B", "outers":
+    [...], "holes": [...], "members": [ids]}. Координаты стыков сведены
+    к общему значению (иначе slab-декомпозиция оставит щель)."""
+    n = len(zones)
+    parent = list(range(n))
+
+    def find(a):
+        while parent[a] != a:
+            parent[a] = parent[parent[a]]
+            a = parent[a]
+        return a
+
+    seams_all = []
+    for a in range(n):
+        for b in range(a + 1, n):
+            sm = _touch(zones[a]["outer"], zones[b]["outer"], tol)
+            if sm:
+                seams_all.extend(sm)
+                ra, rb = find(a), find(b)
+                if ra != rb:
+                    parent[ra] = rb
+    groups = {}
+    for a in range(n):
+        groups.setdefault(find(a), []).append(a)
+    # карта координат стыков → общее значение (среднее по кластеру)
+    fix = {"x": {}, "y": {}}
+    for axis in ("x", "y"):
+        vals = sorted(set(v for ax, ca, cb in seams_all if ax == axis for v in (ca, cb)))
+        m = _cluster_map(vals, tol)
+        fix[axis] = m
+
+    def fx(ring):
+        return [(fix["x"].get(x, x), fix["y"].get(y, y)) for x, y in ring]
+
+    out = []
+    for _root, idx in sorted(groups.items(), key=lambda kv: min(kv[1])):
+        members = [zones[k] for k in sorted(idx)]
+        if len(members) == 1:
+            z = members[0]
+            out.append({"id": z["id"], "outers": [z["outer"]],
+                        "holes": list(z["holes"]), "members": [z["id"]]})
+            continue
+        out.append({
+            "id": "+".join(z["id"] for z in members),
+            "outers": [fx(z["outer"]) for z in members],
+            "holes": [fx(h) for z in members for h in z["holes"]],
+            "members": [z["id"] for z in members],
+        })
+    return out
+
+
+# ────────────────────────────────────────────── раскладка по зонам
+
 def tile_pattern(req):
     """Раскладка по списку контуров (уже сгруппированных: outer+holes).
 
     req = {"tile": {"w","h"}, "gap": {"v","h"},
            "pattern": {"rows": [[type,...],...], "row_shifts": [...]},
-           "datum": {"mode","x"?,"y"?}, "min_piece"?, "ortho_tol"?,
+           "datum": {"mode","x"?,"y"?}, "min_piece"?, "tiny_mode"?,
+           "kerf"?, "merge_touching"?, "merge_tol"?, "ortho_tol"?,
            "contours": [{"id", "outer", "holes", "datum"?}, ...]}
     → {"ok", "pieces": [...+"zone"], "per_zone": [...], "summary", "notes"}."""
     notes = []
@@ -563,25 +755,54 @@ def tile_pattern(req):
         shifts = [0.0 if j % 2 == 0 else 0.5 for j in range(len(rows))]
         pattern = dict(pattern, row_shifts=shifts)
     min_piece = float(req.get("min_piece", MIN_PIECE_MM))
+    tiny_mode = str(req.get("tiny_mode") or "absorb")
+    kerf = float(req.get("kerf", KERF_MM))
     ortho_tol = float(req.get("ortho_tol", 5.0))
-    datum_spec = req.get("datum") or {"mode": "wall"}
+    merge = req.get("merge_touching", True)
+    merge_tol = float(req.get("merge_tol", MERGE_TOL))
+    datum_spec = req.get("datum") or {"mode": DEFAULT_DATUM}
     MX = tile_w + gap_v
     half_w = None
-    nz = [abs(s) for s in shifts if abs(s) > 1e-9]
+    nz = [abs(sh) for sh in shifts if abs(sh) > 1e-9]
     if nz:
         half_w = tile_w - min(nz) * MX
 
-    pieces_all, per_zone = [], []
+    prepped = []
+    zone_datum = {}
     for ci, c in enumerate(req.get("contours") or []):
         zone_id = str(c.get("id", ci + 1))
-        prepped = _prep_contour(c, ortho_tol, notes, zone_id)
-        if prepped is None:
+        pr = _prep_contour(c, ortho_tol, notes, zone_id)
+        if pr is None:
             continue
-        outer, holes = prepped
-        region = OrthoRegion(outer, holes)
-        R, B = datum_for(outer, c.get("datum") or datum_spec)
-        pcs = layout_zone(region, R, B, tile_w, tile_h, gap_v, gap_h,
-                          pattern, min_piece)
+        outer, holes = pr
+        prepped.append({"id": zone_id, "outer": outer, "holes": holes})
+        if c.get("datum"):
+            zone_datum[zone_id] = c["datum"]
+    if not prepped:
+        return {"ok": False, "error": "нет пригодных зон/контуров для раскладки",
+                "notes": notes}
+    if merge:
+        zones = merge_touching(prepped, merge_tol)
+        for z in zones:
+            if len(z["members"]) > 1:
+                notes.append("смежные контуры %s объединены в одну плоскость "
+                             "(общая сетка)" % ", ".join(z["members"]))
+    else:
+        zones = [{"id": z["id"], "outers": [z["outer"]], "holes": z["holes"],
+                  "members": [z["id"]]} for z in prepped]
+
+    pieces_all, per_zone = [], []
+    for z in zones:
+        zone_id = z["id"]
+        region = OrthoRegion.from_rings(z["outers"], z["holes"])
+        dspec = datum_spec
+        for m in z["members"]:
+            if m in zone_datum:
+                dspec = zone_datum[m]
+                break
+        R, B = datum_for(z["outers"], dspec)
+        pcs, absorbed = layout_zone(region, R, B, tile_w, tile_h, gap_v, gap_h,
+                                    pattern, min_piece, tiny_mode)
         by_type = {}
         for p in pcs:
             p["zone"] = zone_id
@@ -600,49 +821,77 @@ def tile_pattern(req):
                 if k == "половинка":
                     d["half"] += 1
                 d["kinds"][k] = d["kinds"].get(k, 0) + 1
+        # раскрой подрезки — по зоне и типу (режут по фасадам)
+        for t, d in by_type.items():
+            nest = nest_pieces([p for p in pcs if p["type"] == t], tile_w, tile_h, kerf)
+            d["blanks_cut"] = nest["blanks"]
+            d["blanks_by_kind"] = nest["by_kind"]
+            d["tiles_total"] = d["full"] + nest["blanks"]
+            d["area_blanks"] = d["tiles_total"] * tile_w * tile_h
+            d["waste_area"] = d["area_blanks"] - d["area"]
         pieces_all.extend(pcs)
         n_full = sum(d["full"] for d in by_type.values())
         n_cut = sum(d["cut"] for d in by_type.values())
-        n_tiny = sum(d["tiny"] for d in by_type.values())
         per_zone.append({
-            "zone_id": zone_id, "datum": {"x": R, "y": B},
+            "zone_id": zone_id, "members": z["members"],
+            "datum": {"x": R, "y": B},
             "area_zone": region.area, "area_tiles": sum(p["area"] for p in pcs),
-            "full": n_full, "cut": n_cut, "tiny": n_tiny,
+            "full": n_full, "cut": n_cut,
+            "tiny": sum(d["tiny"] for d in by_type.values()),
+            "absorbed": absorbed,
+            "blanks_cut": sum(d["blanks_cut"] for d in by_type.values()),
             "by_type": by_type,
         })
-        if n_tiny:
-            notes.append("%s: полосок тоньше %g мм — %d (слой полосок, в счёт не идут)"
-                         % (zone_id, min_piece, n_tiny))
-
-    if not per_zone:
-        return {"ok": False, "error": "нет пригодных зон/контуров для раскладки",
-                "notes": notes}
+        if absorbed["count"]:
+            notes.append("%s: полосок тоньше %g мм — %d (%.3f м²) поглощены рустами, "
+                         "в раскладку не идут"
+                         % (zone_id, min_piece, absorbed["count"], absorbed["area"] / 1e6))
 
     totals = {}
     for pz in per_zone:
         for t, d in pz["by_type"].items():
             tt = totals.setdefault(t, {"full": 0, "cut": 0, "tiny": 0, "half": 0,
-                                       "area": 0.0, "area_cut": 0.0, "kinds": {}})
-            for k in ("full", "cut", "tiny", "half", "area", "area_cut"):
+                                       "area": 0.0, "area_cut": 0.0, "kinds": {},
+                                       "blanks_cut": 0, "blanks_by_kind": {}})
+            for k in ("full", "cut", "tiny", "half", "area", "area_cut", "blanks_cut"):
                 tt[k] += d[k]
             for k, v in d["kinds"].items():
                 tt["kinds"][k] = tt["kinds"].get(k, 0) + v
+            for k, v in d["blanks_by_kind"].items():
+                tt["blanks_by_kind"][k] = tt["blanks_by_kind"].get(k, 0) + v
+    tile_area = tile_w * tile_h
     for t, tt in totals.items():
-        tt["blanks"] = tt["full"] + (tt["cut"] - tt["tiny"] - tt["half"]) + \
-            int(math.ceil(tt["half"] / 2.0))
+        tt["tiles_total"] = tt["full"] + tt["blanks_cut"]
+        tt["area_blanks"] = tt["tiles_total"] * tile_area
+        tt["waste_area"] = tt["area_blanks"] - tt["area"]
+        tt["waste_pct"] = (100.0 * tt["waste_area"] / tt["area_blanks"]
+                           if tt["area_blanks"] > 0 else 0.0)
+        tt["tiles_by_area"] = int(math.ceil(tt["area"] / tile_area))
+        # совместимость: прежнее поле blanks = tiles_total
+        tt["blanks"] = tt["tiles_total"]
+    absorbed_tot = {"count": sum(pz["absorbed"]["count"] for pz in per_zone),
+                    "area": sum(pz["absorbed"]["area"] for pz in per_zone)}
     summary = {
         "zones": len(per_zone),
         "full": sum(t["full"] for t in totals.values()),
         "cut": sum(t["cut"] for t in totals.values()),
         "tiny": sum(t["tiny"] for t in totals.values()),
-        "blanks": sum(t["blanks"] for t in totals.values()),
+        "absorbed": absorbed_tot,
+        "blanks_cut": sum(t["blanks_cut"] for t in totals.values()),
+        "tiles_total": sum(t["tiles_total"] for t in totals.values()),
+        "tiles_by_area": sum(t["tiles_by_area"] for t in totals.values()),
+        "waste_area": sum(t["waste_area"] for t in totals.values()),
         "area_zones": sum(pz["area_zone"] for pz in per_zone),
         "area_tiles": sum(pz["area_tiles"] for pz in per_zone),
         "by_type": totals,
         "tile": {"w": tile_w, "h": tile_h}, "gap": {"v": gap_v, "h": gap_h},
         "module": {"x": MX, "y": tile_h + gap_h},
-        "half_w": half_w,
+        "half_w": half_w, "kerf": kerf, "min_piece": min_piece,
+        "tiny_mode": tiny_mode, "datum_mode": str(datum_spec.get("mode") or DEFAULT_DATUM),
         "pattern": {"rows": rows, "row_shifts": shifts},
     }
+    summary["blanks"] = summary["tiles_total"]
+    ab = summary["area_blanks"] = summary["tiles_total"] * tile_area
+    summary["waste_pct"] = 100.0 * summary["waste_area"] / ab if ab > 0 else 0.0
     return {"ok": True, "pieces": pieces_all, "per_zone": per_zone,
             "summary": summary, "notes": notes}

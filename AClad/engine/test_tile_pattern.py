@@ -121,19 +121,30 @@ ok(tile_area > zone_area * 0.85,
    "T7: плитка покрывает > 85%% зоны (%.3f)" % (tile_area / zone_area))
 
 
-# ── T8: половинки парами в заготовках ──
-# узкая зона высотой 1 ряд, ширина = 2 модуля + сдвиг → half на кромке
+# ── T8: раскрой — половинки парами, полосы по высоте стопкой, пропил ──
+# зона высотой 1 ряд, ширина 2 модуля + сдвиг: в ряду 0 целые, а по бокам
+# куски; проверяем nest_pieces напрямую на руками заданных кусках
+def piece(w, h, rect=True):
+    return {"full": False, "rect": rect, "w": w, "h": h, "area": w * h}
+
+
+nest = tp.nest_pieces([piece(141.5, 82), piece(141.5, 82)], 290, 82, kerf=3.0)
+ok(nest["blanks"] == 1, "T8: две половинки 141.5 + пропил 3 = 286 ≤ 290 → 1 заготовка (%s)" % nest)
+nest = tp.nest_pieces([piece(150, 82), piece(150, 82)], 290, 82, kerf=3.0)
+ok(nest["blanks"] == 2, "T8: 150+150+3 > 290 → 2 заготовки (%s)" % nest)
+nest = tp.nest_pieces([piece(290, 24)] * 3, 290, 82, kerf=3.0)
+ok(nest["blanks"] == 1, "T8: три полосы 24 по высоте: 24·3+3·2 = 78 ≤ 82 → 1 (%s)" % nest)
+nest = tp.nest_pieces([piece(290, 24)] * 4, 290, 82, kerf=3.0)
+ok(nest["blanks"] == 2, "T8: четыре полосы 24: 105 > 82 → 2 (%s)" % nest)
+nest = tp.nest_pieces([piece(100, 50, rect=False)], 290, 82, kerf=3.0)
+ok(nest["blanks"] == 1 and nest["by_kind"]["фигурные"] == 1, "T8: фигурный — плитка на кусок")
+# в сводке: tiles_total = целые + заготовки раскроя, отходы = площадь заготовок − нетто
 p = run(contours=[{"id": "Z", "outer": rect(0, 0, 2 * 297 - 7, 82)}])
 bt = p["summary"]["by_type"]
-tot_half = sum(d["half"] for d in bt.values())
-tot_cut = sum(d["cut"] for d in bt.values())
-tot_full = sum(d["full"] for d in bt.values())
-tot_tiny = sum(d["tiny"] for d in bt.values())
-blanks = sum(d["blanks"] for d in bt.values())
-import math
-expect_blanks = tot_full + (tot_cut - tot_tiny - tot_half) + int(math.ceil(tot_half / 2.0))
-ok(blanks == expect_blanks, "T8: заготовки = целые + куски − половинок/2 (%d/%d)"
-   % (blanks, expect_blanks))
+for t, dd in bt.items():
+    ok(dd["tiles_total"] == dd["full"] + dd["blanks_cut"], "T8: tiles_total = full + blanks_cut (%s)" % t)
+    ok(abs(dd["waste_area"] - (dd["tiles_total"] * 290 * 82 - dd["area"])) < 1e-6, "T8: отходы (%s)" % t)
+ok(p["summary"]["waste_pct"] >= 0.0, "T8: отходы в процентах")
 
 
 # ── T9: pattern_from_sample восстанавливает раппорт из прямоугольников ──
@@ -164,6 +175,11 @@ pb = run(contours=[{"id": "Z", "outer": foot, "datum": {"mode": "bbox"}}])
 zb2 = pb["per_zone"][0]["datum"]
 ok(abs(zb2["y"] - 0.0) < 1e-6,
    "T10: bbox-датум на низу габарита y=0 (%s)" % zb2)
+# дефолт (ответ Германа 09.09, В1) — угол габарита
+pd = tp.tile_pattern({"tile": {"w": 290, "h": 82}, "gap": {"v": 7, "h": 7},
+                      "pattern": PAT2, "contours": [{"id": "Z", "outer": foot}]})
+ok(abs(pd["per_zone"][0]["datum"]["y"] - 0.0) < 1e-6 and pd["summary"]["datum_mode"] == "bbox",
+   "T10: датум по умолчанию = габарит (bbox)")
 
 
 # ── T11: общий горизонт (mode=point) — ряды двух зон на одних отметках ──
@@ -230,6 +246,63 @@ ok(any("не ортогонален" in n for n in p["notes"]),
 p2 = run(contours=[{"id": "S", "outer": skew}], ortho_tol=6.0)
 ok(p2["ok"] and p2["per_zone"][0]["zone_id"] == "S",
    "T14: с допуском 6 мм контур выпрямлен и разложен")
+
+
+
+# ── T15: смежные контуры одной плоскости объединяются (ответ Германа, В2) ──
+# два прямоугольника встык по вертикали x≈W (стык со щелью 0.05 мм из АР);
+# B шире A на руст (7), чтобы 8 столбцов сетки легли целыми через шов:
+# общая ширина 2W+7 = 8·297−7 (остаток 0.05 мм слева — численный мусор)
+A = rect(0, 0, W, H)
+Bz = [[W + 0.05, 0], [W + 0.05 + W + 7, 0], [W + 0.05 + W + 7, H], [W + 0.05, H]]
+p = run(PAT_STACK, contours=[{"id": "A", "outer": A}, {"id": "B", "outer": Bz}])
+ok(len(p["per_zone"]) == 1 and p["per_zone"][0]["members"] == ["A", "B"],
+   "T15: контуры A и B объединены в одну зону (%s)" % [z["zone_id"] for z in p["per_zone"]])
+# общая сетка от правого края B: 8 столбцов × 3 ряда целых; шов закрыт,
+# плитка через шов — целая, а не два куска
+ok(p["summary"]["full"] == 24 and p["summary"]["cut"] == 0,
+   "T15: 8×3 = 24 целых, стык не даёт подрезки (%s)" % {k: p["summary"][k] for k in ("full", "cut")})
+seam_tiles = [t for t in p["pieces"] if t["x"] < W < t["x"] + t["w"]]
+ok(seam_tiles and all(t["full"] for t in seam_tiles),
+   "T15: плитки через шов x=W целые (%d шт.)" % len(seam_tiles))
+ok(any("объединены" in n for n in p["notes"]), "T15: note об объединении")
+# с merge_touching=False — две зоны, каждая со своей сеткой
+p2 = run(PAT_STACK, merge_touching=False,
+         contours=[{"id": "A", "outer": A}, {"id": "B", "outer": Bz}])
+ok(len(p2["per_zone"]) == 2, "T15: без объединения — две зоны")
+# не касающиеся контуры не объединяются
+C = rect(3 * W, 0, W, H)
+p3 = run(PAT_STACK, contours=[{"id": "A", "outer": A}, {"id": "C", "outer": C}])
+ok(len(p3["per_zone"]) == 2, "T15: далёкие контуры остаются раздельными")
+
+# ── T16: полоски поглощаются рустами (ответ Германа, В3) ──
+# зона высотой 3 ряда + руст + 5 мм: 4-й ряд начинается на 267 и режется
+# верхом зоны на 272 → четыре полоски 290×5 < 10 мм — не кладутся
+H5 = 3 * 89 + 5
+p = run(PAT_STACK, contours=[{"id": "Z", "outer": rect(0, 0, W, H5)}])
+ok(p["summary"]["full"] == 12 and p["summary"]["cut"] == 0,
+   "T16: полоска 5 мм не в раскладке (%s)" % {k: p["summary"][k] for k in ("full", "cut")})
+ok(p["summary"]["absorbed"]["count"] == 4 and abs(p["summary"]["absorbed"]["area"] - 4 * 290 * 5) < 1e-6,
+   "T16: поглощено 4 полоски по 290×5 (%s)" % p["summary"]["absorbed"])
+ok(any("поглощены рустами" in n for n in p["notes"]), "T16: note о поглощении")
+# tiny_mode=layer — прежнее поведение: кусок остаётся с флагом tiny
+p2 = run(PAT_STACK, tiny_mode="layer", contours=[{"id": "Z", "outer": rect(0, 0, W, H5)}])
+ok(p2["summary"]["cut"] == 4 and p2["summary"]["tiny"] == 4, "T16: tiny_mode=layer оставляет полоски")
+# порог настраиваемый: 4 мм — полоска 5 мм уже полноценный кусок
+p3 = run(PAT_STACK, min_piece=4.0, contours=[{"id": "Z", "outer": rect(0, 0, W, H5)}])
+ok(p3["summary"]["cut"] == 4 and p3["summary"]["absorbed"]["count"] == 0, "T16: порог 4 мм → полоска остаётся")
+# зона, кончающаяся ВНУТРИ руста (3 ряда + 5 мм без нового ряда) — просто нет плиток
+p4 = run(PAT_STACK, contours=[{"id": "Z", "outer": rect(0, 0, W, H + 5)}])
+ok(p4["summary"]["full"] == 12 and p4["summary"]["cut"] == 0 and p4["summary"]["absorbed"]["count"] == 0,
+   "T16: верх зоны в русте — ни кусков, ни полосок")
+
+# ── T17: датум «стена» для объединённой зоны — внутренний шов не датум ──
+# стена A (низкая) + стена B справа (высокая): правая кромка = правая B
+foot2 = [[0, 0], [1000, 0], [1000, 600], [0, 600]]
+tall = [[1000, 0], [1500, 0], [1500, 1200], [1000, 1200]]
+R, Bd = tp.datum_wall([foot2, tall])
+ok(abs(R - 1500) < 1e-6 and abs(Bd - 0) < 1e-6,
+   "T17: датум объединённой зоны — наружная правая кромка 1500, низ 0 (%s, %s)" % (R, Bd))
 
 
 print("tile_pattern: OK, %d проверок" % _n)

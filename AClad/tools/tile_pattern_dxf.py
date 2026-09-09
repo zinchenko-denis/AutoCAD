@@ -18,7 +18,7 @@ ATTILE, — для проверки алгоритма и раскладок Г�
   python tile_pattern_dxf.py testdata/tiles290/tiles290_input.dxf \\
       --zone-layers ZONE_TERRACOTTA ZONE_BEIGE \\
       --sample-layers-prefix SAMPLE_ \\
-      --tile 290x82 --gap 7 --datum wall \\
+      --tile 290x82 --gap 7 \\
       --out out.dxf --xlsx out.xlsx
 """
 import argparse
@@ -159,23 +159,30 @@ def write_xlsx(res, path):
                (s["tile"]["w"], s["tile"]["h"], s["gap"]["v"], s["gap"]["h"])])
     ws["A1"].font = Font(bold=True, size=13)
     ws.append([])
-    hdr = ["Тип", "Целых, шт", "Подрезка, кусков", "в т.ч. полосок", "в т.ч. половинок",
-           "Площадь плитки, м²", "Заготовок, шт"]
+    hdr = ["Тип", "Целых, шт", "Кусков подрезки, шт", "Заготовок на подрезку, шт",
+           "ИТОГО плиток, шт", "Минимум по площади, шт", "Плитка нетто, м²",
+           "Отходы раскроя, м²", "Отходы, %"]
     ws.append(hdr)
     for c in range(1, len(hdr) + 1):
         ws.cell(row=3, column=c).font = Font(bold=True)
     for t, d in sorted(s["by_type"].items()):
-        ws.append([t, d["full"], d["cut"], d["tiny"], d["half"],
-                   round(d["area"] / 1e6, 2), d["blanks"]])
-    ws.append(["Σ", s["full"], s["cut"], s["tiny"], "", round(s["area_tiles"] / 1e6, 2),
-               s["blanks"]])
+        ws.append([t, d["full"], d["cut"], d["blanks_cut"], d["tiles_total"], d["tiles_by_area"],
+                   round(d["area"] / 1e6, 2), round(d["waste_area"] / 1e6, 2), round(d["waste_pct"], 1)])
+    ws.append(["Σ", s["full"], s["cut"], s["blanks_cut"], s["tiles_total"], s["tiles_by_area"],
+               round(s["area_tiles"] / 1e6, 2), round(s["waste_area"] / 1e6, 2), round(s["waste_pct"], 1)])
+    ws.append([])
+    ws.append(["Заготовки на подрезку — раскрой кусков из целых плиток (полосы полной высоты — по ширине, "
+               "полной ширины — по высоте, пропил %g мм; фигурные у углов проёмов — плитка на кусок). "
+               "Полоски тоньше %g мм (%d шт., %.2f м²) поглощены рустами и в раскладку не входят. "
+               "Запас на бой/брак не включён." % (s["kerf"], s["min_piece"], s["absorbed"]["count"],
+                                                   s["absorbed"]["area"] / 1e6)])
     ws2 = wb.create_sheet("По зонам")
     ws2.append(["Зона", "Датум X", "Датум Y", "S зоны, м²", "S плитки, м²",
-                "Целых", "Подрезка", "Полосок"])
+                "Целых", "Кусков подрезки", "Заготовок на подрезку", "Полосок поглощено"])
     for pz in res["per_zone"]:
         ws2.append([pz["zone_id"], round(pz["datum"]["x"], 1), round(pz["datum"]["y"], 1),
                     round(pz["area_zone"] / 1e6, 2), round(pz["area_tiles"] / 1e6, 2),
-                    pz["full"], pz["cut"], pz["tiny"]])
+                    pz["full"], pz["cut"], pz["blanks_cut"], pz["absorbed"]["count"]])
     wb.save(path)
 
 
@@ -188,8 +195,13 @@ def main():
     ap.add_argument("--sample-layers-prefix")
     ap.add_argument("--tile", default="290x82", help="ШxВ, мм")
     ap.add_argument("--gap", default="7", help="руст, мм (или В,Г)")
-    ap.add_argument("--datum", default="wall", choices=["wall", "bbox"])
-    ap.add_argument("--min-piece", type=float, default=10.0)
+    ap.add_argument("--datum", default="bbox", choices=["bbox", "wall"],
+                    help="bbox — угол габарита (ответ Германа 09.09), wall — угол стены")
+    ap.add_argument("--min-piece", type=float, default=10.0,
+                    help="полоски тоньше поглощаются рустами")
+    ap.add_argument("--kerf", type=float, default=3.0, help="пропил раскроя, мм")
+    ap.add_argument("--no-merge", action="store_true",
+                    help="не объединять смежные контуры в одну плоскость")
     ap.add_argument("--out", default="tiles_out.dxf")
     ap.add_argument("--xlsx", default="tiles_out.xlsx")
     a = ap.parse_args()
@@ -215,7 +227,8 @@ def main():
     req = {"op": "tile_pattern", "tile": {"w": tw, "h": th},
            "gap": {"v": gv, "h": gh},
            "sample": sample or None, "datum": {"mode": a.datum},
-           "min_piece": a.min_piece, "contours": contours}
+           "min_piece": a.min_piece, "kerf": a.kerf,
+           "merge_touching": not a.no_merge, "contours": contours}
 
     res = run_engine(req)
     if not res.get("ok"):
@@ -224,8 +237,11 @@ def main():
             print("  ·", n)
         sys.exit(1)
     s = res["summary"]
-    print("целых %d | подрезка %d | полосок %d | заготовок %d | плитки %.1f м²" %
-          (s["full"], s["cut"], s["tiny"], s["blanks"], s["area_tiles"] / 1e6))
+    print("целых %d | кусков подрезки %d | полосок поглощено %d | заготовок на подрезку %d" %
+          (s["full"], s["cut"], s["absorbed"]["count"], s["blanks_cut"]))
+    print("ПЛИТОК ВСЕГО %d (по площади минимум %d) | плитка нетто %.1f м² | отходы раскроя %.1f м² = %.1f %% (пропил %g мм)" %
+          (s["tiles_total"], s["tiles_by_area"], s["area_tiles"] / 1e6,
+           s["waste_area"] / 1e6, s["waste_pct"], s["kerf"]))
     for n in res.get("notes", [])[:20]:
         print("  ·", n)
     write_dxf(res, colors, a.out, tw, th)

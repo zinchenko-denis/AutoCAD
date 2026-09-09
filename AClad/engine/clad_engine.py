@@ -255,16 +255,22 @@ def op_tile_pattern(req):
       "pattern"?: {"rows": [[type,...],...], "row_shifts": [...]},
         // или "sample": [{"x0","y0","x1","y1","type"}, ...] — образец,
         // раппорт строится движком (tile_pattern.pattern_from_sample)
-      "datum"?: {"mode": "wall"|"bbox"|"point", "x"?, "y"?},
-      "min_piece"?: <мм>, "ortho_tol"?: <мм>,
+      "datum"?: {"mode": "bbox"|"wall"|"point", "x"?, "y"?},  // дефолт bbox
+      "min_piece"?: <мм, полоски тоньше поглощаются рустами>,
+      "tiny_mode"?: "absorb"|"layer", "kerf"?: <мм, пропил раскроя>,
+      "merge_touching"?: bool (смежные контуры = одна плоскость),
+      "merge_tol"?: <мм>, "ortho_tol"?: <мм>,
       "zones":    [{"zone_id", "zone": {facade_zone/1}}, ...],
       "contours": [{"id", "pts", "bulges"?}, ...]
     }
 
-    Раскладка позонная, горизонт общий: сетка рядов у всех зон от
-    одного датума (mode="point" c общими x/y — «общий горизонт», как
-    2.4 в кассетной раскладке) либо у каждой зоны свой (mode="wall"/
-    "bbox"). Выход: pieces[], per_zone[], summary (см. tile_pattern)."""
+    Раскладка позонная: датум у каждой зоны свой (mode="bbox" —
+    дефолт, ответ Германа 09.09; "wall" — угол основной стены) либо
+    общий (mode="point" c x/y — «общий горизонт», как 2.4 в кассетной
+    раскладке). Смежные контуры одной плоскости объединяются (общая
+    сетка), полоски тоньше min_piece поглощаются рустами, заготовки
+    под подрезку — раскроем (см. tile_pattern). Выход: pieces[],
+    per_zone[], summary."""
     import tile_pattern as tpm
 
     notes = []
@@ -302,10 +308,12 @@ def op_tile_pattern(req):
 
     treq = {
         "tile": req.get("tile"), "gap": req.get("gap"),
-        "pattern": pattern, "datum": req.get("datum") or {"mode": "wall"},
+        "pattern": pattern,
+        "datum": req.get("datum") or {"mode": tpm.DEFAULT_DATUM},
         "contours": contours,
     }
-    for key in ("min_piece", "ortho_tol", "types"):
+    for key in ("min_piece", "tiny_mode", "kerf", "merge_touching",
+                "merge_tol", "ortho_tol", "types"):
         if req.get(key) is not None:
             treq[key] = req.get(key)
 
