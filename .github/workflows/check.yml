@@ -99,6 +99,7 @@ jobs:
           cd AClad/engine
           python test_cladding_plan.py
           python test_clad_engine.py
+          python test_tile_pattern.py
 
       - name: AFrame engine unit test
         shell: bash

@@ -243,12 +243,89 @@ def op_cladding(req):
     }
 
 
+def op_tile_pattern(req):
+    """op="tile_pattern" — мелкоштучная раскладка по образцу (команда
+    ATTILE, бандл AClad). Плитка/кирпич с перевязкой и раскраской по
+    типовому раппорту из образца чертежа.
+
+    Вход:
+    {
+      "op": "tile_pattern",
+      "tile": {"w", "h"}, "gap": {"v", "h"},
+      "pattern"?: {"rows": [[type,...],...], "row_shifts": [...]},
+        // или "sample": [{"x0","y0","x1","y1","type"}, ...] — образец,
+        // раппорт строится движком (tile_pattern.pattern_from_sample)
+      "datum"?: {"mode": "wall"|"bbox"|"point", "x"?, "y"?},
+      "min_piece"?: <мм>, "ortho_tol"?: <мм>,
+      "zones":    [{"zone_id", "zone": {facade_zone/1}}, ...],
+      "contours": [{"id", "pts", "bulges"?}, ...]
+    }
+
+    Раскладка позонная, горизонт общий: сетка рядов у всех зон от
+    одного датума (mode="point" c общими x/y — «общий горизонт», как
+    2.4 в кассетной раскладке) либо у каждой зоны свой (mode="wall"/
+    "bbox"). Выход: pieces[], per_zone[], summary (см. tile_pattern)."""
+    import tile_pattern as tpm
+
+    notes = []
+    contours = []
+
+    for zrec in req.get("zones") or []:
+        if not isinstance(zrec, dict):
+            continue
+        zone_id = str(zrec.get("zone_id") or "?")
+        zd = zrec.get("zone")
+        if not isinstance(zd, dict):
+            notes.append("%s: нет геометрии зоны — пропуск" % zone_id)
+            continue
+        c = _zone_to_contour(zd, notes, zone_id)
+        if c is not None:
+            contours.append({"id": zone_id, "outer": c["outer"],
+                             "holes": c["holes"]})
+
+    for outer_id, c in _group_contours(req.get("contours") or [], notes):
+        contours.append({"id": "контур %s" % outer_id,
+                         "outer": c["outer"], "holes": c["holes"]})
+
+    if not contours:
+        return {"ok": False,
+                "error": "нет пригодных зон/контуров для раскладки",
+                "notes": notes}
+
+    pattern = req.get("pattern")
+    if pattern is None and req.get("sample"):
+        try:
+            pattern = tpm.pattern_from_sample(req["sample"])
+        except (ValueError, KeyError, TypeError) as e:
+            return {"ok": False, "error": "образец не разобран: %s" % e,
+                    "notes": notes}
+
+    treq = {
+        "tile": req.get("tile"), "gap": req.get("gap"),
+        "pattern": pattern, "datum": req.get("datum") or {"mode": "wall"},
+        "contours": contours,
+    }
+    for key in ("min_piece", "ortho_tol", "types"):
+        if req.get(key) is not None:
+            treq[key] = req.get(key)
+
+    res = tpm.tile_pattern(treq)
+    res["notes"] = notes + res.get("notes", [])
+    if pattern is not None:
+        res["pattern"] = {"rows": pattern["rows"],
+                          "row_shifts": pattern.get("row_shifts")}
+    return res
+
+
 def run(req):
     op = (req or {}).get("op")
     if op == "cladding":
         return op_cladding(req)
+    if op == "tile_pattern":
+        return op_tile_pattern(req)
     return {"ok": False,
-            "error": "неизвестный op: %r (ожидается cladding)" % op}
+            "error": "неизвестный op: %r (ожидается cladding|tile_pattern)"
+                     % op}
 
 
 def main(argv):

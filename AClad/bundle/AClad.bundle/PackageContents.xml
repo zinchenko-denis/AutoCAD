@@ -34,6 +34,7 @@
       <Commands GroupName="ACladCommands">
         <Command Global="ATCLAD" Local="ATCLAD" />
         <Command Global="ATCLADDIM" Local="ATCLADDIM" />
+        <Command Global="ATTILE" Local="ATTILE" />
       </Commands>
     </ComponentEntry>
   </Components>

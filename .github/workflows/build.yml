@@ -202,7 +202,7 @@ jobs:
         with:
           tag_name: latest
           name: "ATableSpec + ABlockGen + AFacades + AClad + AFrame — последняя сборка"
-          body: "Готовые бандлы. ATableSpec.bundle.zip — спецификации/раскрой из блоков (команда ATSPEC). ABlockGen.bundle.zip — генератор витражей из блоков (команды ATVITRAGEAR, ATVITRAGE). AFacades.bundle.zip — фасады, этап 1: зоны облицовки, площади и погонажи (команды ATFZONE, ATFTABLE; ставится один раз). AClad.bundle.zip — фасады, этап 2: раскладка облицовки кассетами (команда ATCLAD; обновляется часто, AFacades не трогает). AFrame.bundle.zip — фасады, этап 3: подсистема НВФ — кронштейны/направляющие/кляммеры по раскладке (команда ATFRAME). Распаковать нужный zip, папку *.bundle положить в %APPDATA%\\Autodesk\\ApplicationPlugins\\, перезапустить AutoCAD."
+          body: "Готовые бандлы. ATableSpec.bundle.zip — спецификации/раскрой из блоков (команда ATSPEC). ABlockGen.bundle.zip — генератор витражей из блоков (команды ATVITRAGEAR, ATVITRAGE). AFacades.bundle.zip — фасады, этап 1: зоны облицовки, площади и погонажи (команды ATFZONE, ATFTABLE; ставится один раз). AClad.bundle.zip — фасады, этап 2: раскладка облицовки — кассеты (ATCLAD) и мелкоштучная плитка/кирпич с раскраской по образцу (ATTILE); обновляется часто, AFacades не трогает. AFrame.bundle.zip — фасады, этап 3: подсистема НВФ — кронштейны/направляющие/кляммеры по раскладке (команда ATFRAME). Распаковать нужный zip, папку *.bundle положить в %APPDATA%\\Autodesk\\ApplicationPlugins\\, перезапустить AutoCAD."
           files: |
             ATableSpec.bundle.zip
             ABlockGen.bundle.zip
