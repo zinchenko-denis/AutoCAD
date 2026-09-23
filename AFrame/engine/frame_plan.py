@@ -619,6 +619,111 @@ def _apply_calc(calc_req, system, sub, joints, floors, floor_step,
                        float(rep["corner"]["step"]))
 
 
+def _clamps_on_rails(req, sub, system, joints, rows, floors, seam_tol=2.0):
+    """ТОЛЬКО КЛЯММЕРЫ по СУЩЕСТВУЮЩИМ направляющим и ТЕКУЩЕЙ облицовке
+    (Герман 23.09: «разложить только кляммеры по существующей облицовке»).
+
+    rails_fixed — куски вертикальных направляющих с чертежа {x, y0, y1}
+    (прошлый ATFRAME или ручные). Правила — те же, что при полной
+    расстановке (_piece_clamps / _edge_top_clamps / _merge_clamps):
+    куски на одной оси с зазором ≤ 50 мм — одна стойка, стыки внутри —
+    «термошвы» (комбинированный на первом шве выше); стойка на смещённой
+    позиции у грани окна (грань ∓ edge_offset, в пределах высоты окна ±
+    выступ) — оконная (все кляммеры боковые); тип на оси — по осям швов
+    ТЕКУЩЕЙ раскладки (joints_x): на шве — рядовой, в поле плиты — боковой."""
+    notes = []
+    edge_off = float(system.get("edge_offset") or 0.0)
+    overhang = float(system.get("edge_overhang") or 0.0)
+    fixed = []
+    for r in req.get("rails_fixed") or []:
+        try:
+            x, a, b = float(r["x"]), float(r["y0"]), float(r["y1"])
+        except (KeyError, TypeError, ValueError):
+            continue
+        if abs(b - a) > EPS:
+            fixed.append((round(x, 4), min(a, b), max(a, b)))
+    if not fixed:
+        return {"ok": False, "error": "нет направляющих для кляммеров (rails_fixed пуст)"}
+    clamps, used = [], set()
+    for ci, c in enumerate(req.get("contours") or []):
+        outer = _closed(c.get("outer") or [])
+        if len(outer) < 4:
+            continue
+        holes = [_closed(h) for h in (c.get("holes") or [])]
+        x0, y0, x1, y1 = _bbox(outer)
+        hole_boxes = [_bbox(h) for h in holes]
+        mine = sorted((x, max(a, y0), min(b, y1)) for x, a, b in fixed
+                      if x0 - EPS <= x <= x1 + EPS and a < y1 - EPS and b > y0 + EPS)
+        if not mine:
+            continue
+        used.update((x, a) for x, a, _b in mine)
+        # межэтажная без отметок: перекрытия шагом этажа от низа контура —
+        # ровно как при полной расстановке (кляммер над стыком — комбинированный)
+        floors_c = floors
+        if not floors and sub == "interfloor":
+            try:
+                fs = float(req.get("floor_step") or 0.0)
+            except (TypeError, ValueError):
+                fs = 0.0
+            if fs > EPS:
+                floors_c, f = [], y0 + fs
+                while f < y1 - EPS:
+                    floors_c.append(f)
+                    f += fs
+        zj = [j for j in joints if x0 - EPS <= j <= x1 + EPS]
+        wedges = _win_edges(hole_boxes, zj or sorted({x for x, _a, _b in mine}), edge_off)
+        # стойки: куски одной оси с малым зазором
+        stands = []
+        for x, a, b in mine:
+            if stands and abs(stands[-1][0] - x) <= EPS and a - stands[-1][2] <= 50.0 + EPS:
+                st = stands[-1]
+                # стык: межэтажная и с отметками — центр зазора (= отметка),
+                # хлысты/ортогональная — верх нижнего куска (как движок)
+                st[3].append(0.5 * (st[2] + a)
+                             if (sub == "interfloor" or (floors_c and sub == "vertical"))
+                             else st[2])
+                st[2] = max(st[2], b)
+            else:
+                stands.append([x, a, b, []])
+        for x, a, b, seams in stands:
+            side = False
+            if sub != "interfloor" and edge_off > EPS:
+                for bx0, by0, bx1, by1 in hole_boxes:
+                    if (abs(x - (bx0 - edge_off)) <= 0.5 or abs(x - (bx1 + edge_off)) <= 0.5) and \
+                            a >= by0 - overhang - 1.0 and b <= by1 + overhang + 1.0:
+                        side = True
+                        break
+            # отметки перекрытий — стыки для вертикальной и межэтажной; у
+            # ортогональной комбинированный только над стыками кусков
+            fl_in = seams + [f for f in (floors_c if sub != "ortho" else [])
+                             if a + EPS < f < b - EPS and
+                             not any(abs(f - q) <= 50.0 for q in seams)]
+            _piece_clamps(clamps, rows, a, b, x, side, sorted(fl_in), wedges,
+                          on_seam=any(abs(x - j) <= seam_tol for j in joints))
+            if not side or sub == "interfloor":
+                _edge_top_clamps(clamps, rows, a, b, x, y1, hole_boxes)
+    clamps = _merge_clamps(clamps)
+    skipped = len(fixed) - len({(x, a) for x, a, _b in fixed if (x, a) in used or
+                                any(abs(x - ux) <= EPS and a <= ua + EPS for ux, ua in used)})
+    notes.append("кляммеры по существующим направляющим: %d кусков, кляммеров %d"
+                 % (len(fixed), len(clamps)))
+    if skipped > 0:
+        notes.append("направляющих вне выбранных зон: %d — без кляммеров" % skipped)
+    if not rows:
+        notes.append("нет горизонтальных швов (rows_y) — только стартовые кляммеры")
+    return {"ok": True, "rails": [], "hrails": [], "brackets": [], "fittings": [],
+            "clamps": clamps, "notes": notes,
+            "system_used": {k: v for k, v in system.items() if not k.startswith("_src")},
+            "summary": {"system": system.get("_name", "?"), "sub_type": sub, "parts": "clamps",
+                        "rails": 0, "rails_lm": 0.0, "hrails": 0, "hrails_lm": 0.0,
+                        "fittings": 0, "rail_stock_est": None,
+                        "brackets_main": 0, "brackets_row": 0,
+                        "clamps_start": sum(1 for q in clamps if q["kind"] == "стартовый"),
+                        "clamps_row": sum(1 for q in clamps if q["kind"] == "рядовой"),
+                        "clamps_side": sum(1 for q in clamps if q["kind"] == "боковой"),
+                        "clamps_combo": sum(1 for q in clamps if q["kind"] == "комбинированный")}}
+
+
 def frame_plan(req):
     try:
         system = load_system(req.get("system") or "Standart",
@@ -716,6 +821,15 @@ def frame_plan(req):
 
     notes, rails, brackets, clamps = [], [], [], []
     hrails, fittings = [], []
+    # 23.09b (Герман): что раскладывать — all | frame (без кляммеров) |
+    # clamps (только кляммеры; по rails_fixed — существующим направляющим)
+    parts = str(req.get("parts") or "all").strip().lower()
+    if parts not in ("all", "frame", "clamps"):
+        return {"ok": False, "error": "parts: all|frame|clamps (получено %r)" % parts}
+    if parts == "clamps" and req.get("rails_fixed") is not None:
+        return _clamps_on_rails(req, sub, system, joints, rows, floors)
+    if parts == "frame":
+        rows = []
     if not joints:
         return {"ok": False,
                 "error": "нет осей стоек (joints_x) — раскладка "
@@ -1398,6 +1512,15 @@ def frame_plan(req):
         "clamps_combo": sum(1 for cl in clamps
                             if cl["kind"] == "комбинированный"),
     }
+    summary["parts"] = parts
+    if parts == "clamps":
+        notes.append("только кляммеры по РАСЧЁТНЫМ осям (существующие направляющие "
+                     "не переданы) — подсистема не выдаётся")
+        rails, hrails, brackets, fittings = [], [], [], []
+        for k in ("rails", "hrails", "fittings", "brackets_main", "brackets_row"):
+            summary[k] = 0
+        summary["rails_lm"] = summary["hrails_lm"] = 0.0
+        summary["rail_stock_est"] = None
     out = {"ok": True, "rails": rails, "hrails": hrails,
            "brackets": brackets, "clamps": clamps,
            "fittings": fittings, "summary": summary, "notes": notes,

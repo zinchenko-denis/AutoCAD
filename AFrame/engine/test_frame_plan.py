@@ -919,4 +919,56 @@ ok(5900.0 in _xK3 and 5300.0 in _xK3 and
    not any(v > 5900.0 + 1 for v in _xK3),
    "K6b: угол справа — стойки зоны влево (внутрь) (%s)" % _xK3[-4:])
 
+# ── CL1–CL7 (23.09b, Герман): «что раскладывать» — подсистема и
+#    кляммеры / только подсистема / только кляммеры по СУЩЕСТВУЮЩИМ
+#    направляющим и текущей облицовке ──
+from collections import Counter as _Cn
+import subprocess as _sp, tempfile as _tf
+_rq = {"system": "Standart", "sub_type": "vertical",
+       "contours": [{"outer": rect(0, 0, 7200, 6000), "holes": [rect(2000, 900, 3400, 2400)]}],
+       "joints_x": [305.0 + 610 * k for k in range(12)], "rows_y": [605.0 * k for k in range(1, 10)],
+       "floors_y": [3000.0]}
+_full = frame_plan(json.loads(json.dumps(_rq)))
+_fr = frame_plan(dict(json.loads(json.dumps(_rq)), parts="frame"))
+ok(_fr["ok"] and not _fr["clamps"] and _fr["rails"] == _full["rails"] and _fr["brackets"] == _full["brackets"],
+   "CL1: только подсистема — направляющие и кронштейны те же, кляммеров нет")
+def _ck(res):
+    return _Cn((round(c["x"], 3), round(c["y"], 3), c["kind"], c.get("orient")) for c in res["clamps"])
+_rf = [{"x": r["x"], "y0": r["y0"], "y1": r["y1"]} for r in _full["rails"]]
+_cl = frame_plan(dict(json.loads(json.dumps(_rq)), parts="clamps", rails_fixed=_rf))
+ok(_cl["ok"] and not _cl["rails"] and not _cl["brackets"] and _ck(_cl) == _ck(_full),
+   "CL2: только кляммеры по направляющим полной расстановки = кляммеры полной (%d/%d)"
+   % (len(_cl["clamps"]), len(_full["clamps"])))
+for _st, _sn in (("interfloor", "Межэтажная"), ("ortho", "Ортогональная")):
+    _q = dict(json.loads(json.dumps(_rq)), sub_type=_st, system=_sn, floor_step=3000.0)
+    _f2 = frame_plan(json.loads(json.dumps(_q)))
+    _c2 = frame_plan(dict(_q, parts="clamps", rails_fixed=[{"x": r["x"], "y0": r["y0"], "y1": r["y1"]}
+                                                             for r in _f2["rails"]]))
+    ok(_ck(_c2) == _ck(_f2), "CL3: %s — только кляммеры = полной (%d/%d)" % (_st, len(_c2["clamps"]), len(_f2["clamps"])))
+# направляющие стоят НЕ по швам текущей облицовки (облицовку переложили) —
+# кляммеры садятся на существующие оси, тип — по текущим швам
+_moved = [dict(r, x=r["x"] + 150.0) for r in _rf if 3000 < r["x"] < 7000]
+_cm = frame_plan(dict(json.loads(json.dumps(_rq)), parts="clamps", rails_fixed=_moved))
+ok(_cm["ok"] and _cm["clamps"] and {round(c["x"], 3) for c in _cm["clamps"]} <= {round(r["x"], 3) for r in _moved},
+   "CL4: кляммеры только на существующих направляющих")
+ok(all(c["kind"] in ("боковой", "стартовый", "комбинированный") for c in _cm["clamps"]),
+   "CL4b: ось вне шва текущей облицовки — рядовых нет (поле плиты)")
+_e = frame_plan(dict(json.loads(json.dumps(_rq)), parts="clamps", rails_fixed=[]))
+ok(_e["ok"] is False and "rails_fixed" in _e["error"], "CL5: пустой список направляющих — отказ текстом")
+ok(frame_plan(dict(json.loads(json.dumps(_rq)), parts="всё"))["ok"] is False, "CL5b: неизвестный parts — отказ")
+_v = frame_plan(dict(json.loads(json.dumps(_rq)), parts="clamps"))
+ok(_v["ok"] and _v["clamps"] and not _v["rails"] and any("РАСЧЁТНЫМ" in n for n in _v["notes"]),
+   "CL6: только кляммеры без направляющих — по расчётным осям, с нотой")
+_d = _tf.mkdtemp()
+_rq2 = {"op": "frame", "sub_type": "vertical", "system": "Standart",
+        "contours": [{"id": "A", "pts": rect(0, 0, 7200, 6000)}, {"id": "W", "pts": rect(2000, 900, 3400, 2400)}],
+        "joints_x": _rq["joints_x"], "rows_y": _rq["rows_y"], "floors_y": [3000.0],
+        "parts": "clamps", "rails_fixed": _rf}
+json.dump(_rq2, open(os.path.join(_d, "in.json"), "w", encoding="utf-8"))
+_sp.call([sys.executable, os.path.join(os.path.dirname(os.path.abspath(__file__)), "frame_engine.py"),
+          os.path.join(_d, "in.json"), os.path.join(_d, "out.json")])
+_o = json.load(open(os.path.join(_d, "out.json"), encoding="utf-8"))
+ok(_o["ok"] and _o["summary"]["parts"] == "clamps" and _o["summary"]["rails"] == 0 and
+   len(_o["clamps"]) == len(_full["clamps"]), "CL7: CLI frame_engine пробрасывает parts/rails_fixed")
+
 print("frame_plan: %d проверок OK" % _n)

@@ -28,7 +28,9 @@
  F13 сводка согласована со списками (штуки, погонаж);
  F14 ортогональная: ряды кронштейнов = низ+300+600·k (правило Германа:
      5 кронштейнов на 3 м — не откатывать) + доп. ряд над окнами;
- F15 числа конечные, длины > 0.
+ F15 числа конечные, длины > 0;
+ F16 «только кляммеры» по направляющим полной расстановки (parts=clamps,
+     rails_fixed) дают те же кляммеры, что полная (23.09b).
 Инварианты расчёта (frame_calc):
  K1  пиковая ветровая не убывает с высотой; местность A ≥ B ≥ C;
  K2  каждая проверка не убывает с нагрузкой (w0, высота, вес облицовки)
@@ -352,6 +354,19 @@ def run_scenario(sc, rng):
     r4 = fre.run(json.loads(json.dumps(sc["req"])))
     if _diff(_canon(r4), base, 0.0) > 0:
         viol.append(("F12", "повторный прогон дал другой ответ"))
+    q5 = json.loads(json.dumps(sc["req"]))
+    q5["parts"] = "clamps"
+    q5["rails_fixed"] = [{"x": r["x"], "y0": r["y0"], "y1": r["y1"]} for r in res["rails"]]
+    if q5["rails_fixed"]:
+        r5 = fre.run(q5)
+        xs = [p[0] for p in sc["outer"]]
+        a = Counter((round(c["x"], 3), round(c["y"], 3), c["kind"], c.get("orient")) for c in res["clamps"]
+                    if min(xs) - 1e-6 <= c["x"] <= max(xs) + 1e-6)
+        b = Counter((round(c["x"], 3), round(c["y"], 3), c["kind"], c.get("orient"))
+                    for c in (r5.get("clamps") or []))
+        if not r5.get("ok") or a != b:
+            viol.append(("F16", "только кляммеры по направляющим ≠ полной расстановке (%s)"
+                         % (sum(((a - b) + (b - a)).values()) if r5.get("ok") else r5.get("error"))))
     n = len(res["rails"]) + len(res["brackets"]) + len(res["clamps"]) + len(res.get("hrails") or [])
     return viol, dt, n
 

@@ -12,7 +12,9 @@ op="frame" — расстановка подсистемы (команда ATFRA
   "contours": [{"id", "pts", "bulges"?}, ...],   // голые полилинии
   "joints_x": [x, ...],   // оси стоек (из метки ATCLAD)
   "floors_y": [y, ...],   // отметки перекрытий (диалог)
-  "rows_y":   [y, ...]    // центры горизонтальных швов (метка ATCLAD)
+  "rows_y":   [y, ...],   // центры горизонтальных швов (метка ATCLAD)
+  "parts"?: "all" | "frame" | "clamps",       // 23.09b: что раскладывать
+  "rails_fixed"?: [{x, y0, y1}, ...]  // только кляммеры — по этим направляющим
 }
 
 Выход: {"ok", rails, brackets, clamps, per_zone, summary, notes,
@@ -134,7 +136,10 @@ def op_frame(req):
             "rail_step_corner": req.get("rail_step_corner"),
             "rail_step_main": req.get("rail_step_main"),
             "edge_rail_off": req.get("edge_rail_off"),
-            "calc": req.get("calc")}
+            "calc": req.get("calc"),
+            # 23.09b (Герман): что раскладывать + существующие направляющие
+            "parts": req.get("parts"),
+            "rails_fixed": req.get("rails_fixed")}
     rails, brackets, clamps, per_zone = [], [], [], []
     hrails, fittings = [], []
     system_used, calc_report = None, None
@@ -185,7 +190,8 @@ def op_frame(req):
                            if c["kind"] == "боковой"),
         "clamps_combo": sum(1 for c in clamps
                             if c["kind"] == "комбинированный"),
-        "zones": len(per_zone)}
+        "zones": len(per_zone),
+        "parts": str(req.get("parts") or "all")}
     out = {
         "ok": True, "rails": rails, "hrails": hrails,
         "brackets": brackets, "clamps": clamps,
