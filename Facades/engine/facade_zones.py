@@ -360,7 +360,7 @@ class Zone(object):
         return _UNIT_TO_MM[self.units]
 
 
-def _parse_poly(obj, where, warnings_sink=None):
+def _parse_poly(obj, where, warnings_sink=None, k=1.0):
     if not isinstance(obj, dict) or "pts" not in obj:
         raise ZoneFormatError("%s: ожидается объект {pts: [[x,y],...]}" % where)
     pts = obj["pts"]
@@ -378,7 +378,10 @@ def _parse_poly(obj, where, warnings_sink=None):
     # хвост с микрозазором к первой точке (недоведённая обводка ≤ GEO_TOL):
     # сливаем с первой вершиной, чтобы не плодить микросегмент замыкания
     p0, pl = pts[0], pts[-1]
-    d = math.hypot(pl[0] - p0[0], pl[1] - p0[1])
+    # 23.09 (ревью): зазор хвоста — в мм (k — единицы зоны → мм); раньше
+    # сравнивался с 0.5 в единицах зоны, у зоны в МЕТРАХ это 0.5 м — проём
+    # со стороной ≤0.5 м терял вершину
+    d = math.hypot(pl[0] - p0[0], pl[1] - p0[1]) * k
     if DUP_TOL < d <= GEO_TOL:
         pts = pts[:-1]
         if bulges is not None:
@@ -423,7 +426,8 @@ def load_zone(src):
     z.meta = data.get("meta", {})
     z.norm_warnings = []
 
-    z.outer = _parse_poly(data.get("outer"), "outer", z.norm_warnings)
+    ku = _UNIT_TO_MM[units]
+    z.outer = _parse_poly(data.get("outer"), "outer", z.norm_warnings, ku)
     if z.outer.warnings:
         z.norm_warnings.append(
             _warn("W_DUP_POINTS", "outer",
@@ -439,7 +443,7 @@ def load_zone(src):
             raise ZoneFormatError("openings: дубль id %s" % oid)
         seen.add(oid)
         where = "opening:%s" % oid
-        poly = _parse_poly(o["poly"], where, z.norm_warnings)
+        poly = _parse_poly(o["poly"], where, z.norm_warnings, ku)
         if poly.warnings:
             z.norm_warnings.append(
                 _warn("W_DUP_POINTS", where,
@@ -484,7 +488,7 @@ def validate_zone(zone):
         issues.append(_err("E_TOO_FEW_POINTS", "outer",
                            "меньше 3 вершин после нормализации"))
         return issues
-    outer_pts = mm(op.polygonized())
+    outer_pts = mm(op.polygonized(CHORD_TOL / k))
     rels = _self_intersections(outer_pts, tol)
     if "proper" in rels:
         issues.append(_err("E_SELF_INTERSECT", "outer",
@@ -505,7 +509,7 @@ def validate_zone(zone):
         if o.poly.n() < 3:
             issues.append(_err("E_TOO_FEW_POINTS", where, "меньше 3 вершин"))
             continue
-        pts = mm(o.poly.polygonized())
+        pts = mm(o.poly.polygonized(CHORD_TOL / k))
         if "proper" in _self_intersections(pts, tol):
             issues.append(_err("E_SELF_INTERSECT", where, "самопересечение"))
             continue
@@ -555,7 +559,7 @@ def _opening_edges_mm(zone, opening, outer_pts_mm, tol=GEO_TOL):
     out = {"bottom": 0.0, "top": 0.0, "sides": 0.0, "boundary": 0.0}
     for p1, p2, b in opening.poly.segments():
         if abs(b) > EPS:
-            chain = [p1] + _arc_points(p1, p2, b) + [p2]
+            chain = [p1] + _arc_points(p1, p2, b, CHORD_TOL / k) + [p2]
         else:
             chain = [p1, p2]
         for i in range(len(chain) - 1):
@@ -571,8 +575,16 @@ def _opening_edges_mm(zone, opening, outer_pts_mm, tol=GEO_TOL):
                 out["boundary"] += L
                 continue
             dx, dy = c[0] - a[0], c[1] - a[1]
-            if abs(dy) <= abs(dx):
-                out["bottom" if dx > 0 else "top"] += L
+            hv = "bottom" if dx > 0 else "top"
+            # 23.09 (ревью): хорда дуги РОВНО под 45° (у круглых/арочных окон
+            # середина четверти) падала то в низ/верх, то в бок в зависимости
+            # от положения окна на чертеже (шум double) — отлив/откос круглого
+            # окна «гулял» до 17 см при сдвиге чертежа. Ничья — пополам.
+            if abs(abs(dy) - abs(dx)) <= 1e-7 * L:
+                out[hv] += 0.5 * L
+                out["sides"] += 0.5 * L
+            elif abs(dy) < abs(dx):
+                out[hv] += L
             else:
                 out["sides"] += L
     return out
@@ -621,7 +633,7 @@ def zone_report(zone, issues=None):
     k = zone.to_mm()
     a_out = abs(zone.outer.signed_area()) * k * k / 1e6
     p_out = zone.outer.perimeter() * k / 1e3
-    outer_pts_mm = [(p[0] * k, p[1] * k) for p in zone.outer.polygonized()]
+    outer_pts_mm = [(p[0] * k, p[1] * k) for p in zone.outer.polygonized(CHORD_TOL / k)]
     ops = []
     a_ops = 0.0
     p_ops = 0.0
@@ -779,7 +791,7 @@ def build_zones_from_contours(contours, cladding="", zone_prefix="Z-",
         # (E_SELF_INTERSECT для «бабочки», E_ZERO_AREA для коллинеарного) —
         # ошибка уйдёт в failed, а не потеряется среди issues разбора
         area = abs(poly.signed_area()) * k * k
-        pts_mm = [(p[0] * k, p[1] * k) for p in poly.polygonized()]
+        pts_mm = [(p[0] * k, p[1] * k) for p in poly.polygonized(CHORD_TOL / k)]
         parsed.append((cid, poly, pts_mm, area))
 
     # минимальный по площади контейнер для каждого контура
@@ -804,8 +816,38 @@ def build_zones_from_contours(contours, cladding="", zone_prefix="Z-",
 
     zones = []   # индексы top-level
     kids = {}
+    # 23.09 (ревью): контур, ПЕРЕСЕКАЮЩИЙ край другого (проём, нарисованный
+    # с нахлёстом за стену), не вложен ни в кого — раньше он молча
+    # становился ОТДЕЛЬНОЙ ЗОНОЙ с площадью окна, а из стены не вычитался
+    # (стена 8×5 м: 40.000 м² вместо 37.825 + «зона» 2.25). Теперь — ошибка
+    # с именами контуров, меньший из пары в зоны не идёт.
+    tops0 = [i for i in range(n) if depth(i) == 0]
+    bb0 = {}
+    for i in tops0:
+        xs0 = [p[0] for p in parsed[i][2]]
+        ys0 = [p[1] for p in parsed[i][2]]
+        bb0[i] = (min(xs0), min(ys0), max(xs0), max(ys0))
+    crossed = set()
+    for ia in range(len(tops0)):
+        for ib in range(ia + 1, len(tops0)):
+            i, j = tops0[ia], tops0[ib]
+            a0, b0 = bb0[i], bb0[j]
+            if a0[2] < b0[0] - GEO_TOL or b0[2] < a0[0] - GEO_TOL or \
+               a0[3] < b0[1] - GEO_TOL or b0[3] < a0[1] - GEO_TOL:
+                continue
+            if _polys_relation(parsed[i][2], parsed[j][2]) != "cross":
+                continue
+            small, big = (i, j) if parsed[i][3] <= parsed[j][3] else (j, i)
+            crossed.add(small)
+            issues.append(_err(
+                "E_CONTOUR_CROSSES", "contour:%s" % parsed[small][0],
+                "контур пересекает край контура %s — проём с нахлёстом за стену? "
+                "Не учтён (ни зоной, ни проёмом): поправьте обводку — проём "
+                "целиком внутри стены или по её краю" % parsed[big][0]))
     for i in range(n):
         d = depth(i)
+        if i in crossed:
+            continue
         if d == 0:
             zones.append(i)
         elif d == 1:

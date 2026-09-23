@@ -323,5 +323,53 @@ class TestListAndExample(unittest.TestCase):
         self.assertAlmostEqual(back["area_net_m2"], 33.75, places=9)
 
 
+
+class TestReview2309(unittest.TestCase):
+    """23.09 (ревью): фантом-зона, дуга на 45°, зона в метрах."""
+
+    def test_opening_crossing_wall_edge_is_error_not_zone(self):
+        cs = [{"id": "W", "pts": rect(0, 0, 8000, 5000)},
+              {"id": "O", "pts": rect(-50, 1000, 1500, 1500)}]
+        zds, issues = fz.build_zones_from_contours(cs)
+        self.assertEqual(len(zds), 1, "окно с нахлёстом не должно стать отдельной зоной")
+        self.assertIn("E_CONTOUR_CROSSES", codes(issues))
+        self.assertEqual(zds[0]["meta"]["outer_contour_id"], "W")
+
+    def test_adjacent_walls_touching_are_fine(self):
+        cs = [{"id": "A", "pts": rect(0, 0, 4000, 3000)}, {"id": "B", "pts": rect(4000, 0, 3000, 3000)}]
+        zds, issues = fz.build_zones_from_contours(cs)
+        self.assertEqual(len(zds), 2)
+        self.assertNotIn("E_CONTOUR_CROSSES", codes(issues))
+
+    def _round_window_edges(self, dx, dy):
+        r = 500.0
+        cx, cy = 3000.0 + dx, 1500.0 + dy
+        pts = [[cx - r, cy], [cx, cy - r], [cx + r, cy], [cx, cy + r]]
+        b = math.tan(math.pi / 8)
+        z = fz.load_zone(zone_dict(rect(dx, dy, 6000, 3000),
+                                   [opening("O", pts, bulges=[b, b, b, b])]))
+        rep = fz.zone_report(z)
+        return rep["sills_total_m"], rep["jambs_total_m"]
+
+    def test_round_window_edges_do_not_depend_on_position(self):
+        a = self._round_window_edges(0.0, 0.0)
+        for dx, dy in ((612345.5, 24070.3), (13.7, 0.1), (-4096.25, 777.77)):
+            b = self._round_window_edges(dx, dy)
+            self.assertAlmostEqual(a[0], b[0], places=6)
+            self.assertAlmostEqual(a[1], b[1], places=6)
+        # четверть окружности снизу — отлив (по 45° с каждой стороны)
+        self.assertAlmostEqual(a[0], math.pi * 0.5 / 2, delta=0.003)
+
+    def test_zone_in_metres_equals_millimetres(self):
+        small = rect(1000, 1000, 400, 400)            # проём 0.4 × 0.4 м
+        zmm = fz.load_zone(zone_dict(rect(0, 0, 6000, 3000), [opening("O", small)]))
+        zm = fz.load_zone(zone_dict([[x / 1000.0, y / 1000.0] for x, y in rect(0, 0, 6000, 3000)],
+                                    [opening("O", [[x / 1000.0, y / 1000.0] for x, y in small])],
+                                    units="m"))
+        a, b = fz.zone_report(zmm), fz.zone_report(zm)
+        for key in ("area_net_m2", "openings_total_m2", "sills_total_m", "jambs_total_m"):
+            self.assertAlmostEqual(a[key], b[key], places=9, msg=key)
+
+
 if __name__ == "__main__":
     unittest.main()
