@@ -26,10 +26,14 @@ for c in dump:
     s = res["summary"]
     objs = {"res": [res], "it": res["pieces"], "pz": res["per_zone"], "sum": [s],
             "absorbed": [s["absorbed"]], "bond": [s["bond"]],
-            "d": list(s["by_type"].values()), "cm": [], "m": [], "z": []}
+            "d": list(s["by_type"].values()),
+            # НЕ ответ движка (24.09, рецензия: давали 4 ложных «неизвестных»):
+            # метки ATCLAD/ATTILE/ATFZONE, части и проёмы зон из _fzones.json,
+            # элементы C#-запроса контуров
+            "cm": [], "m": [], "z": [], "zd": [], "hz": [], "hrep": [], "part": [], "od": [], "cd": []}
     for var, key in reads:
         if var not in objs:
-            missing.add((var, key, "неизвестный объект"))
+            missing.add((var, key, "неизвестный объект — добавьте в objs (ответ или вход?)"))
             continue
         pool = objs[var]
         if not pool:
