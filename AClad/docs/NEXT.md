@@ -65,6 +65,26 @@ zone_id в attref-цикле; подробно — AFrame/docs/NEXT.md §В-ю).
 (см. §Статус 22.07c).
 
 ## Статус
+- **23.09i — РЕВЬЮ (сессия полного разбора; поведение НЕ менялось; отчёт —
+  `docs/REVIEW_23.09.md` в корне).** Прогон: cladding_plan 58, CLI 12,
+  tile_pattern 152, краш-аудит 124 — зелёные; attile_synth сиды 2309/77/5 —
+  3×696 сценариев, 920 954 куска, 0 провалов (воспроизведено); окно под mono —
+  ОК (сборка: `mcs -r:System.Windows.Forms.dll -r:System.Drawing.dll
+  -r:System.Web.Extensions.dll tools/attile_ui/UiCheck.cs src/ACladPlugin/BondForm.cs
+  src/ACladPlugin/BondSettings.cs`, запуск `xvfb-run -a mono UiCheck.exe DIR`);
+  attile_contract — 35 ключей, 0 недостающих; фикстура 290×82 — 145 333.
+  НАЙДЕНО (доказательства — `tools/xmod_check.py` в корне):
+  (1) КРИТИЧНО: ATTILE по штриховке/марке зоны ATFZONE отказывает — в запрос
+  идёт метка ATFZONE без геометрии (`TilePatternCommand.cs:128–140`, с 09.09);
+  ATCLAD берёт геометрию из `_fzones.json` и вычитает полилинии зоны из
+  «голых» — взять оттуда (без вычета после починки зона разложится дважды).
+  (2) ВАЖНО: метка ATCLAD несёт оси швов ВСЕГО прогона (`clad_engine.py:216`,
+  `CladCommand.cs:570`) — у ATTILE правильно, по зоне.
+  (3) ЗАМЕР: метка ATTILE на фикстуре — 183 746 хэндлов, крупнейшая 345 КБ
+  (1 414 строк Xrecord) × 4 объекта, всего 2.8 МБ; предложение — хэндлы вне
+  метки (NOD/XData).
+  (4) НЕ ПРОВЕРЕНО ВЖИВУЮ: одна транзакция на ~150 тыс. объектов с
+  EvaluateHatch у фигурных — время/память на тесте Германа.
 - **23.09 — ATTILE СТАЛА УНИВЕРСАЛЬНОЙ РАЗБЕЖКОЙ (заявка «шахматный порядок
   для любой облицовки»), СОБРАНО: сборка №20 = build-bundle run #93, релиз
   `build-93` (build-trigger `db446b7` = `8c31b96`), `latest` обновлён (API
