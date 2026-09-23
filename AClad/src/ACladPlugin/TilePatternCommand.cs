@@ -99,6 +99,8 @@ namespace ACladPlugin
             var own = new OwnedLabels();
             var cladOwn = new OwnedLabels();
             var zoneStale = new List<string>();
+            var zoneMoved = new List<string>();                       // 23.09n
+            var hatchExt = new Dictionary<string, List<Extents3d>>();  // габариты штриховок зон
             Dictionary<string, object> prevSettings = null;
             // 23.09b: прежние точки принудительных рустов — из метки ATTILE,
             // иначе из метки ATCLAD (переход с ATCLAD на ATTILE без повторных кликов)
@@ -160,6 +162,16 @@ namespace ACladPlugin
                         string hzid = CladCommand.SafeStr(CladCommand.Get(hz, "zone_id"));
                         try
                         {
+                            if (hzid.Length > 0)
+                            {
+                                List<Extents3d> hel;
+                                if (!hatchExt.TryGetValue(hzid, out hel)) hatchExt[hzid] = hel = new List<Extents3d>();
+                                hel.Add(hat.GeometricExtents);
+                            }
+                        }
+                        catch { }
+                        try
+                        {
                             double fact = hat.Area / 1e6;
                             double stored = Convert.ToDouble(CladCommand.Get(hrep, "area_net_m2"),
                                                              CultureInfo.InvariantCulture);
@@ -196,8 +208,17 @@ namespace ACladPlugin
                 ed.WriteMessage("\nПрежняя раскладка была общей для нескольких контуров — " +
                     "перекладываю их вместе (добавлено " + added + ").");
             if (own.Copied + cladOwn.Copied > 0)
+            {
                 ed.WriteMessage("\nМетка раскладки скопирована вместе с объектом (" +
-                    (own.Copied + cladOwn.Copied) + " шт.) — плитки оригинала не трогаю.");
+                    (own.Copied + cladOwn.Copied) + " шт.) — плитки оригинала не трогаю" +
+                    (own.CloneCount + cladOwn.CloneCount > 0
+                        ? "; скопированные вместе с копией (" + (own.CloneCount + cladOwn.CloneCount) +
+                          ") заменю новой раскладкой." : "."));
+                if (own.CopiedOld + cladOwn.CopiedOld > 0)
+                    ed.WriteMessage("\n  ! " + (own.CopiedOld + cladOwn.CopiedOld) + " копий сделаны с раскладки " +
+                        "до сборки №25 — скопированные плитки на них не опознать: удалите их на копии " +
+                        "вручную, иначе новая раскладка ляжет поверх.");
+            }
             // 23.09c (ревью 23.09, Денис: «почини до сборки»): геометрия зон
             // ATFZONE — из <dwg>_fzones.json, как у ATCLAD. Раньше в движок
             // уходила метка ATFZONE (там нет геометрии) — по штриховке/марке
@@ -218,6 +239,10 @@ namespace ACladPlugin
                     if (zoneStale.Contains(kv.Key)) continue;
                     var parts = CladCommand.FindZoneParts(fz, kv.Key);
                     if (parts.Count == 0) { missing.Add(kv.Key); continue; }
+                    List<Extents3d> hexts;
+                    if (hatchExt.TryGetValue(kv.Key, out hexts) &&
+                        hexts.Exists(he => CladCommand.ZoneShifted(parts, he)))
+                    { zoneMoved.Add(kv.Key); continue; }
                     foreach (var part in parts)
                     {
                         string pid = CladCommand.SafeStr(CladCommand.Get(part, "id"));
@@ -247,6 +272,10 @@ namespace ACladPlugin
                 if (missing.Count > 0)
                     ed.WriteMessage("\nНет геометрии в _fzones.json для " + string.Join(", ", missing.ToArray()) +
                         " — зона пропущена (повторите ATFZONE или выберите её контуры).");
+                if (zoneMoved.Count > 0)
+                    ed.WriteMessage("\nЗону скопировали или перенесли после ATFZONE (штриховка не там, где её " +
+                        "геометрия в _fzones.json): " + string.Join(", ", zoneMoved.ToArray()) +
+                        " — пропущена. Выполните ATFZONE на ней (копия получит свой номер), затем ATTILE.");
                 if (zoneStale.Count > 0)
                     ed.WriteMessage("\nЗона изменена после ATFZONE (площадь штриховки не совпала): " +
                         string.Join(", ", zoneStale.ToArray()) + " — пропущена, повторите ATFZONE.");
@@ -722,8 +751,9 @@ namespace ACladPlugin
                         { "stamp", stamp },
                         { "vjoints", vjoints },
                         { "hjoints", hjoints },
+                        { "refs", true },      // 23.09n: в метке — мягкие ссылки на плитки
                     };
-                    CladCommand.StoreData(tr, ent, ser.Serialize(meta), XKeyTile);
+                    CladCommand.StoreData(tr, ent, ser.Serialize(meta), XKeyTile, la.Handles);
                 }
                 tr.Commit();
             }
@@ -1028,7 +1058,10 @@ namespace ACladPlugin
             public readonly Dictionary<ObjectId, List<string>> Trusted = new Dictionary<ObjectId, List<string>>();
             public readonly Dictionary<ObjectId, List<string>> Legacy = new Dictionary<ObjectId, List<string>>();
             public readonly Dictionary<ObjectId, List<string>> Members = new Dictionary<ObjectId, List<string>>();
-            public int Copied;
+            // 23.09n (Герман, №24): метка скопирована вместе с объектом — плитки
+            // оригинала не трогаем, а КЛОНЫ, приехавшие вместе с копией, заменяем
+            public readonly Dictionary<ObjectId, List<string>> Clones = new Dictionary<ObjectId, List<string>>();
+            public int Copied, CopiedOld, CloneCount;
 
             public IEnumerable<ObjectId> Owners
             {
@@ -1036,19 +1069,28 @@ namespace ACladPlugin
                 {
                     foreach (var k in Trusted.Keys) yield return k;
                     foreach (var k in Legacy.Keys) yield return k;
+                    foreach (var k in Clones.Keys) yield return k;
                 }
             }
 
             public void Collect(Transaction tr, JavaScriptSerializer ser, Entity ent, string key)
             {
-                if (Trusted.ContainsKey(ent.ObjectId) || Legacy.ContainsKey(ent.ObjectId)) return;
+                if (Trusted.ContainsKey(ent.ObjectId) || Legacy.ContainsKey(ent.ObjectId) ||
+                    Clones.ContainsKey(ent.ObjectId)) return;
                 var m = ReadMeta(tr, ser, ent, key);
                 var hs = CladCommand.Get(m, "handles") as object[];
                 if (hs == null) return;
                 string owner = CladCommand.SafeStr(CladCommand.Get(m, "owner"));
-                if (owner.Length > 0 && owner != ent.Handle.ToString()) { Copied++; return; }
                 var l = new List<string>();
                 foreach (var h in hs) l.Add(CladCommand.SafeStr(h));
+                if (owner.Length > 0 && owner != ent.Handle.ToString())
+                {
+                    Copied++;
+                    var cl = CladCommand.CloneHandles(tr, ent, key, m, l);
+                    if (cl == null) CopiedOld++;          // метка до сборки №25 — клонов не узнать
+                    else { Clones[ent.ObjectId] = cl; CloneCount += cl.Count; }
+                    return;
+                }
                 (owner.Length > 0 ? Trusted : Legacy)[ent.ObjectId] = l;
                 var mem = CladCommand.Get(m, "members") as object[];
                 if (mem != null)
@@ -1066,6 +1108,8 @@ namespace ACladPlugin
                     if (ok.Contains(kv.Key)) n += EraseByHandles(tr, db, kv.Value);
                 foreach (var kv in Legacy)
                     if (ok.Contains(kv.Key)) n += EraseInside(tr, db, kv.Value, region, ref keptOut);
+                foreach (var kv in Clones)
+                    if (ok.Contains(kv.Key)) n += EraseByHandles(tr, db, kv.Value);
                 return n;
             }
 
@@ -1074,6 +1118,7 @@ namespace ACladPlugin
                 var hs = new HashSet<string>();
                 foreach (var l in Trusted.Values) foreach (var h in l) hs.Add(h);
                 foreach (var l in Legacy.Values) foreach (var h in l) hs.Add(h);
+                foreach (var l in Clones.Values) foreach (var h in l) hs.Add(h);
                 return hs.Count;
             }
 

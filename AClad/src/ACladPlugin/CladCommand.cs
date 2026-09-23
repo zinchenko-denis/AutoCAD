@@ -616,6 +616,7 @@ namespace ACladPlugin
                         { "handles", kv.Value },
                     };
                     meta["schema"] = 2;
+                    meta["refs"] = true;   // 23.09n: мягкие ссылки на кассеты (COPY)
                     List<ObjectId> targets;
                     if (zoneObjs.TryGetValue(root, out targets))
                         foreach (var tid in targets)
@@ -623,7 +624,7 @@ namespace ACladPlugin
                             var te = (Entity)tr.GetObject(tid,
                                 OpenMode.ForWrite);
                             meta["owner"] = te.Handle.ToString();
-                            StoreData(tr, te, ser.Serialize(meta), XKeyClad);
+                            StoreData(tr, te, ser.Serialize(meta), XKeyClad, kv.Value);
                         }
                     else
                     {
@@ -636,7 +637,7 @@ namespace ACladPlugin
                             var te = (Entity)tr.GetObject(pid2,
                                 OpenMode.ForWrite);
                             meta["owner"] = te.Handle.ToString();
-                            StoreData(tr, te, ser.Serialize(meta), XKeyClad);
+                            StoreData(tr, te, ser.Serialize(meta), XKeyClad, kv.Value);
                         }
                     }
                 }
@@ -1089,6 +1090,20 @@ namespace ACladPlugin
         internal static void StoreData(Transaction tr, Entity ent,
                                        string json, string key)
         {
+            StoreData(tr, ent, json, key, null);
+        }
+
+        // 23.09n (Герман, сборка №24: «COPY зоны вместе с раскладкой — на копии
+        // новая раскладка ложится поверх старой»). Хэндлы-строки метки COPY не
+        // переводит: у копии метка указывает на плитки ОРИГИНАЛА, а скопированные
+        // плитки не указаны нигде — их не удалял никто. Поэтому метка хранит ещё и
+        // МЯГКИЕ ССЫЛКИ (330) на свои объекты: при COPY AutoCAD переводит их на
+        // клоны тех объектов, что скопированы той же командой, а строки остаются.
+        // Ссылка, чьего хэндла нет среди строк, = клон, приехавший вместе с копией.
+        internal static void StoreData(Transaction tr, Entity ent,
+                                       string json, string key,
+                                       IEnumerable<string> refs)
+        {
             if (ent.ExtensionDictionary.IsNull)
                 ent.CreateExtensionDictionary();
             var ext = (DBDictionary)tr.GetObject(ent.ExtensionDictionary,
@@ -1097,18 +1112,101 @@ namespace ACladPlugin
             for (int i = 0; i < json.Length; i += 250)
                 rb.Add(new TypedValue((int)DxfCode.Text,
                     json.Substring(i, Math.Min(250, json.Length - i))));
-            var xr = new Xrecord { Data = rb };
+            if (refs != null)
+                foreach (var id in IdsOf(ent.Database, refs))
+                    rb.Add(new TypedValue((int)DxfCode.SoftPointerId, id));
+            Xrecord xr;
             if (ext.Contains(key))
             {
-                var old = (Xrecord)tr.GetObject(ext.GetAt(key),
-                                                OpenMode.ForWrite);
-                old.Data = rb;
+                xr = (Xrecord)tr.GetObject(ext.GetAt(key), OpenMode.ForWrite);
+                xr.Data = rb;
             }
             else
             {
+                xr = new Xrecord { Data = rb };
                 ext.SetAt(key, xr);
                 tr.AddNewlyCreatedDBObject(xr, true);
             }
+            xr.XlateReferences = true;   // ссылки переводятся при COPY (по умолчанию и так)
+        }
+
+        // 23.09n (разбор замечания Германа по COPY): у копии зоны ATFZONE тот же
+        // номер, а геометрия в _fzones.json — ОРИГИНАЛА: раскладка легла бы на
+        // место оригинала (невидимо — точно поверх его же плиток), а клоны копии
+        // удалились бы. Признак переноса/копии: габарит штриховки сдвинут
+        // относительно габарита вершин зоны из файла на один и тот же вектор по
+        // обоим углам. Дуги на краю габарита признак гасят — тогда не ловим.
+        internal static bool ZoneShifted(List<Dictionary<string, object>> parts, Extents3d he)
+        {
+            double x0 = double.MaxValue, y0 = double.MaxValue, x1 = double.MinValue, y1 = double.MinValue;
+            foreach (var part in parts)
+            {
+                var pts = Get(Get(part, "outer") as Dictionary<string, object>, "pts") as object[];
+                if (pts == null) continue;
+                foreach (var po in pts)
+                {
+                    var p = po as object[];
+                    if (p == null || p.Length < 2) continue;
+                    double x = ToD(p[0]), y = ToD(p[1]);
+                    if (x < x0) x0 = x; if (y < y0) y0 = y;
+                    if (x > x1) x1 = x; if (y > y1) y1 = y;
+                }
+            }
+            if (x0 > x1 || y0 > y1) return false;
+            double dx0 = he.MinPoint.X - x0, dy0 = he.MinPoint.Y - y0;
+            double dx1 = he.MaxPoint.X - x1, dy1 = he.MaxPoint.Y - y1;
+            return Math.Abs(dx0 - dx1) < 2.0 && Math.Abs(dy0 - dy1) < 2.0 &&
+                   Math.Sqrt(dx0 * dx0 + dy0 * dy0) > 5.0;
+        }
+
+        /// <summary>Хэндлы-строки → ObjectId живых объектов чертежа.</summary>
+        internal static List<ObjectId> IdsOf(Database db, IEnumerable<string> handles)
+        {
+            var res = new List<ObjectId>();
+            foreach (var hs in handles)
+            {
+                long v;
+                if (!long.TryParse(hs, NumberStyles.HexNumber, CultureInfo.InvariantCulture, out v))
+                    continue;
+                ObjectId id;
+                if (db.TryGetObjectId(new Handle(v), out id) && !id.IsNull && !id.IsErased)
+                    res.Add(id);
+            }
+            return res;
+        }
+
+        /// <summary>Мягкие ссылки метки key (null — ссылок в метке нет).</summary>
+        internal static List<ObjectId> ReadRefs(Transaction tr, Entity ent, string key)
+        {
+            if (ent.ExtensionDictionary.IsNull) return null;
+            var ext = (DBDictionary)tr.GetObject(ent.ExtensionDictionary, OpenMode.ForRead);
+            if (!ext.Contains(key)) return null;
+            var xr = (Xrecord)tr.GetObject(ext.GetAt(key), OpenMode.ForRead);
+            if (xr.Data == null) return null;
+            var res = new List<ObjectId>();
+            foreach (TypedValue tv in xr.Data)
+                if (tv.TypeCode == (int)DxfCode.SoftPointerId && tv.Value is ObjectId)
+                    res.Add((ObjectId)tv.Value);
+            return res;
+        }
+
+        /// <summary>Клоны, приехавшие вместе с копией объекта: ссылка метки
+        /// переведена на объект, хэндла которого нет среди строк метки.
+        /// null — метка записана до сборки №25 (ссылок нет): клонов не узнать.</summary>
+        internal static List<string> CloneHandles(Transaction tr, Entity ent, string key,
+            Dictionary<string, object> meta, IEnumerable<string> labelHandles)
+        {
+            if (SafeStr(Get(meta, "refs")) != "True") return null;
+            var refs = ReadRefs(tr, ent, key) ?? new List<ObjectId>();
+            var own = new HashSet<string>(labelHandles, StringComparer.OrdinalIgnoreCase);
+            var res = new List<string>();
+            foreach (var id in refs)
+            {
+                if (id.IsNull || id.IsErased || !id.IsValid) continue;
+                string h = id.Handle.ToString();
+                if (!own.Contains(h) && !res.Contains(h)) res.Add(h);
+            }
+            return res;
         }
 
         /// <summary>Снять метку key с объекта (23.09: замена раскладки

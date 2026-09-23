@@ -85,13 +85,16 @@ namespace AFramePlugin
             { ed.WriteMessage("\nОтменено."); return; }
 
             var zoneObjs = new Dictionary<string, List<ObjectId>>();
+            var hatchExt = new Dictionary<string, List<Extents3d>>();   // 23.09n
             var polyByHandle = new Dictionary<string, ObjectId>();
             var polyData = new Dictionary<string, Dictionary<string, object>>();
             var joints = new List<double>();
             var rowsY = new List<double>();
             var oldHandles = new HashSet<string>();
             _copiedLabels = 0;
+            _copiedOld = 0;
             _legacyH.Clear();
+            _clonesByCarrier.Clear();
             // 23.09b: параметры окна с прошлой подсистемы зоны и её хэндлы
             // по зонам (режим «только кляммеры» переписывает метку, не теряя
             // направляющих и кронштейнов)
@@ -182,6 +185,15 @@ namespace AFramePlugin
                     if (m == null) continue;
                     string zid = SafeStr(Get(m, "zone_id"));
                     if (zid.Length == 0) continue;
+                    var zh = ent as Hatch;           // 23.09n: габарит штриховки зоны
+                    if (zh != null)
+                        try
+                        {
+                            List<Extents3d> hel;
+                            if (!hatchExt.TryGetValue(zid, out hel)) hatchExt[zid] = hel = new List<Extents3d>();
+                            hel.Add(zh.GeometricExtents);
+                        }
+                        catch { }
                     if (!zoneObjs.ContainsKey(zid))
                         zoneObjs[zid] = new List<ObjectId>();
                     if (!zoneObjs[zid].Contains(ent.ObjectId))
@@ -309,6 +321,15 @@ namespace AFramePlugin
                 {
                     ed.WriteMessage("\nНет геометрии в _fzones.json для " +
                         kv.Key + " — зона пропущена.");
+                    continue;
+                }
+                List<Extents3d> hexts;
+                if (hatchExt.TryGetValue(kv.Key, out hexts) &&
+                    hexts.Exists(he => ZoneShifted(parts, he)))
+                {
+                    ed.WriteMessage("\nЗону " + kv.Key + " скопировали или перенесли после ATFZONE " +
+                        "(штриховка не там, где её геометрия в _fzones.json) — пропущена. Выполните " +
+                        "ATFZONE на ней (копия получит свой номер), затем ATFRAME.");
                     continue;
                 }
                 foreach (var part in parts)
@@ -556,6 +577,9 @@ namespace AFramePlugin
             // ── 6. чертёж ──
             var handlesByRoot = new Dictionary<string, List<string>>();
             var erasedH = new HashSet<string>();
+            // 23.09n: клоны копии по зонам — в «только кляммеры» оставшиеся клоны
+            // (направляющие, кронштейны) входят в новую метку, иначе осиротеют
+            var clonesByRoot = new Dictionary<string, List<string>>();
             int erased = 0, made = 0;
             using (doc.LockDocument())
             using (var tr = db.TransactionManager.StartTransaction())
@@ -608,6 +632,19 @@ namespace AFramePlugin
                     if (okRoots.Contains(kvo.Key)) foreach (var h0 in kvo.Value) eraseSet.Add(h0);
                     else keptRoots.Add(kvo.Key);
                 }
+                int clonesErase = 0;
+                foreach (var kvc in _clonesByCarrier)
+                {
+                    string cr = CarrierRoot(kvc.Key, okRoots, zoneObjs, polyByHandle);
+                    if (cr == null) continue;
+                    List<string> cl;
+                    if (!clonesByRoot.TryGetValue(cr, out cl)) clonesByRoot[cr] = cl = new List<string>();
+                    foreach (var hc in kvc.Value)
+                    {
+                        if (eraseSet.Add(hc)) clonesErase++;
+                        if (!cl.Contains(hc)) cl.Add(hc);
+                    }
+                }
                 var region = SelRegion(tr, zoneObjs, polyByHandle);
                 int keptOut = 0;
                 if (eraseSet.Count > 0)
@@ -641,7 +678,12 @@ namespace AFramePlugin
                         "выбранных зон — не удалены (метка скопирована или зону переносили).");
                 if (_copiedLabels > 0)
                     ed.WriteMessage("\nМетка подсистемы скопирована вместе с объектом (" + _copiedLabels +
-                        " шт.) — элементы оригинала не трогаю.");
+                        " шт.) — элементы оригинала не трогаю" + (clonesErase > 0
+                        ? "; скопированные вместе с копией (" + clonesErase + ") заменены." : "."));
+                if (_copiedOld > 0)
+                    ed.WriteMessage("\n  ! " + _copiedOld + " копий сделаны с подсистемы до сборки №25 — " +
+                        "скопированные элементы на них не опознать: удалите их на копии вручную, " +
+                        "иначе новая подсистема ляжет поверх.");
 
                 // направляющие — прямоугольники по оси
                 if (rails != null)
@@ -793,6 +835,10 @@ namespace AFramePlugin
                     if (clampsOnly && oldByRoot.TryGetValue(root, out prevH))
                         foreach (var h0 in prevH)
                             if (!erasedH.Contains(h0) && !hl.Contains(h0)) hl.Add(h0);
+                    List<string> keptCl;
+                    if (clampsOnly && clonesByRoot.TryGetValue(root, out keptCl))
+                        foreach (var h1 in keptCl)
+                            if (!erasedH.Contains(h1) && !hl.Contains(h1)) hl.Add(h1);
                     List<string> newH;
                     if (handlesByRoot.TryGetValue(root, out newH)) hl.AddRange(newH);
                     var meta = new Dictionary<string, object>
@@ -805,6 +851,7 @@ namespace AFramePlugin
                         { "settings", fs.ToDict() },
                         { "parts", fs.Mode },
                         { "schema", 2 },
+                        { "refs", true },      // 23.09n: мягкие ссылки на элементы (COPY)
                     };
                     List<ObjectId> targets;
                     if (zoneObjs.TryGetValue(root, out targets))
@@ -813,7 +860,7 @@ namespace AFramePlugin
                             var te = (Entity)tr.GetObject(tid,
                                 OpenMode.ForWrite);
                             meta["owner"] = te.Handle.ToString();
-                            StoreData(tr, te, ser.Serialize(meta), XKeyFrame);
+                            StoreData(tr, te, ser.Serialize(meta), XKeyFrame, hl);
                         }
                     else
                     {
@@ -825,7 +872,7 @@ namespace AFramePlugin
                             var te = (Entity)tr.GetObject(pid2,
                                 OpenMode.ForWrite);
                             meta["owner"] = te.Handle.ToString();
-                            StoreData(tr, te, ser.Serialize(meta), XKeyFrame);
+                            StoreData(tr, te, ser.Serialize(meta), XKeyFrame, hl);
                         }
                     }
                 }
@@ -1673,6 +1720,12 @@ namespace AFramePlugin
         // удаляем только элементы, лежащие на выбранных зонах
         private static int _copiedLabels;
         private static readonly HashSet<string> _legacyH = new HashSet<string>();
+        // 23.09n (Герман, №24: «на копии новая раскладка ложится поверх старой»):
+        // клоны подсистемы, приехавшие вместе с копией, — по объекту-носителю
+        // метки; удаляются, только если зона-копия получила новый результат
+        private static int _copiedOld;
+        private static readonly Dictionary<ObjectId, List<string>> _clonesByCarrier =
+            new Dictionary<ObjectId, List<string>>();
 
         private static bool OwnLabel(Dictionary<string, object> d, Entity ent, bool count)
         {
@@ -1693,7 +1746,16 @@ namespace AFramePlugin
                 string j = ReadData(tr, ent, XKeyFrame);
                 if (j == null) return;
                 var d = ser.DeserializeObject(j) as Dictionary<string, object>;
-                if (!OwnLabel(d, ent, true)) return;
+                if (!OwnLabel(d, ent, true))
+                {
+                    var lh = new List<string>();
+                    var hs0 = Get(d, "handles") as object[];
+                    if (hs0 != null) foreach (var h in hs0) lh.Add(SafeStr(h));
+                    var cl = CloneHandles(tr, ent, XKeyFrame, d, lh);
+                    if (cl == null) _copiedOld++;     // метка до сборки №25 — клонов не узнать
+                    else if (cl.Count > 0) _clonesByCarrier[ent.ObjectId] = cl;
+                    return;
+                }
                 bool legacy = SafeStr(Get(d, "owner")).Length == 0;
                 var hs = Get(d, "handles") as object[];
                 if (hs == null) return;
@@ -1775,6 +1837,18 @@ namespace AFramePlugin
         internal static void StoreData(Transaction tr, Entity ent,
                                        string json, string key)
         {
+            StoreData(tr, ent, json, key, null);
+        }
+
+        // 23.09n (Герман, №24; копия AClad — модули развязаны сознательно):
+        // хэндлы-строки COPY не переводит — метка копии указывает на подсистему
+        // ОРИГИНАЛА, а скопированные элементы не указаны нигде. Поэтому метка
+        // хранит ещё и мягкие ссылки (330): AutoCAD переводит их на клоны тех
+        // объектов, что скопированы той же командой; строки остаются прежними.
+        internal static void StoreData(Transaction tr, Entity ent,
+                                       string json, string key,
+                                       IEnumerable<string> refs)
+        {
             if (ent.ExtensionDictionary.IsNull)
                 ent.CreateExtensionDictionary();
             var ext = (DBDictionary)tr.GetObject(ent.ExtensionDictionary,
@@ -1783,18 +1857,114 @@ namespace AFramePlugin
             for (int i = 0; i < json.Length; i += 250)
                 rb.Add(new TypedValue((int)DxfCode.Text,
                     json.Substring(i, Math.Min(250, json.Length - i))));
-            var xr = new Xrecord { Data = rb };
+            if (refs != null)
+                foreach (var id in IdsOf(ent.Database, refs))
+                    rb.Add(new TypedValue((int)DxfCode.SoftPointerId, id));
+            Xrecord xr;
             if (ext.Contains(key))
             {
-                var old = (Xrecord)tr.GetObject(ext.GetAt(key),
-                                                OpenMode.ForWrite);
-                old.Data = rb;
+                xr = (Xrecord)tr.GetObject(ext.GetAt(key), OpenMode.ForWrite);
+                xr.Data = rb;
             }
             else
             {
+                xr = new Xrecord { Data = rb };
                 ext.SetAt(key, xr);
                 tr.AddNewlyCreatedDBObject(xr, true);
             }
+            xr.XlateReferences = true;
+        }
+
+        // 23.09n (разбор замечания Германа по COPY): у копии зоны ATFZONE тот же
+        // номер, а геометрия в _fzones.json — ОРИГИНАЛА: раскладка легла бы на
+        // место оригинала (невидимо — точно поверх его же плиток), а клоны копии
+        // удалились бы. Признак переноса/копии: габарит штриховки сдвинут
+        // относительно габарита вершин зоны из файла на один и тот же вектор по
+        // обоим углам. Дуги на краю габарита признак гасят — тогда не ловим.
+        internal static bool ZoneShifted(List<Dictionary<string, object>> parts, Extents3d he)
+        {
+            double x0 = double.MaxValue, y0 = double.MaxValue, x1 = double.MinValue, y1 = double.MinValue;
+            foreach (var part in parts)
+            {
+                var pts = Get(Get(part, "outer") as Dictionary<string, object>, "pts") as object[];
+                if (pts == null) continue;
+                foreach (var po in pts)
+                {
+                    var p = po as object[];
+                    if (p == null || p.Length < 2) continue;
+                    double x = ToD(p[0]), y = ToD(p[1]);
+                    if (x < x0) x0 = x; if (y < y0) y0 = y;
+                    if (x > x1) x1 = x; if (y > y1) y1 = y;
+                }
+            }
+            if (x0 > x1 || y0 > y1) return false;
+            double dx0 = he.MinPoint.X - x0, dy0 = he.MinPoint.Y - y0;
+            double dx1 = he.MaxPoint.X - x1, dy1 = he.MaxPoint.Y - y1;
+            return Math.Abs(dx0 - dx1) < 2.0 && Math.Abs(dy0 - dy1) < 2.0 &&
+                   Math.Sqrt(dx0 * dx0 + dy0 * dy0) > 5.0;
+        }
+
+        internal static List<ObjectId> IdsOf(Database db, IEnumerable<string> handles)
+        {
+            var res = new List<ObjectId>();
+            foreach (var hs in handles)
+            {
+                long v;
+                if (!long.TryParse(hs, NumberStyles.HexNumber, CultureInfo.InvariantCulture, out v))
+                    continue;
+                ObjectId id;
+                if (db.TryGetObjectId(new Handle(v), out id) && !id.IsNull && !id.IsErased)
+                    res.Add(id);
+            }
+            return res;
+        }
+
+        internal static List<ObjectId> ReadRefs(Transaction tr, Entity ent, string key)
+        {
+            if (ent.ExtensionDictionary.IsNull) return null;
+            var ext = (DBDictionary)tr.GetObject(ent.ExtensionDictionary, OpenMode.ForRead);
+            if (!ext.Contains(key)) return null;
+            var xr = (Xrecord)tr.GetObject(ext.GetAt(key), OpenMode.ForRead);
+            if (xr.Data == null) return null;
+            var res = new List<ObjectId>();
+            foreach (TypedValue tv in xr.Data)
+                if (tv.TypeCode == (int)DxfCode.SoftPointerId && tv.Value is ObjectId)
+                    res.Add((ObjectId)tv.Value);
+            return res;
+        }
+
+        // клоны, приехавшие вместе с копией (ссылка переведена на объект, хэндла
+        // которого нет среди строк метки); null — метка до сборки №25
+        internal static List<string> CloneHandles(Transaction tr, Entity ent, string key,
+            Dictionary<string, object> meta, IEnumerable<string> labelHandles)
+        {
+            if (SafeStr(Get(meta, "refs")) != "True") return null;
+            var refs = ReadRefs(tr, ent, key) ?? new List<ObjectId>();
+            var own = new HashSet<string>(labelHandles, StringComparer.OrdinalIgnoreCase);
+            var res = new List<string>();
+            foreach (var id in refs)
+            {
+                if (id.IsNull || id.IsErased || !id.IsValid) continue;
+                string h = id.Handle.ToString();
+                if (!own.Contains(h) && !res.Contains(h)) res.Add(h);
+            }
+            return res;
+        }
+
+        // носитель метки принадлежит зоне с новым результатом — та же логика,
+        // по которой метка пишется (объекты зоны ATFZONE или внешняя полилиния)
+        private static string CarrierRoot(ObjectId carrier, HashSet<string> okRoots,
+            Dictionary<string, List<ObjectId>> zoneObjs, Dictionary<string, ObjectId> polyByHandle)
+        {
+            foreach (var r in okRoots)
+            {
+                List<ObjectId> t;
+                if (zoneObjs.TryGetValue(r, out t) && t.Contains(carrier)) return r;
+                string oh = r.StartsWith("контур ") ? r.Substring(7) : r;
+                ObjectId pid;
+                if (polyByHandle.TryGetValue(oh, out pid) && pid == carrier) return r;
+            }
+            return null;
         }
 
         internal static string ReadData(Transaction tr, Entity ent,

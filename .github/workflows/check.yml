@@ -134,6 +134,7 @@ jobs:
           (cd AFrame/engine && python audit_frame.py)
           python tools/engine_contract.py
           python tools/xmod_check.py --no-fixture --allow=X6
+          python tools/label_refs_check.py
           python Facades/tools/zones_synth.py --quick
           python AClad/tools/attile_synth.py --quick
           python AFrame/tools/frame_synth.py --quick --allow F7,F16
