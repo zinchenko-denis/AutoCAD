@@ -6,9 +6,10 @@
 (номера строк — на коммит 2e6a937), дальше — настоящие движки. Итог
 по сценарию: OK / BUG (с доказательством) / INFO (замер).
 
-  X1  ATFZONE → ATTILE: зона выбрана штриховкой/маркой
-      (TilePatternCommand.cs:128-140 шлёт в движок Xrecord ATFZONE,
-      в нём нет геометрии; ATCLAD берёт её из <dwg>_fzones.json).
+  X1  ATFZONE → ATTILE: зона выбрана штриховкой/маркой (+ её полилинии).
+      До 23.09c TilePatternCommand слал в движок метку ATFZONE (геометрии
+      в ней нет) — отказ. С 23.09c — как ATCLAD: геометрия из
+      <dwg>_fzones.json, полилинии зоны из «голых» убраны (без задвоения).
   X2  ATFZONE → ATCLAD: тот же сценарий через _fzones.json — контроль.
   X8  ATFZONE → ATFRAME: часть зоны из _fzones.json (facade_zone/1:
       outer/openings[].poly) → frame_engine._zone_to_contour ждёт
@@ -81,15 +82,22 @@ def x1_x2():
                        {"id": "1B", "pts": rect(2000, 1000, 3500, 2500)}])
     zid = r["zones"][0]["zone_id"]
     tile = {"tile": {"w": 600, "h": 600}, "gap": {"v": 8, "h": 8}, "types": ["КГ"]}
-    # TilePatternCommand.cs:138: zonesPayload.Add({zone_id, zone: <Xrecord ATFZONE>})
-    t = ce.run(roundtrip(dict(tile, op="tile_pattern",
-                              zones=[{"zone_id": zid, "zone": xrec[zid]}])))
-    if t.get("ok"):
-        rep("OK", "X1", "ATTILE по штриховке зоны: %d кусков" % len(t["pieces"]))
+    # 23.09c, TilePatternCommand: зона → части из _fzones.json (FindZoneParts),
+    # её полилинии (outer_contour_id, openings[].id) из «голых» убраны
+    polys = [{"id": "1A", "pts": rect(0, 0, 6000, 3000)}, {"id": "1B", "pts": rect(2000, 1000, 3500, 2500)}]
+    parts = [p for p in r["zones_full"] if p["id"] == zid or p["id"].startswith(zid + ".")]
+    drop = {p["meta"]["outer_contour_id"] for p in parts} | {o["id"] for p in parts for o in p.get("openings") or []}
+    t = ce.run(roundtrip(dict(tile, op="tile_pattern", zones=[{"zone_id": p["id"], "zone": p} for p in parts],
+                              contours=[c for c in polys if c["id"] not in drop])))
+    t0 = ce.run(roundtrip(dict(tile, op="tile_pattern", contours=polys)))
+    if t.get("ok") and len(t["pieces"]) == len(t0["pieces"]) and \
+            {q["zone"] for q in t["pieces"]} == {zid}:
+        rep("OK", "X1", "ATTILE по штриховке зоны (+ её полилинии в выборке): %d кусков, как по "
+            "контурам, без задвоения, ЗАХВАТКА = %s" % (len(t["pieces"]), zid))
     else:
-        rep("BUG", "X1", "ATTILE по штриховке/марке зоны ATFZONE отказывает: «%s»; notes=%s "
-            "(в Xrecord только %s — геометрии нет)"
-            % (t.get("error"), t.get("notes"), sorted(xrec[zid])))
+        rep("BUG", "X1", "ATTILE по штриховке/марке зоны: ok=%s, кусков %s (по контурам %s), зоны %s"
+            % (t.get("ok"), len(t.get("pieces") or []), len(t0.get("pieces") or []),
+               sorted({q["zone"] for q in t.get("pieces") or []})))
     # CladCommand.cs:167-180: геометрия из _fzones.json (FindZoneParts)
     part = r["zones_full"][0]
     c = ce.run(roundtrip(dict(tile, op="tile_pattern",

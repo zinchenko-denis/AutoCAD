@@ -16,9 +16,14 @@ namespace ACladPlugin
         // подпись → команда (СВОИ пункты этого модуля)
         private static readonly string[][] Items =
         {
-            new[] { "Раскладка (ATCLAD)", "ATCLAD" },
-            new[] { "Раскладка с разбежкой (ATTILE)", "ATTILE" },
+            new[] { "Раскладка облицовки (ATTILE)", "ATTILE" },
             new[] { "Размеры облицовки (ATCLADDIM)", "ATCLADDIM" },
+        };
+        // 23.09c: снятые пункты прежних сборок — убрать, если остались в меню
+        // (ATCLAD набирается с клавиатуры для старых чертежей)
+        private static readonly string[] Retired =
+        {
+            "Раскладка (ATCLAD)", "Раскладка с разбежкой (ATTILE)",
         };
 
         private static bool _quitHooked;
@@ -95,9 +100,11 @@ namespace ACladPlugin
                 try { cap = (string)it.Caption; } catch { }
                 if (cap == null) continue;
                 cap = cap.Replace("&", "");
+                bool mine = Array.IndexOf(Retired, cap) >= 0;
                 foreach (var my in Items)
-                    if (cap == my[0])
-                    { try { it.Delete(); } catch { } break; }
+                    if (cap == my[0]) { mine = true; break; }
+                if (mine)
+                    try { it.Delete(); } catch { }
             }
         }
 

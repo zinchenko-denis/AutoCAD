@@ -25,8 +25,9 @@ namespace ACladPlugin
                 if (doc != null)
                     doc.Editor.WriteMessage(
                         "\nAClad загружен (сборка DLL от " + BuildStamp() +
-                        "). Команды: ATCLAD — кассеты по зонам, ATTILE — " +
-                        "раскладка с разбежкой (любой формат), ATCLADDIM — размеры.\n");
+                        "). Команды: ATTILE — раскладка облицовки (разбежка, " +
+                        "принудительные русты), ATCLADDIM — размеры; ATCLAD — " +
+                        "прежняя раскладка кассетами (с клавиатуры, для старых чертежей).\n");
             }
             catch { }
             try { FacadesRibbon.Init();

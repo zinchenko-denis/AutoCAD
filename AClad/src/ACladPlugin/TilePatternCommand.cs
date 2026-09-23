@@ -136,11 +136,7 @@ namespace ACladPlugin
                         string zid = CladCommand.SafeStr(CladCommand.Get(z, "zone_id"));
                         if (zid.Length == 0) continue;
                         if (!zoneObjs.ContainsKey(zid))
-                        {
                             zoneObjs[zid] = new List<ObjectId>();
-                            zonesPayload.Add(new Dictionary<string, object>
-                            { { "zone_id", zid }, { "zone", z } });
-                        }
                         if (!zoneObjs[zid].Contains(ent.ObjectId))
                             zoneObjs[zid].Add(ent.ObjectId);
                         isZone = true;
@@ -171,6 +167,48 @@ namespace ACladPlugin
                     }
                 }
                 tr.Commit();
+            }
+            // 23.09c (ревью 23.09, Денис: «почини до сборки»): геометрия зон
+            // ATFZONE — из <dwg>_fzones.json, как у ATCLAD. Раньше в движок
+            // уходила метка ATFZONE (там нет геометрии) — по штриховке/марке
+            // раскладка отказывала «нет пригодных зон». Контуры самой зоны из
+            // выборки в «голые» не пускаем — иначе зона разложилась бы дважды.
+            var partToRoot = new Dictionary<string, string>();
+            if (zoneObjs.Count > 0)
+            {
+                var fz = CladCommand.LoadFzones(ed, db, ser);
+                var dropIds = new HashSet<string>();
+                var missing = new List<string>();
+                foreach (var kv in zoneObjs)
+                {
+                    var parts = CladCommand.FindZoneParts(fz, kv.Key);
+                    if (parts.Count == 0) { missing.Add(kv.Key); continue; }
+                    foreach (var part in parts)
+                    {
+                        string pid = CladCommand.SafeStr(CladCommand.Get(part, "id"));
+                        partToRoot[pid] = kv.Key;
+                        zonesPayload.Add(new Dictionary<string, object>
+                        { { "zone_id", pid }, { "zone", part } });
+                        string oid = CladCommand.MetaStr(part, "outer_contour_id");
+                        if (oid != null) dropIds.Add(oid);
+                        var ops = CladCommand.Get(part, "openings") as object[];
+                        if (ops != null)
+                            foreach (var o in ops)
+                            {
+                                var od = o as Dictionary<string, object>;
+                                if (od != null) dropIds.Add(CladCommand.SafeStr(CladCommand.Get(od, "id")));
+                            }
+                    }
+                }
+                if (dropIds.Count > 0)
+                    contoursPayload.RemoveAll(c =>
+                    {
+                        var cd = c as Dictionary<string, object>;
+                        return cd != null && dropIds.Contains(CladCommand.SafeStr(CladCommand.Get(cd, "id")));
+                    });
+                if (missing.Count > 0)
+                    ed.WriteMessage("\nНет геометрии в _fzones.json для " + string.Join(", ", missing.ToArray()) +
+                        " — зона пропущена (повторите ATFZONE или выберите её контуры).");
             }
             if (zonesPayload.Count == 0 && contoursPayload.Count == 0)
             { ed.WriteMessage("\nНе выбрано ни зон, ни контуров."); return; }
@@ -431,7 +469,7 @@ namespace ACladPlugin
                             else if (pr.PropertyName == dynH) okH = CladCommand.TrySetNum(pr, h);
                         }
                         if (!okW || !okH) dynFail++;
-                        FillAttributes(tr, br, zone);
+                        FillAttributes(tr, br, RootName(zone, partToRoot));
                         AddToMap(handlesByZone, zone, br.Handle.ToString());
                         made++;
                     }
@@ -527,8 +565,12 @@ namespace ACladPlugin
                         var mem = CladCommand.Get(pz, "members") as object[];
                         var targets = new List<ObjectId>();
                         foreach (var mObj in mem ?? new object[] { zid })
-                            foreach (var oid in OwnersOf(CladCommand.SafeStr(mObj), zoneObjs, polyByHandle))
+                        {
+                            string mm = CladCommand.SafeStr(mObj), root;
+                            if (partToRoot.TryGetValue(mm, out root)) mm = root;
+                            foreach (var oid in OwnersOf(mm, zoneObjs, polyByHandle))
                                 if (!targets.Contains(oid)) targets.Add(oid);
+                        }
                         foreach (var oid in targets)
                             CladCommand.StoreData(tr, (Entity)tr.GetObject(oid, OpenMode.ForWrite),
                                                   mjson, XKeyTile);
@@ -688,6 +730,20 @@ namespace ACladPlugin
         }
 
         // атрибуты вставки — из текущего представления, ЗАХВАТКА = зона (как ATCLAD)
+        // ЗАХВАТКА — имя зоны этапа 1: части слитой зоны («Ф-1.1+Ф-1.2») → «Ф-1»
+        private static string RootName(string zone, Dictionary<string, string> partToRoot)
+        {
+            if (string.IsNullOrEmpty(zone) || partToRoot.Count == 0) return zone;
+            var outp = new List<string>();
+            foreach (var part in zone.Split('+'))
+            {
+                string r;
+                string nm = partToRoot.TryGetValue(part, out r) ? r : part;
+                if (!outp.Contains(nm)) outp.Add(nm);
+            }
+            return string.Join("+", outp.ToArray());
+        }
+
         private static void FillAttributes(Transaction tr, BlockReference br, string zone)
         {
             var rbtr = (BlockTableRecord)tr.GetObject(br.BlockTableRecord, OpenMode.ForRead);

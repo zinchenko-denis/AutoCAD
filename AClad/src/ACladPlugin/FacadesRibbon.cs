@@ -108,13 +108,13 @@ namespace ACladPlugin
             RibbonTab tab = FindOrCreateTab(rc);
             var src = new RibbonPanelSource
             { Title = "Раскладка", Id = PanelId };
-src.Items.Add(MakeButton("Раскладка", "ATCLAD",
-                "ATCLAD — раскладка облицовки кассетами по зонам/" +
-                "контурам.", "acl_clad"));
-            src.Items.Add(MakeButton("Разбежка", "ATTILE",
-                "ATTILE — раскладка любой облицовки с разбежкой (шахматный " +
-                "порядок): формат, смещение рядов, точка отсчёта — в окне.",
-                "acl_tile"));
+            // 23.09c (Герман: «оставить одну команду»): ATCLAD с ленты снят —
+            // раскладка одной ATTILE (русты ATCLAD перенесены в её окно);
+            // сама ATCLAD набирается с клавиатуры для старых чертежей
+            src.Items.Add(MakeButton("Раскладка", "ATTILE",
+                "ATTILE — раскладка облицовки (кассеты, плитка, кирпич) с " +
+                "разбежкой и принудительными рустами: формат, смещение рядов, " +
+                "точка отсчёта, русты — в окне.", "acl_tile"));
             src.Items.Add(MakeButton("Размеры", "ATCLADDIM",
                 "ATCLADDIM — размеры облицовки: ширины ряда / высоты " +
                 "столбца.", "acl_dim"));

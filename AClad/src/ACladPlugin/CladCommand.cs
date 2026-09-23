@@ -904,7 +904,7 @@ namespace ACladPlugin
         }
 
         // ── <dwg>_fzones.json: id → зона facade_zone/1 ──
-        private static Dictionary<string, Dictionary<string, object>>
+        internal static Dictionary<string, Dictionary<string, object>>
             LoadFzones(Editor ed, Database db, JavaScriptSerializer ser)
         {
             var map = new Dictionary<string, Dictionary<string, object>>();
@@ -936,7 +936,7 @@ namespace ACladPlugin
         }
 
         // зона по марке: сама либо её части «Ф-N.1», «Ф-N.2» (merge) ──
-        private static List<Dictionary<string, object>> FindZoneParts(
+        internal static List<Dictionary<string, object>> FindZoneParts(
             Dictionary<string, Dictionary<string, object>> fz, string zid)
         {
             var parts = new List<Dictionary<string, object>>();
@@ -951,7 +951,7 @@ namespace ACladPlugin
             return parts;
         }
 
-        private static string MetaStr(Dictionary<string, object> zd,
+        internal static string MetaStr(Dictionary<string, object> zd,
                                       string key)
         {
             var meta = Get(zd, "meta") as Dictionary<string, object>;
