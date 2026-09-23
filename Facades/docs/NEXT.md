@@ -77,8 +77,9 @@ C#-команда обводки/чтения слоя появится посл
   CLI `validate|report`.
 - `engine/facades_engine.py` — единый CLI движка для C# (паттерн
   vitrage_engine: `facades_engine.exe in.json out.json`), op=`zones`.
-- `engine/test_facade_zones.py`, `engine/test_facades_engine.py` — 48
-  юнитов (`PYTHONUTF8=1 python3 -m unittest`).
+- `engine/test_facade_zones.py`, `engine/test_facades_engine.py` — 39 + 22
+  юнитов (`PYTHONUTF8=1 python3 -m unittest`); синтетика —
+  `tools/zones_synth.py`.
 - `src/AFacadesPlugin/` — C#-плагин: `ZoneCommand.cs` (ATFZONE),
   `ZoneForm.cs` (диалог), `Plugin.cs` (BuildStamp). Бандл:
   `bundle/AFacades.bundle/PackageContents.xml`; CI: build.yml/check.yml
@@ -234,6 +235,14 @@ extension dictionary штриховки зоны (паттерн StoreZoneData �
 сообщением.)
 
 ## Статус
+- **23.09v — ЛЯПЫ РЕВЬЮ ИСПРАВЛЕНЫ (в ветке, в сборку №21 НЕ вошло; CI
+  #161/#162).** Проём с нахлёстом за стену — ошибка E_CONTOUR_CROSSES вместо
+  «фантом-зоны»; хорда дуги ровно на 45° — пополам (отлив/откос круглых окон
+  больше не зависят от положения на чертеже: было до 137 мм, стало ≤ 0.8 мм);
+  зона в метрах — допуски в мм; срок ожидания движка 120 с. Юниты 35 → 39
+  (+22 CLI); zones_synth сид 2309 — нарушений нет. AFacades по правилу
+  обновляется по замечаниям Германа — эти правки уедут со следующей сборкой
+  (обновлять все три фасадных бандла — меню общее).
 - **23.09e — РЕВЬЮ (поведение НЕ менялось).** Юниты 35+22 зелёные. Новое:
   `tools/zones_synth.py` — синтетика с независимым оракулом shapely (дуги —
   своя формула центра/радиуса, кромки проёмов — пробой точками, а не
