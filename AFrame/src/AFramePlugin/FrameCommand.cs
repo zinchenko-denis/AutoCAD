@@ -1691,8 +1691,17 @@ namespace AFramePlugin
                 };
                 using (var p = System.Diagnostics.Process.Start(psi))
                 {
-                    string err = p.StandardError.ReadToEnd();
+                    // 23.09 (ревью): без срока зависший движок вешал AutoCAD
+                    // навсегда; stderr читаем асинхронно, чтобы срок работал
+                    var errTask = p.StandardError.ReadToEndAsync();
+                    if (!p.WaitForExit(300 * 1000))
+                    {
+                        try { p.Kill(); } catch { }
+                        throw new ApplicationException("движок не ответил за 300 с — " +
+                            "процесс остановлен (очень большой фасад? разбейте выбор на части)");
+                    }
                     p.WaitForExit();
+                    string err = errTask.Result ?? "";
                     if (!File.Exists(tmpOut))
                         throw new ApplicationException(
                             err.Length > 0 ? err
