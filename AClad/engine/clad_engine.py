@@ -167,7 +167,7 @@ def op_cladding(req):
 
     Выход: {"ok", "inserts": [{x,y,w,h,zone}], "notes",
             "per_zone": [{"zone_id","outer_id"?,"tiles","full","cut",
-                          "rows"}],
+                          "rows","joints_x","rows_y"}],
             "summary": {"tiles","full","cut","zones"}}
 
     Раскладка позонная, горизонт общий: сетка рядов везде от origin.y —
@@ -221,8 +221,13 @@ def op_cladding(req):
         for n in res["notes"]:
             notes.append("%s: %s" % (zone_id, n))
         s = res["summary"]
+        # 23.09 (ревью): оси швов — ещё и ПО ЗОНЕ; общий список прогона
+        # (ниже) C# писал в метку каждой зоны, и ATFRAME ставил в зоне
+        # стойки по швам соседней
         pz = {"zone_id": zone_id, "tiles": s["tiles"], "full": s["full"],
-              "cut": s["cut"], "rows": s["rows"]}
+              "cut": s["cut"], "rows": s["rows"],
+              "joints_x": sorted(res.get("joints_x") or []),
+              "rows_y": sorted(res.get("rows_y") or [])}
         if outer_id is not None:
             pz["outer_id"] = outer_id
         per_zone.append(pz)

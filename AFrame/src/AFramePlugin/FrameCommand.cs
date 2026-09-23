@@ -95,6 +95,10 @@ namespace AFramePlugin
             // направляющих и кронштейнов)
             Dictionary<string, object> prevFs = null;
             var oldByRoot = new Dictionary<string, List<string>>();
+            // 23.09 (ревью): оси швов — СВОИ у каждой зоны (из её метки
+            // раскладки), а не общим списком всех меток выбора
+            var jxByZone = new Dictionary<string, object[]>();
+            var ryByZone = new Dictionary<string, object[]>();
             int noClad = 0;
             int oldMeta = 0;
             using (var tr = db.TransactionManager.StartTransaction())
@@ -127,6 +131,16 @@ namespace AFramePlugin
                             if (ry != null)
                                 foreach (var v in ry)
                                     rowsY.Add(ToD(v));
+                            // ключ — зона метки и каждая её часть (слитая
+                            // зона ATTILE «Ф-1.1+Ф-1.2» / «контур A+контур B»)
+                            string mzid = SafeStr(Get(m, "zone_id"));
+                            if (mzid.Length > 0)
+                                foreach (var zk0 in (mzid + "+" + mzid).Split('+'))
+                                    if (zk0.Length > 0 && !jxByZone.ContainsKey(zk0))
+                                    {
+                                        jxByZone[zk0] = jx;
+                                        ryByZone[zk0] = ry ?? new object[0];
+                                    }
                         }
                     }
                     else noClad++;
@@ -292,12 +306,42 @@ namespace AFramePlugin
                 {
                     string pid = SafeStr(Get(part, "id"));
                     partToRoot[pid] = kv.Key;
-                    zonesPayload.Add(new Dictionary<string, object>
-                    { { "zone_id", pid }, { "zone", part } });
+                    var zrec = new Dictionary<string, object>
+                    { { "zone_id", pid }, { "zone", part } };
+                    object[] zj, zr;
+                    string zkey = jxByZone.ContainsKey(pid) ? pid : kv.Key;
+                    if (jxByZone.TryGetValue(zkey, out zj))
+                    {
+                        zrec["joints_x"] = zj;
+                        if (ryByZone.TryGetValue(zkey, out zr)) zrec["rows_y"] = zr;
+                    }
+                    zonesPayload.Add(zrec);
+                    // 23.09 (ревью): контуры самой зоны из выборки в «голые» не
+                    // пускаем — иначе та же зона строилась бы дважды (как в ATCLAD)
+                    string oid = MetaStr(part, "outer_contour_id");
+                    if (oid != null) polyData.Remove(oid);
+                    var ops = Get(part, "openings") as object[];
+                    if (ops != null)
+                        foreach (var o in ops)
+                        {
+                            var od = o as Dictionary<string, object>;
+                            if (od != null) polyData.Remove(SafeStr(Get(od, "id")));
+                        }
                 }
             }
             var contoursPayload = new List<Dictionary<string, object>>();
-            foreach (var kv in polyData) contoursPayload.Add(kv.Value);
+            foreach (var kv in polyData)
+            {
+                // голый контур: своя метка раскладки — на самой полилинии
+                // (zone_id «контур <хэндл>» или слитая «контур A+контур B»)
+                object[] cj, cr;
+                if (jxByZone.TryGetValue("контур " + kv.Key, out cj))
+                {
+                    kv.Value["joints_x"] = cj;
+                    if (ryByZone.TryGetValue("контур " + kv.Key, out cr)) kv.Value["rows_y"] = cr;
+                }
+                contoursPayload.Add(kv.Value);
+            }
             if (zonesPayload.Count == 0 && contoursPayload.Count == 0)
             { ed.WriteMessage("\nНет геометрии зон."); return; }
 

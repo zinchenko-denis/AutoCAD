@@ -110,59 +110,48 @@ def x1_x2():
 
 # ── X3 ───────────────────────────────────────────────────────────────
 def x3():
-    # цоколь без окон + этаж с окнами (центрирование простенков даёт другую сетку)
+    """23.09r/s: ATCLAD пишет в метку зоны её оси (per_zone), ATFRAME шлёт
+    каждой зоне свои (zones[]/contours[].joints_x). До фикса — объединение
+    прогона на все метки и общий список в движке: цоколь 14 → 29 стоек."""
     r, _ = atfzone([{"id": "A0", "pts": rect(0, 0, 9000, 1200)},
                     {"id": "B0", "pts": rect(0, 1200, 9000, 4200)},
                     {"id": "B1", "pts": rect(1300, 2100, 2700, 3700)},
                     {"id": "B2", "pts": rect(5100, 2100, 6800, 3700)}])
     parts = {p["id"]: p for p in r["zones_full"]}
-    za, zb = sorted(parts)          # Ф-1 (цоколь), Ф-2 (этаж)
+    za, zb = sorted(parts)
     clad = {"op": "cladding", "tile": {"w": 600, "h": 600}, "gap": {"v": 10, "h": 10},
             "origin": {"y": 0.0}, "vjoints": [], "hjoints": []}
     both = ce.run(roundtrip(dict(clad, zones=[{"zone_id": z, "zone": parts[z]} for z in (za, zb)])))
-    own = {z: ce.run(roundtrip(dict(clad, zones=[{"zone_id": z, "zone": parts[z]}])))
-           for z in (za, zb)}
-    assert both["ok"] and all(v["ok"] for v in own.values())
-    ja, jb = set(own[za]["joints_x"]), set(own[zb]["joints_x"])
-    union = sorted(set(both["joints_x"]))
-    frame = {"op": "frame", "sub_type": "vertical", "system": None, "floors_y": [],
-             "floor_step": 0.0, "rail_profile": "", "nsp_type": "НСП-1"}
-
-    raw = {za: [{"id": "A0", "pts": rect(0, 0, 9000, 1200)}],
-           zb: [{"id": "B0", "pts": rect(0, 1200, 9000, 4200)},
-                {"id": "B1", "pts": rect(1300, 2100, 2700, 3700)},
-                {"id": "B2", "pts": rect(5100, 2100, 6800, 3700)}]}
-
-    def rails_x(zone, joints, rows):
-        # зоны ATFRAME сейчас не читает (X8) — работает путь голых полилиний
-        f = fre.run(roundtrip(dict(frame, zones=[], contours=raw[zone],
-                                   joints_x=joints, rows_y=rows)))
-        assert f["ok"], f.get("error")
-        return sorted({round(t["x"], 1) for t in f["rails"]}), f["summary"]
-
+    own = {pz["zone_id"]: pz for pz in both["per_zone"]}          # метка зоны = её per_zone
+    alone = {z: ce.run(roundtrip(dict(clad, zones=[{"zone_id": z, "zone": parts[z]}]))) for z in (za, zb)}
+    same = all(sorted(own[z]["joints_x"]) == sorted(alone[z]["joints_x"]) for z in (za, zb))
+    frame = {"op": "frame", "sub_type": "vertical", "system": None, "floors_y": [], "floor_step": 0.0,
+             "rail_profile": "", "nsp_type": "НСП-1",
+             "joints_x": sorted(set(both["joints_x"])), "rows_y": sorted(set(both["rows_y"]))}
+    # FrameCommand: zrec += joints_x/rows_y из метки зоны; общий список — запасной
+    f = fre.run(roundtrip(dict(frame, contours=[], zones=[
+        {"zone_id": z, "zone": parts[z], "joints_x": own[z]["joints_x"], "rows_y": own[z]["rows_y"]}
+        for z in (za, zb)])))
+    ok_z = f.get("ok")
     extra = {}
-    for z, jz in ((za, sorted(ja)), (zb, sorted(jb))):
-        rows_own = own[z]["rows_y"]
-        x_ok, s_ok = rails_x(z, jz, rows_own)
-        x_bad, s_bad = rails_x(z, union, sorted(set(both["rows_y"])))   # как FrameCommand
-        extra[z] = (sorted(set(x_bad) - set(x_ok)), s_ok["rails"], s_bad["rails"],
-                    s_ok["brackets_row"] + s_ok["brackets_main"],
-                    s_bad["brackets_row"] + s_bad["brackets_main"])
-    if ja == jb:
-        rep("OK", "X3", "сетки зон совпали — сценарий не показателен")
-        return
-    bad = {z: e for z, e in extra.items() if e[0]}
-    if bad:
-        msg = "; ".join("%s: стоек %d→%d, кронштейнов %d→%d, лишние оси X=%s"
-                        % (z, e[1], e[2], e[3], e[4], e[0][:6]) for z, e in bad.items())
-        rep("BUG", "X3", "оси швов одной зоны попадают в другую (метка ATCLAD = объединение "
-            "прогона; ATFRAME сливает метки): " + msg)
+    for z in (za, zb):
+        xs = sorted({round(t["x"], 1) for t in f.get("rails", []) if t["zone"] == z})
+        f1 = fre.run(roundtrip(dict(frame, contours=[], zones=[{"zone_id": z, "zone": parts[z]}],
+                                    joints_x=alone[z]["joints_x"], rows_y=alone[z]["rows_y"])))
+        x1 = sorted({round(t["x"], 1) for t in f1.get("rails", [])})
+        extra[z] = (len(xs), len(x1), sorted(set(xs) - set(x1))[:6])
+    if ok_z and same and all(e[0] == e[1] and not e[2] for e in extra.values()):
+        rep("OK", "X3", "оси по зонам: в каждой зоне стойки только по своим швам (%s)"
+            % ", ".join("%s: %d" % (z, e[0]) for z, e in extra.items()))
     else:
-        rep("OK", "X3", "чужие оси не дали лишних стоек")
+        rep("BUG", "X3", "оси швов чужой зоны: ok=%s, per_zone=своим %s, %s" % (ok_z, same, extra))
 
 
 # ── X4 ───────────────────────────────────────────────────────────────
 def x4():
+    """23.09s: штриховка зоны + её полилинии в одной выборке — FrameCommand
+    убирает полилинии зоны (outer_contour_id, openings[].id) из «голых», как
+    CladCommand; иначе зона строилась бы дважды."""
     contours = [{"id": "2F0", "pts": rect(0, 0, 6000, 3000)},
                 {"id": "2F1", "pts": rect(2000, 900, 3400, 2400)}]
     r, _ = atfzone(contours)
@@ -170,30 +159,16 @@ def x4():
     base = {"op": "frame", "sub_type": "vertical", "system": None, "floors_y": [],
             "floor_step": 0.0, "rail_profile": "", "nsp_type": "НСП-1",
             "joints_x": [305.0 + 610 * k for k in range(10)], "rows_y": [605.0 * k for k in range(1, 5)]}
-    # X8: frame_engine зону facade_zone/1 не читает; моделируем ПОЧИНЕННОЕ чтение —
-    # та же зона в формате, который он понимает (zone.contour/openings[].contour)
-    fixed = {"contour": {"pts": part["outer"]["pts"]},
-             "openings": [{"contour": {"pts": o["poly"]["pts"]}} for o in part.get("openings") or []]}
-    zrec = [{"zone_id": part["id"], "zone": fixed}]
+    zrec = [{"zone_id": part["id"], "zone": part}]
     only_zone = fre.run(roundtrip(dict(base, zones=zrec, contours=[])))
-    # FrameCommand.cs:266-286 — полилинии из выборки идут в contours БЕЗ вычета контуров зоны
-    both = fre.run(roundtrip(dict(base, zones=zrec, contours=contours)))
-    # CladCommand.cs:185-196 так делает: polyData.Remove(outer_contour_id / openings[].id)
     ids = {part["meta"]["outer_contour_id"]} | {o["id"] for o in part.get("openings") or []}
-    dedup = fre.run(roundtrip(dict(base, zones=zrec,
-                                   contours=[c for c in contours if c["id"] not in ids])))
-    assert only_zone["ok"] and both["ok"] and dedup["ok"]
-    n1, n2, n3 = (x["summary"]["rails"] + x["summary"]["brackets_row"] + x["summary"]["brackets_main"]
-                  + len(x["clamps"]) for x in (only_zone, both, dedup))
-    pos = [(round(t["x"], 1), round(t["y0"], 1)) for t in both["rails"]]
-    dup = len(pos) - len(set(pos))
-    if n2 > n1:
-        rep("BUG", "X4", "ЛАТЕНТНО (проявится после починки X8): штриховка зоны + её полилинии "
-            "в одной выборке: элементов %d вместо %d "
-            "(%d направляющих-двойников в тех же координатах); с вычетом, как в ATCLAD, — %d"
-            % (n2, n1, dup, n3))
+    sent = fre.run(roundtrip(dict(base, zones=zrec, contours=[c for c in contours if c["id"] not in ids])))
+    n1, n2 = (x["summary"]["rails"] + x["summary"]["brackets_row"] + x["summary"]["brackets_main"]
+              + len(x["clamps"]) for x in (only_zone, sent))
+    if only_zone.get("ok") and n1 > 0 and n1 == n2:
+        rep("OK", "X4", "штриховка зоны + её полилинии: %d элементов, как по одной зоне (без задвоения)" % n2)
     else:
-        rep("OK", "X4", "задвоения нет (%d)" % n2)
+        rep("BUG", "X4", "задвоение: %s вместо %s" % (n2, n1))
 
 
 # ── X8 ───────────────────────────────────────────────────────────────
@@ -207,7 +182,8 @@ def x8():
                            "joints_x": [305.0 + 610 * k for k in range(10)],
                            "rows_y": [605.0 * k for k in range(1, 5)], "floors_y": []}))
     if f.get("ok") and f["summary"]["rails"] > 0:
-        rep("OK", "X8", "ATFRAME по зоне ATFZONE: стоек %d" % f["summary"]["rails"])
+        rep("OK", "X8", "ATFRAME по зоне из _fzones.json (facade_zone/1): стоек %d, "
+            "ЗАХВАТКА %s" % (f["summary"]["rails"], sorted({t["zone"] for t in f["rails"]})))
     else:
         rep("BUG", "X8", "ATFRAME по зоне из _fzones.json: «%s», notes=%s — движок ищет "
             "zone.contour, а в facade_zone/1 zone.outer (ключи части: %s)"

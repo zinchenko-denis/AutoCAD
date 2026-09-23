@@ -8,8 +8,10 @@ op="frame" — расстановка подсистемы (команда ATFRA
 {
   "op": "frame",
   "system": "Standart" | {"name": "...", …переопределения…},
-  "zones":    [{"zone_id", "zone": {facade_zone/1}}, ...],
-  "contours": [{"id", "pts", "bulges"?}, ...],   // голые полилинии
+  "zones":    [{"zone_id", "zone": {facade_zone/1}, "joints_x"?, "rows_y"?}, ...],
+  "contours": [{"id", "pts", "bulges"?, "joints_x"?, "rows_y"?}, ...],   // голые
+  // joints_x/rows_y у зоны/контура — СВОИ оси (метка раскладки этой зоны),
+  // иначе общие joints_x/rows_y запроса (ручные оси «шагом/точками»)
   "joints_x": [x, ...],   // оси стоек (из метки ATCLAD)
   "floors_y": [y, ...],   // отметки перекрытий (диалог)
   "rows_y":   [y, ...],   // центры горизонтальных швов (метка ATCLAD)
@@ -45,18 +47,46 @@ def _pts(obj, notes, tag):
     return out
 
 
+_ARC_EPS = 1e-9
+
+
 def _zone_to_contour(zd, notes, zone_id):
-    """facade_zone/1 → {outer, holes} (как в clad_engine)."""
-    cont = zd.get("contour") or {}
-    outer = _pts(cont, notes, zone_id)
+    """facade_zone/1 → {outer, holes} (как в clad_engine).
+
+    23.09 (ревью): движок ждал zone.contour.pts — формат, которого нет ни в
+    ATFZONE, ни в _fzones.json (там zone.outer.pts и openings[].poly.pts):
+    зоны этапа 1 молча выпадали с нотой «меньше 3 вершин», подсистема
+    строилась только по голым полилиниям. Прежний вид contour{pts} тоже
+    принимаем (старые запросы/тесты). Единицы mm|m; дуги — пропуск с нотой
+    (как у раскладки: кассеты/плитка по дугам не кладутся)."""
+    units = zd.get("units") or "mm"
+    k = {"mm": 1.0, "m": 1000.0}.get(units)
+    if k is None:
+        notes.append("%s: неизвестные единицы %r — пропуск" % (zone_id, units))
+        return None
+    src = zd.get("outer") or zd.get("contour") or {}
+    bulges = list((src.get("bulges") or []))
+    for op in zd.get("openings") or []:
+        bulges += list(((op.get("poly") or op.get("contour") or {}).get("bulges")) or [])
+    try:
+        if any(abs(float(b)) > _ARC_EPS for b in bulges):
+            notes.append("%s: контур с дугами — подсистема не строится, зона "
+                         "пропущена" % zone_id)
+            return None
+    except (TypeError, ValueError):
+        pass
+    outer = _pts(src, notes, zone_id)
     if outer is None:
         return None
     holes = []
     for op in zd.get("openings") or []:
-        h = _pts(op.get("contour") or op, notes,
+        h = _pts(op.get("poly") or op.get("contour") or op, notes,
                  "%s/проём" % zone_id)
         if h is not None:
             holes.append(h)
+    if k != 1.0:
+        outer = [(x * k, y * k) for x, y in outer]
+        holes = [[(x * k, y * k) for x, y in h] for h in holes]
     return {"outer": outer, "holes": holes}
 
 
@@ -66,36 +96,85 @@ def _bbox(pts):
     return min(xs), min(ys), max(xs), max(ys)
 
 
-def _inside(inner, outer):
-    """bbox-вложенность + центр bbox внутри bbox (глубина ≤1 —
-    упрощение как у clad_engine для голых контуров)."""
-    ix0, iy0, ix1, iy1 = _bbox(inner)
-    ox0, oy0, ox1, oy1 = _bbox(outer)
-    return (ix0 >= ox0 - EPS and iy0 >= oy0 - EPS and
-            ix1 <= ox1 + EPS and iy1 <= oy1 + EPS and
-            (ix1 - ix0) * (iy1 - iy0) <
-            (ox1 - ox0) * (oy1 - oy0) - EPS)
+def _pt_in_poly(poly, x, y):
+    """Чёт-нечет лучом вправо (как cladding_plan._pt_in_poly)."""
+    n = len(poly)
+    inside = False
+    for i in range(n):
+        x1, y1 = poly[i]
+        x2, y2 = poly[(i + 1) % n]
+        if (y1 > y) != (y2 > y):
+            xi = x1 + (y - y1) * (x2 - x1) / (y2 - y1)
+            if xi > x:
+                inside = not inside
+    return inside
 
 
 def _group_contours(raw, notes):
-    """Голые контуры: внешние + дыры по bbox-вложенности."""
-    polys = []
+    """Голые контуры: внешние + дыры по вложенности.
+
+    23.09 (ревью): раньше — по вложенности ГАБАРИТОВ, и отдельная зона в
+    «кармане» Г-образной стены считалась проёмом этой стены (без
+    подсистемы), а ATCLAD/ATTILE её раскладывали. Теперь как clad_engine:
+    проба — центр габарита и центроид вершин внутри полигона; вложенность
+    глубже проёма — нота-пропуск. Контур несёт свои оси (joints_x/rows_y)
+    — они переходят к зоне."""
+    parsed = []   # (cid, pts, area, probe, src)
     for i, c in enumerate(raw):
         cid = str(c.get("id") or ("c%d" % (i + 1)))
         pts = _pts(c, notes, "контур %s" % cid)
         if pts is None:
             continue
-        polys.append((cid, pts))
-    outers = []
-    for cid, pts in polys:
-        if not any(_inside(pts, opts) for ocid, opts in polys
-                   if ocid != cid):
-            outers.append((cid, pts))
+        if len(pts) >= 2 and abs(pts[0][0] - pts[-1][0]) <= 0.5 and \
+           abs(pts[0][1] - pts[-1][1]) <= 0.5:
+            pts = pts[:-1]
+        if len(pts) < 3:
+            notes.append("контур %s: меньше 3 вершин — пропуск" % cid)
+            continue
+        area = abs(sum(pts[j][0] * pts[(j + 1) % len(pts)][1] -
+                       pts[(j + 1) % len(pts)][0] * pts[j][1]
+                       for j in range(len(pts)))) / 2.0
+        xs = [q[0] for q in pts]
+        ys = [q[1] for q in pts]
+        probe = [((min(xs) + max(xs)) / 2.0, (min(ys) + max(ys)) / 2.0),
+                 (sum(xs) / len(xs), sum(ys) / len(ys))]
+        parsed.append((cid, pts, area, probe, c))
+    n = len(parsed)
+    cont = [-1] * n
+    for i in range(n):
+        best = -1
+        for j in range(n):
+            if i == j or parsed[j][2] <= parsed[i][2]:
+                continue
+            if any(_pt_in_poly(parsed[j][1], x, y) for x, y in parsed[i][3]):
+                if best < 0 or parsed[j][2] < parsed[best][2]:
+                    best = j
+        cont[i] = best
+
+    def depth(i):
+        d, cur = 0, cont[i]
+        while cur >= 0 and d <= n:
+            d += 1
+            cur = cont[cur]
+        return d
+
+    tops, kids = [], {}
+    for i in range(n):
+        d = depth(i)
+        if d == 0:
+            tops.append(i)
+        elif d == 1:
+            kids.setdefault(cont[i], []).append(i)
+        else:
+            notes.append("контур %s: вложен глубже проёма — пропуск" % parsed[i][0])
     out = []
-    for cid, pts in outers:
-        holes = [hp for hcid, hp in polys
-                 if hcid != cid and _inside(hp, pts)]
-        out.append((cid, {"outer": pts, "holes": holes}))
+    for t in tops:
+        cid, pts, _a, _pr, src = parsed[t]
+        item = {"outer": pts, "holes": [parsed[k][1] for k in kids.get(t, [])]}
+        for key in ("joints_x", "rows_y"):
+            if src.get(key):
+                item[key] = src.get(key)
+        out.append((cid, item))
     return out
 
 
@@ -112,6 +191,9 @@ def op_frame(req):
             continue
         c = _zone_to_contour(zd, notes, zone_id)
         if c is not None:
+            for key in ("joints_x", "rows_y"):
+                if zrec.get(key):
+                    c[key] = zrec.get(key)
             items.append((zone_id, c))
     for cid, c in _group_contours(req.get("contours") or [], notes):
         items.append(("контур %s" % cid, c))
@@ -145,6 +227,12 @@ def op_frame(req):
     system_used, calc_report = None, None
     for zone_id, contour in items:
         creq = dict(base)
+        # 23.09 (ревью): оси швов — СВОИ у каждой зоны (из её метки
+        # раскладки); общий список прогона давал в зоне стойки по швам
+        # соседней зоны (цоколь под этажом: стоек 14 → 29)
+        for key in ("joints_x", "rows_y"):
+            if contour.get(key):
+                creq[key] = contour.pop(key)
         creq["contours"] = [contour]
         res = fp.frame_plan(creq)
         if not res.get("ok"):

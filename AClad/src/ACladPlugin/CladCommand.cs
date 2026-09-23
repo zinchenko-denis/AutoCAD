@@ -548,11 +548,37 @@ namespace ACladPlugin
                     made++;
                 }
 
+                // 23.09 (ревью): оси швов метки — СВОИ у зоны (per_zone движка,
+                // части «Ф-1.1» → «Ф-1»); раньше в метку каждой зоны шло
+                // объединение осей всего прогона, и ATFRAME ставил в зоне
+                // стойки по швам соседней
+                var jxByRoot = new Dictionary<string, List<object>>();
+                var ryByRoot = new Dictionary<string, List<object>>();
+                var pzAll = Get(res, "per_zone") as object[];
+                if (pzAll != null)
+                    foreach (var pzo in pzAll)
+                    {
+                        var pzd = pzo as Dictionary<string, object>;
+                        if (pzd == null) continue;
+                        string pid2 = SafeStr(Get(pzd, "zone_id")), root2;
+                        if (!partToRoot.TryGetValue(pid2, out root2)) root2 = pid2;
+                        var jxl = Get(pzd, "joints_x") as object[];
+                        var ryl = Get(pzd, "rows_y") as object[];
+                        if (jxl == null) continue;
+                        if (!jxByRoot.ContainsKey(root2))
+                        { jxByRoot[root2] = new List<object>(); ryByRoot[root2] = new List<object>(); }
+                        foreach (var v in jxl) if (!jxByRoot[root2].Contains(v)) jxByRoot[root2].Add(v);
+                        if (ryl != null)
+                            foreach (var v in ryl) if (!ryByRoot[root2].Contains(v)) ryByRoot[root2].Add(v);
+                    }
                 // метки ATCLAD: параметры + хэндлы камней — на объекты
                 // зоны (штриховка/марка) или на внешнюю полилинию контура
                 foreach (var kv in handlesByRoot)
                 {
                     string root = kv.Key;
+                    List<object> jxOwn, ryOwn;
+                    object jxMeta = jxByRoot.TryGetValue(root, out jxOwn) ? (object)jxOwn : Get(res, "joints_x");
+                    object ryMeta = ryByRoot.TryGetValue(root, out ryOwn) ? (object)ryOwn : Get(res, "rows_y");
                     var meta = new Dictionary<string, object>
                     {
                         { "zone_id", root },
@@ -567,8 +593,8 @@ namespace ACladPlugin
                         { "hjoints", hjoints },
                         // мост к этапу 3 (ATFRAME): оси стоек и
                         // центры горизонтальных швов — из движка
-                        { "joints_x", Get(res, "joints_x") },
-                        { "rows_y", Get(res, "rows_y") },
+                        { "joints_x", jxMeta },
+                        { "rows_y", ryMeta },
                         { "block", blockName },
                         { "layer", cladLayer },
                         { "tiles", kv.Value.Count },

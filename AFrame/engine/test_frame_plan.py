@@ -1025,4 +1025,45 @@ _bad = [h for h in _p["hrails"] if h["kind"] == "СП-60-40" and
             min(h["x1"], hx1) - max(h["x0"], hx0) > 1 for hx0, hy0, hx1, hy1 in _holes)]
 ok(_p["ok"] and not _bad, "PG4: СП-60-40 не проходит сквозь соседние окна (%s)" % _bad[:1])
 
+# ── ZF1–ZF6 (23.09, ревью): frame_engine — зоны этапа 1 (facade_zone/1),
+#    группировка голых контуров точкой в полигоне, СВОИ оси у зоны ──
+import frame_engine as _fe
+_zone = {"schema": "facade_zone/1", "id": "Ф-1", "units": "mm",
+         "outer": {"pts": rect(0, 0, 6000, 3000), "bulges": [0, 0, 0, 0]},
+         "openings": [{"id": "W", "kind": "window", "poly": {"pts": rect(2000, 900, 3400, 2400),
+                                                             "bulges": [0, 0, 0, 0]}}],
+         "meta": {"outer_contour_id": "A"}}
+_base = {"op": "frame", "sub_type": "vertical", "system": "Standart",
+         "joints_x": [305.0 + 610 * k for k in range(10)], "rows_y": [605.0 * k for k in range(1, 5)]}
+_r = _fe.run(dict(json.loads(json.dumps(_base)), zones=[{"zone_id": "Ф-1", "zone": _zone}]))
+ok(_r["ok"] and _r["summary"]["rails"] > 0 and {t["zone"] for t in _r["rails"]} == {"Ф-1"},
+   "ZF1: зона _fzones.json (outer/openings[].poly) читается — подсистема и ЗАХВАТКА «Ф-1»")
+ok(not any(2000 + 1 < t["x"] < 3400 - 1 and t["y0"] < 2400 - 1 and t["y1"] > 900 + 1 for t in _r["rails"]),
+   "ZF1b: проём зоны учтён (стойки не сквозь окно)")
+_old = _fe.run(dict(json.loads(json.dumps(_base)), zones=[{"zone_id": "Ф-1", "zone": {
+    "contour": {"pts": rect(0, 0, 6000, 3000)}, "openings": [{"contour": {"pts": rect(2000, 900, 3400, 2400)}}]}}]))
+ok(_old["ok"] and _old["summary"]["rails"] == _r["summary"]["rails"], "ZF2: прежний вид contour{pts} тоже принимается")
+_zm = json.loads(json.dumps(_zone))
+_zm["units"] = "m"
+_zm["outer"]["pts"] = [[x / 1000.0, y / 1000.0] for x, y in _zm["outer"]["pts"]]
+_zm["openings"][0]["poly"]["pts"] = [[x / 1000.0, y / 1000.0] for x, y in _zm["openings"][0]["poly"]["pts"]]
+_rm = _fe.run(dict(json.loads(json.dumps(_base)), zones=[{"zone_id": "Ф-1", "zone": _zm}]))
+ok(_rm["ok"] and _rm["summary"]["rails"] == _r["summary"]["rails"], "ZF3: зона в метрах = в миллиметрах")
+_za = json.loads(json.dumps(_zone))
+_za["outer"]["bulges"] = [0, 0, 0.3, 0]
+_ra = _fe.run(dict(json.loads(json.dumps(_base)), zones=[{"zone_id": "Ф-1", "zone": _za}]))
+ok(_ra["ok"] is False and any("дугами" in n for n in _ra["notes"]), "ZF4: зона с дугами — нота, не падение")
+_Lc = [[0, 0], [9000, 0], [9000, 6000], [6000, 6000], [6000, 3000], [0, 3000]]
+_rg = _fe.run(dict(json.loads(json.dumps(_base)), joints_x=[305.0 + 610 * k for k in range(15)],
+                   contours=[{"id": "L", "pts": _Lc}, {"id": "P", "pts": rect(1000, 3500, 5000, 5500)}]))
+ok(_rg["ok"] and {t["zone"] for t in _rg["rails"]} == {"контур L", "контур P"},
+   "ZF5: зона в «кармане» Г-стены — отдельная зона (не проём), подсистема в обеих")
+_jz = [305.0 + 610 * k for k in range(10)]
+_jz2 = [610.0 + 1220 * k for k in range(5)]
+_rj = _fe.run(dict(json.loads(json.dumps(_base)), joints_x=sorted(_jz + _jz2), zones=[
+    {"zone_id": "Ф-1", "zone": _zone, "joints_x": _jz, "rows_y": _base["rows_y"]}]))
+ok(_rj["ok"] and {round(t["x"], 1) for t in _rj["rails"]} >= {round(x, 1) for x in _jz if 0 < x < 6000}
+   and not ({round(t["x"], 1) for t in _rj["rails"]} & ({round(x, 1) for x in _jz2} - {round(x, 1) for x in _jz})),
+   "ZF6: свои оси зоны важнее общего списка (чужих швов нет)")
+
 print("frame_plan: %d проверок OK" % _n)
