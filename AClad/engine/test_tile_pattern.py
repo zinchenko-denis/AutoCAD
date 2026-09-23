@@ -575,5 +575,12 @@ p = tp.tile_pattern(dict(base_s, contours=[{"id": "W", "outer": rect(0, 0, 3000,
 ok(not any(t["y"] + t["h"] > 3000 + 1e-6 for t in p["pieces"]),
    "T36: проём за контуром стены не рождает облицовку снаружи")
 
+# T37: запрос без gap/tile через clad_engine — чистый отказ, не падение
+r = ce.run({"op": "tile_pattern", "tile": {"w": 600, "h": 600},
+            "contours": [{"id": "A", "pts": rect(0, 0, 1000, 1000)}]})
+ok(r["ok"], "T37a: без gap — руст 0, раскладка идёт")
+r = ce.run({"op": "tile_pattern", "contours": [{"id": "A", "pts": rect(0, 0, 1000, 1000)}]})
+ok(r["ok"] is False and "размер" in r["error"], "T37b: без tile — отказ текстом (%s)" % r.get("error"))
+
 
 print("tile_pattern: OK, %d проверок" % _n)

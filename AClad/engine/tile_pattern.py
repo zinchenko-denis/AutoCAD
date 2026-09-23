@@ -1354,9 +1354,10 @@ def tile_pattern(req):
     try:
         tile_w = float(req["tile"]["w"])
         tile_h = float(req["tile"]["h"])
-        gap_v = float(req.get("gap", {}).get("v", 0.0))
-        gap_h = float(req.get("gap", {}).get("h", gap_v))
-    except (KeyError, TypeError, ValueError):
+        gap = req.get("gap") or {}          # clad_engine передаёт None, если ключа нет
+        gap_v = float(gap.get("v", 0.0))
+        gap_h = float(gap.get("h", gap_v))
+    except (KeyError, TypeError, ValueError, AttributeError):
         return {"ok": False, "error": "нет размеров плитки tile{w,h}/gap{v,h}",
                 "notes": notes}
     if tile_w <= 0 or tile_h <= 0 or gap_v < 0 or gap_h < 0:

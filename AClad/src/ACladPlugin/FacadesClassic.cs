@@ -17,6 +17,7 @@ namespace ACladPlugin
         private static readonly string[][] Items =
         {
             new[] { "Раскладка (ATCLAD)", "ATCLAD" },
+            new[] { "Раскладка с разбежкой (ATTILE)", "ATTILE" },
             new[] { "Размеры облицовки (ATCLADDIM)", "ATCLADDIM" },
         };
 

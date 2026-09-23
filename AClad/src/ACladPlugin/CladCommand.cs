@@ -83,6 +83,9 @@ namespace ACladPlugin
             var polyByHandle = new Dictionary<string, ObjectId>();
             var polyData = new Dictionary<string, Dictionary<string, object>>();
             var oldHandles = new HashSet<string>();
+            // 23.09: разбежка ATTILE на тех же зонах — снять при раскладке
+            var oldTile = new HashSet<string>();
+            var tileOwners = new List<ObjectId>();
             string cladDefault = "";
             using (var tr = db.TransactionManager.StartTransaction())
             {
@@ -114,6 +117,9 @@ namespace ACladPlugin
                         polyData[h] = new Dictionary<string, object>
                         { { "id", h }, { "pts", pts }, { "bulges", bulges } };
                         CollectOldHandles(tr, ser, ent, oldHandles);
+                        TilePatternCommand.CollectOld(tr, ser, ent, oldTile);
+                        if (ReadData(tr, ent, TilePatternCommand.XKeyTile) != null)
+                            tileOwners.Add(ent.ObjectId);
                         continue;
                     }
 
@@ -132,6 +138,9 @@ namespace ACladPlugin
                     if (!zoneObjs[zid].Contains(ent.ObjectId))
                         zoneObjs[zid].Add(ent.ObjectId);
                     CollectOldHandles(tr, ser, ent, oldHandles);
+                    TilePatternCommand.CollectOld(tr, ser, ent, oldTile);
+                    if (ReadData(tr, ent, TilePatternCommand.XKeyTile) != null)
+                        tileOwners.Add(ent.ObjectId);
 
                     // сверка с фактом: контур двигали после ATFZONE →
                     // раскладка легла бы мимо
@@ -462,6 +471,17 @@ namespace ACladPlugin
                         oe.Erase();
                         erased++;
                     }
+
+                // 23.09: на этих зонах лежала разбежка ATTILE — снять её
+                // (куски любых типов по хэндлам метки) и саму метку, иначе
+                // две раскладки лягут друг на друга, а ATFRAME прочтёт
+                // устаревшие оси швов
+                erased += TilePatternCommand.EraseByHandles(tr, db, oldTile);
+                foreach (var tid in tileOwners)
+                {
+                    var te = tr.GetObject(tid, OpenMode.ForWrite) as Entity;
+                    if (te != null) RemoveData(tr, te, TilePatternCommand.XKeyTile);
+                }
 
                 foreach (var itObj in inserts)
                 {
@@ -981,7 +1001,7 @@ namespace ACladPlugin
 
         // числовое динсвойство — ChangeType к типу значения (паттерн
         // TrySetDynProp ABlockGen, числовая ветка)
-        private static bool TrySetNum(DynamicBlockReferenceProperty pr,
+        internal static bool TrySetNum(DynamicBlockReferenceProperty pr,
                                       double v)
         {
             try
@@ -1020,6 +1040,20 @@ namespace ACladPlugin
                 ext.SetAt(key, xr);
                 tr.AddNewlyCreatedDBObject(xr, true);
             }
+        }
+
+        /// <summary>Снять метку key с объекта (23.09: замена раскладки
+        /// ATCLAD ↔ ATTILE на одной зоне).</summary>
+        internal static void RemoveData(Transaction tr, Entity ent, string key)
+        {
+            if (ent.ExtensionDictionary.IsNull) return;
+            var ext = (DBDictionary)tr.GetObject(ent.ExtensionDictionary,
+                                                 OpenMode.ForWrite);
+            if (!ext.Contains(key)) return;
+            ObjectId id = ext.GetAt(key);
+            ext.Remove(key);
+            var o = tr.GetObject(id, OpenMode.ForWrite);
+            if (o != null && !o.IsErased) o.Erase();
         }
 
         internal static string ReadData(Transaction tr, Entity ent,

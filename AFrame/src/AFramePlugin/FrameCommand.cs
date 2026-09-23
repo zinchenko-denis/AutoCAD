@@ -99,7 +99,10 @@ namespace AFramePlugin
                     var ent = tr.GetObject(so.ObjectId, OpenMode.ForRead)
                               as Entity;
                     if (ent == null) continue;
-                    string mjson = ReadData(tr, ent, XKeyClad);
+                    // 23.09: разбежка ATTILE пишет те же оси швов (joints_x/
+                    // rows_y) под своим ключом — подсистема и по ней
+                    string mjson = ReadData(tr, ent, XKeyClad) ??
+                                   ReadData(tr, ent, "ATTILE");
                     var m = mjson == null ? null
                         : ser.DeserializeObject(mjson)
                           as Dictionary<string, object>;

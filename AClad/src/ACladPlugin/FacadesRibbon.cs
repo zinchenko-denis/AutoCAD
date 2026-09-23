@@ -111,6 +111,10 @@ namespace ACladPlugin
 src.Items.Add(MakeButton("Раскладка", "ATCLAD",
                 "ATCLAD — раскладка облицовки кассетами по зонам/" +
                 "контурам.", "acl_clad"));
+            src.Items.Add(MakeButton("Разбежка", "ATTILE",
+                "ATTILE — раскладка любой облицовки с разбежкой (шахматный " +
+                "порядок): формат, смещение рядов, точка отсчёта — в окне.",
+                "acl_tile"));
             src.Items.Add(MakeButton("Размеры", "ATCLADDIM",
                 "ATCLADDIM — размеры облицовки: ширины ряда / высоты " +
                 "столбца.", "acl_dim"));

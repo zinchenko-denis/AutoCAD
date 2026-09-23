@@ -339,16 +339,25 @@ namespace ACladPlugin
 
         private static int Gcd(int a, int b) { while (b != 0) { int t = a % b; a = b; b = t; } return a; }
 
+        private static string Plural(int n, bool cols)
+        {
+            int m10 = n % 10, m100 = n % 100;
+            bool few = m10 >= 2 && m10 <= 4 && (m100 < 12 || m100 > 14);
+            bool one = m10 == 1 && m100 != 11;
+            if (cols) return one ? "столбец" : few ? "столбца" : "столбцов";
+            return one ? "ряд" : few ? "ряда" : "рядов";
+        }
+
         public string Describe()
         {
             bool cols = Axis == "cols";
             string way = Dir == "-" ? (cols ? "вниз" : "влево") : (cols ? "вверх" : "вправо");
             string unit = cols ? "столбец" : "ряд";
             double m = Module;
-            string mod = "модуль " + F(W + Gv) + " × " + F(H + Gh) + " мм (плитка + шов)";
+            string mod = "Модуль " + F(W + Gv) + " × " + F(H + Gh) + " мм (плитка + шов)";
             int per = Period();
-            string perT = per > 0 ? "период " + per + " " + (cols ? "столбц." : "ряд.") :
-                          (Kind == "pattern" ? "" : "рисунок не повторяется");
+            string perT = per > 0 ? "Период — " + per + " " + Plural(per, cols) :
+                          (Kind == "pattern" ? "" : "Рисунок не повторяется");
             switch (Kind)
             {
                 case "none":
