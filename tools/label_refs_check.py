@@ -39,6 +39,9 @@ ok("CloneHandles(tr, ent, XKeyFrame, d, lh)" in fr and "CarrierRoot(" in fr,
    "ATFRAME: скопированная метка не разбирается на клоны")
 ok("ZoneShifted(parts, he)" in tp and "ZoneShifted(parts, he)" in fr, "ATTILE/ATFRAME: сдвиг зоны не проверяется")
 
+# 23.09n, ответ Германа по №24 (п.2): ATDEDUP — только элементы подсистемы
+ok('StartsWith(SubsystemLayerPrefix' in fr and '"_01_ПС_"' in fr, "ATDEDUP: нет фильтра слоёв подсистемы _01_ПС_*")
+
 # логика клонов (та же, что в C#): ссылка, чьего хэндла нет среди строк метки, — клон
 def clones(label_handles, ref_handles):
     own = {h.upper() for h in label_handles}

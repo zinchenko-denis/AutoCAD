@@ -431,11 +431,20 @@ class TestIndependentReview2409(unittest.TestCase):
                                     opening("O2", rect(2000, 1000, 2000, 2000))]))
         self.assertIn("E_OPENINGS_OVERLAP", codes(fz.validate_zone(z)))
 
-    def test_partial_boundary_edge_split(self):
+    def test_partial_boundary_side_is_jamb(self):
+        # 23.09n (Герман): бок окна, частично лежащий на краю зоны, — всё равно
+        # откос целиком: левый бок 2 м (из них 1 м на краю) + правый 2 м + верх 1 м
         L = [[0, 0], [9000, 0], [9000, 6000], [6000, 6000], [6000, 3000], [0, 3000]]
         zds, _ = self.zones([{"id": "W", "pts": L}, {"id": "O", "pts": rect(6000, 2000, 1000, 2000)}])
         rep = fz.zone_report(fz.load_zone(zds[0]))
-        self.assertAlmostEqual(rep["jambs_total_m"], 4.0, places=6)
+        self.assertAlmostEqual(rep["jambs_total_m"], 5.0, places=6)
+
+    def test_side_fully_on_boundary_not_jamb(self):
+        # бок, ЦЕЛИКОМ лежащий на краю зоны, откосом не считается (как было)
+        zds, _ = self.zones([{"id": "W", "pts": rect(0, 0, 5000, 3000)},
+                             {"id": "O", "pts": rect(0, 1000, 1000, 1500)}])
+        rep = fz.zone_report(fz.load_zone(zds[0]))
+        self.assertAlmostEqual(rep["jambs_total_m"], 2.5, places=6)
 
     def test_nan_rejected(self):
         zds, issues = self.zones([{"id": "W", "pts": [[0, 0], [5000, 0], [5000, float("nan")], [0, 5000]]}])

@@ -62,7 +62,7 @@ jobs:
           python tools/label_refs_check.py
           python Facades/tools/zones_synth.py --quick
           python AClad/tools/attile_synth.py --quick
-          python AFrame/tools/frame_synth.py --quick --allow F7,F16
+          python AFrame/tools/frame_synth.py --quick --allow F16
 
   build:
     needs: test

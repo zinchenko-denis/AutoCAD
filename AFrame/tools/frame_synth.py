@@ -249,12 +249,15 @@ def check_place(sc, res, step_max):
                     break
     if sc["sub"] == "ortho":
         for r in rails:
-            if r["len"] < 200.0:
+            # 23.09n (Герман): кусок ≤ 300 мм без ГП допустим, длиннее — ГП обязателен
+            if r["len"] <= 300.0 + T:
                 continue
             if not any(h["x0"] - T <= r["x"] <= h["x1"] + T and r["y0"] - T <= h["y"] <= r["y1"] + T for h in hr):
                 bad.append(("F7", "вертикаль x=%.0f [%.0f..%.0f] не опирается ни на один ГП" % (r["x"], r["y0"], r["y1"])))
         y0 = Polygon(sc["outer"]).bounds[1]
         tops = {round(h[3] + 100.0, 1) for h in (Polygon(q).bounds for q in sc["holes"])}
+        # 23.09n (Герман): доп. ГП у верха — на 300 ниже верха висевшего куска
+        tops |= {round(r["y1"] - 300.0, 1) for r in rails}
         for b in br:
             k = (b["y"] - y0 - 300.0) / 600.0
             if abs(k - round(k)) * 600.0 > T and round(b["y"], 1) not in tops:

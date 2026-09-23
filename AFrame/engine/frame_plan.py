@@ -1384,6 +1384,43 @@ def frame_plan(req):
                     if not side:
                         _edge_top_clamps(clamps, rows, s_lo, s_hi,
                                          s_x, _ytop(outer, s_x, s_hi, y1), hole_boxes)
+            # 23.09n (Герман, ответ по сборке №24): кусок вертикали выше
+            # последнего ГП, не опирающийся ни на один ГП, ДЛИННЕЕ 300 мм —
+            # добавить ГП у верха: на 300 ниже верха куска («300 от торца»,
+            # как у нижнего ряда), с кронштейнами по колонкам сетки;
+            # кусок ≤ 300 мм — как есть
+            top_piece = 300.0
+            add_y = []
+            for r in rails[n0_rails:]:
+                if r["len"] <= top_piece + EPS:
+                    continue
+                if any(h["x0"] - EPS <= r["x"] <= h["x1"] + EPS and
+                       r["y0"] - EPS <= h["y"] <= r["y1"] + EPS for h in hrails):
+                    continue
+                yt = r["y1"] - top_piece
+                if not any(abs(yt - a0) <= 50.0 for a0 in add_y):
+                    add_y.append(yt)
+            for yy in add_y:
+                segs = list(_hspans(outer, yy))
+                for bx0, by0, bx1, by1 in hole_boxes:
+                    if by0 - EPS < yy < by1 + EPS:
+                        segs = [(sa2, sb2) for sa, sb in segs
+                                for sa2, sb2 in ((sa, min(sb, bx0)), (max(sa, bx1), sb))
+                                if sb2 - sa2 > EPS]
+                for px in xs_g:
+                    if _in_boxes(hole_boxes, px, yy) or \
+                            not any(sa - EPS <= px <= sb + EPS for sa, sb in segs) or \
+                            any(near_pt(b, px, yy) for b in brackets):
+                        continue
+                    brackets.append({"x": round(px, 4), "y": round(yy, 4),
+                                     "kind": "рядовой"})
+                for sa, sb in segs:
+                    hrails.append({"y": round(yy, 4), "x0": round(sa, 4),
+                                   "x1": round(sb, 4), "len": round(sb - sa, 4),
+                                   "kind": "ГП-40-40"})
+            if add_y:
+                notes.append("доп. ГП у верха (кусок вертикали > 300 мм выше "
+                             "последнего ГП): %d" % len(add_y))
             # 02.08 (замечание №1 Дениса/полигон): Z-образные у КАЖДОЙ
             # грани окна ВСЕГДА (ТЗ §3: «у окон Z-образные, длина =
             # сторона окна + 100») — раньше Z возникал, лишь если ось

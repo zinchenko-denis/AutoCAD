@@ -36,6 +36,7 @@ namespace AFramePlugin
         private const string LayerRails = "_01_ПС_НАПРАВЛЯЮЩИЕ";
         private const string LayerBrackets = "_01_ПС_кронштейны";
         private const string LayerClamps = "_01_ПС_КЛЯММЕРЫ";
+        private const string SubsystemLayerPrefix = "_01_ПС_";   // 23.09n: область ATDEDUP
 
         private const string BlkMain = "AFRAME_КР_НЕСУЩИЙ";
         private const string BlkRow = "AFRAME_КР_РЯДОВОЙ";
@@ -2094,7 +2095,7 @@ namespace AFramePlugin
             var area = new List<ObjectId>();
             var pso = new PromptSelectionOptions
             {
-                MessageForAdding = "\nОбласть проверки дублей " +
+                MessageForAdding = "\nОбласть проверки дублей элементов подсистемы " +
                     "(рамкой) — или Enter, чтобы проверить весь " +
                     "чертёж: "
             };
@@ -2121,7 +2122,7 @@ namespace AFramePlugin
                 ed.WriteMessage("\nОтменено.");
                 return;
             }
-            int removed = 0, seenCnt = 0;
+            int removed = 0, seenCnt = 0, foreign = 0;
             var byName = new Dictionary<string, int>();
             var dups = new List<ObjectId>();
             var dupName = new List<string>();
@@ -2149,6 +2150,10 @@ namespace AFramePlugin
                     }
                     catch { continue; }
                     if (br == null) continue;
+                    // 23.09n (Герман, ответ по №24): дубли ищем ТОЛЬКО среди
+                    // элементов подсистемы (слои _01_ПС_*); прочие блоки не трогаем
+                    if (!br.Layer.StartsWith(SubsystemLayerPrefix, StringComparison.OrdinalIgnoreCase))
+                    { foreign++; continue; }
                     seenCnt++;
                     string key = DedupKey(tr, br);
                     if (seen.Add(key)) continue;
@@ -2200,8 +2205,9 @@ namespace AFramePlugin
             }
             if (removed == 0)
             {
-                ed.WriteMessage("\nПроверено вхождений: " + seenCnt +
-                    " — задвоенных нет.");
+                ed.WriteMessage("\nПроверено вхождений подсистемы: " + seenCnt +
+                    " — задвоенных нет." + (foreign > 0 ? " Прочие блоки (не слои " +
+                    SubsystemLayerPrefix + "*) не проверялись: " + foreign + "." : ""));
                 return;
             }
             var sb = new StringBuilder();

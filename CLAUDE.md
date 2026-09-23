@@ -26,7 +26,7 @@ export PYTHONUTF8=1
 (cd AClad/engine && python3 test_cladding_plan.py && python3 test_clad_engine.py && python3 test_tile_pattern.py && python3 audit_clad.py)
 (cd AFrame/engine && python3 test_frame_plan.py && python3 test_frame_calc.py && python3 test_frame_engine.py && python3 audit_frame.py)
 python3 tools/xmod_check.py --no-fixture      # стыки модулей (ATSPEC X6 — не фасады, известен)
-python3 AFrame/tools/frame_synth.py --quick   # синтетика подсистемы (F7 — открытый вопрос Герману)
+python3 AFrame/tools/frame_synth.py --quick   # синтетика подсистемы (F16 — известное, «только кляммеры»)
 python3 Facades/tools/zones_synth.py --quick
 python3 AClad/tools/attile_synth.py --quick
 ```
