@@ -110,8 +110,11 @@ def op_zones(req):
             continue
         rep = fz.zone_report(z, issues)
         # марка — правый верхний угол области (фидбэк Германа 21.07 п.1)
+        # 24.09 (рецензия): допуск хорд и «равного верха» — в мм, не в единицах зоны
+        ku = z.to_mm()
         label = fz.label_anchor([(p[0], p[1])
-                                 for p in z.outer.polygonized()])
+                                 for p in z.outer.polygonized(fz.CHORD_TOL / ku)],
+                                fz.GEO_TOL / ku)
         parts.append((zd, z, issues, rep, fz.zone_dims(z), label))
 
     zones_ok, zones_full = [], []

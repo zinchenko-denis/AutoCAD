@@ -371,5 +371,96 @@ class TestReview2309(unittest.TestCase):
             self.assertAlmostEqual(a[key], b[key], places=9, msg=key)
 
 
+
+class TestIndependentReview2409(unittest.TestCase):
+    """24.09: находки независимой рецензии (совпадающие/наложенные контуры,
+    проём в наружной выемке, частичная кромка на границе, NaN, далёкие
+    координаты)."""
+
+    def zones(self, cs):
+        return fz.build_zones_from_contours(cs)
+
+    def net(self, zd):
+        return fz.zone_report(fz.load_zone(zd))["area_net_m2"]
+
+    def test_duplicate_openings_counted_once(self):
+        cs = [{"id": "W", "pts": rect(0, 0, 5000, 5000)}] + \
+             [{"id": "O%d" % k, "pts": rect(1000, 1000, 3000, 3000)} for k in range(3)]
+        zds, issues = self.zones(cs)
+        self.assertEqual(len(zds), 1)
+        self.assertAlmostEqual(self.net(zds[0]), 16.0, places=9)
+        self.assertEqual(codes(issues).count("W_DUPLICATE_CONTOUR"), 2)
+
+    def test_duplicate_outer_counted_once(self):
+        zds, issues = self.zones([{"id": "A", "pts": rect(0, 0, 5000, 5000)},
+                                  {"id": "B", "pts": list(reversed(rect(0, 0, 5000, 5000)))}])
+        self.assertEqual(len(zds), 1)
+        self.assertIn("W_DUPLICATE_CONTOUR", codes(issues))
+
+    def test_aligned_overlap_of_outers_is_error(self):
+        zds, issues = self.zones([{"id": "A", "pts": rect(0, 0, 5000, 5000)},
+                                  {"id": "B", "pts": rect(4000, 0, 5000, 5000)}])
+        self.assertEqual(len(zds), 1)
+        self.assertIn("E_CONTOURS_OVERLAP", codes(issues))
+
+    def test_adjacent_zones_sharing_edge_are_fine(self):
+        zds, issues = self.zones([{"id": "A", "pts": rect(0, 0, 5000, 5000)},
+                                  {"id": "B", "pts": rect(5000, 0, 5000, 5000)},
+                                  {"id": "C", "pts": rect(0, 5000, 10000, 3000)}])
+        self.assertEqual(len(zds), 3)
+        self.assertEqual([c for c in codes(issues) if c.startswith("E_")], [])
+
+    def test_opening_in_external_notch_is_not_subtracted(self):
+        U = [[0, 0], [6000, 0], [6000, 6000], [4000, 6000], [4000, 2000], [2000, 2000],
+             [2000, 6000], [0, 6000]]
+        zds, issues = self.zones([{"id": "W", "pts": U}, {"id": "O", "pts": rect(2000, 2000, 2000, 3000)}])
+        by = {z["meta"]["outer_contour_id"]: z for z in zds}
+        self.assertAlmostEqual(self.net(by["W"]), 28.0, places=9)
+        self.assertEqual(by["W"]["openings"], [])
+
+    def test_real_opening_in_u_wall_still_subtracted(self):
+        U = [[0, 0], [6000, 0], [6000, 6000], [4000, 6000], [4000, 2000], [2000, 2000],
+             [2000, 6000], [0, 6000]]
+        zds, issues = self.zones([{"id": "W", "pts": U}, {"id": "O", "pts": rect(500, 1000, 1000, 1500)}])
+        self.assertEqual(len(zds), 1)
+        self.assertAlmostEqual(self.net(zds[0]), 26.5, places=9)
+
+    def test_overlapping_openings_in_zone_json_is_error(self):
+        z = fz.load_zone(zone_dict(rect(0, 0, 5000, 5000),
+                                   [opening("O1", rect(1000, 1000, 2000, 2000)),
+                                    opening("O2", rect(2000, 1000, 2000, 2000))]))
+        self.assertIn("E_OPENINGS_OVERLAP", codes(fz.validate_zone(z)))
+
+    def test_partial_boundary_edge_split(self):
+        L = [[0, 0], [9000, 0], [9000, 6000], [6000, 6000], [6000, 3000], [0, 3000]]
+        zds, _ = self.zones([{"id": "W", "pts": L}, {"id": "O", "pts": rect(6000, 2000, 1000, 2000)}])
+        rep = fz.zone_report(fz.load_zone(zds[0]))
+        self.assertAlmostEqual(rep["jambs_total_m"], 4.0, places=6)
+
+    def test_nan_rejected(self):
+        zds, issues = self.zones([{"id": "W", "pts": [[0, 0], [5000, 0], [5000, float("nan")], [0, 5000]]}])
+        self.assertEqual(zds, [])
+        self.assertIn("E_BAD_CONTOUR", codes(issues))
+        with self.assertRaises(fz.ZoneFormatError):
+            fz.load_zone(zone_dict([[0, 0], [5, 0], [5, float("inf")], [0, 5]]))
+
+    def test_far_coordinates_keep_precision(self):
+        for off in (0.0, 1e9, 1e10, 1e11):
+            zds, _ = self.zones([{"id": "W", "pts": rect(off, off, 5000, 5000)},
+                                 {"id": "O", "pts": rect(off + 1000, off + 1000, 1234, 1567)}])
+            self.assertEqual(len(zds), 1, off)
+            self.assertAlmostEqual(self.net(zds[0]), 25.0 - 1.234 * 1.567, places=5, msg=off)
+
+    def test_label_anchor_units_consistent(self):
+        b = 0.37
+        zmm = fz.load_zone(zone_dict([[0, 0], [6000, 0], [6000, 3000], [0, 3000]],
+                                     bulges=[0, 0, b, 0]))
+        zm = fz.load_zone(zone_dict([[0, 0], [6, 0], [6, 3], [0, 3]], bulges=[0, 0, b, 0], units="m"))
+        la = fz.label_anchor(zmm.outer.polygonized(fz.CHORD_TOL), fz.GEO_TOL)
+        lb = fz.label_anchor(zm.outer.polygonized(fz.CHORD_TOL / 1000.0), fz.GEO_TOL / 1000.0)
+        self.assertAlmostEqual(la[0], lb[0] * 1000.0, delta=1.0)
+        self.assertAlmostEqual(la[1], lb[1] * 1000.0, delta=1.0)
+
+
 if __name__ == "__main__":
     unittest.main()

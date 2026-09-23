@@ -183,9 +183,13 @@ class Poly(object):
         return 0.0
 
     def signed_area(self):
+        # 24.09 (независимая рецензия): shoelace от ЛОКАЛЬНОГО начала — при
+        # координатах ~1e10 мм прямое произведение теряло значащие цифры
+        # (проём 1234×1567 на 1e11 мм становился нулевым)
+        ox, oy = self.pts[0] if self.pts else (0.0, 0.0)
         a = 0.0
         for p1, p2, b in self.segments():
-            a += (p1[0] * p2[1] - p2[0] * p1[1])
+            a += ((p1[0] - ox) * (p2[1] - oy) - (p2[0] - ox) * (p1[1] - oy))
             if abs(b) > EPS:
                 a += 2.0 * _arc_segment_area(p1, p2, b)
         return a / 2.0
@@ -303,6 +307,86 @@ def _probe_points(pts):
     return out
 
 
+def _seg_params(a1, a2, poly_pts, tol=GEO_TOL):
+    """Параметры t∈[0,1] на отрезке a1→a2, где его касается/пересекает
+    граница poly (вершины контура на отрезке, пересечения рёбер, концы
+    коллинеарных наложений) — для проверки ПОДОТРЕЗКОВ, а не одних вершин."""
+    dx, dy = a2[0] - a1[0], a2[1] - a1[1]
+    L2 = dx * dx + dy * dy
+    ts = {0.0, 1.0}
+    if L2 < EPS * EPS:
+        return [0.0, 1.0]
+    n = len(poly_pts)
+    for j in range(n):
+        b1, b2 = poly_pts[j], poly_pts[(j + 1) % n]
+        for q in (b1, b2):
+            t = ((q[0] - a1[0]) * dx + (q[1] - a1[1]) * dy) / L2
+            if 0.0 < t < 1.0 and _point_seg_dist(q, a1, a2) <= tol:
+                ts.add(t)
+        ex, ey = b2[0] - b1[0], b2[1] - b1[1]
+        den = dx * ey - dy * ex
+        if abs(den) > EPS:
+            t = ((b1[0] - a1[0]) * ey - (b1[1] - a1[1]) * ex) / den
+            u = ((b1[0] - a1[0]) * dy - (b1[1] - a1[1]) * dx) / den
+            if 0.0 < t < 1.0 and -EPS <= u <= 1.0 + EPS:
+                ts.add(t)
+    return sorted(ts)
+
+
+def _signed_area_pts(pts):
+    ox, oy = pts[0]
+    a = 0.0
+    for i in range(len(pts)):
+        x1, y1 = pts[i]
+        x2, y2 = pts[(i + 1) % len(pts)]
+        a += (x1 - ox) * (y2 - oy) - (x2 - ox) * (y1 - oy)
+    return a / 2.0
+
+
+def _interiors_overlap(apts, bpts, tol=GEO_TOL):
+    """Пересекаются ли ВНУТРЕННОСТИ двух контуров (площадью, а не касанием).
+
+    24.09 (независимая рецензия): совпадающие окна и «выровненный» нахлёст
+    (общие верх/низ) _polys_relation отдаёт как «touch» — пробные точки
+    лежат на границе. Проверка: каждый подотрезок ребра A (по точкам
+    касания с B) сдвигаем внутрь A на 2·tol — точка строго внутри B
+    значит общая площадь; и наоборот."""
+    def probe(P, Q):
+        sgn = 1.0 if _signed_area_pts(P) > 0 else -1.0
+        n = len(P)
+        for i in range(n):
+            a1, a2 = P[i], P[(i + 1) % n]
+            L = _dist(a1, a2)
+            if L < 4.0 * tol:
+                continue
+            nx, ny = -(a2[1] - a1[1]) / L * sgn, (a2[0] - a1[0]) / L * sgn
+            ts = _seg_params(a1, a2, Q, tol)
+            for k in range(len(ts) - 1):
+                if (ts[k + 1] - ts[k]) * L < 4.0 * tol:
+                    continue
+                tm = 0.5 * (ts[k] + ts[k + 1])
+                mx, my = a1[0] + (a2[0] - a1[0]) * tm, a1[1] + (a2[1] - a1[1]) * tm
+                q = (mx + nx * 2.0 * tol, my + ny * 2.0 * tol)
+                if _pip(q, P) and _pip(q, Q) and not _on_boundary(q, Q, 0.5 * tol):
+                    return True
+        return False
+    return probe(apts, bpts) or probe(bpts, apts)
+
+
+def _same_contour(apts, bpts, tol=GEO_TOL):
+    """Тот же контур (дубль обводки): те же вершины с точностью tol, в любом
+    порядке обхода и с любой начальной вершины."""
+    if len(apts) != len(bpts) or not apts:
+        return False
+    n = len(apts)
+    for rev in (False, True):
+        B = bpts[::-1] if rev else bpts
+        for sh in range(n):
+            if all(_dist(apts[i], B[(i + sh) % n]) <= tol for i in range(n)):
+                return True
+    return False
+
+
 def _polys_relation(apts, bpts, tol=GEO_TOL):
     """Отношение контуров A и B: 'cross' | 'a_in_b' | 'b_in_a' | 'touch' | 'apart'."""
     touch = False
@@ -326,7 +410,13 @@ def _polys_relation(apts, bpts, tol=GEO_TOL):
 
 
 def _contains(outer_pts, inner_pts, tol=GEO_TOL):
-    """Все точки inner внутри или на границе outer, без proper-пересечений."""
+    """inner целиком внутри outer (граница — можно): без proper-пересечений,
+    все вершины И середины всех подотрезков рёбер (разбитых точками касания
+    с outer) внутри или на границе.
+
+    24.09 (независимая рецензия): проверялись только вершины — проём в
+    наружной ВЫЕМКЕ П-стены с вершинами на её стенках принимался «внутри»,
+    и из стены вычитались 6 м² пустоты (28 → 22 м²)."""
     for i in range(len(inner_pts)):
         a1 = inner_pts[i]
         a2 = inner_pts[(i + 1) % len(inner_pts)]
@@ -337,6 +427,15 @@ def _contains(outer_pts, inner_pts, tol=GEO_TOL):
     for p in inner_pts:
         if not (_pip(p, outer_pts) or _on_boundary(p, outer_pts, tol)):
             return False
+    for i in range(len(inner_pts)):
+        a1 = inner_pts[i]
+        a2 = inner_pts[(i + 1) % len(inner_pts)]
+        ts = _seg_params(a1, a2, outer_pts, tol)
+        for k in range(len(ts) - 1):
+            tm = 0.5 * (ts[k] + ts[k + 1])
+            m = (a1[0] + (a2[0] - a1[0]) * tm, a1[1] + (a2[1] - a1[1]) * tm)
+            if not (_pip(m, outer_pts) or _on_boundary(m, outer_pts, tol)):
+                return False
     return True
 
 
@@ -368,13 +467,17 @@ def _parse_poly(obj, where, warnings_sink=None, k=1.0):
         raise ZoneFormatError("%s: pts — минимум 3 вершины" % where)
     for p in pts:
         if (not isinstance(p, (list, tuple)) or len(p) != 2 or
-                not all(isinstance(v, (int, float)) for v in p)):
+                not all(isinstance(v, (int, float)) and not isinstance(v, bool)
+                        for v in p)):
             raise ZoneFormatError("%s: вершина не [x,y]" % where)
+        # 24.09 (рецензия): NaN/бесконечность проходили и давали NaN-площадь
+        if not all(math.isfinite(v) for v in p):
+            raise ZoneFormatError("%s: вершина с нечисловой координатой (NaN/∞)" % where)
     bulges = obj.get("bulges")
     if bulges is not None:
         if not isinstance(bulges, list) or len(bulges) != len(pts) or \
-                not all(isinstance(v, (int, float)) for v in bulges):
-            raise ZoneFormatError("%s: bulges — числа, длина == len(pts)" % where)
+                not all(isinstance(v, (int, float)) and math.isfinite(v) for v in bulges):
+            raise ZoneFormatError("%s: bulges — конечные числа, длина == len(pts)" % where)
     # хвост с микрозазором к первой точке (недоведённая обводка ≤ GEO_TOL):
     # сливаем с первой вершиной, чтобы не плодить микросегмент замыкания
     p0, pl = pts[0], pts[-1]
@@ -534,6 +637,25 @@ def validate_zone(zone):
                     "E_OPENINGS_OVERLAP",
                     "opening:%s" % polys[i][0].id,
                     "пересекается/вложен с opening:%s" % polys[j][0].id))
+            elif rel == "touch" and _interiors_overlap(polys[i][1], polys[j][1], tol):
+                # 24.09 (рецензия): совпадающие/выровненно наложенные окна
+                # вычитались дважды (стена 25 м², два одинаковых окна по
+                # 9 м² — нетто 7; три — минус 2)
+                same = _same_contour(polys[i][1], polys[j][1], tol)
+                issues.append(_err(
+                    "E_OPENINGS_OVERLAP",
+                    "opening:%s" % polys[i][0].id,
+                    ("повторяет opening:%s (две одинаковые обводки)" if same
+                     else "накладывается на opening:%s") % polys[j][0].id))
+    # последняя страховка: проёмы не больше зоны (без «max(0, …)»)
+    if polys and not _has_errors(issues):
+        k2 = zone.to_mm() ** 2
+        a_out = abs(zone.outer.signed_area()) * k2
+        a_ops = sum(abs(o.poly.signed_area()) for o, _p in polys) * k2
+        if a_ops > a_out * (1.0 + 1e-9) + 1e-6:
+            issues.append(_err("E_NEGATIVE_NET", "outer",
+                               "проёмы (%.3f м²) больше площади зоны (%.3f м²)"
+                               % (a_ops / 1e6, a_out / 1e6)))
     return issues
 
 
@@ -563,8 +685,15 @@ def _opening_edges_mm(zone, opening, outer_pts_mm, tol=GEO_TOL):
         else:
             chain = [p1, p2]
         for i in range(len(chain) - 1):
-            a = (chain[i][0] * k, chain[i][1] * k)
-            c = (chain[i + 1][0] * k, chain[i + 1][1] * k)
+          a0 = (chain[i][0] * k, chain[i][1] * k)
+          c0 = (chain[i + 1][0] * k, chain[i + 1][1] * k)
+          # 24.09 (рецензия): сторона окна, ЧАСТИЧНО лежащая на краю зоны,
+          # целиком шла в откос — теперь делится по точкам касания: часть
+          # на границе — «граница» (как целый сегмент на границе раньше)
+          ts = _seg_params(a0, c0, outer_pts_mm, tol)
+          for kk in range(len(ts) - 1):
+            a = (a0[0] + (c0[0] - a0[0]) * ts[kk], a0[1] + (c0[1] - a0[1]) * ts[kk])
+            c = (a0[0] + (c0[0] - a0[0]) * ts[kk + 1], a0[1] + (c0[1] - a0[1]) * ts[kk + 1])
             L = _dist(a, c)
             if L < EPS:
                 continue
@@ -609,14 +738,14 @@ def _centroid(pts):
     return (cx / (3.0 * a2), cy / (3.0 * a2))
 
 
-def label_anchor(pts):
+def label_anchor(pts, tol=GEO_TOL):
     """Точка марки зоны — ПРАВЫЙ ВЕРХНИЙ угол ОБЛАСТИ (фидбэк Германа
     21.07 п.1, было — центроид): вершина полигонизации с максимальным
     Y, при равных (GEO_TOL) — с максимальным X. Именно угол контура, а
     не bbox: у Г-образной зоны с вырезом сверху-справа марка сядет на
     правый конец верхней кромки, а не повиснет в пустоте."""
     y_max = max(p[1] for p in pts)
-    return (max(p[0] for p in pts if p[1] >= y_max - GEO_TOL), y_max)
+    return (max(p[0] for p in pts if p[1] >= y_max - tol), y_max)
 
 
 # ------------------------------------------------------------------- отчёт
@@ -713,7 +842,7 @@ def zone_dims(zone):
     """
     k = zone.to_mm()
     tol = GEO_TOL / k
-    pts = zone.outer.polygonized()
+    pts = zone.outer.polygonized(CHORD_TOL / k)
     xs_all = [p[0] for p in pts]
     ys_all = [p[1] for p in pts]
     x0, x1 = min(xs_all), max(xs_all)
@@ -727,7 +856,7 @@ def zone_dims(zone):
             cuts.add(a[0])
             cuts.add(b[0])
     for o in zone.openings:
-        opts = o.poly.polygonized()
+        opts = o.poly.polygonized(CHORD_TOL / k)
         m = len(opts)
         for i in range(m):
             a, b = opts[i], opts[(i + 1) % m]
@@ -770,6 +899,15 @@ def build_zones_from_contours(contours, cladding="", zone_prefix="Z-",
             pts = c["pts"]
             if not isinstance(pts, list) or len(pts) < 3:
                 raise ZoneFormatError("минимум 3 вершины")
+            # 24.09 (рецензия): только конечные числа (NaN давал NaN-площадь)
+            for q in pts:
+                if (not isinstance(q, (list, tuple)) or len(q) != 2 or
+                        not all(isinstance(v, (int, float)) and not isinstance(v, bool)
+                                and math.isfinite(v) for v in q)):
+                    raise ZoneFormatError("вершина не [x,y] из конечных чисел")
+            if c.get("bulges") is not None and not all(
+                    isinstance(v, (int, float)) and math.isfinite(v) for v in c.get("bulges")):
+                raise ZoneFormatError("bulges — конечные числа")
             # хвост с микрозазором к первой точке — слить
             p0, pl = pts[0], pts[-1]
             d = math.hypot((pl[0] - p0[0]) * k, (pl[1] - p0[1]) * k)
@@ -792,6 +930,16 @@ def build_zones_from_contours(contours, cladding="", zone_prefix="Z-",
         # ошибка уйдёт в failed, а не потеряется среди issues разбора
         area = abs(poly.signed_area()) * k * k
         pts_mm = [(p[0] * k, p[1] * k) for p in poly.polygonized(CHORD_TOL / k)]
+        # 24.09 (независимая рецензия): одна и та же обводка дважды (копия
+        # поверх, двойной клик) — окно вычиталось дважды, стена считалась
+        # дважды. Точный повтор — не учитывается, с предупреждением.
+        dup = next((q for q in parsed if abs(q[3] - area) <= GEO_TOL * GEO_TOL + 1e-9 * area
+                    and _same_contour(q[2], pts_mm)), None)
+        if dup is not None:
+            issues.append(_warn("W_DUPLICATE_CONTOUR", where,
+                                "повторяет contour:%s (две одинаковые обводки) — повтор "
+                                "не учтён" % dup[0]))
+            continue
         parsed.append((cid, poly, pts_mm, area))
 
     # минимальный по площади контейнер для каждого контура
@@ -835,15 +983,27 @@ def build_zones_from_contours(contours, cladding="", zone_prefix="Z-",
             if a0[2] < b0[0] - GEO_TOL or b0[2] < a0[0] - GEO_TOL or \
                a0[3] < b0[1] - GEO_TOL or b0[3] < a0[1] - GEO_TOL:
                 continue
-            if _polys_relation(parsed[i][2], parsed[j][2]) != "cross":
+            rel = _polys_relation(parsed[i][2], parsed[j][2])
+            if rel != "cross" and not _interiors_overlap(parsed[i][2], parsed[j][2]):
                 continue
             small, big = (i, j) if parsed[i][3] <= parsed[j][3] else (j, i)
+            if small in crossed:
+                continue
             crossed.add(small)
-            issues.append(_err(
-                "E_CONTOUR_CROSSES", "contour:%s" % parsed[small][0],
-                "контур пересекает край контура %s — проём с нахлёстом за стену? "
-                "Не учтён (ни зоной, ни проёмом): поправьте обводку — проём "
-                "целиком внутри стены или по её краю" % parsed[big][0]))
+            if rel == "cross":
+                issues.append(_err(
+                    "E_CONTOUR_CROSSES", "contour:%s" % parsed[small][0],
+                    "контур пересекает край контура %s — проём с нахлёстом за стену? "
+                    "Не учтён (ни зоной, ни проёмом): поправьте обводку — проём "
+                    "целиком внутри стены или по её краю" % parsed[big][0]))
+            else:
+                # 24.09 (рецензия): выровненный нахлёст двух стен (общие верх
+                # и низ) не ловился — две зоны считали одну площадь дважды
+                issues.append(_err(
+                    "E_CONTOURS_OVERLAP", "contour:%s" % parsed[small][0],
+                    "контур накладывается на контур %s (общая площадь) — одна "
+                    "площадь посчиталась бы дважды. Не учтён: поправьте обводку"
+                    % parsed[big][0]))
     for i in range(n):
         d = depth(i)
         if i in crossed:
