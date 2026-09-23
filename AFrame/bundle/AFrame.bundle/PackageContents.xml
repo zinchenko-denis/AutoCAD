@@ -25,7 +25,7 @@
 
   <!-- AutoCAD 2013–2024 : .NET Framework. R24.0 = AutoCAD 2021. -->
   <Components Description="net48 (AutoCAD 2013-2024)">
-    <RuntimeRequirements OS="Win64" Platform="AutoCAD" SeriesMin="R19.0" SeriesMax="R24.3" />
+    <RuntimeRequirements OS="Win64" Platform="AutoCAD" SeriesMin="R24.0" SeriesMax="R24.3" />
     <ComponentEntry
         AppName="AFrame"
         ModuleName="./Contents/net48/AFramePlugin.dll"
