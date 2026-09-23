@@ -110,13 +110,86 @@ def _pt_in_poly(poly, x, y):
     return inside
 
 
+def _seg_pt_dist(p, a, b):
+    ax, ay = a
+    bx, by = b
+    dx, dy = bx - ax, by - ay
+    L2 = dx * dx + dy * dy
+    if L2 <= 1e-18:
+        return ((p[0] - ax) ** 2 + (p[1] - ay) ** 2) ** 0.5
+    t = max(0.0, min(1.0, ((p[0] - ax) * dx + (p[1] - ay) * dy) / L2))
+    return ((p[0] - ax - t * dx) ** 2 + (p[1] - ay - t * dy) ** 2) ** 0.5
+
+
+def _on_edge(poly, p, tol):
+    n = len(poly)
+    return any(_seg_pt_dist(p, poly[i], poly[(i + 1) % n]) <= tol for i in range(n))
+
+
+def _pip_ray(poly, x, y):
+    n, inside = len(poly), False
+    for i in range(n):
+        x1, y1 = poly[i]
+        x2, y2 = poly[(i + 1) % n]
+        if (y1 > y) != (y2 > y):
+            if x1 + (y - y1) * (x2 - x1) / (y2 - y1) > x:
+                inside = not inside
+    return inside
+
+
+def _contains_poly(outer, inner, tol=0.5):
+    """inner ЦЕЛИКОМ внутри outer (граница — можно): вершины и середины
+    подотрезков рёбер inner, разбитых точками касания/пересечения с outer,
+    внутри или на границе outer.
+
+    24.09 (независимая рецензия): вложенность определялась по центру
+    габарита и среднему вершин — у невыпуклого контура (П, U, С) эти точки
+    лежат в ВЫЕМКЕ, и отдельная зона, стоящая в выемке, «поглощала» его как
+    проём: U-полоса 1,72 м² вокруг прямоугольника 5,28 м² — раскладка 5,28
+    из 7,00 без предупреждения."""
+    n, m = len(inner), len(outer)
+    for p in inner:
+        if not (_pip_ray(outer, p[0], p[1]) or _on_edge(outer, p, tol)):
+            return False
+    for i in range(n):
+        a1, a2 = inner[i], inner[(i + 1) % n]
+        dx, dy = a2[0] - a1[0], a2[1] - a1[1]
+        L2 = dx * dx + dy * dy
+        if L2 <= 1e-18:
+            continue
+        ts = [0.0, 1.0]
+        for j in range(m):
+            b1, b2 = outer[j], outer[(j + 1) % m]
+            for q in (b1, b2):
+                t = ((q[0] - a1[0]) * dx + (q[1] - a1[1]) * dy) / L2
+                if 0.0 < t < 1.0 and _seg_pt_dist(q, a1, a2) <= tol:
+                    ts.append(t)
+            ex, ey = b2[0] - b1[0], b2[1] - b1[1]
+            den = dx * ey - dy * ex
+            if abs(den) > 1e-12:
+                t = ((b1[0] - a1[0]) * ey - (b1[1] - a1[1]) * ex) / den
+                u = ((b1[0] - a1[0]) * dy - (b1[1] - a1[1]) * dx) / den
+                if 0.0 < t < 1.0 and -1e-9 <= u <= 1.0 + 1e-9:
+                    ts.append(t)
+        ts.sort()
+        for k in range(len(ts) - 1):
+            if ts[k + 1] - ts[k] <= 1e-12:
+                continue
+            tm = 0.5 * (ts[k] + ts[k + 1])
+            q = (a1[0] + dx * tm, a1[1] + dy * tm)
+            if not (_pip_ray(outer, q[0], q[1]) or _on_edge(outer, q, tol)):
+                return False
+    return True
+
+
 def _group_contours(raw, notes):
     """Голые контуры: внешние + дыры по вложенности.
 
     23.09 (ревью): раньше — по вложенности ГАБАРИТОВ, и отдельная зона в
     «кармане» Г-образной стены считалась проёмом этой стены (без
-    подсистемы), а ATCLAD/ATTILE её раскладывали. Теперь как clad_engine:
-    проба — центр габарита и центроид вершин внутри полигона; вложенность
+    подсистемы), а ATCLAD/ATTILE её раскладывали. С 24.09 (независимая
+    рецензия) — ПОЛНАЯ вложенность (_contains_poly), как clad_engine:
+    проба по центру габарита у П/U-контура попадала в выемку. Вложенность
     глубже проёма — нота-пропуск. Контур несёт свои оси (joints_x/rows_y)
     — они переходят к зоне."""
     parsed = []   # (cid, pts, area, probe, src)
@@ -124,6 +197,15 @@ def _group_contours(raw, notes):
         cid = str(c.get("id") or ("c%d" % (i + 1)))
         pts = _pts(c, notes, "контур %s" % cid)
         if pts is None:
+            continue
+        try:
+            arc = any(abs(float(b)) > _ARC_EPS for b in (c.get("bulges") or []))
+        except (TypeError, ValueError):
+            arc = False
+        if arc:
+            # 24.09 (рецензия): дуга голой полилинии превращалась в хорду без
+            # предупреждения; путь через зону ATFZONE такие отклонял
+            notes.append("контур %s: дуги не поддерживаются — пропуск" % cid)
             continue
         if len(pts) >= 2 and abs(pts[0][0] - pts[-1][0]) <= 0.5 and \
            abs(pts[0][1] - pts[-1][1]) <= 0.5:
@@ -146,7 +228,7 @@ def _group_contours(raw, notes):
         for j in range(n):
             if i == j or parsed[j][2] <= parsed[i][2]:
                 continue
-            if any(_pt_in_poly(parsed[j][1], x, y) for x, y in parsed[i][3]):
+            if _contains_poly(parsed[j][1], parsed[i][1]):
                 if best < 0 or parsed[j][2] < parsed[best][2]:
                     best = j
         cont[i] = best
@@ -225,6 +307,7 @@ def op_frame(req):
     rails, brackets, clamps, per_zone = [], [], [], []
     hrails, fittings = [], []
     system_used, calc_report = None, None
+    calc_reports = []
     for zone_id, contour in items:
         creq = dict(base)
         # 23.09 (ревью): оси швов — СВОИ у каждой зоны (из её метки
@@ -239,7 +322,17 @@ def op_frame(req):
             return {"ok": False, "error": res.get("error"),
                     "notes": notes}
         system_used = res.get("system_used") or system_used
-        calc_report = res.get("calc_report") or calc_report
+        if res.get("calc_report"):
+            # 24.09 (рецензия): в ответе оставался отчёт ПОСЛЕДНЕЙ зоны, хотя
+            # у зон свои оси и шаги — теперь все, верхний — самый жёсткий
+            calc_reports.append({"zone_id": zone_id, "report": res["calc_report"]})
+            def _smin(r):
+                st = r.get("steps") or {}
+                vals = [float(v) for v in (st.values() if isinstance(st, dict) else st)
+                        if isinstance(v, (int, float))]
+                return min(vals) if vals else float("inf")
+            if calc_report is None or _smin(res["calc_report"]) < _smin(calc_report):
+                calc_report = res["calc_report"]
         for coll, dst in ((res["rails"], rails),
                           (res["brackets"], brackets),
                           (res["clamps"], clamps),
@@ -287,6 +380,7 @@ def op_frame(req):
         "system_used": system_used, "summary": summary}
     if calc_report is not None:
         out["calc_report"] = calc_report
+        out["calc_reports"] = calc_reports
         summary["calc_steps"] = calc_report["steps"]
     return out
 

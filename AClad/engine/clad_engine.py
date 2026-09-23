@@ -67,12 +67,85 @@ def _inside(outer, pts_probe):
     return any(cp._pt_in_poly(outer, x, y) for x, y in pts_probe)
 
 
+def _seg_pt_dist(p, a, b):
+    ax, ay = a
+    bx, by = b
+    dx, dy = bx - ax, by - ay
+    L2 = dx * dx + dy * dy
+    if L2 <= 1e-18:
+        return ((p[0] - ax) ** 2 + (p[1] - ay) ** 2) ** 0.5
+    t = max(0.0, min(1.0, ((p[0] - ax) * dx + (p[1] - ay) * dy) / L2))
+    return ((p[0] - ax - t * dx) ** 2 + (p[1] - ay - t * dy) ** 2) ** 0.5
+
+
+def _on_edge(poly, p, tol):
+    n = len(poly)
+    return any(_seg_pt_dist(p, poly[i], poly[(i + 1) % n]) <= tol for i in range(n))
+
+
+def _pip_ray(poly, x, y):
+    n, inside = len(poly), False
+    for i in range(n):
+        x1, y1 = poly[i]
+        x2, y2 = poly[(i + 1) % n]
+        if (y1 > y) != (y2 > y):
+            if x1 + (y - y1) * (x2 - x1) / (y2 - y1) > x:
+                inside = not inside
+    return inside
+
+
+def _contains_poly(outer, inner, tol=0.5):
+    """inner ЦЕЛИКОМ внутри outer (граница — можно): вершины и середины
+    подотрезков рёбер inner, разбитых точками касания/пересечения с outer,
+    внутри или на границе outer.
+
+    24.09 (независимая рецензия): вложенность определялась по центру
+    габарита и среднему вершин — у невыпуклого контура (П, U, С) эти точки
+    лежат в ВЫЕМКЕ, и отдельная зона, стоящая в выемке, «поглощала» его как
+    проём: U-полоса 1,72 м² вокруг прямоугольника 5,28 м² — раскладка 5,28
+    из 7,00 без предупреждения."""
+    n, m = len(inner), len(outer)
+    for p in inner:
+        if not (_pip_ray(outer, p[0], p[1]) or _on_edge(outer, p, tol)):
+            return False
+    for i in range(n):
+        a1, a2 = inner[i], inner[(i + 1) % n]
+        dx, dy = a2[0] - a1[0], a2[1] - a1[1]
+        L2 = dx * dx + dy * dy
+        if L2 <= 1e-18:
+            continue
+        ts = [0.0, 1.0]
+        for j in range(m):
+            b1, b2 = outer[j], outer[(j + 1) % m]
+            for q in (b1, b2):
+                t = ((q[0] - a1[0]) * dx + (q[1] - a1[1]) * dy) / L2
+                if 0.0 < t < 1.0 and _seg_pt_dist(q, a1, a2) <= tol:
+                    ts.append(t)
+            ex, ey = b2[0] - b1[0], b2[1] - b1[1]
+            den = dx * ey - dy * ex
+            if abs(den) > 1e-12:
+                t = ((b1[0] - a1[0]) * ey - (b1[1] - a1[1]) * ex) / den
+                u = ((b1[0] - a1[0]) * dy - (b1[1] - a1[1]) * dx) / den
+                if 0.0 < t < 1.0 and -1e-9 <= u <= 1.0 + 1e-9:
+                    ts.append(t)
+        ts.sort()
+        for k in range(len(ts) - 1):
+            if ts[k + 1] - ts[k] <= 1e-12:
+                continue
+            tm = 0.5 * (ts[k] + ts[k + 1])
+            q = (a1[0] + dx * tm, a1[1] + dy * tm)
+            if not (_pip_ray(outer, q[0], q[1]) or _on_edge(outer, q, tol)):
+                return False
+    return True
+
+
 def _group_contours(raw, notes):
     """Плоский список полилиний из выбора C# → контуры {outer, holes}
     по вложенности: top-level = участок, внутри — проём; глубже проёма
-    — note-пропуск. Дуги (bulge != 0) — note-пропуск контура. Проба
-    вложенности — центр bbox и центроид вершин (фасадные проёмы
-    прямоугольные; касание границ допустимо)."""
+    — note-пропуск. Дуги (bulge != 0) — note-пропуск контура.
+    Вложенность — полная (_contains_poly: все вершины и подотрезки рёбер
+    внутри или на границе; касание допустимо), с 24.09 вместо проб по
+    центру габарита."""
     parsed = []   # (cid, pts, area, probe)
     for i, c in enumerate(raw):
         cid = str(c.get("id", i))
@@ -116,7 +189,7 @@ def _group_contours(raw, notes):
         for j in range(n):
             if i == j or parsed[j][2] <= parsed[i][2]:
                 continue
-            if _inside(parsed[j][1], parsed[i][3]):
+            if _contains_poly(parsed[j][1], parsed[i][1]):
                 if best < 0 or parsed[j][2] < parsed[best][2]:
                     best = j
         cont[i] = best

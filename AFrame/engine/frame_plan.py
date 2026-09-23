@@ -540,6 +540,43 @@ def _edge_top_clamps(clamps, rows, s_lo, s_hi, s_x, y_top, hole_boxes):
                        "kind": "боковой", "orient": "h"})
 
 
+def _poly_area(poly):
+    ox, oy = poly[0]
+    a = 0.0
+    for i in range(len(poly)):
+        x1, y1 = poly[i]
+        x2, y2 = poly[(i + 1) % len(poly)]
+        a += (x1 - ox) * (y2 - oy) - (x2 - ox) * (y1 - oy)
+    return a / 2.0
+
+
+def _max_tributary(contours, joints, mid_over, sub):
+    """Максимальная грузовая ширина стойки по ИТОГОВЫМ осям: оси раскладки
+    в пределах контура + серединные стойки (вертикальная/ортогональная, как
+    в ветках расстановки). Ширина стойки — полусумма соседних пролётов;
+    крайняя берёт пролёт до соседа (кромка зоны — отдельная консоль, её
+    правило задаёт система)."""
+    best = 0.0
+    for c in contours:
+        outer = _closed(c.get("outer") or [])
+        if len(outer) < 3:
+            continue
+        x0, _y0, x1, _y1 = _bbox(outer)
+        ax = sorted(j for j in joints if x0 - EPS <= j <= x1 + EPS)
+        if sub in ("vertical", "ortho") and mid_over and len(ax) >= 2:
+            ax = sorted(ax + [(ax[i] + ax[i + 1]) / 2.0 for i in range(len(ax) - 1)
+                              if ax[i + 1] - ax[i] > mid_over + EPS])
+        for i in range(len(ax)):
+            left = ax[i] - ax[i - 1] if i > 0 else None
+            right = ax[i + 1] - ax[i] if i + 1 < len(ax) else None
+            if left is not None and right is not None:
+                w = 0.5 * (left + right)
+            else:
+                w = left if left is not None else (right or 0.0)
+            best = max(best, w)
+    return best
+
+
 def _median_gap(vals, default):
     """Медиана интервалов сортированного списка (грузовая ширина из
     осей рустов / шаг перекрытий из отметок)."""
@@ -709,13 +746,24 @@ def _clamps_on_rails(req, sub, system, joints, rows, floors, seam_tol=2.0):
     clamps, used = [], set()
     for ci, c in enumerate(req.get("contours") or []):
         outer = _closed(c.get("outer") or [])
-        if len(outer) < 4:
+        if len(outer) < 3:
             continue
         holes = [_closed(h) for h in (c.get("holes") or [])]
         x0, y0, x1, y1 = _bbox(outer)
         hole_boxes = [_bbox(h) for h in holes]
-        mine = sorted((x, max(a, y0), min(b, y1)) for x, a, b in fixed
-                      if x0 - EPS <= x <= x1 + EPS and a < y1 - EPS and b > y0 + EPS)
+        # 24.09 (рецензия): существующую направляющую — по КОНТУРУ стены и
+        # мимо проёмов, а не по габариту (ручная стойка через «пустоту»
+        # Г-стены давала кляммеры вне стены)
+        mine = []
+        for x, a, b in fixed:
+            if not (x0 - EPS <= x <= x1 + EPS and a < y1 - EPS and b > y0 + EPS):
+                continue
+            spans = [(c0, c1) for c0, c1, _xe in _clip_pieces(outer, [(a, b, x)])]
+            for bx0, by0, bx1, by1 in hole_boxes:
+                if bx0 + EPS < x < bx1 - EPS:
+                    spans = _sub_y(spans, by0, by1)
+            mine.extend((x, c0, c1) for c0, c1 in spans if c1 - c0 > EPS)
+        mine.sort()
         if not mine:
             continue
         used.update((x, a) for x, a, _b in mine)
@@ -933,6 +981,22 @@ def frame_plan(req):
                     "несущая способность посчитана по ГП-40-40 "
                     "(в запас); нужны характеристики профиля")
     if calc_in is not None:
+        # 24.09 (независимая рецензия): грузовая ширина бралась медианой
+        # ИСХОДНЫХ осей раскладки, а стойки потом достраивались (серединные
+        # при пролёте > mid_rail_over). Оси 100/200/300/400/1600/2800 →
+        # медиана 100, а у достроенной стойки 2200 фактически 600 мм —
+        # «всё проходит», хотя кронштейн по той же формуле 3207 > 2250.
+        # Теперь b — НЕ МЕНЬШЕ максимальной фактической ширины по итоговым
+        # осям каждого контура (медиана остаётся нижней границей: в запас).
+        b_fact = _max_tributary(req.get("contours") or [], joints, mid_over, sub)
+        if b_fact:
+            calc_in = dict(calc_in or {})
+            b_med = _median_gap(joints, 600.0)
+            if not calc_in.get("b") and b_fact > b_med + 0.5:
+                calc_in["b"] = b_fact
+                notes.append("грузовая ширина для расчёта %.0f мм — максимальная по "
+                             "итоговым осям стоек (медиана исходных осей %.0f)"
+                             % (b_fact, b_med))
         calc_rep, cerr, csteps = _apply_calc(
             calc_in or {}, system, sub, joints, floors,
             floor_step, corners)
@@ -949,13 +1013,23 @@ def frame_plan(req):
 
     for ci, c in enumerate(req.get("contours") or []):
         outer = _closed(c.get("outer") or [])
-        if len(outer) < 4:
-            notes.append("контур %d: меньше 4 вершин — пропуск"
+        if len(outer) < 3:
+            # 24.09 (рецензия): треугольный фасад (≥3 вершины) раньше
+            # отбрасывался «меньше 4 вершин» с ok=true и пустым ответом
+            notes.append("контур %d: меньше 3 вершин — пропуск"
                          % (ci + 1))
             continue
         holes = [_closed(h) for h in (c.get("holes") or [])]
         x0, y0, x1, y1 = _bbox(outer)
         hole_boxes = [_bbox(h) for h in holes]
+        # 24.09 (рецензия): проёмы везде — по габариту; у непрямоугольного
+        # (трапеция, треугольник, скос) подсистема обходит весь габарит
+        for hi, h in enumerate(holes):
+            hb = _bbox(h)
+            ha = abs(_poly_area(h))
+            if ha < (hb[2] - hb[0]) * (hb[3] - hb[1]) * (1.0 - 1e-6):
+                notes.append("проём %d не прямоугольный — подсистема обходит его по "
+                             "габариту %.0f×%.0f" % (hi + 1, hb[2] - hb[0], hb[3] - hb[1]))
         wedges = _win_edges(hole_boxes,
                             [j for j in joints if x0 - EPS <= j <= x1 + EPS],
                             edge_off)

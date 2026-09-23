@@ -1066,4 +1066,72 @@ ok(_rj["ok"] and {round(t["x"], 1) for t in _rj["rails"]} >= {round(x, 1) for x 
    and not ({round(t["x"], 1) for t in _rj["rails"]} & ({round(x, 1) for x in _jz2} - {round(x, 1) for x in _jz})),
    "ZF6: свои оси зоны важнее общего списка (чужих швов нет)")
 
+# ── IR1–IR9 (24.09, независимая рецензия): расчёт по фактической
+#    грузовой ширине, треугольник, дуги голого контура, «только
+#    кляммеры» по контуру и мимо проёмов, отчёт по каждой зоне, полная
+#    вложенность контуров ──
+_ir = {"op": "frame", "sub_type": "vertical", "system": "Вектор-1", "corners_x": [0, 3100],
+       "contours": [{"id": "A", "pts": rect(0, 0, 3100, 3000)}],
+       "joints_x": [100, 200, 300, 400, 1600, 2800], "rows_y": [600.0 * k for k in range(1, 5)],
+       "calc": {"wind_region": "II", "terrain": "B", "height": 30, "q_clad": 25, "offset": 230,
+                "na_max": 3000}}
+_r1 = _fe.run(json.loads(json.dumps(_ir)))
+_st = _r1["calc_report"]["steps"]
+ok(_r1["ok"] and any("грузовая ширина для расчёта 600" in n for n in _r1["notes"]),
+   "IR1: грузовая ширина — по итоговым осям (600), не медиана исходных (100)")
+_b2200 = sorted(b["y"] for b in _r1["brackets"] if abs(b["x"] - 2200) < 1e-6)
+ok(_st["corner"] <= 500 and all(_b2200[i + 1] - _b2200[i] <= _st["corner"] + 1e-6
+                                for i in range(len(_b2200) - 1)),
+   "IR1b: у достроенной стойки X=2200 шаг кронштейнов в пределах расчётного угловой зоны (%s)" % _b2200)
+_reg = dict(json.loads(json.dumps(_ir)), joints_x=[305.0 + 610 * k for k in range(5)])
+_r2 = _fe.run(_reg)
+ok(_r2["ok"] and not any("грузовая ширина для расчёта" in n for n in _r2["notes"]),
+   "IR2: регулярная сетка — ширина прежняя (нота не нужна)")
+_tri = _fe.run({"op": "frame", "sub_type": "vertical", "system": "Standart",
+                "contours": [{"id": "T", "pts": [[0, 0], [6000, 0], [3000, 6000]]}],
+                "joints_x": [305.0 + 610 * k for k in range(10)], "rows_y": [605.0 * k for k in range(1, 10)]})
+ok(_tri["ok"] and _tri["rails"] and all(_pip([[0, 0], [6000, 0], [3000, 6000]], t["x"], t["y1"])
+                                        for t in _tri["rails"]),
+   "IR3: треугольный фасад — подсистема есть, стойки до скатов (%d)" % len(_tri["rails"]))
+_arc = _fe.run({"op": "frame", "sub_type": "vertical", "system": "Standart",
+                "contours": [{"id": "A", "pts": rect(0, 0, 6000, 3000), "bulges": [0, 0, 1, 0]}],
+                "joints_x": [305.0 + 610 * k for k in range(10)], "rows_y": [605.0 * k for k in range(1, 5)]})
+ok(any("дуги не поддерживаются" in n for n in _arc["notes"]) and not _arc.get("rails"),
+   "IR4: голый контур с дугой — нота, не молчаливая хорда")
+_Lr = [[0, 0], [6000, 0], [6000, 6000], [3000, 6000], [3000, 2000], [0, 2000]]
+_cf = _fe.run({"op": "frame", "sub_type": "vertical", "system": "Standart",
+               "contours": [{"id": "L", "pts": _Lr}, {"id": "W", "pts": rect(3600, 3000, 4800, 4500)}],
+               "parts": "clamps", "rails_fixed": [{"x": 1000, "y0": 0, "y1": 6000}, {"x": 4200, "y0": 0, "y1": 6000}],
+               "joints_x": [1000.0, 4200.0], "rows_y": [600.0 * k for k in range(1, 11)]})
+ok(_cf["ok"] and not [c for c in _cf["clamps"] if abs(c["x"] - 1000) < 1e-6 and c["y"] > 2000 + 60],
+   "IR5: только кляммеры — существующая стойка по контуру стены (не в «пустоте» Г)")
+ok(not [c for c in _cf["clamps"] if abs(c["x"] - 4200) < 1e-6 and 3000 + 60 < c["y"] < 4500 - 60],
+   "IR5b: только кляммеры — не внутри окна")
+_mz = _fe.run({"op": "frame", "sub_type": "vertical", "system": "Вектор-1", "contours": [],
+               "zones": [{"zone_id": "Ф-1", "zone": {"units": "mm", "outer": {"pts": rect(0, 0, 6000, 3000)}},
+                          "joints_x": [305.0 + 610 * k for k in range(10)]},
+                         {"zone_id": "Ф-2", "zone": {"units": "mm", "outer": {"pts": rect(0, 4000, 3100, 7000)}},
+                          "joints_x": [100, 200, 300, 400, 1600, 2800]}],
+               "rows_y": [600.0 * k for k in range(1, 12)], "corners_x": [0, 3100, 6000],
+               "calc": {"wind_region": "II", "terrain": "B", "height": 30, "q_clad": 25, "offset": 230,
+                        "na_max": 3000}})
+ok(_mz["ok"] and [c["zone_id"] for c in _mz.get("calc_reports") or []] == ["Ф-1", "Ф-2"],
+   "IR6: расчётный отчёт по каждой зоне (calc_reports), не только последней")
+_U = [[0, 0], [2600, 0], [2600, 2400], [2500, 2400], [2500, 100], [100, 100], [100, 2400], [0, 2400]]
+_g = _fe.run({"op": "frame", "sub_type": "vertical", "system": "Standart",
+              "contours": [{"id": "U", "pts": _U}, {"id": "I", "pts": rect(300, 300, 2300, 2200)}],
+              "joints_x": [305.0 + 610 * k for k in range(5)], "rows_y": [605.0 * k for k in range(1, 4)]})
+ok(_g["ok"] and {t["zone"] for t in _g["rails"]} == {"контур U", "контур I"},
+   "IR7: U-полоса вокруг отдельной зоны — обе зоны (не «проём»)")
+_Uw = [[0, 0], [9000, 0], [9000, 6000], [6000, 6000], [6000, 3000], [3000, 3000], [3000, 6000], [0, 6000]]
+_Uo = [[500, 500], [8500, 500], [8500, 2500], [7000, 2500], [7000, 1500], [2000, 1500], [2000, 2500], [500, 2500]]
+_h = _fe.run({"op": "frame", "sub_type": "vertical", "system": "Standart",
+              "contours": [{"id": "W", "pts": _Uw}, {"id": "O", "pts": _Uo}],
+              "joints_x": [305.0 + 610 * k for k in range(15)], "rows_y": [605.0 * k for k in range(1, 10)]})
+ok(_h["ok"] and {t["zone"] for t in _h["rails"]} == {"контур W"},
+   "IR8: П-проём внутри П-стены (проба габарита в выемке стены) — проём, а не стена")
+ok(not any(2000 + 1 < t["x"] < 7000 - 1 and t["y0"] < 1500 - 1 and t["y1"] > 500 + 1 and
+           not (t["y1"] <= 500 + 1 or t["y0"] >= 1500 - 1) for t in _h["rails"]),
+   "IR8b: стойки не сквозь П-проём")
+
 print("frame_plan: %d проверок OK" % _n)
