@@ -305,4 +305,275 @@ ok(abs(R - 1500) < 1e-6 and abs(Bd - 0) < 1e-6,
    "T17: датум объединённой зоны — наружная правая кромка 1500, низ 0 (%s, %s)" % (R, Bd))
 
 
+
+# ══════════════ 23.09: универсальная разбежка (bond/anchor/axis/…) ══════════════
+
+def run_u(**kw):
+    """Универсальный вызов: керамогранит 600×1200 (по умолчанию), руст 8."""
+    base = {"tile": {"w": 600, "h": 1200}, "gap": {"v": 8, "h": 8},
+            "types": ["КГ"]}
+    base.update(kw)
+    return tp.tile_pattern(base)
+
+
+def fulls(p):
+    return [t for t in p["pieces"] if t["full"]]
+
+
+def has_full_at(p, x, y, tol=1e-6):
+    return any(abs(t["x"] - x) < tol and abs(t["y"] - y) < tol for t in fulls(p))
+
+
+# ── T18: через ряд 1/2 от правого-нижнего ≡ образец 09.09 [0, ½] (регресс) ──
+Zw = [{"id": "Z", "outer": rect(0, 0, 3000, 1500), "holes": [rect(900, 400, 800, 700)]}]
+p_old = run(PAT_STACK, contours=Zw)
+p_new = run(PAT_STACK, contours=Zw, bond={"kind": "none"},
+            anchor={"h": "R", "v": "B"})
+key = lambda p: sorted((round(t["x"], 3), round(t["y"], 3), round(t["w"], 3),
+                        round(t["h"], 3), t["type"]) for t in p["pieces"])
+ok(p_new["ok"] and key(p_old) == key(p_new),
+   "T18a: bond none + anchor R,B ≡ стек 09.09 (%d vs %d кусков)"
+   % (len(p_old["pieces"]), len(p_new["pieces"])))
+P1 = {"rows": [["T1"], ["T1"]], "row_shifts": [0.0, 0.5]}
+p_old = run(P1, contours=Zw)
+p_new = run({"rows": [["T1"]], "row_shifts": [0.0]}, contours=Zw,
+            bond={"kind": "alternate", "value": 0.5},
+            anchor={"h": "R", "v": "B"})
+ok(key(p_old) == key(p_new), "T18b: через ряд ½ ≡ образец [0, ½] 09.09")
+
+# ── T19: сдвиги лесенкой 1/3: 0, ⅓, ⅔, 0 …; ниже базы — продолжение ──
+fn, info = tp.resolve_bond({"kind": "step", "value": "1/3"}, [0.0], 608.0)
+vals = [round(fn(j), 6) for j in (-1, 0, 1, 2, 3)]
+ok(vals == [round(2 / 3.0, 6), 0.0, round(1 / 3.0, 6), round(2 / 3.0, 6), 0.0],
+   "T19a: лесенка ⅓ (%s)" % vals)
+ok(info["period"] == 3 and len(info["phases"]) == 3, "T19b: период 3, фаз 3 (%s)" % info)
+fn, info = tp.resolve_bond({"kind": "step", "value": "1/3", "dir": "-"}, [0.0], 608.0)
+ok(round(fn(1), 6) == round(2 / 3.0, 6), "T19c: влево ⅓ ≡ вправо ⅔ по модулю")
+fn, info = tp.resolve_bond({"kind": "alternate", "value": 0.75, "dir": "left"}, [0.0], 608.0)
+ok(round(fn(1), 6) == 0.25 and fn(2) == 0.0, "T19d: через ряд ¾ влево = ¼ вправо")
+
+# ── T20: смещение в мм: 200 мм при модуле 608; у левой кромки ряда 1 кусок 192 ──
+Zp = [{"id": "P", "outer": rect(0, 0, 3000, 2416)}]
+p = run_u(contours=Zp, bond={"kind": "alternate", "value": 200, "units": "mm"},
+          anchor={"h": "L", "v": "B"})
+r1 = sorted((t for t in p["pieces"] if t["j"] == 1), key=lambda t: t["x"])
+ok(abs(r1[0]["x"]) < 1e-6 and abs(r1[0]["w"] - 192) < 1e-6 and not r1[0]["full"],
+   "T20a: ряд 1 начинается куском 192 мм (%s)" % r1[0])
+ok(abs(r1[1]["x"] - 200) < 1e-6 and r1[1]["full"], "T20b: первая целая ряда 1 с X=200")
+fn, info = tp.resolve_bond({"kind": "step", "value": 200, "units": "mm"}, [0.0], 608.0)
+ok(info["period"] == 76, "T20c: лесенка 200 мм на модуле 608 — период 76 (%s)" % info["period"])
+
+# ── T21: своя последовательность; первое значение приводится к 0 ──
+fn, info = tp.resolve_bond({"kind": "sequence", "sequence": ["1/4", "3/4"]}, [0.0], 608.0)
+ok([round(fn(j), 6) for j in range(4)] == [0.0, 0.5, 0.0, 0.5] and info["notes"],
+   "T21a: [¼, ¾] → [0, ½] + замечание")
+fn, info = tp.resolve_bond({"kind": "sequence", "sequence": "0; 200; 400",
+                            "units": "mm"}, [0.0], 608.0)
+ok(abs(fn(2) * 608 - 400) < 1e-6 and info["period"] == 3, "T21b: строка «0; 200; 400» мм")
+
+# ── T22: привязка — целая плитка в выбранной точке габарита ──
+Zs = [{"id": "S", "outer": rect(0, 0, 6000, 6000)}]
+cases = [({"h": "L", "v": "B"}, (0, 0)), ({"h": "R", "v": "B"}, (5400, 0)),
+         ({"h": "L", "v": "T"}, (0, 4800)), ({"h": "R", "v": "T"}, (5400, 4800)),
+         ({"h": "C", "v": "B"}, (2700, 0)), ({"h": "C", "v": "C"}, (2700, 2400))]
+for an, (x, y) in cases:
+    p = run_u(contours=Zs, bond={"kind": "none"}, anchor=an)
+    ok(has_full_at(p, x, y), "T22: привязка %s → целая в (%s, %s)" % (an, x, y))
+p = run_u(contours=Zs, bond={"kind": "none"}, anchor={"h": "C", "v": "B", "center": "joint"})
+ok(has_full_at(p, 2396, 0) and has_full_at(p, 3004, 0), "T22j: шов по оси 3000 (2996…3004)")
+p = run_u(contours=Zs, bond={"kind": "none"}, anchor={"h": "L", "v": "B", "point": {"x": 1000, "y": 500}})
+ok(has_full_at(p, 1000, 500) and any(t["y"] < 500 and not t["full"] for t in p["pieces"]),
+   "T22p: общая точка (1000, 500): целая там, ниже — подрезка")
+p = run_u(contours=Zs, bond={"kind": "alternate", "value": 0.5}, anchor={"h": "R", "v": "T"})
+top = [t for t in p["pieces"] if t["j"] == 0]
+ok(any(t["full"] and abs(t["x"] + t["w"] - 6000) < 1e-6 for t in top),
+   "T22t: сверху-справа — базовый ряд верхний, целая у правой кромки")
+row_below = [t for t in p["pieces"] if t["j"] == -1]
+ok(any(abs(t["x"] + t["w"] - 6000) < 1e-6 and abs(t["w"] - 296) < 1e-6 for t in row_below),
+   "T22u: ряд под базовым сдвинут на ½ — у кромки кусок 296")
+
+# ── T23: вертикальные столбцы (axis=cols), ручной счёт: 600×1200, ½ вверх ──
+Zc = [{"id": "C", "outer": rect(0, 0, 2000, 3000)}]
+p = run_u(contours=Zc, axis="cols", bond={"kind": "alternate", "value": 0.5, "dir": "+"},
+          anchor={"h": "L", "v": "B"})
+col = lambda x0: sorted((round(t["y"], 3), round(t["h"], 3), t["full"])
+                        for t in p["pieces"] if abs(t["x"] - x0) < 1e-6)
+ok(col(0) == [(0.0, 1200.0, True), (1208.0, 1200.0, True), (2416.0, 584.0, False)],
+   "T23a: столбец 0 от низа: 1200, 1200, подрезка 584 (%s)" % col(0))
+ok(col(608) == [(0.0, 596.0, False), (604.0, 1200.0, True), (1812.0, 1188.0, False)],
+   "T23b: столбец 1 сдвинут на ½ вверх: 596, целая, 1188 (%s)" % col(608))
+xs = sorted({round(t["x"], 3) for t in p["pieces"]})
+ok(xs == [0.0, 608.0, 1216.0, 1824.0] and
+   all(abs(t["w"] - 176) < 1e-6 for t in p["pieces"] if abs(t["x"] - 1824) < 1e-6),
+   "T23c: столбцы 0/608/1216/1824, крайний шириной 176 (%s)" % xs)
+ok(p["per_zone"][0]["joints_x"] == [604.0, 1212.0, 1820.0],
+   "T23d: вертикальные швы столбцов сплошные (%s)" % p["per_zone"][0]["joints_x"])
+ok(p["summary"]["bond"]["text"].startswith("через ряд: каждый второй столбец сдвинут вверх"),
+   "T23e: текст смещения для столбцов (%s)" % p["summary"]["bond"]["text"])
+# транспонированная проверка: cols на Z ≡ rows на Zᵀ с переставленными размерами
+Zt = [{"id": "C", "outer": [[y, x] for x, y in rect(0, 0, 2000, 3000)]}]
+q = tp.tile_pattern({"tile": {"w": 1200, "h": 600}, "gap": {"v": 8, "h": 8}, "types": ["КГ"],
+                     "contours": Zt, "bond": {"kind": "alternate", "value": 0.5},
+                     "anchor": {"h": "L", "v": "B"}})
+ka = sorted((round(t["x"], 3), round(t["y"], 3), round(t["w"], 3), round(t["h"], 3)) for t in p["pieces"])
+kb = sorted((round(t["y"], 3), round(t["x"], 3), round(t["h"], 3), round(t["w"], 3)) for t in q["pieces"])
+ok(ka == kb, "T23f: столбцы ≡ транспонированные ряды")
+
+# ── T24: руст вокруг проёма — ни один кусок не ближе руста к окну ──
+Zg = [{"id": "G", "outer": rect(0, 0, 3000, 3000), "holes": [rect(1000, 1000, 1000, 1000)]}]
+p = tp.tile_pattern({"tile": {"w": 600, "h": 600}, "gap": {"v": 8, "h": 8}, "types": ["КГ"],
+                     "contours": Zg, "bond": {"kind": "none"}, "anchor": {"h": "L", "v": "B"},
+                     "gap_around": True})
+def _over(t, x0, y0, x1, y1):
+    """Площадь куска (по фактическому контуру, Г — по кольцу) в окне."""
+    if t.get("rings"):
+        reg = tp.OrthoRegion(t["rings"][0], t["rings"][1:])
+        return sum((c - a) * (d - b) for a, b, c, d in reg.clip_rect(x0, y0, x1, y1))
+    return max(0.0, min(t["x"] + t["w"], x1) - max(t["x"], x0)) * \
+        max(0.0, min(t["y"] + t["h"], y1) - max(t["y"], y0))
+bad = [t for t in p["pieces"] if _over(t, 992, 992, 2008, 2008) > 1e-6]
+ok(p["ok"] and not bad, "T24a: руст 8 вокруг окна соблюдён (нарушителей %d)" % len(bad))
+ok(any(abs(t["x"] + t["w"] - 992) < 1e-6 for t in p["pieces"]) and
+   any(abs(t["x"] - 2008) < 1e-6 for t in p["pieces"]),
+   "T24b: камни встают к шву окна (кромки 992 и 2008)")
+jx = p["per_zone"][0]["joints_x"]
+ok(996.0 in jx and 2004.0 in jx, "T24c: боковые швы окна — оси стоек (%s)" % jx)
+p0 = tp.tile_pattern({"tile": {"w": 600, "h": 600}, "gap": {"v": 8, "h": 8}, "types": ["КГ"],
+                      "contours": Zg, "bond": {"kind": "none"}, "anchor": {"h": "L", "v": "B"}})
+ok(p0["summary"]["area_tiles"] > p["summary"]["area_tiles"],
+   "T24d: без руста вокруг проёма облицовки больше (к кромке окна)")
+
+# ── T25: Г-кусок у угла окна: оставить / разрезать / разрезать с рустом ──
+Zl = [{"id": "L", "outer": rect(0, 0, 3000, 3000), "holes": [rect(700, 700, 600, 600)]}]
+def lay(shaped):
+    return tp.tile_pattern({"tile": {"w": 600, "h": 600}, "gap": {"v": 8, "h": 8},
+                            "types": ["КГ"], "contours": Zl, "bond": {"kind": "none"},
+                            "anchor": {"h": "L", "v": "B"}, "gap_around": True,
+                            "shaped": shaped})
+cell = lambda p: [t for t in p["pieces"] if t["i"] == -2 and t["j"] == 2]
+pk, ps, pj = lay("keep"), lay("split"), lay("split_joint")
+ok(len(cell(pk)) == 1 and not cell(pk)[0]["rect"], "T25a: keep — один фигурный Г-кусок")
+a_l = cell(pk)[0]["area"]
+ok(abs(a_l - (508 * 600 + 92 * 508)) < 1e-6, "T25b: площадь Г = 508·600 + 92·508 (%s)" % a_l)
+sp = sorted(cell(ps), key=lambda t: t["x"])
+ok(len(sp) == 2 and all(t["rect"] and t.get("split") for t in sp) and
+   abs(sum(t["area"] for t in sp) - a_l) < 1e-6, "T25c: split — два прямоугольника той же площади")
+sj = sorted(cell(pj), key=lambda t: t["x"])
+ok(len(sj) == 2 and abs(sj[0]["x"] + sj[0]["w"] - 1300) < 1e-6 and
+   abs(sj[1]["x"] - 1308) < 1e-6 and abs(sj[1]["h"] - 600) < 1e-6,
+   "T25d: split_joint — верхний кусок до грани окна 1300, боковой от 1308 (%s)" % sj)
+# низ окна 700 (с рустом 692) против ряда 608 → у нижних углов полоса 84,
+# у верхних (верх 1300+8 против ряда 1216) — 508: 2·8·84 + 2·8·508
+ok(abs(pj["summary"]["trimmed"]["area"] - (2 * 8 * 84 + 2 * 8 * 508)) < 1e-6 and
+   pj["summary"]["trimmed"]["count"] == 4,
+   "T25e: снято рустом 2·8·84 + 2·8·508 (%s)" % pj["summary"]["trimmed"])
+
+# ── T26: малая подрезка — только РЕЗАНЫЙ размер меньше порога ──
+Zm = [{"id": "M", "outer": rect(0, 0, 4 * 608 + 100, 1200)}]
+p = run_u(contours=Zm, bond={"kind": "none"}, anchor={"h": "L", "v": "B"}, warn_cut=150)
+sm = [t for t in p["pieces"] if t.get("small")]
+ok(len(sm) == 1 and abs(sm[0]["w"] - 100) < 1e-6 and p["summary"]["small"] == 1,
+   "T26a: кусок 100 мм при пороге 150 — малая подрезка")
+p = run_u(contours=Zm, bond={"kind": "none"}, anchor={"h": "L", "v": "B"}, warn_cut=100)
+ok(p["summary"]["small"] == 0, "T26b: порог 100 — кусок 100 не малый")
+pb = run(PAT_STACK, contours=[{"id": "B", "outer": rect(0, 0, 4 * 297 + 120, 4 * 89 - 7)}],
+         warn_cut=100, bond={"kind": "none"}, anchor={"h": "L", "v": "B"})
+ok(pb["summary"]["small"] == 0, "T26c: кирпич 82 мм высотой — не «малый» при пороге 100")
+
+# ── T27: мост к ATFRAME — оси швов по фактическим стыкам ──
+Zb = [{"id": "J", "outer": rect(0, 0, 2424, 1816)}]
+p = tp.tile_pattern({"tile": {"w": 600, "h": 600}, "gap": {"v": 8, "h": 8}, "types": ["КГ"],
+                     "contours": Zb, "bond": {"kind": "none"}, "anchor": {"h": "L", "v": "B"}})
+ok(p["per_zone"][0]["joints_x"] == [604.0, 1212.0, 1820.0] and
+   p["per_zone"][0]["rows_y"] == [604.0, 1212.0], "T27a: стек — швы %s / %s"
+   % (p["per_zone"][0]["joints_x"], p["per_zone"][0]["rows_y"]))
+p = tp.tile_pattern({"tile": {"w": 600, "h": 600}, "gap": {"v": 8, "h": 8}, "types": ["КГ"],
+                     "contours": Zb, "bond": {"kind": "alternate", "value": 0.5},
+                     "anchor": {"h": "L", "v": "B"}})
+ok(p["per_zone"][0]["joints_x"] == [300.0, 604.0, 908.0, 1212.0, 1516.0, 1820.0, 2124.0],
+   "T27b: разбежка ½ — объединение осей рядов (%s)" % p["per_zone"][0]["joints_x"])
+ok(p["summary"]["joint_axes_per_module"] == 2 and
+   any("оси стоек" in n for n in p["notes"]), "T27c: 2 оси на модуль + замечание для НВФ")
+
+# ── T28–29: образец с привязкой слева/сверху — в базовой плитке свой элемент ──
+p = run(PAT2, contours=[{"id": "Q", "outer": rect(0, 0, 4 * 297 - 7, 4 * 89 - 7)}],
+        bond={"kind": "none"}, anchor={"h": "L", "v": "B"})
+t00 = [t for t in p["pieces"] if t["i"] == 0 and t["j"] == 0][0]
+t10 = [t for t in p["pieces"] if t["i"] == -1 and t["j"] == 0][0]
+ok(abs(t00["x"]) < 1e-6 and t00["type"] == "T1" and t10["type"] == "T2",
+   "T28: слева-снизу — образец с левого элемента (T1, T2 …)")
+p = run(PAT2, contours=[{"id": "Q", "outer": rect(0, 0, 4 * 297 - 7, 4 * 89 - 7)}],
+        bond={"kind": "none"}, anchor={"h": "R", "v": "T"})
+t00 = [t for t in p["pieces"] if t["i"] == 0 and t["j"] == 0][0]
+ok(t00["type"] == PAT2["rows"][-1][-1] and abs(t00["y"] + t00["h"] - (4 * 89 - 7)) < 1e-6,
+   "T29: справа-сверху — верхний правый элемент образца")
+
+# ── T30–31: отказы с понятным текстом ──
+for bad_kw, what in ((dict(bond={"kind": "zigzag"}), "вид смещения"),
+                     (dict(bond={"kind": "sequence", "sequence": []}), "пустая"),
+                     (dict(anchor={"h": "X"}), "anchor"),
+                     (dict(axis="diag"), "axis"),
+                     (dict(shaped="cut"), "shaped"),
+                     (dict(bond={"kind": "step", "value": "1/0"}), "ноль")):
+    p = run_u(contours=Zs, **bad_kw)
+    ok(not p["ok"] and what in p["error"], "T30: отказ %s (%s)" % (bad_kw, p.get("error")))
+p = run_u(contours=Zs, bond={"kind": "alternate", "value": 1.5})
+ok(p["ok"] and any("остаток" in n for n in p["notes"]), "T31: смещение ≥ модуля → остаток + note")
+
+# ── T32: CLI clad_engine: столбцы + образец (транспонируется) + новые ключи ──
+sample = []
+for jj, row in enumerate([["A", "B"], ["B", "A"]]):
+    for ii, t in enumerate(row):
+        sample.append({"x0": jj * 608, "y0": ii * 1208, "x1": jj * 608 + 600,
+                       "y1": ii * 1208 + 1200, "type": t})
+req = {"op": "tile_pattern", "tile": {"w": 600, "h": 1200}, "gap": {"v": 8, "h": 8},
+       "sample": sample, "axis": "cols", "bond": {"kind": "pattern"},
+       "anchor": {"h": "L", "v": "B"}, "gap_around": True, "shaped": "split_joint",
+       "warn_cut": 150, "contours": [{"id": "K", "pts": rect(0, 0, 2424, 3624)}]}
+d = tempfile.mkdtemp()
+fi, fo = os.path.join(d, "in.json"), os.path.join(d, "out.json")
+json.dump(req, open(fi, "w", encoding="utf-8"), ensure_ascii=False)
+rc = subprocess.call([sys.executable, "clad_engine.py", fi, fo])
+out = json.load(open(fo, encoding="utf-8"))
+ok(rc == 0 and out["ok"] and out["summary"]["axis"] == "cols" and
+   {t["type"] for t in out["pieces"]} == {"A", "B"}, "T32a: CLI cols + образец")
+c0 = sorted((t for t in out["pieces"] if abs(t["x"]) < 1e-6), key=lambda t: t["y"])
+ok([t["type"] for t in c0[:2]] == ["A", "B"], "T32b: столбец 0 снизу вверх A, B (%s)"
+   % [t["type"] for t in c0[:2]])
+ok(all(k in out["per_zone"][0] for k in ("joints_x", "rows_y", "small", "trimmed", "members")),
+   "T32c: мост ATFRAME и счётчики в per_zone")
+
+
+# ── T33–T36: грабли, найденные синтетикой 23.09 (регресс) ──
+base_s = {"tile": {"w": 600, "h": 600}, "gap": {"v": 8, "h": 8}, "types": ["T"],
+          "bond": {"kind": "none"}, "anchor": {"h": "L", "v": "B"}}
+# T33: подрезанная плитка через ГОРИЗОНТАЛЬНЫЙ шов смежных зон — один кусок
+p = tp.tile_pattern(dict(base_s, contours=[{"id": "A", "outer": rect(0, 0, 3000, 2967)},
+                                           {"id": "B", "outer": rect(0, 2967, 3000, 2000)}]))
+seam = [t for t in p["pieces"] if t["x"] > 2400 and 2400 < t["y"] < 3000]
+ok(len(seam) == 1 and abs(seam[0]["h"] - 600) < 1e-6 and abs(seam[0]["w"] - 568) < 1e-6,
+   "T33a: кусок 568×600 через шов y=2967 не делится (%s)" % seam)
+q = tp.tile_pattern(dict(base_s, axis="cols",
+                         contours=[{"id": "A", "outer": rect(0, 0, 2967, 3000)},
+                                   {"id": "B", "outer": rect(2967, 0, 2000, 3000)}]))
+ok(not any(abs(t["x"] - 2967) < 1e-6 or abs(t["x"] + t["w"] - 2967) < 1e-6
+           for t in q["pieces"]), "T33b: столбцы — вертикальный шов стен не режет плитку")
+# T34: перекрывающиеся зоны НЕ сливаются (нижние рёбра на одной линии) + замечание
+p = tp.tile_pattern(dict(base_s, contours=[{"id": "A", "outer": rect(0, 0, 3000, 3000)},
+                                           {"id": "B", "outer": rect(2000, 0, 3000, 3000)}]))
+ok(p["summary"]["zones"] == 2 and any("перекрываются" in n for n in p["notes"]),
+   "T34: перекрытие зон — две зоны и предупреждение (%s)" % p["notes"])
+# T35: два перекрывающихся проёма — внутри объединения облицовки нет
+p = tp.tile_pattern(dict(base_s, contours=[{"id": "W", "outer": rect(0, 0, 3000, 3000),
+                         "holes": [rect(200, 200, 800, 800), rect(700, 700, 800, 800)]}]))
+inside = sum(_over(t, 200, 200, 1000, 1000) + _over(t, 700, 700, 1500, 1500) -
+             _over(t, 700, 700, 1000, 1000) for t in p["pieces"])
+ok(inside < 1e-6, "T35: наложение проёмов — облицовки внутри нет (%.3f мм²)" % inside)
+# T36: проём, вылезающий за верх стены, — облицовки снаружи стены нет
+p = tp.tile_pattern(dict(base_s, contours=[{"id": "W", "outer": rect(0, 0, 3000, 3000),
+                         "holes": [rect(1000, 2500, 800, 700)]}]))
+ok(not any(t["y"] + t["h"] > 3000 + 1e-6 for t in p["pieces"]),
+   "T36: проём за контуром стены не рождает облицовку снаружи")
+
+
 print("tile_pattern: OK, %d проверок" % _n)

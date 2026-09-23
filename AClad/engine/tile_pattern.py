@@ -64,6 +64,42 @@
 - датум по умолчанию — "bbox" (ответ Германа 09.09 на В1: как у GPT —
   правый-низ габарита зоны, буквальное «справа налево, снизу вверх»).
 
+УНИВЕРСАЛЬНАЯ РАЗБЕЖКА (23.09, заявка «шахматный порядок для любой
+облицовки»: керамогранит любых форматов, фиброцемент, камень, клинкер).
+Новые ключи запроса (все необязательны; без них — прежнее поведение
+один в один, 91 юнит 09.09 — регресс):
+- "bond": {"kind", "value", "units", "dir", "sequence"} — смещение рядов
+  без образца: "none" — шов в шов; "alternate" — через ряд (0, s, 0,
+  s …); "step" — лесенкой (ряд выше сдвинут на s относительно ряда
+  ниже, накопительно); "sequence" — своя последовательность сдвигов
+  рядов (повторяется; приводится к 0 у базового ряда); "pattern" —
+  сдвиги из образца (как 09.09). value/sequence — доли МОДУЛЯ (плитка
+  + шов: 1/2 = стык ряда ровно по центру плитки нижнего ряда) при
+  units="frac" или мм при units="mm"; dir "+" — вправо (для столбцов
+  — вверх), "-" — влево/вниз;
+- "axis": "rows" (ряды горизонтальные, смещение по X) | "cols"
+  (столбцы вертикальные, смещение по Y) — «cols» считается той же
+  машиной в транспонированной плоскости (x↔y), результат
+  транспонируется обратно;
+- "anchor": {"h": L|C|R, "v": B|C|T, "center": tile|joint, "ref":
+  bbox|wall, "point"?} — где стоит ЦЕЛАЯ плитка базового ряда: угол/
+  середина габарита зоны (ref=bbox) или основной стены (ref=wall),
+  либо общая точка (point) — общий горизонт/вертикаль всех зон;
+  center: при C — плитка по оси или шов по оси;
+- "gap_around": true — руст вокруг проёмов со всех сторон (ТЗ Германа
+  1.5/П4 для кассет): проёмы расширяются на gap.v слева/справа и gap.h
+  сверху/снизу, облицовка к проёму не прилипает;
+- "shaped": "keep" (Г-куски фигурными, как 09.09) | "split" (на
+  прямоугольники по линиям полос) | "split_joint" (на прямоугольники с
+  рустом по продолжению грани проёма: у линии разреза более короткая
+  полоса укорачивается на руст);
+- "warn_cut": порог малой подрезки, мм — кусок, РЕЗАНЫЙ по ширине
+  (высоте) уже порога, помечается small (предупреждение, не удаление);
+- выход дополняется: pieces[].small/split, per_zone[].joints_x/rows_y
+  (мост к ATFRAME: оси вертикальных швов = оси стоек, центры
+  горизонтальных — кляммеры; считаются по фактическим стыкам кусков),
+  summary.bond (разобранное смещение + текст), summary.small/trimmed.
+
 Только stdlib.
 """
 from bisect import bisect_left, bisect_right
@@ -134,7 +170,16 @@ class OrthoRegion(object):
             ivs = []
             for m in range(0, len(ys) - 1, 2):
                 if ys[m + 1] - ys[m] > EPS:
-                    ivs.append((ys[m], ys[m + 1]))
+                    # 23.09 (синтетика): интервалы, касающиеся друг друга
+                    # (горизонтальный шов смежных контуров одной плоскости),
+                    # сливаются — иначе подрезанная плитка через шов делилась
+                    # на два куска (компоненты связности соединяют полосы
+                    # только по X); для столбцов так выглядит ЛЮБОЙ
+                    # вертикальный шов стен (транспонирование)
+                    if ivs and abs(ivs[-1][1] - ys[m]) <= EPS:
+                        ivs[-1] = (ivs[-1][0], ys[m + 1])
+                    else:
+                        ivs.append((ys[m], ys[m + 1]))
                     self.area += (xs[k + 1] - xs[k]) * (ys[m + 1] - ys[m])
             self.slabs.append((xs[k], xs[k + 1], ivs))
         bx0, bx1 = (xs[0], xs[-1]) if xs else (0.0, 0.0)
@@ -278,6 +323,130 @@ def union_outline(rects):
     return rings
 
 
+def _sub_iv(ivs, a, b):
+    """Y-интервалы ivs (отсортированные, непересекающиеся) минус [a, b]."""
+    out = []
+    for ya, yb in ivs:
+        if yb <= a + EPS or ya >= b - EPS:
+            out.append((ya, yb))
+            continue
+        if ya < a - EPS:
+            out.append((ya, a))
+        if yb > b + EPS:
+            out.append((b, yb))
+    return out
+
+
+def region_subtract(region, cutters):
+    """Новая зона = region минус объединение прямоугольников cutters
+    [(x0, y0, x1, y1)] — полосы перестраиваются по X всех границ;
+    используется для «руста вокруг проёмов» (проёмы, расширенные на
+    руст, вычитаются из зоны без дыр)."""
+    if not cutters or not region.xs:
+        return region
+    x_lo, x_hi = region.xs[0], region.xs[-1]
+    xs = set(region.xs)
+    for cx0, _cy0, cx1, _cy1 in cutters:
+        for v in (cx0, cx1):
+            if x_lo + EPS < v < x_hi - EPS:
+                xs.add(v)
+    xs = sorted(xs)
+    new = OrthoRegion.__new__(OrthoRegion)
+    new.xs = xs
+    new.slabs = []
+    new.area = 0.0
+    for k in range(len(xs) - 1):
+        xa, xb = xs[k], xs[k + 1]
+        xm = 0.5 * (xa + xb)
+        kb = bisect_right(region.xs, xm) - 1
+        ivs = list(region.slabs[kb][2]) if 0 <= kb < len(region.slabs) else []
+        for cx0, cy0, cx1, cy1 in cutters:
+            if cx0 <= xa + EPS and cx1 >= xb - EPS:
+                ivs = _sub_iv(ivs, cy0, cy1)
+        ivs = [(a, b) for a, b in ivs if b - a > EPS]
+        new.slabs.append((xa, xb, ivs))
+        new.area += (xb - xa) * sum(b - a for a, b in ivs)
+    new.bounds = region.bounds
+    return new
+
+
+def build_region(outers, holes, ex=0.0, ey=0.0):
+    """Зона для раскладки: внешние контуры (чёт-нечёт — смежные контуры
+    одной плоскости стыкуются по ребру) МИНУС объединение проёмов,
+    расширенных на ex по X и ey по Y (руст вокруг проёмов; 0 — без
+    руста). Вычитание, а не чёт-нечёт (23.09, синтетика): проём,
+    вылезающий за контур стены, или два перекрывающихся проёма при
+    чёт-нечёт давали облицовку СНАРУЖИ стены / внутри наложения
+    проёмов; на корректных контурах результат тот же, что 09.09."""
+    if not holes:
+        return OrthoRegion.from_rings(outers, [])
+    base = OrthoRegion.from_rings(outers, [])
+    cutters = []
+    for hring in holes:
+        if len(hring) < 3:
+            continue
+        hr = OrthoRegion(hring)
+        for x0, x1, ivs in hr.slabs:
+            for ya, yb in ivs:
+                cutters.append((x0 - ex, ya - ey, x1 + ex, yb + ey))
+    return region_subtract(base, cutters)
+
+
+def _split_rects(comp, joint=0.0):
+    """Г/П-кусок (компонента прямоугольников полос) → прямоугольники.
+    Соседние полосы с одинаковым Y-диапазоном склеиваются, линии разреза
+    — вертикальные границы полос (в плоскости ряда: высота куска в
+    пределах ряда не дробится). joint > 0 — у каждой линии разреза
+    более КОРОТКАЯ из двух соседних полос укорачивается на joint (руст
+    продолжает грань проёма/уступа; при равной высоте — правая)."""
+    rs = sorted([list(r) for r in comp],
+                key=lambda r: (round(r[1], 6), round(r[3], 6), r[0]))
+    merged = []
+    for r in rs:
+        if merged:
+            m = merged[-1]
+            if abs(m[1] - r[1]) < EPS and abs(m[3] - r[3]) < EPS and \
+               abs(m[2] - r[0]) < EPS:
+                m[2] = r[2]
+                continue
+        merged.append(r)
+    if joint <= EPS or len(merged) < 2:
+        return [tuple(r) for r in merged]
+    n = len(merged)
+    trim_l = [0.0] * n
+    trim_r = [0.0] * n
+    for a in range(n):
+        A = merged[a]
+        for b in range(n):
+            if a == b:
+                continue
+            Bq = merged[b]
+            if abs(A[2] - Bq[0]) < EPS and \
+               min(A[3], Bq[3]) - max(A[1], Bq[1]) > EPS:
+                ha, hb = A[3] - A[1], Bq[3] - Bq[1]
+                if ha < hb - EPS:
+                    trim_r[a] = joint
+                else:
+                    trim_l[b] = joint
+    out = []
+    for k, r in enumerate(merged):
+        x0, x1 = r[0] + trim_l[k], r[2] - trim_r[k]
+        if x1 - x0 > EPS:
+            out.append((x0, r[1], x1, r[3]))
+    return out
+
+
+def _small_flag(w, h, tile_w, tile_h, warn):
+    """Малая подрезка: кусок РЕЗАН по ширине (высоте) и этот размер уже
+    порога warn. Целый размер плитки меньше порога — не подрезка (кирпич
+    82 мм при пороге 100 — не «малый»)."""
+    if warn <= 0:
+        return False
+    cw = w < tile_w - 0.05
+    ch = h < tile_h - 0.05
+    return (cw and w < warn - 1e-9) or (ch and h < warn - 1e-9)
+
+
 # ────────────────────────────────────────────── датум и образец
 
 def datum_wall(outers):
@@ -342,6 +511,103 @@ def datum_for(outers, spec):
     if spec.get("y") is not None and mode != "point":
         B = float(spec["y"])
     return R, B
+
+
+def zone_edges(outers, ref="bbox"):
+    """Кромки зоны {"L","R","B","T"}: габарит (ref="bbox") или основная
+    стена (ref="wall": доминирующие по суммарной длине рёбра наружной
+    кромки; R/B — ровно datum_wall 09.09, L/T — зеркально)."""
+    if outers and not isinstance(outers[0][0], (tuple, list)):
+        outers = [outers]
+    xs = [p[0] for o in outers for p in o]
+    ys = [p[1] for o in outers for p in o]
+    E = {"L": min(xs), "R": max(xs), "B": min(ys), "T": max(ys)}
+    if ref != "wall":
+        return E
+    E["R"], E["B"] = datum_wall(outers)
+    vsegs, hsegs = [], []
+    for outer in outers:
+        pts = outer if signed_area(outer) > 0 else outer[::-1]
+        for (x1, y1), (x2, y2) in _edges(pts):
+            dx, dy = x2 - x1, y2 - y1
+            if abs(dx) < EPS and abs(dy) > EPS:
+                vsegs.append((round(x1, 1), min(y1, y2), max(y1, y2),
+                              1 if dy > 0 else -1))
+            elif abs(dy) < EPS and abs(dx) > EPS:
+                hsegs.append((round(y1, 1), min(x1, x2), max(x1, x2),
+                              1 if dx > 0 else -1))
+    left, top = {}, {}
+    for x, lo, hi, d in _cancel(vsegs):
+        if d < 0:
+            left[x] = left.get(x, 0.0) + (hi - lo)
+    for y, lo, hi, d in _cancel(hsegs):
+        if d < 0:
+            top[y] = top.get(y, 0.0) + (hi - lo)
+    if left:
+        best = max(left.values())
+        kx = min(x for x, v in left.items() if v >= best - 1e-6)
+        E["L"] = min((x for x in xs if abs(x - kx) <= 0.06),
+                     key=lambda x: abs(x - kx), default=kx)
+    if top:
+        best = max(top.values())
+        ky = max(y for y, v in top.items() if v >= best - 1e-6)
+        E["T"] = min((y for y in ys if abs(y - ky) <= 0.06),
+                     key=lambda y: abs(y - ky), default=ky)
+    return E
+
+
+def anchor_rb(outers, anchor, w, h, gv, gh):
+    """anchor → (R, B): правый край базовой плитки и низ базового ряда
+    (та же пара, что датум 09.09). Целая плитка базового ряда стоит в
+    выбранном углу/середине габарита (стены) или в общей точке."""
+    E = zone_edges(outers, str(anchor.get("ref") or "bbox"))
+    pt = anchor.get("point")
+    hx = str(anchor.get("h") or "R").upper()
+    vy = str(anchor.get("v") or "B").upper()
+    center = str(anchor.get("center") or "tile")
+    px = py = None
+    if pt:
+        px, py = float(pt["x"]), float(pt["y"])
+    if hx == "L":
+        R = (px if pt else E["L"]) + w
+    elif hx == "C":
+        xc = px if pt else 0.5 * (E["L"] + E["R"])
+        R = xc + 0.5 * w if center != "joint" else xc - 0.5 * gv
+    else:
+        R = px if pt else E["R"]
+    if vy == "T":
+        B = (py if pt else E["T"]) - h
+    elif vy == "C":
+        yc = py if pt else 0.5 * (E["B"] + E["T"])
+        B = yc - 0.5 * h if center != "joint" else yc + 0.5 * gh
+    else:
+        B = py if pt else E["B"]
+    return R, B
+
+
+_TR = {"L": "B", "C": "C", "R": "T", "B": "L", "T": "R"}
+
+
+def transpose_anchor(a):
+    """Привязка в транспонированной плоскости (x↔y) для столбцов."""
+    out = dict(a)
+    out["h"] = _TR[str(a.get("v") or "B").upper()]
+    out["v"] = _TR[str(a.get("h") or "R").upper()]
+    if a.get("point"):
+        out["point"] = {"x": float(a["point"]["y"]), "y": float(a["point"]["x"])}
+    return out
+
+
+def anchor_color_origin(anchor, nc, nr):
+    """Какой элемент образца стоит в базовой плитке (i=0, j=0): справа —
+    правый нижний (как 09.09), слева — левый, сверху — верхний ряд."""
+    if not anchor:
+        return nc - 1, 0
+    hx = str(anchor.get("h") or "R").upper()
+    vy = str(anchor.get("v") or "B").upper()
+    c0 = 0 if hx == "L" else (nc // 2 if hx == "C" else nc - 1)
+    r0 = nr - 1 if vy == "T" else (nr // 2 if vy == "C" else 0)
+    return c0, r0
 
 
 def pattern_from_sample(rects, row_tol=None):
@@ -413,16 +679,210 @@ def default_pattern(types, nrows=2, shift=0.5):
             "cols": 1, "nrows": nrows}
 
 
+# ────────────────────────────────────────────── смещение рядов (bond)
+
+BOND_KINDS = ("pattern", "none", "alternate", "step", "sequence")
+_NEG_DIRS = ("-", "left", "down", "влево", "вниз", "l", "d")
+
+
+def _parse_num(v):
+    """Число из JSON/строки: 0.5, "1/3", "0,25", "200"."""
+    if isinstance(v, bool):
+        raise ValueError("не число: %r" % (v,))
+    if isinstance(v, (int, float)):
+        return float(v)
+    t = str(v).strip().replace(",", ".").replace(" ", "")
+    if t.lower().endswith("мм"):
+        t = t[:-2]
+    if "/" in t:
+        a, b = t.split("/", 1)
+        if float(b) == 0:
+            raise ValueError("деление на ноль: %r" % (v,))
+        return float(a) / float(b)
+    return float(t)
+
+
+def _frac(x):
+    """Дробная часть в [0, 1); почти 0 и почти 1 → 0 (численный шум)."""
+    f = x - math.floor(x)
+    if f < 1e-9 or f > 1.0 - 1e-9:
+        return 0.0
+    return f
+
+
+def frac_text(f):
+    """0.5 → "1/2", 0.3333 → "1/3", 0.37 → "0.370"."""
+    if abs(f) < 1e-9:
+        return "0"
+    for q in range(1, 13):
+        p = int(round(f * q))
+        if p and abs(p / float(q) - f) < 1e-6:
+            g = math.gcd(p, q)
+            return "%d/%d" % (p // g, q // g) if q // g > 1 else str(p // g)
+    return "%.3f" % f
+
+
+def resolve_bond(spec, shifts, module, r0=0, normalize=False):
+    """Смещение рядов → (shift_of(j) → доля модуля [0, 1), info).
+
+    spec None/kind="pattern" — сдвиги образца shifts[j mod NS] (как 09.09;
+    normalize — привести к 0 у базового ряда r0, чтобы целая плитка
+    стояла в точке отсчёта); иначе — см. докстринг модуля. module — шаг
+    вдоль ряда (w + gap.v; для столбцов — h + gap.h) для перевода мм."""
+    ns = len(shifts)
+    notes = []
+    if not spec or str(spec.get("kind") or "pattern") == "pattern":
+        if normalize:
+            base = shifts[r0 % ns]
+
+            def fn(j):
+                return _frac(shifts[(r0 + j) % ns] - base)
+        else:
+            def fn(j):
+                return shifts[j % ns]
+        info = {"kind": "pattern", "period": ns}
+        return fn, _bond_finish(fn, info, module, notes)
+    kind = str(spec.get("kind"))
+    if kind not in BOND_KINDS:
+        raise ValueError("неизвестный вид смещения %r (ожидается %s)"
+                         % (kind, "|".join(BOND_KINDS)))
+    d = spec.get("dir", "+")
+    sign = -1.0 if (str(d).strip().lower() in _NEG_DIRS or
+                    (isinstance(d, (int, float)) and not isinstance(d, bool)
+                     and d < 0)) else 1.0
+    units = str(spec.get("units") or "frac").lower()
+    if units not in ("frac", "mm"):
+        raise ValueError("единицы смещения: frac|mm (получено %r)" % units)
+
+    def conv(v):
+        x = _parse_num(v)
+        return x / module if units == "mm" else x
+
+    info = {"kind": kind, "dir": "+" if sign > 0 else "-", "units": units}
+    if kind == "none":
+        def fn(j):
+            return 0.0
+        info["period"] = 1
+    elif kind in ("alternate", "step"):
+        f = conv(spec.get("value", 0.5))
+        if f < 0:
+            f, sign = -f, -sign
+            info["dir"] = "+" if sign > 0 else "-"
+        if f >= 1.0 - 1e-9:
+            notes.append("смещение не меньше модуля — берётся остаток "
+                         "(%s модуля)" % frac_text(_frac(f)))
+        f = _frac(f)
+        if f <= 1e-9:
+            notes.append("смещение 0 — ряды шов в шов")
+        info["f"] = f
+        if kind == "alternate":
+            def fn(j):
+                return 0.0 if j % 2 == 0 else _frac(sign * f)
+            info["period"] = 2 if f > 1e-9 else 1
+        else:
+            def fn(j):
+                return _frac(sign * j * f)
+            period = None
+            for p in range(1, 1001):
+                if _frac(p * f + 1e-7) < 2e-7:
+                    period = p
+                    break
+            info["period"] = period
+    else:
+        raw = spec.get("sequence") or []
+        if isinstance(raw, str):
+            raw = [t for t in raw.replace(",", ";").split(";") if t.strip()]
+        seq = [conv(v) for v in raw]
+        if not seq:
+            raise ValueError("пустая последовательность смещений")
+        if abs(_frac(seq[0])) > 1e-9:
+            notes.append("первое смещение последовательности приведено к 0 "
+                         "— базовый ряд начинается целой плиткой в точке "
+                         "отсчёта")
+        base = seq[0]
+        seq = [_frac(v - base) for v in seq]
+        n = len(seq)
+
+        def fn(j):
+            return _frac(sign * seq[j % n])
+        info["sequence"] = seq
+        info["period"] = n
+    return fn, _bond_finish(fn, info, module, notes)
+
+
+def _bond_finish(fn, info, module, notes):
+    per = info.get("period") or 200
+    js = range(min(per, 200))
+    info["shifts"] = [round(fn(j), 6) for j in js][:24]
+    ph = sorted(set(round(fn(j), 6) for j in js))
+    # 0.999999 и 0 — одна фаза
+    phases = []
+    for v in ph:
+        if v > 1 - 1e-6:
+            v = 0.0
+        if not any(abs(v - q) < 1e-6 for q in phases):
+            phases.append(v)
+    info["phases"] = sorted(phases)
+    info["module"] = module
+    info["notes"] = notes
+    return info
+
+
+def bond_text(info, axis="rows"):
+    """Человеческое описание смещения для сводки/отчёта."""
+    k = info.get("kind")
+    cols = axis == "cols"
+    what = "столбец правее" if cols else "ряд выше"
+    ways = ("вверх", "вниз") if cols else ("вправо", "влево")
+    way = ways[0] if info.get("dir", "+") == "+" else ways[1]
+    mod = info.get("module") or 0.0
+    per = info.get("period")
+    per_t = ("период %d %s" % (per, "столбца" if cols and per in (2, 3, 4)
+                               else "столбцов" if cols else
+                               "ряда" if per in (2, 3, 4) else "рядов")
+             if per else "рисунок не повторяется в пределах 1000 рядов")
+    if k == "none":
+        return "без смещения — швы в линию (шов в шов)"
+    if k in ("alternate", "step"):
+        f = info.get("f", 0.0)
+        if f <= 1e-9:
+            return "без смещения — швы в линию (шов в шов)"
+        amt = "%s модуля (%.0f мм)" % (frac_text(f), f * mod)
+        if k == "alternate":
+            return "через ряд: каждый второй %s сдвинут %s на %s; %s" % (
+                "столбец" if cols else "ряд", way, amt, per_t)
+        return "лесенкой: каждый %s сдвинут %s на %s; %s" % (what, way, amt,
+                                                             per_t)
+    if k == "sequence":
+        seq = info.get("sequence") or []
+        return "своя последовательность (%s): %s модуля = %s мм; %s" % (
+            way, "; ".join(frac_text(v) for v in seq),
+            "; ".join("%.0f" % (v * mod) for v in seq), per_t)
+    sh = info.get("shifts") or []
+    return "по образцу: сдвиги рядов %s модуля; %s" % (
+        "; ".join(frac_text(v) for v in sh[:8]) + (" …" if len(sh) > 8 else ""),
+        per_t)
+
+
 # ────────────────────────────────────────────── раскладка одной зоны
 
 
 def layout_zone(region, R, B, tile_w, tile_h, gap_v, gap_h, pattern,
-                min_piece=MIN_PIECE_MM, tiny_mode="absorb"):
+                min_piece=MIN_PIECE_MM, tiny_mode="absorb", shift_of=None,
+                shaped="keep", warn_cut=0.0, color_col0=None, color_row0=0,
+                stats=None):
     """Плитки одной зоны. Возвращает (pieces, absorbed):
     pieces — {"i","j","type","full","x","y","w","h","rect","tiny","area","rings"?}
     (rings — только у фигурных кусков; прямоугольные — x,y,w,h);
     absorbed — {"count","area"}: полоски тоньше min_piece, поглощённые
-    рустами (tiny_mode="absorb") — в pieces их нет."""
+    рустами (tiny_mode="absorb") — в pieces их нет.
+
+    23.09: shift_of(j) — сдвиг ряда j в долях модуля (дефолт —
+    pattern.row_shifts[j mod NS], как 09.09); shaped — Г-куски "keep" |
+    "split" | "split_joint" (см. _split_rects); warn_cut — флаг small
+    (малая подрезка); color_col0/row0 — элемент образца в базовой
+    плитке; stats — dict для {"trimmed": {"count","area"}} (площадь,
+    снятая рустом при разрезе Г-кусков)."""
     MX = tile_w + gap_v
     MY = tile_h + gap_h
     rows = pattern["rows"]
@@ -430,6 +890,14 @@ def layout_zone(region, R, B, tile_w, tile_h, gap_v, gap_h, pattern,
     nr = len(rows)
     nc = len(rows[0])
     ns = len(shifts)
+    if shift_of is None:
+        def shift_of(j):
+            return shifts[j % ns]
+    c0 = (nc - 1) if color_col0 is None else int(color_col0)
+    trimmed = {"count": 0, "area": 0.0}
+    if stats is not None:
+        stats["trimmed"] = trimmed
+    joint_split = gap_v if shaped == "split_joint" else 0.0
     minx, miny, maxx, maxy = region.bounds
     i_min = int(math.floor((R - maxx) / MX)) - 2
     i_max = int(math.ceil((R - minx) / MX)) + 2
@@ -443,8 +911,8 @@ def layout_zone(region, R, B, tile_w, tile_h, gap_v, gap_h, pattern,
         y1 = y0 + tile_h
         if y1 <= miny + EPS or y0 >= maxy - EPS:
             continue
-        s = shifts[j % ns] * MX
-        row_pat = rows[j % nr]
+        s = shift_of(j) * MX
+        row_pat = rows[(color_row0 + j) % nr]
         for i in range(i_min, i_max + 1):
             x1 = R - i * MX + s
             x0 = x1 - tile_w
@@ -453,12 +921,13 @@ def layout_zone(region, R, B, tile_w, tile_h, gap_v, gap_h, pattern,
             rects = region.clip_rect(x0, y0, x1, y1)
             if not rects:
                 continue
-            ttype = row_pat[(nc - 1) - (i % nc)]
+            ttype = row_pat[(c0 - i) % nc]
             covered = sum((c - a) * (d - b) for a, b, c, d in rects)
             if abs(covered - full_area) <= AREA_TOL * full_area:
                 pieces.append({"i": i, "j": j, "type": ttype, "full": True,
                                "x": x0, "y": y0, "w": tile_w, "h": tile_h,
-                               "rect": True, "tiny": False, "area": full_area})
+                               "rect": True, "tiny": False, "area": full_area,
+                               "small": False})
                 continue
             for comp in _components(rects):
                 bx0 = min(r[0] for r in comp)
@@ -475,24 +944,64 @@ def layout_zone(region, R, B, tile_w, tile_h, gap_v, gap_h, pattern,
                     absorbed["area"] += area
                     continue
                 is_rect = len(comp) == 1 or abs(area - w * h) <= AREA_TOL * w * h
+                if not is_rect and shaped in ("split", "split_joint"):
+                    kept = 0.0
+                    parts = _split_rects(comp, joint_split)
+                    for px0, py0, px1, py1 in parts:
+                        pw, ph = px1 - px0, py1 - py0
+                        pa = pw * ph
+                        if min(pw, ph) < NOISE_MM or pa < 1.0:
+                            continue
+                        kept += pa
+                        ptiny = min(pw, ph) < min_piece
+                        if ptiny and tiny_mode == "absorb":
+                            absorbed["count"] += 1
+                            absorbed["area"] += pa
+                            continue
+                        pieces.append({
+                            "i": i, "j": j, "type": ttype, "full": False,
+                            "x": px0, "y": py0, "w": pw, "h": ph,
+                            "rect": True, "tiny": ptiny, "area": pa,
+                            "split": True,
+                            "small": _small_flag(pw, ph, tile_w, tile_h,
+                                                 warn_cut)})
+                    if area - kept > 1e-6:
+                        trimmed["count"] += 1
+                        trimmed["area"] += area - kept
+                    continue
+                if is_rect:
+                    small = _small_flag(w, h, tile_w, tile_h, warn_cut)
+                else:
+                    small = any(_small_flag(r[2] - r[0], r[3] - r[1], tile_w,
+                                            tile_h, warn_cut)
+                                for r in _split_rects(comp, 0.0))
                 piece = {"i": i, "j": j, "type": ttype, "full": False,
                          "x": bx0, "y": by0, "w": w, "h": h,
-                         "rect": is_rect, "tiny": tiny, "area": area}
+                         "rect": is_rect, "tiny": tiny, "area": area,
+                         "small": small}
                 if not is_rect:
-                    piece["rings"] = [[[round(x, 3), round(y, 3)] for x, y in ring]
+                    # 23.09: 6 знаков (было 3) — кромки Г-куска совпадают с
+                    # соседями точно (при нулевом русте 3 знака давали
+                    # микроперекрытия 0.0003 мм — синтетика, I2)
+                    piece["rings"] = [[[round(x, 6), round(y, 6)] for x, y in ring]
                                       for ring in union_outline(comp)]
                 pieces.append(piece)
     return pieces, absorbed
 
 
-def classify(piece, tile_w, tile_h, half_w):
-    """Вид куска для ведомости подрезки."""
+def classify(piece, tile_w, tile_h, half_w, axis="rows"):
+    """Вид куска для ведомости подрезки (axis="cols": половинка — по
+    высоте, half_w тогда — «половинная» высота)."""
     if piece["full"]:
         return "целая"
     if not piece["rect"]:
         return "фигурная"
     w, h = piece["w"], piece["h"]
-    if abs(h - tile_h) < 0.05 and half_w is not None and abs(w - half_w) < 0.05:
+    if axis == "cols":
+        if abs(w - tile_w) < 0.05 and half_w is not None and \
+           abs(h - half_w) < 0.05:
+            return "половинка"
+    elif abs(h - tile_h) < 0.05 and half_w is not None and abs(w - half_w) < 0.05:
         return "половинка"
     if abs(h - tile_h) < 0.05:
         return "рез по ширине"
@@ -642,28 +1151,64 @@ def _prep_contour(contour, ortho_tol, notes, zone_id):
 # ────────────────────────────────────────────── объединение смежных контуров
 
 def _touch(a, b, tol):
-    """Касаются ли контуры a и b по ребру (общий вертикальный или
+    """Касаются ли контуры a и b по ребру: общий вертикальный или
     горизонтальный отрезок длиной > tol при расстоянии между рёбрами
-    ≤ tol). Возвращает список (axis, ca, cb): координаты стыкующихся
-    рёбер, чтобы свести их к общему значению."""
+    ≤ tol И интерьеры по РАЗНЫЕ стороны шва (правая кромка одного —
+    левая другого, верх одного — низ другого). 23.09 (синтетика):
+    прежняя проверка без сторон считала «швом» и два нижних ребра на
+    одной линии у ПЕРЕКРЫВАЮЩИХСЯ зон — они сливались, чёт-нечёт делал
+    из наложения дыру. Возвращает список (axis, ca, cb): координаты
+    стыкующихся рёбер, чтобы свести их к общему значению."""
     seams = []
-    ea = [((x1, y1), (x2, y2)) for (x1, y1), (x2, y2) in _edges(a)]
-    eb = [((x1, y1), (x2, y2)) for (x1, y1), (x2, y2) in _edges(b)]
-    for (ax1, ay1), (ax2, ay2) in ea:
-        av = abs(ax1 - ax2) < EPS
-        ah = abs(ay1 - ay2) < EPS
-        if not (av or ah):
-            continue
-        for (bx1, by1), (bx2, by2) in eb:
-            if av and abs(bx1 - bx2) < EPS and abs(ax1 - bx1) <= tol:
-                ov = min(max(ay1, ay2), max(by1, by2)) - max(min(ay1, ay2), min(by1, by2))
-                if ov > tol:
-                    seams.append(("x", ax1, bx1))
-            elif ah and abs(by1 - by2) < EPS and abs(ay1 - by1) <= tol:
-                ov = min(max(ax1, ax2), max(bx1, bx2)) - max(min(ax1, ax2), min(bx1, bx2))
-                if ov > tol:
-                    seams.append(("y", ay1, by1))
+
+    def oriented(ring):
+        pts = ring if signed_area(ring) > 0 else ring[::-1]
+        out = []
+        for (x1, y1), (x2, y2) in _edges(pts):
+            if abs(x1 - x2) < EPS and abs(y1 - y2) > EPS:
+                # вверх (CCW) — правая кромка (+1), вниз — левая (−1)
+                out.append(("v", x1, min(y1, y2), max(y1, y2), 1 if y2 > y1 else -1))
+            elif abs(y1 - y2) < EPS and abs(x1 - x2) > EPS:
+                # вправо — низ (+1), влево — верх (−1)
+                out.append(("h", y1, min(x1, x2), max(x1, x2), 1 if x2 > x1 else -1))
+        return out
+
+    ea, eb = oriented(a), oriented(b)
+    for ka, ca, lo_a, hi_a, sa in ea:
+        for kb, cb, lo_b, hi_b, sb in eb:
+            if ka != kb or sa != -sb or abs(ca - cb) > tol:
+                continue
+            if min(hi_a, hi_b) - max(lo_a, lo_b) > tol:
+                seams.append(("x" if ka == "v" else "y", ca, cb))
     return seams
+
+
+def overlap_notes(zones):
+    """Перекрывающиеся зоны (облицовка ляжет дважды) — замечание.
+    zones: [{"id","outers","holes"}] после объединения смежных."""
+    out = []
+    regs = []
+    for z in zones:
+        r = OrthoRegion.from_rings(z["outers"], [])
+        regs.append((z["id"], r))
+    for a in range(len(regs)):
+        ida, ra = regs[a]
+        ax0, ay0, ax1, ay1 = ra.bounds
+        for b in range(a + 1, len(regs)):
+            idb, rb = regs[b]
+            bx0, by0, bx1, by1 = rb.bounds
+            if min(ax1, bx1) - max(ax0, bx0) <= EPS or \
+               min(ay1, by1) - max(ay0, by0) <= EPS:
+                continue
+            ov = 0.0
+            for x0, x1, ivs in rb.slabs:
+                for ya, yb in ivs:
+                    ov += sum((c - p) * (d - q) for p, q, c, d in
+                              ra.clip_rect(x0, ya, x1, yb))
+            if ov > 1000.0:
+                out.append("зоны %s и %s перекрываются (%.3f м²) — облицовка "
+                           "ляжет дважды; проверьте контуры" % (ida, idb, ov / 1e6))
+    return out
 
 
 def merge_touching(zones, tol=MERGE_TOL):
@@ -719,6 +1264,79 @@ def merge_touching(zones, tol=MERGE_TOL):
     return out
 
 
+# ────────────────────────────────────────────── мост к ATFRAME
+
+def bridge_axes(pieces, gap_v, gap_h, holes=(), gap_around=False, tol=0.05):
+    """Оси вертикальных швов (joints_x — оси стоек подсистемы) и центры
+    горизонтальных (rows_y — кляммеры) по ФАКТИЧЕСКИМ стыкам кусков:
+    правая кромка + руст = левая кромка соседа с перекрытием по Y (и
+    так же по вертикали) — как cladding_plan для ATCLAD. При разбежке
+    это объединение осей всех рядов. С рустом вокруг проёмов — ещё оси
+    боковых швов проёмов (анкерные швы, как в ATCLAD)."""
+    by_x, by_y = {}, {}
+    for p in pieces:
+        by_x.setdefault(int(round(p["x"] * 10)), []).append(p)
+        by_y.setdefault(int(round(p["y"] * 10)), []).append(p)
+    jx, ry = set(), set()
+    for p in pieces:
+        xr = p["x"] + p["w"]
+        k = int(round((xr + gap_v) * 10))
+        hit = False
+        for kk in (k - 1, k, k + 1):
+            for q in by_x.get(kk, ()):
+                if q is p:
+                    continue
+                if abs(q["x"] - (xr + gap_v)) <= tol and \
+                   min(p["y"] + p["h"], q["y"] + q["h"]) - \
+                   max(p["y"], q["y"]) > tol:
+                    hit = True
+                    break
+            if hit:
+                break
+        if hit:
+            jx.add(round(xr + 0.5 * gap_v, 2))
+        yt = p["y"] + p["h"]
+        k = int(round((yt + gap_h) * 10))
+        hit = False
+        for kk in (k - 1, k, k + 1):
+            for q in by_y.get(kk, ()):
+                if q is p:
+                    continue
+                if abs(q["y"] - (yt + gap_h)) <= tol and \
+                   min(p["x"] + p["w"], q["x"] + q["w"]) - \
+                   max(p["x"], q["x"]) > tol:
+                    hit = True
+                    break
+            if hit:
+                break
+        if hit:
+            ry.add(round(yt + 0.5 * gap_h, 2))
+    if gap_around:
+        for h in holes:
+            if len(h) < 3:
+                continue
+            hx = [pt[0] for pt in h]
+            jx.add(round(min(hx) - 0.5 * gap_v, 2))
+            jx.add(round(max(hx) + 0.5 * gap_v, 2))
+    return sorted(jx), sorted(ry)
+
+
+def _tr_pts(pts):
+    return [(float(p[1]), float(p[0])) for p in pts]
+
+
+def _untranspose_piece(p):
+    """Кусок из транспонированной плоскости (столбцы) обратно: x↔y,
+    w↔h, кольца — с обратным порядком (снова против часовой)."""
+    q = dict(p)
+    q["x"], q["y"], q["w"], q["h"] = p["y"], p["x"], p["h"], p["w"]
+    if "rings" in p:
+        q["rings"] = [[[pt[1], pt[0]] for pt in ring][::-1]
+                      for ring in p["rings"]]
+    q["axis"] = "cols"
+    return q
+
+
 # ────────────────────────────────────────────── раскладка по зонам
 
 def tile_pattern(req):
@@ -728,6 +1346,8 @@ def tile_pattern(req):
            "pattern": {"rows": [[type,...],...], "row_shifts": [...]},
            "datum": {"mode","x"?,"y"?}, "min_piece"?, "tiny_mode"?,
            "kerf"?, "merge_touching"?, "merge_tol"?, "ortho_tol"?,
+           "axis"?, "bond"?, "anchor"?, "gap_around"?, "shaped"?,
+           "warn_cut"?,                                  (23.09)
            "contours": [{"id", "outer", "holes", "datum"?}, ...]}
     → {"ok", "pieces": [...+"zone"], "per_zone": [...], "summary", "notes"}."""
     notes = []
@@ -742,10 +1362,17 @@ def tile_pattern(req):
     if tile_w <= 0 or tile_h <= 0 or gap_v < 0 or gap_h < 0:
         return {"ok": False, "error": "размеры плитки/русты вне диапазона",
                 "notes": notes}
+    axis = str(req.get("axis") or "rows").lower()
+    if axis not in ("rows", "cols"):
+        return {"ok": False, "error": "axis: rows|cols (получено %r)" % axis,
+                "notes": notes}
+    cols = axis == "cols"
+    new_api = bool(req.get("bond") or req.get("anchor") or cols)
     pattern = req.get("pattern")
     if not pattern or not pattern.get("rows"):
         pattern = default_pattern(req.get("types") or ["T1"])
-        notes.append("образец не задан — разбежка полплиты одним типом")
+        if not req.get("bond"):
+            notes.append("образец не задан — разбежка полплиты одним типом")
     rows = pattern["rows"]
     nc = len(rows[0])
     if any(len(r) != nc for r in rows):
@@ -754,30 +1381,70 @@ def tile_pattern(req):
     if not shifts:
         shifts = [0.0 if j % 2 == 0 else 0.5 for j in range(len(rows))]
         pattern = dict(pattern, row_shifts=shifts)
-    min_piece = float(req.get("min_piece", MIN_PIECE_MM))
+    try:
+        min_piece = float(req.get("min_piece", MIN_PIECE_MM))
+        kerf = float(req.get("kerf", KERF_MM))
+        ortho_tol = float(req.get("ortho_tol", 5.0))
+        merge_tol = float(req.get("merge_tol", MERGE_TOL))
+        warn_cut = float(req.get("warn_cut") or 0.0)
+    except (TypeError, ValueError):
+        return {"ok": False, "error": "порог/пропил/допуск — не число",
+                "notes": notes}
     tiny_mode = str(req.get("tiny_mode") or "absorb")
-    kerf = float(req.get("kerf", KERF_MM))
-    ortho_tol = float(req.get("ortho_tol", 5.0))
     merge = req.get("merge_touching", True)
-    merge_tol = float(req.get("merge_tol", MERGE_TOL))
     datum_spec = req.get("datum") or {"mode": DEFAULT_DATUM}
-    MX = tile_w + gap_v
-    half_w = None
-    nz = [abs(sh) for sh in shifts if abs(sh) > 1e-9]
-    if nz:
-        half_w = tile_w - min(nz) * MX
+    shaped = str(req.get("shaped") or "keep")
+    if shaped not in ("keep", "split", "split_joint"):
+        return {"ok": False, "error": "shaped: keep|split|split_joint "
+                "(получено %r)" % shaped, "notes": notes}
+    gap_around = bool(req.get("gap_around", False))
+    anchor = req.get("anchor") or None
+    if anchor is not None:
+        if not isinstance(anchor, dict) or \
+           str(anchor.get("h") or "R").upper() not in ("L", "C", "R") or \
+           str(anchor.get("v") or "B").upper() not in ("B", "C", "T"):
+            return {"ok": False, "error": "anchor: h=L|C|R, v=B|C|T",
+                    "notes": notes}
+    # рабочая плоскость: для столбцов — транспонированная (x↔y)
+    if cols:
+        tw, th, gvw, ghw = tile_h, tile_w, gap_h, gap_v
+    else:
+        tw, th, gvw, ghw = tile_w, tile_h, gap_v, gap_h
+    MXw = tw + gvw
+    wanchor = transpose_anchor(anchor) if (cols and anchor) else anchor
+    c0, r0 = anchor_color_origin(wanchor, nc, len(rows))
+    try:
+        shift_of, binfo = resolve_bond(req.get("bond"), shifts, MXw, r0,
+                                       normalize=anchor is not None)
+    except (ValueError, TypeError, ZeroDivisionError) as e:
+        return {"ok": False, "error": "смещение рядов: %s" % e, "notes": notes}
+    notes.extend(binfo.pop("notes", []))
+    binfo["text"] = bond_text(binfo, axis)
+    if new_api:
+        nzp = [f for f in binfo["phases"] if f > 1e-9]
+        half = (tw - min(nzp) * MXw) if nzp else None
+    else:
+        nz = [abs(sh) for sh in shifts if abs(sh) > 1e-9]
+        half = (tile_w - min(nz) * (tile_w + gap_v)) if nz else None
 
     prepped = []
     zone_datum = {}
     for ci, c in enumerate(req.get("contours") or []):
         zone_id = str(c.get("id", ci + 1))
-        pr = _prep_contour(c, ortho_tol, notes, zone_id)
+        cc = c
+        if cols:
+            cc = {"id": zone_id, "outer": _tr_pts(c.get("outer") or []),
+                  "holes": [_tr_pts(h) for h in c.get("holes") or []]}
+        pr = _prep_contour(cc, ortho_tol, notes, zone_id)
         if pr is None:
             continue
         outer, holes = pr
         prepped.append({"id": zone_id, "outer": outer, "holes": holes})
         if c.get("datum"):
-            zone_datum[zone_id] = c["datum"]
+            dd = dict(c["datum"])
+            if cols:
+                dd["x"], dd["y"] = dd.get("y"), dd.get("x")
+            zone_datum[zone_id] = dd
     if not prepped:
         return {"ok": False, "error": "нет пригодных зон/контуров для раскладки",
                 "notes": notes}
@@ -791,24 +1458,43 @@ def tile_pattern(req):
         zones = [{"id": z["id"], "outers": [z["outer"]], "holes": z["holes"],
                   "members": [z["id"]]} for z in prepped]
 
+    notes.extend(overlap_notes(zones))
     pieces_all, per_zone = [], []
     for z in zones:
         zone_id = z["id"]
-        region = OrthoRegion.from_rings(z["outers"], z["holes"])
-        dspec = datum_spec
+        ex = gvw if gap_around else 0.0
+        ey = ghw if gap_around else 0.0
+        region = build_region(z["outers"], z["holes"], ex, ey)
+        dspec = None
         for m in z["members"]:
             if m in zone_datum:
                 dspec = zone_datum[m]
                 break
-        R, B = datum_for(z["outers"], dspec)
-        pcs, absorbed = layout_zone(region, R, B, tile_w, tile_h, gap_v, gap_h,
-                                    pattern, min_piece, tiny_mode)
+        if anchor and dspec is None:
+            R, B = anchor_rb(z["outers"], wanchor, tw, th, gvw, ghw)
+        else:
+            R, B = datum_for(z["outers"], dspec or datum_spec)
+        st = {}
+        pcs, absorbed = layout_zone(region, R, B, tw, th, gvw, ghw,
+                                    pattern, min_piece, tiny_mode, shift_of,
+                                    shaped, warn_cut, c0, r0, st)
+        trimmed = st.get("trimmed") or {"count": 0, "area": 0.0}
+        holes_real = z["holes"]
+        if cols:
+            pcs = [_untranspose_piece(p) for p in pcs]
+            holes_real = [_tr_pts(h) for h in z["holes"]]
+            datum_real = {"x": B + th, "y": R - tw}
+            origin = {"x": B, "y": R - tw}
+        else:
+            datum_real = {"x": R, "y": B}
+            origin = {"x": R - tw, "y": B}
         by_type = {}
         for p in pcs:
             p["zone"] = zone_id
             d = by_type.setdefault(p["type"], {"full": 0, "cut": 0, "tiny": 0,
                                                "half": 0, "area": 0.0,
-                                               "area_cut": 0.0, "kinds": {}})
+                                               "area_cut": 0.0, "kinds": {},
+                                               "small": 0})
             d["area"] += p["area"]
             if p["full"]:
                 d["full"] += 1
@@ -817,7 +1503,9 @@ def tile_pattern(req):
                 d["area_cut"] += p["area"]
                 if p["tiny"]:
                     d["tiny"] += 1
-                k = classify(p, tile_w, tile_h, half_w)
+                if p.get("small"):
+                    d["small"] += 1
+                k = classify(p, tile_w, tile_h, half, axis)
                 if k == "половинка":
                     d["half"] += 1
                 d["kinds"][k] = d["kinds"].get(k, 0) + 1
@@ -832,28 +1520,40 @@ def tile_pattern(req):
         pieces_all.extend(pcs)
         n_full = sum(d["full"] for d in by_type.values())
         n_cut = sum(d["cut"] for d in by_type.values())
+        n_small = sum(d["small"] for d in by_type.values())
+        jx, ry = bridge_axes(pcs, gap_v, gap_h, holes_real, gap_around)
         per_zone.append({
             "zone_id": zone_id, "members": z["members"],
-            "datum": {"x": R, "y": B},
+            "datum": datum_real, "origin": origin,
             "area_zone": region.area, "area_tiles": sum(p["area"] for p in pcs),
             "full": n_full, "cut": n_cut,
             "tiny": sum(d["tiny"] for d in by_type.values()),
+            "small": n_small, "trimmed": trimmed,
             "absorbed": absorbed,
             "blanks_cut": sum(d["blanks_cut"] for d in by_type.values()),
             "by_type": by_type,
+            "joints_x": jx, "rows_y": ry,
         })
         if absorbed["count"]:
             notes.append("%s: полосок тоньше %g мм — %d (%.3f м²) поглощены рустами, "
                          "в раскладку не идут"
                          % (zone_id, min_piece, absorbed["count"], absorbed["area"] / 1e6))
+        if n_small:
+            notes.append("%s: малая подрезка (резаный размер < %g мм) — %d шт"
+                         % (zone_id, warn_cut, n_small))
+        if trimmed["count"]:
+            notes.append("%s: Г-кусков разрезано рустом по продолжению грани — %d"
+                         % (zone_id, trimmed["count"]))
 
     totals = {}
     for pz in per_zone:
         for t, d in pz["by_type"].items():
             tt = totals.setdefault(t, {"full": 0, "cut": 0, "tiny": 0, "half": 0,
                                        "area": 0.0, "area_cut": 0.0, "kinds": {},
-                                       "blanks_cut": 0, "blanks_by_kind": {}})
-            for k in ("full", "cut", "tiny", "half", "area", "area_cut", "blanks_cut"):
+                                       "blanks_cut": 0, "blanks_by_kind": {},
+                                       "small": 0})
+            for k in ("full", "cut", "tiny", "half", "area", "area_cut",
+                      "blanks_cut", "small"):
                 tt[k] += d[k]
             for k, v in d["kinds"].items():
                 tt["kinds"][k] = tt["kinds"].get(k, 0) + v
@@ -871,12 +1571,26 @@ def tile_pattern(req):
         tt["blanks"] = tt["tiles_total"]
     absorbed_tot = {"count": sum(pz["absorbed"]["count"] for pz in per_zone),
                     "area": sum(pz["absorbed"]["area"] for pz in per_zone)}
+    trimmed_tot = {"count": sum(pz["trimmed"]["count"] for pz in per_zone),
+                   "area": sum(pz["trimmed"]["area"] for pz in per_zone)}
+    n_ax = len(binfo["phases"]) if not cols else 1
+    if new_api and not cols and n_ax >= 2:
+        notes.append("вертикальные швы при разбежке — %d оси на модуль %.0f мм "
+                     "(шаг ≈ %.0f мм); для НВФ это оси стоек подсистемы "
+                     "(ATFRAME берёт их из метки раскладки)"
+                     % (n_ax, MXw, MXw / n_ax))
+    if new_api and cols and len(binfo["phases"]) >= 2:
+        notes.append("разбежка столбцов: горизонтальные швы соседних столбцов "
+                     "на разных отметках (%d фазы на модуль %.0f мм)"
+                     % (len(binfo["phases"]), MXw))
     summary = {
         "zones": len(per_zone),
         "full": sum(t["full"] for t in totals.values()),
         "cut": sum(t["cut"] for t in totals.values()),
         "tiny": sum(t["tiny"] for t in totals.values()),
+        "small": sum(t["small"] for t in totals.values()),
         "absorbed": absorbed_tot,
+        "trimmed": trimmed_tot,
         "blanks_cut": sum(t["blanks_cut"] for t in totals.values()),
         "tiles_total": sum(t["tiles_total"] for t in totals.values()),
         "tiles_by_area": sum(t["tiles_by_area"] for t in totals.values()),
@@ -885,10 +1599,14 @@ def tile_pattern(req):
         "area_tiles": sum(pz["area_tiles"] for pz in per_zone),
         "by_type": totals,
         "tile": {"w": tile_w, "h": tile_h}, "gap": {"v": gap_v, "h": gap_h},
-        "module": {"x": MX, "y": tile_h + gap_h},
-        "half_w": half_w, "kerf": kerf, "min_piece": min_piece,
+        "module": {"x": tile_w + gap_v, "y": tile_h + gap_h},
+        "half_w": half, "kerf": kerf, "min_piece": min_piece,
         "tiny_mode": tiny_mode, "datum_mode": str(datum_spec.get("mode") or DEFAULT_DATUM),
-        "pattern": {"rows": rows, "row_shifts": shifts},
+        "pattern": {"rows": rows,
+                    "row_shifts": binfo["shifts"] if new_api else shifts},
+        "axis": axis, "bond": binfo, "anchor": anchor,
+        "gap_around": gap_around, "shaped": shaped, "warn_cut": warn_cut,
+        "joint_axes_per_module": n_ax,
     }
     summary["blanks"] = summary["tiles_total"]
     ab = summary["area_blanks"] = summary["tiles_total"] * tile_area

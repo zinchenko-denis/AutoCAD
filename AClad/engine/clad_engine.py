@@ -260,6 +260,11 @@ def op_tile_pattern(req):
       "tiny_mode"?: "absorb"|"layer", "kerf"?: <мм, пропил раскроя>,
       "merge_touching"?: bool (смежные контуры = одна плоскость),
       "merge_tol"?: <мм>, "ortho_tol"?: <мм>,
+      // 23.09 — универсальная разбежка (см. tile_pattern):
+      "axis"?: "rows"|"cols", "bond"?: {"kind","value","units","dir",
+      "sequence"}, "anchor"?: {"h","v","center","ref","point"?},
+      "gap_around"?: bool, "shaped"?: "keep"|"split"|"split_joint",
+      "warn_cut"?: <мм>,
       "zones":    [{"zone_id", "zone": {facade_zone/1}}, ...],
       "contours": [{"id", "pts", "bulges"?}, ...]
     }
@@ -299,9 +304,16 @@ def op_tile_pattern(req):
                 "notes": notes}
 
     pattern = req.get("pattern")
-    if pattern is None and req.get("sample"):
+    sample = req.get("sample")
+    if pattern is None and sample:
+        # столбцы считаются в транспонированной плоскости — образец туда же
+        if str(req.get("axis") or "rows").lower() == "cols":
+            sample = [{"x0": r.get("y0"), "y0": r.get("x0"),
+                       "x1": r.get("y1"), "y1": r.get("x1"),
+                       "type": r.get("type")} for r in sample
+                      if isinstance(r, dict)]
         try:
-            pattern = tpm.pattern_from_sample(req["sample"])
+            pattern = tpm.pattern_from_sample(sample)
         except (ValueError, KeyError, TypeError) as e:
             return {"ok": False, "error": "образец не разобран: %s" % e,
                     "notes": notes}
@@ -313,7 +325,8 @@ def op_tile_pattern(req):
         "contours": contours,
     }
     for key in ("min_piece", "tiny_mode", "kerf", "merge_touching",
-                "merge_tol", "ortho_tol", "types"):
+                "merge_tol", "ortho_tol", "types", "axis", "bond", "anchor",
+                "gap_around", "shaped", "warn_cut"):
         if req.get(key) is not None:
             treq[key] = req.get(key)
 
