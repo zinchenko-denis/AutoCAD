@@ -8,6 +8,7 @@ using Autodesk.AutoCAD.DatabaseServices;
 using Autodesk.AutoCAD.EditorInput;
 using Autodesk.AutoCAD.Geometry;
 using Autodesk.AutoCAD.Runtime;
+using WinForms = System.Windows.Forms;
 using AcApp = Autodesk.AutoCAD.ApplicationServices.Application;
 
 [assembly: CommandClass(typeof(AFramePlugin.FrameCommand))]
@@ -89,6 +90,11 @@ namespace AFramePlugin
             var joints = new List<double>();
             var rowsY = new List<double>();
             var oldHandles = new HashSet<string>();
+            // 23.09b: параметры окна с прошлой подсистемы зоны и её хэндлы
+            // по зонам (режим «только кляммеры» переписывает метку, не теряя
+            // направляющих и кронштейнов)
+            Dictionary<string, object> prevFs = null;
+            var oldByRoot = new Dictionary<string, List<string>>();
             int noClad = 0;
             int oldMeta = 0;
             using (var tr = db.TransactionManager.StartTransaction())
@@ -126,6 +132,8 @@ namespace AFramePlugin
                     else noClad++;
                     // прежняя подсистема (метка ATFRAME) — с любого
                     CollectOldHandles(tr, ser, ent, oldHandles);
+                    CollectOldByRoot(tr, ser, ent, oldByRoot);
+                    if (prevFs == null) prevFs = ReadFrameSettings(tr, ser, ent);
 
                     // замкнутые полилинии — геометрия ВСЕГДА, метка не
                     // нужна (26.07: окна-полилинии без метки выпадали
@@ -181,6 +189,23 @@ namespace AFramePlugin
                     }
                 }
             }
+            // ── 1б. ОКНО параметров (Герман 23.09: «такое же диалоговое окно,
+            //    как у ATTILE»): что раскладывать, тип, профиль, шаги, оси,
+            //    точки после ОК, знаки — вместо ~15 вопросов командной строки ──
+            bool hasLayout = joints.Count > 0;
+            FrameSettings fs = prevFs != null ? FrameSettings.FromDict(prevFs)
+                                              : FrameSettings.LoadLast();
+            if (prevFs != null)
+                ed.WriteMessage("\nПараметры — с прошлой подсистемы этой зоны.");
+            using (var ff = new FrameForm(fs, hasLayout))
+            {
+                if (AcApp.ShowModalDialog(ff) != WinForms.DialogResult.OK)
+                { ed.WriteMessage("\nОтменено."); return; }
+                fs = ff.Result;
+            }
+            fs.SaveLast();
+            bool clampsOnly = fs.ClampsOnly;
+
             if (joints.Count == 0)
             {
                 double bbx0 = double.MaxValue, bbx1 = double.MinValue;
@@ -199,16 +224,7 @@ namespace AFramePlugin
                         if (xy[1] > bby1) bby1 = xy[1];
                     }
                 }
-                var pkj = new PromptKeywordOptions(
-                    "\nОси стоек [Шаг/Точки/Отмена] <Шаг>: ",
-                    "Шаг Точки Отмена");
-                var rkj = ed.GetKeywords(pkj);
-                string jkey = (rkj.Status == PromptStatus.OK &&
-                               rkj.StringResult != null &&
-                               rkj.StringResult.Length > 0)
-                              ? rkj.StringResult : "Шаг";
-                if (jkey == "Отмена") return;
-                if (jkey == "Точки")
+                if (fs.Axes == "points")
                 {
                     while (true)
                     {
@@ -226,11 +242,10 @@ namespace AFramePlugin
                 else
                 {
                     var pfo = new PromptPointOptions(
-                        "\nТочка ПЕРВОЙ оси стойки: ");
+                        "\nТочка ПЕРВОЙ оси стойки (шаг " + F0(fs.AxisStep) + " мм — из окна): ");
                     var pfv = ed.GetPoint(pfo);
                     if (pfv.Status != PromptStatus.OK) return;
-                    double jstep = AskD(ed,
-                        "Шаг осей (плита + шов), мм", 608.0);
+                    double jstep = fs.AxisStep;
                     if (jstep < 50) jstep = 608.0;
                     double margin = 150.0;
                     for (double jx0 = pfv.Value.X;
@@ -246,8 +261,7 @@ namespace AFramePlugin
                 { ed.WriteMessage("\nОсей нет — отмена."); return; }
                 if (rowsY.Count == 0)
                 {
-                    double rstep = AskD(ed, "Шаг горизонтальных швов " +
-                        "для кляммеров, мм (0 — без кляммеров)", 605.0);
+                    double rstep = fs.RowStep;
                     if (rstep >= 50)
                         for (double ry0 = bby0 + rstep;
                              ry0 < bby1; ry0 += rstep)
@@ -287,204 +301,71 @@ namespace AFramePlugin
             if (zonesPayload.Count == 0 && contoursPayload.Count == 0)
             { ed.WriteMessage("\nНет геометрии зон."); return; }
 
-            // ── 3. ТИП подсистемы (ТЗ Германа 26.07: вертикальная /
-            //    межэтажная / ортогональная; комбинации — разными
-            //    запусками). Классический конструктор кейвордов,
-            //    дефолт по не-OK — грабля 18.07r ──
-            var pko = new PromptKeywordOptions(
-                "\nТип подсистемы [Вертикальная/Межэтажная/" +
-                "Ортогональная] <Вертикальная>: ",
-                "Вертикальная Межэтажная Ортогональная");
-            var rk = ed.GetKeywords(pko);
-            string typKey = (rk.Status == PromptStatus.OK &&
-                             rk.StringResult != null &&
-                             rk.StringResult.Length > 0)
-                            ? rk.StringResult : "Вертикальная";
-            bool interFloor = typKey == "Межэтажная";
-            bool ortho = typKey == "Ортогональная";
-            string subType = interFloor ? "interfloor"
-                : ortho ? "ortho" : "vertical";
-            string sysName = interFloor ? "Межэтажная"
-                : ortho ? "Ортогональная" : "Standart";
+            // ── 3. параметры из ОКНА (23.09b) — то, что раньше спрашивала
+            //    командная строка: тип (ТЗ 26.07), профиль (письмо 01.08 п.2),
+            //    шаги по расчёту/вручную (этап 4, 04.08 п.1–2), знаки ──
+            bool interFloor = fs.InterFloor;
+            bool ortho = fs.Ortho;
+            string subType = fs.SubType;
+            string sysName = fs.SysName;
+            string typKey = fs.TypeTitle + (clampsOnly ? ", только кляммеры"
+                : fs.Mode == "frame" ? ", без кляммеров" : "");
 
-            // углы здания (фидбэк Германа 27.07): угловая зона
-            // (1500) отсчитывается от УКАЗАННЫХ внешних углов, а не
-            // от краёв зоны; Enter без точек — по краям контуров
+            // углы здания (фидбэк Германа 27.07): угловая зона (1500)
+            // отсчитывается от УКАЗАННЫХ внешних углов; нет точек — по краям
             var cornersX = new List<object>();
-            while (true)
+            if (fs.AskCorners && !clampsOnly)
             {
-                var pco = new PromptPointOptions(
-                    "\nТочка на ВНЕШНЕМ углу здания (Enter — дальше): ")
-                { AllowNone = true };
-                var pcv = ed.GetPoint(pco);
-                if (pcv.Status != PromptStatus.OK) break;
-                cornersX.Add(pcv.Value.X);
-                ed.WriteMessage("\n  угол X = " + F0(pcv.Value.X) +
-                                " (всего " + cornersX.Count + ")");
+                while (true)
+                {
+                    var pco = new PromptPointOptions(
+                        "\nТочка на ВНЕШНЕМ углу здания (Enter — дальше): ")
+                    { AllowNone = true };
+                    var pcv = ed.GetPoint(pco);
+                    if (pcv.Status != PromptStatus.OK) break;
+                    cornersX.Add(pcv.Value.X);
+                    ed.WriteMessage("\n  угол X = " + F0(pcv.Value.X) +
+                                    " (всего " + cornersX.Count + ")");
+                }
+                if (cornersX.Count == 0)
+                    ed.WriteMessage("\n  углы не указаны — угловые зоны " +
+                        "по краям контуров.");
             }
-            if (cornersX.Count == 0)
-                ed.WriteMessage("\n  углы не указаны — угловые зоны " +
-                    "по краям контуров.");
 
             double? railStepCorner = null;
             bool manualStep = false;
-
-            // ── 3п. ПРОФИЛЬ направляющих (письмо Германа 01.08 п.2):
-            //    видимость динблока = марка профиля. Вертикальная:
-            //    Авто (подбор расчётом по допустимым В-ш) или явный
-            //    выбор; межэтажная: НСП-1/НСП-2; ортогональная: ШП/
-            //    ZП ставятся движком автоматом ──
-            string railProfile = null, nspType = null;
-            if (subType == "vertical")
+            string railProfile = fs.RailProfileOrNull, nspType = fs.NspTypeOrNull;
+            var sysOverride = fs.SysOverride();
+            Dictionary<string, object> calcDict = clampsOnly ? null : fs.CalcDict();
+            if (calcDict != null && subType == "vertical")
+                ed.WriteMessage("\n  расчётный пресет: Вектор-1 " +
+                    "(КР2-70 + УК-70-1,2 + ГП-40-40-1,2).");
+            if (fs.Manual && !clampsOnly)
             {
-                var pkp = new PromptKeywordOptions(
-                    "\nПрофиль направляющей — Авто(подбор), ГП-40-40, " +
-                    "ГП-60-40, ШП-60-20 [Авто/ГП40/ГП60/ШП60] <Авто>: ",
-                    "Авто ГП40 ГП60 ШП60");
-                var rpk = ed.GetKeywords(pkp);
-                string kp = rpk.Status == PromptStatus.OK &&
-                            rpk.StringResult != null
-                            ? rpk.StringResult : "";
-                if (kp == "ГП40") railProfile = "ГП-40-40";
-                else if (kp == "ГП60") railProfile = "ГП-60-40";
-                else if (kp == "ШП60") railProfile = "ШП-60-20";
-            }
-            else if (interFloor)
-            {
-                var pkp = new PromptKeywordOptions(
-                    "\nВертикальный профиль межэтажной [НСП1/НСП2] " +
-                    "<НСП1>: ", "НСП1 НСП2");
-                var rpk = ed.GetKeywords(pkp);
-                nspType = (rpk.Status == PromptStatus.OK &&
-                           rpk.StringResult == "НСП2")
-                          ? "НСП-2" : "НСП-1";
-            }
-
-            // ── 3р. ЭТАП 4 (целевой порядок Дениса 24.07): шаги
-            //    кронштейнов СЧИТАЮТСЯ модулем расчёта несущей
-            //    способности (frame_calc, методика «Вектор фасад») —
-            //    конструктор даёт только исходные. «Вручную» —
-            //    прежний путь со справочником/правкой шагов ──
-            var sysOverride = new Dictionary<string, object>
-            { { "name", sysName } };
-            Dictionary<string, object> calcDict = null;
-            var pkr = new PromptKeywordOptions(
-                "\nШаги кронштейнов [Расчет/Вручную] <Расчет>: ",
-                "Расчет Вручную");
-            var rkr = ed.GetKeywords(pkr);
-            bool manual = rkr.Status == PromptStatus.OK &&
-                          rkr.StringResult == "Вручную";
-            if (!manual)
-            {
-                var pkw = new PromptKeywordOptions(
-                    "\nВетровой район [Ia/I/II/III/IV/V] <II>: ",
-                    "Ia I II III IV V");
-                var rw = ed.GetKeywords(pkw);
-                string windReg = (rw.Status == PromptStatus.OK &&
-                                  rw.StringResult != null &&
-                                  rw.StringResult.Length > 0)
-                                 ? rw.StringResult : "II";
-                var pkt = new PromptKeywordOptions(
-                    "\nТип местности по СП 20.13330 [A/B/C] <B>: ",
-                    "A B C");
-                var rt = ed.GetKeywords(pkt);
-                string terr = (rt.Status == PromptStatus.OK &&
-                               rt.StringResult != null &&
-                               rt.StringResult.Length > 0)
-                              ? rt.StringResult : "B";
-                double hgt = AskD(ed, "Высота здания, м", 30.0);
-                double qcl = AskD(ed, "Вес облицовки, кг/м2",
-                                  interFloor ? 8.0 : 25.0);
-                double off = AskD(ed, "Вынос облицовки, мм", 230.0);
-                double na = AskD(ed, "Усилие вырыва анкера по ТС/" +
-                                     "акту, Н", 3000.0);
-                if (subType == "vertical")
-                {
-                    sysOverride["name"] = "Вектор-1";
-                    ed.WriteMessage("\n  расчётный пресет: Вектор-1 " +
-                        "(КР2-70 + УК-70-1,2 + ГП-40-40-1,2).");
-                }
-                calcDict = new Dictionary<string, object>
-                {
-                    { "wind_region", windReg },
-                    { "terrain", terr },
-                    { "height", hgt },
-                    { "q_clad", qcl },
-                    { "offset", off },
-                    { "na_max", na },
-                };
-            }
-            else
-            {
-                // дефолты для подтверждения (источник истины движок,
-                // тут только стартовые значения диалога)
-                double stepMain = 800.0;
-                double stepCorner = 800.0;
-                double railGap = 10.0;
-                double startOff = 300.0;
-                double cornerZone = 1500.0;
-
-                stepMain = AskD(ed, "Шаг кронштейнов в РЯДОВОЙ " +
-                                "зоне, мм", stepMain);
-                stepCorner = AskD(ed, "Шаг кронштейнов в УГЛОВОЙ " +
-                                  "зоне (1500 от угла), мм", stepCorner);
-                sysOverride["bracket_step"] = stepMain;
-                sysOverride["bracket_step_corner"] = stepCorner;
-                // 04.08 (Герман п.1): шаг, заданный РУКАМИ, ставится
-                // буквально — без «размазывания» остатка по пролётам
-                // (В16 давал 798 вместо заданных 800)
+                // 04.08 (Герман п.1): шаг, заданный РУКАМИ, ставится буквально
                 manualStep = true;
-                // 04.08 (Герман п.2): шаг СТОЕК в угловой зоне —
-                // первая в 100 мм от указанного угла, дальше этим
-                // шагом; Enter — стойки только по осям рустов
-                double railStepC = AskD(ed, "Шаг СТОЕК в УГЛОВОЙ зоне, "
-                                        + "мм (0 — только по рустам)",
-                                        0.0);
-                if (railStepC > 1.0) railStepCorner = railStepC;
-                var pkc = new PromptKeywordOptions(
-                    "\nПрочее: старт " + F0(startOff) + ", зазор " +
-                    "стыка " + F0(railGap) + ", угловая зона " +
-                    F0(cornerZone) + " [Принять/Изменить] <Принять>: ",
-                    "Принять Изменить");
-                var rkc = ed.GetKeywords(pkc);
-                if (rkc.Status == PromptStatus.OK &&
-                    rkc.StringResult == "Изменить")
-                {
-                    startOff = AskD(ed, "Первый кронштейн от низа " +
-                                        "стойки, мм", startOff);
-                    railGap = AskD(ed, "Зазор стыка направляющих, мм",
-                                   railGap);
-                    cornerZone = AskD(ed, "Ширина угловой зоны, мм",
-                                      cornerZone);
-                    sysOverride["bracket_start_offset"] = startOff;
-                    sysOverride["rail_gap"] = railGap;
-                    sysOverride["corner_zone"] = cornerZone;
-                }
+                // 04.08 (Герман п.2): шаг СТОЕК в угловой зоне (0 — по рустам)
+                if (fs.RailStepCorner > 1.0) railStepCorner = fs.RailStepCorner;
             }
 
-            // ── 3а. знаки: условные или ОБРАЗЦЫ боевых блоков
-            //    Германа с чертежа (ТЗ 26.07 п.3: тип и длина
-            //    кронштейна в имени блока, «Кронш КР1-70-100») ──
+            // ── 3а. знаки: условные или ОБРАЗЦЫ боевых блоков Германа ──
             ObjectId smpMain = ObjectId.Null, smpRow = ObjectId.Null;
             ObjectId smpClampRow = ObjectId.Null,
                      smpClampStart = ObjectId.Null,
                      smpClampSide = ObjectId.Null,
                      smpClampCombo = ObjectId.Null,
                      smpRail = ObjectId.Null;
-            var pks = new PromptKeywordOptions(
-                "\nЗнаки кронштейнов [Условные/Образцы] <Условные>: ",
-                "Условные Образцы");
-            var rks = ed.GetKeywords(pks);
-            if (rks.Status == PromptStatus.OK &&
-                rks.StringResult == "Образцы")
+            if (fs.Signs == "samples")
             {
-                // фидбэк Германа 27.07 (п.4): образцы и для
-                // кляммеров, и для направляющей (его библиотека
-                // блоков); Enter по любому — условный знак
-                smpMain = PickBlock(ed, db,
-                    "\nОбразец НЕСУЩЕГО кронштейна (Enter — усл.): ");
-                smpRow = PickBlock(ed, db,
-                    "\nОбразец ОПОРНОГО кронштейна (Enter — усл.): ");
+                // фидбэк Германа 27.07 (п.4): образцы и для кляммеров, и для
+                // направляющей; Enter по любому — условный знак
+                if (!clampsOnly)
+                {
+                    smpMain = PickBlock(ed, db,
+                        "\nОбразец НЕСУЩЕГО кронштейна (Enter — усл.): ");
+                    smpRow = PickBlock(ed, db,
+                        "\nОбразец ОПОРНОГО кронштейна (Enter — усл.): ");
+                }
                 smpClampRow = PickBlock(ed, db,
                     "\nОбразец кляммера РЯДОВОГО (Enter — усл.): ");
                 smpClampStart = PickBlock(ed, db,
@@ -494,50 +375,45 @@ namespace AFramePlugin
                 smpClampCombo = PickBlock(ed, db,
                     "\nОбразец кляммера КОМБИНИРОВАННОГО " +
                     "(Enter — усл.): ");
-                smpRail = PickBlock(ed, db,
-                    "\nОбразец НАПРАВЛЯЮЩЕЙ — динамический блок " +
-                    "(Enter — прямоугольники): ");
+                if (!clampsOnly)
+                    smpRail = PickBlock(ed, db,
+                        "\nОбразец НАПРАВЛЯЮЩЕЙ — динамический блок " +
+                        "(Enter — прямоугольники): ");
             }
 
             // ── 4. отметки перекрытий (несущие; стык направляющих) ──
             var floors = new List<object>();
-            while (true)
-            {
-                var ppo = new PromptPointOptions(
-                    "\nТочка на отметке перекрытия (Enter — дальше): ")
-                { AllowNone = true };
-                var pv = ed.GetPoint(ppo);
-                if (pv.Status != PromptStatus.OK) break;
-                floors.Add(pv.Value.Y);
-                ed.WriteMessage("\n  перекрытие Y = " + F0(pv.Value.Y) +
-                                " (всего " + floors.Count + ")");
-            }
-            // ТЗ Германа 26.07 п.5: кляммеры — только для керамогранита,
-            // решает конструктор (классический конструктор кейвордов)
-            var pkl = new PromptKeywordOptions(
-                "\nРаскладывать кляммеры (только для керамогранита) " +
-                "[Да/Нет] <Да>: ", "Да Нет");
-            var rkl = ed.GetKeywords(pkl);
-            if (rkl.Status == PromptStatus.OK &&
-                rkl.StringResult == "Нет")
+            if (fs.AskFloors)
+                while (true)
+                {
+                    var ppo = new PromptPointOptions(
+                        "\nТочка на отметке перекрытия (Enter — дальше): ")
+                    { AllowNone = true };
+                    var pv = ed.GetPoint(ppo);
+                    if (pv.Status != PromptStatus.OK) break;
+                    floors.Add(pv.Value.Y);
+                    ed.WriteMessage("\n  перекрытие Y = " + F0(pv.Value.Y) +
+                                    " (всего " + floors.Count + ")");
+                }
+            // ТЗ Германа 26.07 п.5 + 23.09: «только подсистема» — без кляммеров
+            if (fs.Mode == "frame")
                 rowsY.Clear();
 
-            // Ответ Германа 07.08 (В-ад): обе схемы верны. Отметки
-            // УКАЗАНЫ — несущий кронштейн на центре перекрытия, стык
-            // направляющих на отметке. НЕ указаны — движок кладёт
-            // ХЛЫСТЫ снизу вверх (кронштейны 300 от торцов + шаг,
-            // все одного типа). Автоперекрытия шагом этажа остались
-            // только у межэтажной — ей отметки нужны конструктивно.
+            // Ответ Германа 07.08 (В-ад): отметки УКАЗАНЫ — несущий на центре
+            // перекрытия; НЕ указаны — хлысты снизу вверх. Автоперекрытия
+            // шагом этажа — только у межэтажной (высота этажа — из окна)
             double floorStep = 0.0;
             if (floors.Count == 0)
             {
                 if (interFloor)
                 {
-                    floorStep = AskD(ed, "Отметок нет. Высота этажа " +
-                        "для автоматических перекрытий, мм", 3000.0);
+                    floorStep = fs.FloorStep;
                     if (floorStep < 1) floorStep = 0.0;
+                    if (floorStep > 0)
+                        ed.WriteMessage("\nОтметок нет — перекрытия шагом этажа " +
+                            F0(floorStep) + " мм.");
                 }
-                else
+                else if (!clampsOnly)
                     ed.WriteMessage("\nОтметки не указаны — " +
                         "направляющие хлыстами от низа зоны, " +
                         "кронштейны одного типа (300 от торцов).");
@@ -566,6 +442,26 @@ namespace AFramePlugin
             if (railStepCorner.HasValue)
                 payload["rail_step_corner"] = railStepCorner.Value;
             if (manualStep) payload["exact_step"] = true;
+            // 23.09b (Герман): что раскладывать
+            if (fs.Mode == "frame") payload["parts"] = "frame";
+            if (clampsOnly)
+            {
+                // существующие направляющие: из прошлой подсистемы зон (метка
+                // ATFRAME), иначе — выбором на чертеже (ручная подсистема)
+                var railsFixed = RailsFromHandles(db, oldHandles);
+                if (railsFixed.Count == 0)
+                {
+                    ed.WriteMessage("\nУ выбранных зон нет подсистемы ATFRAME — " +
+                        "выберите направляющие на чертеже.");
+                    railsFixed = SelectRails(ed, db);
+                }
+                if (railsFixed.Count == 0)
+                { ed.WriteMessage("\nНаправляющих нет — кляммеры ставить не на что."); return; }
+                ed.WriteMessage("\nНаправляющих: " + railsFixed.Count +
+                    " — кляммеры по текущей облицовке; прежние кляммеры зон заменяются.");
+                payload["parts"] = "clamps";
+                payload["rails_fixed"] = railsFixed;
+            }
             string baseDir = Path.GetDirectoryName(
                 System.Reflection.Assembly.GetExecutingAssembly().Location)
                 ?? ".";
@@ -603,6 +499,7 @@ namespace AFramePlugin
 
             // ── 6. чертёж ──
             var handlesByRoot = new Dictionary<string, List<string>>();
+            var erasedH = new HashSet<string>();
             int erased = 0, made = 0;
             using (doc.LockDocument())
             using (var tr = db.TransactionManager.StartTransaction())
@@ -643,8 +540,12 @@ namespace AFramePlugin
                         if (oe == null) continue;
                         if (!oldHandles.Contains(oe.Handle.ToString()))
                             continue;
+                        if (clampsOnly && !string.Equals(oe.Layer, LayerClamps,
+                                StringComparison.OrdinalIgnoreCase))
+                            continue;       // направляющие и кронштейны — на месте
                         oe.UpgradeOpen();
                         oe.Erase();
+                        erasedH.Add(oe.Handle.ToString());
                         erased++;
                     }
 
@@ -785,17 +686,30 @@ namespace AFramePlugin
                             "вставка", "", LayerBrackets,
                             handlesByRoot, partToRoot, ref made);
 
-                // метка ATFRAME на объекты зоны / контуры
-                foreach (var kv in handlesByRoot)
+                // метка ATFRAME на объекты зоны / контуры; «только кляммеры» —
+                // прежние хэндлы зоны без удалённых кляммеров + новые кляммеры
+                var roots = new List<string>(handlesByRoot.Keys);
+                if (clampsOnly)
+                    foreach (var k0 in oldByRoot.Keys)
+                        if (!roots.Contains(k0)) roots.Add(k0);
+                foreach (var root in roots)
                 {
-                    string root = kv.Key;
+                    var hl = new List<string>();
+                    List<string> prevH;
+                    if (clampsOnly && oldByRoot.TryGetValue(root, out prevH))
+                        foreach (var h0 in prevH)
+                            if (!erasedH.Contains(h0) && !hl.Contains(h0)) hl.Add(h0);
+                    List<string> newH;
+                    if (handlesByRoot.TryGetValue(root, out newH)) hl.AddRange(newH);
                     var meta = new Dictionary<string, object>
                     {
                         { "zone_id", root },
                         { "system", sysName },
                         { "floors_y", floors },
-                        { "count", kv.Value.Count },
-                        { "handles", kv.Value },
+                        { "count", hl.Count },
+                        { "handles", hl },
+                        { "settings", fs.ToDict() },
+                        { "parts", fs.Mode },
                     };
                     string mj = ser.Serialize(meta);
                     List<ObjectId> targets;
@@ -1455,6 +1369,129 @@ namespace AFramePlugin
         }
 
         // ── прежняя подсистема: хэндлы из метки ATFRAME выбранного ──
+        // ── 23.09b: окно ATFRAME и режим «только кляммеры» ──
+        private static Dictionary<string, object> ReadFrameSettings(
+            Transaction tr, JavaScriptSerializer ser, Entity ent)
+        {
+            try
+            {
+                string j = ReadData(tr, ent, XKeyFrame);
+                if (j == null) return null;
+                var d = ser.DeserializeObject(j) as Dictionary<string, object>;
+                return Get(d, "settings") as Dictionary<string, object>;
+            }
+            catch { return null; }
+        }
+
+        private static void CollectOldByRoot(Transaction tr,
+            JavaScriptSerializer ser, Entity ent,
+            Dictionary<string, List<string>> into)
+        {
+            try
+            {
+                string j = ReadData(tr, ent, XKeyFrame);
+                if (j == null) return;
+                var d = ser.DeserializeObject(j) as Dictionary<string, object>;
+                string root = SafeStr(Get(d, "zone_id"));
+                var hs = Get(d, "handles") as object[];
+                if (root.Length == 0 || hs == null) return;
+                List<string> l;
+                if (!into.TryGetValue(root, out l)) into[root] = l = new List<string>();
+                foreach (var h in hs)
+                {
+                    string sh = SafeStr(h);
+                    if (!l.Contains(sh)) l.Add(sh);
+                }
+            }
+            catch { }
+        }
+
+        /// <summary>Ось и высота вертикальной направляющей по объекту
+        /// чертежа: полилиния-прямоугольник / отрезок / блок (динблок
+        /// профиля). Вертикальная — высота больше ширины втрое.</summary>
+        private static bool RailGeom(Entity e, out double x, out double y0, out double y1)
+        {
+            x = y0 = y1 = 0;
+            var ln = e as Line;
+            if (ln != null)
+            {
+                if (Math.Abs(ln.StartPoint.X - ln.EndPoint.X) > 1.0) return false;
+                x = 0.5 * (ln.StartPoint.X + ln.EndPoint.X);
+                y0 = Math.Min(ln.StartPoint.Y, ln.EndPoint.Y);
+                y1 = Math.Max(ln.StartPoint.Y, ln.EndPoint.Y);
+                return y1 - y0 > 1.0;
+            }
+            if (!(e is Polyline) && !(e is BlockReference)) return false;
+            Extents3d ex;
+            try { ex = e.GeometricExtents; }
+            catch { return false; }
+            double w = ex.MaxPoint.X - ex.MinPoint.X, h = ex.MaxPoint.Y - ex.MinPoint.Y;
+            if (h < 3.0 * Math.Max(w, 1.0)) return false;
+            x = 0.5 * (ex.MinPoint.X + ex.MaxPoint.X);
+            y0 = ex.MinPoint.Y;
+            y1 = ex.MaxPoint.Y;
+            return true;
+        }
+
+        private static List<object> RailsFromHandles(Database db, HashSet<string> handles)
+        {
+            var out1 = new List<object>();
+            using (var tr = db.TransactionManager.StartTransaction())
+            {
+                foreach (var hs in handles)
+                {
+                    long v;
+                    if (!long.TryParse(hs, NumberStyles.HexNumber, CultureInfo.InvariantCulture, out v))
+                        continue;
+                    ObjectId id;
+                    if (!db.TryGetObjectId(new Handle(v), out id) || id.IsNull || id.IsErased)
+                        continue;
+                    var e = tr.GetObject(id, OpenMode.ForRead, false) as Entity;
+                    if (e == null || !string.Equals(e.Layer, LayerRails, StringComparison.OrdinalIgnoreCase))
+                        continue;
+                    double x, y0, y1;
+                    if (RailGeom(e, out x, out y0, out y1))
+                        out1.Add(new Dictionary<string, object> { { "x", x }, { "y0", y0 }, { "y1", y1 } });
+                }
+                tr.Commit();
+            }
+            return out1;
+        }
+
+        private static List<object> SelectRails(Editor ed, Database db)
+        {
+            var out1 = new List<object>();
+            var pso = new PromptSelectionOptions
+            {
+                MessageForAdding = "\nВыберите вертикальные направляющие (полилинии/блоки/отрезки): "
+            };
+            var sel = ed.GetSelection(pso, new SelectionFilter(new[]
+            {
+                new TypedValue((int)DxfCode.Operator, "<or"),
+                new TypedValue((int)DxfCode.Start, "LWPOLYLINE"),
+                new TypedValue((int)DxfCode.Start, "INSERT"),
+                new TypedValue((int)DxfCode.Start, "LINE"),
+                new TypedValue((int)DxfCode.Operator, "or>"),
+            }));
+            if (sel.Status != PromptStatus.OK) return out1;
+            int skipped = 0;
+            using (var tr = db.TransactionManager.StartTransaction())
+            {
+                foreach (SelectedObject so in sel.Value)
+                {
+                    var e = tr.GetObject(so.ObjectId, OpenMode.ForRead) as Entity;
+                    double x, y0, y1;
+                    if (e != null && RailGeom(e, out x, out y0, out y1))
+                        out1.Add(new Dictionary<string, object> { { "x", x }, { "y0", y0 }, { "y1", y1 } });
+                    else skipped++;
+                }
+                tr.Commit();
+            }
+            if (skipped > 0)
+                ed.WriteMessage("\n  не вертикальные/не профиль — пропущено: " + skipped);
+            return out1;
+        }
+
         private static void CollectOldHandles(Transaction tr,
             JavaScriptSerializer ser, Entity ent, HashSet<string> into)
         {
