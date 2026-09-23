@@ -583,4 +583,98 @@ r = ce.run({"op": "tile_pattern", "contours": [{"id": "A", "pts": rect(0, 0, 100
 ok(r["ok"] is False and "размер" in r["error"], "T37b: без tile — отказ текстом (%s)" % r.get("error"))
 
 
+# ── T38–T45 (23.09b, Герман): ПРИНУДИТЕЛЬНЫЕ русты, как в ATCLAD ──
+# vjoints — ось вертикального руста (ТЗ 2.5), hjoints — НИЗ
+# горизонтального (2.6/Г3). Руст — граница участка: не облицовывается,
+# за рустом раскладка заново от руста (целая плитка базового ряда у
+# руста со стороны опорного участка).
+def frun(**kw):
+    base = {"op": "tile_pattern", "tile": {"w": 600, "h": 300}, "gap": {"v": 10, "h": 10},
+            "types": ["КГ"], "anchor": {"h": "L", "v": "B", "center": "tile", "ref": "bbox"},
+            "bond": {"kind": "none"}, "contours": [{"id": "A", "pts": rect(0, 0, 6000, 3000)}]}
+    base.update(kw)
+    r = ce.run(json.loads(json.dumps(base)))
+    assert r["ok"], r.get("error")
+    return r
+
+
+def crosses(pcs, a, b, key="x", size="w"):
+    return [q for q in pcs if q[key] < b - 1e-6 and q[key] + q[size] > a + 1e-6]
+
+
+r0 = frun()
+r = frun(vjoints=[2500])
+P = r["pieces"]
+ok(not crosses(P, 2495, 2505), "T38a: ни один кусок не заходит в вертикальный руст 2495–2505")
+ok(any(q["full"] and abs(q["x"] - 2505) < 1e-6 and abs(q["y"]) < 1e-6 for q in P),
+   "T38b: ЛН — справа от руста целая плитка базового ряда вплотную к русту")
+ok(all(abs(q["w"] - 55) < 1e-6 for q in P if abs(q["x"] + q["w"] - 2495) < 1e-6),
+   "T38c: слева руст — подрезка 55 (0..2495 целыми 600+10 от левого края)")
+ok(abs(r["per_zone"][0]["area_zone"] - (18e6 - 10 * 3000)) < 1e-3,
+   "T38d: площадь зоны = стена минус руст (%s)" % r["per_zone"][0]["area_zone"])
+ok(any("принудительные русты" in n for n in r["notes"]), "T38e: нота о рустах")
+ok(2500.0 in r["per_zone"][0]["joints_x"], "T38f: ось руста — в осях стоек для ATFRAME")
+
+r = frun(hjoints=[1500])
+P = r["pieces"]
+ok(not crosses(P, 1500, 1510, "y", "h"), "T39a: ни один кусок не заходит в горизонтальный руст 1500–1510")
+ok(any(q["full"] and abs(q["y"] - 1510) < 1e-6 for q in P),
+   "T39b: Г3 — над рустом ряды стандартной высоты от py+руст")
+ok({round(q["h"]) for q in P if abs(q["y"] + q["h"] - 1500) < 1e-6} == {260},
+   "T39c: Г3 — снизу подрезка к русту (ряды 0..1240, последний 260)")
+ok(r["per_zone"][0]["forced"] == {"vjoints": [], "hjoints": [1500.0]}, "T39d: forced в per_zone")
+
+r = frun(vjoints=[2500], hjoints=[1500], anchor={"h": "R", "v": "T"})
+P = r["pieces"]
+ok(any(q["full"] and abs(q["x"] + q["w"] - 2495) < 1e-6 for q in P) and
+   any(q["full"] and abs(q["y"] + q["h"] - 1500) < 1e-6 for q in P),
+   "T40a: ПВ — целые у руста со стороны опорного (правого верхнего) участка")
+ok({round(q["w"]) for q in P if abs(q["x"] - 2505) < 1e-6} == {445},
+   "T40b: ПВ — подрезка приходит к русту с дальней стороны (445)")
+
+r = frun(vjoints=[2500], bond={"kind": "alternate", "value": "1/2", "units": "frac"})
+P = r["pieces"]
+at = sorted((round(q["y"]), round(q["w"]), q["full"]) for q in P if abs(q["x"] - 2505) < 1e-6)[:2]
+ok(at == [(0, 600, True), (310, 295, False)],
+   "T41: разбежка 1/2 за рустом сохраняется: ряд 0 целая, ряд 1 — половинка (%s)" % at)
+
+# клик у грани проёма с рустом вокруг — совпадает со швом грани (не двойной шов)
+W = [{"id": "A", "pts": rect(0, 0, 6000, 3000)}, {"id": "W", "pts": rect(2000, 900, 1500, 1200)}]
+r = frun(contours=W, gap_around=True, vjoints=[2003], hjoints=[2101])
+P = r["pieces"]
+ok(not crosses(P, 1990, 2000) and not crosses(P, 2100, 2110, "y", "h"),
+   "T42a: руст у грани окна слит со швом грани (2000−10..2000 и верх окна 2100..2110)")
+ok(not any(q["x"] < 2000 - 1e-6 and q["x"] + q["w"] > 1990 + 1e-6 for q in P) and
+   any(abs(q["x"] + q["w"] - 1990) < 1e-6 for q in P), "T42b: кромки у шва грани, двойного руста нет")
+ok(any(q["full"] and abs(q["y"] - 2110) < 1e-6 for q in P),
+   "T42c: клик по верху окна = руст над окном, выше — ряды стандартной высоты (п.1.4)")
+
+r = frun(vjoints=[3], hjoints=[-50, 5000])
+ok(len(r["pieces"]) == len(r0["pieces"]) and any("у края зоны" in n for n in r["notes"]),
+   "T43: руст у края/вне зоны не ставится (нота), раскладка прежняя")
+
+r = frun(axis="cols", vjoints=[2500], hjoints=[1500], tile={"w": 300, "h": 600})
+P = r["pieces"]
+ok(not crosses(P, 2495, 2505) and not crosses(P, 1500, 1510, "y", "h"),
+   "T44: столбцы — русты те же (реальная плоскость), куски в них не заходят")
+
+# две зоны, руст по X проходит через обе (как ATCLAD: «на всю высоту всех участков»)
+r = frun(contours=[{"id": "A", "pts": rect(0, 0, 6000, 1500)}, {"id": "B", "pts": rect(0, 2000, 6000, 1000)}],
+         vjoints=[2500], merge_touching=False)
+ok(all(not crosses([q for q in r["pieces"] if q["zone"] == z], 2495, 2505) for z in ("контур A", "контур B")),
+   "T45a: вертикальный руст действует на все зоны прогона")
+tmp = tempfile.mkdtemp()
+req = {"op": "tile_pattern", "tile": {"w": 600, "h": 300}, "gap": {"v": 10, "h": 10}, "types": ["КГ"],
+       "contours": [{"id": "A", "pts": rect(0, 0, 6000, 3000)}], "vjoints": [2500], "hjoints": [1500]}
+ip, op_ = os.path.join(tmp, "in.json"), os.path.join(tmp, "out.json")
+json.dump(req, open(ip, "w", encoding="utf-8"))
+subprocess.call([sys.executable, os.path.join(os.path.dirname(os.path.abspath(__file__)), "clad_engine.py"), ip, op_])
+cli = json.load(open(op_, encoding="utf-8"))
+ok(cli["ok"] and not crosses(cli["pieces"], 2495, 2505) and not crosses(cli["pieces"], 1500, 1510, "y", "h"),
+   "T45b: CLI clad_engine пробрасывает vjoints/hjoints")
+ok(tp.tile_pattern({"tile": {"w": 600, "h": 300}, "gap": {"v": 10, "h": 10}, "vjoints": ["x"],
+                    "contours": [{"id": "A", "outer": rect(0, 0, 100, 100), "holes": []}]})["ok"] is False,
+   "T45c: мусор в vjoints — чистый отказ")
+
+
 print("tile_pattern: OK, %d проверок" % _n)

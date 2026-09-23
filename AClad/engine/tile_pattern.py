@@ -392,6 +392,112 @@ def build_region(outers, holes, ex=0.0, ey=0.0):
     return region_subtract(base, cutters)
 
 
+def _snap_slot(a, b, bands, gap):
+    """Принудительный руст [a, b], кликнутый у грани проёма (центр в
+    пределах руста от центра полосы шва грани), совпадает со швом грани
+    — иначе рядом легли бы два руста (двойной шов 1.5·руста; тот же
+    урок, что у ATCLAD 23.07)."""
+    c = 0.5 * (a + b)
+    best = None
+    for ba, bb in bands:
+        d = abs(c - 0.5 * (ba + bb))
+        if d <= gap + EPS and (best is None or d < best[0]):
+            best = (d, ba, bb)
+    return (best[1], best[2]) if best else (a, b)
+
+
+def _sub_bounds(reg):
+    """Фактический габарит зоны после вычитания (region_subtract хранит
+    габарит исходной зоны — для участка он шире, раскладка перебирала бы
+    лишние плитки)."""
+    xs, ys = [], []
+    for x0, x1, ivs in reg.slabs:
+        if ivs:
+            xs += [x0, x1]
+            ys += [ivs[0][0], ivs[-1][1]]
+    return (min(xs), min(ys), max(xs), max(ys)) if xs else None
+
+
+def forced_cells(region, R, B, tw, th, s0, vslots, hslots, hole_boxes,
+                 gv, gh, notes, zone_id):
+    """ПРИНУДИТЕЛЬНЫЕ РУСТЫ (Герман 23.09: «как в ATCLAD», ТЗ 2.5/2.6).
+
+    vslots — X-интервалы вертикальных рустов, hslots — Y-интервалы
+    горизонтальных (рабочая плоскость; для столбцов транспонированы).
+    Руст — граница участка: зона режется рустами на прямоугольные
+    ячейки, руст не облицовывается. «Опорная» ячейка — та, где стоит
+    базовая целая плитка (правило «Отсчёт» или общая точка); в ней фаза
+    прежняя. В ячейках ЗА рустом раскладка начинается заново ОТ РУСТА,
+    обращённого к опорной ячейке: целая плитка базового ряда вплотную к
+    русту, подрезка приходит к дальней стороне. Для отсчёта «снизу» это
+    ровно Г3 ATCLAD: выше горизонтального руста — ряды стандартной
+    высоты, ниже — подрезка к русту.
+
+    → None, если ни один руст не проходит через зону; иначе список
+    (участок-зона, R, B) для layout_zone."""
+    bx0, by0, bx1, by1 = region.bounds
+
+    def prep(slots, lo, hi, bands, gap, what):
+        out = []
+        for a, b in slots:
+            a, b = _snap_slot(a, b, bands, gap)
+            if not (lo + EPS < a and b < hi - EPS):
+                if a < hi and b > lo:
+                    notes.append("%s: %s руст %.0f–%.0f у края зоны — не ставится"
+                                 % (zone_id, what, a, b))
+                continue
+            if out and a <= out[-1][1] + EPS:
+                out[-1] = (out[-1][0], max(out[-1][1], b))
+            else:
+                out.append((a, b))
+        return out
+
+    vb = [(hx0 - gv, hx0) for hx0, _y0, _x1, _y1 in hole_boxes] + \
+         [(hx1, hx1 + gv) for _x0, _y0, hx1, _y1 in hole_boxes]
+    hb = [(hy0 - gh, hy0) for _x0, hy0, _x1, _y1 in hole_boxes] + \
+         [(hy1, hy1 + gh) for _x0, _y0, _x1, hy1 in hole_boxes]
+    vs = prep(sorted(vslots), bx0, bx1, vb, gv, "вертикальный")
+    hs = prep(sorted(hslots), by0, by1, hb, gh, "горизонтальный")
+    if not vs and not hs:
+        return None
+    xc = [(bx0, vs[0][0])] if vs else [(bx0, bx1)]
+    for k in range(len(vs)):
+        xc.append((vs[k][1], vs[k + 1][0] if k + 1 < len(vs) else bx1))
+    yc = [(by0, hs[0][0])] if hs else [(by0, by1)]
+    for k in range(len(hs)):
+        yc.append((hs[k][1], hs[k + 1][0] if k + 1 < len(hs) else by1))
+
+    def pick(cells, v):
+        for k, (a, b) in enumerate(cells):
+            if a - EPS <= v <= b + EPS:
+                return k
+        return min(range(len(cells)),
+                   key=lambda k: min(abs(v - cells[k][0]), abs(v - cells[k][1])))
+
+    ia = pick(xc, R + s0 - 0.5 * tw)      # центр базовой целой плитки
+    ja = pick(yc, B + 0.5 * th)
+    big = 1e9
+    out = []
+    for ix, (cx0, cx1) in enumerate(xc):
+        for iy, (cy0, cy1) in enumerate(yc):
+            if cx1 - cx0 <= EPS or cy1 - cy0 <= EPS:
+                continue
+            sub = region_subtract(region, [(-big, -big, cx0, big), (cx1, -big, big, big),
+                                           (-big, -big, big, cy0), (-big, cy1, big, big)])
+            if sub.area <= EPS:
+                continue
+            bb = _sub_bounds(sub)
+            if bb is None:
+                continue
+            sub.bounds = bb
+            Rc = R if ix == ia else (cx0 + tw - s0 if ix > ia else cx1 - s0)
+            Bc = B if iy == ja else (cy0 if iy > ja else cy1 - th)
+            out.append((sub, Rc, Bc))
+    notes.append("%s: принудительные русты — вертикальных %d, горизонтальных %d "
+                 "(участков %d)" % (zone_id, len(vs), len(hs), len(out)))
+    return out
+
+
 def _split_rects(comp, joint=0.0):
     """Г/П-кусок (компонента прямоугольников полос) → прямоугольники.
     Соседние полосы с одинаковым Y-диапазоном склеиваются, линии разреза
@@ -1348,6 +1454,8 @@ def tile_pattern(req):
            "kerf"?, "merge_touching"?, "merge_tol"?, "ortho_tol"?,
            "axis"?, "bond"?, "anchor"?, "gap_around"?, "shaped"?,
            "warn_cut"?,                                  (23.09)
+           "vjoints"?: [x, ...] — оси принудительных вертикальных рустов,
+           "hjoints"?: [y, ...] — низ принудительных горизонтальных (23.09b),
            "contours": [{"id", "outer", "holes", "datum"?}, ...]}
     → {"ok", "pieces": [...+"zone"], "per_zone": [...], "summary", "notes"}."""
     notes = []
@@ -1406,6 +1514,13 @@ def tile_pattern(req):
            str(anchor.get("v") or "B").upper() not in ("B", "C", "T"):
             return {"ok": False, "error": "anchor: h=L|C|R, v=B|C|T",
                     "notes": notes}
+    # 23.09b (Герман): ПРИНУДИТЕЛЬНЫЕ русты, как в ATCLAD — vjoints: ось
+    # вертикального руста (ТЗ 2.5), hjoints: НИЗ горизонтального (2.6/Г3)
+    try:
+        fvx = sorted(set(float(v) for v in (req.get("vjoints") or [])))
+        fhy = sorted(set(float(v) for v in (req.get("hjoints") or [])))
+    except (TypeError, ValueError):
+        return {"ok": False, "error": "vjoints/hjoints — списки чисел", "notes": notes}
     # рабочая плоскость: для столбцов — транспонированная (x↔y)
     if cols:
         tw, th, gvw, ghw = tile_h, tile_w, gap_h, gap_v
@@ -1413,6 +1528,10 @@ def tile_pattern(req):
         tw, th, gvw, ghw = tile_w, tile_h, gap_v, gap_h
     MXw = tw + gvw
     wanchor = transpose_anchor(anchor) if (cols and anchor) else anchor
+    # слоты рустов в РЕАЛЬНОЙ плоскости → рабочая (столбцы: x↔y)
+    rv = [(x - 0.5 * gap_v, x + 0.5 * gap_v) for x in fvx]
+    rh = [(y, y + gap_h) for y in fhy]
+    vslots_w, hslots_w = (rh, rv) if cols else (rv, rh)
     c0, r0 = anchor_color_origin(wanchor, nc, len(rows))
     try:
         shift_of, binfo = resolve_bond(req.get("bond"), shifts, MXw, r0,
@@ -1476,10 +1595,37 @@ def tile_pattern(req):
         else:
             R, B = datum_for(z["outers"], dspec or datum_spec)
         st = {}
-        pcs, absorbed = layout_zone(region, R, B, tw, th, gvw, ghw,
-                                    pattern, min_piece, tiny_mode, shift_of,
-                                    shaped, warn_cut, c0, r0, st)
-        trimmed = st.get("trimmed") or {"count": 0, "area": 0.0}
+        cells = None
+        if vslots_w or hslots_w:
+            hbw = []
+            for hring in z["holes"]:
+                if len(hring) >= 3:
+                    hbw.append((min(p[0] for p in hring), min(p[1] for p in hring),
+                                max(p[0] for p in hring), max(p[1] for p in hring)))
+            cells = forced_cells(region, R, B, tw, th, shift_of(0) * MXw,
+                                 vslots_w, hslots_w, hbw, gvw, ghw, notes, zone_id)
+        if cells is None:
+            pcs, absorbed = layout_zone(region, R, B, tw, th, gvw, ghw,
+                                        pattern, min_piece, tiny_mode, shift_of,
+                                        shaped, warn_cut, c0, r0, st)
+            trimmed = st.get("trimmed") or {"count": 0, "area": 0.0}
+            zone_area = region.area
+        else:
+            pcs, absorbed = [], {"count": 0, "area": 0.0}
+            trimmed = {"count": 0, "area": 0.0}
+            zone_area = 0.0
+            for sub, Rc, Bc in cells:
+                stc = {}
+                p_c, a_c = layout_zone(sub, Rc, Bc, tw, th, gvw, ghw, pattern,
+                                       min_piece, tiny_mode, shift_of, shaped,
+                                       warn_cut, c0, r0, stc)
+                pcs.extend(p_c)
+                absorbed["count"] += a_c["count"]
+                absorbed["area"] += a_c["area"]
+                tc = stc.get("trimmed") or {"count": 0, "area": 0.0}
+                trimmed["count"] += tc["count"]
+                trimmed["area"] += tc["area"]
+                zone_area += sub.area
         holes_real = z["holes"]
         if cols:
             pcs = [_untranspose_piece(p) for p in pcs]
@@ -1526,7 +1672,7 @@ def tile_pattern(req):
         per_zone.append({
             "zone_id": zone_id, "members": z["members"],
             "datum": datum_real, "origin": origin,
-            "area_zone": region.area, "area_tiles": sum(p["area"] for p in pcs),
+            "area_zone": zone_area, "area_tiles": sum(p["area"] for p in pcs),
             "full": n_full, "cut": n_cut,
             "tiny": sum(d["tiny"] for d in by_type.values()),
             "small": n_small, "trimmed": trimmed,
@@ -1534,6 +1680,8 @@ def tile_pattern(req):
             "blanks_cut": sum(d["blanks_cut"] for d in by_type.values()),
             "by_type": by_type,
             "joints_x": jx, "rows_y": ry,
+            "forced": {"vjoints": [x for x in fvx], "hjoints": [y for y in fhy]}
+            if cells is not None else None,
         })
         if absorbed["count"]:
             notes.append("%s: полосок тоньше %g мм — %d (%.3f м²) поглощены рустами, "

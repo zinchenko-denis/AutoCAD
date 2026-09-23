@@ -265,6 +265,8 @@ def op_tile_pattern(req):
       "sequence"}, "anchor"?: {"h","v","center","ref","point"?},
       "gap_around"?: bool, "shaped"?: "keep"|"split"|"split_joint",
       "warn_cut"?: <мм>,
+      // 23.09b — принудительные русты (как ATCLAD 2.5/2.6):
+      "vjoints"?: [x, ...] (ось шва), "hjoints"?: [y, ...] (низ руста),
       "zones":    [{"zone_id", "zone": {facade_zone/1}}, ...],
       "contours": [{"id", "pts", "bulges"?}, ...]
     }
@@ -326,7 +328,7 @@ def op_tile_pattern(req):
     }
     for key in ("min_piece", "tiny_mode", "kerf", "merge_touching",
                 "merge_tol", "ortho_tol", "types", "axis", "bond", "anchor",
-                "gap_around", "shaped", "warn_cut"):
+                "gap_around", "shaped", "warn_cut", "vjoints", "hjoints"):
         if req.get(key) is not None:
             treq[key] = req.get(key)
 

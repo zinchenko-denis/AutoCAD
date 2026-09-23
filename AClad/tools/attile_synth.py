@@ -29,6 +29,12 @@ shapely.
  I11 детерминизм и независимость от порядка/направления вершин;
  I12 путь CLI clad_engine с C#-форматом контуров (каждая полилиния —
      отдельный контур) даёт то же, что прямой вызов.
+ Семейство forced (23.09b, принудительные русты как в ATCLAD) — фазы
+ ячеек за рустом оракул сетки не моделирует, поэтому проверяются:
+ I13 куски внутри зоны МИНУС русты (ни один не заходит в руст);
+ I2 без наложений; I11/I12 как выше;
+ I14 за рустом (со стороны, противоположной отсчёту) у руста стоит
+     плитка полной ширины (без проёмов, «шов в шов», отсчёт снизу).
 
 Запуск (из корня репо): PYTHONUTF8=1 python3 AClad/tools/attile_synth.py
   [--quick] [--seed N] [--render DIR] [--dump DIR]
@@ -338,6 +344,75 @@ def fam_point(rng):
 FAMILIES = [("rect", fam_rect), ("facade", fam_facade), ("grid", fam_grid),
             ("shape", fam_shape), ("tiny", fam_tiny), ("adjacent", fam_adjacent),
             ("edgewin", fam_edgewin), ("point", fam_point)]
+
+
+def fam_forced(rng):
+    q = rand_params(rng)
+    W, H = rng.randint(2500, 14000), rng.randint(2500, 12000)
+    holes = windows(rng, 0, 0, W, H, rng.randint(0, 4)) if rng.random() < 0.5 else []
+    q["contours"] = [{"id": "F", "outer": R(0, 0, W, H), "holes": holes}]
+    q["vjoints"] = sorted(rng.randint(300, W - 300) for _ in range(rng.randint(0, 3)))
+    q["hjoints"] = sorted(rng.randint(300, H - 300) for _ in range(rng.randint(0 if q["vjoints"] else 1, 3)))
+    if rng.random() < 0.3:          # фазовая проверка I14 — простой случай
+        q.update(bond={"kind": "none"}, axis="rows", contours=[{"id": "F", "outer": R(0, 0, W, H)}])
+        q["anchor"] = {"h": rng.choice("LR"), "v": "B", "center": "tile"}
+    return q
+
+
+FAMILIES.append(("forced", fam_forced))   # в конец: прежние 696 сценариев не меняются
+
+
+def check_forced(req):
+    errs = []
+    t0 = time.time()
+    res = tp.tile_pattern(req)
+    st = {"t": time.time() - t0}
+    if not res.get("ok"):
+        return ["движок отказал: %s" % res.get("error")], st
+    W, H = float(req["tile"]["w"]), float(req["tile"]["h"])
+    gv, gh = float(req["gap"]["v"]), float(req["gap"]["h"])
+    pcs = res["pieces"]
+    st["pieces"] = len(pcs)
+    c = req["contours"][0]
+    Z = o_zone([c["outer"]], c.get("holes") or [], req.get("gap_around"), gv, gh)
+    x0, y0, x1, y1 = Polygon(c["outer"]).bounds
+    slots = [box(v - gv / 2.0, y0 - 1, v + gv / 2.0, y1 + 1) for v in req.get("vjoints") or []
+             if x0 + gv < v < x1 - gv] + \
+            [box(x0 - 1, v, x1 + 1, v + gh) for v in req.get("hjoints") or [] if y0 + gh < v < y1 - gh]
+    # клик у грани проёма движок сдвигает на шов грани — оракул тоже (в пределах руста)
+    Zf = Z.difference(unary_union(slots)) if slots and not c.get("holes") else Z
+    geoms = [piece_geom(p) for p in pcs]
+    for p, g in zip(pcs, geoms):
+        out = g.difference(Zf.buffer(0.05, join_style=2)).area
+        if out > 1.0:
+            errs.append("I13: кусок (%.1f,%.1f %.1f×%.1f) вне зоны/в русте на %.1f мм²"
+                        % (p["x"], p["y"], p["w"], p["h"], out))
+            break
+    tree = STRtree(geoms)
+    for k, g in enumerate(geoms):
+        for m in tree.query(g):
+            if m > k and g.intersection(geoms[m]).area > 1.0:
+                errs.append("I2: наложение кусков %d и %d" % (k, m))
+                break
+        if len(errs) > 3:
+            break
+    an = req.get("anchor") or {}
+    if req.get("bond", {}).get("kind") == "none" and not c.get("holes") and an.get("v") == "B" \
+            and req.get("axis") == "rows" and y1 - y0 >= H:
+        for v in req.get("vjoints") or []:
+            a, b = v - gv / 2.0, v + gv / 2.0
+            if not (x0 + gv < v < x1 - gv):
+                continue
+            far = (b, min([w - gv / 2.0 for w in req["vjoints"] if w > v] + [x1])) if an.get("h") == "L" \
+                else (max([w + gv / 2.0 for w in req["vjoints"] if w < v] + [x0]), a)
+            if far[1] - far[0] < W - 0.01:
+                continue
+            # целая ПО ШИРИНЕ (по высоте плитку могут резать горизонтальные русты-пояса)
+            hit = [p for p in pcs if abs(p["w"] - W) < 0.01 and
+                   (abs(p["x"] - b) < 0.01 if an.get("h") == "L" else abs(p["x"] + p["w"] - a) < 0.01)]
+            if not hit:
+                errs.append("I14: за рустом x=%s у руста нет плитки полной ширины (отсчёт %s)" % (v, an.get("h")))
+    return errs, st
 
 
 def gallery():
@@ -653,7 +728,12 @@ def main(argv):
     t_all = time.time()
     for name, q in cases:
         try:
-            errs, st = check(q, full_checks=not a.quick)
+            if name.startswith("forced"):
+                errs, st = check_forced(q)
+                if int(name[-2:]) % 4 == 0:
+                    errs += invariance(q) + cli_same(q)
+            else:
+                errs, st = check(q, full_checks=not a.quick)
             if name.startswith(("rect", "facade", "shape")) and int(name[-2:]) % 5 == 0:
                 errs += invariance(q)
             if name.startswith(("facade", "adjacent", "grid")) and int(name[-2:]) % 9 == 0:
