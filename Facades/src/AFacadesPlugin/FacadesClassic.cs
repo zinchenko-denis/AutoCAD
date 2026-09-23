@@ -75,7 +75,14 @@ namespace AFacadesPlugin
                     try { nm = (string)m.Name; } catch { }
                 if (nm != null &&
                     nm.Replace("&", "") == MenuName)
+                {
+                    // 24.09 (рецензия): после отменённого выхода (QuitAborted) меню
+                    // оставалось в Menus, но снятым с menubar — вернуть на место
+                    if (create)
+                        try { if (!(bool)m.OnMenuBar) m.InsertInMenuBar((int)app.MenuBar.Count); }
+                        catch { }
                     return m;
+                }
             }
             if (!create) return null;
             dynamic menu = menus.Add(MenuName);

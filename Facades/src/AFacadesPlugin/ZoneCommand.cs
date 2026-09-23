@@ -34,6 +34,22 @@ namespace AFacadesPlugin
         {
             var doc = AcApp.DocumentManager.MdiActiveDocument;
             if (doc == null) return;
+            // 24.09 (рецензия): ошибка штриховки/слоя/повреждённой метки
+            // обрывала команду без объяснения
+            try { RunCore(doc); }
+            catch (System.Exception ex)
+            {
+                try
+                {
+                    doc.Editor.WriteMessage("\nATFZONE: внутренняя ошибка — сообщите " +
+                        "разработчику.\n" + ex.ToString() + "\n");
+                }
+                catch { }
+            }
+        }
+
+        private void RunCore(Autodesk.AutoCAD.ApplicationServices.Document doc)
+        {
             var ed = doc.Editor;
             var db = doc.Database;
 
@@ -109,6 +125,18 @@ namespace AFacadesPlugin
                 trl.Commit();
             }
             layerNames.Sort(StringComparer.CurrentCultureIgnoreCase);
+            // 24.09 (рецензия): после перезапуска AutoCAD нумерация начиналась
+            // с 1 и могла повторить марку, уже стоящую в чертеже (второй
+            // «Ф-1» затирал геометрию первого в _fzones.json). Предлагаем
+            // следующий свободный номер; совпадения — вопрос после расчёта.
+            var existingIds = ExistingZoneIds(db);
+            int maxTail = 0;
+            foreach (var zid0 in existingIds)
+            {
+                int t0 = TailNumber(zid0);
+                if (t0 > maxTail) maxTail = t0;
+            }
+            if (maxTail + 1 > ZoneForm.NextStart) ZoneForm.NextStart = maxTail + 1;
             ZoneForm form = new ZoneForm(contours.Count, layerNames);
             form.AddPicker = delegate ()
             {
@@ -252,13 +280,34 @@ namespace AFacadesPlugin
                 return;
             }
 
+            var dupIds = new List<string>();
+            foreach (var zo in zones)
+            {
+                string zid1 = SafeStr(Get(zo as Dictionary<string, object>, "zone_id"));
+                if (existingIds.Contains(zid1)) dupIds.Add(zid1);
+            }
+            if (dupIds.Count > 0)
+            {
+                var pkd = new PromptKeywordOptions(
+                    "\nМарки уже есть в чертеже: " + string.Join(", ", dupIds.ToArray()) +
+                    " — создать ещё раз [Да/Нет] <Нет>: ", "Да Нет");
+                var rkd = ed.GetKeywords(pkd);
+                if (rkd.Status != PromptStatus.OK || rkd.StringResult != "Да")
+                {
+                    ed.WriteMessage("\nОтменено — задайте другой начальный номер или префикс.");
+                    return;
+                }
+            }
+
             // ── 4. точка таблицы (до транзакции — один undo-шаг на всё) ──
             Point3d tablePt = Point3d.Origin;
             bool doTable = form.MakeTable;
             if (doTable)
             {
-                var ppr = ed.GetPoint("\nТочка вставки таблицы: ");
+                var ppr = ed.GetPoint("\nТочка вставки таблицы (Esc — отмена команды): ");
                 if (ppr.Status == PromptStatus.OK) tablePt = ppr.Value;
+                else if (ppr.Status == PromptStatus.Cancel)
+                { ed.WriteMessage("\nОтменено — зоны не созданы."); return; }
                 else doTable = false;
             }
 
@@ -494,12 +543,16 @@ namespace AFacadesPlugin
                     ? "atfzone" : Path.GetFileNameWithoutExtension(dwg);
                 string path = Path.Combine(dir ?? ".", name + "_fzones.json");
 
+                // 24.09 (рецензия): зона заменяется ЦЕЛИКОМ — все её прежние
+                // части. Раньше оставались записи, чей id не совпал буквально:
+                // обычная «Ф-1» → объединённая «Ф-1.1/.2» оставляла старую
+                // «Ф-1» (раскладка брала её), 3 части → 2 оставляли «.3»
                 var all = new List<object>();
-                var newIds = new HashSet<string>();
+                var newRoots = new HashSet<string>();
                 foreach (var z in zonesFull)
                 {
                     var zd = z as Dictionary<string, object>;
-                    if (zd != null) newIds.Add(SafeStr(Get(zd, "id")));
+                    if (zd != null) newRoots.Add(ZoneRoot(zd));
                 }
                 if (File.Exists(path))
                 {
@@ -510,8 +563,11 @@ namespace AFacadesPlugin
                         {
                             var zd = z as Dictionary<string, object>;
                             if (zd == null) continue;
-                            if (!newIds.Contains(SafeStr(Get(zd, "id"))))
-                                all.Add(zd);
+                            string oid = SafeStr(Get(zd, "id"));
+                            bool replaced = newRoots.Contains(ZoneRoot(zd)) || newRoots.Contains(oid);
+                            foreach (var r in newRoots)
+                                if (oid.StartsWith(r + ".")) { replaced = true; break; }
+                            if (!replaced) all.Add(zd);
                         }
                 }
                 all.AddRange(zonesFull);
@@ -583,6 +639,50 @@ namespace AFacadesPlugin
         //    рядом в том же extension dictionary (стык этапа 2, NEXT §Стык) ──
 
         internal const string XKey = "ATFZONE";
+
+        // корень зоны: meta.group у части объединённой зоны, иначе id
+        private static string ZoneRoot(Dictionary<string, object> zd)
+        {
+            var meta = Get(zd, "meta") as Dictionary<string, object>;
+            string g = SafeStr(Get(meta, "group"));
+            return g.Length > 0 ? g : SafeStr(Get(zd, "id"));
+        }
+
+        private static int TailNumber(string s)
+        {
+            int i = s.Length;
+            while (i > 0 && char.IsDigit(s[i - 1])) i--;
+            int v;
+            return i < s.Length && int.TryParse(s.Substring(i), out v) ? v : 0;
+        }
+
+        // марки зон, уже стоящих в чертеже (метки ATFZONE на штриховках/марках)
+        private static HashSet<string> ExistingZoneIds(Database db)
+        {
+            var ids = new HashSet<string>();
+            var ser = new JavaScriptSerializer { MaxJsonLength = int.MaxValue };
+            try
+            {
+                using (var tr = db.TransactionManager.StartTransaction())
+                {
+                    var bt = (BlockTable)tr.GetObject(db.BlockTableId, OpenMode.ForRead);
+                    var ms = (BlockTableRecord)tr.GetObject(bt[BlockTableRecord.ModelSpace], OpenMode.ForRead);
+                    foreach (ObjectId oid in ms)
+                    {
+                        var e = tr.GetObject(oid, OpenMode.ForRead) as Entity;
+                        if (!(e is Hatch) && !(e is MText)) continue;
+                        string j = ReadZoneData(tr, e);
+                        if (j == null) continue;
+                        var zd = ser.DeserializeObject(j) as Dictionary<string, object>;
+                        string zid = SafeStr(Get(zd, "zone_id"));
+                        if (zid.Length > 0) ids.Add(zid);
+                    }
+                    tr.Commit();
+                }
+            }
+            catch { }
+            return ids;
+        }
 
         internal static void StoreZoneData(Transaction tr, Entity ent,
                                            string json)

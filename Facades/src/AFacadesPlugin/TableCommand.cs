@@ -28,6 +28,21 @@ namespace AFacadesPlugin
         {
             var doc = AcApp.DocumentManager.MdiActiveDocument;
             if (doc == null) return;
+            // 24.09 (рецензия): ошибка не должна обрывать команду молча
+            try { RunCore(doc); }
+            catch (System.Exception ex)
+            {
+                try
+                {
+                    doc.Editor.WriteMessage("\nATFTABLE: внутренняя ошибка — сообщите " +
+                        "разработчику.\n" + ex.ToString() + "\n");
+                }
+                catch { }
+            }
+        }
+
+        private void RunCore(Autodesk.AutoCAD.ApplicationServices.Document doc)
+        {
             var ed = doc.Editor;
             var db = doc.Database;
 
@@ -66,9 +81,12 @@ namespace AFacadesPlugin
                     if (z == null) { noData++; continue; }
                     string id = ZoneCommand.SafeStr(
                         ZoneCommand.Get(z, "zone_id"));
-                    if (id.Length == 0 || seen.Contains(id)) continue;
+                    if (id.Length == 0) continue;
 
-                    // сверка с фактом: изменилась ли штриховка после обсчёта
+                    // сверка с фактом: изменилась ли штриховка после обсчёта.
+                    // 24.09 (рецензия): сверка — ДО отсева повторов зоны:
+                    // раньше, если первой в выборке шла марка, штриховка той
+                    // же зоны отсеивалась и изменение не замечалось
                     var hat = ent as Hatch;
                     if (hat != null)
                     {
@@ -80,19 +98,20 @@ namespace AFacadesPlugin
                             double stored = Convert.ToDouble(
                                 ZoneCommand.Get(rep, "area_net_m2"),
                                 CultureInfo.InvariantCulture);
-                            if (Math.Abs(fact - stored) > 0.001)
-                            {
+                            if (Math.Abs(fact - stored) > 0.001 && !stale.Contains(id))
                                 stale.Add(id);
-                                z["stale"] = true;
-                            }
                         }
                         catch { }
                     }
+                    if (seen.Contains(id)) continue;
                     seen.Add(id);
                     zones.Add(z);
                 }
                 tr.Commit();
             }
+            foreach (var z in zones)
+                if (stale.Contains(ZoneCommand.SafeStr(ZoneCommand.Get(z, "zone_id"))))
+                    z["stale"] = true;
             if (zones.Count == 0)
             {
                 ed.WriteMessage("\nВ выборке нет объектов с данными зон " +
@@ -121,6 +140,9 @@ namespace AFacadesPlugin
                 "\nКуда вывести ведомость [Чертеж/Ексель/Оба] <Чертеж>: ",
                 "Чертеж Ексель Оба");
             var kres = ed.GetKeywords(pko);
+            // 24.09 (рецензия): Esc — отмена команды, а не выбор «Чертеж»
+            if (kres.Status == PromptStatus.Cancel)
+            { ed.WriteMessage("\nОтменено."); return; }
             string mode = (kres.Status == PromptStatus.OK &&
                            kres.StringResult != null &&
                            kres.StringResult.Length > 0)
@@ -141,6 +163,8 @@ namespace AFacadesPlugin
                 { DefaultValue = 250.0, AllowNegative = false,
                   AllowZero = false };
                 var hres = ed.GetDouble(pdo);
+                if (hres.Status == PromptStatus.Cancel)
+                { ed.WriteMessage("\nОтменено."); return; }
                 double textH = hres.Status == PromptStatus.OK
                                ? hres.Value : 250.0;
                 var ppr = ed.GetPoint("\nТочка вставки таблицы: ");
