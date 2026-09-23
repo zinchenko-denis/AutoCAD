@@ -41,6 +41,8 @@ namespace ACladPlugin
         private readonly CheckBox _point = new CheckBox();
         private readonly CheckBox _gap = new CheckBox();
         private readonly CheckBox _merge = new CheckBox();
+        private readonly CheckBox _forcedV = new CheckBox();
+        private readonly CheckBox _forcedH = new CheckBox();
         private readonly ComboBox _shaped = new ComboBox();
         private readonly NumericUpDown _min = Num(0, 500, 0);
         private readonly NumericUpDown _kerf = Num(0, 20, 1);
@@ -87,7 +89,7 @@ namespace ACladPlugin
             MinimizeBox = false;
             MaximizeBox = false;
             ShowInTaskbar = false;
-            ClientSize = new Size(846, 692);
+            ClientSize = new Size(846, 764);
 
             // ── 1. облицовка ──
             var g1 = new GroupBox { Text = "1. Облицовка", Left = 10, Top = 6, Width = 470, Height = 134 };
@@ -194,28 +196,37 @@ namespace ACladPlugin
                 L("Пропил, мм:", 306, 76, 84), _kerf,
                 L("Предупреждать о подрезке меньше, мм:", 10, 106, 280), _warn });
 
+            // ── 6. принудительные русты (Герман 23.09: как в ATCLAD) ──
+            var g6 = new GroupBox { Text = "6. Принудительные русты (как в ATCLAD)", Left = 10, Top = 644,
+                                    Width = 470, Height = 70 };
+            _forcedV.Text = "вертикальные — точки на оси руста (указать после «Разложить»)";
+            Place(_forcedV, 10, 20, 452);
+            _forcedH.Text = "горизонтальные — точка = низ руста (по верху окна — руст над окном)";
+            Place(_forcedH, 10, 44, 452);
+            g6.Controls.AddRange(new Control[] { _forcedV, _forcedH });
+
             // ── просмотр ──
-            var gp = new GroupBox { Text = "Просмотр рисунка", Left = 490, Top = 6, Width = 346, Height = 634 };
+            var gp = new GroupBox { Text = "Просмотр рисунка", Left = 490, Top = 6, Width = 346, Height = 708 };
             _pv.Left = 10; _pv.Top = 20; _pv.Width = 326; _pv.Height = 410;
-            _desc.Left = 10; _desc.Top = 436; _desc.Width = 326; _desc.Height = 146;
+            _desc.Left = 10; _desc.Top = 436; _desc.Width = 326; _desc.Height = 214;
             _desc.AutoSize = false;
             var legend = new Label
             {
                 Text = "светлые — целые, тёмные — подрезка (у рамки и окна); красная " +
                        "точка — отсчёт, жирная рамка — базовая плитка; белая кайма " +
                        "у окна — руст вокруг проёма",
-                Left = 10, Top = 584, Width = 326, Height = 44, ForeColor = Color.DimGray,
+                Left = 10, Top = 656, Width = 326, Height = 44, ForeColor = Color.DimGray,
                 Font = new Font(Font.FontFamily, Font.Size - 0.75f)
             };
             gp.Controls.AddRange(new Control[] { _pv, _desc, legend });
 
-            var reset = new Button { Text = "Сброс к пресету", Left = 10, Top = 652, Width = 140, Height = 30 };
-            var ok = new Button { Text = "Разложить", Left = 616, Top = 652, Width = 106, Height = 30 };
-            var cancel = new Button { Text = "Отмена", Left = 730, Top = 652, Width = 106, Height = 30,
+            var reset = new Button { Text = "Сброс к пресету", Left = 10, Top = 724, Width = 140, Height = 30 };
+            var ok = new Button { Text = "Разложить", Left = 616, Top = 724, Width = 106, Height = 30 };
+            var cancel = new Button { Text = "Отмена", Left = 730, Top = 724, Width = 106, Height = 30,
                                       DialogResult = DialogResult.Cancel };
             AcceptButton = ok;
             CancelButton = cancel;
-            Controls.AddRange(new Control[] { g1, g2, g3, g4, g5, gp, reset, ok, cancel });
+            Controls.AddRange(new Control[] { g1, g2, g3, g4, g5, g6, gp, reset, ok, cancel });
 
             LoadControls();
 
@@ -275,7 +286,7 @@ namespace ACladPlugin
                 var nu = c as NumericUpDown;
                 if (nu != null) nu.ValueChanged += upd;
             }
-            foreach (var c in new CheckBox[] { _colors, _point, _gap, _merge })
+            foreach (var c in new CheckBox[] { _colors, _point, _gap, _merge, _forcedV, _forcedH })
                 c.CheckedChanged += upd;
             _rows.CheckedChanged += upd;
             _cols.CheckedChanged += upd;
@@ -337,6 +348,8 @@ namespace ACladPlugin
                 _point.Checked = _s.CommonPoint;
                 _gap.Checked = _s.GapAround;
                 _merge.Checked = _s.Merge;
+                _forcedV.Checked = _s.ForcedV;
+                _forcedH.Checked = _s.ForcedH;
                 _shaped.SelectedIndex = Math.Max(0, Array.IndexOf(ShapedCodes, _s.Shaped));
                 _min.Value = Dec(_s.MinPiece, _min);
                 _kerf.Value = Dec(_s.Kerf, _kerf);
@@ -383,6 +396,8 @@ namespace ACladPlugin
             _s.CommonPoint = _point.Checked;
             _s.GapAround = _gap.Checked;
             _s.Merge = _merge.Checked;
+            _s.ForcedV = _forcedV.Checked;
+            _s.ForcedH = _forcedH.Checked;
             if (_shaped.SelectedIndex >= 0) _s.Shaped = ShapedCodes[_shaped.SelectedIndex];
             if (_s.Element.Length > 0 && _s.Shaped == "keep")
             {
@@ -416,7 +431,11 @@ namespace ACladPlugin
             _desc.Text = err == null
                 ? _s.Describe() + (_s.ColorsBySample || _s.Kind == "pattern"
                     ? " После ОК — выбрать образец в чертеже." : "") +
-                  (_s.CommonPoint ? " После ОК — указать общую точку." : "")
+                  (_s.CommonPoint ? " После ОК — указать общую точку." : "") +
+                  (_s.ForcedV || _s.ForcedH ? " Затем — точки принудительных рустов (" +
+                      (_s.ForcedV && _s.ForcedH ? "вертикальных и горизонтальных"
+                       : _s.ForcedV ? "вертикальных" : "горизонтальных") +
+                      "): за рустом раскладка начинается заново от руста." : "")
                 : err;
             for (int k = 0; k < 9; k++)
                 _anchor[k].BackColor = _anchor[k].Checked ? Color.FromArgb(233, 186, 120)

@@ -60,6 +60,13 @@ static class UiCheck
         // 4. круг ToDict/FromDict
         var r = BondSettings.FromDict(ser.DeserializeObject(ser.Serialize(sn.ToDict())) as Dictionary<string, object>);
         Ok(ser.Serialize(r.ToDict()) == ser.Serialize(sn.ToDict()), "ToDict/FromDict — без потерь");
+        // 23.09b: принудительные русты — флаги хранятся, в запрос движка сами не идут (точки добавляет команда)
+        var sf = new BondSettings { ForcedV = true, ForcedH = true };
+        var rf = BondSettings.FromDict(ser.DeserializeObject(ser.Serialize(sf.ToDict())) as Dictionary<string, object>);
+        Ok(rf.ForcedV && rf.ForcedH, "русты: флаги переживают ToDict/FromDict");
+        Ok(!sf.ToEngine().ContainsKey("vjoints") && !sf.ToEngine().ContainsKey("hjoints"),
+           "русты: ToEngine точек не несёт");
+        Ok(!BondSettings.FromDict(new Dictionary<string, object>()).ForcedV, "русты: по умолчанию выкл.");
         // 5. дамп сдвигов и запросов для сверки с движком
         var cases = new List<BondSettings> {
             Mk("none","","frac","+","rows",null), Mk("alternate","1/2","frac","+","rows",null),

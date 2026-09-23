@@ -40,6 +40,9 @@ namespace ACladPlugin
         public bool GapAround = true;
         public string Shaped = "split_joint"; // keep | split | split_joint
         public double MinPiece = 10, WarnCut = 150, Kerf = 3;
+        // 23.09b (Герман): принудительные русты, как в ATCLAD — точки
+        // указываются после «Разложить»; сами точки — в метке ATTILE
+        public bool ForcedV = false, ForcedH = false;
 
         // ── пресеты материалов ──
         public class Preset
@@ -410,6 +413,7 @@ namespace ACladPlugin
                 { "ref", Ref }, { "common_point", CommonPoint }, { "merge", Merge },
                 { "gap_around", GapAround }, { "shaped", Shaped },
                 { "min_piece", MinPiece }, { "warn_cut", WarnCut }, { "kerf", Kerf },
+                { "forced_v", ForcedV }, { "forced_h", ForcedH },
             };
         }
 
@@ -469,6 +473,8 @@ namespace ACladPlugin
             s.MinPiece = D(d, "min_piece", s.MinPiece);
             s.WarnCut = D(d, "warn_cut", s.WarnCut);
             s.Kerf = D(d, "kerf", s.Kerf);
+            s.ForcedV = B(d, "forced_v", false);
+            s.ForcedH = B(d, "forced_h", false);
             return s;
         }
 

@@ -95,6 +95,9 @@ namespace ACladPlugin
             var cladHandles = new HashSet<string>();
             var cladOwners = new List<ObjectId>();
             Dictionary<string, object> prevSettings = null;
+            // 23.09b: прежние точки принудительных рустов — из метки ATTILE,
+            // иначе из метки ATCLAD (переход с ATCLAD на ATTILE без повторных кликов)
+            object[] prevV = null, prevH = null, cladV = null, cladH = null;
             using (var tr = db.TransactionManager.StartTransaction())
             {
                 foreach (SelectedObject so in selZ.Value)
@@ -148,8 +151,18 @@ namespace ACladPlugin
                     {
                         var m = ReadMeta(tr, ser, ent, XKeyTile);
                         prevSettings = CladCommand.Get(m, "settings") as Dictionary<string, object>;
+                        if (prevSettings != null)
+                        {
+                            prevV = CladCommand.Get(m, "vjoints") as object[];
+                            prevH = CladCommand.Get(m, "hjoints") as object[];
+                        }
                     }
                     var cm = ReadMeta(tr, ser, ent, CladCommand.XKeyClad);
+                    if (cladV == null && cm != null)
+                    {
+                        cladV = CladCommand.Get(cm, "vjoints") as object[];
+                        cladH = CladCommand.Get(cm, "hjoints") as object[];
+                    }
                     var ch = CladCommand.Get(cm, "handles") as object[];
                     if (ch != null)
                     {
@@ -286,6 +299,16 @@ namespace ACladPlugin
                 an["point"] = new Dictionary<string, object>
                 { { "x", ppt.Value.X }, { "y", ppt.Value.Y } };
             }
+
+            // ── 5б. принудительные русты (Герман 23.09: «как в ATCLAD») ──
+            //    ось вертикального руста / НИЗ горизонтального (ТЗ 2.5/2.6,
+            //    Г3); за рустом раскладка начинается заново от руста
+            var vjoints = new List<object>();
+            var hjoints = new List<object>();
+            if (st.ForcedV && !AskRusts(ed, true, NonEmpty(prevV) ?? NonEmpty(cladV), vjoints)) return;
+            if (st.ForcedH && !AskRusts(ed, false, NonEmpty(prevH) ?? NonEmpty(cladH), hjoints)) return;
+            if (vjoints.Count > 0) payload["vjoints"] = vjoints;
+            if (hjoints.Count > 0) payload["hjoints"] = hjoints;
 
             // ── 6. движок ──
             payload["op"] = "tile_pattern";
@@ -497,6 +520,8 @@ namespace ACladPlugin
                             { "tiles", hl.Count },
                             { "handles", hl },
                             { "stamp", stamp },
+                            { "vjoints", vjoints },
+                            { "hjoints", hjoints },
                         };
                         string mjson = ser.Serialize(meta);
                         var mem = CladCommand.Get(pz, "members") as object[];
@@ -680,6 +705,50 @@ namespace ACladPlugin
         }
 
         /// <summary>Стереть объекты по хэндлам (любые типы). Возвращает число.</summary>
+        private static object[] NonEmpty(object[] a)
+        { return a != null && a.Length > 0 ? a : null; }
+
+        // Точки принудительных рустов (как ATCLAD 2.5/2.6). Если в метке зоны
+        // есть прежние — сначала вопрос классическим конструктором кейвордов
+        // (грабля 18.07r: дефолт по не-OK). false — пользователь отменил (Esc).
+        private static bool AskRusts(Editor ed, bool vertical, object[] prev, List<object> outList)
+        {
+            string what = vertical ? "вертикального руста (ось шва)" : "горизонтального руста (низ руста)";
+            string many = vertical ? "Вертикальные" : "Горизонтальные";
+            if (prev != null)
+            {
+                var pk = new PromptKeywordOptions("\n" + many + " русты: прежние " + prev.Length +
+                    " шт [Прежние/Новые/Нет] <Прежние>: ", "Прежние Новые Нет");
+                var rk = ed.GetKeywords(pk);
+                if (rk.Status == PromptStatus.Cancel) { ed.WriteMessage("\nОтменено."); return false; }
+                string kw = rk.Status == PromptStatus.OK && !string.IsNullOrEmpty(rk.StringResult)
+                    ? rk.StringResult : "Прежние";
+                if (kw == "Нет") return true;
+                if (kw == "Прежние")
+                {
+                    foreach (var v in prev)
+                    {
+                        try { outList.Add(Convert.ToDouble(v, CultureInfo.InvariantCulture)); }
+                        catch { }
+                    }
+                    ed.WriteMessage("\n  " + many.ToLower() + " русты — прежние: " + outList.Count + " шт.");
+                    return true;
+                }
+            }
+            while (true)
+            {
+                var po = new PromptPointOptions("\nТочка " + what + " (Enter — " +
+                    (outList.Count == 0 ? "без них" : "дальше") + "): ") { AllowNone = true };
+                var pr = ed.GetPoint(po);
+                if (pr.Status == PromptStatus.Cancel) { ed.WriteMessage("\nОтменено."); return false; }
+                if (pr.Status != PromptStatus.OK) return true;
+                double v = vertical ? pr.Value.X : pr.Value.Y;
+                outList.Add(v);
+                ed.WriteMessage("\n  " + (vertical ? "вертикальный руст X = " : "горизонтальный руст Y = ") +
+                                F0(v) + " (всего " + outList.Count + ")");
+            }
+        }
+
         internal static int EraseByHandles(Transaction tr, Database db, IEnumerable<string> handles)
         {
             int n = 0;
