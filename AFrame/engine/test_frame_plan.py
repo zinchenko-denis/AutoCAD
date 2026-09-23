@@ -971,4 +971,58 @@ _o = json.load(open(os.path.join(_d, "out.json"), encoding="utf-8"))
 ok(_o["ok"] and _o["summary"]["parts"] == "clamps" and _o["summary"]["rails"] == 0 and
    len(_o["clamps"]) == len(_full["clamps"]), "CL7: CLI frame_engine пробрасывает parts/rails_fixed")
 
+# ── PG1–PG4 (23.09, ревью): стена НЕ прямоугольник — всё по контуру,
+#    а не по габариту; оконная стойка у края зоны; СП мимо соседнего окна ──
+def _pip(poly, x, y, tol=1.0):
+    """Точка внутри/на границе полигона (свой луч, stdlib)."""
+    n, ins = len(poly), False
+    for i in range(n):
+        (xa, ya), (xb, yb) = poly[i], poly[(i + 1) % n]
+        # на ребре
+        if min(xa, xb) - tol <= x <= max(xa, xb) + tol and min(ya, yb) - tol <= y <= max(ya, yb) + tol:
+            dx, dy = xb - xa, yb - ya
+            L = (dx * dx + dy * dy) ** 0.5
+            if L > 0 and abs(dx * (y - ya) - dy * (x - xa)) / L <= tol:
+                return True
+        if (ya > y) != (yb > y) and x < xa + (y - ya) * (xb - xa) / (yb - ya):
+            ins = not ins
+    return ins
+_L = [[0, 0], [9000, 0], [9000, 6000], [6000, 6000], [6000, 3000], [0, 3000]]
+for _st, _sn, _fl in (("vertical", "Standart", []), ("interfloor", "Межэтажная", [3000.0]),
+                      ("ortho", "Ортогональная", [])):
+    _p = frame_plan({"system": _sn, "sub_type": _st, "contours": [{"outer": _L}],
+                     "joints_x": [305.0 + 610 * k for k in range(15)],
+                     "rows_y": [605.0 * k for k in range(1, 10)], "floors_y": _fl})
+    _out = [r for r in _p["rails"] if not (_pip(_L, r["x"], r["y0"]) and _pip(_L, r["x"], r["y1"]))]
+    _outb = [b for b in _p["brackets"] if not _pip(_L, b["x"], b["y"])]
+    _outc = [c for c in _p["clamps"] if not _pip(_L, c["x"], c["y"], 60.0)]
+    _outh = [h for h in _p.get("hrails") or [] if not (_pip(_L, h["x0"], h["y"]) and _pip(_L, h["x1"], h["y"]))]
+    ok(_p["ok"] and not _out and not _outb and not _outc and not _outh,
+       "PG1: Г-стена, %s — ничего за контуром (стоек %d, кронштейнов %d, кляммеров %d, ГП %d вне)"
+       % (_st, len(_out), len(_outb), len(_outc), len(_outh)))
+# фронтон: стойки у края доходят до ската, не до конька
+_G = [[0, 0], [10000, 0], [10000, 3000], [5000, 6000], [0, 3000]]
+_p = frame_plan({"system": "Standart", "sub_type": "vertical", "contours": [{"outer": _G}],
+                 "joints_x": [305.0 + 610 * k for k in range(16)], "rows_y": [605.0 * k for k in range(1, 10)]})
+_top = max(r["y1"] for r in _p["rails"] if abs(r["x"] - 305.0) < 1e-6)
+ok(abs(_top - (3000 + 305.0 * 3000 / 5000)) < 1e-6, "PG2: фронтон — стойка x=305 до ската (%.1f)" % _top)
+# окно в 90 мм от бокового края: оконная стойка (грань + 100) — не за стеной
+_p = frame_plan({"system": "Standart", "sub_type": "vertical",
+                 "contours": [{"outer": rect(0, 0, 12700, 6000), "holes": [rect(11210, 1800, 12610, 3700)]}],
+                 "joints_x": [305.0 + 610 * k for k in range(21)], "rows_y": [605.0 * k for k in range(1, 10)]})
+ok(all(r["x"] <= 12700 + 1e-6 for r in _p["rails"]) and all(c["x"] <= 12700 + 1e-6 for c in _p["clamps"]),
+   "PG3: окно у края зоны — оконная стойка за стену не выходит")
+# межэтажная: СП-60-40 под окном не проходит сквозь соседнее окно / вдоль окна под ним
+_p = frame_plan({"system": "Межэтажная", "sub_type": "interfloor",
+                 "contours": [{"outer": rect(0, 0, 5000, 5200),
+                               "holes": [rect(2560, 1100, 3660, 2250), rect(2510, 450, 4160, 1100),
+                                         rect(3370, 1950, 4120, 4200), rect(2180, 1060, 3080, 2210)]}],
+                 "joints_x": [305.0 + 1508 * k for k in range(4)], "rows_y": [605.0 * k for k in range(1, 8)],
+                 "floors_y": [3000.0]})
+_holes = [(2560, 1100, 3660, 2250), (2510, 450, 4160, 1100), (3370, 1950, 4120, 4200), (2180, 1060, 3080, 2210)]
+_bad = [h for h in _p["hrails"] if h["kind"] == "СП-60-40" and
+        any(hx0 + 1 < min(h["x1"], hx1) - max(h["x0"], hx0) + hx0 and hy0 + 1 < h["y"] < hy1 - 1 and
+            min(h["x1"], hx1) - max(h["x0"], hx0) > 1 for hx0, hy0, hx1, hy1 in _holes)]
+ok(_p["ok"] and not _bad, "PG4: СП-60-40 не проходит сквозь соседние окна (%s)" % _bad[:1])
+
 print("frame_plan: %d проверок OK" % _n)

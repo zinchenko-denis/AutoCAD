@@ -78,6 +78,68 @@ def _bbox(poly):
     return min(xs), min(ys), max(xs), max(ys)
 
 
+def _vspans(poly, x):
+    """Y-интервалы, где вертикаль x проходит ВНУТРИ полигона стены (чёт-нечёт,
+    полуоткрытое правило по X). 23.09 (ревью): раньше всё ставилось по
+    ГАБАРИТУ контура — у Г-образной, ступенчатой, П-образной стены и фронтона
+    стойки/кляммеры висели там, где стены нет. Ось на самой кромке габарита
+    сдвигается внутрь на 1e-6, чтобы не потерять стойку у края."""
+    xs = [q[0] for q in poly]
+    x = min(max(x, min(xs) + 1e-6), max(xs) - 1e-6)
+    ys = []
+    n = len(poly)
+    for i in range(n):
+        (xa, ya), (xb, yb) = poly[i], poly[(i + 1) % n]
+        if (xa <= x < xb) or (xb <= x < xa):
+            ys.append(ya + (x - xa) * (yb - ya) / (xb - xa))
+    ys.sort()
+    return [(ys[k], ys[k + 1]) for k in range(0, len(ys) - 1, 2)
+            if ys[k + 1] - ys[k] > EPS]
+
+
+def _hspans(poly, y):
+    """X-интервалы горизонтали y внутри полигона стены (как _vspans)."""
+    ys = [q[1] for q in poly]
+    y = min(max(y, min(ys) + 1e-6), max(ys) - 1e-6)
+    xs = []
+    n = len(poly)
+    for i in range(n):
+        (xa, ya), (xb, yb) = poly[i], poly[(i + 1) % n]
+        if (ya <= y < yb) or (yb <= y < ya):
+            xs.append(xa + (y - ya) * (xb - xa) / (yb - ya))
+    xs.sort()
+    return [(xs[k], xs[k + 1]) for k in range(0, len(xs) - 1, 2)
+            if xs[k + 1] - xs[k] > EPS]
+
+
+def _inside_pt(poly, x, y, tol=1.0):
+    return any(lo - tol <= y <= hi + tol for lo, hi in _vspans(poly, x))
+
+
+def _clip_pieces(poly, pieces):
+    """Куски (lo, hi, x) ∩ стена по вертикали x (смещённая оконная стойка
+    у края зоны могла выйти за контур)."""
+    xs = [q[0] for q in poly]
+    out = []
+    for lo, hi, xe in pieces:
+        if xe < min(xs) - EPS or xe > max(xs) + EPS:
+            continue                     # ось вне габарита стены
+        for a, b in _vspans(poly, xe):
+            c0, c1 = max(lo, a), min(hi, b)
+            if c1 - c0 > EPS:
+                out.append((c0, c1, xe))
+    return out
+
+
+def _ytop(poly, x, y, default):
+    """Верх стены над точкой (x, y): кромка интервала, в котором лежит y —
+    «последний ряд по высоте» у Г/ступеней/фронтона не на верху габарита."""
+    for a, b in _vspans(poly, x):
+        if a - 1.0 <= y <= b + 1.0:
+            return b
+    return default
+
+
 def _sub_y(spans, lo, hi):
     """Вычесть [lo, hi] из списка Y-интервалов (копия cladding_plan —
     модули развязаны сознательно, конвенция репо)."""
@@ -685,6 +747,13 @@ def _clamps_on_rails(req, sub, system, joints, rows, floors, seam_tol=2.0):
                 st[2] = max(st[2], b)
             else:
                 stands.append([x, a, b, []])
+        # хлыст, не дошедший до ВЕРХА стены на зазор стыка (остаток ≤ зазора
+        # хлыстом не закрывается) — стойка, как при расстановке, до верха
+        tail = float(system.get("rail_gap") or 0.0) + 1.0
+        for st in stands:
+            yt = _ytop(outer, st[0], st[2], y1)
+            if 0.0 < yt - st[2] <= tail:
+                st[2] = yt
         for x, a, b, seams in stands:
             side = False
             if sub != "interfloor" and edge_off > EPS:
@@ -701,7 +770,7 @@ def _clamps_on_rails(req, sub, system, joints, rows, floors, seam_tol=2.0):
             _piece_clamps(clamps, rows, a, b, x, side, sorted(fl_in), wedges,
                           on_seam=any(abs(x - j) <= seam_tol for j in joints))
             if not side or sub == "interfloor":
-                _edge_top_clamps(clamps, rows, a, b, x, y1, hole_boxes)
+                _edge_top_clamps(clamps, rows, a, b, x, _ytop(outer, x, b, y1), hole_boxes)
     clamps = _merge_clamps(clamps)
     skipped = len(fixed) - len({(x, a) for x, a, _b in fixed if (x, a) in used or
                                 any(abs(x - ux) <= EPS and a <= ua + EPS for ux, ua in used)})
@@ -924,16 +993,9 @@ def frame_plan(req):
             step_m = float(step_main or 800.0)
             step_c = float(step_corner or step_m)
             for f in floors_c:
-                # кронштейны по центру перекрытия, шаг по горизонтали
-                for px in _hpos(x0, x1, min_corner, corner_zone,
-                                step_m, step_c, corners):
-                    if _in_boxes(hole_boxes, px, f):
-                        continue          # точка попала в проём
-                    brackets.append({"x": round(px, 4),
-                                     "y": round(f, 4),
-                                     "kind": "несущий"})
-                # НГП — горизонтальный несущий профиль (рвётся окнами)
-                segs = [(x0, x1)]
+                # НГП — горизонтальный несущий профиль (рвётся окнами и
+                # уступами стены; 23.09 — по контуру, не по габариту)
+                segs = list(_hspans(outer, f))
                 for bx0, by0, bx1, by1 in hole_boxes:
                     if by0 - EPS < f < by1 + EPS:
                         segs = [(sa2, sb2) for sa, sb in segs
@@ -941,6 +1003,16 @@ def frame_plan(req):
                                 (((sa, min(sb, bx0)),
                                   (max(sa, bx1), sb)))
                                 if sb2 - sa2 > EPS]
+                # кронштейны по центру перекрытия, шаг по горизонтали —
+                # только там, где есть НГП (иначе кронштейн «в воздухе»)
+                for px in _hpos(x0, x1, min_corner, corner_zone,
+                                step_m, step_c, corners):
+                    if _in_boxes(hole_boxes, px, f) or \
+                            not any(sa - EPS <= px <= sb + EPS for sa, sb in segs):
+                        continue          # в проёме / вне стены / уступ
+                    brackets.append({"x": round(px, 4),
+                                     "y": round(f, 4),
+                                     "kind": "несущий"})
                 for sa, sb in segs:
                     if stock > EPS and sb - sa > stock + EPS:
                         notes.append("НГП на отм. %.0f длиной %.0f > "
@@ -957,7 +1029,7 @@ def frame_plan(req):
             for jx in joints:
                 if jx < x0 - EPS or jx > x1 + EPS:
                     continue
-                spans = [(y0, y1)]
+                spans = list(_vspans(outer, jx))
                 touch = []
                 for bx0, by0, bx1, by1 in hole_boxes:
                     if bx0 - EPS < jx < bx1 + EPS:
@@ -995,7 +1067,7 @@ def frame_plan(req):
                                   False, fl_in, wedges,
                                   on_seam=_on_seam(jx))
                     _edge_top_clamps(clamps, rows, s_lo, s_hi, jx,
-                                     y1, hole_boxes)
+                                     _ytop(outer, jx, s_hi, y1), hole_boxes)
             # СП-60-40 в подоконной зоне на скобах С1 к крайним
             # межэтажным профилям
             jset = [j for j in joints if x0 - EPS <= j <= x1 + EPS]
@@ -1009,17 +1081,36 @@ def frame_plan(req):
                 if not left or not right:
                     continue
                 la2, ra2 = max(left), min(right)
+                # 23.09 (ревью): СП тянулся до ближайших осей и мог пройти
+                # СКВОЗЬ соседнее окно на той же высоте — режем соседними
+                # проёмами и стеной, оставляем кусок под своим окном
+                segs = [(max(a6, la2), min(b6, ra2)) for a6, b6 in _hspans(outer, by0)]
+                for ox0, oy0, ox1, oy1 in hole_boxes:
+                    if (ox0, oy0, ox1, oy1) == (bx0, by0, bx1, by1):
+                        continue
+                    # соседний проём на этой высоте ИЛИ прямо под окном (верх
+                    # соседа = низ окна: стены под подоконником там нет)
+                    if oy0 + EPS < by0 < oy1 + 1.0:
+                        segs = [(sa2, sb2) for sa, sb in segs
+                                for sa2, sb2 in ((sa, min(sb, ox0)), (max(sa, ox1), sb))
+                                if sb2 - sa2 > EPS]
+                segs = [(sa, sb) for sa, sb in segs if sa < bx1 - EPS and sb > bx0 + EPS]
+                if not segs:
+                    continue
+                sa, sb = segs[0]
+                if abs(sa - la2) > EPS or abs(sb - ra2) > EPS:
+                    notes.append("СП-60-40 под окном X=%.0f..%.0f упирается в соседнее "
+                                 "окно/край стены — укорочен до %.0f..%.0f" % (bx0, bx1, sa, sb))
                 hrails.append({"y": round(by0, 4),
-                               "x0": round(la2, 4),
-                               "x1": round(ra2, 4),
-                               "len": round(ra2 - la2, 4),
+                               "x0": round(sa, 4),
+                               "x1": round(sb, 4),
+                               "len": round(sb - sa, 4),
                                "kind": "СП-60-40"})
-                fittings.append({"x": round(la2, 4),
-                                 "y": round(by0, 4),
-                                 "kind": "скоба С1"})
-                fittings.append({"x": round(ra2, 4),
-                                 "y": round(by0, 4),
-                                 "kind": "скоба С1"})
+                for fx in (sa, sb):
+                    if any(abs(fx - j) <= EPS for j in (la2, ra2)):
+                        fittings.append({"x": round(fx, 4),
+                                         "y": round(by0, 4),
+                                         "kind": "скоба С1"})
             continue
 
         # ── ОРТОГОНАЛЬНАЯ (ТЗ 26.07 §3) ──
@@ -1057,15 +1148,30 @@ def frame_plan(req):
                     # воздухе: ряда сетки на этой отметке нет)
                     hx0 = max(bx0 - edge_off, x0)
                     hx1 = min(bx1 + edge_off, x1)
-                    hrails.append({"y": round(by1 + edge_rail, 4),
-                                   "x0": round(hx0, 4),
-                                   "x1": round(hx1, 4),
-                                   "len": round(hx1 - hx0, 4),
-                                   "kind": "ГП-40-40"})
+                    yl = by1 + edge_rail
+                    # 23.09: перемычка — по контуру стены и мимо соседних окон
+                    lsegs = [(max(sa, hx0), min(sb, hx1)) for sa, sb in _hspans(outer, yl)]
+                    for ox0, oy0, ox1, oy1 in hole_boxes:
+                        if oy0 + EPS < yl < oy1 - EPS:
+                            lsegs = [(sa2, sb2) for sa, sb in lsegs
+                                     for sa2, sb2 in ((sa, min(sb, ox0)), (max(sa, ox1), sb))
+                                     if sb2 - sa2 > EPS]
+                    for sa, sb in lsegs:
+                        if sb - sa <= EPS or sb < bx0 - EPS or sa > bx1 + EPS:
+                            continue
+                        hrails.append({"y": round(yl, 4),
+                                       "x0": round(sa, 4),
+                                       "x1": round(sb, 4),
+                                       "len": round(sb - sa, 4),
+                                       "kind": "ГП-40-40"})
             n_add = 0
             for px, yy in add_br:
-                if _in_boxes(hole_boxes, px, yy):
+                if _in_boxes(hole_boxes, px, yy) or not _inside_pt(outer, px, yy):
                     continue
+                if not any(abs(h["y"] - yy) <= EPS and h["x0"] - EPS <= px <= h["x1"] + EPS
+                           for h in hrails) and \
+                        not any(abs(g - yy) <= EPS for g in ys_g):
+                    continue                     # ГП на отметке нет
                 if any(near_pt(b, px, yy) for b in brackets):
                     continue
                 brackets.append({"x": round(px, 4), "y": round(yy, 4),
@@ -1074,16 +1180,10 @@ def frame_plan(req):
             if n_add:
                 notes.append("доп. кронштейнов у проёмов: %d" % n_add)
 
-            # сетка кронштейнов (кроме проёмов)
+            # сетка кронштейнов (кроме проёмов) — на ГП своего ряда
             for yy in ys_g:
-                for px in xs_g:
-                    if _in_boxes(hole_boxes, px, yy):
-                        continue
-                    brackets.append({"x": round(px, 4),
-                                     "y": round(yy, 4),
-                                     "kind": "рядовой"})
-                # ГП-40-40 горизонтальный на каждом ряду сетки
-                segs = [(x0, x1)]
+                # ГП-40-40 горизонтальный на каждом ряду сетки (по контуру)
+                segs = list(_hspans(outer, yy))
                 for bx0, by0, bx1, by1 in hole_boxes:
                     if by0 - EPS < yy < by1 + EPS:
                         segs = [(sa2, sb2) for sa, sb in segs
@@ -1091,6 +1191,13 @@ def frame_plan(req):
                                 (((sa, min(sb, bx0)),
                                   (max(sa, bx1), sb)))
                                 if sb2 - sa2 > EPS]
+                for px in xs_g:
+                    if _in_boxes(hole_boxes, px, yy) or \
+                            not any(sa - EPS <= px <= sb + EPS for sa, sb in segs):
+                        continue
+                    brackets.append({"x": round(px, 4),
+                                     "y": round(yy, 4),
+                                     "kind": "рядовой"})
                 for sa, sb in segs:
                     hrails.append({"y": round(yy, 4),
                                    "x0": round(sa, 4),
@@ -1118,7 +1225,7 @@ def frame_plan(req):
             for jx in jx_o:
                 if jx < x0 - EPS or jx > x1 + EPS:
                     continue
-                pieces = [(y0, y1, jx)]
+                pieces = [(lo7, hi7, jx) for lo7, hi7 in _vspans(outer, jx)]
                 for bx0, by0, bx1, by1 in hole_boxes:
                     inside = bx0 - EPS < jx < bx1 + EPS
                     sx = None
@@ -1158,7 +1265,7 @@ def frame_plan(req):
                             spans = _sub_y(spans, oy0, oy1)
                     for a4, b4 in spans:
                         cut2.append((a4, b4, xe))
-                pieces = cut2
+                pieces = _clip_pieces(outer, cut2)
                 for s_lo, s_hi, s_x in pieces:
                     if s_hi - s_lo <= EPS:
                         continue
@@ -1194,7 +1301,7 @@ def frame_plan(req):
                                   on_seam=_on_seam(jx))
                     if not side:
                         _edge_top_clamps(clamps, rows, s_lo, s_hi,
-                                         s_x, y1, hole_boxes)
+                                         s_x, _ytop(outer, s_x, s_hi, y1), hole_boxes)
             # 02.08 (замечание №1 Дениса/полигон): Z-образные у КАЖДОЙ
             # грани окна ВСЕГДА (ТЗ §3: «у окон Z-образные, длина =
             # сторона окна + 100») — раньше Z возникал, лишь если ось
@@ -1215,7 +1322,8 @@ def frame_plan(req):
                         # и МИНУС существующие куски этой оси (±50) —
                         # ни дублей, ни Z сквозь проём; осколки <100
                         # не ставим (В-аг)
-                        spans = [(z0, z1)]
+                        spans = [(a8, b8) for a8, b8, _x8 in
+                                 _clip_pieces(outer, [(z0, z1, zx)])]
                         for ox0, oy0, ox1, oy1 in hole_boxes:
                             if ox0 + EPS < zx < ox1 - EPS:
                                 spans = _sub_y(spans, oy0, oy1)
@@ -1280,7 +1388,7 @@ def frame_plan(req):
             # ВЫРЕЗАЕТ диапазон; ось ближе edge_offset к грани проёма —
             # на высоте проёма кусок СМЕЩАЕТСЯ от грани (26.07: крепёж
             # не ближе 100 мм от края проёма)
-            pieces = [(y0, y1, jx)]
+            pieces = [(lo7, hi7, jx) for lo7, hi7 in _vspans(outer, jx)]
             for bx0, by0, bx1, by1 in hole_boxes:
                 inside = bx0 - EPS < jx < bx1 + EPS
                 sx = None
@@ -1325,7 +1433,11 @@ def frame_plan(req):
                         spans = _sub_y(spans, oy0, oy1)
                 for a4, b4 in spans:
                     cut2.append((a4, b4, xe))
-            pieces = cut2
+            n_cut = len(cut2)
+            pieces = _clip_pieces(outer, cut2)
+            if len(pieces) < n_cut and any(abs(xe - jx) > EPS for _a, _b, xe in cut2):
+                notes.append("оконная стойка у края зоны (ось %.0f) за контуром стены — "
+                             "не ставится" % jx)
 
             # 04.08 (D-сверка полигона): укладка кусков отложена —
             # смещённая оконная стойка одной оси и СОБСТВЕННАЯ ось
@@ -1408,7 +1520,7 @@ def frame_plan(req):
                               seams_in, wedges, on_seam=_on_seam(jx))
                 if not side:
                     _edge_top_clamps(clamps, rows, s_lo, s_hi, s_x,
-                                     y1, hole_boxes)
+                                     _ytop(outer, s_x, s_hi, y1), hole_boxes)
 
         # 02.08 (замечание №1 Дениса/полигон): оконные стойки у
         # КАЖДОЙ грани проёма ВСЕГДА (ТЗ §1: «направляющие слева/
@@ -1434,7 +1546,8 @@ def frame_plan(req):
                     # ни дублей, ни стоек сквозь проём; осколки
                     # короче 100 не ставим. Стойка в 50..300 от
                     # грани — В-аг
-                    spans = [(z0, z1)]
+                    spans = [(a8, b8) for a8, b8, _x8 in
+                             _clip_pieces(outer, [(z0, z1, zx)])]
                     for ox0, oy0, ox1, oy1 in hole_boxes:
                         if ox0 + EPS < zx < ox1 - EPS:
                             spans = _sub_y(spans, oy0, oy1)
