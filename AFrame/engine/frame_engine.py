@@ -348,7 +348,10 @@ def op_frame(req):
         per_zone.append({"zone_id": zone_id, "rails": s["rails"],
                          "rails_lm": s["rails_lm"],
                          "brackets_main": s["brackets_main"],
-                         "brackets_row": s["brackets_row"]})
+                         "brackets_row": s["brackets_row"],
+                         # 24.09: чтобы C# удалял прежнее только у зон с результатом
+                         "clamps": len(res["clamps"]),
+                         "hrails": len(res.get("hrails") or [])})
     lm = sum(r["len"] for r in rails) / 1000.0
     hlm = sum(r["len"] for r in hrails) / 1000.0
     stock = float((system_used or {}).get("rail_stock") or 0.0)

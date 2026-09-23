@@ -82,10 +82,12 @@ namespace ACladPlugin
             var zoneStale = new List<string>();
             var polyByHandle = new Dictionary<string, ObjectId>();
             var polyData = new Dictionary<string, Dictionary<string, object>>();
-            var oldHandles = new HashSet<string>();
+            // 24.09 (независимая рецензия): прежние раскладки — по владельцам:
+            // удаляется только у зон, получивших результат; метка,
+            // скопированная вместе с объектом, чужие камни не трогает.
             // 23.09: разбежка ATTILE на тех же зонах — снять при раскладке
-            var oldTile = new HashSet<string>();
-            var tileOwners = new List<ObjectId>();
+            var ownC = new TilePatternCommand.OwnedLabels();
+            var ownT = new TilePatternCommand.OwnedLabels();
             string cladDefault = "";
             using (var tr = db.TransactionManager.StartTransaction())
             {
@@ -116,10 +118,8 @@ namespace ACladPlugin
                         polyByHandle[h] = pl.ObjectId;
                         polyData[h] = new Dictionary<string, object>
                         { { "id", h }, { "pts", pts }, { "bulges", bulges } };
-                        CollectOldHandles(tr, ser, ent, oldHandles);
-                        TilePatternCommand.CollectOld(tr, ser, ent, oldTile);
-                        if (ReadData(tr, ent, TilePatternCommand.XKeyTile) != null)
-                            tileOwners.Add(ent.ObjectId);
+                        ownC.Collect(tr, ser, ent, XKeyClad);
+                        ownT.Collect(tr, ser, ent, TilePatternCommand.XKeyTile);
                         continue;
                     }
 
@@ -137,10 +137,8 @@ namespace ACladPlugin
                         zoneObjs[zid] = new List<ObjectId>();
                     if (!zoneObjs[zid].Contains(ent.ObjectId))
                         zoneObjs[zid].Add(ent.ObjectId);
-                    CollectOldHandles(tr, ser, ent, oldHandles);
-                    TilePatternCommand.CollectOld(tr, ser, ent, oldTile);
-                    if (ReadData(tr, ent, TilePatternCommand.XKeyTile) != null)
-                        tileOwners.Add(ent.ObjectId);
+                    ownC.Collect(tr, ser, ent, XKeyClad);
+                    ownT.Collect(tr, ser, ent, TilePatternCommand.XKeyTile);
 
                     // сверка с фактом: контур двигали после ATFZONE →
                     // раскладка легла бы мимо
@@ -169,6 +167,9 @@ namespace ACladPlugin
             var fz = LoadFzones(ed, db, ser);
             var zonesPayload = new List<Dictionary<string, object>>();
             var partToRoot = new Dictionary<string, string>();
+            // полилинии зон в выборке: их прежняя раскладка (прошлый запуск по
+            // полилиниям) заменяется вместе с зоной — хэндл → корень зоны
+            var dropRoot = new Dictionary<string, string>();
             var zoneMissing = new List<string>();
             foreach (var kv in zoneObjs)
             {
@@ -185,14 +186,16 @@ namespace ACladPlugin
                     // контуры зоны из выборки в «голые» не пускаем —
                     // иначе та же зона раскладывалась бы дважды
                     string oid = MetaStr(part, "outer_contour_id");
-                    if (oid != null) { polyData.Remove(oid); }
+                    if (oid != null) { polyData.Remove(oid); dropRoot[oid] = zid; }
                     var ops = Get(part, "openings") as object[];
                     if (ops != null)
                         foreach (var o in ops)
                         {
                             var od = o as Dictionary<string, object>;
-                            if (od != null)
-                                polyData.Remove(SafeStr(Get(od, "id")));
+                            if (od == null) continue;
+                            string opid = SafeStr(Get(od, "id"));
+                            polyData.Remove(opid);
+                            dropRoot[opid] = zid;
                         }
                 }
             }
@@ -453,35 +456,47 @@ namespace ACladPlugin
                 }
                 catch { }
 
-                // прежние камни этой зоны/контура (перегенерация)
-                if (oldHandles.Count > 0)
-                    foreach (ObjectId oid in ms)
-                    {
-                        Entity oe;
-                        try
-                        {
-                            oe = tr.GetObject(oid, OpenMode.ForRead)
-                                 as Entity;
-                        }
-                        catch { continue; }
-                        if (!(oe is BlockReference)) continue;
-                        if (!oldHandles.Contains(oe.Handle.ToString()))
-                            continue;
-                        oe.UpgradeOpen();
-                        oe.Erase();
-                        erased++;
-                    }
-
-                // 23.09: на этих зонах лежала разбежка ATTILE — снять её
-                // (куски любых типов по хэндлам метки) и саму метку, иначе
-                // две раскладки лягут друг на друга, а ATFRAME прочтёт
-                // устаревшие оси швов
-                erased += TilePatternCommand.EraseByHandles(tr, db, oldTile);
-                foreach (var tid in tileOwners)
+                // прежние камни (перегенерация) и разбежка ATTILE (23.09: снять,
+                // иначе две раскладки лягут друг на друга) — только у зон,
+                // получивших новый результат
+                var okOwners = OkOwners(res, partToRoot, zoneObjs, polyByHandle);
+                var dropOk = new List<ObjectId>();
+                foreach (var kv in dropRoot)
                 {
-                    var te = tr.GetObject(tid, OpenMode.ForWrite) as Entity;
-                    if (te != null) RemoveData(tr, te, TilePatternCommand.XKeyTile);
+                    ObjectId pid0;
+                    List<ObjectId> zl;
+                    if (!polyByHandle.TryGetValue(kv.Key, out pid0) ||
+                        !zoneObjs.TryGetValue(kv.Value, out zl)) continue;
+                    bool rootOk = false;
+                    foreach (var zo in zl) if (okOwners.Contains(zo)) { rootOk = true; break; }
+                    if (rootOk) { okOwners.Add(pid0); dropOk.Add(pid0); }
                 }
+                var region = TilePatternCommand.SelectionRegion(tr, zoneObjs, polyByHandle);
+                int keptOut = 0;
+                erased += ownC.EraseFor(tr, db, okOwners, region, ref keptOut);
+                erased += ownT.EraseFor(tr, db, okOwners, region, ref keptOut);
+                foreach (var tid in ownT.Owners)
+                    if (okOwners.Contains(tid))
+                    {
+                        var te = tr.GetObject(tid, OpenMode.ForWrite) as Entity;
+                        if (te != null) RemoveData(tr, te, TilePatternCommand.XKeyTile);
+                    }
+                foreach (var pid0 in dropOk)
+                {
+                    var pe = tr.GetObject(pid0, OpenMode.ForWrite) as Entity;
+                    if (pe != null)
+                    {
+                        RemoveData(tr, pe, XKeyClad);
+                        RemoveData(tr, pe, TilePatternCommand.XKeyTile);
+                    }
+                }
+                int keptZ = ownC.CountNotIn(okOwners) + ownT.CountNotIn(okOwners);
+                if (keptZ > 0)
+                    ed.WriteMessage("\nНе разложено (см. замечания): прежняя раскладка сохранена у " +
+                        keptZ + " объект(ов) зон.");
+                if (keptOut > 0)
+                    ed.WriteMessage("\nПо старой метке " + keptOut + " прежних элементов лежат вне " +
+                        "выбранных зон — не удалены (метка скопирована или зону переносили).");
 
                 foreach (var itObj in inserts)
                 {
@@ -600,14 +615,15 @@ namespace ACladPlugin
                         { "tiles", kv.Value.Count },
                         { "handles", kv.Value },
                     };
-                    string mjson = ser.Serialize(meta);
+                    meta["schema"] = 2;
                     List<ObjectId> targets;
                     if (zoneObjs.TryGetValue(root, out targets))
                         foreach (var tid in targets)
                         {
                             var te = (Entity)tr.GetObject(tid,
                                 OpenMode.ForWrite);
-                            StoreData(tr, te, mjson, XKeyClad);
+                            meta["owner"] = te.Handle.ToString();
+                            StoreData(tr, te, ser.Serialize(meta), XKeyClad);
                         }
                     else
                     {
@@ -619,7 +635,8 @@ namespace ACladPlugin
                         {
                             var te = (Entity)tr.GetObject(pid2,
                                 OpenMode.ForWrite);
-                            StoreData(tr, te, mjson, XKeyClad);
+                            meta["owner"] = te.Handle.ToString();
+                            StoreData(tr, te, ser.Serialize(meta), XKeyClad);
                         }
                     }
                 }
@@ -913,6 +930,32 @@ namespace ACladPlugin
         }
 
         // ── прежние камни: хэндлы из метки ATCLAD выбранного объекта ──
+        // владельцы, у зон которых есть результат (per_zone движка; части
+        // «Ф-1.1» → корень «Ф-1»; «контур <хэндл>» → полилиния)
+        private static HashSet<ObjectId> OkOwners(Dictionary<string, object> res,
+            Dictionary<string, string> partToRoot, Dictionary<string, List<ObjectId>> zoneObjs,
+            Dictionary<string, ObjectId> polyByHandle)
+        {
+            var ok = new HashSet<ObjectId>();
+            var pz = Get(res, "per_zone") as object[];
+            if (pz == null) return ok;
+            foreach (var o in pz)
+            {
+                var d = o as Dictionary<string, object>;
+                if (d == null) continue;
+                string zid = SafeStr(Get(d, "zone_id")), root;
+                if (!partToRoot.TryGetValue(zid, out root)) root = zid;
+                List<ObjectId> l;
+                if (zoneObjs.TryGetValue(root, out l)) foreach (var x in l) ok.Add(x);
+                string oh = root.StartsWith("контур ") ? root.Substring(7) : root;
+                ObjectId pid;
+                if (polyByHandle.TryGetValue(oh, out pid)) ok.Add(pid);
+                string oid = SafeStr(Get(d, "outer_id"));
+                if (oid.Length > 0 && polyByHandle.TryGetValue(oid, out pid)) ok.Add(pid);
+            }
+            return ok;
+        }
+
         private static void CollectOldHandles(Transaction tr,
             JavaScriptSerializer ser, Entity ent, HashSet<string> into)
         {

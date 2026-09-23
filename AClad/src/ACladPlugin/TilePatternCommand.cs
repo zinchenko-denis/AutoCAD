@@ -91,9 +91,14 @@ namespace ACladPlugin
             var contoursPayload = new List<object>();
             var zoneObjs = new Dictionary<string, List<ObjectId>>();
             var polyByHandle = new Dictionary<string, ObjectId>();
-            var oldHandles = new HashSet<string>();
-            var cladHandles = new HashSet<string>();
-            var cladOwners = new List<ObjectId>();
+            // 24.09 (независимая рецензия): прежняя раскладка — ПО ВЛАДЕЛЬЦАМ
+            // (объект зоны/контура с меткой). Удаляется только то, что
+            // заменяется результатом этого запуска: зона, которую движок
+            // пропустил, сохраняет прежнюю раскладку; метка, СКОПИРОВАННАЯ
+            // вместе с объектом (COPY), чужие плитки не трогает.
+            var own = new OwnedLabels();
+            var cladOwn = new OwnedLabels();
+            var zoneStale = new List<string>();
             Dictionary<string, object> prevSettings = null;
             // 23.09b: прежние точки принудительных рустов — из метки ATTILE,
             // иначе из метки ATCLAD (переход с ATCLAD на ATTILE без повторных кликов)
@@ -142,7 +147,27 @@ namespace ACladPlugin
                         isZone = true;
                     }
                     if (!isZone) continue;
-                    CollectOld(tr, ser, ent, oldHandles);
+                    own.Collect(tr, ser, ent, XKeyTile);
+                    cladOwn.Collect(tr, ser, ent, CladCommand.XKeyClad);
+                    // зону двигали/меняли после ATFZONE — геометрия в _fzones.json
+                    // устарела (как у ATCLAD): такую зону не раскладываем
+                    var hat = ent as Hatch;
+                    if (hat != null)
+                    {
+                        string hj = CladCommand.ReadData(tr, ent, CladCommand.XKeyZone);
+                        var hz = hj == null ? null : ser.DeserializeObject(hj) as Dictionary<string, object>;
+                        var hrep = CladCommand.Get(hz, "report") as Dictionary<string, object>;
+                        string hzid = CladCommand.SafeStr(CladCommand.Get(hz, "zone_id"));
+                        try
+                        {
+                            double fact = hat.Area / 1e6;
+                            double stored = Convert.ToDouble(CladCommand.Get(hrep, "area_net_m2"),
+                                                             CultureInfo.InvariantCulture);
+                            if (hzid.Length > 0 && Math.Abs(fact - stored) > 0.001 && !zoneStale.Contains(hzid))
+                                zoneStale.Add(hzid);
+                        }
+                        catch { }
+                    }
                     if (prevSettings == null)
                     {
                         var m = ReadMeta(tr, ser, ent, XKeyTile);
@@ -159,21 +184,30 @@ namespace ACladPlugin
                         cladV = CladCommand.Get(cm, "vjoints") as object[];
                         cladH = CladCommand.Get(cm, "hjoints") as object[];
                     }
-                    var ch = CladCommand.Get(cm, "handles") as object[];
-                    if (ch != null)
-                    {
-                        foreach (var hh in ch) cladHandles.Add(CladCommand.SafeStr(hh));
-                        cladOwners.Add(ent.ObjectId);
-                    }
                 }
                 tr.Commit();
             }
+            // прежняя раскладка была ОБЩЕЙ для нескольких контуров/зон (слитые
+            // смежные «A+B»), а выбрана часть — добираем остальных участников:
+            // иначе плитки соседа удалились бы вместе с меткой, а заново
+            // разложилась бы только выбранная часть
+            int added = ExpandMembers(db, ser, own, zoneObjs, polyByHandle, contoursPayload);
+            if (added > 0)
+                ed.WriteMessage("\nПрежняя раскладка была общей для нескольких контуров — " +
+                    "перекладываю их вместе (добавлено " + added + ").");
+            if (own.Copied + cladOwn.Copied > 0)
+                ed.WriteMessage("\nМетка раскладки скопирована вместе с объектом (" +
+                    (own.Copied + cladOwn.Copied) + " шт.) — плитки оригинала не трогаю.");
             // 23.09c (ревью 23.09, Денис: «почини до сборки»): геометрия зон
             // ATFZONE — из <dwg>_fzones.json, как у ATCLAD. Раньше в движок
             // уходила метка ATFZONE (там нет геометрии) — по штриховке/марке
             // раскладка отказывала «нет пригодных зон». Контуры самой зоны из
             // выборки в «голые» не пускаем — иначе зона разложилась бы дважды.
             var partToRoot = new Dictionary<string, string>();
+            // полилинии зон ATFZONE, попавшие в выборку рамкой: в «голые» не
+            // идут, но их прежняя раскладка (прошлый запуск по полилиниям)
+            // заменяется вместе с зоной — хэндл полилинии → корень зоны
+            var dropRoot = new Dictionary<string, string>();
             if (zoneObjs.Count > 0)
             {
                 var fz = CladCommand.LoadFzones(ed, db, ser);
@@ -181,6 +215,7 @@ namespace ACladPlugin
                 var missing = new List<string>();
                 foreach (var kv in zoneObjs)
                 {
+                    if (zoneStale.Contains(kv.Key)) continue;
                     var parts = CladCommand.FindZoneParts(fz, kv.Key);
                     if (parts.Count == 0) { missing.Add(kv.Key); continue; }
                     foreach (var part in parts)
@@ -190,13 +225,16 @@ namespace ACladPlugin
                         zonesPayload.Add(new Dictionary<string, object>
                         { { "zone_id", pid }, { "zone", part } });
                         string oid = CladCommand.MetaStr(part, "outer_contour_id");
-                        if (oid != null) dropIds.Add(oid);
+                        if (oid != null) { dropIds.Add(oid); dropRoot[oid] = kv.Key; }
                         var ops = CladCommand.Get(part, "openings") as object[];
                         if (ops != null)
                             foreach (var o in ops)
                             {
                                 var od = o as Dictionary<string, object>;
-                                if (od != null) dropIds.Add(CladCommand.SafeStr(CladCommand.Get(od, "id")));
+                                if (od == null) continue;
+                                string opid = CladCommand.SafeStr(CladCommand.Get(od, "id"));
+                                dropIds.Add(opid);
+                                dropRoot[opid] = kv.Key;
                             }
                     }
                 }
@@ -209,6 +247,9 @@ namespace ACladPlugin
                 if (missing.Count > 0)
                     ed.WriteMessage("\nНет геометрии в _fzones.json для " + string.Join(", ", missing.ToArray()) +
                         " — зона пропущена (повторите ATFZONE или выберите её контуры).");
+                if (zoneStale.Count > 0)
+                    ed.WriteMessage("\nЗона изменена после ATFZONE (площадь штриховки не совпала): " +
+                        string.Join(", ", zoneStale.ToArray()) + " — пропущена, повторите ATFZONE.");
             }
             if (zonesPayload.Count == 0 && contoursPayload.Count == 0)
             { ed.WriteMessage("\nНе выбрано ни зон, ни контуров."); return; }
@@ -251,10 +292,11 @@ namespace ACladPlugin
             st.SaveLast();
 
             // ── 3. раскладка ATCLAD на этих зонах — заменить ──
-            if (cladHandles.Count > 0)
+            int cladCount = cladOwn.HandleCount();
+            if (cladCount > 0)
             {
                 var pk = new PromptKeywordOptions(
-                    "\nНа выбранных зонах лежит раскладка ATCLAD (" + cladHandles.Count +
+                    "\nНа выбранных зонах лежит раскладка ATCLAD (" + cladCount +
                     " камней) — заменить её? ") { AllowNone = false };
                 pk.Keywords.Add("Заменить");
                 pk.Keywords.Add("Отмена");
@@ -429,17 +471,43 @@ namespace ACladPlugin
                 }
                 string smallLayer = MakeLayer(tr, db, st.SmallLayer(), 1, -1, true);
 
-                // прежняя раскладка ATTILE этих зон (перегенерация) и ATCLAD (замена)
-                erased += EraseByHandles(tr, db, oldHandles);
-                if (cladHandles.Count > 0)
+                // прежняя раскладка ATTILE этих зон (перегенерация) и ATCLAD (замена) —
+                // ТОЛЬКО у владельцев, которые получили новый результат
+                var okOwners = SuccessOwners(res, partToRoot, zoneObjs, polyByHandle);
+                var dropOk = new List<ObjectId>();
+                foreach (var kv in dropRoot)
                 {
-                    erased += EraseByHandles(tr, db, cladHandles);
-                    foreach (var oid in cladOwners)
+                    ObjectId pid0;
+                    List<ObjectId> zl;
+                    if (!polyByHandle.TryGetValue(kv.Key, out pid0) ||
+                        !zoneObjs.TryGetValue(kv.Value, out zl)) continue;
+                    bool rootOk = false;
+                    foreach (var zo in zl) if (okOwners.Contains(zo)) { rootOk = true; break; }
+                    if (rootOk) { okOwners.Add(pid0); dropOk.Add(pid0); }
+                }
+                var region = SelectionRegion(tr, zoneObjs, polyByHandle);
+                int keptOut = 0;
+                erased += own.EraseFor(tr, db, okOwners, region, ref keptOut);
+                erased += cladOwn.EraseFor(tr, db, okOwners, region, ref keptOut);
+                foreach (var oid in cladOwn.Owners)
+                    if (okOwners.Contains(oid))
                     {
                         var te = tr.GetObject(oid, OpenMode.ForWrite) as Entity;
                         if (te != null) CladCommand.RemoveData(tr, te, CladCommand.XKeyClad);
                     }
+                // у полилиний зоны старую метку снять — носитель теперь сама зона
+                foreach (var pid0 in dropOk)
+                {
+                    var pe = tr.GetObject(pid0, OpenMode.ForWrite) as Entity;
+                    if (pe != null) CladCommand.RemoveData(tr, pe, XKeyTile);
                 }
+                int keptZones = own.CountNotIn(okOwners) + cladOwn.CountNotIn(okOwners);
+                if (keptZones > 0)
+                    ed.WriteMessage("\nНе разложено (см. замечания): прежняя раскладка сохранена у " +
+                        keptZones + " объект(ов) зон.");
+                if (keptOut > 0)
+                    ed.WriteMessage("\nПо старой метке " + keptOut + " прежних элементов лежат вне " +
+                        "выбранных зон — не удалены (метка скопирована или зону переносили).");
 
                 foreach (var itObj in pieces)
                 {
@@ -529,10 +597,14 @@ namespace ACladPlugin
                     }
                 }
 
-                // метка ATTILE — на объекты КАЖДОГО члена зоны (объединённые
-                // «A+B» тоже: грабля 09.09 — метка терялась, повтор задваивал)
+                // метка ATTILE — ОДНА на объект-владельца: объединение всех частей
+                // и слитых зон, попавших на него (24.09: несмежные части одной
+                // зоны ATFZONE раньше затирали метку друг друга — повтор
+                // задваивал забытую часть); owner — хэндл самого объекта
+                // (метка, скопированная COPY, узнаётся по несовпадению)
                 var perZone = CladCommand.Get(res, "per_zone") as object[];
                 string stamp = DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:ssZ", CultureInfo.InvariantCulture);
+                var agg = new Dictionary<ObjectId, LabelAgg>();
                 if (perZone != null)
                     foreach (var pzObj in perZone)
                     {
@@ -541,40 +613,48 @@ namespace ACladPlugin
                         string zid = CladCommand.SafeStr(CladCommand.Get(pz, "zone_id"));
                         List<string> hl;
                         if (!handlesByZone.TryGetValue(zid, out hl)) hl = new List<string>();
-                        var meta = new Dictionary<string, object>
-                        {
-                            { "zone_id", zid },
-                            { "members", CladCommand.Get(pz, "members") },
-                            { "settings", st.ToDict() },
-                            { "cladding", st.Name },
-                            { "tile", new Dictionary<string, object> { { "w", st.W }, { "h", st.H } } },
-                            { "gap", new Dictionary<string, object> { { "v", st.Gv }, { "h", st.Gh } } },
-                            { "layer", st.LayerFor("", false) },
-                            { "block", dyn ? st.Element : st.BlockFor("", false) },
-                            // мост к ATFRAME: оси вертикальных швов (стойки) и
-                            // центры горизонтальных (кляммеры)
-                            { "joints_x", CladCommand.Get(pz, "joints_x") },
-                            { "rows_y", CladCommand.Get(pz, "rows_y") },
-                            { "tiles", hl.Count },
-                            { "handles", hl },
-                            { "stamp", stamp },
-                            { "vjoints", vjoints },
-                            { "hjoints", hjoints },
-                        };
-                        string mjson = ser.Serialize(meta);
                         var mem = CladCommand.Get(pz, "members") as object[];
-                        var targets = new List<ObjectId>();
                         foreach (var mObj in mem ?? new object[] { zid })
                         {
                             string mm = CladCommand.SafeStr(mObj), root;
                             if (partToRoot.TryGetValue(mm, out root)) mm = root;
                             foreach (var oid in OwnersOf(mm, zoneObjs, polyByHandle))
-                                if (!targets.Contains(oid)) targets.Add(oid);
+                            {
+                                LabelAgg la;
+                                if (!agg.TryGetValue(oid, out la)) agg[oid] = la = new LabelAgg();
+                                la.Add(zid, mem, hl, CladCommand.Get(pz, "joints_x") as object[],
+                                       CladCommand.Get(pz, "rows_y") as object[]);
+                            }
                         }
-                        foreach (var oid in targets)
-                            CladCommand.StoreData(tr, (Entity)tr.GetObject(oid, OpenMode.ForWrite),
-                                                  mjson, XKeyTile);
                     }
+                foreach (var kv in agg)
+                {
+                    var ent = (Entity)tr.GetObject(kv.Key, OpenMode.ForWrite);
+                    var la = kv.Value;
+                    var meta = new Dictionary<string, object>
+                    {
+                        { "schema", 2 },
+                        { "owner", ent.Handle.ToString() },
+                        { "zone_id", string.Join("+", la.Zones.ToArray()) },
+                        { "members", la.Members },
+                        { "settings", st.ToDict() },
+                        { "cladding", st.Name },
+                        { "tile", new Dictionary<string, object> { { "w", st.W }, { "h", st.H } } },
+                        { "gap", new Dictionary<string, object> { { "v", st.Gv }, { "h", st.Gh } } },
+                        { "layer", st.LayerFor("", false) },
+                        { "block", dyn ? st.Element : st.BlockFor("", false) },
+                        // мост к ATFRAME: оси вертикальных швов (стойки) и
+                        // центры горизонтальных (кляммеры) — всех частей владельца
+                        { "joints_x", la.Jx },
+                        { "rows_y", la.Ry },
+                        { "tiles", la.Handles.Count },
+                        { "handles", la.Handles },
+                        { "stamp", stamp },
+                        { "vjoints", vjoints },
+                        { "hjoints", hjoints },
+                    };
+                    CladCommand.StoreData(tr, ent, ser.Serialize(meta), XKeyTile);
+                }
                 tr.Commit();
             }
 
@@ -803,6 +883,250 @@ namespace ACladPlugin
                 ed.WriteMessage("\n  " + (vertical ? "вертикальный руст X = " : "горизонтальный руст Y = ") +
                                 F0(v) + " (всего " + outList.Count + ")");
             }
+        }
+
+        // ── 24.09: владельцы прежней раскладки ──
+        internal class OwnedLabels
+        {
+            // доверенные метки (owner = хэндл объекта) и старые (без owner)
+            public readonly Dictionary<ObjectId, List<string>> Trusted = new Dictionary<ObjectId, List<string>>();
+            public readonly Dictionary<ObjectId, List<string>> Legacy = new Dictionary<ObjectId, List<string>>();
+            public readonly Dictionary<ObjectId, List<string>> Members = new Dictionary<ObjectId, List<string>>();
+            public int Copied;
+
+            public IEnumerable<ObjectId> Owners
+            {
+                get
+                {
+                    foreach (var k in Trusted.Keys) yield return k;
+                    foreach (var k in Legacy.Keys) yield return k;
+                }
+            }
+
+            public void Collect(Transaction tr, JavaScriptSerializer ser, Entity ent, string key)
+            {
+                if (Trusted.ContainsKey(ent.ObjectId) || Legacy.ContainsKey(ent.ObjectId)) return;
+                var m = ReadMeta(tr, ser, ent, key);
+                var hs = CladCommand.Get(m, "handles") as object[];
+                if (hs == null) return;
+                string owner = CladCommand.SafeStr(CladCommand.Get(m, "owner"));
+                if (owner.Length > 0 && owner != ent.Handle.ToString()) { Copied++; return; }
+                var l = new List<string>();
+                foreach (var h in hs) l.Add(CladCommand.SafeStr(h));
+                (owner.Length > 0 ? Trusted : Legacy)[ent.ObjectId] = l;
+                var mem = CladCommand.Get(m, "members") as object[];
+                if (mem != null)
+                {
+                    var ml = new List<string>();
+                    foreach (var x in mem) ml.Add(CladCommand.SafeStr(x));
+                    Members[ent.ObjectId] = ml;
+                }
+            }
+
+            public int EraseFor(Transaction tr, Database db, HashSet<ObjectId> ok, Extents3d? region, ref int keptOut)
+            {
+                int n = 0;
+                foreach (var kv in Trusted)
+                    if (ok.Contains(kv.Key)) n += EraseByHandles(tr, db, kv.Value);
+                foreach (var kv in Legacy)
+                    if (ok.Contains(kv.Key)) n += EraseInside(tr, db, kv.Value, region, ref keptOut);
+                return n;
+            }
+
+            public int HandleCount()
+            {
+                var hs = new HashSet<string>();
+                foreach (var l in Trusted.Values) foreach (var h in l) hs.Add(h);
+                foreach (var l in Legacy.Values) foreach (var h in l) hs.Add(h);
+                return hs.Count;
+            }
+
+            public int CountNotIn(HashSet<ObjectId> ok)
+            {
+                int n = 0;
+                foreach (var k in Owners) if (!ok.Contains(k)) n++;
+                return n;
+            }
+        }
+
+        internal class LabelAgg
+        {
+            public readonly List<string> Zones = new List<string>();
+            public readonly List<string> Members = new List<string>();
+            public readonly List<string> Handles = new List<string>();
+            public readonly List<object> Jx = new List<object>();
+            public readonly List<object> Ry = new List<object>();
+            private readonly HashSet<string> _h = new HashSet<string>();
+
+            public void Add(string zid, object[] mem, List<string> hl, object[] jx, object[] ry)
+            {
+                if (!Zones.Contains(zid)) Zones.Add(zid);
+                foreach (var mo in mem ?? new object[] { zid })
+                {
+                    string ms = CladCommand.SafeStr(mo);
+                    if (!Members.Contains(ms)) Members.Add(ms);
+                }
+                foreach (var h in hl) if (_h.Add(h)) Handles.Add(h);
+                if (jx != null) foreach (var v in jx) if (!Jx.Contains(v)) Jx.Add(v);
+                if (ry != null) foreach (var v in ry) if (!Ry.Contains(v)) Ry.Add(v);
+            }
+        }
+
+        // владельцы, у которых есть результат этого запуска (зона в per_zone)
+        private static HashSet<ObjectId> SuccessOwners(Dictionary<string, object> res,
+            Dictionary<string, string> partToRoot, Dictionary<string, List<ObjectId>> zoneObjs,
+            Dictionary<string, ObjectId> polyByHandle)
+        {
+            var ok = new HashSet<ObjectId>();
+            var perZone = CladCommand.Get(res, "per_zone") as object[];
+            if (perZone == null) return ok;
+            foreach (var pzObj in perZone)
+            {
+                var pz = pzObj as Dictionary<string, object>;
+                if (pz == null) continue;
+                string zid = CladCommand.SafeStr(CladCommand.Get(pz, "zone_id"));
+                var mem = CladCommand.Get(pz, "members") as object[];
+                foreach (var mObj in mem ?? new object[] { zid })
+                {
+                    string mm = CladCommand.SafeStr(mObj), root;
+                    if (partToRoot.TryGetValue(mm, out root)) mm = root;
+                    foreach (var oid in OwnersOf(mm, zoneObjs, polyByHandle)) ok.Add(oid);
+                }
+            }
+            return ok;
+        }
+
+        // габарит выбранных зон (+100 мм) — для старых меток без owner:
+        // удаляем только элементы, лежащие на выбранных зонах
+        internal static Extents3d? SelectionRegion(Transaction tr,
+            Dictionary<string, List<ObjectId>> zoneObjs, Dictionary<string, ObjectId> polyByHandle)
+        {
+            Extents3d? r = null;
+            var ids = new List<ObjectId>(polyByHandle.Values);
+            foreach (var l in zoneObjs.Values) ids.AddRange(l);
+            foreach (var oid in ids)
+            {
+                try
+                {
+                    var e = tr.GetObject(oid, OpenMode.ForRead) as Entity;
+                    if (e == null || e is MText || e is DBText) continue;
+                    var ex = e.GeometricExtents;
+                    if (r == null) r = ex;
+                    else { var t = r.Value; t.AddExtents(ex); r = t; }
+                }
+                catch { }
+            }
+            if (r == null) return null;
+            var v = new Vector3d(100, 100, 0);
+            return new Extents3d(r.Value.MinPoint - v, r.Value.MaxPoint + v);
+        }
+
+        internal static int EraseInside(Transaction tr, Database db, IEnumerable<string> handles,
+                                        Extents3d? region, ref int keptOut)
+        {
+            int n = 0;
+            foreach (var hs in handles)
+            {
+                long v;
+                if (!long.TryParse(hs, NumberStyles.HexNumber, CultureInfo.InvariantCulture, out v))
+                    continue;
+                ObjectId id;
+                if (!db.TryGetObjectId(new Handle(v), out id) || id.IsNull || id.IsErased)
+                    continue;
+                var e = tr.GetObject(id, OpenMode.ForRead, false) as Entity;
+                if (e == null) continue;
+                if (region != null)
+                {
+                    Point3d c;
+                    try
+                    {
+                        var ex = e.GeometricExtents;
+                        c = new Point3d(0.5 * (ex.MinPoint.X + ex.MaxPoint.X), 0.5 * (ex.MinPoint.Y + ex.MaxPoint.Y), 0);
+                    }
+                    catch { continue; }
+                    var r = region.Value;
+                    if (c.X < r.MinPoint.X || c.X > r.MaxPoint.X || c.Y < r.MinPoint.Y || c.Y > r.MaxPoint.Y)
+                    { keptOut++; continue; }
+                }
+                e.UpgradeOpen();
+                e.Erase();
+                n++;
+            }
+            return n;
+        }
+
+        // добрать остальных участников прежней общей раскладки (слитые A+B):
+        // «контур <хэндл>» — полилиния по хэндлу; иначе — зона ATFZONE по имени
+        private static int ExpandMembers(Database db, JavaScriptSerializer ser, OwnedLabels own,
+            Dictionary<string, List<ObjectId>> zoneObjs, Dictionary<string, ObjectId> polyByHandle,
+            List<object> contoursPayload)
+        {
+            var want = new List<string>();
+            foreach (var ml in own.Members.Values)
+                foreach (var m in ml)
+                {
+                    string root = m;
+                    int dot = root.LastIndexOf('.');
+                    bool isPoly = root.StartsWith("контур ");
+                    if (isPoly && polyByHandle.ContainsKey(root.Substring(7))) continue;
+                    if (!isPoly && zoneObjs.ContainsKey(root)) continue;
+                    if (!isPoly && dot > 0 && zoneObjs.ContainsKey(root.Substring(0, dot))) continue;
+                    if (!want.Contains(root)) want.Add(root);
+                }
+            if (want.Count == 0) return 0;
+            int added = 0;
+            using (var tr = db.TransactionManager.StartTransaction())
+            {
+                var zoneNames = new HashSet<string>();
+                foreach (var w in want)
+                {
+                    if (!w.StartsWith("контур ")) { zoneNames.Add(w); continue; }
+                    long v;
+                    ObjectId id;
+                    if (!long.TryParse(w.Substring(7), NumberStyles.HexNumber, CultureInfo.InvariantCulture, out v) ||
+                        !db.TryGetObjectId(new Handle(v), out id) || id.IsNull || id.IsErased)
+                        continue;
+                    var pl = tr.GetObject(id, OpenMode.ForRead) as Polyline;
+                    if (pl == null || pl.NumberOfVertices < 3) continue;
+                    var pts = new List<object>();
+                    var bulges = new List<object>();
+                    for (int i = 0; i < pl.NumberOfVertices; i++)
+                    {
+                        Point2d p = pl.GetPoint2dAt(i);
+                        pts.Add(new[] { p.X, p.Y });
+                        bulges.Add(pl.GetBulgeAt(i));
+                    }
+                    string h = pl.Handle.ToString();
+                    polyByHandle[h] = pl.ObjectId;
+                    contoursPayload.Add(new Dictionary<string, object>
+                    { { "id", h }, { "pts", pts }, { "bulges", bulges } });
+                    own.Collect(tr, ser, pl, XKeyTile);
+                    added++;
+                }
+                if (zoneNames.Count > 0)
+                {
+                    var bt = (BlockTable)tr.GetObject(db.BlockTableId, OpenMode.ForRead);
+                    var ms = (BlockTableRecord)tr.GetObject(bt[BlockTableRecord.ModelSpace], OpenMode.ForRead);
+                    foreach (ObjectId oid in ms)
+                    {
+                        var e = tr.GetObject(oid, OpenMode.ForRead) as Entity;
+                        if (e == null || !(e is Hatch || e is MText)) continue;
+                        string zj = CladCommand.ReadData(tr, e, CladCommand.XKeyZone);
+                        if (zj == null) continue;
+                        var zd = ser.DeserializeObject(zj) as Dictionary<string, object>;
+                        string zid = CladCommand.SafeStr(CladCommand.Get(zd, "zone_id"));
+                        string hit = null;
+                        foreach (var zn in zoneNames)
+                            if (zn == zid || zn.StartsWith(zid + ".")) { hit = zid; break; }
+                        if (hit == null) continue;
+                        if (!zoneObjs.ContainsKey(hit)) { zoneObjs[hit] = new List<ObjectId>(); added++; }
+                        if (!zoneObjs[hit].Contains(oid)) zoneObjs[hit].Add(oid);
+                        own.Collect(tr, ser, e, XKeyTile);
+                    }
+                }
+                tr.Commit();
+            }
+            return added;
         }
 
         internal static int EraseByHandles(Transaction tr, Database db, IEnumerable<string> handles)

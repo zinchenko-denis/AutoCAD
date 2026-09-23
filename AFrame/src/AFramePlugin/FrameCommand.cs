@@ -90,6 +90,8 @@ namespace AFramePlugin
             var joints = new List<double>();
             var rowsY = new List<double>();
             var oldHandles = new HashSet<string>();
+            _copiedLabels = 0;
+            _legacyH.Clear();
             // 23.09b: параметры окна с прошлой подсистемы зоны и её хэндлы
             // по зонам (режим «только кляммеры» переписывает метку, не теряя
             // направляющих и кронштейнов)
@@ -162,15 +164,19 @@ namespace AFramePlugin
                                 pl.GetPoint2dAt(n - 1)) <= CloseTol;
                         if (!closed) continue;
                         var pts = new List<object>();
+                        var bulges = new List<object>();
                         for (int i = 0; i < n; i++)
                         {
                             Point2d p = pl.GetPoint2dAt(i);
                             pts.Add(new[] { p.X, p.Y });
+                            bulges.Add(pl.GetBulgeAt(i));
                         }
                         string h = pl.Handle.ToString();
                         polyByHandle[h] = pl.ObjectId;
+                        // 24.09 (рецензия): дуги передаём — движок отклонит их
+                        // с замечанием, а не превратит молча в хорду
                         polyData[h] = new Dictionary<string, object>
-                        { { "id", h }, { "pts", pts } };
+                        { { "id", h }, { "pts", pts }, { "bulges", bulges } };
                         continue;
                     }
                     if (m == null) continue;
@@ -293,6 +299,9 @@ namespace AFramePlugin
             var fz = LoadFzones(ed, db, ser);
             var zonesPayload = new List<Dictionary<string, object>>();
             var partToRoot = new Dictionary<string, string>();
+            // 24.09: полилинии зон в выборке — их прежняя подсистема (прошлый
+            // запуск по полилиниям) заменяется вместе с зоной: «контур H» → корень
+            var dropRoot = new Dictionary<string, string>();
             foreach (var kv in zoneObjs)
             {
                 var parts = FindZoneParts(fz, kv.Key);
@@ -319,13 +328,16 @@ namespace AFramePlugin
                     // 23.09 (ревью): контуры самой зоны из выборки в «голые» не
                     // пускаем — иначе та же зона строилась бы дважды (как в ATCLAD)
                     string oid = MetaStr(part, "outer_contour_id");
-                    if (oid != null) polyData.Remove(oid);
+                    if (oid != null) { polyData.Remove(oid); dropRoot["контур " + oid] = kv.Key; }
                     var ops = Get(part, "openings") as object[];
                     if (ops != null)
                         foreach (var o in ops)
                         {
                             var od = o as Dictionary<string, object>;
-                            if (od != null) polyData.Remove(SafeStr(Get(od, "id")));
+                            if (od == null) continue;
+                            string opid = SafeStr(Get(od, "id"));
+                            polyData.Remove(opid);
+                            dropRoot["контур " + opid] = kv.Key;
                         }
                 }
             }
@@ -571,7 +583,34 @@ namespace AFramePlugin
                                                 "AFRAME_СКОБА", false);
 
                 // прежняя подсистема этих зон (перегенерация)
-                if (oldHandles.Count > 0)
+                // 24.09 (рецензия): прежнее — только у зон, получивших результат
+                // (зона, пропущенная движком, сохраняет свою подсистему)
+                var okRoots = new HashSet<string>();
+                var pzs = Get(res, "per_zone") as object[];
+                if (pzs != null)
+                    foreach (var pzo in pzs)
+                    {
+                        var pzd = pzo as Dictionary<string, object>;
+                        if (pzd == null) continue;
+                        double cnt = ToD(Get(pzd, "rails")) + ToD(Get(pzd, "clamps")) +
+                                     ToD(Get(pzd, "hrails")) + ToD(Get(pzd, "brackets_main")) +
+                                     ToD(Get(pzd, "brackets_row"));
+                        if (cnt <= 0) continue;
+                        string pzid = SafeStr(Get(pzd, "zone_id")), proot;
+                        okRoots.Add(partToRoot.TryGetValue(pzid, out proot) ? proot : pzid);
+                    }
+                foreach (var kvd in dropRoot)
+                    if (okRoots.Contains(kvd.Value)) okRoots.Add(kvd.Key);
+                var eraseSet = new HashSet<string>();
+                var keptRoots = new List<string>();
+                foreach (var kvo in oldByRoot)
+                {
+                    if (okRoots.Contains(kvo.Key)) foreach (var h0 in kvo.Value) eraseSet.Add(h0);
+                    else keptRoots.Add(kvo.Key);
+                }
+                var region = SelRegion(tr, zoneObjs, polyByHandle);
+                int keptOut = 0;
+                if (eraseSet.Count > 0)
                     foreach (ObjectId oid in ms)
                     {
                         Entity oe;
@@ -582,8 +621,10 @@ namespace AFramePlugin
                         }
                         catch { continue; }
                         if (oe == null) continue;
-                        if (!oldHandles.Contains(oe.Handle.ToString()))
+                        if (!eraseSet.Contains(oe.Handle.ToString()))
                             continue;
+                        if (_legacyH.Contains(oe.Handle.ToString()) && !InRegion(oe, region))
+                        { keptOut++; continue; }
                         if (clampsOnly && !string.Equals(oe.Layer, LayerClamps,
                                 StringComparison.OrdinalIgnoreCase))
                             continue;       // направляющие и кронштейны — на месте
@@ -592,6 +633,15 @@ namespace AFramePlugin
                         erasedH.Add(oe.Handle.ToString());
                         erased++;
                     }
+                if (keptRoots.Count > 0)
+                    ed.WriteMessage("\nНе построено (см. замечания): прежняя подсистема сохранена у зон: " +
+                        string.Join(", ", keptRoots.ToArray()) + ".");
+                if (keptOut > 0)
+                    ed.WriteMessage("\nПо старой метке " + keptOut + " прежних элементов лежат вне " +
+                        "выбранных зон — не удалены (метка скопирована или зону переносили).");
+                if (_copiedLabels > 0)
+                    ed.WriteMessage("\nМетка подсистемы скопирована вместе с объектом (" + _copiedLabels +
+                        " шт.) — элементы оригинала не трогаю.");
 
                 // направляющие — прямоугольники по оси
                 if (rails != null)
@@ -754,15 +804,16 @@ namespace AFramePlugin
                         { "handles", hl },
                         { "settings", fs.ToDict() },
                         { "parts", fs.Mode },
+                        { "schema", 2 },
                     };
-                    string mj = ser.Serialize(meta);
                     List<ObjectId> targets;
                     if (zoneObjs.TryGetValue(root, out targets))
                         foreach (var tid in targets)
                         {
                             var te = (Entity)tr.GetObject(tid,
                                 OpenMode.ForWrite);
-                            StoreData(tr, te, mj, XKeyFrame);
+                            meta["owner"] = te.Handle.ToString();
+                            StoreData(tr, te, ser.Serialize(meta), XKeyFrame);
                         }
                     else
                     {
@@ -773,7 +824,8 @@ namespace AFramePlugin
                         {
                             var te = (Entity)tr.GetObject(pid2,
                                 OpenMode.ForWrite);
-                            StoreData(tr, te, mj, XKeyFrame);
+                            meta["owner"] = te.Handle.ToString();
+                            StoreData(tr, te, ser.Serialize(meta), XKeyFrame);
                         }
                     }
                 }
@@ -1414,6 +1466,48 @@ namespace AFramePlugin
 
         // ── прежняя подсистема: хэндлы из метки ATFRAME выбранного ──
         // ── 23.09b: окно ATFRAME и режим «только кляммеры» ──
+        // 24.09 (рецензия): «точный дубль» — совпадают определение блока,
+        // слой, положение X/Y/Z, поворот, ВСЕ масштабы, значения динамических
+        // свойств (длина, видимость…) и атрибутов (марка). Раньше — только
+        // X/Y/поворот/ScaleX: профили одной семьи разной длины или марки
+        // считались дублями, и второй удалялся.
+        private static string DedupKey(Transaction tr, BlockReference br)
+        {
+            var ci = CultureInfo.InvariantCulture;
+            var sb = new StringBuilder();
+            sb.Append(br.DynamicBlockTableRecord.Handle).Append('|').Append(br.Layer)
+              .Append('|').Append(Math.Round(br.Position.X, 1).ToString(ci))
+              .Append('|').Append(Math.Round(br.Position.Y, 1).ToString(ci))
+              .Append('|').Append(Math.Round(br.Position.Z, 1).ToString(ci))
+              .Append('|').Append(Math.Round(br.Rotation * 180.0 / Math.PI, 1).ToString(ci))
+              .Append('|').Append(Math.Round(br.ScaleFactors.X, 4).ToString(ci))
+              .Append('|').Append(Math.Round(br.ScaleFactors.Y, 4).ToString(ci))
+              .Append('|').Append(Math.Round(br.ScaleFactors.Z, 4).ToString(ci));
+            try
+            {
+                if (br.IsDynamicBlock)
+                    foreach (DynamicBlockReferenceProperty pr in br.DynamicBlockReferencePropertyCollection)
+                    {
+                        if (pr.PropertyName == "Origin") continue;
+                        object v = pr.Value;
+                        string vs = v is double ? Math.Round((double)v, 2).ToString(ci)
+                                  : Convert.ToString(v, ci);
+                        sb.Append("|d:").Append(pr.PropertyName).Append('=').Append(vs);
+                    }
+            }
+            catch { sb.Append("|d:?"); }
+            try
+            {
+                foreach (ObjectId aid in br.AttributeCollection)
+                {
+                    var ar = tr.GetObject(aid, OpenMode.ForRead) as AttributeReference;
+                    if (ar != null) sb.Append("|a:").Append(ar.Tag).Append('=').Append(ar.TextString);
+                }
+            }
+            catch { sb.Append("|a:?"); }
+            return sb.ToString();
+        }
+
         private static Dictionary<string, object> ReadFrameSettings(
             Transaction tr, JavaScriptSerializer ser, Entity ent)
         {
@@ -1427,6 +1521,42 @@ namespace AFramePlugin
             catch { return null; }
         }
 
+        private static Extents3d? SelRegion(Transaction tr,
+            Dictionary<string, List<ObjectId>> zoneObjs, Dictionary<string, ObjectId> polyByHandle)
+        {
+            Extents3d? r = null;
+            var ids = new List<ObjectId>(polyByHandle.Values);
+            foreach (var l in zoneObjs.Values) ids.AddRange(l);
+            foreach (var oid in ids)
+            {
+                try
+                {
+                    var e = tr.GetObject(oid, OpenMode.ForRead) as Entity;
+                    if (e == null || e is MText || e is DBText) continue;
+                    var ex = e.GeometricExtents;
+                    if (r == null) r = ex;
+                    else { var t = r.Value; t.AddExtents(ex); r = t; }
+                }
+                catch { }
+            }
+            if (r == null) return null;
+            var v = new Vector3d(300, 300, 0);
+            return new Extents3d(r.Value.MinPoint - v, r.Value.MaxPoint + v);
+        }
+
+        private static bool InRegion(Entity e, Extents3d? region)
+        {
+            if (region == null) return true;
+            try
+            {
+                var ex = e.GeometricExtents;
+                double cx = 0.5 * (ex.MinPoint.X + ex.MaxPoint.X), cy = 0.5 * (ex.MinPoint.Y + ex.MaxPoint.Y);
+                var r = region.Value;
+                return cx >= r.MinPoint.X && cx <= r.MaxPoint.X && cy >= r.MinPoint.Y && cy <= r.MaxPoint.Y;
+            }
+            catch { return false; }
+        }
+
         private static void CollectOldByRoot(Transaction tr,
             JavaScriptSerializer ser, Entity ent,
             Dictionary<string, List<string>> into)
@@ -1436,6 +1566,7 @@ namespace AFramePlugin
                 string j = ReadData(tr, ent, XKeyFrame);
                 if (j == null) return;
                 var d = ser.DeserializeObject(j) as Dictionary<string, object>;
+                if (!OwnLabel(d, ent, false)) return;
                 string root = SafeStr(Get(d, "zone_id"));
                 var hs = Get(d, "handles") as object[];
                 if (root.Length == 0 || hs == null) return;
@@ -1536,6 +1667,24 @@ namespace AFramePlugin
             return out1;
         }
 
+        // 24.09 (независимая рецензия): метка, скопированная вместе с объектом
+        // (COPY клонирует словарь расширения), хранит хэндлы подсистемы
+        // ОРИГИНАЛА — по ней ничего не удаляем; у старых меток без owner
+        // удаляем только элементы, лежащие на выбранных зонах
+        private static int _copiedLabels;
+        private static readonly HashSet<string> _legacyH = new HashSet<string>();
+
+        private static bool OwnLabel(Dictionary<string, object> d, Entity ent, bool count)
+        {
+            string owner = SafeStr(Get(d, "owner"));
+            if (owner.Length > 0 && owner != ent.Handle.ToString())
+            {
+                if (count) _copiedLabels++;
+                return false;
+            }
+            return true;
+        }
+
         private static void CollectOldHandles(Transaction tr,
             JavaScriptSerializer ser, Entity ent, HashSet<string> into)
         {
@@ -1544,10 +1693,15 @@ namespace AFramePlugin
                 string j = ReadData(tr, ent, XKeyFrame);
                 if (j == null) return;
                 var d = ser.DeserializeObject(j) as Dictionary<string, object>;
+                if (!OwnLabel(d, ent, true)) return;
+                bool legacy = SafeStr(Get(d, "owner")).Length == 0;
                 var hs = Get(d, "handles") as object[];
                 if (hs == null) return;
                 foreach (var h in hs)
+                {
                     into.Add(SafeStr(h));
+                    if (legacy) _legacyH.Add(SafeStr(h));
+                }
             }
             catch { }
         }
@@ -1776,12 +1930,32 @@ namespace AFramePlugin
             };
             var asel = ed.GetSelection(pso, new SelectionFilter(
                 new[] { new TypedValue((int)DxfCode.Start, "INSERT") }));
+            // 24.09 (независимая рецензия): Esc/ошибка выбора раньше давали
+            // пустой список — и команда чистила ВЕСЬ чертёж. Теперь Esc —
+            // отмена; весь чертёж — только по Enter и подтверждению.
             if (asel.Status == PromptStatus.OK)
+            {
                 foreach (SelectedObject so in asel.Value)
                     if (so != null) area.Add(so.ObjectId);
+            }
+            else if (asel.Status == PromptStatus.None)
+            {
+                var pk = new PromptKeywordOptions(
+                    "\nПроверить дубли во ВСЁМ чертеже [Да/Нет] <Нет>: ", "Да Нет");
+                var rk = ed.GetKeywords(pk);
+                if (rk.Status != PromptStatus.OK || rk.StringResult != "Да")
+                { ed.WriteMessage("\nОтменено."); return; }
+            }
+            else
+            {
+                ed.WriteMessage("\nОтменено.");
+                return;
+            }
             int removed = 0, seenCnt = 0;
             var byName = new Dictionary<string, int>();
-            using (doc.LockDocument())
+            var dups = new List<ObjectId>();
+            var dupName = new List<string>();
+            // проход 1 — только чтение: найти дубли, ничего не удаляя
             using (var tr = db.TransactionManager.StartTransaction())
             {
                 var ids = new List<ObjectId>(area);
@@ -1806,17 +1980,7 @@ namespace AFramePlugin
                     catch { continue; }
                     if (br == null) continue;
                     seenCnt++;
-                    string key = br.DynamicBlockTableRecord.Handle
-                        + "|" + br.Layer
-                        + "|" + Math.Round(br.Position.X, 1)
-                            .ToString(CultureInfo.InvariantCulture)
-                        + "|" + Math.Round(br.Position.Y, 1)
-                            .ToString(CultureInfo.InvariantCulture)
-                        + "|" + Math.Round(
-                            br.Rotation * 180.0 / Math.PI, 1)
-                            .ToString(CultureInfo.InvariantCulture)
-                        + "|" + Math.Round(br.ScaleFactors.X, 3)
-                            .ToString(CultureInfo.InvariantCulture);
+                    string key = DedupKey(tr, br);
                     if (seen.Add(key)) continue;
                     string nm;
                     try
@@ -1827,14 +1991,42 @@ namespace AFramePlugin
                         nm = btr.Name;
                     }
                     catch { nm = "?"; }
-                    br.UpgradeOpen();
-                    br.Erase();
-                    removed++;
-                    int c0;
-                    byName.TryGetValue(nm, out c0);
-                    byName[nm] = c0 + 1;
+                    dups.Add(oid);
+                    dupName.Add(nm);
                 }
                 tr.Commit();
+            }
+            if (dups.Count > 0)
+            {
+                var plan = new Dictionary<string, int>();
+                foreach (var nm in dupName)
+                {
+                    int c0;
+                    plan.TryGetValue(nm, out c0);
+                    plan[nm] = c0 + 1;
+                }
+                var sbp = new StringBuilder();
+                foreach (var kv in plan) sbp.Append("\n  ").Append(kv.Key).Append(": ").Append(kv.Value);
+                ed.WriteMessage("\nНайдено точных дублей: " + dups.Count + " (из " + seenCnt + ")" + sbp);
+                var pk2 = new PromptKeywordOptions("\nУдалить их [Да/Нет] <Да>: ", "Да Нет");
+                var rk2 = ed.GetKeywords(pk2);
+                if (rk2.Status == PromptStatus.Cancel || (rk2.Status == PromptStatus.OK && rk2.StringResult == "Нет"))
+                { ed.WriteMessage("\nОтменено — ничего не удалено."); return; }
+                using (doc.LockDocument())
+                using (var tr = db.TransactionManager.StartTransaction())
+                {
+                    for (int i = 0; i < dups.Count; i++)
+                    {
+                        var br = tr.GetObject(dups[i], OpenMode.ForWrite, false) as BlockReference;
+                        if (br == null || br.IsErased) continue;
+                        br.Erase();
+                        removed++;
+                        int c0;
+                        byName.TryGetValue(dupName[i], out c0);
+                        byName[dupName[i]] = c0 + 1;
+                    }
+                    tr.Commit();
+                }
             }
             if (removed == 0)
             {
