@@ -312,18 +312,23 @@ namespace ACladPlugin
             List<object> sample = null;
             var typeColor = new Dictionary<string, int>();
             var typeTrue = new Dictionary<string, int>();
+            // 23.09 (Герман, письмом): образец можно рисовать БЛОКАМИ, в т.ч.
+            // динамическими; тип = слой блока, и раскладка кладёт плитки на
+            // тот же слой тем же блоком (с его видимостью и прочими свойствами)
+            var sampleElem = new Dictionary<string, SampleElem>();
             if (useSample)
             {
                 var psS = new PromptSelectionOptions
                 {
-                    MessageForAdding = "\nВыберите ОБРАЗЕЦ (плитки — полилинии/штриховки; " +
-                                       "тип = слой, цвет = цвет слоя): "
+                    MessageForAdding = "\nВыберите ОБРАЗЕЦ (плитки — полилинии, штриховки или " +
+                                       "блоки, в т.ч. динамические; тип = слой): "
                 };
                 var fS = new SelectionFilter(new[]
                 {
                     new TypedValue((int)DxfCode.Operator, "<or"),
                     new TypedValue((int)DxfCode.Start, "LWPOLYLINE"),
                     new TypedValue((int)DxfCode.Start, "HATCH"),
+                    new TypedValue((int)DxfCode.Start, "INSERT"),
                     new TypedValue((int)DxfCode.Operator, "or>"),
                 });
                 var selS = ed.GetSelection(psS, fS);
@@ -339,7 +344,10 @@ namespace ACladPlugin
                     {
                         var ent = tr.GetObject(so.ObjectId, OpenMode.ForRead) as Entity;
                         if (ent == null) continue;
-                        Extents3d? ext = SafeExtents(ent);
+                        var sbr = ent as BlockReference;
+                        // габарит блока — по КРИВЫМ определения (атрибуты и тексты
+                        // не расширяют плитку — грабля 29)
+                        Extents3d? ext = sbr != null ? CladCommand.CellExtents(tr, sbr) : SafeExtents(ent);
                         if (ext == null) continue;
                         var e = ext.Value;
                         double x0 = e.MinPoint.X, y0 = e.MinPoint.Y,
@@ -353,6 +361,8 @@ namespace ACladPlugin
                         ws.Add(x1 - x0); hs.Add(y1 - y0);
                         if (multi && !typeColor.ContainsKey(type))
                             RecordTypeColor(tr, lt, ent, type, typeColor, typeTrue);
+                        if (sbr != null && !sampleElem.ContainsKey(type))
+                            sampleElem[type] = SampleElem.From(tr, sbr, e);
                     }
                     tr.Commit();
                 }
@@ -362,7 +372,12 @@ namespace ACladPlugin
                 double medW = ws[ws.Count / 2], medH = hs[hs.Count / 2];
                 ed.WriteMessage("\nОбразец: " + sample.Count + " плиток" +
                     (multi ? ", типов " + typeColor.Count : "") + " (плитка ≈ " +
-                    F0(medW) + "×" + F0(medH) + " мм).");
+                    F0(medW) + "×" + F0(medH) + " мм)" +
+                    (sampleElem.Count > 0 ? ", из них блоками — типов " + sampleElem.Count : "") + ".");
+                foreach (var kv in sampleElem)
+                    if (!kv.Value.Usable)
+                        ed.WriteMessage("\n  ! блок образца типа «" + kv.Key + "» повёрнут/отражён/масштабирован — " +
+                            "этим блоком не кладу (прямоугольник/элемент окна).");
                 if (Math.Abs(medW - st.W) > 2 || Math.Abs(medH - st.H) > 2)
                     ed.WriteMessage("\n  ! размер плиток образца отличается от формата окна (" +
                         F0(st.W) + "×" + F0(st.H) + ") — раскладка идёт по формату окна.");
@@ -423,6 +438,7 @@ namespace ACladPlugin
             // ── 7. чертёж ──
             int erased = 0, made = 0, dynFail = 0, smallMade = 0;
             bool dyn = st.Element.Length > 0;
+            var sampleLayersUsed = new List<string>();
             var handlesByZone = new Dictionary<string, List<string>>();
             using (doc.LockDocument())
             using (var tr = db.TransactionManager.StartTransaction())
@@ -457,19 +473,57 @@ namespace ACladPlugin
                 var fullLayer = new Dictionary<string, string>();
                 var cutLayer = new Dictionary<string, string>();
                 var blockOf = new Dictionary<string, ObjectId>();
+                var lt0 = (LayerTable)tr.GetObject(db.LayerTableId, OpenMode.ForRead);
+                bool onSample = multi && st.SampleLayers;
+                // элемент типа — блок образца (кроме повёрнутых); без раскраски —
+                // единственный блок образца, если элемент в окне не выбран
+                var elemOf = new Dictionary<string, SampleElem>();
+                foreach (var t in types)
+                {
+                    SampleElem se;
+                    if (onSample && sampleElem.TryGetValue(t, out se) && se.Usable)
+                        elemOf[t] = se;
+                    else if (!multi && !dyn && sampleElem.Count == 1)
+                        foreach (var v in sampleElem.Values) if (v.Usable) elemOf[t] = v;
+                }
+                foreach (var se in elemOf.Values) se.Probe(tr, ms);
+                // обычный (не динамический) блок образца годится только для целых
+                // плиток своего размера — иначе прямоугольник/элемент окна
+                foreach (var t in new List<string>(elemOf.Keys))
+                {
+                    var se = elemOf[t];
+                    if (!se.Dyn && (Math.Abs(se.Wd - st.W) > 1.0 || Math.Abs(se.Hd - st.H) > 1.0))
+                    {
+                        ed.WriteMessage("\n  ! блок образца типа «" + t + "» " + F0(se.Wd) + "×" + F0(se.Hd) +
+                            " не динамический и не формата " + F0(st.W) + "×" + F0(st.H) +
+                            " — целые плитки этого типа будут прямоугольником/элементом окна.");
+                        elemOf.Remove(t);
+                    }
+                }
                 foreach (var t in types)
                 {
                     int aci = typeColor.ContainsKey(t) ? typeColor[t] : 7;
                     int rgb = typeTrue.ContainsKey(t) ? typeTrue[t] : -1;
                     bool keep = !multi;   // один тип — цвет существующего слоя не трогаем
-                    fullLayer[t] = MakeLayer(tr, db, st.LayerFor(t, multi), aci, rgb, keep);
-                    cutLayer[t] = dyn ? fullLayer[t]
-                        : MakeLayer(tr, db, st.CutLayerFor(t, multi), multi ? aci : 30, rgb, keep);
-                    if (!dyn)
+                    SampleElem te;
+                    bool hasTe = elemOf.TryGetValue(t, out te);
+                    if (onSample && lt0.Has(t))
+                    {
+                        // 23.09 (Герман): тот же слой, что у образца — новых слоёв нет
+                        fullLayer[t] = cutLayer[t] = t;
+                        if (!sampleLayersUsed.Contains(t)) sampleLayersUsed.Add(t);
+                    }
+                    else
+                    {
+                        fullLayer[t] = MakeLayer(tr, db, st.LayerFor(t, multi), aci, rgb, keep);
+                        cutLayer[t] = (dyn || (hasTe && te.Dyn)) ? fullLayer[t]
+                            : MakeLayer(tr, db, st.CutLayerFor(t, multi), multi ? aci : 30, rgb, keep);
+                    }
+                    if (!dyn && !hasTe)
                         blockOf[t] = EnsureTileBlock(tr, db, bt, st.BlockFor(t, multi),
                                                      st.W, st.H, multi);
                 }
-                string smallLayer = MakeLayer(tr, db, st.SmallLayer(), 1, -1, true);
+                string smallLayer = null;   // слой подсветки малой подрезки — только если она есть
 
                 // прежняя раскладка ATTILE этих зон (перегенерация) и ATCLAD (замена) —
                 // ТОЛЬКО у владельцев, которые получили новый результат
@@ -522,19 +576,26 @@ namespace ACladPlugin
                            w = ToD(CladCommand.Get(it, "w")), h = ToD(CladCommand.Get(it, "h"));
                     var rings = RingsOf(it, st.W, st.H);
                     bool shapedPiece = CladCommand.Get(it, "rings") != null;
-                    if (dyn && !shapedPiece)
+                    SampleElem te;
+                    bool hasTe = elemOf.TryGetValue(type, out te);
+                    bool useDyn = !shapedPiece && (hasTe ? te.Dyn : dyn);
+                    if (useDyn)
                     {
-                        var br = new BlockReference(new Point3d(x, y, 0), dynDef);
+                        ObjectId defId = hasTe ? te.Def : dynDef;
+                        string pw = hasTe ? te.W : dynW, ph = hasTe ? te.H : dynH;
+                        double ox = hasTe ? te.OffX : 0.0, oy = hasTe ? te.OffY : 0.0;
+                        var br = new BlockReference(new Point3d(x - ox, y - oy, 0), defId);
                         br.Layer = fullLayer[type];
                         ms.AppendEntity(br);
                         tr.AddNewlyCreatedDBObject(br, true);
+                        if (hasTe) te.ApplyLook(br);     // видимость/цвет/прочие свойства образца
                         bool okW = false, okH = false;
                         foreach (DynamicBlockReferenceProperty pr in
                                  br.DynamicBlockReferencePropertyCollection)
                         {
                             if (pr.ReadOnly) continue;
-                            if (pr.PropertyName == dynW) okW = CladCommand.TrySetNum(pr, w);
-                            else if (pr.PropertyName == dynH) okH = CladCommand.TrySetNum(pr, h);
+                            if (pr.PropertyName == pw) okW = CladCommand.TrySetNum(pr, w);
+                            else if (pr.PropertyName == ph) okH = CladCommand.TrySetNum(pr, h);
                         }
                         if (!okW || !okH) dynFail++;
                         FillAttributes(tr, br, RootName(zone, partToRoot));
@@ -543,10 +604,18 @@ namespace ACladPlugin
                     }
                     else if (full)
                     {
-                        var br = new BlockReference(new Point3d(x, y, 0), blockOf[type]);
+                        bool sampleStatic = hasTe && !te.Dyn;
+                        var br = new BlockReference(sampleStatic
+                            ? new Point3d(x - te.OffX, y - te.OffY, 0) : new Point3d(x, y, 0),
+                            sampleStatic ? te.Def : blockOf[type]);
                         br.Layer = fullLayer[type];
                         ms.AppendEntity(br);
                         tr.AddNewlyCreatedDBObject(br, true);
+                        if (sampleStatic)
+                        {
+                            te.ApplyLook(br);
+                            FillAttributes(tr, br, RootName(zone, partToRoot));
+                        }
                         AddToMap(handlesByZone, zone, br.Handle.ToString());
                         made++;
                     }
@@ -588,6 +657,7 @@ namespace ACladPlugin
                     }
                     if (small)
                     {
+                        if (smallLayer == null) smallLayer = MakeLayer(tr, db, st.SmallLayer(), 1, -1, true);
                         var sp = MakePoly(rings[0], smallLayer);
                         sp.ConstantWidth = Math.Max(2.0, Math.Min(st.W, st.H) * 0.01);
                         ms.AppendEntity(sp);
@@ -686,9 +756,13 @@ namespace ACladPlugin
                 ed.WriteMessage("\n  ! у " + dynFail + " вставок не выставились «ширина»/«высота».");
             if (multi) PrintByType(ed, sum);
             PrintNotes(ed, CladCommand.Get(res, "notes") as object[]);
-            ed.WriteMessage("\nСпецификация — ATSPEC по слою «" + st.LayerFor("", false) +
-                (multi ? " …»" : "»") + (dyn ? " (все камни — блок «" + st.Element +
-                "» с размерами)." : " (целые — блоки «" + st.BlockFor("", false) + "»)."));
+            if (sampleLayersUsed.Count > 0)
+                ed.WriteMessage("\nПлитки — на слоях образца: " + string.Join(", ", sampleLayersUsed.ToArray()) +
+                    " (новые слои не создавались); спецификация — ATSPEC по этим слоям.");
+            else
+                ed.WriteMessage("\nСпецификация — ATSPEC по слою «" + st.LayerFor("", false) +
+                    (multi ? " …»" : "»") + (dyn ? " (все камни — блок «" + st.Element +
+                    "» с размерами)." : " (целые — блоки «" + st.BlockFor("", false) + "»)."));
         }
 
         // ── помощники ──
@@ -788,6 +862,68 @@ namespace ACladPlugin
 
         // имена динпараметров «ширина»/«высота» (В7 Германа, как ATCLAD) —
         // пробной вставкой, до того как что-либо стирать
+        // 23.09 (Герман): блок образца — элемент своего типа: то же определение
+        // (динамическое — с «ширина»/«высота» для подрезки), та же видимость,
+        // цвет и прочие динсвойства, что у плитки образца
+        internal class SampleElem
+        {
+            public ObjectId Def;
+            public bool Usable;            // без поворота, отражения и масштаба
+            public bool Dyn;               // есть «ширина»/«высота» — режем им же
+            public string W, H;            // имена динсвойств размера
+            public double OffX, OffY;      // точка вставки → левый нижний угол плитки
+            public double Wd, Hd;          // размер плитки образца
+            public Autodesk.AutoCAD.Colors.Color Color;
+            public readonly Dictionary<string, object> Props = new Dictionary<string, object>();
+            private bool _probed;
+
+            public static SampleElem From(Transaction tr, BlockReference br, Extents3d ext)
+            {
+                var se = new SampleElem();
+                se.Def = br.IsDynamicBlock ? br.DynamicBlockTableRecord : br.BlockTableRecord;
+                var sc = br.ScaleFactors;
+                se.Usable = Math.Abs(br.Rotation) < 1e-6 && Math.Abs(sc.X - 1) < 1e-6 &&
+                            Math.Abs(sc.Y - 1) < 1e-6 && Math.Abs(sc.Z - 1) < 1e-6;
+                se.OffX = ext.MinPoint.X - br.Position.X;
+                se.OffY = ext.MinPoint.Y - br.Position.Y;
+                se.Wd = ext.MaxPoint.X - ext.MinPoint.X;
+                se.Hd = ext.MaxPoint.Y - ext.MinPoint.Y;
+                se.Color = br.Color;
+                try
+                {
+                    if (br.IsDynamicBlock)
+                        foreach (DynamicBlockReferenceProperty pr in br.DynamicBlockReferencePropertyCollection)
+                            if (!pr.ReadOnly && pr.PropertyName != "Origin")
+                                se.Props[pr.PropertyName] = pr.Value;
+                }
+                catch { }
+                return se;
+            }
+
+            public void Probe(Transaction tr, BlockTableRecord ms)
+            {
+                if (_probed) return;
+                _probed = true;
+                string w, h;
+                Dyn = ProbeDyn(tr, ms, Def, out w, out h);
+                W = w;
+                H = h;
+            }
+
+            public void ApplyLook(BlockReference br)
+            {
+                try { if (Color != null) br.Color = Color; } catch { }
+                if (!br.IsDynamicBlock) return;
+                foreach (DynamicBlockReferenceProperty pr in br.DynamicBlockReferencePropertyCollection)
+                {
+                    if (pr.ReadOnly || pr.PropertyName == W || pr.PropertyName == H) continue;
+                    object v;
+                    if (Props.TryGetValue(pr.PropertyName, out v))
+                        try { pr.Value = v; } catch { }
+                }
+            }
+        }
+
         private static bool ProbeDyn(Transaction tr, BlockTableRecord ms, ObjectId defId,
                                      out string dynW, out string dynH)
         {

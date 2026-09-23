@@ -32,6 +32,10 @@ namespace ACladPlugin
         public string Dir = "+";              // + вправо/вверх, - влево/вниз
         public string Sequence = "0; 1/3; 2/3";
         public bool ColorsBySample = false;
+        // 23.09 (Герман, письмом): при раскраске по образцу — класть плитки на
+        // те же слои, что у образца (новые слои не создавать), а если образец
+        // нарисован блоками (в т.ч. динамическими) — тем же блоком
+        public bool SampleLayers = true;
         public string AnchorH = "R", AnchorV = "B";   // L|C|R, B|C|T
         public string Center = "tile";        // tile | joint
         public string Ref = "bbox";           // bbox | wall
@@ -409,6 +413,7 @@ namespace ACladPlugin
                 { "w", W }, { "h", H }, { "gv", Gv }, { "gh", Gh }, { "axis", Axis },
                 { "kind", Kind }, { "value", Value }, { "units", Units }, { "dir", Dir },
                 { "sequence", Sequence }, { "colors_by_sample", ColorsBySample },
+                { "sample_layers", SampleLayers },
                 { "anchor_h", AnchorH }, { "anchor_v", AnchorV }, { "center", Center },
                 { "ref", Ref }, { "common_point", CommonPoint }, { "merge", Merge },
                 { "gap_around", GapAround }, { "shaped", Shaped },
@@ -462,6 +467,7 @@ namespace ACladPlugin
             s.Dir = OneOf(S(d, "dir", s.Dir), "+", "+", "-");
             s.Sequence = S(d, "sequence", s.Sequence);
             s.ColorsBySample = B(d, "colors_by_sample", false);
+            s.SampleLayers = B(d, "sample_layers", true);
             s.AnchorH = OneOf(S(d, "anchor_h", s.AnchorH), "R", "L", "C", "R");
             s.AnchorV = OneOf(S(d, "anchor_v", s.AnchorV), "B", "B", "C", "T");
             s.Center = OneOf(S(d, "center", s.Center), "tile", "tile", "joint");

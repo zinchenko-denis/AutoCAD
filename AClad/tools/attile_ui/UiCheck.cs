@@ -67,6 +67,12 @@ static class UiCheck
         Ok(!sf.ToEngine().ContainsKey("vjoints") && !sf.ToEngine().ContainsKey("hjoints"),
            "русты: ToEngine точек не несёт");
         Ok(!BondSettings.FromDict(new Dictionary<string, object>()).ForcedV, "русты: по умолчанию выкл.");
+        // 23.09 (Герман): «слои и блоки — как у образца» — по умолчанию вкл., хранится
+        Ok(new BondSettings().SampleLayers && BondSettings.FromDict(new Dictionary<string, object>()).SampleLayers,
+           "слои образца: по умолчанию вкл.");
+        var so = new BondSettings { ColorsBySample = true, SampleLayers = false };
+        Ok(!BondSettings.FromDict(ser.DeserializeObject(ser.Serialize(so.ToDict())) as Dictionary<string, object>).SampleLayers,
+           "слои образца: выкл. переживает ToDict/FromDict");
         // 5. дамп сдвигов и запросов для сверки с движком
         var cases = new List<BondSettings> {
             Mk("none","","frac","+","rows",null), Mk("alternate","1/2","frac","+","rows",null),

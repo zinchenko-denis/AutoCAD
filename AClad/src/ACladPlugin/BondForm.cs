@@ -22,6 +22,7 @@ namespace ACladPlugin
         private readonly ComboBox _name = new ComboBox();
         private readonly ComboBox _element = new ComboBox();
         private readonly CheckBox _colors = new CheckBox();
+        private readonly CheckBox _sampleLayers = new CheckBox();
         private readonly NumericUpDown _w = Num(1, 20000, 0);
         private readonly NumericUpDown _h = Num(1, 20000, 0);
         private readonly Button _rot = new Button();
@@ -106,10 +107,14 @@ namespace ACladPlugin
             foreach (var b in dynBlocks ?? new string[0])
                 if (!string.IsNullOrEmpty(b)) _element.Items.Add(b);
             Place(_element, 120, 74, 340);
-            _colors.Text = "Раскраска по образцу из чертежа (тип = слой плиток образца)";
-            Place(_colors, 10, 104, 450);
+            _colors.Text = "Раскраска по образцу (тип — слой)";
+            Place(_colors, 10, 104, 250);
+            // 23.09 (Герман): плитки — на слои образца и его блоком (динамическим тоже)
+            _sampleLayers.Text = "слои и блоки образца";
+            Place(_sampleLayers, 266, 104, 196);
             g1.Controls.AddRange(new Control[] { L("Материал:", 10, 18), _material,
-                L("Наименование:", 10, 46), _name, L("Элемент:", 10, 74), _element, _colors });
+                L("Наименование:", 10, 46), _name, L("Элемент:", 10, 74), _element, _colors,
+                _sampleLayers });
 
             // ── 2. формат и швы ──
             var g2 = new GroupBox { Text = "2. Формат и швы", Left = 10, Top = 144, Width = 470, Height = 80 };
@@ -286,7 +291,7 @@ namespace ACladPlugin
                 var nu = c as NumericUpDown;
                 if (nu != null) nu.ValueChanged += upd;
             }
-            foreach (var c in new CheckBox[] { _colors, _point, _gap, _merge, _forcedV, _forcedH })
+            foreach (var c in new CheckBox[] { _colors, _sampleLayers, _point, _gap, _merge, _forcedV, _forcedH })
                 c.CheckedChanged += upd;
             _rows.CheckedChanged += upd;
             _cols.CheckedChanged += upd;
@@ -326,6 +331,7 @@ namespace ACladPlugin
                 int ei = _s.Element.Length > 0 ? _element.Items.IndexOf(_s.Element) : 0;
                 _element.SelectedIndex = ei >= 0 ? ei : 0;
                 _colors.Checked = _s.ColorsBySample;
+                _sampleLayers.Checked = _s.SampleLayers;
                 _w.Value = Dec(_s.W, _w);
                 _h.Value = Dec(_s.H, _h);
                 _formats.Items.Clear();
@@ -373,6 +379,7 @@ namespace ACladPlugin
             _s.Name = (_name.Text ?? "").Trim();
             _s.Element = _element.SelectedIndex > 0 ? (string)_element.SelectedItem : "";
             _s.ColorsBySample = _colors.Checked;
+            _s.SampleLayers = _sampleLayers.Checked;
             _s.W = (double)_w.Value;
             _s.H = (double)_h.Value;
             _s.Gv = (double)_gv.Value;
@@ -426,11 +433,16 @@ namespace ACladPlugin
             _dir.Enabled = _s.Kind != "none" && _s.Kind != "pattern";
             _seq.Enabled = _s.Kind == "sequence";
             _center.Enabled = _s.AnchorH == "C" || _s.AnchorV == "C";
+            _sampleLayers.Enabled = _s.ColorsBySample;
             string err = _s.Validate();
             _desc.ForeColor = err == null ? SystemColors.ControlText : Color.Firebrick;
             _desc.Text = err == null
                 ? _s.Describe() + (_s.ColorsBySample || _s.Kind == "pattern"
-                    ? " После ОК — выбрать образец в чертеже." : "") +
+                    ? " После ОК — выбрать образец в чертеже (полилинии, штриховки или блоки, в т.ч. " +
+                      "динамические)." : "") +
+                  (_s.ColorsBySample && _s.SampleLayers
+                    ? " Плитки лягут на слои образца (новые слои не создаются), а если образец из " +
+                      "блоков — тем же блоком с его видимостью и цветом." : "") +
                   (_s.CommonPoint ? " После ОК — указать общую точку." : "") +
                   (_s.ForcedV || _s.ForcedH ? " Затем — точки принудительных рустов (" +
                       (_s.ForcedV && _s.ForcedH ? "вертикальных и горизонтальных"

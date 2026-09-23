@@ -712,7 +712,7 @@ namespace ACladPlugin
         // Паттерн — ATableSpec.ReportCommand.AddGab (там та же грабля
         // ловилась чёрным списком); фолбэк — сырой GeometricExtents,
         // если кривых в блоке нет вовсе.
-        private static Extents3d CellExtents(Transaction tr,
+        internal static Extents3d CellExtents(Transaction tr,
                                              BlockReference br)
         {
             double x0 = double.MaxValue, y0 = double.MaxValue;
