@@ -1378,45 +1378,59 @@ def bridge_axes(pieces, gap_v, gap_h, holes=(), gap_around=False, tol=0.05):
     правая кромка + руст = левая кромка соседа с перекрытием по Y (и
     так же по вертикали) — как cladding_plan для ATCLAD. При разбежке
     это объединение осей всех рядов. С рустом вокруг проёмов — ещё оси
-    боковых швов проёмов (анкерные швы, как в ATCLAD)."""
+    боковых швов проёмов (анкерные швы, как в ATCLAD).
+
+    24.09 (независимая рецензия, замер): на зоне 30×30 м поиск занимал
+    ~95 % времени движка — для каждого куска перебирался весь столбец/ряд
+    соседей. Теперь: ось, уже найденная, повторно не ищется (результат —
+    множество, он не меняется), а соседи в корзине отсортированы по второй
+    координате и берутся двоичным поиском. Ответ тот же (сверено на
+    синтетике и фикстуре 290×82)."""
+    from bisect import bisect_left
     by_x, by_y = {}, {}
     for p in pieces:
         by_x.setdefault(int(round(p["x"] * 10)), []).append(p)
         by_y.setdefault(int(round(p["y"] * 10)), []).append(p)
+    # корзины: сортировка по второй координате + её максимальный размер
+    idx_x, idx_y = {}, {}
+    for k, lst in by_x.items():
+        lst.sort(key=lambda q: q["y"])
+        idx_x[k] = ([q["y"] for q in lst], max(q["h"] for q in lst), lst)
+    for k, lst in by_y.items():
+        lst.sort(key=lambda q: q["x"])
+        idx_y[k] = ([q["x"] for q in lst], max(q["w"] for q in lst), lst)
+
+    def touches(idx, k, p, pos, lo, hi, along, size):
+        """Есть ли в корзине k кусок (не p) с кромкой pos и перекрытием
+        (lo, hi) по второй координате."""
+        for kk in (k - 1, k, k + 1):
+            ent = idx.get(kk)
+            if ent is None:
+                continue
+            keys, mx, lst = ent
+            i = bisect_left(keys, lo - mx - tol)
+            while i < len(lst) and keys[i] < hi:
+                q = lst[i]
+                i += 1
+                if q is p:
+                    continue
+                if abs(q[along] - pos) <= tol and \
+                   min(hi, q[size[0]] + q[size[1]]) - max(lo, q[size[0]]) > tol:
+                    return True
+        return False
+
     jx, ry = set(), set()
     for p in pieces:
         xr = p["x"] + p["w"]
-        k = int(round((xr + gap_v) * 10))
-        hit = False
-        for kk in (k - 1, k, k + 1):
-            for q in by_x.get(kk, ()):
-                if q is p:
-                    continue
-                if abs(q["x"] - (xr + gap_v)) <= tol and \
-                   min(p["y"] + p["h"], q["y"] + q["h"]) - \
-                   max(p["y"], q["y"]) > tol:
-                    hit = True
-                    break
-            if hit:
-                break
-        if hit:
-            jx.add(round(xr + 0.5 * gap_v, 2))
+        ax = round(xr + 0.5 * gap_v, 2)
+        if ax not in jx and touches(idx_x, int(round((xr + gap_v) * 10)), p, xr + gap_v,
+                                    p["y"], p["y"] + p["h"], "x", ("y", "h")):
+            jx.add(ax)
         yt = p["y"] + p["h"]
-        k = int(round((yt + gap_h) * 10))
-        hit = False
-        for kk in (k - 1, k, k + 1):
-            for q in by_y.get(kk, ()):
-                if q is p:
-                    continue
-                if abs(q["y"] - (yt + gap_h)) <= tol and \
-                   min(p["x"] + p["w"], q["x"] + q["w"]) - \
-                   max(p["x"], q["x"]) > tol:
-                    hit = True
-                    break
-            if hit:
-                break
-        if hit:
-            ry.add(round(yt + 0.5 * gap_h, 2))
+        ay = round(yt + 0.5 * gap_h, 2)
+        if ay not in ry and touches(idx_y, int(round((yt + gap_h) * 10)), p, yt + gap_h,
+                                    p["x"], p["x"] + p["w"], "y", ("x", "w")):
+            ry.add(ay)
     if gap_around:
         for h in holes:
             if len(h) < 3:
