@@ -42,7 +42,23 @@ namespace AFacadesPlugin
             try
             {
                 string p = Assembly.GetExecutingAssembly().Location;
-                return File.GetLastWriteTime(p).ToString("dd.MM.yyyy HH:mm");
+                string stamp = File.GetLastWriteTime(p).ToString("dd.MM.yyyy HH:mm");
+                // 24.09 (рецензия): дата файла не опознаёт сборку однозначно —
+                // паспорт build-info.json (номер сборки, коммит) рядом с DLL
+                string bi = Path.Combine(Path.GetDirectoryName(p) ?? ".", "build-info.json");
+                if (File.Exists(bi))
+                {
+                    var d = new System.Web.Script.Serialization.JavaScriptSerializer()
+                        .DeserializeObject(File.ReadAllText(bi, System.Text.Encoding.UTF8))
+                        as System.Collections.Generic.Dictionary<string, object>;
+                    object n, sha;
+                    if (d != null && d.TryGetValue("build", out n) && d.TryGetValue("sha", out sha))
+                    {
+                        string sh = System.Convert.ToString(sha);
+                        stamp += ", сборка №" + n + ", коммит " + (sh.Length > 7 ? sh.Substring(0, 7) : sh);
+                    }
+                }
+                return stamp;
             }
             catch { return "?"; }
         }

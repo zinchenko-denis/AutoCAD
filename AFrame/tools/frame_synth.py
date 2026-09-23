@@ -462,6 +462,9 @@ def main(argv):
     ap.add_argument("--n", type=int, default=24, help="сценариев на пару (форма, подсистема)")
     ap.add_argument("--dump", default=None)
     ap.add_argument("--quick", action="store_true")
+    ap.add_argument("--allow", default="",
+                    help="коды известных открытых вопросов через запятую (напр. F7,F16): "
+                         "печатаются, но код выхода 0 (для CI; не скрывать — отчёт в логе)")
     a = ap.parse_args(argv)
     rng = random.Random(a.seed)
     n = 4 if a.quick else a.n
@@ -505,7 +508,11 @@ def main(argv):
         print("  · %s %s" % (c, m))
     for c, m in ci:
         print("  [INFO] %s %s" % (c, m))
-    hard = sum(sum(v.values()) for v in stats.values()) + len(cv)
+    allow = {c.strip() for c in a.allow.split(",") if c.strip()}
+    hard = sum(n for v in stats.values() for c, n in v.items() if c not in allow) + len(cv)
+    known = sum(n for v in stats.values() for c, n in v.items() if c in allow)
+    if known:
+        print("ИЗВЕСТНЫЕ открытые вопросы (--allow %s): %d сценариев — см. выше" % (",".join(sorted(allow)), known))
     return 1 if hard else 0
 
 

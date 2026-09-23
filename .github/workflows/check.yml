@@ -18,7 +18,13 @@ on:
       - "AClad/engine/**"
       - "AFrame/src/**"
       - "AFrame/engine/**"
+      # 24.09 (рецензия): правки проверочных инструментов и бандлов тоже
+      # запускают проверку
+      - "tools/**"
+      - "*/tools/**"
+      - "*/bundle/**"
       - ".github/workflows/check.yml"
+      - ".github/workflows/build.yml"
   workflow_dispatch: {}
 
 permissions:
@@ -26,7 +32,7 @@ permissions:
 
 jobs:
   check:
-    runs-on: windows-latest
+    runs-on: windows-2022
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -112,3 +118,22 @@ jobs:
           # 23.09 (ревью): расчёт несущей способности и CLI в CI не гонялись
           python test_frame_calc.py
           python test_frame_engine.py
+
+      # 24.09 (рецензия): краш-аудиты, стыки модулей, контракт ключей и
+      # короткая синтетика фасадов — обязательны. Известные открытые вопросы
+      # (F7/F16 подсистемы — ждут правила Германа; X6 — ATSPEC, модуль
+      # Алексея) печатаются в логе, но не валят проверку (--allow)
+      - name: Facades quick gates (audits, contracts, synth)
+        shell: bash
+        env:
+          PYTHONUTF8: "1"
+          PYTHONIOENCODING: "utf-8"
+        run: |
+          pip install shapely ezdxf pyyaml
+          (cd AClad/engine && python audit_clad.py)
+          (cd AFrame/engine && python audit_frame.py)
+          python tools/engine_contract.py
+          python tools/xmod_check.py --no-fixture --allow=X6
+          python Facades/tools/zones_synth.py --quick
+          python AClad/tools/attile_synth.py --quick
+          python AFrame/tools/frame_synth.py --quick --allow F7,F16

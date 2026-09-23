@@ -31,8 +31,41 @@ permissions:
   contents: write              # нужно, чтобы опубликовать релиз (см. примечание в README)
 
 jobs:
+  # 24.09 (независимая рецензия): выпуск не зависел от тестов — упаковка и
+  # публикация шли даже при красных проверках. Теперь build ждёт test.
+  test:
+    runs-on: windows-2022
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12.10'
+
+      - name: Engine tests and facade gates
+        shell: bash
+        env:
+          PYTHONUTF8: "1"
+          PYTHONIOENCODING: "utf-8"
+        run: |
+          python -m pip install --upgrade pip
+          pip install ezdxf==1.4.4 pyyaml==6.0.3 openpyxl==3.1.5 shapely
+          (cd ATableSpec/engine && python test_atspec_report.py && python test_audit_scenarios.py && python test_beads.py)
+          (cd ABlockGen/engine && python test_vitrage_plan.py && python test_vitrage_recognize.py && python test_crash_scenarios.py)
+          (cd Facades/engine && python test_facade_zones.py && python test_facades_engine.py)
+          (cd AClad/engine && python test_cladding_plan.py && python test_clad_engine.py && python test_tile_pattern.py && python audit_clad.py)
+          (cd AFrame/engine && python test_frame_plan.py && python test_frame_calc.py && python test_frame_engine.py && python audit_frame.py)
+          python tools/engine_contract.py
+          python tools/xmod_check.py --no-fixture --allow=X6
+          python Facades/tools/zones_synth.py --quick
+          python AClad/tools/attile_synth.py --quick
+          python AFrame/tools/frame_synth.py --quick --allow F7,F16
+
   build:
-    runs-on: windows-latest
+    needs: test
+    runs-on: windows-2022
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -45,7 +78,7 @@ jobs:
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.12'
+          python-version: '3.12.10'
 
       # 1) Плагин (DLL) — ссылки на AutoCAD берутся из NuGet, AutoCAD не нужен
       - name: Build plugin DLL
@@ -55,7 +88,8 @@ jobs:
       - name: Freeze engine EXE
         run: |
           python -m pip install --upgrade pip
-          pip install pyinstaller ezdxf pyyaml openpyxl
+          # 24.09 (рецензия): версии закреплены — те же, что дали сборку №22
+          pip install pyinstaller==6.22.3 pyinstaller-hooks-contrib==2026.7 ezdxf==1.4.4 pyyaml==6.0.3 openpyxl==3.1.5
           pyinstaller --onefile --name dxf_spec ATableSpec/engine/dxf_spec.py --distpath build_exe
 
       # 3) Собрать бандл и упаковать в zip
@@ -73,6 +107,8 @@ jobs:
             New-Item -ItemType Directory -Force "$b/Contents/icons" | Out-Null
             Copy-Item "ATableSpec/bundle/ATableSpec.bundle/Contents/icons/*" "$b/Contents/icons/" -Recurse -Force
           }
+          # 24.09 (рецензия): паспорт сборки рядом с DLL — номер, коммит, дата
+          @{ bundle = "ATableSpec"; build = "${{ github.run_number }}"; attempt = "${{ github.run_attempt }}"; sha = "${{ github.sha }}"; ref = "${{ github.ref_name }}"; built_utc = (Get-Date).ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ"); python = "3.12.10"; pyinstaller = "6.22.3" } | ConvertTo-Json | Set-Content -Encoding utf8 "$b/Contents/net48/build-info.json"
           Compress-Archive -Path $b -DestinationPath "ATableSpec.bundle.zip" -Force
 
       # ── ABlockGen (генератор витражей из блоков) — вторая программа, свой бандл ──
@@ -92,6 +128,8 @@ jobs:
           Copy-Item "build_abg_dll/ABlockGenPlugin.dll" "$b/Contents/net48/"
           Copy-Item "build_abg_exe/vitrage_engine.exe"  "$b/Contents/engine/"
           Copy-Item "ABlockGen/bundle/ABlockGen.bundle/Contents/icons" "$b/Contents/" -Recurse
+          # 24.09 (рецензия): паспорт сборки рядом с DLL — номер, коммит, дата
+          @{ bundle = "ABlockGen"; build = "${{ github.run_number }}"; attempt = "${{ github.run_attempt }}"; sha = "${{ github.sha }}"; ref = "${{ github.ref_name }}"; built_utc = (Get-Date).ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ"); python = "3.12.10"; pyinstaller = "6.22.3" } | ConvertTo-Json | Set-Content -Encoding utf8 "$b/Contents/net48/build-info.json"
           Compress-Archive -Path $b -DestinationPath "ABlockGen.bundle.zip" -Force
 
       # ── AFacades (фасады: зоны облицовки) — третья программа, свой бандл ──
@@ -114,6 +152,8 @@ jobs:
             New-Item -ItemType Directory -Force "$b/Contents/icons" | Out-Null
             Copy-Item "Facades/bundle/AFacades.bundle/Contents/icons/*" "$b/Contents/icons/" -Recurse -Force
           }
+          # 24.09 (рецензия): паспорт сборки рядом с DLL — номер, коммит, дата
+          @{ bundle = "AFacades"; build = "${{ github.run_number }}"; attempt = "${{ github.run_attempt }}"; sha = "${{ github.sha }}"; ref = "${{ github.ref_name }}"; built_utc = (Get-Date).ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ"); python = "3.12.10"; pyinstaller = "6.22.3" } | ConvertTo-Json | Set-Content -Encoding utf8 "$b/Contents/net48/build-info.json"
           Compress-Archive -Path $b -DestinationPath "AFacades.bundle.zip" -Force
 
       # ── AClad (раскладка облицовки, этап 2) — четвёртая программа,
@@ -138,6 +178,8 @@ jobs:
             New-Item -ItemType Directory -Force "$b/Contents/icons" | Out-Null
             Copy-Item "AClad/bundle/AClad.bundle/Contents/icons/*" "$b/Contents/icons/" -Recurse -Force
           }
+          # 24.09 (рецензия): паспорт сборки рядом с DLL — номер, коммит, дата
+          @{ bundle = "AClad"; build = "${{ github.run_number }}"; attempt = "${{ github.run_attempt }}"; sha = "${{ github.sha }}"; ref = "${{ github.ref_name }}"; built_utc = (Get-Date).ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ"); python = "3.12.10"; pyinstaller = "6.22.3" } | ConvertTo-Json | Set-Content -Encoding utf8 "$b/Contents/net48/build-info.json"
           Compress-Archive -Path $b -DestinationPath "AClad.bundle.zip" -Force
 
       # ── AFrame (подсистема НВФ: кронштейны/направляющие/кляммеры,
@@ -163,6 +205,8 @@ jobs:
             New-Item -ItemType Directory -Force "$b/Contents/icons" | Out-Null
             Copy-Item "AFrame/bundle/AFrame.bundle/Contents/icons/*" "$b/Contents/icons/" -Recurse -Force
           }
+          # 24.09 (рецензия): паспорт сборки рядом с DLL — номер, коммит, дата
+          @{ bundle = "AFrame"; build = "${{ github.run_number }}"; attempt = "${{ github.run_attempt }}"; sha = "${{ github.sha }}"; ref = "${{ github.ref_name }}"; built_utc = (Get-Date).ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ"); python = "3.12.10"; pyinstaller = "6.22.3" } | ConvertTo-Json | Set-Content -Encoding utf8 "$b/Contents/net48/build-info.json"
           Compress-Archive -Path $b -DestinationPath "AFrame.bundle.zip" -Force
 
       # 4a) Артефакты сборки (видны в разделе Actions; скачивание — для залогиненных)
@@ -202,7 +246,7 @@ jobs:
         with:
           tag_name: latest
           name: "ATableSpec + ABlockGen + AFacades + AClad + AFrame — последняя сборка"
-          body: "Готовые бандлы. ATableSpec.bundle.zip — спецификации/раскрой из блоков (команда ATSPEC). ABlockGen.bundle.zip — генератор витражей из блоков (команды ATVITRAGEAR, ATVITRAGE). AFacades.bundle.zip — фасады, этап 1: зоны облицовки, площади и погонажи (команды ATFZONE, ATFTABLE; ставится один раз). AClad.bundle.zip — фасады, этап 2: раскладка облицовки — кассеты (ATCLAD) и мелкоштучная плитка/кирпич с раскраской по образцу (ATTILE); обновляется часто, AFacades не трогает. AFrame.bundle.zip — фасады, этап 3: подсистема НВФ — кронштейны/направляющие/кляммеры по раскладке (команда ATFRAME). Распаковать нужный zip, папку *.bundle положить в %APPDATA%\\Autodesk\\ApplicationPlugins\\, перезапустить AutoCAD."
+          body: "Сборка №${{ github.run_number }}, коммит ${{ github.sha }} (исходники — релиз build-${{ github.run_number }}; тег latest исторический и на код не указывает). Готовые бандлы. ATableSpec.bundle.zip — спецификации/раскрой из блоков (команда ATSPEC). ABlockGen.bundle.zip — генератор витражей из блоков (команды ATVITRAGEAR, ATVITRAGE). AFacades.bundle.zip — фасады, этап 1: зоны облицовки, площади и погонажи (команды ATFZONE, ATFTABLE; ставится один раз). AClad.bundle.zip — фасады, этап 2: раскладка облицовки — кассеты (ATCLAD) и мелкоштучная плитка/кирпич с раскраской по образцу (ATTILE); обновляется часто, AFacades не трогает. AFrame.bundle.zip — фасады, этап 3: подсистема НВФ — кронштейны/направляющие/кляммеры по раскладке (команда ATFRAME). Распаковать нужный zip, папку *.bundle положить в %APPDATA%\\Autodesk\\ApplicationPlugins\\, перезапустить AutoCAD."
           files: |
             ATableSpec.bundle.zip
             ABlockGen.bundle.zip
@@ -215,10 +259,16 @@ jobs:
       # не воспроизвести/не откатить. Каждый прогон дополнительно
       # публикует релиз build-<run_number> с теми же пятью архивами
       # и SHA кода. Ссылки конструкторам НЕ меняются — им latest.
+      # 24.09 (рецензия): тег создавался на ветке по умолчанию (main от
+      # 06.07) — «Source code» релиза не совпадал с бандлами. Теперь тег —
+      # на собранный коммит (target_commitish), а повторный прогон (rerun
+      # того же номера) снимок НЕ переписывает.
       - name: Publish immutable "build-N" release
+        if: github.run_attempt == 1
         uses: softprops/action-gh-release@v2
         with:
           tag_name: build-${{ github.run_number }}
+          target_commitish: ${{ github.sha }}
           name: "build-${{ github.run_number }} (${{ github.sha }})"
           body: "Неизменяемый снимок сборки №${{ github.run_number }} с коммита ${{ github.sha }}. Для установки конструкторами используется релиз latest; этот — для отката и воспроизведения истории."
           make_latest: false

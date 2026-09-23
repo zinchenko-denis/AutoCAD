@@ -217,5 +217,8 @@ import collections
 kinds = collections.Counter(e.split(":")[1].strip().split(" (")[0].split(" x=")[0].split(" в ")[0] for e in allerrs)
 for k, v in kinds.most_common():
     print("%5d  %s" % (v, k))
-with open("/tmp/audit_errs.txt", "w") as f:
+import os as _os, sys as _sys, tempfile as _tf
+with open(_os.path.join(_tf.gettempdir(), "audit_errs.txt"), "w", encoding="utf-8") as f:
     f.write("\n".join(allerrs))
+# 24.09 (рецензия): аудит печатал нарушения, но выходил с 0 — CI не падал
+_sys.exit(1 if (allerrs or crash) else 0)

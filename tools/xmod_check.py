@@ -297,9 +297,16 @@ def main(argv):
         x5()
     x6()
     x7()
-    nb = sum(1 for s, _, _ in RESULTS if s == "BUG")
-    print("── ИТОГ: %d проверок, BUG %d, OK %d, INFO %d"
-          % (len(RESULTS), nb, sum(1 for s, _, _ in RESULTS if s == "OK"),
+    # --allow X6: известный открытый дефект чужого модуля (ATSPEC — модуль
+    # Алексея, по решению Дениса пока не трогаем) печатается, но не валит CI
+    allow = set()
+    for a in argv:
+        if a.startswith("--allow="):
+            allow |= {c.strip() for c in a.split("=", 1)[1].split(",") if c.strip()}
+    nb = sum(1 for s, c, _ in RESULTS if s == "BUG" and c not in allow)
+    nk = sum(1 for s, c, _ in RESULTS if s == "BUG" and c in allow)
+    print("── ИТОГ: %d проверок, BUG %d (из них известных, --allow: %d), OK %d, INFO %d"
+          % (len(RESULTS), nb + nk, nk, sum(1 for s, _, _ in RESULTS if s == "OK"),
              sum(1 for s, _, _ in RESULTS if s == "INFO")))
     return 1 if nb else 0
 
