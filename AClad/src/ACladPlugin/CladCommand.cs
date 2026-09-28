@@ -1076,11 +1076,35 @@ namespace ACladPlugin
         {
             try
             {
+                // 26.09: значение уже такое — не выставляем: каждое выставление —
+                // пересчёт динблока вместе со штриховками внутри
+                try
+                {
+                    if (Math.Abs(Convert.ToDouble(pr.Value, CultureInfo.InvariantCulture) - v) < 1e-6)
+                        return true;
+                }
+                catch { }
                 pr.Value = Convert.ChangeType(v, pr.Value.GetType(),
                                               CultureInfo.InvariantCulture);
                 return true;
             }
             catch { return false; }
+        }
+
+        /// <summary>Значения динсвойства совпадают (число — с допуском).</summary>
+        internal static bool SameValue(object a, object b)
+        {
+            if (a == null || b == null) return a == null && b == null;
+            if (a.Equals(b)) return true;
+            if (a is string || b is string) return false;
+            try
+            {
+                if (a is IConvertible && b is IConvertible)
+                    return Math.Abs(Convert.ToDouble(a, CultureInfo.InvariantCulture) -
+                                    Convert.ToDouble(b, CultureInfo.InvariantCulture)) < 1e-9;
+            }
+            catch { }
+            return false;
         }
 
         // ── Xrecord на объекте: JSON чанками ≤250 символов. Контракт
@@ -1200,11 +1224,12 @@ namespace ACladPlugin
             var refs = ReadRefs(tr, ent, key) ?? new List<ObjectId>();
             var own = new HashSet<string>(labelHandles, StringComparer.OrdinalIgnoreCase);
             var res = new List<string>();
+            var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);   // 26.09: было res.Contains — квадрат
             foreach (var id in refs)
             {
                 if (id.IsNull || id.IsErased || !id.IsValid) continue;
                 string h = id.Handle.ToString();
-                if (!own.Contains(h) && !res.Contains(h)) res.Add(h);
+                if (!own.Contains(h) && seen.Add(h)) res.Add(h);
             }
             return res;
         }

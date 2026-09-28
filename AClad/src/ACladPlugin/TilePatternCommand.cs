@@ -441,11 +441,15 @@ namespace ACladPlugin
             payload["zones"] = zonesPayload;
             payload["contours"] = contoursPayload;
             Dictionary<string, object> res;
+            // 26.09: время по этапам — в сводку (Герман, №25: «понимать время»)
+            var swEngine = System.Diagnostics.Stopwatch.StartNew();
+            long tEngine = 0, tParse = 0;
             try
             {
-                res = ser.DeserializeObject(
-                    CladCommand.CallEngine(EngineExe(), ser.Serialize(payload)))
-                    as Dictionary<string, object>;
+                string outJson = CladCommand.CallEngine(EngineExe(), ser.Serialize(payload));
+                tEngine = swEngine.ElapsedMilliseconds;
+                res = ser.DeserializeObject(outJson) as Dictionary<string, object>;
+                tParse = swEngine.ElapsedMilliseconds - tEngine;
             }
             catch (System.Exception ex)
             { ed.WriteMessage("\nОшибка движка: " + ex.Message); return; }
@@ -465,297 +469,475 @@ namespace ACladPlugin
             }
 
             // ── 7. чертёж ──
-            int erased = 0, made = 0, dynFail = 0, smallMade = 0;
+            // 26.09 (Герман, №25: большой фасад — дольше 15 минут, 25 зон за ночь не
+            // разложились; в командной строке на каждую плитку — «Ассоциативная
+            // штриховка на заблокированном или замороженном слое не обновлена»).
+            // Время уходило на процессы AutoCAD, которые нам не нужны:
+            //  (1) динблок образца ПЕРЕСЧИТЫВАЛСЯ на каждой плитке (видимость,
+            //      «ширина», «высота») и каждый раз пытался обновить ассоциативную
+            //      штриховку внутри себя;
+            //  (2) наши заливки подрезки были ассоциативными (реактор «контур →
+            //      штриховка» на каждый кусок и попытка обновления при записи);
+            //  (3) всё — одной огромной транзакцией.
+            // Теперь: динблок пересчитывается ОДИН раз на «блок + тип + размер + зона»
+            // (прототип), остальные плитки — его копии, как при COPY (общий анонимный
+            // блок, без пересчёта); заливки — неассоциативные, по вершинам; пачки ~1 с
+            // в своих транзакциях; окно хода; Esc — прервать: созданное удаляется, а
+            // прежняя раскладка стирается только в самом конце — она цела; на время
+            // отрисовки NOMUTT = 1 — служебные сообщения в командную строку не льются.
+            var swDraw = System.Diagnostics.Stopwatch.StartNew();
+            long tDraw = 0, tFinal = 0;
+            int erased = 0, made = 0, dynFail = 0, smallMade = 0, dynEval = 0, cloned = 0, fillFail = 0;
             bool dyn = st.Element.Length > 0;
             var sampleLayersUsed = new List<string>();
             var handlesByZone = new Dictionary<string, List<string>>();
+            string dynW = null, dynH = null;
+            ObjectId dynDef = ObjectId.Null;
+            var types = new List<string>();
+            var fullLayer = new Dictionary<string, string>();
+            var cutLayer = new Dictionary<string, string>();
+            var blockOf = new Dictionary<string, ObjectId>();
+            var elemOf = new Dictionary<string, SampleElem>();
+            string smallLayer = null;   // слой подсветки малой подрезки — только если она есть
+            ObjectId msId;
+            bool cancelled = false;
+            int total = pieces.Length, idx = 0;
+            string cloneErr = null;
             using (doc.LockDocument())
-            using (var tr = db.TransactionManager.StartTransaction())
             {
-                var bt = (BlockTable)tr.GetObject(db.BlockTableId, OpenMode.ForRead);
-                var ms = (BlockTableRecord)tr.GetObject(bt[BlockTableRecord.ModelSpace],
-                                                        OpenMode.ForWrite);
-                string dynW = null, dynH = null;
-                ObjectId dynDef = ObjectId.Null;
-                if (dyn)
+                // ── 7а. подготовка: динпараметры, слои и блоки по типам ──
+                using (var tr = db.TransactionManager.StartTransaction())
                 {
-                    if (!bt.Has(st.Element))
-                    { ed.WriteMessage("\nБлок «" + st.Element + "» не найден в чертеже."); return; }
-                    dynDef = bt[st.Element];
-                    if (!ProbeDyn(tr, ms, dynDef, out dynW, out dynH))
+                    var bt = (BlockTable)tr.GetObject(db.BlockTableId, OpenMode.ForRead);
+                    msId = bt[BlockTableRecord.ModelSpace];
+                    var ms = (BlockTableRecord)tr.GetObject(msId, OpenMode.ForWrite);
+                    if (dyn)
                     {
-                        ed.WriteMessage("\nУ блока «" + st.Element + "» нет динпараметров " +
-                            "«ширина»/«высота» — подрезку им не показать. Выберите другой " +
-                            "блок или «Прямоугольник».");
-                        return;
+                        if (!bt.Has(st.Element))
+                        { ed.WriteMessage("\nБлок «" + st.Element + "» не найден в чертеже."); return; }
+                        dynDef = bt[st.Element];
+                        if (!ProbeDyn(tr, ms, dynDef, out dynW, out dynH))
+                        {
+                            ed.WriteMessage("\nУ блока «" + st.Element + "» нет динпараметров " +
+                                "«ширина»/«высота» — подрезку им не показать. Выберите другой " +
+                                "блок или «Прямоугольник».");
+                            return;
+                        }
                     }
+                    foreach (var itObj in pieces)
+                    {
+                        var it = itObj as Dictionary<string, object>;
+                        string t = CladCommand.SafeStr(CladCommand.Get(it, "type"));
+                        if (!types.Contains(t)) types.Add(t);
+                    }
+                    var lt0 = (LayerTable)tr.GetObject(db.LayerTableId, OpenMode.ForRead);
+                    bool onSample = multi && st.SampleLayers;
+                    // элемент типа — блок образца (кроме повёрнутых); без раскраски —
+                    // единственный блок образца, если элемент в окне не выбран
+                    foreach (var t in types)
+                    {
+                        SampleElem se;
+                        if (onSample && sampleElem.TryGetValue(t, out se) && se.Usable)
+                            elemOf[t] = se;
+                        else if (!multi && !dyn && sampleElem.Count == 1)
+                            foreach (var v in sampleElem.Values) if (v.Usable) elemOf[t] = v;
+                    }
+                    foreach (var se in elemOf.Values) se.Probe(tr, ms);
+                    // обычный (не динамический) блок образца годится только для целых
+                    // плиток своего размера — иначе прямоугольник/элемент окна
+                    foreach (var t in new List<string>(elemOf.Keys))
+                    {
+                        var se = elemOf[t];
+                        if (!se.Dyn && (Math.Abs(se.Wd - st.W) > 1.0 || Math.Abs(se.Hd - st.H) > 1.0))
+                        {
+                            ed.WriteMessage("\n  ! блок образца типа «" + t + "» " + F0(se.Wd) + "×" + F0(se.Hd) +
+                                " не динамический и не формата " + F0(st.W) + "×" + F0(st.H) +
+                                " — целые плитки этого типа будут прямоугольником/элементом окна.");
+                            elemOf.Remove(t);
+                        }
+                    }
+                    foreach (var t in types)
+                    {
+                        int aci = typeColor.ContainsKey(t) ? typeColor[t] : 7;
+                        int rgb = typeTrue.ContainsKey(t) ? typeTrue[t] : -1;
+                        bool keep = !multi;   // один тип — цвет существующего слоя не трогаем
+                        SampleElem te;
+                        bool hasTe = elemOf.TryGetValue(t, out te);
+                        if (onSample && lt0.Has(t))
+                        {
+                            // 23.09 (Герман): тот же слой, что у образца — новых слоёв нет
+                            fullLayer[t] = cutLayer[t] = t;
+                            if (!sampleLayersUsed.Contains(t)) sampleLayersUsed.Add(t);
+                        }
+                        else
+                        {
+                            fullLayer[t] = MakeLayer(tr, db, st.LayerFor(t, multi), aci, rgb, keep);
+                            cutLayer[t] = (dyn || (hasTe && te.Dyn)) ? fullLayer[t]
+                                : MakeLayer(tr, db, st.CutLayerFor(t, multi), multi ? aci : 30, rgb, keep);
+                        }
+                        if (!dyn && !hasTe)
+                            blockOf[t] = EnsureTileBlock(tr, db, bt, st.BlockFor(t, multi),
+                                                         st.W, st.H, multi);
+                    }
+                    tr.Commit();
                 }
 
-                // слои и блоки по типам
-                var types = new List<string>();
-                foreach (var itObj in pieces)
+                // ── 7б. плитки — пачками ──
+                var created = new List<ObjectId>();                     // всё созданное — для отката по Esc
+                var protoByKey = new Dictionary<string, Proto>();       // прототипы динблока
+                var attCache = new Dictionary<ObjectId, List<ObjectId>>();
+                bool cloneOk = true;
+                System.Exception drawErr = null;
+                object oldMutt = null;
+                TileProgressForm prog = null;
+                try
                 {
-                    var it = itObj as Dictionary<string, object>;
-                    string t = CladCommand.SafeStr(CladCommand.Get(it, "type"));
-                    if (!types.Contains(t)) types.Add(t);
-                }
-                var fullLayer = new Dictionary<string, string>();
-                var cutLayer = new Dictionary<string, string>();
-                var blockOf = new Dictionary<string, ObjectId>();
-                var lt0 = (LayerTable)tr.GetObject(db.LayerTableId, OpenMode.ForRead);
-                bool onSample = multi && st.SampleLayers;
-                // элемент типа — блок образца (кроме повёрнутых); без раскраски —
-                // единственный блок образца, если элемент в окне не выбран
-                var elemOf = new Dictionary<string, SampleElem>();
-                foreach (var t in types)
-                {
-                    SampleElem se;
-                    if (onSample && sampleElem.TryGetValue(t, out se) && se.Usable)
-                        elemOf[t] = se;
-                    else if (!multi && !dyn && sampleElem.Count == 1)
-                        foreach (var v in sampleElem.Values) if (v.Usable) elemOf[t] = v;
-                }
-                foreach (var se in elemOf.Values) se.Probe(tr, ms);
-                // обычный (не динамический) блок образца годится только для целых
-                // плиток своего размера — иначе прямоугольник/элемент окна
-                foreach (var t in new List<string>(elemOf.Keys))
-                {
-                    var se = elemOf[t];
-                    if (!se.Dyn && (Math.Abs(se.Wd - st.W) > 1.0 || Math.Abs(se.Hd - st.H) > 1.0))
+                    try { oldMutt = AcApp.GetSystemVariable("NOMUTT"); AcApp.SetSystemVariable("NOMUTT", 1); }
+                    catch { oldMutt = null; }
+                    try { prog = new TileProgressForm("ATTILE — раскладка", total); }
+                    catch { prog = null; }
+                    while (idx < total && !cancelled)
                     {
-                        ed.WriteMessage("\n  ! блок образца типа «" + t + "» " + F0(se.Wd) + "×" + F0(se.Hd) +
-                            " не динамический и не формата " + F0(st.W) + "×" + F0(st.H) +
-                            " — целые плитки этого типа будут прямоугольником/элементом окна.");
-                        elemOf.Remove(t);
-                    }
-                }
-                foreach (var t in types)
-                {
-                    int aci = typeColor.ContainsKey(t) ? typeColor[t] : 7;
-                    int rgb = typeTrue.ContainsKey(t) ? typeTrue[t] : -1;
-                    bool keep = !multi;   // один тип — цвет существующего слоя не трогаем
-                    SampleElem te;
-                    bool hasTe = elemOf.TryGetValue(t, out te);
-                    if (onSample && lt0.Has(t))
-                    {
-                        // 23.09 (Герман): тот же слой, что у образца — новых слоёв нет
-                        fullLayer[t] = cutLayer[t] = t;
-                        if (!sampleLayersUsed.Contains(t)) sampleLayersUsed.Add(t);
-                    }
-                    else
-                    {
-                        fullLayer[t] = MakeLayer(tr, db, st.LayerFor(t, multi), aci, rgb, keep);
-                        cutLayer[t] = (dyn || (hasTe && te.Dyn)) ? fullLayer[t]
-                            : MakeLayer(tr, db, st.CutLayerFor(t, multi), multi ? aci : 30, rgb, keep);
-                    }
-                    if (!dyn && !hasTe)
-                        blockOf[t] = EnsureTileBlock(tr, db, bt, st.BlockFor(t, multi),
-                                                     st.W, st.H, multi);
-                }
-                string smallLayer = null;   // слой подсветки малой подрезки — только если она есть
-
-                // прежняя раскладка ATTILE этих зон (перегенерация) и ATCLAD (замена) —
-                // ТОЛЬКО у владельцев, которые получили новый результат
-                var okOwners = SuccessOwners(res, partToRoot, zoneObjs, polyByHandle);
-                var dropOk = new List<ObjectId>();
-                foreach (var kv in dropRoot)
-                {
-                    ObjectId pid0;
-                    List<ObjectId> zl;
-                    if (!polyByHandle.TryGetValue(kv.Key, out pid0) ||
-                        !zoneObjs.TryGetValue(kv.Value, out zl)) continue;
-                    bool rootOk = false;
-                    foreach (var zo in zl) if (okOwners.Contains(zo)) { rootOk = true; break; }
-                    if (rootOk) { okOwners.Add(pid0); dropOk.Add(pid0); }
-                }
-                var region = SelectionRegion(tr, zoneObjs, polyByHandle);
-                int keptOut = 0;
-                erased += own.EraseFor(tr, db, okOwners, region, ref keptOut);
-                erased += cladOwn.EraseFor(tr, db, okOwners, region, ref keptOut);
-                foreach (var oid in cladOwn.Owners)
-                    if (okOwners.Contains(oid))
-                    {
-                        var te = tr.GetObject(oid, OpenMode.ForWrite) as Entity;
-                        if (te != null) CladCommand.RemoveData(tr, te, CladCommand.XKeyClad);
-                    }
-                // у полилиний зоны старую метку снять — носитель теперь сама зона
-                foreach (var pid0 in dropOk)
-                {
-                    var pe = tr.GetObject(pid0, OpenMode.ForWrite) as Entity;
-                    if (pe != null) CladCommand.RemoveData(tr, pe, XKeyTile);
-                }
-                int keptZones = own.CountNotIn(okOwners) + cladOwn.CountNotIn(okOwners);
-                if (keptZones > 0)
-                    ed.WriteMessage("\nНе разложено (см. замечания): прежняя раскладка сохранена у " +
-                        keptZones + " объект(ов) зон.");
-                if (keptOut > 0)
-                    ed.WriteMessage("\nПо старой метке " + keptOut + " прежних элементов лежат вне " +
-                        "выбранных зон — не удалены (метка скопирована или зону переносили).");
-
-                foreach (var itObj in pieces)
-                {
-                    var it = itObj as Dictionary<string, object>;
-                    if (it == null) continue;
-                    string type = CladCommand.SafeStr(CladCommand.Get(it, "type"));
-                    string zone = CladCommand.SafeStr(CladCommand.Get(it, "zone"));
-                    bool full = CladCommand.GetBool(it, "full");
-                    bool small = CladCommand.GetBool(it, "small");
-                    if (!fullLayer.ContainsKey(type)) continue;
-                    double x = ToD(CladCommand.Get(it, "x")), y = ToD(CladCommand.Get(it, "y")),
-                           w = ToD(CladCommand.Get(it, "w")), h = ToD(CladCommand.Get(it, "h"));
-                    var rings = RingsOf(it, st.W, st.H);
-                    bool shapedPiece = CladCommand.Get(it, "rings") != null;
-                    SampleElem te;
-                    bool hasTe = elemOf.TryGetValue(type, out te);
-                    bool useDyn = !shapedPiece && (hasTe ? te.Dyn : dyn);
-                    if (useDyn)
-                    {
-                        ObjectId defId = hasTe ? te.Def : dynDef;
-                        string pw = hasTe ? te.W : dynW, ph = hasTe ? te.H : dynH;
-                        double ox = hasTe ? te.OffX : 0.0, oy = hasTe ? te.OffY : 0.0;
-                        var br = new BlockReference(new Point3d(x - ox, y - oy, 0), defId);
-                        br.Layer = fullLayer[type];
-                        ms.AppendEntity(br);
-                        tr.AddNewlyCreatedDBObject(br, true);
-                        if (hasTe) te.ApplyLook(br);     // видимость/цвет/прочие свойства образца
-                        bool okW = false, okH = false;
-                        foreach (DynamicBlockReferenceProperty pr in
-                                 br.DynamicBlockReferencePropertyCollection)
+                        var bCreated = new List<ObjectId>();
+                        var bHandles = new List<KeyValuePair<string, string>>();
+                        var pending = new Dictionary<string, List<Pend>>();
+                        int bMade = 0, bFail = 0, bSmall = 0, bEval = 0, bFillFail = 0;
+                        var swBatch = System.Diagnostics.Stopwatch.StartNew();
+                        using (var tr = db.TransactionManager.StartTransaction())
                         {
-                            if (pr.ReadOnly) continue;
-                            if (pr.PropertyName == pw) okW = CladCommand.TrySetNum(pr, w);
-                            else if (pr.PropertyName == ph) okH = CladCommand.TrySetNum(pr, h);
-                        }
-                        if (!okW || !okH) dynFail++;
-                        FillAttributes(tr, br, RootName(zone, partToRoot));
-                        AddToMap(handlesByZone, zone, br.Handle.ToString());
-                        made++;
-                    }
-                    else if (full)
-                    {
-                        bool sampleStatic = hasTe && !te.Dyn;
-                        var br = new BlockReference(sampleStatic
-                            ? new Point3d(x - te.OffX, y - te.OffY, 0) : new Point3d(x, y, 0),
-                            sampleStatic ? te.Def : blockOf[type]);
-                        br.Layer = fullLayer[type];
-                        ms.AppendEntity(br);
-                        tr.AddNewlyCreatedDBObject(br, true);
-                        if (sampleStatic)
-                        {
-                            te.ApplyLook(br);
-                            FillAttributes(tr, br, RootName(zone, partToRoot));
-                        }
-                        AddToMap(handlesByZone, zone, br.Handle.ToString());
-                        made++;
-                    }
-                    else
-                    {
-                        string lay = cutLayer[type];
-                        var outer = MakePoly(rings[0], lay);
-                        ms.AppendEntity(outer);
-                        tr.AddNewlyCreatedDBObject(outer, true);
-                        AddToMap(handlesByZone, zone, outer.Handle.ToString());
-                        var inner = new ObjectIdCollection();
-                        for (int k = 1; k < rings.Count; k++)
-                        {
-                            var ip = MakePoly(rings[k], lay);
-                            ms.AppendEntity(ip);
-                            tr.AddNewlyCreatedDBObject(ip, true);
-                            inner.Add(ip.ObjectId);
-                            AddToMap(handlesByZone, zone, ip.Handle.ToString());
-                        }
-                        if (multi)
-                        {
-                            var hh = new Hatch();
-                            ms.AppendEntity(hh);
-                            tr.AddNewlyCreatedDBObject(hh, true);
-                            hh.SetDatabaseDefaults();
-                            hh.Layer = lay;
-                            hh.ColorIndex = 256;
-                            hh.SetHatchPattern(HatchPatternType.PreDefined, "SOLID");
-                            hh.Associative = true;
-                            hh.AppendLoop(HatchLoopTypes.External,
-                                new ObjectIdCollection(new[] { outer.ObjectId }));
-                            foreach (ObjectId iid in inner)
-                                hh.AppendLoop(HatchLoopTypes.Default,
-                                    new ObjectIdCollection(new[] { iid }));
-                            hh.EvaluateHatch(true);
-                            AddToMap(handlesByZone, zone, hh.Handle.ToString());
-                        }
-                        made++;
-                    }
-                    if (small)
-                    {
-                        if (smallLayer == null) smallLayer = MakeLayer(tr, db, st.SmallLayer(), 1, -1, true);
-                        var sp = MakePoly(rings[0], smallLayer);
-                        sp.ConstantWidth = Math.Max(2.0, Math.Min(st.W, st.H) * 0.01);
-                        ms.AppendEntity(sp);
-                        tr.AddNewlyCreatedDBObject(sp, true);
-                        AddToMap(handlesByZone, zone, sp.Handle.ToString());
-                        smallMade++;
-                    }
-                }
-
-                // метка ATTILE — ОДНА на объект-владельца: объединение всех частей
-                // и слитых зон, попавших на него (24.09: несмежные части одной
-                // зоны ATFZONE раньше затирали метку друг друга — повтор
-                // задваивал забытую часть); owner — хэндл самого объекта
-                // (метка, скопированная COPY, узнаётся по несовпадению)
-                var perZone = CladCommand.Get(res, "per_zone") as object[];
-                string stamp = DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:ssZ", CultureInfo.InvariantCulture);
-                var agg = new Dictionary<ObjectId, LabelAgg>();
-                if (perZone != null)
-                    foreach (var pzObj in perZone)
-                    {
-                        var pz = pzObj as Dictionary<string, object>;
-                        if (pz == null) continue;
-                        string zid = CladCommand.SafeStr(CladCommand.Get(pz, "zone_id"));
-                        List<string> hl;
-                        if (!handlesByZone.TryGetValue(zid, out hl)) hl = new List<string>();
-                        var mem = CladCommand.Get(pz, "members") as object[];
-                        foreach (var mObj in mem ?? new object[] { zid })
-                        {
-                            string mm = CladCommand.SafeStr(mObj), root;
-                            if (partToRoot.TryGetValue(mm, out root)) mm = root;
-                            foreach (var oid in OwnersOf(mm, zoneObjs, polyByHandle))
+                            var ms = (BlockTableRecord)tr.GetObject(msId, OpenMode.ForWrite);
+                            int inBatch = 0;
+                            while (idx < total)
                             {
-                                LabelAgg la;
-                                if (!agg.TryGetValue(oid, out la)) agg[oid] = la = new LabelAgg();
-                                la.Add(zid, mem, hl, CladCommand.Get(pz, "joints_x") as object[],
-                                       CladCommand.Get(pz, "rows_y") as object[]);
+                                if (inBatch >= BatchMax || (inBatch > 0 && swBatch.ElapsedMilliseconds > BatchMs)) break;
+                                if ((inBatch & 63) == 0 && UserWantsStop(prog)) { cancelled = true; break; }
+                                var it = pieces[idx] as Dictionary<string, object>;
+                                idx++;
+                                inBatch++;
+                                if (it == null) continue;
+                                string type = CladCommand.SafeStr(CladCommand.Get(it, "type"));
+                                string zone = CladCommand.SafeStr(CladCommand.Get(it, "zone"));
+                                bool full = CladCommand.GetBool(it, "full");
+                                bool small = CladCommand.GetBool(it, "small");
+                                if (!fullLayer.ContainsKey(type)) continue;
+                                double x = ToD(CladCommand.Get(it, "x")), y = ToD(CladCommand.Get(it, "y")),
+                                       w = ToD(CladCommand.Get(it, "w")), h = ToD(CladCommand.Get(it, "h"));
+                                bool shapedPiece = CladCommand.Get(it, "rings") != null;
+                                SampleElem te;
+                                bool hasTe = elemOf.TryGetValue(type, out te);
+                                bool useDyn = !shapedPiece && (hasTe ? te.Dyn : dyn);
+                                List<List<double[]>> rings = null;
+                                if (useDyn)
+                                {
+                                    ObjectId defId = hasTe ? te.Def : dynDef;
+                                    string root = RootName(zone, partToRoot);
+                                    string key = defId.Handle.ToString() + "|" + type + "|" + F2(w) + "|" + F2(h) + "|" + root;
+                                    Proto pr;
+                                    if (cloneOk && protoByKey.TryGetValue(key, out pr))
+                                    {
+                                        // такая плитка уже есть — копия после записи пачки
+                                        List<Pend> pl;
+                                        if (!pending.TryGetValue(key, out pl)) pending[key] = pl = new List<Pend>();
+                                        pl.Add(new Pend { Dx = x - pr.X, Dy = y - pr.Y, Zone = zone });
+                                        if (pr.Fail) bFail++;
+                                    }
+                                    else
+                                    {
+                                        var np = new Proto
+                                        {
+                                            Def = defId, Te = hasTe ? te : null, Layer = fullLayer[type],
+                                            PW = hasTe ? te.W : dynW, PH = hasTe ? te.H : dynH, W = w, H = h,
+                                            Root = root, Ox = hasTe ? te.OffX : 0.0, Oy = hasTe ? te.OffY : 0.0,
+                                            X = x, Y = y,
+                                        };
+                                        bool ok;
+                                        var br = MakeDynRef(tr, ms, np, x, y, attCache, out ok);
+                                        np.Id = br.ObjectId;
+                                        np.Fail = !ok;
+                                        if (!ok) bFail++;
+                                        bEval++;
+                                        bCreated.Add(br.ObjectId);
+                                        bHandles.Add(new KeyValuePair<string, string>(zone, br.Handle.ToString()));
+                                        if (cloneOk) protoByKey[key] = np;
+                                    }
+                                    bMade++;
+                                }
+                                else if (full)
+                                {
+                                    bool sampleStatic = hasTe && !te.Dyn;
+                                    var br = new BlockReference(sampleStatic
+                                        ? new Point3d(x - te.OffX, y - te.OffY, 0) : new Point3d(x, y, 0),
+                                        sampleStatic ? te.Def : blockOf[type]);
+                                    br.Layer = fullLayer[type];
+                                    ms.AppendEntity(br);
+                                    tr.AddNewlyCreatedDBObject(br, true);
+                                    if (sampleStatic)
+                                    {
+                                        te.ApplyLook(br);
+                                        FillAttributes(tr, br, RootName(zone, partToRoot), attCache);
+                                    }
+                                    bCreated.Add(br.ObjectId);
+                                    bHandles.Add(new KeyValuePair<string, string>(zone, br.Handle.ToString()));
+                                    bMade++;
+                                }
+                                else
+                                {
+                                    rings = RingsOf(it, st.W, st.H);
+                                    string lay = cutLayer[type];
+                                    for (int k = 0; k < rings.Count; k++)
+                                    {
+                                        var pl = MakePoly(rings[k], lay);
+                                        ms.AppendEntity(pl);
+                                        tr.AddNewlyCreatedDBObject(pl, true);
+                                        bCreated.Add(pl.ObjectId);
+                                        bHandles.Add(new KeyValuePair<string, string>(zone, pl.Handle.ToString()));
+                                    }
+                                    if (multi)
+                                    {
+                                        var hh = MakeFill(tr, ms, rings, lay, 256);
+                                        if (hh != null)
+                                        {
+                                            bCreated.Add(hh.ObjectId);
+                                            bHandles.Add(new KeyValuePair<string, string>(zone, hh.Handle.ToString()));
+                                        }
+                                        else bFillFail++;
+                                    }
+                                    bMade++;
+                                }
+                                if (small)
+                                {
+                                    if (rings == null) rings = RingsOf(it, st.W, st.H);
+                                    if (smallLayer == null) smallLayer = MakeLayer(tr, db, st.SmallLayer(), 1, -1, true);
+                                    var sp = MakePoly(rings[0], smallLayer);
+                                    sp.ConstantWidth = Math.Max(2.0, Math.Min(st.W, st.H) * 0.01);
+                                    ms.AppendEntity(sp);
+                                    tr.AddNewlyCreatedDBObject(sp, true);
+                                    bCreated.Add(sp.ObjectId);
+                                    bHandles.Add(new KeyValuePair<string, string>(zone, sp.Handle.ToString()));
+                                    bSmall++;
+                                }
+                                if (prog != null) prog.Report(idx, false);
+                            }
+                            if (!cancelled) tr.Commit();   // иначе пачка откатывается целиком
+                        }
+                        if (cancelled) break;
+                        created.AddRange(bCreated);
+                        foreach (var kv in bHandles) AddToMap(handlesByZone, kv.Key, kv.Value);
+                        made += bMade; dynFail += bFail; smallMade += bSmall; dynEval += bEval; fillFail += bFillFail;
+
+                        // копии прототипов этой пачки — отдельной транзакцией (прототип
+                        // уже записан и закрыт)
+                        if (pending.Count > 0 && cloneOk)
+                        {
+                            var cCreated = new List<ObjectId>();
+                            var cHandles = new List<KeyValuePair<string, string>>();
+                            try
+                            {
+                                using (var tr = db.TransactionManager.StartTransaction())
+                                {
+                                    foreach (var kv in pending)
+                                    {
+                                        var pr = protoByKey[kv.Key];
+                                        var ids = CloneMany(db, msId, pr.Id, kv.Value.Count);
+                                        for (int i = 0; i < ids.Count; i++)
+                                        {
+                                            var ce = (Entity)tr.GetObject(ids[i], OpenMode.ForWrite);
+                                            ce.TransformBy(Matrix3d.Displacement(
+                                                new Vector3d(kv.Value[i].Dx, kv.Value[i].Dy, 0)));
+                                            cCreated.Add(ids[i]);
+                                            cHandles.Add(new KeyValuePair<string, string>(kv.Value[i].Zone, ids[i].Handle.ToString()));
+                                        }
+                                    }
+                                    tr.Commit();
+                                }
+                                created.AddRange(cCreated);
+                                foreach (var kv in cHandles) AddToMap(handlesByZone, kv.Key, kv.Value);
+                                cloned += cCreated.Count;
+                                pending.Clear();
+                            }
+                            catch (System.Exception ex)
+                            {
+                                // транзакция копий откатилась — эти и дальнейшие плитки по-старому
+                                cloneOk = false;
+                                cloneErr = ex.Message;
                             }
                         }
+                        if (pending.Count > 0)
+                        {
+                            using (var tr = db.TransactionManager.StartTransaction())
+                            {
+                                var ms = (BlockTableRecord)tr.GetObject(msId, OpenMode.ForWrite);
+                                foreach (var kv in pending)
+                                {
+                                    var pr = protoByKey[kv.Key];
+                                    foreach (var p in kv.Value)
+                                    {
+                                        bool ok;
+                                        var br = MakeDynRef(tr, ms, pr, pr.X + p.Dx, pr.Y + p.Dy, attCache, out ok);
+                                        dynEval++;
+                                        created.Add(br.ObjectId);
+                                        AddToMap(handlesByZone, p.Zone, br.Handle.ToString());
+                                    }
+                                }
+                                tr.Commit();
+                            }
+                            pending.Clear();
+                        }
+                        if (prog != null)
+                        {
+                            // окно — только если работа длится дольше первой пачки
+                            if (!prog.Visible && idx < total)
+                                try { AcApp.ShowModelessDialog(prog); prog.Activate(); } catch { }
+                            if (prog.Visible) { prog.Report(idx, true); prog.Pump(); }
+                        }
+                        if (UserWantsStop(prog)) cancelled = true;
                     }
-                foreach (var kv in agg)
-                {
-                    var ent = (Entity)tr.GetObject(kv.Key, OpenMode.ForWrite);
-                    var la = kv.Value;
-                    var meta = new Dictionary<string, object>
-                    {
-                        { "schema", 2 },
-                        { "owner", ent.Handle.ToString() },
-                        { "zone_id", string.Join("+", la.Zones.ToArray()) },
-                        { "members", la.Members },
-                        { "settings", st.ToDict() },
-                        { "cladding", st.Name },
-                        { "tile", new Dictionary<string, object> { { "w", st.W }, { "h", st.H } } },
-                        { "gap", new Dictionary<string, object> { { "v", st.Gv }, { "h", st.Gh } } },
-                        { "layer", st.LayerFor("", false) },
-                        { "block", dyn ? st.Element : st.BlockFor("", false) },
-                        // мост к ATFRAME: оси вертикальных швов (стойки) и
-                        // центры горизонтальных (кляммеры) — всех частей владельца
-                        { "joints_x", la.Jx },
-                        { "rows_y", la.Ry },
-                        { "tiles", la.Handles.Count },
-                        { "handles", la.Handles },
-                        { "stamp", stamp },
-                        { "vjoints", vjoints },
-                        { "hjoints", hjoints },
-                        { "refs", true },      // 23.09n: в метке — мягкие ссылки на плитки
-                    };
-                    CladCommand.StoreData(tr, ent, ser.Serialize(meta), XKeyTile, la.Handles);
                 }
-                tr.Commit();
+                catch (System.Exception ex)
+                {
+                    drawErr = ex;   // уложенные пачки уберём ниже — без метки они были бы сиротами
+                }
+                finally
+                {
+                    if (oldMutt != null)
+                        try { AcApp.SetSystemVariable("NOMUTT", oldMutt); } catch { }
+                    if (prog != null)
+                        try { prog.Close(); prog.Dispose(); } catch { }
+                }
+                tDraw = swDraw.ElapsedMilliseconds;
+
+                // ── 7в. прервано или сбой: убрать созданное (прежняя раскладка не тронута) ──
+                if (cancelled || drawErr != null)
+                {
+                    int del = EraseCreated(db, created);
+                    if (drawErr != null)
+                    {
+                        ed.WriteMessage("\nATTILE: ошибка при отрисовке — уложенное удалено (" + del +
+                            "), прежняя раскладка не тронута.");
+                        throw new InvalidOperationException("отрисовка плиток: " + drawErr.Message, drawErr);
+                    }
+                    ed.WriteMessage("\nATTILE прервано: уложено " + Math.Min(idx, total) + " из " + total +
+                        " за " + Sec(tDraw) + " — всё созданное удалено (" + del + "), прежняя раскладка " +
+                        "не тронута.");
+                    return;
+                }
+
+                // ── 7г. прежняя раскладка → стереть; метки → записать ──
+                var swFinal = System.Diagnostics.Stopwatch.StartNew();
+                try
+                {
+                using (var tr = db.TransactionManager.StartTransaction())
+                {
+                    // прежняя раскладка ATTILE этих зон (перегенерация) и ATCLAD (замена) —
+                    // ТОЛЬКО у владельцев, которые получили новый результат
+                    var okOwners = SuccessOwners(res, partToRoot, zoneObjs, polyByHandle);
+                    var dropOk = new List<ObjectId>();
+                    foreach (var kv in dropRoot)
+                    {
+                        ObjectId pid0;
+                        List<ObjectId> zl;
+                        if (!polyByHandle.TryGetValue(kv.Key, out pid0) ||
+                            !zoneObjs.TryGetValue(kv.Value, out zl)) continue;
+                        bool rootOk = false;
+                        foreach (var zo in zl) if (okOwners.Contains(zo)) { rootOk = true; break; }
+                        if (rootOk) { okOwners.Add(pid0); dropOk.Add(pid0); }
+                    }
+                    var region = SelectionRegion(tr, zoneObjs, polyByHandle);
+                    int keptOut = 0;
+                    erased += own.EraseFor(tr, db, okOwners, region, ref keptOut);
+                    erased += cladOwn.EraseFor(tr, db, okOwners, region, ref keptOut);
+                    foreach (var oid in cladOwn.Owners)
+                        if (okOwners.Contains(oid))
+                        {
+                            var te = tr.GetObject(oid, OpenMode.ForWrite) as Entity;
+                            if (te != null) CladCommand.RemoveData(tr, te, CladCommand.XKeyClad);
+                        }
+                    // у полилиний зоны старую метку снять — носитель теперь сама зона
+                    foreach (var pid0 in dropOk)
+                    {
+                        var pe = tr.GetObject(pid0, OpenMode.ForWrite) as Entity;
+                        if (pe != null) CladCommand.RemoveData(tr, pe, XKeyTile);
+                    }
+                    int keptZones = own.CountNotIn(okOwners) + cladOwn.CountNotIn(okOwners);
+                    if (keptZones > 0)
+                        ed.WriteMessage("\nНе разложено (см. замечания): прежняя раскладка сохранена у " +
+                            keptZones + " объект(ов) зон.");
+                    if (keptOut > 0)
+                        ed.WriteMessage("\nПо старой метке " + keptOut + " прежних элементов лежат вне " +
+                            "выбранных зон — не удалены (метка скопирована или зону переносили).");
+
+                    // метка ATTILE — ОДНА на объект-владельца: объединение всех частей
+                    // и слитых зон, попавших на него (24.09: несмежные части одной
+                    // зоны ATFZONE раньше затирали метку друг друга — повтор
+                    // задваивал забытую часть); owner — хэндл самого объекта
+                    // (метка, скопированная COPY, узнаётся по несовпадению)
+                    var perZone = CladCommand.Get(res, "per_zone") as object[];
+                    string stamp = DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:ssZ", CultureInfo.InvariantCulture);
+                    var agg = new Dictionary<ObjectId, LabelAgg>();
+                    if (perZone != null)
+                        foreach (var pzObj in perZone)
+                        {
+                            var pz = pzObj as Dictionary<string, object>;
+                            if (pz == null) continue;
+                            string zid = CladCommand.SafeStr(CladCommand.Get(pz, "zone_id"));
+                            List<string> hl;
+                            if (!handlesByZone.TryGetValue(zid, out hl)) hl = new List<string>();
+                            var mem = CladCommand.Get(pz, "members") as object[];
+                            foreach (var mObj in mem ?? new object[] { zid })
+                            {
+                                string mm = CladCommand.SafeStr(mObj), root;
+                                if (partToRoot.TryGetValue(mm, out root)) mm = root;
+                                foreach (var oid in OwnersOf(mm, zoneObjs, polyByHandle))
+                                {
+                                    LabelAgg la;
+                                    if (!agg.TryGetValue(oid, out la)) agg[oid] = la = new LabelAgg();
+                                    la.Add(zid, mem, hl, CladCommand.Get(pz, "joints_x") as object[],
+                                           CladCommand.Get(pz, "rows_y") as object[]);
+                                }
+                            }
+                        }
+                    foreach (var kv in agg)
+                    {
+                        var ent = (Entity)tr.GetObject(kv.Key, OpenMode.ForWrite);
+                        var la = kv.Value;
+                        var meta = new Dictionary<string, object>
+                        {
+                            { "schema", 2 },
+                            { "owner", ent.Handle.ToString() },
+                            { "zone_id", string.Join("+", la.Zones.ToArray()) },
+                            { "members", la.Members },
+                            { "settings", st.ToDict() },
+                            { "cladding", st.Name },
+                            { "tile", new Dictionary<string, object> { { "w", st.W }, { "h", st.H } } },
+                            { "gap", new Dictionary<string, object> { { "v", st.Gv }, { "h", st.Gh } } },
+                            { "layer", st.LayerFor("", false) },
+                            { "block", dyn ? st.Element : st.BlockFor("", false) },
+                            // мост к ATFRAME: оси вертикальных швов (стойки) и
+                            // центры горизонтальных (кляммеры) — всех частей владельца
+                            { "joints_x", la.Jx },
+                            { "rows_y", la.Ry },
+                            { "tiles", la.Handles.Count },
+                            { "handles", la.Handles },
+                            { "stamp", stamp },
+                            { "vjoints", vjoints },
+                            { "hjoints", hjoints },
+                            { "refs", true },      // 23.09n: в метке — мягкие ссылки на плитки
+                        };
+                        CladCommand.StoreData(tr, ent, ser.Serialize(meta), XKeyTile, la.Handles);
+                    }
+                    tr.Commit();
+                }
+                }
+                catch (System.Exception ex)
+                {
+                    // транзакция меток откатилась сама; уложенное — убрать, иначе
+                    // оно осталось бы без метки поверх прежней раскладки
+                    int del = EraseCreated(db, created);
+                    ed.WriteMessage("\nATTILE: ошибка при записи меток — уложенное удалено (" + del +
+                        "), прежняя раскладка не тронута.");
+                    throw new InvalidOperationException("запись меток: " + ex.Message, ex);
+                }
+                tFinal = swFinal.ElapsedMilliseconds;
             }
 
             // ── 8. сводка ──
@@ -784,6 +966,17 @@ namespace ACladPlugin
                     st.SmallLayer() + "».");
             if (dynFail > 0)
                 ed.WriteMessage("\n  ! у " + dynFail + " вставок не выставились «ширина»/«высота».");
+            if (fillFail > 0)
+                ed.WriteMessage("\n  ! у " + fillFail + " кусков подрезки не построилась заливка (контур есть).");
+            // 26.09: время по этапам и сколько раз AutoCAD пересчитывал динблок
+            ed.WriteMessage("\n  время: расчёт " + Sec(tEngine + tParse) + ", отрисовка " + Sec(tDraw) +
+                ", запись меток " + Sec(tFinal) + ".");
+            if (dynEval > 0)
+                ed.WriteMessage("\n  динблок пересчитан " + dynEval + " раз (по одному на размер и зону)" +
+                    (cloned > 0 ? ", остальные " + cloned + " плиток — его копии." : "."));
+            if (cloneErr != null)
+                ed.WriteMessage("\n  ! копирование плиток не удалось (" + cloneErr + ") — остальные " +
+                    "вставлены по одной, медленно. Сообщите разработчику.");
             if (multi) PrintByType(ed, sum);
             PrintNotes(ed, CladCommand.Get(res, "notes") as object[]);
             if (sampleLayersUsed.Count > 0)
@@ -796,6 +989,152 @@ namespace ACladPlugin
         }
 
         // ── помощники ──
+
+        // 26.09: пачка отрисовки — до BatchMax плиток или ~BatchMs мс в своей
+        // транзакции (окно хода обновляется, Esc проверяется между пачками)
+        private const int BatchMax = 2000;
+        private const long BatchMs = 1000;
+
+        // прототип динблока: одна настроенная вставка на «блок + тип + размер + зона»
+        internal sealed class Proto
+        {
+            public ObjectId Id, Def;
+            public SampleElem Te;
+            public string Layer, PW, PH, Root;
+            public double W, H, Ox, Oy, X, Y;
+            public bool Fail;
+        }
+
+        // плитка, которая станет копией прототипа: смещение от его плитки
+        internal struct Pend
+        {
+            public double Dx, Dy;
+            public string Zone;
+        }
+
+        private static bool UserWantsStop(TileProgressForm prog)
+        {
+            if (prog != null && prog.CancelRequested) return true;
+            try { return HostApplicationServices.Current.UserBreak(); }
+            catch { return false; }
+        }
+
+        // вставка динблока с выставлением свойств — ЕДИНСТВЕННОЕ место, где
+        // AutoCAD пересчитывает динблок (прототип или запасной путь)
+        private static BlockReference MakeDynRef(Transaction tr, BlockTableRecord ms, Proto p,
+            double x, double y, Dictionary<ObjectId, List<ObjectId>> attCache, out bool ok)
+        {
+            var br = new BlockReference(new Point3d(x - p.Ox, y - p.Oy, 0), p.Def);
+            br.Layer = p.Layer;
+            ms.AppendEntity(br);
+            tr.AddNewlyCreatedDBObject(br, true);
+            if (p.Te != null) p.Te.ApplyLook(br);     // видимость/цвет/прочие свойства образца
+            bool okW = false, okH = false;
+            foreach (DynamicBlockReferenceProperty pr in br.DynamicBlockReferencePropertyCollection)
+            {
+                if (pr.ReadOnly) continue;
+                if (pr.PropertyName == p.PW) okW = CladCommand.TrySetNum(pr, p.W);
+                else if (pr.PropertyName == p.PH) okH = CladCommand.TrySetNum(pr, p.H);
+            }
+            ok = okW && okH;
+            FillAttributes(tr, br, p.Root, attCache);
+            return br;
+        }
+
+        // count копий src — как COPY (DeepCloneObjects): копия ссылается на тот же
+        // анонимный блок, AutoCAD её не пересчитывает. Удвоением: 1 → 2 → 4 …,
+        // вызовов ~log2(count). Копии стоят на месте src — сдвигает вызывающий.
+        internal static List<ObjectId> CloneMany(Database db, ObjectId ownerId, ObjectId src, int count)
+        {
+            var res = new List<ObjectId>(count);
+            var sources = new List<ObjectId> { src };
+            while (res.Count < count)
+            {
+                int take = Math.Min(sources.Count, count - res.Count);
+                var coll = new ObjectIdCollection();
+                for (int i = 0; i < take; i++) coll.Add(sources[i]);
+                using (var map = new IdMapping())
+                {
+                    db.DeepCloneObjects(coll, ownerId, map, false);
+                    for (int i = 0; i < take; i++)
+                    {
+                        ObjectId c = map[sources[i]].Value;
+                        if (c.IsNull) throw new InvalidOperationException("копия не создана");
+                        res.Add(c);
+                    }
+                }
+                sources.AddRange(res.GetRange(res.Count - take, take));
+            }
+            return res;
+        }
+
+        // 26.09: заливка SOLID — НЕассоциативная, петли по вершинам, а не по
+        // объектам: у AutoCAD нет реактора «контур → штриховка», значит нет и
+        // попыток её обновлять (раньше — сообщение на каждый кусок). null — не
+        // построилась (контур остаётся, заливки нет).
+        private static Hatch MakeFill(Transaction tr, BlockTableRecord owner,
+            List<List<double[]>> rings, string layer, int colorIndex)
+        {
+            var hh = new Hatch();
+            owner.AppendEntity(hh);
+            tr.AddNewlyCreatedDBObject(hh, true);
+            try
+            {
+                hh.SetDatabaseDefaults();
+                hh.Layer = layer;
+                hh.ColorIndex = colorIndex;
+                hh.SetHatchPattern(HatchPatternType.PreDefined, "SOLID");
+                hh.Associative = false;
+                for (int k = 0; k < rings.Count; k++)
+                {
+                    var ring = rings[k];
+                    var pts = new Point2dCollection();
+                    var bul = new DoubleCollection();
+                    foreach (var p in ring) { pts.Add(new Point2d(p[0], p[1])); bul.Add(0.0); }
+                    pts.Add(new Point2d(ring[0][0], ring[0][1]));   // петля замкнута явно
+                    bul.Add(0.0);
+                    // как в примере ObjectARX: наружная — External, острова — Default,
+                    // первая вершина повторена в конце
+                    hh.AppendLoop(k == 0 ? HatchLoopTypes.External : HatchLoopTypes.Default, pts, bul);
+                }
+                hh.EvaluateHatch(true);
+                return hh;
+            }
+            catch
+            {
+                try { hh.Erase(); } catch { }
+                return null;
+            }
+        }
+
+        // удалить всё, что создал этот запуск (Esc или сбой) — отдельной транзакцией
+        private static int EraseCreated(Database db, List<ObjectId> created)
+        {
+            int del = 0;
+            using (var tr = db.TransactionManager.StartTransaction())
+            {
+                foreach (var id in created)
+                {
+                    if (id.IsNull || id.IsErased || !id.IsValid) continue;
+                    var o = tr.GetObject(id, OpenMode.ForWrite, false, true);
+                    if (o != null && !o.IsErased) { o.Erase(); del++; }
+                }
+                tr.Commit();
+            }
+            return del;
+        }
+
+        private static string F2(double v) { return v.ToString("0.##", CultureInfo.InvariantCulture); }
+
+        // «3,1 с» / «4 мин 12 с» / «1 ч 05 мин»
+        internal static string Sec(long ms)
+        {
+            double s = ms / 1000.0;
+            if (s < 60) return s.ToString(s < 10 ? "0.0" : "0", CultureInfo.GetCultureInfo("ru-RU")) + " с";
+            long t = (long)Math.Round(s);
+            if (t < 3600) return (t / 60) + " мин " + (t % 60).ToString("00") + " с";
+            return (t / 3600) + " ч " + ((t % 3600) / 60).ToString("00") + " мин";
+        }
 
         private static void RecordTypeColor(Transaction tr, LayerTable lt,
             Entity ent, string type, Dictionary<string, int> aci,
@@ -874,19 +1213,9 @@ namespace ACladPlugin
             pl.ColorIndex = 0;   // ByBlock
             rec.AppendEntity(pl);
             tr.AddNewlyCreatedDBObject(pl, true);
-            if (fill)
-            {
-                var hh = new Hatch();
-                rec.AppendEntity(hh);
-                tr.AddNewlyCreatedDBObject(hh, true);
-                hh.SetDatabaseDefaults();
-                hh.Layer = "0";
-                hh.ColorIndex = 0;
-                hh.SetHatchPattern(HatchPatternType.PreDefined, "SOLID");
-                hh.Associative = true;
-                hh.AppendLoop(HatchLoopTypes.External, new ObjectIdCollection(new[] { pl.ObjectId }));
-                hh.EvaluateHatch(true);
-            }
+            if (fill)   // 26.09: неассоциативная, по вершинам (как заливка подрезки)
+                MakeFill(tr, rec, new List<List<double[]>> { new List<double[]>
+                    { new[] { 0.0, 0.0 }, new[] { w, 0.0 }, new[] { w, h }, new[] { 0.0, h } } }, "0", 0);
             return rec.ObjectId;
         }
 
@@ -948,8 +1277,11 @@ namespace ACladPlugin
                 {
                     if (pr.ReadOnly || pr.PropertyName == W || pr.PropertyName == H) continue;
                     object v;
-                    if (Props.TryGetValue(pr.PropertyName, out v))
-                        try { pr.Value = v; } catch { }
+                    if (!Props.TryGetValue(pr.PropertyName, out v)) continue;
+                    object cur = null;
+                    try { cur = pr.Value; } catch { }
+                    if (CladCommand.SameValue(cur, v)) continue;   // 26.09: без лишнего пересчёта
+                    try { pr.Value = v; } catch { }
                 }
             }
         }
@@ -990,11 +1322,25 @@ namespace ACladPlugin
             return string.Join("+", outp.ToArray());
         }
 
-        private static void FillAttributes(Transaction tr, BlockReference br, string zone)
+        // 26.09: определения атрибутов — один раз на блок (раньше каждая вставка
+        // обходила всё определение)
+        private static void FillAttributes(Transaction tr, BlockReference br, string zone,
+                                           Dictionary<ObjectId, List<ObjectId>> cache)
         {
-            var rbtr = (BlockTableRecord)tr.GetObject(br.BlockTableRecord, OpenMode.ForRead);
-            if (!rbtr.HasAttributeDefinitions) return;
-            foreach (ObjectId aid in rbtr)
+            List<ObjectId> defs;
+            if (cache == null || !cache.TryGetValue(br.BlockTableRecord, out defs))
+            {
+                defs = new List<ObjectId>();
+                var rbtr = (BlockTableRecord)tr.GetObject(br.BlockTableRecord, OpenMode.ForRead);
+                if (rbtr.HasAttributeDefinitions)
+                    foreach (ObjectId aid in rbtr)
+                    {
+                        var d = tr.GetObject(aid, OpenMode.ForRead) as AttributeDefinition;
+                        if (d != null && !d.Constant) defs.Add(aid);
+                    }
+                if (cache != null) cache[br.BlockTableRecord] = defs;
+            }
+            foreach (ObjectId aid in defs)
             {
                 var ad = tr.GetObject(aid, OpenMode.ForRead) as AttributeDefinition;
                 if (ad == null || ad.Constant) continue;
