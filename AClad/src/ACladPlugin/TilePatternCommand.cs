@@ -479,9 +479,10 @@ namespace ACladPlugin
             //  (2) наши заливки подрезки были ассоциативными (реактор «контур →
             //      штриховка» на каждый кусок и попытка обновления при записи);
             //  (3) всё — одной огромной транзакцией.
-            // Теперь: динблок пересчитывается ОДИН раз на «блок + тип + размер + зона»
-            // (прототип), остальные плитки — его копии, как при COPY (общий анонимный
-            // блок, без пересчёта); заливки — неассоциативные, по вершинам; пачки ~1 с
+            // Теперь: динблок пересчитывается ОДИН раз на «блок + тип + размер» (+ зона,
+            // если у блока есть атрибут ЗАХВАТКА) — прототип; остальные плитки — его
+            // копии, как при COPY (общий анонимный блок, без пересчёта; все прототипы
+            // пачки — общими вызовами удвоением); заливки — неассоциативные; пачки ~1 с
             // в своих транзакциях; окно хода; Esc — прервать: созданное удаляется, а
             // прежняя раскладка стирается только в самом конце — она цела; на время
             // отрисовки NOMUTT = 1 — служебные сообщения в командную строку не льются.
@@ -586,6 +587,7 @@ namespace ACladPlugin
                 var created = new List<ObjectId>();                     // всё созданное — для отката по Esc
                 var protoByKey = new Dictionary<string, Proto>();       // прототипы динблока
                 var attCache = new Dictionary<ObjectId, List<ObjectId>>();
+                var zoneAttr = new Dictionary<ObjectId, bool>();
                 bool cloneOk = true;
                 System.Exception drawErr = null;
                 object oldMutt = null;
@@ -631,7 +633,10 @@ namespace ACladPlugin
                                 {
                                     ObjectId defId = hasTe ? te.Def : dynDef;
                                     string root = RootName(zone, partToRoot);
-                                    string key = defId.Handle.ToString() + "|" + type + "|" + F2(w) + "|" + F2(h) + "|" + root;
+                                    // зона в ключе — только если у блока есть атрибут ЗАХВАТКА
+                                    // (иначе копии всех зон одинаковы — прототипов вдвое меньше)
+                                    string key = defId.Handle.ToString() + "|" + type + "|" + F2(w) + "|" + F2(h) +
+                                                 (HasZoneAttr(tr, defId, zoneAttr) ? "|" + root : "");
                                     Proto pr;
                                     if (cloneOk && protoByKey.TryGetValue(key, out pr))
                                     {
@@ -735,17 +740,21 @@ namespace ACladPlugin
                             {
                                 using (var tr = db.TransactionManager.StartTransaction())
                                 {
-                                    foreach (var kv in pending)
+                                    var keys = new List<string>(pending.Keys);
+                                    var protoIds = new List<ObjectId>();
+                                    var counts = new List<int>();
+                                    foreach (var pk in keys) { protoIds.Add(protoByKey[pk].Id); counts.Add(pending[pk].Count); }
+                                    var groups = CloneGroups(db, msId, protoIds, counts);
+                                    for (int g = 0; g < keys.Count; g++)
                                     {
-                                        var pr = protoByKey[kv.Key];
-                                        var ids = CloneMany(db, msId, pr.Id, kv.Value.Count);
+                                        var pl = pending[keys[g]];
+                                        var ids = groups[g];
                                         for (int i = 0; i < ids.Count; i++)
                                         {
                                             var ce = (Entity)tr.GetObject(ids[i], OpenMode.ForWrite);
-                                            ce.TransformBy(Matrix3d.Displacement(
-                                                new Vector3d(kv.Value[i].Dx, kv.Value[i].Dy, 0)));
+                                            ce.TransformBy(Matrix3d.Displacement(new Vector3d(pl[i].Dx, pl[i].Dy, 0)));
                                             cCreated.Add(ids[i]);
-                                            cHandles.Add(new KeyValuePair<string, string>(kv.Value[i].Zone, ids[i].Handle.ToString()));
+                                            cHandles.Add(new KeyValuePair<string, string>(pl[i].Zone, ids[i].Handle.ToString()));
                                         }
                                     }
                                     tr.Commit();
@@ -972,7 +981,7 @@ namespace ACladPlugin
             ed.WriteMessage("\n  время: расчёт " + Sec(tEngine + tParse) + ", отрисовка " + Sec(tDraw) +
                 ", запись меток " + Sec(tFinal) + ".");
             if (dynEval > 0)
-                ed.WriteMessage("\n  динблок пересчитан " + dynEval + " раз (по одному на размер и зону)" +
+                ed.WriteMessage("\n  динблок пересчитан " + dynEval + " раз (один раз на каждый типоразмер)" +
                     (cloned > 0 ? ", остальные " + cloned + " плиток — его копии." : "."));
             if (cloneErr != null)
                 ed.WriteMessage("\n  ! копирование плиток не удалось (" + cloneErr + ") — остальные " +
@@ -1041,31 +1050,70 @@ namespace ACladPlugin
             return br;
         }
 
-        // count копий src — как COPY (DeepCloneObjects): копия ссылается на тот же
-        // анонимный блок, AutoCAD её не пересчитывает. Удвоением: 1 → 2 → 4 …,
-        // вызовов ~log2(count). Копии стоят на месте src — сдвигает вызывающий.
-        internal static List<ObjectId> CloneMany(Database db, ObjectId ownerId, ObjectId src, int count)
+        // копии прототипов — как COPY (DeepCloneObjects): копия ссылается на тот же
+        // анонимный блок, AutoCAD её не пересчитывает. Удвоением (1 → 2 → 4 …) и
+        // ВСЕ прототипы пачки в одном вызове на раунд: вызовов ~log2(самой большой
+        // группы), а не на каждую плитку. Копии стоят на месте прототипа —
+        // сдвигает вызывающий. groups[g] — counts[g] копий protos[g].
+        internal static List<List<ObjectId>> CloneGroups(Database db, ObjectId ownerId,
+            List<ObjectId> protos, List<int> counts)
         {
-            var res = new List<ObjectId>(count);
-            var sources = new List<ObjectId> { src };
-            while (res.Count < count)
+            int n = protos.Count;
+            var res = new List<List<ObjectId>>(n);
+            var srcs = new List<List<ObjectId>>(n);
+            for (int g = 0; g < n; g++)
             {
-                int take = Math.Min(sources.Count, count - res.Count);
+                res.Add(new List<ObjectId>(counts[g]));
+                srcs.Add(new List<ObjectId> { protos[g] });
+            }
+            while (true)
+            {
                 var coll = new ObjectIdCollection();
-                for (int i = 0; i < take; i++) coll.Add(sources[i]);
+                var grp = new List<int>();
+                var src = new List<ObjectId>();
+                for (int g = 0; g < n; g++)
+                {
+                    int take = Math.Min(srcs[g].Count, counts[g] - res[g].Count);
+                    for (int i = 0; i < take; i++)
+                    {
+                        coll.Add(srcs[g][i]);
+                        grp.Add(g);
+                        src.Add(srcs[g][i]);
+                    }
+                }
+                if (coll.Count == 0) break;
                 using (var map = new IdMapping())
                 {
                     db.DeepCloneObjects(coll, ownerId, map, false);
-                    for (int i = 0; i < take; i++)
+                    for (int i = 0; i < src.Count; i++)
                     {
-                        ObjectId c = map[sources[i]].Value;
+                        ObjectId c = map[src[i]].Value;
                         if (c.IsNull) throw new InvalidOperationException("копия не создана");
-                        res.Add(c);
+                        res[grp[i]].Add(c);
+                        srcs[grp[i]].Add(c);
                     }
                 }
-                sources.AddRange(res.GetRange(res.Count - take, take));
             }
             return res;
+        }
+
+        // есть ли у определения блока изменяемый атрибут ЗАХВАТКА (его заполняет
+        // FillAttributes зоной) — один раз на блок
+        private static bool HasZoneAttr(Transaction tr, ObjectId defId, Dictionary<ObjectId, bool> cache)
+        {
+            bool has;
+            if (cache.TryGetValue(defId, out has)) return has;
+            has = false;
+            var btr = tr.GetObject(defId, OpenMode.ForRead) as BlockTableRecord;
+            if (btr != null && btr.HasAttributeDefinitions)
+                foreach (ObjectId aid in btr)
+                {
+                    var ad = tr.GetObject(aid, OpenMode.ForRead) as AttributeDefinition;
+                    if (ad != null && !ad.Constant && ad.Tag.Trim().ToUpperInvariant() == "ЗАХВАТКА")
+                    { has = true; break; }
+                }
+            cache[defId] = has;
+            return has;
         }
 
         // 26.09: заливка SOLID — НЕассоциативная, петли по вершинам, а не по
