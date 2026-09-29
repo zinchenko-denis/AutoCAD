@@ -347,6 +347,7 @@ def _cut_boxes_h(segs, y, boxes):
 
 TILE_SUP_TOL = 20.0      # шина держится на профиле, если её высота в пределах профиля ±20 мм
 TILE_MIN_WHIP = 300.0    # кусок шины короче 300 мм стыком не режем (тот же минимум, что у хлыста)
+TILE_MIN_RUN = 5.0       # прогон шины короче 5 мм — шум контура (вершины с разницей в доли мм), не шина
 
 
 def _tile_rails(outer, boxes, rows, merge=20.0):
@@ -418,7 +419,10 @@ def _tile_rails(outer, boxes, rows, merge=20.0):
     out, run = [], 0
     for yy, segs, kind in lines:
         for sa, sb in sorted(segs):
-            if sb - sa <= EPS:
+            # 29.09l (прогон на эталоне 290×82): у контуров с вершинами, разнесёнными на
+            # доли миллиметра, выходили «шины» длиной 0,0001–1 мм — 524 штуки в счёте
+            # хлыстов и пустые прямоугольники на чертеже; такие прогоны отбрасываем
+            if sb - sa < TILE_MIN_RUN:
                 continue
             run += 1
             out.append({"y": round(yy, 4), "x0": round(sa, 4), "x1": round(sb, 4),

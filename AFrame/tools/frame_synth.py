@@ -316,8 +316,11 @@ def check_tile(sc, res):
         if ops_u is not None:
             ln = ln.difference(ops_u)
         got = sum(h["len"] for h in sh if h["kind"] == "шина рядовая" and abs(h["y"] - yy) <= T)
-        if abs(got - ln.length) > 2 * T:
-            bad.append(("T4", "ряд y=%.0f: шин %.0f мм, стены без проёмов %.0f" % (yy, got, ln.length)))
+        # 29.09l: прогон короче 5 мм — шум контура / острие фронтона, шиной не считается
+        parts = list(getattr(ln, "geoms", [ln]))
+        exp_len = sum(g.length for g in parts if g.length >= 5.0)
+        if abs(got - exp_len) > 2 * T:
+            bad.append(("T4", "ряд y=%.0f: шин %.0f мм, стены без проёмов %.0f" % (yy, got, exp_len)))
             break
     if res["clamps"]:
         bad.append(("T5", "у плитки %d кляммеров" % len(res["clamps"])))
