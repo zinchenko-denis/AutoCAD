@@ -2,6 +2,9 @@ using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Globalization;
+using System.IO;
+using System.Text;
+using System.Web.Script.Serialization;
 using System.Windows.Forms;
 
 namespace AFacadesPlugin
@@ -168,6 +171,92 @@ namespace AFacadesPlugin
             cancel.SetBounds(324, y, 94, 28);
             Controls.Add(ok); Controls.Add(cancel);
             AcceptButton = ok; CancelButton = cancel;
+            ApplySaved();
+        }
+
+        // ── 29.09 (Герман): «настройки — размер шрифта, штриховку, цвет штриховки —
+        //    хотелось бы, чтобы они сохранялись»: последние значения окна (кроме
+        //    начального номера — он свой у чертежа) живут между запусками и сеансами
+        //    AutoCAD в %APPDATA%\AFacades\zone_settings.json ──
+        internal static string SettingsPath()
+        {
+            return Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
+                                "AFacades", "zone_settings.json");
+        }
+
+        internal static Dictionary<string, object> LoadSaved()
+        {
+            try
+            {
+                string p = SettingsPath();
+                if (File.Exists(p))
+                    return new JavaScriptSerializer().DeserializeObject(File.ReadAllText(p, Encoding.UTF8))
+                           as Dictionary<string, object>;
+            }
+            catch { }
+            return null;
+        }
+
+        private static string Str(Dictionary<string, object> d, string k)
+        {
+            object o;
+            return d != null && d.TryGetValue(k, out o) && o != null ? Convert.ToString(o, CultureInfo.InvariantCulture) : null;
+        }
+
+        private static bool? Bool(Dictionary<string, object> d, string k)
+        {
+            object o;
+            if (d == null || !d.TryGetValue(k, out o) || !(o is bool)) return null;
+            return (bool)o;
+        }
+
+        private void ApplySaved()
+        {
+            var d = LoadSaved();
+            if (d == null) return;
+            object ho;
+            if (History.Count == 0 && d.TryGetValue("history", out ho) && ho is object[])
+            {
+                foreach (var h in (object[])ho)
+                {
+                    string hs = Convert.ToString(h, CultureInfo.InvariantCulture);
+                    if (!string.IsNullOrEmpty(hs) && !History.Contains(hs) && History.Count < 12) History.Add(hs);
+                }
+                for (int i = History.Count - 1; i >= 0; i--)
+                    if (!_cladding.Items.Contains(History[i])) _cladding.Items.Insert(0, History[i]);
+                if (History.Count > 0) _cladding.Text = History[0];
+            }
+            string v;
+            if ((v = Str(d, "prefix")) != null) _prefix.Text = v;
+            if ((v = Str(d, "text_height")) != null && v.Trim().Length > 0) _textH.Text = v;
+            if ((v = Str(d, "pattern")) != null && v.Trim().Length > 0) _pattern.Text = v;
+            if ((v = Str(d, "scale")) != null && v.Trim().Length > 0) _scale.Text = v;
+            if ((v = Str(d, "color")) != null && v.Trim().Length > 0) _color.Text = v;
+            bool? b;
+            if ((b = Bool(d, "merge")).HasValue) _merge.Checked = b.Value;
+            if ((b = Bool(d, "dims")).HasValue) _dims.Checked = b.Value;
+            if ((b = Bool(d, "table")).HasValue) _table.Checked = b.Value;
+            if ((b = Bool(d, "json")).HasValue) _json.Checked = b.Value;
+        }
+
+        private void SaveCurrent()
+        {
+            try
+            {
+                var d = new Dictionary<string, object>
+                {
+                    { "history", History.ToArray() },
+                    { "prefix", _prefix.Text }, { "text_height", _textH.Text.Trim() },
+                    { "pattern", _pattern.Text.Trim() }, { "scale", _scale.Text.Trim() },
+                    { "color", _color.Text.Trim() },
+                    { "merge", _merge.Checked }, { "dims", _dims.Checked },
+                    { "table", _table.Checked }, { "json", _json.Checked },
+                };
+                string p = SettingsPath();
+                Directory.CreateDirectory(Path.GetDirectoryName(p));
+                File.WriteAllText(p, new JavaScriptSerializer().Serialize(d), new UTF8Encoding(false));
+            }
+            catch { }      // настройки — удобство: не записались — работа не останавливается
         }
 
         private void OnAddContours(object sender, EventArgs e)
@@ -208,6 +297,7 @@ namespace AFacadesPlugin
                 History.Remove(Cladding);
                 History.Insert(0, Cladding);
                 if (History.Count > 12) History.RemoveAt(History.Count - 1);
+                SaveCurrent();
             }
         }
     }
