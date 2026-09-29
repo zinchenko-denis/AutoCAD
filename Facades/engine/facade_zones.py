@@ -670,8 +670,10 @@ def _opening_pieces_mm(zone, opening, outer_pts_mm, tol=GEO_TOL):
     [(класс, (x,y), (x,y), длина)], класс — bottom | top | sides | boundary.
 
     bottom — низ проёма (отлив), top — верх (откос+отсечка), sides — бока
-    (откос+отсечка), boundary — кромки, лежащие НА границе зоны (дверь до
-    низа зоны: порог без отлива).
+    (откос+отсечка), boundary — верх и низ, лежащие НА границе зоны (дверь до
+    низа зоны: порог без отлива). Бок на границе зоны — всегда бок: частично
+    (Герман 23.09n) и целиком (Герман 29.09j, ответ на 9к PDF №27: «бок окна,
+    который лежит на краю зоны, также считать откосом»).
 
     Классификация по направлению обхода CCW-полигона проёма: интерьер
     слева, поэтому сегмент вправо (|dy|<=|dx|, dx>0) — нижняя кромка,
@@ -695,10 +697,12 @@ def _opening_pieces_mm(zone, opening, outer_pts_mm, tol=GEO_TOL):
           # на границе — «граница» (как целый сегмент на границе раньше)
           # 23.09n (Герман, ответ по сборке №24): бок окна, ЧАСТИЧНО лежащий на
           # краю зоны, — «всё равно считать откосом»: бок не делим, он откос
-          # целиком; бок, целиком лежащий на краю, — по-прежнему «граница».
+          # целиком. 29.09j (Герман, ответ на 9к PDF №27): бок, ЦЕЛИКОМ лежащий
+          # на краю зоны, — «также считать откосом»: бок «границей» не бывает.
           # Верх и низ делятся по точкам касания, как с 24.09.
           ddx, ddy = abs(c0[0] - a0[0]), abs(c0[1] - a0[1])
-          if ddy > ddx + 1e-7 * max(ddx, ddy):
+          side = ddy > ddx + 1e-7 * max(ddx, ddy)
+          if side:
               ts = [0.0, 1.0]
           else:
               ts = _seg_params(a0, c0, outer_pts_mm, tol)
@@ -709,7 +713,7 @@ def _opening_pieces_mm(zone, opening, outer_pts_mm, tol=GEO_TOL):
             if L < EPS:
                 continue
             mid = ((a[0] + c[0]) / 2.0, (a[1] + c[1]) / 2.0)
-            if (_on_boundary(a, outer_pts_mm, tol) and
+            if (not side and _on_boundary(a, outer_pts_mm, tol) and
                     _on_boundary(c, outer_pts_mm, tol) and
                     _on_boundary(mid, outer_pts_mm, tol)):
                 out.append(("boundary", a, c, L))
@@ -742,7 +746,8 @@ def _opening_edges_mm(zone, opening, outer_pts_mm, tol=GEO_TOL):
 # 29.09 (ATFZONE, просьба Германа): типы проёмов и что по их кромкам считается и
 # рисуется. Окно — откосы (верх+бока) и отлив (низ); дверь — откосы (бока+верх),
 # низ — порог, не считается; витраж — примыкания боковые, верхнее, нижнее.
-# Кромка на границе зоны — нигде (как и раньше). Прочие типы (no_facade,
+# Верх и низ на границе зоны — нигде (как и раньше); бок на границе зоны — как
+# любой бок (Герман 29.09j). Прочие типы (no_facade,
 # произвольные) — как окно (прежнее поведение: все проёмы были окнами).
 OPENING_KINDS = ("window", "vitrage", "door")
 _KIND_CATS = {
@@ -911,11 +916,15 @@ def zone_report(zone, issues=None):
 
 
 def parapet_report(contour, zone_outers_mm=(), units="mm"):
-    """Зона парапета (29.09, просьба Германа: «выбор пользователю зоны парапета и
-    отрисовать её полилинией»): площадь, периметр, длина по верху (горизонтальные
-    кромки, над которыми парапета нет — под крышку/отлив), ширина по габариту;
-    точка марки — правый верхний угол. Наложение на зону облицовки —
-    предупреждение (площадь могла быть посчитана и там).
+    """Парапет (29.09, просьба Германа: «выбор пользователю зоны парапета и
+    отрисовать её полилинией»): длина по верху, м.п. — кромки, над которыми
+    парапета нет (под крышку), включая наклонные и дуги пологие не круче 45° (как
+    верх проёма), по их настоящей длине; периметр; точка метки — правый верхний
+    угол. Наложение на зону облицовки — предупреждение.
+    29.09j (Герман, ответ на 9з–9и PDF №27): «парапет надо считать только в
+    метрах погонных; площадь считать не нужно — развёртки на разных объектах
+    разные»; марок и нумерации нет — «просто парапет». Площади и ширины в ответе
+    больше нет.
     contour: {"id", "pts", "bulges"?}; zone_outers_mm — полигоны зон (мм)."""
     k = _UNIT_TO_MM.get(units, 1.0)
     cid = str(contour.get("id", "?"))
@@ -925,26 +934,24 @@ def parapet_report(contour, zone_outers_mm=(), units="mm"):
     pts_mm = [(p[0] * k, p[1] * k) for p in poly.polygonized(CHORD_TOL / k)]
     if _self_intersections(pts_mm):
         raise ZoneFormatError("парапет %s: контур самопересекается" % cid)
-    area = abs(poly.signed_area()) * k * k / 1e6
     top = 0.0
     n = len(pts_mm)
     for i in range(n):
         a, c = pts_mm[i], pts_mm[(i + 1) % n]
-        if abs(c[1] - a[1]) > GEO_TOL or abs(c[0] - a[0]) <= GEO_TOL:
-            continue
+        dx, dy = abs(c[0] - a[0]), abs(c[1] - a[1])
+        if dx <= GEO_TOL or dy > dx:
+            continue                     # вертикаль, торец, круче 45° — не верх
         mx, my = (a[0] + c[0]) / 2.0, (a[1] + c[1]) / 2.0
         if _pip((mx, my - 2.0), pts_mm) and not _pip((mx, my + 2.0), pts_mm):
-            top += abs(c[0] - a[0])
-    xs = [p[0] for p in pts_mm]
+            top += math.hypot(dx, dy)
     warns = []
     for zi, zp in enumerate(zone_outers_mm or ()):
         if _interiors_overlap(pts_mm, zp) or _contains(zp, pts_mm) or _contains(pts_mm, zp):
-            warns.append("парапет накладывается на зону облицовки — его площадь могла быть "
-                         "посчитана и в зоне")
+            warns.append("парапет накладывается на зону облицовки — эта часть вошла и в "
+                         "площадь зоны")
             break
     la = label_anchor(pts_mm, GEO_TOL)
-    return {"id": cid, "area_m2": area, "perimeter_m": poly.perimeter() * k / 1e3,
-            "top_m": top / 1e3, "width_m": (max(xs) - min(xs)) / 1e3,
+    return {"id": cid, "perimeter_m": poly.perimeter() * k / 1e3, "top_m": top / 1e3,
             "label_pt": [la[0] / k, la[1] / k], "warnings": warns}
 
 

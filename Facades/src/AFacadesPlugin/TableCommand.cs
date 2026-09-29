@@ -196,7 +196,7 @@ namespace AFacadesPlugin
                 ExportXlsx(ed, db, zones, parapets);
 
             ed.WriteMessage("\nATFTABLE: строк " + zones.Count +
-                (parapets.Count > 0 ? ", парапетов " + parapets.Count : "") + "." +
+                (parapets.Count > 0 ? ", парапет " + ZoneTable.ParapetRows(parapets)[0][1] + " м.п." : "") + "." +
                 (noData > 0 ? " Пропущено объектов без данных: " + noData + "."
                             : ""));
             if (stale.Count > 0)
@@ -255,6 +255,7 @@ namespace AFacadesPlugin
             if (pr.Count > 0)
             {
                 rows.Add(new object[] { "" });
+                rows.Add(new object[] { ZoneTable.ParapetTitle });
                 rows.Add(ZoneTable.ParapetHead);
                 foreach (var r in pr) rows.Add(Numeric(r, 1));
             }

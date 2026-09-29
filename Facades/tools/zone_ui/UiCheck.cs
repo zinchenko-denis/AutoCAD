@@ -149,11 +149,15 @@ static class ZoneUiCheck
            rowsT[1][5] == "0", "зона старой сборки: проёмы — окна (штуки, площадь, отливы, откосы)");
         Ok(rowsT[2][0] == "ИТОГО" && rowsT[2][2] == "80.000" && rowsT[2][9] == "59.750" && rowsT[2][3] == "4",
            "итого: S участков 80, нетто 59.75, окон 4");
+        // 29.09k (Герман, 9з–9и): парапет — одной строкой «Парапет», только м.п. по верху; метки
+        // старой сборки (с марками и площадью) читаются, но марок и площади в таблице нет
         var prowsT = ZoneTable.ParapetRows(new List<Dictionary<string, object>>
             { J("{\"mark\":\"П-1\",\"area_m2\":6,\"top_m\":10,\"width_m\":10}"),
-              J("{\"area_m2\":2.1,\"top_m\":3,\"width_m\":3}") });
-        Ok(prowsT.Count == 3 && prowsT[0][0] == "П-1" && prowsT[1][0] == "П-2" && prowsT[2][1] == "8.100" &&
-           prowsT[2][2] == "13.000", "парапеты: марки, итого площадь 8.1 и по верху 13");
+              J("{\"top_m\":3}") });
+        Ok(prowsT.Count == 1 && prowsT[0].Length == ZoneTable.ParapetHead.Length && prowsT[0][0] == "Парапет" &&
+           prowsT[0][1] == "13.000", "парапет: одна строка «Парапет», по верху 13 м.п.");
+        Ok(ZoneTable.ParapetHead.Length == 2 && Array.IndexOf(ZoneTable.ParapetHead, "S, м²") < 0,
+           "шапка парапета без площади и ширины");
         Ok(ZoneTable.ParapetRows(null).Count == 0, "нет парапетов — нет блока");
         foreach (var m in ZoneTable.HeaderMerges)
             Ok(m[3] < ZoneTable.Cols && m[2] <= 1, "слияние шапки в пределах двух строк и 16 колонок");

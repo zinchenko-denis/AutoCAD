@@ -439,12 +439,32 @@ class TestIndependentReview2409(unittest.TestCase):
         rep = fz.zone_report(fz.load_zone(zds[0]))
         self.assertAlmostEqual(rep["jambs_total_m"], 5.0, places=6)
 
-    def test_side_fully_on_boundary_not_jamb(self):
-        # бок, ЦЕЛИКОМ лежащий на краю зоны, откосом не считается (как было)
+    def test_side_fully_on_boundary_is_jamb(self):
+        # 29.09j (Герман, ответ на 9к PDF №27): бок, ЦЕЛИКОМ лежащий на краю зоны
+        # (окно в углу стены), — «также считать откосом»: левый 1.5 + правый 1.5 + верх 1
         zds, _ = self.zones([{"id": "W", "pts": rect(0, 0, 5000, 3000)},
                              {"id": "O", "pts": rect(0, 1000, 1000, 1500)}])
+        z = fz.load_zone(zds[0])
+        rep = fz.zone_report(z)
+        self.assertAlmostEqual(rep["jambs_total_m"], 4.0, places=6)
+        self.assertAlmostEqual(rep["on_boundary_total_m"], 0.0, places=6)
+        # линия откосов — одна П-образная, бок на краю тоже в ней; отлив — отдельно
+        outer = [(p[0], p[1]) for p in z.outer.polygonized()]
+        lines = dict((ln["cat"], ln) for ln in fz.opening_lines(z, z.openings[0], outer))
+        self.assertEqual(sorted(lines), ["window_sill", "window_slope"])
+        self.assertAlmostEqual(lines["window_slope"]["len_m"], 4.0, places=6)
+        self.assertEqual(len(lines["window_slope"]["pts"]), 4)
+        self.assertAlmostEqual(lines["window_sill"]["len_m"], 1.0, places=6)
+
+    def test_top_and_bottom_on_boundary_still_not_counted(self):
+        # верх и низ на краю зоны — как раньше не считаются (низ до края — обычно
+        # неотмеченная дверь: порог без отлива); бока — откосы
+        zds, _ = self.zones([{"id": "W", "pts": rect(0, 0, 5000, 3000)},
+                             {"id": "O", "pts": rect(2000, 0, 1000, 3000)}])
         rep = fz.zone_report(fz.load_zone(zds[0]))
-        self.assertAlmostEqual(rep["jambs_total_m"], 2.5, places=6)
+        self.assertAlmostEqual(rep["sills_total_m"], 0.0, places=6)
+        self.assertAlmostEqual(rep["jambs_total_m"], 6.0, places=6)
+        self.assertAlmostEqual(rep["on_boundary_total_m"], 2.0, places=6)
 
     def test_nan_rejected(self):
         zds, issues = self.zones([{"id": "W", "pts": [[0, 0], [5000, 0], [5000, float("nan")], [0, 5000]]}])

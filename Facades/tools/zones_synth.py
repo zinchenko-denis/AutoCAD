@@ -30,8 +30,8 @@ facades_engine, ревью 23.09) против НЕЗАВИСИМОГО орак
     откосы = верх+бока; дверь — откосы = верх+бока, низ не считается;
     витраж — примыкания бок/верх/низ (тип — детерминированно от сценария);
  Z16 линии схемы лежат на контуре своего проёма, их длины = суммам отчёта;
- Z17 горизонтальные куски линий не лежат на границе зоны (бок окна, частично
-    на краю, — откос целиком: правило Германа 23.09n).
+ Z17 горизонтальные куски линий не лежат на границе зоны (бок окна на краю —
+    частично или целиком — откос целиком: правила Германа 23.09n и 29.09j).
 
 Запуск (из корня): PYTHONUTF8=1 python3 Facades/tools/zones_synth.py
   [--seed N] [--n N] [--quick] [--dump DIR]. Выход ≠ 0 при нарушениях.
@@ -108,14 +108,15 @@ def edge_classes(op_ring, outer_poly, delta=0.05):
         if L < 1e-9:
             continue
         m = ((a[0] + c[0]) / 2.0, (a[1] + c[1]) / 2.0)
-        # часть кромки, лежащая НА границе зоны (не «всё или ничего» по концам)
-        on_b = LineString([a, c]).intersection(bnd_b).length
+        dx, dy = c[0] - a[0], c[1] - a[1]
+        # часть кромки, лежащая НА границе зоны (не «всё или ничего» по концам); бок —
+        # всегда бок, частично и целиком на краю (Герман 23.09n и 29.09j, ответ на 9к)
+        on_b = LineString([a, c]).intersection(bnd_b).length if abs(dy) <= abs(dx) else 0.0
         if on_b > 20.0:
             out["boundary"] += min(on_b, L)
             L -= min(on_b, L)
             if L <= 1.0:
                 continue
-        dx, dy = c[0] - a[0], c[1] - a[1]
         if abs(dy) <= abs(dx):
             up_in = op_poly.contains(Point(m[0], m[1] + delta))
             out["bottom" if up_in else "top"] += L
@@ -456,6 +457,17 @@ def run_bad(rng, idx, bad):
                     "откос %.1f / порог %.1f, по длине на границе — откос %.1f / порог %.1f"
                     % (eng["jambs_total_m"], eng["on_boundary_total_m"], ora["jambs_total_m"],
                        ora["on_boundary_total_m"]))
+    # Z5 (29.09j, Герман 9к): бок окна ЦЕЛИКОМ на краю зоны (окно в углу стены) — откос:
+    # левый 1.5 + правый 1.5 + верх 1.0 = 4.0, на границе 0; движок = оракул = число
+    if idx == 0:
+        Wz = {"pts": rect(0, 0, 5000, 3000)}
+        opz = [{"pts": rect(0, 1000, 1000, 2500)}]
+        e5, err5 = engine_report(Wz, opz)
+        o5 = oracle(Wz, opz)
+        if e5 is None or not near(e5["jambs_total_m"], 4.0, TOL_L) or \
+                not near(o5["jambs_total_m"], 4.0, TOL_L) or e5["on_boundary_total_m"] > TOL_L:
+            bad.append(("Z5", "бок окна целиком на краю зоны: откосы движок %s, оракул %.3f (ждём 4.0)"
+                        % (err5 or "%.3f" % e5["jambs_total_m"], o5["jambs_total_m"])))
     # Z13: контур внутри проёма
     contours = [{"id": "Z", "pts": rect(0, 0, W, H)}, {"id": "O", "pts": rect(1000, 1000, 5000, 4000)},
                 {"id": "I", "pts": rect(2000, 2000, 3000, 3000)}]

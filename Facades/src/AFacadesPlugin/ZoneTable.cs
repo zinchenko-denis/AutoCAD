@@ -10,7 +10,9 @@ namespace AFacadesPlugin
     /// Facades/tools/zone_ui). 29.09 (Герман: «все площади — в типовую таблицу, пока в
     /// свободной и удобной форме»): проёмы по типам (окна / витражи / двери — штуки и
     /// площадь), нетто, погонаж: отливы окон, откосы окон, откосы дверей, примыкания
-    /// витражей бок / верх / низ; парапеты — отдельный блок (площадь, длина по верху).
+    /// витражей бок / верх / низ; парапет — отдельный блок одной строкой: длина по верху,
+    /// м.п. (29.09k, Герман, ответ на 9з–9и PDF №27: «только в метрах погонных», площадь не
+    /// нужна — развёртки у объектов разные; марок и нумерации нет — «просто парапет»).
     /// Зоны старых сборок (до 29.09 все проёмы были окнами) — в колонки окон.
     /// </summary>
     internal static class ZoneTable
@@ -37,7 +39,9 @@ namespace AFacadesPlugin
             new[] { 0, 3, 0, 8 }, new[] { 0, 9, 1, 9 }, new[] { 0, 10, 0, 15 },
         };
 
-        internal static readonly string[] ParapetHead = { "Парапет", "S, м²", "Длина по верху, м.п.", "Ширина, м" };
+        internal const string ParapetTitle = "Ведомость парапета";
+
+        internal static readonly string[] ParapetHead = { "Наименование", "Длина по верху, м.п." };
 
         private static double D(Dictionary<string, object> d, string k, double def)
         {
@@ -107,23 +111,15 @@ namespace AFacadesPlugin
             return rows;
         }
 
-        /// <summary>Строки парапетов (Марка, S, длина по верху, ширина) + «ИТОГО».</summary>
+        /// <summary>Парапет одной строкой: «Парапет» + сумма длин по верху всех контуров, м.п.
+        /// (у меток старых сборок — те же top_m; их площадь и марки П-N не выводятся).</summary>
         internal static List<string[]> ParapetRows(List<Dictionary<string, object>> parapets)
         {
             var rows = new List<string[]>();
-            double ta = 0, tt = 0;
-            int k = 0;
-            foreach (var p in parapets ?? new List<Dictionary<string, object>>())
-            {
-                k++;
-                double a = D(p, "area_m2", 0), t = D(p, "top_m", 0), w = D(p, "width_m", 0);
-                ta += a; tt += t;
-                object mo;
-                string mark = p.TryGetValue("mark", out mo) && mo != null ? Convert.ToString(mo, CultureInfo.InvariantCulture)
-                                                                         : "П-" + k;
-                rows.Add(new[] { mark, F3(a), F3(t), F3(w) });
-            }
-            if (rows.Count > 0) rows.Add(new[] { "ИТОГО", F3(ta), F3(tt), "" });
+            if (parapets == null || parapets.Count == 0) return rows;
+            double tt = 0;
+            foreach (var p in parapets) tt += D(p, "top_m", 0);
+            rows.Add(new[] { "Парапет", F3(tt) });
             return rows;
         }
     }

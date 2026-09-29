@@ -531,21 +531,20 @@ namespace AFacadesPlugin
                     made++;
                 }
 
-                // 29.09 (Герман): парапеты — контуры на слой «Парапет», марка с площадью
-                // у правого верхнего угла; данные — в метке марки (для ATFTABLE)
+                // 29.09 (Герман): парапеты — контуры на слой «Парапет», метка у правого
+                // верхнего угла; данные — в метке (для ATFTABLE). 29.09k (Герман, ответ на
+                // 9з–9и PDF №27): только погонные метры по верху — без площади («развёртки
+                // на разных объектах разные») и без марок/нумерации — «просто парапет»
                 var parapetRows = new List<Dictionary<string, object>>();
-                int pk = 0;
                 foreach (var po in parapets)
                 {
                     var pd = po as Dictionary<string, object>;
                     string pid = SafeStr(Get(pd, "id"));
                     ObjectId poid;
                     if (pd == null || !parapetIds.TryGetValue(pid, out poid)) continue;
-                    pk++;
                     var pent = (Entity)tr.GetObject(poid, OpenMode.ForWrite);
                     pent.Layer = EnsureNamed(tr, db, LayerParapet, 2);
-                    string mark = "П-" + pk;
-                    pd["mark"] = mark;
+                    string ptop = F3(Get(pd, "top_m"));
                     var plp = Get(pd, "label_pt") as object[];
                     double off2 = 0.5 * form.TextHeight;
                     var pmt = new MText
@@ -555,7 +554,7 @@ namespace AFacadesPlugin
                         TextHeight = form.TextHeight,
                         Layer = LayerParapet,
                         Attachment = AttachmentPoint.TopRight,
-                        Contents = "Парапет " + mark + @"\PS = " + F3(Get(pd, "area_m2")) + " м²",
+                        Contents = @"Парапет\PL = " + ptop + " м.п.",
                     };
                     btr.AppendEntity(pmt);
                     tr.AddNewlyCreatedDBObject(pmt, true);
@@ -564,7 +563,7 @@ namespace AFacadesPlugin
                     var pws = Get(pd, "warnings") as object[];
                     if (pws != null)
                         foreach (var pw in pws)
-                            ed.WriteMessage("\n  ! парапет " + mark + ": " + SafeStr(pw));
+                            ed.WriteMessage("\n  ! парапет (L = " + ptop + " м.п.): " + SafeStr(pw));
                 }
 
                 if (doTable)
@@ -602,8 +601,8 @@ namespace AFacadesPlugin
                 F3(Get(sum, "door_slopes_m")) + ", примыкания витражей " +
                 F3(ToD(Get(sum, "vitrage_side_m")) + ToD(Get(sum, "vitrage_top_m")) +
                    ToD(Get(sum, "vitrage_bottom_m"))) + " м.п." +
-                (parapets.Length > 0 ? "; парапетов " + parapets.Length + " (" +
-                 F3(Get(sum, "parapets_area_m2")) + " м², по верху " + F3(Get(sum, "parapets_top_m")) + " м.п.)" : "") +
+                (parapets.Length > 0 ? "; парапет " + F3(Get(sum, "parapets_top_m")) + " м.п. по верху (контуров " +
+                 parapets.Length + ")" : "") +
                 "; линий схемы " + linesMade + (linesErased > 0 ? " (прежних заменено " + linesErased + ")" : "") + ".");
         }
 
@@ -615,7 +614,8 @@ namespace AFacadesPlugin
 
         // 29.09 (Герман: «все площади — в типовую таблицу, в свободной и удобной форме»):
         // проёмы по типам, погонаж по категориям (ZoneTable — без AutoCAD), шапка в две
-        // строки со слияниями; парапеты — отдельной таблицей под основной
+        // строки со слияниями; парапет — отдельной таблицей под основной (29.09k: одной
+        // строкой «Парапет» — длина по верху, м.п.)
         internal static void InsertTable(Transaction tr, Database db,
             BlockTableRecord btr, Point3d pt,
             List<Dictionary<string, object>> zones,
@@ -652,20 +652,21 @@ namespace AFacadesPlugin
 
             var prow = ZoneTable.ParapetRows(parapets);
             if (prow.Count == 0) return;
+            int pc = ZoneTable.ParapetHead.Length;
             var tp = new Table();
             tp.TableStyle = db.Tablestyle;
-            tp.SetSize(prow.Count + 2, 4);
+            tp.SetSize(prow.Count + 2, pc);
             tp.Position = new Point3d(pt.X, pt.Y - tb.Height - 2 * h, pt.Z);
-            double[] pw = { 8 * h, 7 * h, 10 * h, 7 * h };
-            for (int c = 0; c < 4; c++) tp.Columns[c].Width = pw[c];
+            double[] pw = { 12 * h, 14 * h };
+            for (int c = 0; c < pc; c++) tp.Columns[c].Width = pw[c];
             for (int r = 0; r < prow.Count + 2; r++) tp.Rows[r].Height = 2.2 * h;
-            tp.Cells[0, 0].TextString = "Парапеты";
-            for (int c = 0; c < 4; c++) tp.Cells[1, c].TextString = ZoneTable.ParapetHead[c];
+            tp.Cells[0, 0].TextString = ZoneTable.ParapetTitle;
+            for (int c = 0; c < pc; c++) tp.Cells[1, c].TextString = ZoneTable.ParapetHead[c];
             for (int i = 0; i < prow.Count; i++)
-                for (int c = 0; c < 4; c++)
+                for (int c = 0; c < pc; c++)
                     tp.Cells[2 + i, c].TextString = prow[i][c];
             for (int r = 0; r < prow.Count + 2; r++)
-                for (int c = 0; c < 4; c++)
+                for (int c = 0; c < pc; c++)
                     tp.Cells[r, c].TextHeight = h;
             tp.GenerateLayout();
             btr.AppendEntity(tp);

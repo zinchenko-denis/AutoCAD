@@ -356,7 +356,8 @@ class TestOpeningKinds(unittest.TestCase):
         self.assertEqual((rep["window_count"], rep["vitrage_count"], rep["door_count"]), (2, 1, 2))
         self.assertAlmostEqual(rep["window_area_m2"], 2.25 + 0.8)
         self.assertAlmostEqual(rep["window_sills_m"], 1.5 + 0.8)          # отливы — низ окон
-        self.assertAlmostEqual(rep["window_slopes_m"], 4.5 + 1.8)         # у края — без левого бока
+        # окно WS у края зоны: левый бок на краю — тоже откос (Герман 29.09j, ответ на 9к)
+        self.assertAlmostEqual(rep["window_slopes_m"], 4.5 + 2.8)
         self.assertAlmostEqual(rep["door_slopes_m"], 5.4 + 6.0)           # низ двери — порог
         self.assertAlmostEqual(rep["vitrage_side_m"], 7.0)
         self.assertAlmostEqual(rep["vitrage_top_m"], 3.0)
@@ -437,19 +438,40 @@ class TestOpeningKinds(unittest.TestCase):
             {"id": "P2", "pts": _R(0, 5500, 3000, 6200)},
             {"id": "BAD", "pts": [[0, 7000], [1000, 8000], [1000, 7000], [0, 8000]]}])
         pp = dict((p["id"], p) for p in res["parapets"])
-        self.assertAlmostEqual(pp["P"]["area_m2"], 6.0)
+        # 29.09j (Герман, 9з): только погонные метры — площади и ширины в ответе нет
+        self.assertNotIn("area_m2", pp["P"])
+        self.assertNotIn("width_m", pp["P"])
         self.assertAlmostEqual(pp["P"]["top_m"], 10.0)
         self.assertEqual(pp["P"]["warnings"], [])              # касание зоны — не наложение
         self.assertTrue(pp["P2"]["warnings"])                   # заходит на зону
         self.assertNotIn("BAD", pp)
         self.assertIn("E_BAD_PARAPET", [i["code"] for i in res["issues"]])
-        self.assertAlmostEqual(res["summary"]["parapets_area_m2"], 6.0 + 2.1)
+        self.assertNotIn("parapets_area_m2", res["summary"])
+        self.assertAlmostEqual(res["summary"]["parapets_top_m"], 10.0 + 3.0)
+        self.assertEqual(res["summary"]["parapets_count"], 2)
 
     def test_parapet_stepped_top(self):
         # ступенчатый верх парапета: по верху — только горизонтальные кромки сверху
         pts = [[0, 0], [6000, 0], [6000, 900], [3000, 900], [3000, 600], [0, 600]]
         res = self.run_zone(self.base()[:1], parapets=[{"id": "S", "pts": [[x, y + 7000] for x, y in pts]}])
         self.assertAlmostEqual(res["parapets"][0]["top_m"], 6.0)
+
+    def test_parapet_sloped_and_arched_top(self):
+        # 29.09j: м.п. — единственная величина парапета, поэтому наклонный верх (фронтон,
+        # не круче 45°) и пологая дуга считаются по настоящей длине; торцы — нет
+        pts = [[0, 0], [8000, 0], [8000, 600], [4000, 3600], [0, 600]]      # скаты по 5000
+        res = self.run_zone(self.base()[:1], parapets=[{"id": "G", "pts": [[x, y + 9000] for x, y in pts]}])
+        self.assertAlmostEqual(res["parapets"][0]["top_m"], 10.0, places=6)
+        steep = [[0, 0], [2000, 0], [2000, 600], [1000, 3600], [0, 600]]     # скаты круче 45°
+        res = self.run_zone(self.base()[:1], parapets=[{"id": "S", "pts": [[x, y + 9000] for x, y in steep]}])
+        self.assertAlmostEqual(res["parapets"][0]["top_m"], 0.0, places=6)
+        arc = {"id": "A", "pts": [[0, 9000], [6000, 9000], [6000, 9600], [0, 9600]],
+               "bulges": [0, 0, 0.1, 0]}                                       # пологая дуга сверху
+        res = self.run_zone(self.base()[:1], parapets=[arc])
+        chord, h = 6000.0, 0.1 * 6000.0 / 2.0
+        r = (chord ** 2 / 4.0 + h ** 2) / (2.0 * h)
+        exp = 2.0 * r * math.asin(chord / 2.0 / r) / 1000.0
+        self.assertAlmostEqual(res["parapets"][0]["top_m"], exp, delta=0.01)
 
 
 if __name__ == "__main__":
