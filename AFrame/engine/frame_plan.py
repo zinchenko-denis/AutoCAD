@@ -1306,6 +1306,7 @@ def frame_plan(req):
             notes.append(calc_rep["bc_note"])
 
     rail_from = []       # 29.09l: (контур, индекс его первой стойки в rails) — для стыков шин
+    tile_geo = {}        # 29.09q: контур → (стена, проёмы) — для удлинения шин без направляющей
     for ci, c in enumerate(req.get("contours") or []):
         rail_from.append((ci, len(rails)))
         outer = _closed(c.get("outer") or [])
@@ -1343,6 +1344,7 @@ def frame_plan(req):
             tile_hr, _sloped = _tile_rails(outer, hole_boxes, rows_c)
             for h in tile_hr:
                 h["_c"] = ci         # хлысты режутся после расстановки (стык — на направляющей)
+            tile_geo[ci] = (outer, hole_boxes)
             def _rl(kind):
                 hs = [h for h in tile_hr if h["kind"] == kind]
                 return len(set(h["run"] for h in hs)), sum(h["len"] for h in hs) / 1000.0
@@ -2041,6 +2043,81 @@ def frame_plan(req):
     if tile:
         bnd = rail_from + [(None, len(rails))]
         sup_c = dict((c0, rails[i0:i1]) for (c0, i0), (_c1, i1) in zip(bnd, bnd[1:]))
+        # 29.09q (Герман, 29.09n: «если шина не попадает ни на одну направляющую, то надо её
+        # удлинить»): прогон, под которым нет ни одной направляющей (узкое окно, полоска у края),
+        # удлиняется в обе стороны до ближайших направляющих — по стене на его высоте, не через
+        # проёмы; соседний прогон на той же высоте (±20 мм) уступает место. Нет направляющих и
+        # там (простенок без направляющих) — прогон остаётся как есть, счёт в замечаниях.
+        n_ext, extra_all = 0, []
+        by_c = {}
+        for h in hrails:
+            if "_c" in h:
+                by_c.setdefault(h["_c"], []).append(h)
+        for c0, runs in by_c.items():
+            outer_c, boxes_c = tile_geo.get(c0, (None, []))
+            if outer_c is None:
+                continue
+            rl = sup_c.get(c0, ())
+            nxt_run = max(h["run"] for h in runs) + 1
+            extra = []
+            for h in runs:
+                if h.get("_dead"):
+                    continue
+                yy = h["y"]
+                sup = sorted(set(round(r["x"], 4) for r in rl
+                                 if r["y0"] - TILE_SUP_TOL <= yy <= r["y1"] + TILE_SUP_TOL))
+                if any(h["x0"] - EPS <= x <= h["x1"] + EPS for x in sup):
+                    continue
+                pr = 2.0 if h["kind"] == "шина стартовая" else (-2.0 if h["kind"] == "шина концевая" else 0.0)
+                yp = yy + pr
+                spans = list(_hspans(outer_c, yp))
+                for bx0, by0, bx1, by1 in boxes_c:
+                    if by0 + EPS < yp < by1 - EPS:
+                        spans = [(a2, b2) for a1, b1 in spans
+                                 for a2, b2 in ((a1, min(b1, bx0)), (max(a1, bx1), b1)) if b2 - a2 > EPS]
+                xm = (h["x0"] + h["x1"]) / 2.0
+                sp = [(a1, b1) for a1, b1 in spans if a1 - EPS <= xm <= b1 + EPS]
+                if not sp:
+                    continue
+                lo, hi = sp[0]
+                left = [x for x in sup if lo - EPS <= x < h["x0"] - EPS]
+                right = [x for x in sup if h["x1"] + EPS < x <= hi + EPS]
+                nx0 = left[-1] if left else h["x0"]
+                nx1 = right[0] if right else h["x1"]
+                # рядовая не залезает на стартовую/концевую той же высоты — упирается в неё
+                if h["kind"] == "шина рядовая":
+                    for g in runs + extra:
+                        if g is h or g.get("_dead") or g["kind"] == "шина рядовая" or abs(g["y"] - yy) >= 20.0:
+                            continue
+                        if g["x1"] <= h["x0"] + EPS and g["x1"] > nx0:
+                            nx0 = g["x1"]
+                        if g["x0"] >= h["x1"] - EPS and g["x0"] < nx1:
+                            nx1 = g["x0"]
+                if nx0 >= h["x0"] - EPS and nx1 <= h["x1"] + EPS:
+                    continue
+                h["x0"], h["x1"], h["len"] = round(nx0, 4), round(nx1, 4), round(nx1 - nx0, 4)
+                n_ext += 1
+                for g in runs + extra:           # соседи на той же высоте уступают место
+                    if g is h or g.get("_dead") or abs(g["y"] - yy) >= 20.0:
+                        continue
+                    if h["kind"] == "шина рядовая" and g["kind"] != "шина рядовая":
+                        continue                 # стартовая/концевая рядовой не уступает
+                    if g["x1"] <= nx0 + EPS or g["x0"] >= nx1 - EPS:
+                        continue
+                    parts = [q for q in ((g["x0"], min(g["x1"], nx0)), (max(g["x0"], nx1), g["x1"]))
+                             if q[1] - q[0] >= TILE_MIN_RUN]
+                    if not parts:
+                        g["_dead"] = True
+                        continue
+                    g["x0"], g["x1"] = round(parts[0][0], 4), round(parts[0][1], 4)
+                    g["len"] = round(g["x1"] - g["x0"], 4)
+                    if len(parts) > 1:
+                        extra.append(dict(g, x0=round(parts[1][0], 4), x1=round(parts[1][1], 4),
+                                          len=round(parts[1][1] - parts[1][0], 4), run=nxt_run))
+                        nxt_run += 1
+            extra_all.extend(extra)
+        if n_ext or extra_all:
+            hrails = [h for h in hrails if not h.get("_dead")] + extra_all
         new_hr, run_id, n_air, n_bare = [], {}, 0, 0
         for h in hrails:
             if "_c" not in h:
@@ -2064,12 +2141,15 @@ def frame_plan(req):
         if n_wh:
             notes.append("плитка: хлыстов шины %d — не длиннее %.0f мм, стык на направляющей "
                          "(после окна — заново от грани проёма)" % (n_wh, tile_whip))
+        if n_ext:
+            notes.append("плитка: шин удлинено до ближайших направляющих %d (под ними не было ни "
+                         "одной — узкое окно, полоска у края)" % n_ext)
         if n_air:
             notes.append("плитка: стыков шины без направляющей %d — в пределах хлыста %.0f мм "
                          "направляющей нет" % (n_air, tile_whip))
         if n_bare:
-            notes.append("плитка: кусков шины без направляющей под ними %d (узкий простенок "
-                         "или проём уже шага) — проверьте" % n_bare)
+            notes.append("плитка: кусков шины без направляющей под ними %d — удлинить не до чего (в "
+                         "простенке или у края нет направляющих) — проверьте" % n_bare)
 
     clamps = _merge_clamps(clamps)
     # 01.08 (письмо Германа, п.2): марка профиля для СОСТОЯНИЯ

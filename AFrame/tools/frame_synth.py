@@ -303,10 +303,43 @@ def check_tile(sc, res):
             exp[side] += (ln.difference(ops_u) if ops_u is not None else ln).length
     got_s = sum(h["len"] for h in sh if h["kind"] == "шина стартовая")
     got_e = sum(h["len"] for h in sh if h["kind"] == "шина концевая")
-    if abs(got_s - exp["низ"]) > T * (1 + len(runs)):
+    # 29.09q: шина без направляющей удлиняется (Герман) — по кромкам это нижняя граница
+    if got_s < exp["низ"] - T * (1 + len(runs)):
         bad.append(("T3", "стартовая %.0f мм, по кромкам низа %.0f" % (got_s, exp["низ"])))
-    if abs(got_e - exp["верх"]) > T * (1 + len(runs)):
+    if got_e < exp["верх"] - T * (1 + len(runs)):
         bad.append(("T3", "концевая %.0f мм, по кромкам верха %.0f" % (got_e, exp["верх"])))
+    # T7 (29.09q, Герман: «если шина не попадает ни на одну направляющую — удлинить»): кусок без
+    # направляющей под ним допустим, только если и в его пролёте стены на этой высоте их нет
+    for key, ps in runs.items():
+        yy, sa, sb = ps[0]["y"], ps[0]["x0"], ps[-1]["x1"]
+        sup = [r["x"] for r in rails if r["y0"] - 20.0 - 1e-6 <= yy <= r["y1"] + 20.0 + 1e-6]
+        if any(sa - T <= x <= sb + T for x in sup):
+            continue
+        pr = 2.0 if key[0] == "шина стартовая" else (-2.0 if key[0] == "шина концевая" else 0.0)
+        ln = LineString([(x0 - 1, yy + pr), (x1 + 1, yy + pr)]).intersection(wall)
+        for b in boxes:
+            if b[1] + 1e-6 < yy + pr < b[3] - 1e-6:
+                ln = ln.difference(Polygon([(b[0], b[1]), (b[2], b[1]), (b[2], b[3]), (b[0], b[3])]))
+        xm = (sa + sb) / 2.0
+        # путь к направляющей занят шиной той же высоты (±20 мм), которой рядовая не перекрывает
+        # (стартовая/концевая) — удлинять некуда, это не нарушение
+        others = [h for h in sh if abs(h["y"] - yy) < 20.0 and (h["kind"], h["run"]) != key and
+                  (key[0] != "шина рядовая" or h["kind"] != "шина рядовая")]
+
+        def _free(a, b):
+            return not any(h["x0"] < b - T and h["x1"] > a + T for h in others)
+        for g in getattr(ln, "geoms", [ln]):
+            if g.is_empty:
+                continue
+            gx = [c[0] for c in g.coords]
+            if not (min(gx) - T <= xm <= max(gx) + T):
+                continue
+            lft = [x for x in sup if min(gx) - T <= x < sa - T]
+            rgt = [x for x in sup if sb + T < x <= max(gx) + T]
+            if (lft and _free(max(lft), sa)) or (rgt and _free(sb, min(rgt))):
+                bad.append(("T7", "прогон %s y=%.0f: под шиной нет направляющей, а в пролёте стены есть — не "
+                            "удлинена" % (key, yy)))
+                break
     ey = [ln.coords[0][1] for ln, _s in _hedges_oracle(wall)] + \
         [v for b in boxes for v in (b[1], b[3])]      # 29.09l: у кромок проёмов — свои шины
     for yy in t["rows"]:
