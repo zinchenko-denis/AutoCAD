@@ -1,0 +1,25 @@
+{
+ "zone_id": "Ф-1",
+ "report": {
+  "area_outer_m2": 98.0,
+  "window_count": 5,
+  "window_area_m2": 10.65,
+  "vitrage_count": 1,
+  "vitrage_area_m2": 8.4,
+  "door_count": 2,
+  "door_area_m2": 4.83,
+  "area_net_m2": 74.12,
+  "window_sills_m": 7.1,
+  "window_slopes_m": 20.6,
+  "door_slopes_m": 11.3,
+  "vitrage_side_m": 5.6,
+  "vitrage_top_m": 3.0,
+  "vitrage_bottom_m": 3.0
+ },
+ "parapet": {
+  "area_m2": 9.8,
+  "top_m": 14.0,
+  "width_m": 14.0
+ },
+ "lines": 16
+}
