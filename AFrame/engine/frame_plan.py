@@ -2043,6 +2043,60 @@ def frame_plan(req):
     if tile:
         bnd = rail_from + [(None, len(rails))]
         sup_c = dict((c0, rails[i0:i1]) for (c0, i0), (_c1, i1) in zip(bnd, bnd[1:]))
+        # 29.09t (Герман, ответ на 6е PDF №28: «необходимо вставить дополнительную направляющую в
+        # 100 мм, как у окна»): у каждой вертикальной кромки контура зоны (края вырезов — простенки
+        # у входов, уступы) — направляющая в edge_rail от кромки внутрь стены, по высоте кромки +
+        # overhang сверху и снизу, как оконная стойка; по стене и мимо проёмов; своя направляющая в
+        # ±50 мм уже есть — не ставим (у краёв габарита — крайние оси сетки). Длиннее хлыста — хлыстами.
+        n_notch = 0
+        kind_v = {"interfloor": "НСП", "ortho": "Z-профиль"}.get(sub, "направляющая")
+        gap_v = float(system.get("rail_gap") or 0.0)
+        for c0, (outer_c, boxes_c) in sorted(tile_geo.items()):
+            cx0, _cy0, cx1, _cy1 = _bbox(outer_c)
+            own = list(sup_c.get(c0, []))
+            nv = len(outer_c)
+            for i in range(nv):
+                (xa, ya), (xb, yb) = outer_c[i], outer_c[(i + 1) % nv]
+                if abs(xb - xa) > 0.5 or abs(yb - ya) < 100.0:
+                    continue                             # только вертикальные кромки от 100 мм
+                lo_e, hi_e = min(ya, yb), max(ya, yb)
+                ym = (lo_e + hi_e) / 2.0
+                if _pip_strict(outer_c, xa + 2.0, ym) and not _pip_strict(outer_c, xa - 2.0, ym):
+                    zx = xa + edge_rail
+                elif _pip_strict(outer_c, xa - 2.0, ym) and not _pip_strict(outer_c, xa + 2.0, ym):
+                    zx = xa - edge_rail
+                else:
+                    continue
+                spans = [(a8, b8) for a8, b8, _x8 in
+                         _clip_pieces(outer_c, [(lo_e - overhang, hi_e + overhang, zx)])]
+                for ox0, oy0, ox1, oy1 in boxes_c:
+                    if ox0 + EPS < zx < ox1 - EPS:
+                        spans = _sub_y(spans, oy0, oy1)
+                for rr in own:
+                    if abs(rr["x"] - zx) <= 50.0:
+                        spans = _sub_y(spans, rr["y0"], rr["y1"])
+                for za, zb in [(a5, b5) for a5, b5 in spans if b5 - a5 > 100.0]:
+                    yq, parts = za, []
+                    while zb - yq > EPS:
+                        ce = min(yq + rail_std, zb) if rail_std > EPS else zb
+                        parts.append((yq, ce))
+                        yq = ce + gap_v
+                    for pa, pb in parts:
+                        if pb - pa <= EPS:
+                            continue
+                        piece = {"x": round(zx, 4), "y0": round(pa, 4), "y1": round(pb, 4),
+                                 "len": round(pb - pa, 4), "kind": kind_v}
+                        rails.append(piece)
+                        own.append(piece)
+                        n_notch += 1
+                        if sub == "vertical" and step_main is not None and start_off is not None:
+                            stp = step_corner if _in_corner(zx, cx0, cx1, corner_zone, corners) else step_main
+                            for yb2 in _rail_brackets(pa, pb, float(start_off), float(stp), exact_step):
+                                brackets.append({"x": round(zx, 4), "y": round(yb2, 4), "kind": "рядовой"})
+            sup_c[c0] = own
+        if n_notch:
+            notes.append("плитка: у краёв вырезов и уступов зоны добавлено направляющих %d (в %.0f мм от "
+                         "кромки, как у окна)" % (n_notch, edge_rail))
         # 29.09q (Герман, 29.09n: «если шина не попадает ни на одну направляющую, то надо её
         # удлинить»): прогон, под которым нет ни одной направляющей (узкое окно, полоска у края),
         # удлиняется в обе стороны до ближайших направляющих — по стене на его высоте, не через
