@@ -235,6 +235,12 @@ extension dictionary штриховки зоны (паттерн StoreZoneData �
 сообщением.)
 
 ## Статус
+- **29.09w — «Собираем» №29 (Денис 29.09) — ВЫЛОЖЕНО. build-bundle #102 (workflow_dispatch build.yml на
+  feat/auto-reactor, 72ee0d4): test → build зелёные; тег build-102 → 72ee0d4; latest = build-102 (дайджесты
+  sha256 всех пяти архивов совпали); build-info.json — 102 / 72ee0d4 / feat/auto-reactor; ссылки PDF (latest
+  и build-102) отдают 206. main НЕ трогали (f4abeb2) — «Пушим» отдельно. PDF Герману —
+  AFrame/docs/FACADES_build29_2909.pdf (генератор make_build29_2909.py 102 72ee0d4, картинка make_pics29.py).**
+  Состав AFacades: верх и низ проёма на краю зоны — откос и отлив (29.09s-2).
 - **29.09s-2 — 6ж СДЕЛАНО (2a8fc4f; в сборку не выпущено, пойдёт в №29):** верх и низ проёма на краю зоны —
   откос и отлив (класса «граница» больше нет, on_boundary_m = 0; низ двери — порог по типу). Тесты 52/33,
   zones_synth — проверка Z17 снята (линия по краю зоны теперь законна), оракул без «границы»; роли 17 OK;
