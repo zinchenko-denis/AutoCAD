@@ -456,15 +456,14 @@ class TestIndependentReview2409(unittest.TestCase):
         self.assertEqual(len(lines["window_slope"]["pts"]), 4)
         self.assertAlmostEqual(lines["window_sill"]["len_m"], 1.0, places=6)
 
-    def test_top_and_bottom_on_boundary_still_not_counted(self):
-        # верх и низ на краю зоны — как раньше не считаются (низ до края — обычно
-        # неотмеченная дверь: порог без отлива); бока — откосы
+    def test_top_and_bottom_on_boundary_counted(self):
+        # 29.09s (Герман, ответ на 6ж PDF №28): верх и низ проёма на краю зоны — откос и отлив
         zds, _ = self.zones([{"id": "W", "pts": rect(0, 0, 5000, 3000)},
                              {"id": "O", "pts": rect(2000, 0, 1000, 3000)}])
         rep = fz.zone_report(fz.load_zone(zds[0]))
-        self.assertAlmostEqual(rep["sills_total_m"], 0.0, places=6)
-        self.assertAlmostEqual(rep["jambs_total_m"], 6.0, places=6)
-        self.assertAlmostEqual(rep["on_boundary_total_m"], 2.0, places=6)
+        self.assertAlmostEqual(rep["sills_total_m"], 1.0, places=6)
+        self.assertAlmostEqual(rep["jambs_total_m"], 7.0, places=6)
+        self.assertAlmostEqual(rep["on_boundary_total_m"], 0.0, places=6)
 
     def test_nan_rejected(self):
         zds, issues = self.zones([{"id": "W", "pts": [[0, 0], [5000, 0], [5000, float("nan")], [0, 5000]]}])

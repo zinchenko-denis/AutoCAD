@@ -53,8 +53,9 @@ class TestOpeningEdges(unittest.TestCase):
             [opening("D", rect(5000, 0, 900, 2100), kind="door")]))
         rep = fz.zone_report(z)
         e = rep["openings"][0]["edges"]
-        self.assertAlmostEqual(e["on_boundary_m"], 0.9, places=9)
-        self.assertAlmostEqual(e["bottom_m"], 0.0, places=9)
+        # 29.09s (Герман 6ж): низ на краю зоны — обычный низ; у двери он порог — не считается
+        self.assertAlmostEqual(e["on_boundary_m"], 0.0, places=9)
+        self.assertAlmostEqual(e["bottom_m"], 0.9, places=9)
         self.assertAlmostEqual(e["top_m"], 0.9, places=9)
         self.assertAlmostEqual(e["sides_m"], 4.2, places=9)
         self.assertAlmostEqual(rep["sills_total_m"], 0.0, places=9)
