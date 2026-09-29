@@ -28,6 +28,7 @@ AFrame/tools/roles/RolesDump.cs): «поле окна не дошло до дв�
   RolesDump.exe>. Выход ≠ 0 при нарушениях."""
 import argparse
 import json
+import re
 import math
 import os
 import random
@@ -365,6 +366,13 @@ def run_role(rng, role, dump, n, stats, first, times):
                               "whip": float(prm.get("tile_whip") or 2500), "rows": rows_used}
                 if not (psub == "interfloor" and not floors and not prm.get("floor_step")):
                     bad += [(c, "%s: %s" % (tag, m)) for c, m in fsy.check_tile(sc, res)]
+                    # 29.09l (прогон на эталоне 290×82): куски шины, под которыми нет ни одной
+                    # направляющей (узкий простенок/проём уже шага, у межэтажной — нет оконных
+                    # стоек) — вопрос Герману в PDF №28; пока справка, не нарушение
+                    for n in res.get("notes") or []:
+                        m = re.search(r"кусков шины без направляющей под ними (\d+)", n)
+                        if m:
+                            INFO["шины без направляющей под ними (кусков), %s" % psub] += int(m.group(1))
                 if res["clamps"]:
                     bad.append(("R4", "%s: у плитки %d кляммеров" % (tag, len(res["clamps"]))))
             # R3: керамогранит, вертикальная, с раскладкой — у оси руста вдали от проёмов направляющая
