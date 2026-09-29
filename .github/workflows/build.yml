@@ -153,6 +153,10 @@ jobs:
             New-Item -ItemType Directory -Force "$b/Contents/icons" | Out-Null
             Copy-Item "Facades/bundle/AFacades.bundle/Contents/icons/*" "$b/Contents/icons/" -Recurse -Force
           }
+          # 29.09n (Герман): формы ведомостей работ ATFTABLE — xlsx и карты клеток json
+          New-Item -ItemType Directory -Force "$b/Contents/templates" | Out-Null
+          Copy-Item "Facades/bundle/AFacades.bundle/Contents/templates/*" "$b/Contents/templates/" -Recurse -Force
+          if (-not (Test-Path "$b/Contents/templates/vent.xlsx")) { throw "нет формы ведомости vent.xlsx" }
           # 24.09 (рецензия): паспорт сборки рядом с DLL — номер, коммит, дата
           @{ bundle = "AFacades"; build = "${{ github.run_number }}"; attempt = "${{ github.run_attempt }}"; sha = "${{ github.sha }}"; ref = "${{ github.ref_name }}"; built_utc = (Get-Date).ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ"); python = "3.12.10"; pyinstaller = "6.22.3" } | ConvertTo-Json | Set-Content -Encoding utf8 "$b/Contents/net48/build-info.json"
           Compress-Archive -Path $b -DestinationPath "AFacades.bundle.zip" -Force

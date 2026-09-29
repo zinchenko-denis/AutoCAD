@@ -34,7 +34,9 @@ READ = re.compile(r'\b(?:Get|GetBool|GetD|GetS|D|S|GetDouble|GetBoolFlag|GetDoub
 MODULES = {
     "Facades": (["Facades/src/AFacadesPlugin/ZoneCommand.cs", "Facades/src/AFacadesPlugin/TableCommand.cs"],
                 {"res", "z", "rep", "d", "fd", "sum", "hd", "bd"},
-                {"zd": "_fzones.json (запись C#)", "a": "сортировка строк таблицы", "b": "сортировка"}),
+                {"zd": "_fzones.json (запись C#)", "a": "сортировка строк таблицы", "b": "сортировка",
+                 "z._layer": "слой штриховки зоны — ставит ATFTABLE (29.09n, ведомость работ по слоям)",
+                 "p": "парапет из метки/линии (ParapetKey)"}),
     "AClad/ATCLAD": (["AClad/src/ACladPlugin/CladCommand.cs"],
                      {"res", "it", "sum", "d", "pzd"},
                      {"z": "Xrecord ATFZONE", "part": "_fzones.json", "zd": "_fzones.json", "rep": "Xrecord ATFZONE",

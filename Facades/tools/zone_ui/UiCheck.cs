@@ -3,7 +3,8 @@
 // штриховки — хотелось бы, чтобы они сохранялись»), отказ не сохраняет, снимок окна.
 // Сборка (из Facades):
 //   mcs -out:zoneui.exe -r:System.Windows.Forms.dll -r:System.Drawing.dll -r:System.Web.Extensions.dll \
-//       tools/zone_ui/UiCheck.cs src/AFacadesPlugin/ZoneForm.cs src/AFacadesPlugin/ZoneTable.cs
+//       tools/zone_ui/UiCheck.cs src/AFacadesPlugin/ZoneForm.cs src/AFacadesPlugin/ZoneTable.cs \
+//       src/AFacadesPlugin/LayerPickForm.cs
 //   HOME=/tmp/zone_home xvfb-run -a mono zoneui.exe /tmp/zone_ui
 // (HOME — чтобы не трогать настоящие настройки: под mono %APPDATA% = $HOME/.config)
 using System;
@@ -161,6 +162,24 @@ static class ZoneUiCheck
         Ok(ZoneTable.ParapetRows(null).Count == 0, "нет парапетов — нет блока");
         foreach (var m in ZoneTable.HeaderMerges)
             Ok(m[3] < ZoneTable.Cols && m[2] <= 1, "слияние шапки в пределах двух строк и 16 колонок");
+
+        // 7. 29.09n (Герман): ATFTABLE — выбор слоёв со штриховками зон
+        var lay = new Dictionary<string, int> { { "НВФ утеплитель 150 мм", 3 }, { "Нвф утеплитель– 100 мм", 2 } };
+        using (var lf = new LayerPickForm(lay, null, "вентилируемый фасад"))
+        {
+            lf.Show(); Application.DoEvents();
+            Ok(!lf.OkEnabled && lf.Selected.Count == 0, "слои: ничего не отмечено — OK недоступна");
+            lf.CheckLayer("НВФ утеплитель 150 мм", true); lf.CheckLayer("Нвф утеплитель– 100 мм", true);
+            Application.DoEvents();
+            Ok(lf.OkEnabled && lf.Selected.Count == 2, "слои: два отмечены — OK доступна, выбрано 2");
+            lf.Close();
+        }
+        using (var lf1 = new LayerPickForm(new Dictionary<string, int> { { "Штукатурка", 5 } }, null, ""))
+        {
+            lf1.Show(); Application.DoEvents();
+            Ok(lf1.OkEnabled && lf1.Selected.Count == 1, "слои: единственный слой отмечен сразу");
+            lf1.Close();
+        }
 
         Console.WriteLine(fails == 0 ? "ZONE UI: OK" : "ZONE UI: провалов " + fails);
         return fails == 0 ? 0 : 1;
