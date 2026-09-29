@@ -677,4 +677,65 @@ ok(tp.tile_pattern({"tile": {"w": 600, "h": 300}, "gap": {"v": 10, "h": 10}, "vj
    "T45c: мусор в vjoints — чистый отказ")
 
 
+# ── T46 (29.09v, Герман, ответ на 6з PDF №28: «на фронтоне раскладка нужна»): фронтон с окном —
+#    раскладывается по обёртке, плитки у ската режутся по наклону; за скатом плиток нет, наложений
+#    нет, заполнение как у сетки; ряды доходят до конька ──
+import random as _rnd
+_G = [[0, 0], [3000, 0], [3000, 2000], [1500, 3000], [0, 2000]]
+_W = [[1000, 500], [1600, 500], [1600, 1400], [1000, 1400]]
+_rg = tp.tile_pattern({"tile": {"w": 290.0, "h": 82.0}, "gap": {"v": 7.0, "h": 7.0}, "datum": {"mode": "bbox"},
+                       "min_piece": 10.0, "contours": [{"id": "G", "outer": _G, "holes": [_W]}]})
+ok(_rg["ok"] and not any("не ортогонален" in n for n in _rg["notes"]) and
+   any("фронтон" in n for n in _rg["notes"]), "T46: фронтон не пропускается (%s)" % _rg.get("notes"))
+
+
+def _sy(x):
+    return 2000 + x / 1.5 if x <= 1500 else 2000 + (3000 - x) / 1.5
+
+
+def _poly_of(pc):
+    if pc.get("rings"):
+        return [tuple(q) for q in pc["rings"][0]]
+    return [(pc["x"], pc["y"]), (pc["x"] + pc["w"], pc["y"]), (pc["x"] + pc["w"], pc["y"] + pc["h"]),
+            (pc["x"], pc["y"] + pc["h"])]
+
+
+def _pin(pt, poly):
+    x, y, c = pt[0], pt[1], False
+    for k in range(len(poly)):
+        (x1, y1), (x2, y2) = poly[k], poly[(k + 1) % len(poly)]
+        if (y1 > y) != (y2 > y) and x < x1 + (y - y1) * (x2 - x1) / (y2 - y1):
+            c = not c
+    return c
+
+
+_pcs = _rg["pieces"]
+ok(all(q[1] <= _sy(q[0]) + 1e-3 for pc in _pcs for q in _poly_of(pc)), "T46: ни одной точки плитки выше ската")
+ok(sum(1 for pc in _pcs if pc.get("slope")) > 10 and
+   all(not pc["rect"] and not pc["full"] for pc in _pcs if pc.get("slope")),
+   "T46: плитки у ската — фигурные куски (в раскрое плитка на кусок, в чертеже полилиния)")
+_r = _rnd.Random(46)
+_polys = [(_poly_of(pc), pc) for pc in _pcs]
+_dbl = _out = 0
+for _k in range(3000):
+    _pt = (_r.uniform(0, 3000), _r.uniform(0, 3000))
+    _hits = [pc for poly, pc in _polys if _pin(_pt, poly)]
+    if len(_hits) > 1:
+        _dbl += 1
+    if _hits and (_pt[1] > _sy(_pt[0]) or (1000 < _pt[0] < 1600 and 500 < _pt[1] < 1400)):
+        _out += 1
+ok(_dbl == 0 and _out == 0, "T46: наложений нет, в окне и за скатом плиток нет (%d / %d)" % (_dbl, _out))
+_pz = _rg["per_zone"][0]
+_ta = 3000 * 2000 + 0.5 * 3000 * 1000 - 600 * 900
+ok(abs(_pz["area_zone"] - _ta) < 1.0 and abs(_pz["area_tiles"] / _ta - 290 * 82 / (297.0 * 89.0)) < 0.01,
+   "T46: площадь зоны — по настоящему контуру, заполнение как у сетки (%.0f / %.3f)"
+   % (_pz["area_zone"], _pz["area_tiles"] / _ta))
+ok(max(_pz["rows_y"]) > 2900, "T46: ряды (для шин ATFRAME) доходят до конька (%.0f)" % max(_pz["rows_y"]))
+# столбцами (вертикальная раскладка) — тоже без выхода за скат
+_rc = tp.tile_pattern({"tile": {"w": 290.0, "h": 82.0}, "gap": {"v": 7.0, "h": 7.0}, "datum": {"mode": "bbox"},
+                       "min_piece": 10.0, "axis": "cols", "contours": [{"id": "G", "outer": _G, "holes": []}]})
+ok(_rc["ok"] and all(q[1] <= _sy(q[0]) + 1e-3 for pc in _rc["pieces"] for q in _poly_of(pc)),
+   "T46: раскладка столбцами — тоже по скату (%s)" % _rc.get("error"))
+
+
 print("tile_pattern: OK, %d проверок" % _n)

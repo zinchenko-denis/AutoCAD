@@ -1214,9 +1214,130 @@ def _quantize(rings, tol):
     return out
 
 
-def _prep_contour(contour, ortho_tol, notes, zone_id):
+SLOPE_MIN_DEG = 2.0      # 29.09v: скат фронтона — не положе 2° к оси (почти ортогональное — ошибка)
+
+
+def _slope_cover(ring):
+    """29.09v (Герман, ответ на 6з PDF №28: «раскладка фронтона нужна»): ортогональная «обёртка»
+    контура с наклонными рёбрами — каждое наклонное ребро a→b заменяется ступенькой через ВНЕШНИЙ
+    угол (по правую руку от ребра при обходе против часовой): у фронтона обёртка — прямоугольник
+    габарита, у Г-стены со скатом — та же Г. На обёртке идёт обычная раскладка (сетка, образец,
+    датум), затем плитки у ската режутся по нему (_clip_slopes).
+    Возвращает (обёртка, [(a, b), ...] наклонные рёбра против часовой) или (None, None)."""
+    pts = [tuple(q) for q in ring]
+    if len(pts) >= 2 and abs(pts[0][0] - pts[-1][0]) < 1e-9 and abs(pts[0][1] - pts[-1][1]) < 1e-9:
+        pts = pts[:-1]
+    if len(pts) < 3:
+        return None, None
+    if signed_area(pts) < 0:
+        pts = pts[::-1]
+    out, slopes = [], []
+    n = len(pts)
+    for k in range(n):
+        a, b = pts[k], pts[(k + 1) % n]
+        out.append(a)
+        if abs(b[0] - a[0]) < 1e-6 or abs(b[1] - a[1]) < 1e-6:
+            continue
+        # скат — ребро круче SLOPE_MIN_DEG от обеих осей; почти ортогональное (перекос в
+        # миллиметры сверх допуска выпрямления) — ошибка чертежа: контур отклоняется, как раньше
+        ang = math.degrees(math.atan2(abs(b[1] - a[1]), abs(b[0] - a[0])))
+        if ang < SLOPE_MIN_DEG or ang > 90.0 - SLOPE_MIN_DEG:
+            return None, None
+        slopes.append((a, b))
+        for c in ((b[0], a[1]), (a[0], b[1])):
+            if (b[0] - a[0]) * (c[1] - a[1]) - (b[1] - a[1]) * (c[0] - a[0]) < 0:
+                out.append(c)        # внешний угол — справа от ребра
+                break
+    # сократить вырожденные и коллинеарные вершины
+    clean = []
+    for q in out:
+        if clean and abs(clean[-1][0] - q[0]) < 1e-6 and abs(clean[-1][1] - q[1]) < 1e-6:
+            continue
+        clean.append(q)
+    changed = True
+    while changed and len(clean) >= 3:
+        changed = False
+        for k in range(len(clean)):
+            a, b, c = clean[k - 1], clean[k], clean[(k + 1) % len(clean)]
+            if abs((b[0] - a[0]) * (c[1] - a[1]) - (b[1] - a[1]) * (c[0] - a[0])) < 1e-6:
+                del clean[k]
+                changed = True
+                break
+    if len(clean) < 4 or not _is_ortho([list(q) for q in clean]):
+        return None, None
+    return [list(q) for q in clean], slopes
+
+
+def _clip_half(poly, a, b):
+    """Sutherland–Hodgman: многоугольник ∩ полуплоскость слева от a→b (внутренняя сторона
+    ребра контура, обход против часовой)."""
+    def side(q):
+        return (b[0] - a[0]) * (q[1] - a[1]) - (b[1] - a[1]) * (q[0] - a[0])
+    out = []
+    n = len(poly)
+    for k in range(n):
+        p, q = poly[k], poly[(k + 1) % n]
+        sp, sq = side(p), side(q)
+        if sp >= -1e-9:
+            out.append(p)
+        if (sp >= -1e-9) != (sq >= -1e-9):
+            t = sp / (sp - sq)
+            out.append((p[0] + (q[0] - p[0]) * t, p[1] + (q[1] - p[1]) * t))
+    return out
+
+
+def _clip_slopes(pieces, slopes, min_piece):
+    """Плитки фронтона: кусок, чей габарит задевает габарит наклонного ребра, режется
+    полуплоскостью этого ребра (у конька — обоих). Целиком за скатом — выбрасывается; остаток
+    тоньше min_piece — поглощается рустом, как полоски у прямых кромок; обрезанный — фигурный
+    кусок (rings, rect=False: в раскрое — плитка на кусок, в чертеже — полилиния со штриховкой).
+    Возвращает (куски, {"count","area"} поглощённых, число обрезанных)."""
+    out, absorbed, n_cut = [], {"count": 0, "area": 0.0}, 0
+    sb = [(min(a[0], b[0]), min(a[1], b[1]), max(a[0], b[0]), max(a[1], b[1]), a, b) for a, b in slopes]
+    for p in pieces:
+        if p.get("rings"):
+            poly = [tuple(q) for q in p["rings"][0]]
+        else:
+            x, y, w, h = p["x"], p["y"], p["w"], p["h"]
+            poly = [(x, y), (x + w, y), (x + w, y + h), (x, y + h)]
+        px0 = min(q[0] for q in poly); px1 = max(q[0] for q in poly)
+        py0 = min(q[1] for q in poly); py1 = max(q[1] for q in poly)
+        hit = [(a, b) for x0, y0, x1, y1, a, b in sb
+               if px0 < x1 - 1e-6 and px1 > x0 + 1e-6 and py0 < y1 - 1e-6 and py1 > y0 + 1e-6]
+        if not hit:
+            out.append(p)
+            continue
+        for a, b in hit:
+            poly = _clip_half(poly, a, b)
+            if len(poly) < 3:
+                break
+        area = abs(signed_area(poly)) if len(poly) >= 3 else 0.0
+        if area < 1e-3:
+            continue                                  # плитка целиком за скатом
+        if abs(area - p["area"]) < 1e-3:
+            out.append(p)                             # скат её не задел
+            continue
+        xs = [q[0] for q in poly]
+        ys = [q[1] for q in poly]
+        w2, h2 = max(xs) - min(xs), max(ys) - min(ys)
+        if min(w2, h2) < min_piece:
+            absorbed["count"] += 1
+            absorbed["area"] += area
+            continue
+        q = dict(p)
+        q.update({"full": False, "rect": False, "x": min(xs), "y": min(ys), "w": w2, "h": h2,
+                  "area": area, "rings": [[[round(v[0], 4), round(v[1], 4)] for v in poly]],
+                  "slope": True})
+        out.append(q)
+        n_cut += 1
+    return out, absorbed, n_cut
+
+
+def _prep_contour(contour, ortho_tol, notes, zone_id, allow_slope=False):
     """Замкнуть, выпрямить почти ортогональные рёбра, свести близкие
-    координаты, проверить ортогональность."""
+    координаты, проверить ортогональность. 29.09v: allow_slope — контур с наклонными рёбрами
+    (фронтон) возвращается третьим элементом (наклонные рёбра), вместо контура — его ортогональная
+    обёртка (_slope_cover); проёмы по-прежнему должны быть ортогональны."""
     outer = _closed(contour["outer"])
     holes = [_closed(h) for h in contour.get("holes") or []]
     if len(outer) < 3:
@@ -1234,6 +1355,13 @@ def _prep_contour(contour, ortho_tol, notes, zone_id):
     # порог кластеризации — доля допуска, чтобы не слить реальные грани
     snapped = _quantize(snapped, QUANT_TOL)
     bad = [p for p in snapped if len(p) < 3 or not _is_ortho(p)]
+    if bad and allow_slope and len(snapped[0]) >= 3 and not _is_ortho(snapped[0]) and \
+            all(_is_ortho(h) for h in snapped[1:] if len(h) >= 3):
+        cover, slopes = _slope_cover(snapped[0])
+        if cover is not None:
+            notes.append("%s: фронтон (наклонных рёбер %d) — раскладка по обёртке, плитки у ската режутся "
+                         "по наклону" % (zone_id, len(slopes)))
+            return cover, [h for h in snapped[1:] if len(h) >= 3], slopes
     if bad:
         worst = max((_ortho_err(p) for p in bad if len(p) >= 3), default=0.0)
         notes.append("%s: контур не ортогонален (остаточное отклонение "
@@ -1569,11 +1697,19 @@ def tile_pattern(req):
         if cols:
             cc = {"id": zone_id, "outer": _tr_pts(c.get("outer") or []),
                   "holes": [_tr_pts(h) for h in c.get("holes") or []]}
-        pr = _prep_contour(cc, ortho_tol, notes, zone_id)
+        pr = _prep_contour(cc, ortho_tol, notes, zone_id, allow_slope=True)
         if pr is None:
             continue
-        outer, holes = pr
-        prepped.append({"id": zone_id, "outer": outer, "holes": holes})
+        if len(pr) == 3:
+            # 29.09v: фронтон — обёртка для раскладки, наклонные рёбра — для резки; площадь зоны —
+            # по настоящему контуру (обёртка больше на треугольники за скатами)
+            outer, holes, slopes = pr
+            true_ring = [list(q) for q in _closed(cc.get("outer") or [])]
+            prepped.append({"id": zone_id, "outer": outer, "holes": holes, "slopes": slopes,
+                            "cover_extra": abs(signed_area(outer)) - abs(signed_area(true_ring))})
+        else:
+            outer, holes = pr
+            prepped.append({"id": zone_id, "outer": outer, "holes": holes})
         if c.get("datum"):
             dd = dict(c["datum"])
             if cols:
@@ -1582,8 +1718,11 @@ def tile_pattern(req):
     if not prepped:
         return {"ok": False, "error": "нет пригодных зон/контуров для раскладки",
                 "notes": notes}
+    sloped = [{"id": z["id"], "outers": [z["outer"]], "holes": z["holes"], "members": [z["id"]],
+               "slopes": z["slopes"], "cover_extra": z["cover_extra"]} for z in prepped if z.get("slopes")]
+    prepped = [z for z in prepped if not z.get("slopes")]
     if merge:
-        zones = merge_touching(prepped, merge_tol)
+        zones = merge_touching(prepped, merge_tol) if prepped else []
         for z in zones:
             if len(z["members"]) > 1:
                 notes.append("смежные контуры %s объединены в одну плоскость "
@@ -1591,6 +1730,7 @@ def tile_pattern(req):
     else:
         zones = [{"id": z["id"], "outers": [z["outer"]], "holes": z["holes"],
                   "members": [z["id"]]} for z in prepped]
+    zones += sloped          # 29.09v: фронтоны — каждый своей плоскостью (с соседями не сливаются)
 
     notes.extend(overlap_notes(zones))
     pieces_all, per_zone = [], []
@@ -1640,6 +1780,12 @@ def tile_pattern(req):
                 trimmed["count"] += tc["count"]
                 trimmed["area"] += tc["area"]
                 zone_area += sub.area
+        if z.get("slopes"):
+            pcs, ab_s, n_slope = _clip_slopes(pcs, z["slopes"], min_piece)
+            absorbed["count"] += ab_s["count"]
+            absorbed["area"] += ab_s["area"]
+            zone_area -= z["cover_extra"]
+            notes.append("%s: по скату обрезано плиток %d" % (zone_id, n_slope))
         holes_real = z["holes"]
         if cols:
             pcs = [_untranspose_piece(p) for p in pcs]
