@@ -19,10 +19,16 @@ namespace AFramePlugin
     {
         // 26.09 (Денис): что облицовываем. Керамогранит/композит — прежний
         // алгоритм (стойки по швам раскладки, кляммеры); бетонная/клинкерная
-        // плитка — стойки стандартным шагом (не по швам), кронштейны шагом по
-        // вертикали, горизонтальные шины по рядам плитки, кляммеров нет
+        // плитка — вертикальные направляющие заданным шагом (не по швам), на
+        // них горизонтальные шины, кляммеров нет.
+        // 29.09c (Герман, ответ по №27): у плитки те же три типа подсистемы и
+        // те же шаги кронштейнов (расчёт/вручную); шины трёх видов, хлысты
+        // 2500 от левого края; марка шины — от проекта, своя у бетонной и у
+        // клинкерной; углы здания — как у всех, шаг направляющих в угловой
+        // зоне — свой (0 — как рядовой)
         public string Cladding = "porcelain";  // porcelain | composite | concrete | clinker
-        public double TileStepV = 600, TileStepH = 600;   // шаг кронштейнов плитки: по вертикали / по горизонтали
+        public double TileStepH = 600, TileStepHCorner = 0, TileWhip = 2500;
+        public string RailBrandConcrete = "", RailBrandClinker = "";
         public string Mode = "all";            // all | frame | clamps
         public string SubType = "vertical";    // vertical | interfloor | ortho
         public string Profile = "Авто";        // верт.: Авто|ГП-40-40|ГП-60-40|ШП-60-20; межэт.: НСП-1|НСП-2
@@ -42,6 +48,7 @@ namespace AFramePlugin
         public static readonly string[] Modes = { "all", "frame", "clamps" };
         public static readonly string[] Claddings = { "porcelain", "composite", "concrete", "clinker" };
         public static readonly string[] CladdingTitles = { "керамогранит", "композит", "бетонная плитка", "клинкерная плитка" };
+        private static readonly string[] CladdingUnder = { "керамогранит", "композит", "бетонную плитку", "клинкерную плитку" };
         public static readonly string[] SubTypes = { "vertical", "interfloor", "ortho" };
         public static readonly string[] VertProfiles = { "Авто", "ГП-40-40", "ГП-60-40", "ШП-60-20" };
         public static readonly string[] NspProfiles = { "НСП-1", "НСП-2" };
@@ -51,12 +58,27 @@ namespace AFramePlugin
         // ── то, что раньше давали ответы в командной строке ──
         /// <summary>Бетонная или клинкерная плитка — подсистема под шины.</summary>
         public bool IsTile { get { return Cladding == "concrete" || Cladding == "clinker"; } }
-        /// <summary>Тип, который уходит в движок: у плитки всегда вертикальная.</summary>
-        public string EffSubType { get { return IsTile ? "vertical" : SubType; } }
+        /// <summary>Тип, который уходит в движок (29.09c: у плитки — любой из трёх, как у всех).</summary>
+        public string EffSubType { get { return SubType; } }
         public bool InterFloor { get { return EffSubType == "interfloor"; } }
         public bool Ortho { get { return EffSubType == "ortho"; } }
-        public bool Manual { get { return IsTile || Steps == "manual"; } }
+        public bool Manual { get { return Steps == "manual"; } }
         public bool ClampsOnly { get { return Mode == "clamps" && !IsTile; } }
+
+        /// <summary>Марка шины текущей плитки (Герман 29.09: «меняется от проекта к проекту и
+        /// зависит от бетонной или клинкерной плитки») — хранится отдельно для каждой.</summary>
+        public string RailBrand
+        {
+            get { return Cladding == "clinker" ? RailBrandClinker : Cladding == "concrete" ? RailBrandConcrete : ""; }
+            set
+            {
+                // без Trim: поле окна пишет сюда на каждое нажатие — пробел между словами
+                // иначе съедался бы; обрезаем при записи в метку и в запрос движку
+                string v = value ?? "";
+                if (Cladding == "clinker") RailBrandClinker = v;
+                else if (Cladding == "concrete") RailBrandConcrete = v;
+            }
+        }
 
         public string CladdingTitle
         {
@@ -68,8 +90,10 @@ namespace AFramePlugin
         {
             get
             {
-                if (IsTile) return "Под плитку: " + CladdingTitle;
-                return InterFloor ? "Межэтажная" : Ortho ? "Ортогональная" : "Вертикальная";
+                string t = InterFloor ? "Межэтажная" : Ortho ? "Ортогональная" : "Вертикальная";
+                if (!IsTile) return t;
+                int k = Array.IndexOf(Claddings, Cladding);
+                return t + " под " + (k >= 0 ? CladdingUnder[k] : Cladding);
             }
         }
 
@@ -111,19 +135,6 @@ namespace AFramePlugin
         public Dictionary<string, object> SysOverride()
         {
             var d = new Dictionary<string, object> { { "name", SysName } };
-            if (IsTile)
-            {
-                // плитка: оба шага — ручные, стандартные; угловая = рядовая
-                d["bracket_step"] = TileStepV;
-                d["bracket_step_corner"] = TileStepV;
-                if (MiscChanged)
-                {
-                    d["bracket_start_offset"] = StartOff;
-                    d["rail_gap"] = RailGap;
-                    d["corner_zone"] = CornerZone;
-                }
-                return d;
-            }
             if (!Manual)
             {
                 if (SubType == "vertical") d["name"] = "Вектор-1";   // расчётный пресет, как раньше
@@ -142,7 +153,7 @@ namespace AFramePlugin
 
         public Dictionary<string, object> CalcDict()
         {
-            if (Manual) return null;           // в т.ч. плитка — шаги ручные
+            if (Manual) return null;           // 29.09c: у плитки — как у всех (расчёт или вручную)
             return new Dictionary<string, object>
             {
                 { "wind_region", WindRegion }, { "terrain", Terrain }, { "height", Height },
@@ -176,12 +187,12 @@ namespace AFramePlugin
             if (Array.IndexOf(Claddings, Cladding) < 0) return "Неизвестная облицовка «" + Cladding + "».";
             if (IsTile)
             {
-                if (TileStepV < 100 || TileStepV > 3000) return "Шаг кронштейнов по вертикали — от 100 до 3000 мм.";
-                if (TileStepH < 100 || TileStepH > 3000) return "Шаг кронштейнов по горизонтали — от 100 до 3000 мм.";
-                if (StartOff < 0 || RailGap < 0 || CornerZone < 0) return "Старт, зазор и угловая зона — не отрицательные.";
+                if (TileStepH < 100 || TileStepH > 3000) return "Шаг вертикальных направляющих — от 100 до 3000 мм.";
+                if (TileStepHCorner != 0 && (TileStepHCorner < 100 || TileStepHCorner > 3000))
+                    return "Шаг направляющих в угловой зоне — 0 (как рядовой) или от 100 до 3000 мм.";
+                if (TileWhip < 300 || TileWhip > 12000) return "Хлыст шины — от 300 до 12000 мм.";
                 if (!hasLayout && RowStep < 50)
-                    return "Шины ставятся по рядам плитки, а у зон нет раскладки ATTILE — задайте шаг швов (рядов) от 50 мм.";
-                return null;
+                    return "Шины ставятся по рядам плитки, а у зон нет раскладки ATTILE — задайте шаг рядов от 50 мм.";
             }
             if (!ClampsOnly && !Manual)
             {
@@ -194,9 +205,9 @@ namespace AFramePlugin
             {
                 if (StepMain < 100 || StepCorner < 100) return "Шаг кронштейнов — не меньше 100 мм.";
                 if (StartOff < 0 || RailGap < 0 || CornerZone < 0) return "Старт, зазор и угловая зона — не отрицательные.";
-                if (RailStepCorner != 0 && RailStepCorner < 50) return "Шаг стоек в угловой зоне — 0 (по рустам) или от 50 мм.";
+                if (!IsTile && RailStepCorner != 0 && RailStepCorner < 50) return "Шаг стоек в угловой зоне — 0 (по рустам) или от 50 мм.";
             }
-            if (!hasLayout)
+            if (!hasLayout && !IsTile)
             {
                 if (Axes == "step" && AxisStep < 50) return "Шаг осей стоек — не меньше 50 мм.";
                 if (RowStep != 0 && RowStep < 50) return "Шаг горизонтальных швов — 0 (без кляммеров) или от 50 мм.";
@@ -212,17 +223,28 @@ namespace AFramePlugin
             var sb = new StringBuilder();
             if (IsTile)
             {
-                sb.Append("Облицовка — ").Append(CladdingTitle).Append(": подсистема без привязки к вертикальным швам. ")
-                  .Append("Вертикальные профили шагом ").Append(F(TileStepH)).Append(" мм от края зоны (первый и последний — ")
-                  .Append("в 100 мм от краёв; у окон — стойки у каждой грани), кронштейны на них шагом ")
-                  .Append(F(TileStepV)).Append(" мм (первый — ").Append(F(StartOff)).Append(" от низа), профиль ")
-                  .Append(Profile == "Авто" ? "по умолчанию" : Profile).Append(". На вертикальные профили — горизонтальные ")
-                  .Append("шины по рядам плитки").Append(hasLayout ? " (ряды — из раскладки зон)" : " шагом " + F(RowStep) + " мм")
-                  .Append(", на них вешается облицовка. Кляммеров нет.");
+                sb.Append(TypeTitle).Append(" подсистема: вертикальные направляющие шагом ").Append(F(TileStepH))
+                  .Append(" мм от края зоны, не по швам (первая и последняя — в 100 мм от краёв")
+                  .Append(TileStepHCorner > 0 ? "; в угловых зонах — шагом " + F(TileStepHCorner)
+                                              : "; в угловых зонах — тем же шагом (в угловой зоне 0)")
+                  .Append("; у окон — у каждой грани)")
+                  .Append(Manual ? "; кронштейны вручную: рядовая " + F(StepMain) + ", угловая " + F(StepCorner) + " мм"
+                                 : "; кронштейны по расчёту: район " + WindRegion + ", местность " + Terrain + ", " +
+                                   F(Height) + " м, облицовка " + F(QClad) + " кг/м², вынос " + F(Offset) +
+                                   " мм, анкер " + F(NaMax) + " Н");
+                if (SubType == "vertical") sb.Append("; профиль ").Append(Profile == "Авто" ? "подбором" : Profile);
+                if (InterFloor) sb.Append("; ").Append(Profile);
+                sb.Append(". Шины: стартовая по низу зоны, рядовые по центрам горизонтальных швов")
+                  .Append(hasLayout ? " (ряды — из раскладки зон)" : " (шагом " + F(RowStep) + " мм от низа зоны)")
+                  .Append(", концевая по верху; хлысты по ").Append(F(TileWhip))
+                  .Append(" мм от левого края, последний короче; марка — ")
+                  .Append(RailBrand.Trim().Length > 0 ? "«" + RailBrand.Trim() + "»" : "не задана").Append(". Кляммеров нет.");
                 var aft = new List<string>();
+                if (AskCorners) aft.Add("внешние углы здания");
                 if (Signs == "samples") aft.Add("образцы знаков");
                 if (AskFloors) aft.Add("отметки перекрытий");
                 if (aft.Count > 0) sb.Append(" После «Разложить» указать: ").Append(string.Join(", ", aft.ToArray())).Append(".");
+                if (InterFloor) sb.Append(" Без отметок — перекрытия шагом этажа " + F(FloorStep) + " мм.");
                 return sb.ToString();
             }
             if (ClampsOnly)
@@ -264,7 +286,9 @@ namespace AFramePlugin
         {
             return new Dictionary<string, object>
             {
-                { "cladding", Cladding }, { "tile_step_v", TileStepV }, { "tile_step_h", TileStepH },
+                { "cladding", Cladding }, { "tile_step_h", TileStepH }, { "tile_step_h_corner", TileStepHCorner },
+                { "tile_whip", TileWhip }, { "rail_brand_concrete", RailBrandConcrete.Trim() },
+                { "rail_brand_clinker", RailBrandClinker.Trim() },
                 { "mode", Mode }, { "sub_type", SubType }, { "profile", Profile }, { "steps", Steps },
                 { "wind_region", WindRegion }, { "terrain", Terrain }, { "height", Height },
                 { "q_clad", QClad }, { "offset", Offset }, { "na_max", NaMax },
@@ -309,8 +333,11 @@ namespace AFramePlugin
             var s = new FrameSettings();
             if (d == null) return s;
             s.Cladding = OneOf(S(d, "cladding", s.Cladding), "porcelain", Claddings);
-            s.TileStepV = D(d, "tile_step_v", s.TileStepV);
             s.TileStepH = D(d, "tile_step_h", s.TileStepH);
+            s.TileStepHCorner = D(d, "tile_step_h_corner", s.TileStepHCorner);
+            s.TileWhip = D(d, "tile_whip", s.TileWhip);
+            s.RailBrandConcrete = S(d, "rail_brand_concrete", s.RailBrandConcrete).Trim();
+            s.RailBrandClinker = S(d, "rail_brand_clinker", s.RailBrandClinker).Trim();
             s.Mode = OneOf(S(d, "mode", s.Mode), "all", Modes);
             s.SubType = OneOf(S(d, "sub_type", s.SubType), "vertical", SubTypes);
             string[] pr = ProfilesFor(s.SubType);

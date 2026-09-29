@@ -24,8 +24,12 @@ namespace AFramePlugin
         // 26.09 (Денис): первым пунктом — что облицовываем
         private readonly RadioButton _cPorc = new RadioButton(), _cComp = new RadioButton(),
                                      _cConc = new RadioButton(), _cClink = new RadioButton();
-        private readonly NumericUpDown _tileV = Num(100, 3000, 0), _tileH = Num(100, 3000, 0);
-        private readonly List<Control> _tileCtl = new List<Control>();
+        // 29.09c (Герман): у плитки — шаг направляющих (рядовой/угловой), марка и хлыст шины
+        private readonly NumericUpDown _tileH = Num(100, 3000, 0), _tileHC = Num(0, 3000, 0),
+                                       _tileWhip = Num(300, 12000, 0);
+        private readonly TextBox _brand = new TextBox();
+        private readonly List<Control> _tileCtl = new List<Control>(), _axCtl = new List<Control>();
+        private Label _rowLblAx, _rowLblTile, _railStepCLbl;
         private GroupBox _g1;
         private readonly RadioButton _mAll = new RadioButton(), _mFrame = new RadioButton(), _mClamps = new RadioButton();
         private readonly RadioButton _tVert = new RadioButton(), _tInter = new RadioButton(), _tOrtho = new RadioButton();
@@ -74,7 +78,7 @@ namespace AFramePlugin
             MinimizeBox = false;
             MaximizeBox = false;
             ShowInTaskbar = false;
-            ClientSize = new Size(860, 686);
+            ClientSize = new Size(860, 714);
 
             // ── 1. облицовка (26.09, Денис: «первым пунктом») ──
             var gc = new GroupBox { Text = "1. Облицовка", Left = 10, Top = 6, Width = 470, Height = 70 };
@@ -113,31 +117,38 @@ namespace AFramePlugin
             AddPair(_manCtl, "Шаг рядовой, мм:", _stepMain, 10, 48); AddPair(_manCtl, "Шаг угловой, мм:", _stepCorner, 240, 48);
             AddPair(_manCtl, "Стойки в угл., мм:", _railStepC, 10, 76); AddPair(_manCtl, "Старт кронштейна:", _startOff, 240, 76);
             AddPair(_manCtl, "Зазор стыка, мм:", _railGap, 10, 104); AddPair(_manCtl, "Угловая зона, мм:", _cornerZone, 240, 104);
-            // плитка: два стандартных шага вместо расчёта/ручного набора
-            AddPair(_tileCtl, "По вертикали, мм:", _tileV, 10, 24); AddPair(_tileCtl, "По горизонтали, мм:", _tileH, 240, 24);
-            _tileCtl.Add(new Label { Text = "Стойки — шагом по горизонтали от края зоны, не по швам облицовки;",
-                                     Left = 10, Top = 58, Width = 450, Height = 18 });
-            _tileCtl.Add(new Label { Text = "кронштейны на стойках — шагом по вертикали; по рядам плитки — шины.",
-                                     Left = 10, Top = 78, Width = 450, Height = 18 });
+            _railStepCLbl = (Label)_manCtl[_manCtl.IndexOf(_railStepC) - 1];
             _g3.Controls.AddRange(new Control[] { _calc, _manual });
-            foreach (var c in _tileCtl) _g3.Controls.Add(c);
             foreach (var c in _calcCtl) _g3.Controls.Add(c);
             foreach (var c in _manCtl) _g3.Controls.Add(c);
 
             // ── 4. оси и швы (если у зон нет раскладки) ──
-            _g4 = new GroupBox { Text = "5. Оси стоек и швы", Left = 10, Top = 400, Width = 470, Height = 102 };
+            _g4 = new GroupBox { Text = "5. Оси стоек и швы", Left = 10, Top = 400, Width = 470, Height = 130 };
             _layoutInfo.Left = 10; _layoutInfo.Top = 20; _layoutInfo.Width = 450; _layoutInfo.Height = 18;
             _layoutInfo.Text = hasLayout ? "Оси стоек и швы берутся из раскладки выбранных зон (ATTILE/ATCLAD)."
                                          : "У выбранных зон нет раскладки — оси и швы задать здесь:";
             _layoutInfo.ForeColor = hasLayout ? Color.DarkGreen : Color.Firebrick;
             _axStep.Text = "шагом от первой оси"; _axPoints.Text = "точками на чертеже";
             Place(_axStep, 10, 42, 220); Place(_axPoints, 240, 42, 220);
-            Place(_axisStep, 150, 70, 80); Place(_rowStep, 380, 70, 80);
-            _g4.Controls.AddRange(new Control[] { _layoutInfo, _axStep, _axPoints, L("Шаг осей, мм:", 10, 70, 138),
-                _axisStep, L("Шаг швов (0 — нет):", 240, 70, 138), _rowStep });
+            Place(_axisStep, 150, 70, 80);
+            _rowLblAx = L("Шаг швов (0 — нет):", 240, 70, 138);
+            _axCtl.AddRange(new Control[] { _axStep, _axPoints, L("Шаг осей, мм:", 10, 70, 138), _axisStep, _rowLblAx });
+            // плитка (29.09c): шаг вертикальных направляющих, марка и хлыст шины, ряды
+            AddPair(_tileCtl, "Шаг направляющих:", _tileH, 10, 44);
+            AddPair(_tileCtl, "В угловой зоне:", _tileHC, 240, 44);   // 0 — как рядовой (см. «Что будет»)
+            _tileCtl.Add(L("Марка шины:", 10, 72, 138));
+            Place(_brand, 150, 72, 310);
+            _tileCtl.Add(_brand);
+            AddPair(_tileCtl, "Хлыст шины, мм:", _tileWhip, 10, 100);
+            _rowLblTile = L("Шаг рядов, мм:", 240, 100, 138);
+            _tileCtl.Add(_rowLblTile);
+            _g4.Controls.Add(_layoutInfo);
+            foreach (var c in _axCtl) _g4.Controls.Add(c);
+            foreach (var c in _tileCtl) _g4.Controls.Add(c);
+            _g4.Controls.Add(_rowStep);
 
             // ── 5. после «Разложить» ──
-            var g5 = new GroupBox { Text = "6. После «Разложить» указать на чертеже", Left = 10, Top = 506, Width = 470, Height = 76 };
+            var g5 = new GroupBox { Text = "6. После «Разложить» указать на чертеже", Left = 10, Top = 534, Width = 470, Height = 76 };
             _corners.Text = "внешние углы здания (угловые зоны)";
             _floors.Text = "отметки перекрытий";
             Place(_corners, 10, 20, 450); Place(_floors, 10, 46, 200);
@@ -145,19 +156,19 @@ namespace AFramePlugin
             g5.Controls.AddRange(new Control[] { _corners, _floors, L("Этаж без отметок, мм:", 230, 46, 148), _floorStep });
 
             // ── 6. знаки ──
-            var g6 = new GroupBox { Text = "7. Знаки кронштейнов и кляммеров", Left = 10, Top = 586, Width = 470, Height = 50 };
+            var g6 = new GroupBox { Text = "7. Знаки кронштейнов и кляммеров", Left = 10, Top = 614, Width = 470, Height = 50 };
             _sCond.Text = "условные"; _sSamples.Text = "образцы блоков с чертежа (указать после ОК)";
             Place(_sCond, 10, 20, 110); Place(_sSamples, 130, 20, 330);
             g6.Controls.AddRange(new Control[] { _sCond, _sSamples });
 
             // ── что будет ──
-            var gd = new GroupBox { Text = "Что будет", Left = 490, Top = 6, Width = 360, Height = 630 };
-            _desc.Left = 10; _desc.Top = 22; _desc.Width = 340; _desc.Height = 598; _desc.AutoSize = false;
+            var gd = new GroupBox { Text = "Что будет", Left = 490, Top = 6, Width = 360, Height = 658 };
+            _desc.Left = 10; _desc.Top = 22; _desc.Width = 340; _desc.Height = 626; _desc.AutoSize = false;
             gd.Controls.Add(_desc);
 
-            var reset = new Button { Text = "Сброс", Left = 10, Top = 646, Width = 110, Height = 30 };
-            var ok = new Button { Text = "Разложить", Left = 630, Top = 646, Width = 106, Height = 30 };
-            var cancel = new Button { Text = "Отмена", Left = 744, Top = 646, Width = 106, Height = 30,
+            var reset = new Button { Text = "Сброс", Left = 10, Top = 674, Width = 110, Height = 30 };
+            var ok = new Button { Text = "Разложить", Left = 630, Top = 674, Width = 106, Height = 30 };
+            var cancel = new Button { Text = "Отмена", Left = 744, Top = 674, Width = 106, Height = 30,
                                       DialogResult = DialogResult.Cancel };
             AcceptButton = ok;
             CancelButton = cancel;
@@ -180,8 +191,10 @@ namespace AFramePlugin
                 };
             foreach (var cb in new[] { _profile, _wind, _terr }) cb.SelectedIndexChanged += upd;
             foreach (var nu in new[] { _height, _qclad, _offset, _na, _stepMain, _stepCorner, _railStepC, _startOff,
-                                       _railGap, _cornerZone, _axisStep, _rowStep, _floorStep, _tileV, _tileH })
+                                       _railGap, _cornerZone, _axisStep, _rowStep, _floorStep, _tileH, _tileHC,
+                                       _tileWhip })
                 nu.ValueChanged += upd;
+            _brand.TextChanged += upd;
             foreach (var ch in new[] { _corners, _floors }) ch.CheckedChanged += upd;
             reset.Click += delegate
             {
@@ -189,6 +202,8 @@ namespace AFramePlugin
                 d.SetSubType(_s.SubType);
                 d.Mode = _s.Mode;
                 d.Cladding = _s.Cladding;
+                // марки шин — проектные данные, «Сброс» их не стирает
+                d.RailBrandConcrete = _s.RailBrandConcrete; d.RailBrandClinker = _s.RailBrandClinker;
                 CopyInto(d, _s);
                 LoadControls();
             };
@@ -236,7 +251,9 @@ namespace AFramePlugin
                 bool tile = _s.IsTile;
                 _cPorc.Checked = _s.Cladding == "porcelain"; _cComp.Checked = _s.Cladding == "composite";
                 _cConc.Checked = _s.Cladding == "concrete"; _cClink.Checked = _s.Cladding == "clinker";
-                _tileV.Value = Dec(_s.TileStepV, _tileV); _tileH.Value = Dec(_s.TileStepH, _tileH);
+                _tileH.Value = Dec(_s.TileStepH, _tileH); _tileHC.Value = Dec(_s.TileStepHCorner, _tileHC);
+                _tileWhip.Value = Dec(_s.TileWhip, _tileWhip);
+                if (_brand.Text != _s.RailBrand) _brand.Text = _s.RailBrand;
                 _mAll.Checked = _s.Mode == "all"; _mFrame.Checked = _s.Mode == "frame"; _mClamps.Checked = _s.Mode == "clamps";
                 _tVert.Checked = _s.EffSubType == "vertical"; _tInter.Checked = _s.InterFloor; _tOrtho.Checked = _s.Ortho;
                 _profile.Items.Clear();
@@ -248,8 +265,6 @@ namespace AFramePlugin
                     int k = Array.IndexOf(prs, _s.Profile);
                     _profile.SelectedIndex = k >= 0 ? k : 0;
                 }
-                // по полю Steps, а не Manual: у плитки Manual всегда true, а выбор
-                // «расчёт/вручную» для керамогранита должен сохраниться
                 _calc.Checked = _s.Steps != "manual"; _manual.Checked = _s.Steps == "manual";
                 _wind.SelectedIndex = Math.Max(0, Array.IndexOf(FrameSettings.Winds, _s.WindRegion));
                 _terr.SelectedIndex = Math.Max(0, Array.IndexOf(FrameSettings.Terrains, _s.Terrain));
@@ -265,26 +280,30 @@ namespace AFramePlugin
                 _sCond.Checked = _s.Signs == "cond"; _sSamples.Checked = _s.Signs == "samples";
 
                 bool frameParts = !_s.ClampsOnly;
-                // плитка: кляммеров нет (что раскладывать — только подсистема с
-                // шинами), тип — вертикальный, шаги — два стандартных
+                // плитка (29.09c, Герман): кляммеров нет (что раскладывать — только
+                // подсистема с шинами); тип и шаги кронштейнов — как у всех облицовок;
+                // в п.5 вместо осей по швам — шаг направляющих, марка и хлыст шины
                 _g1.Enabled = !tile;
-                foreach (var rb in new[] { _tVert, _tInter, _tOrtho }) rb.Enabled = !tile;
                 _profile.Enabled = frameParts && prs.Length > 0;
                 _g3.Enabled = frameParts;
-                _calc.Visible = _manual.Visible = !tile;
-                foreach (var c in _calcCtl) c.Visible = !tile && !_s.Manual;
-                foreach (var c in _manCtl) c.Visible = !tile && _s.Manual;
+                foreach (var c in _calcCtl) c.Visible = !_s.Manual;
+                foreach (var c in _manCtl) c.Visible = _s.Manual;
+                _railStepC.Visible = _railStepCLbl.Visible = _s.Manual && !tile;   // у плитки — в п.5
+                _g4.Text = tile ? "5. Направляющие и шины (плитка)" : "5. Оси стоек и швы";
+                foreach (var c in _axCtl) { c.Visible = !tile; c.Enabled = !_hasLayout; }
                 foreach (var c in _tileCtl) c.Visible = tile;
-                foreach (Control c in _g4.Controls) if (c != _layoutInfo) c.Enabled = !_hasLayout && !tile;
-                _axisStep.Enabled = !_hasLayout && !tile && _s.Axes == "step";
+                _rowLblAx.Visible = !tile;
+                _rowLblTile.Enabled = !_hasLayout;
+                _axisStep.Enabled = !_hasLayout && _s.Axes == "step";
                 _rowStep.Enabled = !_hasLayout;
+                if (tile) Place(_rowStep, 380, 100, 80); else Place(_rowStep, 380, 70, 80);
                 _layoutInfo.Text = tile
-                    ? (_hasLayout ? "Шины — по рядам раскладки зон (ATTILE); стойки — шагом от края зоны."
-                                  : "У зон нет раскладки — шины по шагу швов (рядов плитки):")
+                    ? (_hasLayout ? "Рядовые шины — по рядам раскладки зон (ATTILE)."
+                                  : "У зон нет раскладки — рядовые шины шагом рядов от низа зоны.")
                     : (_hasLayout ? "Оси стоек и швы берутся из раскладки выбранных зон (ATTILE/ATCLAD)."
                                   : "У выбранных зон нет раскладки — оси и швы задать здесь:");
                 _layoutInfo.ForeColor = _hasLayout ? Color.DarkGreen : Color.Firebrick;
-                _corners.Enabled = frameParts && !tile;
+                _corners.Enabled = frameParts;
                 _floorStep.Enabled = _s.InterFloor && frameParts;
                 string err = _s.Validate(_hasLayout);
                 _desc.ForeColor = err == null ? SystemColors.ControlText : Color.Firebrick;
@@ -313,7 +332,9 @@ namespace AFramePlugin
             _s.AskCorners = _corners.Checked; _s.AskFloors = _floors.Checked;
             _s.FloorStep = (double)_floorStep.Value;
             _s.Signs = _sSamples.Checked ? "samples" : "cond";
-            _s.TileStepV = (double)_tileV.Value; _s.TileStepH = (double)_tileH.Value;
+            _s.TileStepH = (double)_tileH.Value; _s.TileStepHCorner = (double)_tileHC.Value;
+            _s.TileWhip = (double)_tileWhip.Value;
+            _s.RailBrand = _brand.Text;   // марка — той плитки, что сейчас в окне (облицовку меняем ниже)
             _s.Cladding = _cClink.Checked ? "clinker" : _cConc.Checked ? "concrete" : _cComp.Checked ? "composite" : "porcelain";
         }
     }

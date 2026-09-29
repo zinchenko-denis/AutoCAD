@@ -1154,10 +1154,12 @@ ok(not any(abs(h["y"] - 6400) < 60 for h in pg2["hrails"]) and
    not any("доп. ГП у верха" in n for n in pg2.get("notes", [])),
    "FR-G2: кусок ≤ 300 мм — ГП не добавляется")
 
-# ── FR-T (Денис 26.09): облицовка — бетонная/клинкерная плитка. Стойки
-#    НЕ по швам, а стандартным шагом по горизонтали от края зоны (100);
-#    кронштейны на них шагом по вертикали (ручной — буквально); по рядам
-#    плитки — горизонтальные шины; кляммеров нет ──
+# ── FR-T (Денис 26.09; Герман 29.09 — ответ по №27): облицовка — бетонная/
+#    клинкерная плитка. Вертикальные направляющие НЕ по швам, а заданным шагом
+#    по горизонтали от края зоны (100); тип подсистемы — любой из трёх;
+#    кронштейны — по расчёту или вручную, как у всех; шины трёх видов
+#    (стартовая по низу, рядовые по центрам швов, концевая по верху), хлысты
+#    2500 от левого края прогона; кляммеров нет ──
 tsys = {"name": "Standart", "bracket_step": 600, "bracket_step_corner": 600}
 treq = {"system": tsys, "exact_step": True, "cladding": "clinker", "tile_step_x": 600,
         "contours": [{"outer": rect(0, 0, 3000, 2400),
@@ -1176,41 +1178,145 @@ ok(win == [(750, 2050), (750, 2050)], "FR-T2: у окна куски на выс
 thr = [(r["y0"], r["y1"]) for r in pt["rails"] if r["x"] == 1300]
 ok(sorted(thr) == [(0, 800), (2000, 2400)], "FR-T2: стойка через окно режется (%s)" % thr)
 ok(len(pt["clamps"]) == 0, "FR-T3: кляммеров у плитки нет")
-ok(all(h["kind"] == "шина" for h in pt["hrails"]) and len(pt["hrails"]) == 11,
-   "FR-T3: шины на 7 рядах, 4 ряда окна разрезаны надвое → 11 (%d)" % len(pt["hrails"]))
+
+
+def _kinds(res):
+    out = {}
+    for h in res["hrails"]:
+        out[h["kind"]] = out.get(h["kind"], 0) + 1
+    return out
+
+
+ok(_kinds(pt) == {"шина стартовая": 2, "шина рядовая": 14, "шина концевая": 2},
+   "FR-T3: стартовая и концевая по 2 хлыста (2500+500), рядовых 14: 3 сквозных ряда × 2 + "
+   "4 ряда окна × 2 куска (%s)" % _kinds(pt))
+ok(sorted((h["x0"], h["x1"]) for h in pt["hrails"] if h["y"] == 0) == [(0, 2500), (2500, 3000)],
+   "FR-T3: стартовая по низу зоны — хлыст 2500 от левого края, последний короче")
+ok(sorted((h["x0"], h["x1"]) for h in pt["hrails"] if h["y"] == 2400) == [(0, 2500), (2500, 3000)],
+   "FR-T3: концевая по верху зоны")
 ok(sorted((h["x0"], h["x1"]) for h in pt["hrails"] if h["y"] == 1200) == [(0, 1000), (1600, 3000)],
-   "FR-T3: шина в ряду окна — до граней проёма")
+   "FR-T3: рядовая в ряду окна — до граней проёма")
 b100 = sorted(b["y"] for b in pt["brackets"] if b["x"] == 100)
 ok(b100 == [300, 900, 1500, 2100], "FR-T4: кронштейны шагом 600 буквально от 300 (%s)" % b100)
-ok(any("плитка — стоек 6 шагом 600" in n for n in pt["notes"]), "FR-T4: итог в замечаниях")
-# бетонная — то же; керамогранит — прежний алгоритм (стойки по швам)
+ok(any("вертикальных направляющих 6 шагом 600" in n and "хлыстов 18 по 2500" in n
+       for n in pt["notes"]), "FR-T4: итог в замечаниях (%s)" % pt["notes"])
+# бетонная — то же; керамогранит — прежний алгоритм (стойки по швам, шин нет)
 pc = frame_plan(dict(treq, cladding="concrete"))
-ok(pc["ok"] and len(pc["hrails"]) == 11, "FR-T5: бетонная плитка — так же")
+ok(pc["ok"] and len(pc["hrails"]) == 18, "FR-T5: бетонная плитка — так же")
 pp = frame_plan(dict(treq, cladding="porcelain", joints_x=[500, 1100, 2000, 2600], rows_y=[]))
-ok(pp["ok"] and not any(h["kind"] == "шина" for h in pp["hrails"]) and
+ok(pp["ok"] and not any(h["kind"].startswith("шина") for h in pp["hrails"]) and
    {500, 2000} <= set(r["x"] for r in pp["rails"]),
    "FR-T5: керамогранит — стойки по швам, шин нет")
-# ошибки: нет шага; «только кляммеры»; неизвестная облицовка
+# ошибки: нет шага; «только кляммеры»; неизвестная облицовка; угловой шаг и хлыст
 e1 = frame_plan(dict(treq, tile_step_x=0))
-ok(not e1["ok"] and "шаг стоек" in e1["error"], "FR-T6: без шага — ошибка")
+ok(not e1["ok"] and "шаг вертикальных направляющих" in e1["error"], "FR-T6: без шага — ошибка")
 e2 = frame_plan(dict(treq, parts="clamps"))
 ok(not e2["ok"] and "кляммеров нет" in e2["error"], "FR-T6: у плитки «только кляммеры» — ошибка")
 e3 = frame_plan(dict(treq, cladding="wood"))
 ok(not e3["ok"], "FR-T6: неизвестная облицовка — ошибка")
+e4 = frame_plan(dict(treq, tile_step_x_corner=50))
+ok(not e4["ok"] and "угловой зоне" in e4["error"], "FR-T6: угловой шаг 50 — ошибка")
+e5 = frame_plan(dict(treq, tile_whip=100))
+ok(not e5["ok"] and "хлыста" in e5["error"], "FR-T6: хлыст 100 мм — ошибка")
 # без осей раскладки — у плитки не ошибка; узкая зона — одна стойка посередине
 pn = frame_plan(dict(treq, joints_x=[], contours=[{"outer": rect(0, 0, 150, 2400)}]))
 ok(pn["ok"] and sorted(set(r["x"] for r in pn["rails"])) == [75],
    "FR-T7: зона уже 200 мм — одна стойка посередине")
-# расчёт у плитки не применяется
-pk = frame_plan(dict(treq, calc={"wind_region": "II", "terrain": "B", "height": 30,
-                                "q_clad": 40, "offset": 200, "na_max": 3000}))
-ok(pk["ok"] and any("расчёт не применяется" in n for n in pk["notes"]),
-   "FR-T7: у плитки расчёт шагов не применяется (ручные)")
+# 29.09c (Герман): у плитки кронштейны ПО РАСЧЁТУ; грузовая ширина = заданный шаг
+pk = frame_plan(dict(treq, system="Вектор-1", exact_step=False,
+                     calc={"wind_region": "II", "terrain": "B", "height": 30,
+                           "q_clad": 40, "offset": 200, "na_max": 3000}))
+ok(pk["ok"] and any("ПО РАСЧЁТУ" in n for n in pk["notes"]) and
+   pk["calc_report"]["inputs"]["b_row"] == 600 and pk["calc_report"]["inputs"]["b_corner"] == 600,
+   "FR-T7: у плитки расчёт применяется, грузовая ширина = шаг 600 (%s)" % pk.get("error"))
+pk2 = frame_plan(dict(treq, system="Вектор-1", exact_step=False, tile_step_x_corner=400,
+                      calc={"wind_region": "II", "terrain": "B", "height": 30,
+                            "q_clad": 40, "offset": 200, "na_max": 3000}))
+ok(pk2["ok"] and pk2["calc_report"]["inputs"]["b_corner"] == 400,
+   "FR-T7: шаг направляющих угловой зоны уходит в расчёт угловой (b_corner 400)")
 
-# зона без раскладки — ряды для шин шагом швов от низа ЭТОЙ зоны
+# зона без раскладки — ряды шагом швов от низа ЭТОЙ зоны + стартовая и концевая
 pr = frame_plan(dict(treq, rows_y=[], tile_row_step=500,
                      contours=[{"outer": rect(0, 1000, 1200, 2600)}]))
-ok(pr["ok"] and sorted(h["y"] for h in pr["hrails"]) == [1500, 2000, 2500],
-   "FR-T8: без раскладки — шины шагом швов от низа зоны (%s)" % [h["y"] for h in pr["hrails"]])
+ok(pr["ok"] and sorted(h["y"] for h in pr["hrails"]) == [1000, 1500, 2000, 2500, 2600],
+   "FR-T8: без раскладки — рядовые шагом швов от низа зоны (%s)" % [h["y"] for h in pr["hrails"]])
+ok([h["kind"] for h in sorted(pr["hrails"], key=lambda h: h["y"])] ==
+   ["шина стартовая", "шина рядовая", "шина рядовая", "шина рядовая", "шина концевая"],
+   "FR-T8: низ — стартовая, верх — концевая")
+
+# FR-T9: хлысты 2500 от ЛЕВОГО конца каждого прогона, последний короче; после окна —
+# отсчёт заново от грани проёма
+pw = frame_plan(dict(treq, rows_y=[1000], contours=[{"outer": rect(0, 0, 6000, 2000),
+                                                     "holes": [rect(1000, 500, 2000, 1500)]}]))
+ok(sorted(h["len"] for h in pw["hrails"] if h["y"] == 0) == [1000, 2500, 2500],
+   "FR-T9: стартовая 6000 — 2500 + 2500 + 1000")
+ok(sorted((h["x0"], h["x1"]) for h in pw["hrails"] if h["y"] == 1000) ==
+   [(0, 1000), (2000, 4500), (4500, 6000)],
+   "FR-T9: рядовая за окном — от грани проёма 2000: 2000–4500, 4500–6000")
+ok(len(set(h["run"] for h in pw["hrails"])) == 4, "FR-T9: прогонов 4 (старт, 2 рядовых, конец)")
+
+# FR-T10 (Герман 29.09): у плитки все три типа. Межэтажная — вертикальные межэтажные
+# заданным шагом (не по швам), НГП на перекрытиях, шины; без отметок — контур пропущен
+# целиком, шин без направляющих нет. Ортогональная — сетка кронштейнов, ГП, вертикальные
+# ШП заданным шагом, шины; в итоге шины и ГП — раздельно
+pi = frame_plan(dict(treq, sub_type="interfloor", floors_y=[1200]))
+ok(pi["ok"] and sorted(set(r["x"] for r in pi["rails"])) == [100, 700, 1300, 1900, 2500, 2900] and
+   {r["kind"] for r in pi["rails"]} == {"НСП", "ШП-60-20"},
+   "FR-T10: межэтажная — НСП шагом 600 от края, через окно — ШП (%s)"
+   % sorted(set((r["x"], r["kind"]) for r in pi["rails"])))
+ok(_kinds(pi).get("НГП") == 2 and _kinds(pi).get("шина рядовая") == 14 and
+   all(b["kind"] == "несущий" and b["y"] == 1200 for b in pi["brackets"]),
+   "FR-T10: межэтажная — НГП на перекрытии (окно режет), несущие на отметке, шины (%s)" % _kinds(pi))
+pi0 = frame_plan(dict(treq, sub_type="interfloor", floors_y=[]))
+ok(pi0["ok"] and not pi0["hrails"] and not pi0["rails"] and
+   any("межэтажная без отметок" in n for n in pi0["notes"]) and
+   not any("хлыстов" in n for n in pi0["notes"]),
+   "FR-T10: межэтажная без отметок — ни направляющих, ни шин")
+po = frame_plan(dict(treq, sub_type="ortho"))
+ok(po["ok"] and sorted(set(r["x"] for r in po["rails"] if r["kind"] == "ШП-60-20")) ==
+   [100, 700, 1300, 1900, 2500, 2900] and
+   sorted(set(r["x"] for r in po["rails"] if r["kind"] == "Z-профиль")) == [900, 1700],
+   "FR-T10: ортогональная — ШП шагом 600, Z у граней окна")
+ok(sorted(set(h["y"] for h in po["hrails"] if h["kind"] == "ГП-40-40")) == [300, 900, 1500, 2100] and
+   po["summary"]["hguides"] == 6 and po["summary"]["shina_pieces"] == 18 and
+   near(po["summary"]["shina_lm"], 24.6) and po["summary"]["hrails"] == 24,
+   "FR-T10: ортогональная — ГП по сетке 300+600, в итоге ГП 6 и шины 18 (24,6 м) раздельно (%s)"
+   % {k: v for k, v in po["summary"].items() if k.startswith("shina") or k.startswith("hg")})
+
+# FR-T11 (Герман 29.09, п.5): углы здания у плитки. Угол на левом краю, шаг направляющих в
+# угловой зоне 400: от угла 100/500/900/1300, граница зоны 1500 — общая, дальше 600;
+# кронштейны в угловой зоне — угловым шагом
+pa = frame_plan(dict(treq, contours=[{"outer": rect(0, 0, 3000, 2400)}], corners_x=[0],
+                     tile_step_x_corner=400,
+                     system={"name": "Standart", "bracket_step": 600, "bracket_step_corner": 400}))
+ok(pa["ok"] and sorted(set(r["x"] for r in pa["rails"])) == [100, 500, 900, 1300, 1500, 2100, 2700, 2900],
+   "FR-T11: оси в угловой зоне шагом 400 от угла (%s)" % sorted(set(r["x"] for r in pa["rails"])))
+ok(sorted(b["y"] for b in pa["brackets"] if b["x"] == 500) == [300, 700, 1100, 1500, 1900, 2100] and
+   sorted(b["y"] for b in pa["brackets"] if b["x"] == 2100) == [300, 900, 1500, 2100],
+   "FR-T11: кронштейны: в угловой зоне шагом 400, в рядовой — 600")
+pa2 = frame_plan(dict(treq, contours=[{"outer": rect(0, 0, 3000, 2400)}], corners_x=[0]))
+ok(sorted(set(r["x"] for r in pa2["rails"])) == [100, 700, 1300, 1900, 2500, 2900],
+   "FR-T11: угловой шаг 0 — оси как в рядовой")
+
+# FR-T12: Г-образная зона — стартовая на каждой ступени низа; ряд в 10 мм над ступенью на
+# этой ступени не ставится (место стартовой); фронтон — концевой по наклону нет, нота
+L = [[0, 0], [2000, 0], [2000, 1000], [3000, 1000], [3000, 3000], [0, 3000]]
+pl = frame_plan(dict(treq, rows_y=[500, 1010, 1500], contours=[{"outer": L}]))
+st = sorted((h["y"], h["x0"], h["x1"]) for h in pl["hrails"] if h["kind"] == "шина стартовая")
+ok(st == [(0, 0, 2000), (1000, 2000, 3000)], "FR-T12: стартовые на обеих ступенях (%s)" % st)
+ok(sorted((h["x0"], h["x1"]) for h in pl["hrails"] if h["y"] == 1010) == [(0, 2000)],
+   "FR-T12: ряд 1010 над ступенью 1000 — только на нижней части")
+G = [[0, 0], [4000, 0], [4000, 3000], [2000, 4000], [0, 3000]]
+pg = frame_plan(dict(treq, rows_y=[3500], contours=[{"outer": G}]))
+ok(pg["ok"] and not any(h["kind"] == "шина концевая" for h in pg["hrails"]) and
+   any("наклонный на 4.5 м" in n for n in pg["notes"]),
+   "FR-T12: фронтон — концевой на наклоне нет, нота с длиной (%s)" % pg["notes"])
+
+# FR-T13: марка шины от проекта — в профиль каждого куска и в итог; хлыст из запроса
+pb = frame_plan(dict(treq, tile_rail_brand="ШК-40", tile_whip=3000))
+ok(all(h["profile"] == "ШК-40" for h in pb["hrails"] if h["kind"].startswith("шина")) and
+   pb["summary"]["tile_rail_brand"] == "ШК-40" and pb["summary"]["tile_whip"] == 3000 and
+   pb["summary"]["shina_start"] == 1 and near(pb["summary"]["shina_start_lm"], 3.0),
+   "FR-T13: марка в профиле шин, хлыст 3000 — стартовая одним куском (%s)" % pb["summary"])
 
 print("frame_plan: %d проверок OK" % _n)

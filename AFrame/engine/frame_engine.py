@@ -16,7 +16,10 @@ op="frame" — расстановка подсистемы (команда ATFRA
   "floors_y": [y, ...],   // отметки перекрытий (диалог)
   "rows_y":   [y, ...],   // центры горизонтальных швов (метка ATCLAD)
   // 26.09: "cladding": porcelain|composite|concrete|clinker; у плитки
-  // (concrete/clinker) — "tile_step_x" (шаг стоек), шины по rows_y
+  // (concrete/clinker) — "tile_step_x" (шаг вертикальных направляющих),
+  // 29.09c: "tile_step_x_corner" (в угловой зоне, 0 — как рядовой),
+  // "tile_whip" (хлыст шины, 2500), "tile_rail_brand" (марка шины),
+  // "tile_row_step" (ряды шин у зоны без раскладки); тип — любой из трёх
   "parts"?: "all" | "frame" | "clamps",       // 23.09b: что раскладывать
   "rails_fixed"?: [{x, y0, y1}, ...]  // только кляммеры — по этим направляющим
 }
@@ -305,6 +308,10 @@ def op_frame(req):
             "cladding": req.get("cladding"),
             "tile_step_x": req.get("tile_step_x"),
             "tile_row_step": req.get("tile_row_step"),
+            # 29.09c (Герман): угловой шаг направляющих, хлыст и марка шины
+            "tile_step_x_corner": req.get("tile_step_x_corner"),
+            "tile_whip": req.get("tile_whip"),
+            "tile_rail_brand": req.get("tile_rail_brand"),
             "edge_rail_off": req.get("edge_rail_off"),
             "calc": req.get("calc"),
             # 23.09b (Герман): что раскладывать + существующие направляющие
@@ -382,6 +389,13 @@ def op_frame(req):
                             if c["kind"] == "комбинированный"),
         "zones": len(per_zone),
         "parts": str(req.get("parts") or "all")}
+    # 29.09c: шины под плитку — по видам и отдельно от горизонтальных направляющих
+    cl = str(req.get("cladding") or "porcelain").strip().lower()
+    summary["cladding"] = cl
+    if cl in ("concrete", "clinker"):
+        summary.update(fp.shina_summary(hrails))
+        summary["tile_whip"] = float(req.get("tile_whip") or 2500.0)
+        summary["tile_rail_brand"] = str(req.get("tile_rail_brand") or "").strip()
     out = {
         "ok": True, "rails": rails, "hrails": hrails,
         "brackets": brackets, "clamps": clamps,

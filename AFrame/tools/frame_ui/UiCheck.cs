@@ -75,27 +75,43 @@ static class FrameUiCheck
            "мусор в метке — умолчания");
         Ok(d.Describe(true).Contains("кляммеры") && full.Describe(false).Contains("Только кляммеры"), "описание");
 
-        // 3б. облицовка (26.09, Денис): плитка — стойки шагом, шины, без кляммеров
+        // 3б. облицовка (26.09 Денис; 29.09c Герман): плитка — направляющие заданным
+        //     шагом, шины трёх видов, без кляммеров; тип и шаги кронштейнов — как у всех
         Ok(d.Cladding == "porcelain" && !d.IsTile, "по умолчанию — керамогранит, прежний алгоритм");
-        var tk = new FrameSettings { Cladding = "clinker", TileStepV = 700, TileStepH = 550 };
-        var tso = tk.SysOverride();
-        Ok(tk.IsTile && tk.Manual && tk.CalcDict() == null && (string)tso["name"] == "Standart" &&
-           (double)tso["bracket_step"] == 700 && (double)tso["bracket_step_corner"] == 700,
-           "плитка: шаги ручные 700/700, расчёта нет");
+        var tk = new FrameSettings { Cladding = "clinker", TileStepH = 550, TileStepHCorner = 400, TileWhip = 3000 };
+        tk.RailBrand = "ШК-40";
+        Ok(tk.IsTile && !tk.Manual && tk.CalcDict() != null && (string)tk.SysOverride()["name"] == "Вектор-1",
+           "плитка: кронштейны по расчёту, как у керамогранита (пресет Вектор-1)");
+        Ok(tk.RailBrandClinker == "ШК-40" && tk.RailBrandConcrete == "", "марка шины — у клинкерной своя");
+        tk.Cladding = "concrete";
+        Ok(tk.RailBrand == "" && (tk.RailBrand = "Б-2") == "Б-2" && tk.RailBrandConcrete == "Б-2" &&
+           tk.RailBrandClinker == "ШК-40", "марка шины у бетонной — отдельно, клинкерная не тронута");
+        tk.Cladding = "clinker";
         var tko = new FrameSettings { Cladding = "concrete", Mode = "clamps" };
         tko.SetSubType("ortho");
-        Ok(!tko.ClampsOnly && tko.EffSubType == "vertical" && !tko.Ortho && tko.SubType == "ortho",
-           "плитка: не «только кляммеры», тип вертикальный, сохранённый тип не трогается");
+        Ok(!tko.ClampsOnly && tko.EffSubType == "ortho" && tko.Ortho && tko.SysName == "Ортогональная",
+           "плитка: не «только кляммеры»; тип — выбранный (ортогональная)");
+        var tkm = new FrameSettings { Cladding = "clinker", Steps = "manual", StepMain = 700, StepCorner = 500 };
+        var tso = tkm.SysOverride();
+        Ok(tkm.Manual && tkm.CalcDict() == null && (double)tso["bracket_step"] == 700 && (double)tso["bracket_step_corner"] == 500,
+           "плитка вручную: шаги кронштейнов 700/500, как у всех");
         Ok(new FrameSettings { Cladding = "clinker", RowStep = 0 }.Validate(false) != null,
-           "плитка без раскладки и без шага швов — ошибка (шинам нужны ряды)");
+           "плитка без раскладки и без шага рядов — ошибка (шинам нужны ряды)");
         Ok(new FrameSettings { Cladding = "clinker", RowStep = 0 }.Validate(true) == null,
-           "плитка с раскладкой — шаг швов не нужен");
-        Ok(new FrameSettings { Cladding = "clinker", TileStepH = 50 }.Validate(true) != null, "шаг по горизонтали 50 — ошибка");
-        Ok(new FrameSettings { Cladding = "clinker", Height = 0 }.Validate(true) == null, "плитка — высота здания не нужна");
-        Ok(tk.Describe(true).Contains("шины") && tk.Describe(true).Contains("550") && tk.TypeTitle.Contains("клинкерная"),
-           "плитка: описание про шины и шаг");
+           "плитка с раскладкой — шаг рядов не нужен");
+        Ok(new FrameSettings { Cladding = "clinker", TileStepH = 50 }.Validate(true) != null, "шаг направляющих 50 — ошибка");
+        Ok(new FrameSettings { Cladding = "clinker", TileStepHCorner = 50 }.Validate(true) != null, "угловой шаг 50 — ошибка");
+        Ok(new FrameSettings { Cladding = "clinker", TileWhip = 100 }.Validate(true) != null, "хлыст 100 — ошибка");
+        Ok(new FrameSettings { Cladding = "clinker", Height = 0 }.Validate(true) != null,
+           "плитка по расчёту — высота здания нужна (как у всех)");
+        Ok(new FrameSettings { Cladding = "clinker", AxisStep = 10, RowStep = 80 }.Validate(false) == null,
+           "плитка без раскладки: шаг осей по швам не проверяется (осей по швам нет)");
+        Ok(tk.Describe(true).Contains("Шины") && tk.Describe(true).Contains("550") && tk.Describe(true).Contains("ШК-40") &&
+           tk.Describe(true).Contains("3000") && tk.TypeTitle == "Вертикальная под клинкерную плитку",
+           "плитка: описание (шины, шаг, марка, хлыст) и заголовок «" + tk.TypeTitle + "»");
         var tr2 = FrameSettings.FromDict(ser.DeserializeObject(ser.Serialize(tk.ToDict())) as Dictionary<string, object>);
-        Ok(tr2.Cladding == "clinker" && tr2.TileStepV == 700 && tr2.TileStepH == 550, "плитка: ToDict/FromDict");
+        Ok(tr2.Cladding == "clinker" && tr2.TileStepH == 550 && tr2.TileStepHCorner == 400 && tr2.TileWhip == 3000 &&
+           tr2.RailBrandClinker == "ШК-40" && tr2.RailBrandConcrete == "Б-2", "плитка: ToDict/FromDict");
         Ok(FrameSettings.FromDict(new Dictionary<string, object> { { "cladding", "дерево" } }).Cladding == "porcelain",
            "неизвестная облицовка в метке — керамогранит");
 
@@ -113,8 +129,15 @@ static class FrameUiCheck
         var sbad = new FrameSettings { AskFloors = false, FloorStep = 0 };
         sbad.SetSubType("interfloor");
         shots.Add(Tuple.Create("frame_error", sbad, true));
-        shots.Add(Tuple.Create("frame_tile", new FrameSettings { Cladding = "clinker" }, true));
-        shots.Add(Tuple.Create("frame_tile_nolayout", new FrameSettings { Cladding = "concrete", RowStep = 72 }, false));
+        var st1 = new FrameSettings { Cladding = "clinker", TileStepHCorner = 400 };
+        st1.RailBrand = "ШК-40 (клинкер)";
+        shots.Add(Tuple.Create("frame_tile", st1, true));
+        var st2 = new FrameSettings { Cladding = "concrete", RowStep = 72, Steps = "manual" };
+        st2.SetSubType("interfloor");
+        shots.Add(Tuple.Create("frame_tile_nolayout", st2, false));
+        var st3 = new FrameSettings { Cladding = "clinker" };
+        st3.SetSubType("ortho");
+        shots.Add(Tuple.Create("frame_tile_ortho", st3, true));
         foreach (var kv in shots)
         {
             using (var f = new FrameForm(kv.Item2, kv.Item3))

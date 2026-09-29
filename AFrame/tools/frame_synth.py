@@ -31,6 +31,16 @@
  F15 числа конечные, длины > 0;
  F16 «только кляммеры» по направляющим полной расстановки (parts=clamps,
      rails_fixed) дают те же кляммеры, что полная (23.09b).
+Плитка (Герман 29.09, ответ по №27) — отдельный проход со своим генератором
+случайных чисел (прежние сценарии не сдвигаются), те же F1–F15 плюс:
+ T1  вертикальные направляющие в [край+100, край−100] (кроме оконных у граней),
+     соседние оси не дальше max(шаг, угловой шаг)+50;
+ T2  хлысты: куски прогона стыкуются встык, все, кроме последнего, = хлыст;
+ T3  стартовая = горизонтальные кромки низа стены минус проёмы, концевая —
+     кромки верха минус проёмы (оракул shapely, ±1 мм на прогон);
+ T4  рядовая на отметке ряда = ширина стены на этой отметке минус проёмы
+     (ряды дальше 20 мм от кромок низа/верха);
+ T5  кляммеров нет; T6 сводка шин сходится со списком.
 Инварианты расчёта (frame_calc):
  K1  пиковая ветровая не убывает с высотой; местность A ≥ B ≥ C;
  K2  каждая проверка не убывает с нагрузкой (w0, высота, вес облицовки)
@@ -186,6 +196,108 @@ def _vseg(r):
 
 def _hseg(h):
     return LineString([(h["x0"], h["y"]), (h["x1"], h["y"])])
+
+
+TILE_SUBS = ["vertical_l", "interfloor", "ortho"]
+
+
+def make_tile_scenario(rng, fam, sub, idx):
+    """Тот же сценарий, облицовка — плитка: направляющие заданным шагом,
+    ряды шин — сетка клинкера/бетона (модуль 75–92), хлыст 2500."""
+    sc = make_scenario(rng, fam, sub, idx)
+    req = sc["req"]
+    step = float(rng.choice([400, 500, 600, 700]))
+    scc = float(rng.choice([0, 0, 300, 400]))
+    y0, y1 = Polygon(sc["outer"]).bounds[1], Polygon(sc["outer"]).bounds[3]
+    pitch = rng.choice([75.0, 88.0, 92.0])
+    ph = rng.uniform(0, pitch)
+    rows = [round(y0 + ph + k * pitch, 3) for k in range(1, int((y1 - y0) / pitch) + 1)
+            if y0 < y0 + ph + k * pitch < y1]
+    req.update({"cladding": rng.choice(["clinker", "concrete"]), "tile_step_x": step,
+                "tile_step_x_corner": scc, "tile_whip": 2500.0, "parts": "frame",
+                "tile_rail_brand": "ШК-%d" % idx, "rows_y": rows})
+    sc["tile"] = {"step": step, "sc": scc, "whip": 2500.0, "rows": rows}
+    sc["id"] = "tile-" + sc["id"]
+    return sc
+
+
+def _hedges_oracle(wall):
+    """Горизонтальные кромки стены: (LineString, 'низ'|'верх') по shapely."""
+    out = []
+    cs = list(wall.exterior.coords)
+    for (xa, ya), (xb, yb) in zip(cs, cs[1:]):
+        if abs(yb - ya) > 0.5 or abs(xb - xa) <= 1e-6:
+            continue
+        xm, ym = (xa + xb) / 2.0, (ya + yb) / 2.0
+        up = wall.contains(Point(xm, ym + 2.0))
+        dn = wall.contains(Point(xm, ym - 2.0))
+        if up != dn:
+            out.append((LineString([(xa, ym), (xb, ym)]), "низ" if up else "верх"))
+    return out
+
+
+def check_tile(sc, res):
+    """T1–T6 для плитки → список (код, текст)."""
+    bad = []
+    t = sc["tile"]
+    wall, ops = _geom(sc)
+    x0, y0, x1, y1 = wall.bounds
+    rails, hr = res["rails"], res.get("hrails") or []
+    boxes = [Polygon(h).bounds for h in sc["holes"]]
+    win_x = set()
+    for bx0, _by0, bx1, _by1 in boxes:
+        win_x |= {round(bx0 - 100.0, 1), round(bx1 + 100.0, 1)}
+    axes = sorted({round(r["x"], 1) for r in rails})
+    grid = [a for a in axes if a not in win_x]
+    for a in grid:
+        if a < x0 + 100.0 - T or a > x1 - 100.0 + T:
+            bad.append(("T1", "ось x=%.0f ближе 100 мм к краю зоны" % a))
+            break
+    lim = max(t["step"], t["sc"]) + 50.0 + T
+    for a, b in zip(axes, axes[1:]):
+        if b - a > lim and wall.intersection(LineString([((a + b) / 2.0, y0 - 1), ((a + b) / 2.0, y1 + 1)])).length > T:
+            bad.append(("T1", "между осями %.0f и %.0f пролёт %.0f > %.0f" % (a, b, b - a, lim)))
+            break
+    sh = [h for h in hr if h["kind"].startswith("шина")]
+    runs = defaultdict(list)
+    for h in sh:
+        runs[(h["kind"], h["run"])].append(h)
+    for key, ps in runs.items():
+        ps.sort(key=lambda h: h["x0"])
+        for a, b in zip(ps, ps[1:]):
+            if abs(a["x1"] - b["x0"]) > T or abs(a["y"] - b["y"]) > T:
+                bad.append(("T2", "прогон %s: куски не встык (%.0f / %.0f)" % (key, a["x1"], b["x0"])))
+                break
+        if any(abs(h["len"] - t["whip"]) > T for h in ps[:-1]) or ps[-1]["len"] > t["whip"] + T:
+            bad.append(("T2", "прогон %s: хлыст не %.0f" % (key, t["whip"])))
+    ops_u = unary_union([Polygon([(a, b), (c, b), (c, d), (a, d)]) for a, b, c, d in boxes]) if boxes else None
+    exp = {"низ": 0.0, "верх": 0.0}
+    for ln, side in _hedges_oracle(wall):
+        exp[side] += (ln.difference(ops_u) if ops_u is not None else ln).length
+    got_s = sum(h["len"] for h in sh if h["kind"] == "шина стартовая")
+    got_e = sum(h["len"] for h in sh if h["kind"] == "шина концевая")
+    if abs(got_s - exp["низ"]) > T * (1 + len(runs)):
+        bad.append(("T3", "стартовая %.0f мм, по кромкам низа %.0f" % (got_s, exp["низ"])))
+    if abs(got_e - exp["верх"]) > T * (1 + len(runs)):
+        bad.append(("T3", "концевая %.0f мм, по кромкам верха %.0f" % (got_e, exp["верх"])))
+    ey = [ln.coords[0][1] for ln, _s in _hedges_oracle(wall)]
+    for yy in t["rows"]:
+        if any(abs(yy - e) < 20.0 + T for e in ey):
+            continue
+        ln = LineString([(x0 - 1, yy), (x1 + 1, yy)]).intersection(wall)
+        if ops_u is not None:
+            ln = ln.difference(ops_u)
+        got = sum(h["len"] for h in sh if h["kind"] == "шина рядовая" and abs(h["y"] - yy) <= T)
+        if abs(got - ln.length) > 2 * T:
+            bad.append(("T4", "ряд y=%.0f: шин %.0f мм, стены без проёмов %.0f" % (yy, got, ln.length)))
+            break
+    if res["clamps"]:
+        bad.append(("T5", "у плитки %d кляммеров" % len(res["clamps"])))
+    sm = res["summary"]
+    if sm.get("shina_pieces") != len(sh) or abs(sm.get("shina_lm", -1) - sum(h["len"] for h in sh) / 1000.0) > 0.011 or \
+            sm.get("hguides") != len(hr) - len(sh):
+        bad.append(("T6", "сводка шин не сходится со списком"))
+    return bad
 
 
 def check_place(sc, res, step_max):
@@ -345,6 +457,8 @@ def run_scenario(sc, rng):
     if sc["sub"] == "vertical":
         step_max = max(float(su.get("bracket_step") or 0), float(su.get("bracket_step_corner") or 0)) or None
     viol += check_place(sc, res, step_max)
+    if sc.get("tile"):
+        viol += check_tile(sc, res)
     base = _canon(res)
     r2 = fre.run(_shifted(sc["req"], *SHIFT))
     if not r2.get("ok") or _diff(base, _canon(r2, *SHIFT)) > 0:
@@ -360,7 +474,7 @@ def run_scenario(sc, rng):
     q5 = json.loads(json.dumps(sc["req"]))
     q5["parts"] = "clamps"
     q5["rails_fixed"] = [{"x": r["x"], "y0": r["y0"], "y1": r["y1"]} for r in res["rails"]]
-    if q5["rails_fixed"]:
+    if q5["rails_fixed"] and not sc.get("tile"):      # у плитки кляммеров нет
         r5 = fre.run(q5)
         xs = [p[0] for p in sc["outer"]]
         a = Counter((round(c["x"], 3), round(c["y"], 3), c["kind"], c.get("orient")) for c in res["clamps"]
@@ -498,6 +612,29 @@ def main(argv):
     for fam in fams:
         print("  %-7s %s" % (fam, "  ".join("%-4d" % stats[fam][c] for c in codes_all)))
     for (fam, c), (sc, msgs) in sorted(first.items()):
+        print("  · %s %s: %s" % (c, sc["id"], "; ".join(msgs)))
+        if a.dump:
+            os.makedirs(a.dump, exist_ok=True)
+            with open(os.path.join(a.dump, "%s_%s.json" % (c, sc["id"])), "w", encoding="utf-8") as f:
+                json.dump(sc["req"], f, ensure_ascii=False)
+    # плитка (Герман 29.09): свой генератор — прежние сценарии не сдвигаются
+    rng_t = random.Random(a.seed + 2909)
+    tstats, tfirst, ttotal = Counter(), {}, 0
+    for fam in fams:
+        for sub in TILE_SUBS:
+            for i in range(n):
+                sc = make_tile_scenario(rng_t, fam, sub, i)
+                viol, dt, ne = run_scenario(sc, rng_t)
+                ttotal += 1
+                elems += ne
+                slow.append((dt, sc["id"], ne))
+                for c in Counter(c for c, _ in viol):
+                    tstats[c] += 1
+                    stats["плитка"][c] += 1
+                    if c not in tfirst:
+                        tfirst[c] = (sc, [m for cc, m in viol if cc == c][:3])
+    print("ПЛИТКА: сценариев %d, нарушений %s" % (ttotal, dict(tstats) or "нет"))
+    for c, (sc, msgs) in sorted(tfirst.items()):
         print("  · %s %s: %s" % (c, sc["id"], "; ".join(msgs)))
         if a.dump:
             os.makedirs(a.dump, exist_ok=True)

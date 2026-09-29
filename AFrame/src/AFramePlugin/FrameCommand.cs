@@ -39,6 +39,14 @@ namespace AFramePlugin
         // 26.09: горизонтальные шины под бетонную/клинкерную плитку — свой слой
         // (для спецификации отдельно от вертикальных профилей)
         private const string LayerTileRails = "_01_ПС_ШИНЫ";
+        // 29.09c (Герман): шины трёх видов — у каждого вида свой слой (выбор по слою,
+        // счёт для спецификации): стартовые по низу зоны, рядовые по швам, концевые по верху
+        private static readonly Dictionary<string, string> ShinaLayers = new Dictionary<string, string>
+        {
+            { "шина стартовая", "_01_ПС_ШИНЫ_СТАРТОВЫЕ" },
+            { "шина рядовая", "_01_ПС_ШИНЫ_РЯДОВЫЕ" },
+            { "шина концевая", "_01_ПС_ШИНЫ_КОНЦЕВЫЕ" },
+        };
         private const string SubsystemLayerPrefix = "_01_ПС_";   // 23.09n: область ATDEDUP
 
         private const string BlkMain = "AFRAME_КР_НЕСУЩИЙ";
@@ -390,15 +398,15 @@ namespace AFramePlugin
             //    шаги по расчёту/вручную (этап 4, 04.08 п.1–2), знаки ──
             bool interFloor = fs.InterFloor;
             bool ortho = fs.Ortho;
-            string subType = fs.EffSubType;   // у плитки — вертикальная
+            string subType = fs.EffSubType;   // 29.09c: у плитки — любой из трёх
             string sysName = fs.SysName;
-            string typKey = fs.TypeTitle + (fs.IsTile ? ", шины по рядам" : clampsOnly ? ", только кляммеры"
+            string typKey = fs.TypeTitle + (fs.IsTile ? ", шины" : clampsOnly ? ", только кляммеры"
                 : fs.Mode == "frame" ? ", без кляммеров" : "");
 
             // углы здания (фидбэк Германа 27.07): угловая зона (1500)
             // отсчитывается от УКАЗАННЫХ внешних углов; нет точек — по краям
             var cornersX = new List<object>();
-            if (fs.AskCorners && !clampsOnly && !fs.IsTile)
+            if (fs.AskCorners && !clampsOnly)   // 29.09c: у плитки углы тоже (шаг — по расчёту)
             {
                 while (true)
                 {
@@ -535,7 +543,11 @@ namespace AFramePlugin
             payload["cladding"] = fs.Cladding;
             if (fs.IsTile)
             {
+                // 29.09c (Герман): шаг направляющих (и в угловой зоне), хлыст и марка шины
                 payload["tile_step_x"] = fs.TileStepH;
+                if (fs.TileStepHCorner > 0) payload["tile_step_x_corner"] = fs.TileStepHCorner;
+                payload["tile_whip"] = fs.TileWhip;
+                payload["tile_rail_brand"] = fs.RailBrand.Trim();
                 if (fs.RowStep >= 50) payload["tile_row_step"] = fs.RowStep;   // зоны без раскладки
                 payload["parts"] = "frame";
             }
@@ -746,7 +758,7 @@ namespace AFramePlugin
 
                 // горизонтальные профили (НГП/ГП/СП межэтажной и
                 // ортогональной) — прямоугольники по оси
-                bool shinaLayer = false;
+                var shinaMade = new HashSet<string>();
                 if (hrails != null)
                     foreach (var ro in hrails)
                     {
@@ -755,19 +767,23 @@ namespace AFramePlugin
                         double y = ToD(Get(r, "y")),
                                hx0 = ToD(Get(r, "x0")),
                                hx1 = ToD(Get(r, "x1"));
-                        bool shina = SafeStr(Get(r, "kind")) == "шина";
+                        string hk = SafeStr(Get(r, "kind"));
+                        string shLayer;
+                        bool shina = ShinaLayers.TryGetValue(hk, out shLayer) || hk == "шина";
+                        if (shina && shLayer == null) shLayer = LayerTileRails;
+                        // 29.09c: стартовая — над линией низа зоны, концевая — под линией
+                        // верха (внутри зоны), рядовая и направляющие — по центру линии
+                        double ya = y - railW / 2, yb = y + railW / 2;
+                        if (hk == "шина стартовая") { ya = y; yb = y + railW; }
+                        else if (hk == "шина концевая") { ya = y - railW; yb = y; }
                         var pl = new Polyline();
-                        pl.AddVertexAt(0, new Point2d(hx0, y - railW / 2),
-                                       0, 0, 0);
-                        pl.AddVertexAt(1, new Point2d(hx1, y - railW / 2),
-                                       0, 0, 0);
-                        pl.AddVertexAt(2, new Point2d(hx1, y + railW / 2),
-                                       0, 0, 0);
-                        pl.AddVertexAt(3, new Point2d(hx0, y + railW / 2),
-                                       0, 0, 0);
+                        pl.AddVertexAt(0, new Point2d(hx0, ya), 0, 0, 0);
+                        pl.AddVertexAt(1, new Point2d(hx1, ya), 0, 0, 0);
+                        pl.AddVertexAt(2, new Point2d(hx1, yb), 0, 0, 0);
+                        pl.AddVertexAt(3, new Point2d(hx0, yb), 0, 0, 0);
                         pl.Closed = true;
-                        if (shina && !shinaLayer) { EnsureLayer(tr, db, LayerTileRails); shinaLayer = true; }
-                        pl.Layer = shina ? LayerTileRails : LayerRails;
+                        if (shina && shinaMade.Add(shLayer)) EnsureLayer(tr, db, shLayer);
+                        pl.Layer = shina ? shLayer : LayerRails;
                         ms.AppendEntity(pl);
                         tr.AddNewlyCreatedDBObject(pl, true);
                         Remember(handlesByRoot, partToRoot,
@@ -906,8 +922,11 @@ namespace AFramePlugin
                 SafeStr(Get(sum, "rails")) + " (" +
                 SafeStr(Get(sum, "rails_lm")) + " м.п., хлыстов ~" +
                 SafeStr(Get(sum, "rail_stock_est")) +
-                (fs.IsTile ? "), шин " : "), горизонтальных ") + SafeStr(Get(sum, "hrails")) +
-                " (" + SafeStr(Get(sum, "hrails_lm")) + " м.п.)" +
+                (fs.IsTile
+                    ? "), горизонтальных направляющих " + SafeStr(Get(sum, "hguides")) + " (" +
+                      SafeStr(Get(sum, "hguides_lm")) + " м.п.)"
+                    : "), горизонтальных " + SafeStr(Get(sum, "hrails")) + " (" +
+                      SafeStr(Get(sum, "hrails_lm")) + " м.п.)") +
                 ", кронштейнов несущих " +
                 SafeStr(Get(sum, "brackets_main")) +
                 " / рядовых " + SafeStr(Get(sum, "brackets_row")) +
@@ -917,6 +936,17 @@ namespace AFramePlugin
                 SafeStr(Get(sum, "clamps_combo")) + ", метизов " +
                 SafeStr(Get(sum, "fittings")) +
                 (erased > 0 ? "; прежних удалено " + erased : "") + ".");
+            if (fs.IsTile && sum != null)
+            {
+                // 29.09c (Герман): шины трёх видов, хлысты, марка — отдельной строкой
+                string br0 = SafeStr(Get(sum, "tile_rail_brand"));
+                ed.WriteMessage("\n  шины" + (br0.Length > 0 ? " «" + br0 + "»" : " (марка не задана)") +
+                    ": стартовые " + SafeStr(Get(sum, "shina_start_lm")) + " м.п., рядовые " +
+                    SafeStr(Get(sum, "shina_row_lm")) + " м.п., концевые " +
+                    SafeStr(Get(sum, "shina_end_lm")) + " м.п.; всего " + SafeStr(Get(sum, "shina_lm")) +
+                    " м.п. = хлыстов " + SafeStr(Get(sum, "shina_pieces")) + " (по " +
+                    F0(ToD(Get(sum, "tile_whip"))) + " мм от левого края, последний в прогоне короче).");
+            }
             PrintCalcReport(ed, Get(res, "calc_report")
                             as Dictionary<string, object>);
             PrintNotes(ed, Get(res, "notes") as object[]);

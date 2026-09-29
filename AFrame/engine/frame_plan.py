@@ -251,24 +251,165 @@ def _span_points(a, b, step):
     return [a + L * j / k for j in range(k + 1)]
 
 
-def _tile_axes(x0, x1, step, edge=100.0, tol=50.0):
-    """Оси стоек под бетонную/клинкерную плитку (Денис 26.09): НЕ по швам
-    облицовки, а стандартным шагом. Первая стойка — в edge (100 мм) от
-    левого края зоны (как краевая стойка и стойка у окна), дальше РОВНО
-    шагом (ручной шаг ставится буквально — Герман 04.08 п.1), последняя —
-    в edge от правого края, если до неё больше tol; короче шага выходит
-    только последний пролёт. Зона уже 2×edge — одна стойка посередине."""
+def _tile_axes(x0, x1, step, edge=100.0, tol=50.0, corners=None, czone=0.0,
+               step_corner=None):
+    """Оси вертикальных направляющих под бетонную/клинкерную плитку (Денис
+    26.09, Герман 29.09): НЕ по швам облицовки, а заданным шагом по
+    горизонтали. Первая — в edge (100 мм) от левого края зоны (как краевая и
+    оконная стойка), дальше РОВНО шагом (ручной шаг ставится буквально —
+    Герман 04.08 п.1), последняя — в edge от правого края, если до неё больше
+    tol; короче шага выходит только последний пролёт. Зона уже 2×edge — одна
+    ось посередине.
+
+    29.09c (Герман, ответ по №27 п.5: «шаг углов здания также может
+    меняться»): step_corner — шаг в УГЛОВОЙ зоне (0/None — как рядовой).
+    Угловая зона — czone от указанного угла внутрь (углы не указаны — от обоих
+    краёв зоны, как у кронштейнов). В угловой зоне оси идут ОТ УГЛА ровно
+    step_corner, в рядовой части — от её левой границы ровно step; граница
+    угловой зоны — общая ось, короче шага выходит только пролёт у границы."""
     a, b = x0 + edge, x1 - edge
     if b - a <= EPS:
         return [round((x0 + x1) / 2.0, 4)]
-    out = []
-    x = a
-    while x <= b + EPS:
-        out.append(x)
-        x += step
-    if b - out[-1] > tol:
-        out.append(b)
-    return [round(v, 4) for v in out]
+    sc = float(step_corner or 0.0)
+    segs = [(a, b, float(step), 1)]
+    if sc > EPS and abs(sc - step) > EPS and czone > EPS:
+        cz = []
+        if corners is None:
+            cz = [(x0, x0 + czone, 1), (x1 - czone, x1, -1)]
+        else:
+            for c in corners:
+                if c - x0 <= x1 - c:
+                    cz.append((c, c + czone, 1))
+                else:
+                    cz.append((c - czone, c, -1))
+        cz = sorted((max(lo, a), min(hi, b), d) for lo, hi, d in cz
+                    if min(hi, b) - max(lo, a) > EPS)
+        merged = []
+        for lo, hi, d in cz:
+            if merged and lo <= merged[-1][1] + EPS:
+                merged[-1] = (merged[-1][0], max(merged[-1][1], hi), merged[-1][2])
+            else:
+                merged.append((lo, hi, d))
+        segs, cur = [], a
+        for lo, hi, d in merged:
+            if lo - cur > EPS:
+                segs.append((cur, lo, float(step), 1))
+            segs.append((lo, hi, sc, d))
+            cur = hi
+        if b - cur > EPS:
+            segs.append((cur, b, float(step), 1))
+    pts = []                                # (x, приоритет: угловая зона выше)
+    for lo, hi, st, d in segs:
+        pr = 1 if abs(st - step) > EPS else 0
+        q = []
+        if d > 0:
+            x = lo
+            while x <= hi + EPS:
+                q.append(x)
+                x += st
+            if hi - q[-1] > tol:
+                q.append(hi)
+        else:
+            x = hi
+            while x >= lo - EPS:
+                q.append(x)
+                x -= st
+            if q[-1] - lo > tol:
+                q.append(lo)
+        pts += [(v, pr) for v in q]
+    out = []                                # общая граница / почти совпали —
+    for v, pr in sorted(pts):               # одна ось, угловая важнее
+        if out and v - out[-1][0] <= tol:
+            if pr > out[-1][1]:
+                out[-1] = (v, pr)
+            continue
+        out.append((v, pr))
+    return [round(float(v), 4) for v, _pr in out]
+
+
+SHINA_KINDS = ("шина стартовая", "шина рядовая", "шина концевая")
+
+
+def _pip_strict(poly, x, y):
+    """Точка строго внутри полигона (по вертикали x, без допуска)."""
+    return any(lo < y < hi for lo, hi in _vspans(poly, x))
+
+
+def _cut_boxes_h(segs, y, boxes):
+    """Горизонтальные интервалы на отметке y минус проёмы (по габариту)."""
+    for bx0, by0, bx1, by1 in boxes:
+        if by0 - EPS < y < by1 + EPS:
+            segs = [(sa2, sb2) for sa, sb in segs
+                    for sa2, sb2 in ((sa, min(sb, bx0)), (max(sa, bx1), sb))
+                    if sb2 - sa2 > EPS]
+    return segs
+
+
+def _tile_rails(outer, boxes, rows, whip, merge=20.0):
+    """Шины под бетонную/клинкерную плитку (Герман 29.09, ответ по №27 пп.1–2):
+    «Шины бывают трех видов: стартовая, рядовая и концевая. Стартовая шина
+    ставится внизу зоны, рядовая — по центру горизонтального шва, концевая —
+    по верхней границе зоны. Хлыст длиной два с половиной метра раскладывается
+    ровным шагом от левого края, последний пролет короче».
+
+    - стартовая — по каждой ГОРИЗОНТАЛЬНОЙ кромке контура, над которой стена
+      (низ зоны; у ступенчатой/Г-образной — на каждой ступени), концевая — по
+      каждой горизонтальной кромке, под которой стена (верх зоны); наклонные
+      кромки (фронтон) шину не получают — длина в ноте;
+    - рядовая — по центру каждого горизонтального шва (rows), по контуру стены;
+      ряд ближе merge к стартовой/концевой линии на том же участке не ставится;
+    - окна режут шину по габариту проёма;
+    - каждый прогон (кусок между краями стены и окнами) режется на хлысты whip
+      от ЛЕВОГО конца прогона, последний короче.
+
+    Возвращает (hrails, sloped_top_mm) — куски шин {y, x0, x1, len, kind, run}
+    и длину наклонных кромок верха без концевой шины."""
+    edges = []                               # (y, lo, hi, kind)
+    sloped = 0.0
+    n = len(outer)
+    for i in range(n):
+        (xa, ya), (xb, yb) = outer[i], outer[(i + 1) % n]
+        lo, hi = min(xa, xb), max(xa, xb)
+        if hi - lo <= EPS:
+            continue                         # вертикальная кромка
+        xm, ym = (xa + xb) / 2.0, (ya + yb) / 2.0
+        if abs(yb - ya) > 0.5:
+            # наклонная: верх зоны, если стена под ней
+            if _pip_strict(outer, xm, ym - 2.0) and not _pip_strict(outer, xm, ym + 2.0):
+                sloped += math.hypot(xb - xa, yb - ya)
+            continue
+        up = _pip_strict(outer, xm, ym + 2.0)
+        dn = _pip_strict(outer, xm, ym - 2.0)
+        if up and not dn:
+            edges.append((ym, lo, hi, "шина стартовая"))
+        elif dn and not up:
+            edges.append((ym, lo, hi, "шина концевая"))
+    lines = []                               # (y, [(sa, sb)], kind)
+    for ym, lo, hi, kind in edges:
+        lines.append((ym, _cut_boxes_h([(lo, hi)], ym, boxes), kind))
+    for yy in rows:
+        segs = list(_hspans(outer, yy))
+        for ey, lo, hi, _k in edges:
+            if abs(ey - yy) < merge:
+                # место занято стартовой/концевой на этом участке
+                segs = [(sa2, sb2) for sa, sb in segs
+                        for sa2, sb2 in ((sa, min(sb, lo)), (max(sa, hi), sb))
+                        if sb2 - sa2 > EPS]
+        lines.append((yy, _cut_boxes_h(segs, yy, boxes), "шина рядовая"))
+    out, run = [], 0
+    for yy, segs, kind in lines:
+        for sa, sb in sorted(segs):
+            if sb - sa <= EPS:
+                continue
+            run += 1
+            xq = sa
+            while sb - xq > EPS:
+                xe = min(xq + whip, sb)
+                out.append({"y": round(yy, 4), "x0": round(xq, 4),
+                            "x1": round(xe, 4), "len": round(xe - xq, 4),
+                            "kind": kind, "run": run})
+                xq = xe
+    return out, sloped
 
 
 def _zone_rail_axes(x0, x1, corners, czone, step_corner, step_main,
@@ -869,6 +1010,24 @@ def _clamps_on_rails(req, sub, system, joints, rows, floors, seam_tol=2.0):
                         "clamps_combo": sum(1 for q in clamps if q["kind"] == "комбинированный")}}
 
 
+def shina_summary(hrails):
+    """Счёт шин по видам (куски = хлысты) и горизонтальных направляющих
+    отдельно — у ортогональной под плиткой в hrails лежат и ГП, и шины."""
+    out = {}
+    for key, kind in (("shina_start", "шина стартовая"), ("shina_row", "шина рядовая"),
+                      ("shina_end", "шина концевая")):
+        hs = [h for h in hrails if h["kind"] == kind]
+        out[key] = len(hs)
+        out[key + "_lm"] = round(sum(h["len"] for h in hs) / 1000.0, 2)
+    sh = [h for h in hrails if h["kind"] in SHINA_KINDS]
+    gd = [h for h in hrails if h["kind"] not in SHINA_KINDS]
+    out["shina_pieces"] = len(sh)
+    out["shina_lm"] = round(sum(h["len"] for h in sh) / 1000.0, 2)
+    out["hguides"] = len(gd)
+    out["hguides_lm"] = round(sum(h["len"] for h in gd) / 1000.0, 2)
+    return out
+
+
 def frame_plan(req):
     try:
         system = load_system(req.get("system") or "Standart",
@@ -968,11 +1127,17 @@ def frame_plan(req):
     hrails, fittings = [], []
     # 26.09 (Денис): облицовка. Керамогранит/композит — как было (стойки по
     # швам раскладки, кляммеры). Бетонная/клинкерная плитка — подсистема БЕЗ
-    # привязки к вертикальным швам: вертикальные стойки стандартным шагом по
-    # горизонтали (tile_step_x), кронштейны на них шагом по вертикали
-    # (bracket_step, ручной — буквально), а по рядам плитки (rows_y —
-    # центры горизонтальных швов) — горизонтальные ШИНЫ, на которые вешается
-    # облицовка. Кляммеров у плитки нет.
+    # привязки к вертикальным швам: вертикальные направляющие заданным шагом
+    # по горизонтали (tile_step_x), на них — горизонтальные ШИНЫ, на которые
+    # вешается облицовка. Кляммеров у плитки нет.
+    # 29.09c (Герман, ответ по №27): у плитки ТЕ ЖЕ три типа подсистемы
+    # (вертикальная / межэтажная / ортогональная) — «разница только в том»,
+    # что вертикальные направляющие заданным шагом по горизонтали; кронштейны
+    # — по расчёту (или вручную), как у остальных облицовок; углы здания —
+    # как у всех (шаг угловой зоны — из расчёта; шаг направляющих в угловой
+    # зоне — tile_step_x_corner, 0 — как рядовой). Шины трёх видов (стартовая
+    # по низу, рядовые по центрам швов, концевая по верху), хлысты tile_whip
+    # (2500) от левого края прогона; марка шины — tile_rail_brand (от проекта).
     cladding = str(req.get("cladding") or "porcelain").strip().lower()
     if cladding not in ("porcelain", "composite", "concrete", "clinker"):
         return {"ok": False,
@@ -980,20 +1145,30 @@ def frame_plan(req):
                          "(получено %r)" % cladding}
     tile = cladding in ("concrete", "clinker")
     tile_step, tile_rows, tile_row_step = 0.0, [], 0.0
+    tile_step_c, tile_whip, tile_brand = 0.0, 2500.0, ""
     if tile:
-        try:
-            tile_step = float(req.get("tile_step_x") or 0.0)
-        except (TypeError, ValueError):
-            tile_step = 0.0
+        def _fnum(key, dflt):
+            try:
+                v = req.get(key)
+                return float(v) if v not in (None, "") else dflt
+            except (TypeError, ValueError):
+                return dflt
+        tile_step = _fnum("tile_step_x", 0.0)
         if tile_step < 100.0 - EPS:
             return {"ok": False,
-                    "error": "плитка: шаг стоек по горизонтали (tile_step_x) "
-                             "— не меньше 100 мм"}
-        sub = "vertical"
-        try:
-            tile_row_step = float(req.get("tile_row_step") or 0.0)
-        except (TypeError, ValueError):
-            tile_row_step = 0.0
+                    "error": "плитка: шаг вертикальных направляющих по горизонтали "
+                             "(tile_step_x) — не меньше 100 мм"}
+        tile_step_c = _fnum("tile_step_x_corner", 0.0)
+        if EPS < tile_step_c < 100.0 - EPS:
+            return {"ok": False,
+                    "error": "плитка: шаг направляющих в угловой зоне "
+                             "(tile_step_x_corner) — 0 (как рядовой) или от 100 мм"}
+        tile_whip = _fnum("tile_whip", 2500.0)
+        if tile_whip < 300.0 - EPS:
+            return {"ok": False,
+                    "error": "плитка: длина хлыста шины (tile_whip) — не меньше 300 мм"}
+        tile_brand = str(req.get("tile_rail_brand") or "").strip()
+        tile_row_step = _fnum("tile_row_step", 0.0)
         tile_rows = list(rows)
         rows = []            # кляммеров у плитки нет — ряды идут в шины
         mid_over = None      # стойки ровно шагом, без серединных
@@ -1033,9 +1208,14 @@ def frame_plan(req):
                      or None)
     calc_in = req.get("calc")
     if tile and calc_in is not None:
-        # у плитки шаги задаются вручную (стандартные) — расчёт не применяем
-        notes.append("плитка: шаги кронштейнов заданы вручную — расчёт не применяется")
-        calc_in = None
+        # 29.09c (Герман): у плитки кронштейны — по расчёту. Грузовая ширина
+        # направляющей = заданный шаг по горизонтали (оси ровные, крайний
+        # пролёт короче), в угловой зоне — свой шаг, если задан
+        calc_in = dict(calc_in or {})
+        if not calc_in.get("b"):
+            calc_in["b"] = tile_step
+        if not calc_in.get("b_corner"):
+            calc_in["b_corner"] = tile_step_c if tile_step_c > EPS else tile_step
     if rail_prof_req and calc_in is not None:
         cands = _USER_PROF.get(rail_prof_req)
         if cands:
@@ -1046,7 +1226,7 @@ def frame_plan(req):
                     "сечения ГП-60-40 нет в расчётном справочнике — "
                     "несущая способность посчитана по ГП-40-40 "
                     "(в запас); нужны характеристики профиля")
-    if calc_in is not None:
+    if calc_in is not None and not tile:
         # 24.09 (независимая рецензия): грузовая ширина бралась медианой
         # ИСХОДНЫХ осей раскладки, а стойки потом достраивались (серединные
         # при пролёте > mid_rail_over). Оси 100/200/300/400/1600/2800 →
@@ -1063,6 +1243,7 @@ def frame_plan(req):
                 notes.append("грузовая ширина для расчёта %.0f мм — максимальная по "
                              "итоговым осям стоек (медиана исходных осей %.0f)"
                              % (b_fact, b_med))
+    if calc_in is not None:
         calc_rep, cerr, csteps = _apply_calc(
             calc_in or {}, system, sub, joints, floors,
             floor_step, corners)
@@ -1096,11 +1277,13 @@ def frame_plan(req):
             if ha < (hb[2] - hb[0]) * (hb[3] - hb[1]) * (1.0 - 1e-6):
                 notes.append("проём %d не прямоугольный — подсистема обходит его по "
                              "габариту %.0f×%.0f" % (hi + 1, hb[2] - hb[0], hb[3] - hb[1]))
+        tile_hr, tile_notes = [], []
         if tile:
-            # стойки — стандартным шагом от края зоны (оси раскладки не нужны);
-            # у окон вертикальная ветка сама ставит стойки у каждой грани
-            joints = _tile_axes(x0, x1, tile_step, edge_rail)
-            n_sh, n_rows = 0, 0
+            # вертикальные направляющие — заданным шагом от края зоны (оси
+            # раскладки не нужны), в угловых зонах — свой шаг; у окон ветки
+            # типов сами ставят направляющие у граней, как у керамогранита
+            joints = _tile_axes(x0, x1, tile_step, edge_rail, corners=corners,
+                                czone=corner_zone, step_corner=tile_step_c)
             rows_c = [r for r in tile_rows if y0 + EPS < r < y1 - EPS]
             if not rows_c and tile_row_step >= 50.0:
                 # раскладки у зоны нет — ряды шагом швов от низа зоны
@@ -1108,31 +1291,25 @@ def frame_plan(req):
                 while y0 + k * tile_row_step < y1 - EPS:
                     rows_c.append(y0 + k * tile_row_step)
                     k += 1
-            for yy in rows_c:
-                if yy <= y0 + EPS or yy >= y1 - EPS:
-                    continue
-                segs = list(_hspans(outer, yy))
-                for bx0, by0, bx1, by1 in hole_boxes:
-                    if by0 - EPS < yy < by1 + EPS:
-                        segs = [(sa2, sb2) for sa, sb in segs
-                                for sa2, sb2 in ((sa, min(sb, bx0)), (max(sa, bx1), sb))
-                                if sb2 - sa2 > EPS]
-                got = False
-                for sa, sb in segs:
-                    if sb - sa <= EPS:
-                        continue
-                    hrails.append({"y": round(yy, 4), "x0": round(sa, 4),
-                                   "x1": round(sb, 4), "len": round(sb - sa, 4),
-                                   "kind": "шина"})
-                    n_sh += 1
-                    got = True
-                n_rows += 1 if got else 0
-            notes.append("контур %d: плитка — стоек %d шагом %.0f мм от края зоны "
-                         "(не по швам), шин %d на %d рядах" %
-                         (ci + 1, len(joints), tile_step, n_sh, n_rows))
+            tile_hr, sloped = _tile_rails(outer, hole_boxes, rows_c, tile_whip)
+            def _rl(kind):
+                hs = [h for h in tile_hr if h["kind"] == kind]
+                return len(set(h["run"] for h in hs)), sum(h["len"] for h in hs) / 1000.0
+            (rs, ls), (rr, lr), (re_, le) = [_rl(k2) for k2 in SHINA_KINDS]
+            tile_notes.append(
+                "контур %d: плитка — вертикальных направляющих %d шагом %.0f мм от края "
+                "зоны (не по швам)%s; шины: стартовых прогонов %d (%.1f м), рядовых %d "
+                "(%.1f м), концевых %d (%.1f м) — хлыстов %d по %.0f мм (последний в "
+                "прогоне короче)" %
+                (ci + 1, len(joints), tile_step,
+                 (", в угловых зонах %.0f" % tile_step_c) if tile_step_c > EPS else "",
+                 rs, ls, rr, lr, re_, le, len(tile_hr), tile_whip))
+            if sloped > 100.0:
+                tile_notes.append("контур %d: верх зоны наклонный на %.1f м — концевая шина "
+                                  "на наклонных участках не ставится" % (ci + 1, sloped / 1000.0))
             if not rows_c:
-                notes.append("контур %d: у плитки нет рядов (нет раскладки ATTILE и шага "
-                             "швов) — шины не поставлены" % (ci + 1))
+                tile_notes.append("контур %d: у плитки нет рядов (нет раскладки ATTILE и шага "
+                                  "швов) — только стартовая и концевая шины" % (ci + 1))
         wedges = _win_edges(hole_boxes,
                             [j for j in joints if x0 - EPS <= j <= x1 + EPS],
                             edge_off)
@@ -1151,6 +1328,12 @@ def frame_plan(req):
                 notes.append(
                     "контур %d: перекрытия автоматически шагом %.0f "
                     "(%d шт)" % (ci + 1, floor_step, len(floors_c)))
+
+        if tile and not (sub == "interfloor" and not floors_c):
+            # межэтажная без отметок пропускает контур целиком (нота ниже) —
+            # шины без направляющих не выдаём
+            hrails.extend(tile_hr)
+            notes.extend(tile_notes)
 
         # ── МЕЖЭТАЖНАЯ (ТЗ 26.07 §2) ──
         if sub == "interfloor":
@@ -1572,7 +1755,7 @@ def frame_plan(req):
         # Включается наличием указанных углов (corners_x) или явным
         # rail_step_corner; совпавшие с рустом ближе 50 мм отбрасываем,
         # чтобы не получить сдвоенный профиль.
-        if corners is not None or rail_step_corner:
+        if (corners is not None or rail_step_corner) and not tile:
             extra = _zone_rail_axes(x0, x1, corners, corner_zone,
                                     rail_step_corner, rail_step_main,
                                     edge_rail_off)
@@ -1811,7 +1994,8 @@ def frame_plan(req):
     for r in rails:
         r["profile"] = _pm.get(r["kind"], r["kind"])
     for r in hrails:
-        r["profile"] = r["kind"]
+        r["profile"] = (tile_brand if tile_brand and r["kind"] in SHINA_KINDS
+                        else r["kind"])
     lm = sum(r["len"] for r in rails) / 1000.0
     hlm = sum(r["len"] for r in hrails) / 1000.0
     system_used = {k: v for k, v in system.items()
@@ -1840,6 +2024,11 @@ def frame_plan(req):
                             if cl["kind"] == "комбинированный"),
     }
     summary["parts"] = parts
+    summary["cladding"] = cladding
+    if tile:
+        summary.update(shina_summary(hrails))
+        summary["tile_whip"] = tile_whip
+        summary["tile_rail_brand"] = tile_brand
     if parts == "clamps":
         notes.append("только кляммеры по РАСЧЁТНЫМ осям (существующие направляющие "
                      "не переданы) — подсистема не выдаётся")

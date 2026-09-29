@@ -134,24 +134,32 @@ class TestFrameEngine(unittest.TestCase):
         self.assertEqual(res["summary"]["rails"], 1)
 
     def test_tile_cladding_passes_through_zones(self):
-        """26.09 (Денис): облицовка «клинкер» и шаг стоек доходят до каждой
-        зоны (ГРАБЛЯ-13): стойки шагом, а не по своим швам зоны; шины по
-        рядам зоны; кляммеров нет."""
+        """26.09 (Денис) / 29.09c (Герман): облицовка «клинкер», шаг
+        направляющих, угловой шаг, хлыст и марка шины доходят до каждой зоны
+        (ГРАБЛЯ-13): направляющие шагом, а не по своим швам зоны; шины трёх
+        видов по рядам зоны; кляммеров нет; итог — шины по видам."""
         res = fe.run({
             "op": "frame", "sub_type": "vertical", "parts": "frame",
             "system": {"name": "Standart", "bracket_step": 600,
                        "bracket_step_corner": 600},
             "exact_step": True, "cladding": "clinker", "tile_step_x": 600,
+            "tile_step_x_corner": 300, "corners_x": [0], "tile_whip": 1500,
+            "tile_rail_brand": "ШК-1",
             "contours": [{"id": "A", "pts": rect(0, 0, 2000, 1500),
                           "joints_x": [130 * k for k in range(1, 15)],
                           "rows_y": [72 * k for k in range(1, 20)]}]})
         self.assertTrue(res["ok"], res)
         xs = sorted(set(r["x"] for r in res["rails"]))
-        self.assertEqual(xs, [100.0, 700.0, 1300.0, 1900.0])
-        self.assertEqual(len(res["hrails"]), 19)
-        self.assertTrue(all(h["kind"] == "шина" and h["zone"] == "контур A"
-                            for h in res["hrails"]))
+        self.assertEqual(xs, [100.0, 400.0, 700.0, 1000.0, 1300.0, 1500.0, 1900.0])
+        # 19 рядов + стартовая + концевая, каждый прогон 2000 = 1500 + 500
+        self.assertEqual(len(res["hrails"]), 42)
+        self.assertTrue(all(h["kind"].startswith("шина") and h["zone"] == "контур A" and
+                            h["profile"] == "ШК-1" for h in res["hrails"]))
         self.assertEqual(len(res["clamps"]), 0)
+        sm = res["summary"]
+        self.assertEqual((sm["shina_start"], sm["shina_row"], sm["shina_end"]), (2, 38, 2))
+        self.assertEqual(sm["tile_rail_brand"], "ШК-1")
+        self.assertEqual(sm["hguides"], 0)
 
 
 if __name__ == "__main__":
