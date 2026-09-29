@@ -64,6 +64,9 @@ namespace AFacadesPlugin
 
             var ser = new JavaScriptSerializer { MaxJsonLength = int.MaxValue };
             var zones = new List<Dictionary<string, object>>();
+            // 29.09 (Герман): парапеты ATFZONE — данные в метке их марки
+            var parapets = new List<Dictionary<string, object>>();
+            var seenP = new HashSet<string>();
             var seen = new HashSet<string>();
             var stale = new List<string>();
             int noData = 0;
@@ -74,6 +77,14 @@ namespace AFacadesPlugin
                     var ent = tr.GetObject(so.ObjectId, OpenMode.ForRead)
                               as Entity;
                     if (ent == null) continue;
+                    string pj = ZoneCommand.ReadZoneData(tr, ent, ZoneCommand.ParapetKey);
+                    if (pj != null)
+                    {
+                        var pd = ser.DeserializeObject(pj) as Dictionary<string, object>;
+                        string pid = ZoneCommand.SafeStr(ZoneCommand.Get(pd, "id"));
+                        if (pd != null && seenP.Add(pid)) parapets.Add(pd);
+                        continue;
+                    }
                     string json = ZoneCommand.ReadZoneData(tr, ent);
                     if (json == null) { noData++; continue; }
                     var z = ser.DeserializeObject(json)
@@ -112,7 +123,7 @@ namespace AFacadesPlugin
             foreach (var z in zones)
                 if (stale.Contains(ZoneCommand.SafeStr(ZoneCommand.Get(z, "zone_id"))))
                     z["stale"] = true;
-            if (zones.Count == 0)
+            if (zones.Count == 0 && parapets.Count == 0)
             {
                 ed.WriteMessage("\nВ выборке нет объектов с данными зон " +
                     "(нужны штриховки/марки, созданные ATFZONE)." +
@@ -176,15 +187,16 @@ namespace AFacadesPlugin
                     var btr = (BlockTableRecord)tr.GetObject(
                         SymbolUtilityServices.GetBlockModelSpaceId(db),
                         OpenMode.ForWrite);
-                    ZoneCommand.InsertTable(tr, db, btr, ppr.Value, zones,
+                    ZoneCommand.InsertTable(tr, db, btr, ppr.Value, zones, parapets,
                                             textH);
                     tr.Commit();
                 }
             }
             if (toXls)
-                ExportXlsx(ed, db, zones);
+                ExportXlsx(ed, db, zones, parapets);
 
-            ed.WriteMessage("\nATFTABLE: строк " + zones.Count + "." +
+            ed.WriteMessage("\nATFTABLE: строк " + zones.Count +
+                (parapets.Count > 0 ? ", парапетов " + parapets.Count : "") + "." +
                 (noData > 0 ? " Пропущено объектов без данных: " + noData + "."
                             : ""));
             if (stale.Count > 0)
@@ -202,9 +214,10 @@ namespace AFacadesPlugin
             return int.MaxValue;
         }
 
-        // ── выгрузка ведомости в .xlsx ──
+        // ── выгрузка ведомости в .xlsx (29.09: те же колонки, что в чертеже — ZoneTable) ──
         private static void ExportXlsx(Editor ed, Database db,
-            List<Dictionary<string, object>> zones)
+            List<Dictionary<string, object>> zones,
+            List<Dictionary<string, object>> parapets)
         {
             try
             {
@@ -221,42 +234,44 @@ namespace AFacadesPlugin
                 };
                 if (sfd.ShowDialog() !=
                     System.Windows.Forms.DialogResult.OK) return;
-
-                var rows = new List<object[]>
-                {
-                    new object[] { "Марка", "Облицовка", "S участка, м²",
-                                   "S проёмов, м²", "S облицовки, м²",
-                                   "Отливы, м.п.", "Откосы, м.п." }
-                };
-                double tG = 0, tO = 0, tN = 0, tS = 0, tJ = 0;
-                foreach (var z in zones)
-                {
-                    var rep = ZoneCommand.Get(z, "report")
-                              as Dictionary<string, object>;
-                    double g = D(rep, "area_outer_m2"),
-                           o = D(rep, "openings_total_m2"),
-                           n = D(rep, "area_net_m2"),
-                           s = D(rep, "sills_total_m"),
-                           j = D(rep, "jambs_total_m");
-                    tG += g; tO += o; tN += n; tS += s; tJ += j;
-                    rows.Add(new object[]
-                    {
-                        ZoneCommand.SafeStr(ZoneCommand.Get(z, "zone_id")),
-                        ZoneCommand.SafeStr(ZoneCommand.Get(z, "cladding")),
-                        Math.Round(g, 3), Math.Round(o, 3), Math.Round(n, 3),
-                        Math.Round(s, 3), Math.Round(j, 3),
-                    });
-                }
-                rows.Add(new object[] { "ИТОГО", "", Math.Round(tG, 3),
-                                        Math.Round(tO, 3), Math.Round(tN, 3),
-                                        Math.Round(tS, 3), Math.Round(tJ, 3) });
-                XlsxWriter.Write(sfd.FileName, "Ведомость зон", rows);
+                XlsxWriter.Write(sfd.FileName, "Ведомость зон", XlsxRows(zones, parapets));
                 ed.WriteMessage("\nВедомость выгружена: " + sfd.FileName);
             }
             catch (System.Exception ex)
             {
                 ed.WriteMessage("\nExcel не записан: " + ex.Message);
             }
+        }
+
+        internal static List<object[]> XlsxRows(List<Dictionary<string, object>> zones,
+                                               List<Dictionary<string, object>> parapets)
+        {
+            var rows = new List<object[]> { ZoneTable.Group, ZoneTable.Sub };
+            foreach (var r in ZoneTable.ZoneRows(zones,
+                         z => ZoneCommand.SafeStr(ZoneCommand.Get(z, "zone_id")),
+                         z => ZoneCommand.SafeStr(ZoneCommand.Get(z, "cladding"))))
+                rows.Add(Numeric(r, 2));
+            var pr = ZoneTable.ParapetRows(parapets);
+            if (pr.Count > 0)
+            {
+                rows.Add(new object[] { "" });
+                rows.Add(ZoneTable.ParapetHead);
+                foreach (var r in pr) rows.Add(Numeric(r, 1));
+            }
+            return rows;
+        }
+
+        // числа — числами (Excel считает суммы сам), подписи — текстом
+        private static object[] Numeric(string[] r, int from)
+        {
+            var o = new object[r.Length];
+            for (int i = 0; i < r.Length; i++)
+            {
+                double v;
+                o[i] = i >= from && double.TryParse(r[i], NumberStyles.Float, CultureInfo.InvariantCulture, out v)
+                       ? (object)v : r[i];
+            }
+            return o;
         }
 
         private static double D(Dictionary<string, object> d, string key)

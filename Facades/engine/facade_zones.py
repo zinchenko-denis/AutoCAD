@@ -665,8 +665,9 @@ def _has_errors(issues):
 
 # ------------------------------------------------- кромки проёмов (отлив/откос)
 
-def _opening_edges_mm(zone, opening, outer_pts_mm, tol=GEO_TOL):
-    """Разложить периметр проёма по типам кромок (все длины в мм).
+def _opening_pieces_mm(zone, opening, outer_pts_mm, tol=GEO_TOL):
+    """Периметр проёма кусками по типам кромок (мм), В ПОРЯДКЕ ОБХОДА CCW:
+    [(класс, (x,y), (x,y), длина)], класс — bottom | top | sides | boundary.
 
     bottom — низ проёма (отлив), top — верх (откос+отсечка), sides — бока
     (откос+отсечка), boundary — кромки, лежащие НА границе зоны (дверь до
@@ -676,9 +677,11 @@ def _opening_edges_mm(zone, opening, outer_pts_mm, tol=GEO_TOL):
     слева, поэтому сегмент вправо (|dy|<=|dx|, dx>0) — нижняя кромка,
     влево — верхняя, остальное — бока. Дуги классифицируются мини-хордами
     полигонизации (арочный верх уходит в top/sides по фактическим наклонам).
+    29.09 (ATFZONE, просьба Германа): куски нужны с геометрией — по ним
+    рисуются откосы, отливы и примыкания; суммы _opening_edges_mm — из них же.
     """
     k = zone.to_mm()
-    out = {"bottom": 0.0, "top": 0.0, "sides": 0.0, "boundary": 0.0}
+    out = []
     for p1, p2, b in opening.poly.segments():
         if abs(b) > EPS:
             chain = [p1] + _arc_points(p1, p2, b, CHORD_TOL / k) + [p2]
@@ -709,21 +712,90 @@ def _opening_edges_mm(zone, opening, outer_pts_mm, tol=GEO_TOL):
             if (_on_boundary(a, outer_pts_mm, tol) and
                     _on_boundary(c, outer_pts_mm, tol) and
                     _on_boundary(mid, outer_pts_mm, tol)):
-                out["boundary"] += L
+                out.append(("boundary", a, c, L))
                 continue
             dx, dy = c[0] - a[0], c[1] - a[1]
             hv = "bottom" if dx > 0 else "top"
             # 23.09 (ревью): хорда дуги РОВНО под 45° (у круглых/арочных окон
             # середина четверти) падала то в низ/верх, то в бок в зависимости
             # от положения окна на чертеже (шум double) — отлив/откос круглого
-            # окна «гулял» до 17 см при сдвиге чертежа. Ничья — пополам.
+            # окна «гулял» до 17 см при сдвиге чертежа. Ничья — пополам
+            # (первая половина хорды — низ/верх, вторая — бок).
             if abs(abs(dy) - abs(dx)) <= 1e-7 * L:
-                out[hv] += 0.5 * L
-                out["sides"] += 0.5 * L
+                out.append((hv, a, mid, 0.5 * L))
+                out.append(("sides", mid, c, 0.5 * L))
             elif abs(dy) < abs(dx):
-                out[hv] += L
+                out.append((hv, a, c, L))
             else:
-                out["sides"] += L
+                out.append(("sides", a, c, L))
+    return out
+
+
+def _opening_edges_mm(zone, opening, outer_pts_mm, tol=GEO_TOL):
+    """Длины кромок проёма по типам (мм): bottom / top / sides / boundary."""
+    out = {"bottom": 0.0, "top": 0.0, "sides": 0.0, "boundary": 0.0}
+    for cls, _a, _c, L in _opening_pieces_mm(zone, opening, outer_pts_mm, tol):
+        out[cls] += L
+    return out
+
+
+# 29.09 (ATFZONE, просьба Германа): типы проёмов и что по их кромкам считается и
+# рисуется. Окно — откосы (верх+бока) и отлив (низ); дверь — откосы (бока+верх),
+# низ — порог, не считается; витраж — примыкания боковые, верхнее, нижнее.
+# Кромка на границе зоны — нигде (как и раньше). Прочие типы (no_facade,
+# произвольные) — как окно (прежнее поведение: все проёмы были окнами).
+OPENING_KINDS = ("window", "vitrage", "door")
+_KIND_CATS = {
+    "window": {"bottom": "window_sill", "top": "window_slope", "sides": "window_slope"},
+    "door": {"top": "door_slope", "sides": "door_slope"},
+    "vitrage": {"bottom": "vitrage_bottom", "top": "vitrage_top", "sides": "vitrage_side"},
+}
+LINE_CATS = ("window_slope", "window_sill", "door_slope",
+             "vitrage_side", "vitrage_top", "vitrage_bottom")
+
+
+def _kind_of(opening):
+    kd = str(opening.kind or "window").strip().lower()
+    return kd if kd in _KIND_CATS else "window"
+
+
+def opening_lines(zone, opening, outer_pts_mm, tol=GEO_TOL):
+    """Линии исполнительной схемы по кромкам проёма (29.09, просьба Германа):
+    [{"cat": window_slope|window_sill|door_slope|vitrage_side|vitrage_top|
+    vitrage_bottom, "pts": [[x,y],...] (единицы зоны), "len_m"}]. Соседние
+    куски одной категории сливаются в одну полилинию (у окна верх и бока — одна
+    П-образная линия откосов), в том числе через начало обхода; кромки на
+    границе зоны и порог двери линий не дают."""
+    k = zone.to_mm()
+    cats = _KIND_CATS[_kind_of(opening)]
+    chains = []                         # [cat, [pts], L]
+    for cls, a, c, L in _opening_pieces_mm(zone, opening, outer_pts_mm, tol):
+        cat = cats.get(cls)
+        if cat is None:
+            chains.append([None, None, 0.0])       # разрыв (граница зоны / порог)
+            continue
+        last = chains[-1] if chains else None
+        if last and last[0] == cat and _dist(last[1][-1], a) <= tol:
+            last[1].append(c)
+            last[2] += L
+        else:
+            chains.append([cat, [a, c], L])
+    chains = [ch for ch in chains]
+    # через начало обхода: последняя и первая цепочки одной категории встык
+    real = [i for i, ch in enumerate(chains) if ch[0] is not None]
+    if len(real) >= 2:
+        f, l = chains[real[0]], chains[real[-1]]
+        if real[0] == 0 and real[-1] == len(chains) - 1 and f[0] == l[0] and \
+                _dist(l[1][-1], f[1][0]) <= tol:
+            l[1].extend(f[1][1:])
+            l[2] += f[2]
+            chains[real[0]] = [None, None, 0.0]
+    out = []
+    for cat, pts, L in chains:
+        if cat is None or L < 1.0:
+            continue
+        out.append({"cat": cat, "pts": [[p[0] / k, p[1] / k] for p in pts],
+                    "len_m": L / 1e3})
     return out
 
 
@@ -775,6 +847,11 @@ def zone_report(zone, issues=None):
     a_ops = 0.0
     p_ops = 0.0
     sills = jambs = on_bnd = 0.0
+    # 29.09 (ATFZONE, просьба Германа): по типам проёмов — штуки, площади и
+    # погонаж по категориям кромок (окно: откосы/отлив; дверь: откосы, низ —
+    # порог; витраж: примыкания бок/верх/низ)
+    by_kind = dict((kd, {"count": 0, "area_m2": 0.0}) for kd in OPENING_KINDS)
+    lens = dict((c, 0.0) for c in LINE_CATS)
     for o in zone.openings:
         a = abs(o.poly.signed_area()) * k * k / 1e6
         p = o.poly.perimeter() * k / 1e3
@@ -784,8 +861,18 @@ def zone_report(zone, issues=None):
         edges = {"bottom_m": e["bottom"] / 1e3, "top_m": e["top"] / 1e3,
                  "sides_m": e["sides"] / 1e3,
                  "on_boundary_m": e["boundary"] / 1e3}
-        sills += edges["bottom_m"]
-        jambs += edges["top_m"] + edges["sides_m"]
+        kd = _kind_of(o)
+        by_kind[kd]["count"] += 1
+        by_kind[kd]["area_m2"] += a
+        for cls, key in (("bottom", "bottom_m"), ("top", "top_m"), ("sides", "sides_m")):
+            cat = _KIND_CATS[kd].get(cls)
+            if cat:
+                lens[cat] += edges[key]
+        if kd == "window":
+            sills += edges["bottom_m"]
+            jambs += edges["top_m"] + edges["sides_m"]
+        elif kd == "door":
+            jambs += edges["top_m"] + edges["sides_m"]
         on_bnd += edges["on_boundary_m"]
         ops.append({"id": o.id, "kind": o.kind,
                     "area_m2": a, "perimeter_m": p, "edges": edges})
@@ -806,8 +893,59 @@ def zone_report(zone, issues=None):
         "sills_total_m": sills,
         "jambs_total_m": jambs,
         "on_boundary_total_m": on_bnd,
+        # 29.09: по типам проёмов (отливы = низ ОКОН, откосы = верх+бока окон и дверей)
+        "window_count": by_kind["window"]["count"],
+        "window_area_m2": by_kind["window"]["area_m2"],
+        "vitrage_count": by_kind["vitrage"]["count"],
+        "vitrage_area_m2": by_kind["vitrage"]["area_m2"],
+        "door_count": by_kind["door"]["count"],
+        "door_area_m2": by_kind["door"]["area_m2"],
+        "window_sills_m": lens["window_sill"],
+        "window_slopes_m": lens["window_slope"],
+        "door_slopes_m": lens["door_slope"],
+        "vitrage_side_m": lens["vitrage_side"],
+        "vitrage_top_m": lens["vitrage_top"],
+        "vitrage_bottom_m": lens["vitrage_bottom"],
         "warnings": [i.as_dict() for i in issues if i.level == "warning"],
     }
+
+
+def parapet_report(contour, zone_outers_mm=(), units="mm"):
+    """Зона парапета (29.09, просьба Германа: «выбор пользователю зоны парапета и
+    отрисовать её полилинией»): площадь, периметр, длина по верху (горизонтальные
+    кромки, над которыми парапета нет — под крышку/отлив), ширина по габариту;
+    точка марки — правый верхний угол. Наложение на зону облицовки —
+    предупреждение (площадь могла быть посчитана и там).
+    contour: {"id", "pts", "bulges"?}; zone_outers_mm — полигоны зон (мм)."""
+    k = _UNIT_TO_MM.get(units, 1.0)
+    cid = str(contour.get("id", "?"))
+    poly = Poly(contour.get("pts") or [], contour.get("bulges"))
+    if poly.n() < 3:
+        raise ZoneFormatError("парапет %s: меньше 3 вершин" % cid)
+    pts_mm = [(p[0] * k, p[1] * k) for p in poly.polygonized(CHORD_TOL / k)]
+    if _self_intersections(pts_mm):
+        raise ZoneFormatError("парапет %s: контур самопересекается" % cid)
+    area = abs(poly.signed_area()) * k * k / 1e6
+    top = 0.0
+    n = len(pts_mm)
+    for i in range(n):
+        a, c = pts_mm[i], pts_mm[(i + 1) % n]
+        if abs(c[1] - a[1]) > GEO_TOL or abs(c[0] - a[0]) <= GEO_TOL:
+            continue
+        mx, my = (a[0] + c[0]) / 2.0, (a[1] + c[1]) / 2.0
+        if _pip((mx, my - 2.0), pts_mm) and not _pip((mx, my + 2.0), pts_mm):
+            top += abs(c[0] - a[0])
+    xs = [p[0] for p in pts_mm]
+    warns = []
+    for zi, zp in enumerate(zone_outers_mm or ()):
+        if _interiors_overlap(pts_mm, zp) or _contains(zp, pts_mm) or _contains(pts_mm, zp):
+            warns.append("парапет накладывается на зону облицовки — его площадь могла быть "
+                         "посчитана и в зоне")
+            break
+    la = label_anchor(pts_mm, GEO_TOL)
+    return {"id": cid, "area_m2": area, "perimeter_m": poly.perimeter() * k / 1e3,
+            "top_m": top / 1e3, "width_m": (max(xs) - min(xs)) / 1e3,
+            "label_pt": [la[0] / k, la[1] / k], "warnings": warns}
 
 
 def report_text(rep):
@@ -884,7 +1022,7 @@ def zone_dims(zone):
 # ------------------------------------ группировка контуров (ручной режим)
 
 def build_zones_from_contours(contours, cladding="", zone_prefix="Z-",
-                              start_index=1, units="mm", source=None):
+                              start_index=1, units="mm", source=None, kinds=None):
     """Плоский список контуров (из C#-выбора) -> зоны по вложенности.
 
     contours: [{"id": любое, "pts": [[x,y],...], "bulges": [...]?}, ...]
@@ -894,6 +1032,8 @@ def build_zones_from_contours(contours, cladding="", zone_prefix="Z-",
     Возвращает (zone_dicts, issues): zone_dicts — список dict facade_zone/1
     (нумерация zone_prefix+N от start_index, в порядке убывания площади),
     issues — глобальные проблемы разбора контуров (Issue).
+    kinds — {id контура: window|vitrage|door} (29.09, выбор в ATFZONE; нет в
+    словаре — окно); тип у контура верхнего уровня (зоны) — предупреждение.
     """
     if units not in _UNIT_TO_MM:
         raise ZoneFormatError("units: только mm|m")
@@ -1054,6 +1194,13 @@ def build_zones_from_contours(contours, cladding="", zone_prefix="Z-",
         zones = [i for r in rows
                  for i in sorted(r, key=lambda i: -bbs[i][2])]
 
+    for zi in zones:
+        cid0 = parsed[zi][0]
+        if (kinds or {}).get(cid0) in ("vitrage", "door"):
+            issues.append(_warn(
+                "W_KIND_ON_ZONE", "contour:%s" % cid0,
+                "контур выбран как %s, но это внешний контур зоны (не проём) — тип не "
+                "применён" % ("витраж" if kinds[cid0] == "vitrage" else "дверь")))
     zone_dicts = []
     num = start_index
     for zi in zones:
@@ -1075,8 +1222,11 @@ def build_zones_from_contours(contours, cladding="", zone_prefix="Z-",
         }
         for oi in kids.get(zi, []):
             ocid, opoly, _, _ = parsed[oi]
+            okind = str((kinds or {}).get(ocid) or "window")
+            if okind not in OPENING_KINDS:
+                okind = "window"
             zd["openings"].append({
-                "id": ocid, "kind": "window",
+                "id": ocid, "kind": okind,
                 "poly": {"pts": [[p[0], p[1]] for p in opoly.pts],
                          "bulges": list(opoly.bulges)}})
         zone_dicts.append(zd)

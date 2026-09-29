@@ -19,15 +19,22 @@ op="zones" — ручной режим Германа (этап 1): плоски
   "cladding": "керамогранит идальго 600х600",   // имя облицовки = имя слоя
   "zone_prefix": "Ф-",                            // префикс марок зон
   "start_index": 1,
-  "units": "mm"
+  "units": "mm",
+  // 29.09 (просьба Германа): типы проёмов и парапеты
+  "opening_kinds": {"хэндл": "vitrage" | "door", ...},   // прочие проёмы — окна
+  "parapets": [{"id", "pts", "bulges"?}, ...]
 }
 
 Выход:
 {
   "ok": true,
   "zones": [ { "zone_id", "cladding", "outer_id", "opening_ids": [...],
+               "opening_kinds": {"хэндл": "window"|"vitrage"|"door"},
+               "lines": [{"opening_id", "cat", "pts", "len_m"}],  // схема (29.09)
                "label_pt": [x, y],  // правый верхний угол области (21.07 п.1)
                "report": {facade_zone_report/1} } ],
+  "parapets": [ {"id", "area_m2", "perimeter_m", "top_m", "width_m", "label_pt",
+                 "warnings"} ],
   "zones_full": [ {facade_zone/1} ],              // для *_fzones.json
   "failed": [ { "zone_id", "outer_id", "issues": [...] } ],
   "issues": [ ... ],                              // глобальные (разбор контуров)
@@ -51,7 +58,11 @@ def _issue_list(issues):
 
 _SUM_KEYS = ("area_outer_m2", "openings_total_m2", "area_net_m2",
              "perimeter_outer_m", "openings_perimeter_total_m",
-             "sills_total_m", "jambs_total_m", "on_boundary_total_m")
+             "sills_total_m", "jambs_total_m", "on_boundary_total_m",
+             # 29.09: по типам проёмов
+             "window_count", "window_area_m2", "vitrage_count", "vitrage_area_m2",
+             "door_count", "door_area_m2", "window_sills_m", "window_slopes_m",
+             "door_slopes_m", "vitrage_side_m", "vitrage_top_m", "vitrage_bottom_m")
 
 
 def _merge_reports(reps):
@@ -83,11 +94,15 @@ def op_zones(req):
         start = 1
     units = req.get("units") or "mm"
     merge = bool(req.get("merge"))
+    kinds = req.get("opening_kinds") or {}
+    if not isinstance(kinds, dict):
+        kinds = {}
+    kinds = dict((str(k2), str(v).strip().lower()) for k2, v in kinds.items())
 
     zone_dicts, global_issues = fz.build_zones_from_contours(
         contours, cladding=cladding, zone_prefix=prefix,
         start_index=start, units=units,
-        source={"method": "manual", "tool": "ATFZONE"})
+        source={"method": "manual", "tool": "ATFZONE"}, kinds=kinds)
 
     parts = []   # (zd, Zone, issues, report, dims, label)
     failed = []
@@ -115,6 +130,15 @@ def op_zones(req):
         label = fz.label_anchor([(p[0], p[1])
                                  for p in z.outer.polygonized(fz.CHORD_TOL / ku)],
                                 fz.GEO_TOL / ku)
+        # 29.09 (просьба Германа): линии исполнительной схемы по кромкам проёмов
+        outer_mm = [(p[0] * ku, p[1] * ku) for p in z.outer.polygonized(fz.CHORD_TOL / ku)]
+        lines = []
+        for o in z.openings:
+            for ln in fz.opening_lines(z, o, outer_mm):
+                ln["opening_id"] = o.id
+                lines.append(ln)
+        zd["_lines"] = lines
+        zd["_outer_mm"] = outer_mm
         parts.append((zd, z, issues, rep, fz.zone_dims(z), label))
 
     zones_ok, zones_full = [], []
@@ -131,9 +155,11 @@ def op_zones(req):
               min(p[0]["meta"]["bbox"][1] for p in parts),
               max(p[0]["meta"]["bbox"][2] for p in parts),
               max(p[0]["meta"]["bbox"][3] for p in parts)]
-        op_ids = []
+        op_ids, okinds, lines = [], {}, []
         for p in parts:
             op_ids.extend(o["id"] for o in p[0]["openings"])
+            okinds.update((o["id"], o["kind"]) for o in p[0]["openings"])
+            lines.extend(p[0].pop("_lines"))
         zones_ok.append({
             "zone_id": zid,
             "cladding": cladding,
@@ -141,6 +167,8 @@ def op_zones(req):
             "part_count": len(parts),
             "outer_ids": [p[0]["meta"]["outer_contour_id"] for p in parts],
             "opening_ids": op_ids,
+            "opening_kinds": okinds,
+            "lines": lines,
             "label_pt": [anchor[0], anchor[1]],
             "bbox": bb,
             "report": rep,
@@ -163,6 +191,8 @@ def op_zones(req):
                 "outer_id": zd["meta"]["outer_contour_id"],
                 "outer_ids": [zd["meta"]["outer_contour_id"]],
                 "opening_ids": [o["id"] for o in zd["openings"]],
+                "opening_kinds": dict((o["id"], o["kind"]) for o in zd["openings"]),
+                "lines": zd.pop("_lines"),
                 "label_pt": [label[0], label[1]],
                 "bbox": zd["meta"]["bbox"],
                 "report": rep,
@@ -174,10 +204,31 @@ def op_zones(req):
             tot_jambs += rep["jambs_total_m"]
             tot_ops += rep["openings_count"]
 
+    # 29.09 (просьба Германа): парапеты — отдельными строками, своя площадь и
+    # длина по верху; наложение на зону — предупреждение
+    zone_outers = [p[0].pop("_outer_mm", None) for p in parts]
+    zone_outers = [z0 for z0 in zone_outers if z0]
+    for zd in zones_full:
+        zd.pop("_outer_mm", None)
+        zd.pop("_lines", None)
+    parapets = []
+    for pc in req.get("parapets") or []:
+        if not isinstance(pc, dict):
+            continue
+        try:
+            parapets.append(fz.parapet_report(pc, zone_outers, units))
+        except (fz.ZoneFormatError, KeyError, TypeError, ValueError) as e:
+            global_issues.append(fz._err("E_BAD_PARAPET", "parapet:%s" % pc.get("id", "?"), str(e)))
+    rsum = {}
+    for key in ("window_count", "window_area_m2", "vitrage_count", "vitrage_area_m2",
+                "door_count", "door_area_m2", "window_sills_m", "window_slopes_m",
+                "door_slopes_m", "vitrage_side_m", "vitrage_top_m", "vitrage_bottom_m"):
+        rsum[key] = sum((z0["report"].get(key) or 0) for z0 in zones_ok)
     return {
         "ok": True,
         "zones": zones_ok,
         "zones_full": zones_full,
+        "parapets": parapets,
         "failed": failed,
         "issues": _issue_list(global_issues),
         "summary": {
@@ -186,6 +237,10 @@ def op_zones(req):
             "sills_total_m": tot_sills,
             "jambs_total_m": tot_jambs,
             "openings_total": tot_ops,
+            "parapets_count": len(parapets),
+            "parapets_area_m2": sum(pp["area_m2"] for pp in parapets),
+            "parapets_top_m": sum(pp["top_m"] for pp in parapets),
+            **rsum,
         },
     }
 

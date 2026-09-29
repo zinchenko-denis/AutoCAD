@@ -225,6 +225,47 @@ namespace AFacadesPlugin
             if (AcApp.ShowModalDialog(form) != DialogResult.OK)
             { ed.WriteMessage("\nОтменено."); return; }
 
+            // ── 2б. типы проёмов и парапет (29.09, просьба Германа: «разбить проёмы на
+            //    окна, витражи и двери»; «выбор пользователю зоны парапета»). Чтобы меньше
+            //    кликать — спрашиваем только витражи и двери, остальные проёмы — окна;
+            //    парапет — свои замкнутые контуры. Флажок в окне выключает вопросы ──
+            var kinds = new Dictionary<string, object>();
+            var parapetContours = new List<Dictionary<string, object>>();
+            var parapetIds = new Dictionary<string, ObjectId>();
+            if (form.AskKinds)
+            {
+                if (contours.Count > 1)
+                {
+                    List<string> vit, drs;
+                    if (!PickHandles(ed, "\nВыберите ВИТРАЖИ среди проёмов (Enter — нет): ",
+                                     filter, idByHandle, out vit))
+                    { ed.WriteMessage("\nОтменено."); return; }
+                    foreach (var h in vit) kinds[h] = "vitrage";
+                    if (!PickHandles(ed, "\nВыберите ДВЕРИ среди проёмов (Enter — нет): ",
+                                     filter, idByHandle, out drs))
+                    { ed.WriteMessage("\nОтменено."); return; }
+                    int both = 0;
+                    foreach (var h in drs) { if (kinds.ContainsKey(h)) both++; kinds[h] = "door"; }
+                    if (both > 0)
+                        ed.WriteMessage("\n  " + both + " проём(ов) выбраны и витражом, и дверью — считаю дверью.");
+                    ed.WriteMessage("\n  витражей " + (vit.Count - both) + ", дверей " + drs.Count +
+                                    "; остальные проёмы — окна.");
+                }
+                if (!PickParapets(ed, db, filter, parapetContours, parapetIds, skipped))
+                { ed.WriteMessage("\nОтменено."); return; }
+                if (parapetIds.Count > 0)
+                {
+                    // контур, выбранный и зоной/проёмом, и парапетом, — только парапет
+                    int moved = contours.RemoveAll(c => parapetIds.ContainsKey(SafeStr(Get(c, "id"))));
+                    foreach (var h in parapetIds.Keys) { idByHandle.Remove(h); kinds.Remove(h); }
+                    if (moved > 0)
+                        ed.WriteMessage("\n  " + moved + " контур(ов) выбраны и зоной, и парапетом — считаю парапетом.");
+                    ed.WriteMessage("\n  контуров парапета: " + parapetIds.Count + ".");
+                }
+            }
+            if (contours.Count == 0 && parapetContours.Count == 0)
+            { ed.WriteMessage("\nНет контуров зон."); return; }
+
             // ── 3. движок ──
             var ser = new JavaScriptSerializer { MaxJsonLength = int.MaxValue };
             var payload = new Dictionary<string, object>
@@ -236,6 +277,8 @@ namespace AFacadesPlugin
                 { "start_index", form.StartIndex },
                 { "units", "mm" },
                 { "merge", form.MergeZones },
+                { "opening_kinds", kinds },
+                { "parapets", parapetContours },
             };
             string baseDir = Path.GetDirectoryName(
                 Assembly.GetExecutingAssembly().Location) ?? ".";
@@ -273,8 +316,9 @@ namespace AFacadesPlugin
                     PrintIssues(ed, Get(fd, "issues") as object[], null);
                 }
 
-            var zones = Get(res, "zones") as object[];
-            if (zones == null || zones.Length == 0)
+            var zones = (Get(res, "zones") as object[]) ?? new object[0];
+            var parapets = (Get(res, "parapets") as object[]) ?? new object[0];
+            if (zones.Length == 0 && parapets.Length == 0)
             {
                 ed.WriteMessage("\nНи одной валидной зоны." + SkippedMsg(skipped));
                 return;
@@ -313,7 +357,7 @@ namespace AFacadesPlugin
 
             // ── 5. правки чертежа ──
             string layer = LayerName(form.Cladding);
-            int made = 0;
+            int made = 0, linesMade = 0, linesErased = 0;
             using (doc.LockDocument())
             using (var tr = db.TransactionManager.StartTransaction())
             {
@@ -354,11 +398,20 @@ namespace AFacadesPlugin
                         var ent = (Entity)tr.GetObject(lid, OpenMode.ForWrite);
                         ent.Layer = layer;
                     }
-                    foreach (var lid in holeIds)
-                    {
-                        var ent = (Entity)tr.GetObject(lid, OpenMode.ForWrite);
-                        ent.Layer = layer;
-                    }
+                    // 29.09 (Герман): контуры проёмов — на слои по типу (окна / витражи /
+                    // двери); прежние линии схемы этих проёмов (повторный ATFZONE) — долой
+                    var okinds = Get(z, "opening_kinds") as Dictionary<string, object>;
+                    var holeByH = new Dictionary<string, Entity>();
+                    if (opIds != null)
+                        foreach (var oh in opIds)
+                        {
+                            string s = SafeStr(oh);
+                            if (!idByHandle.ContainsKey(s)) continue;
+                            var ent = (Entity)tr.GetObject(idByHandle[s], OpenMode.ForWrite);
+                            ent.Layer = OpeningLayer(tr, db, SafeStr(Get(okinds, s)));
+                            linesErased += EraseOldLines(tr, db, ser, ent);
+                            holeByH[s] = ent;
+                        }
 
                     // ЕДИНАЯ штриховка зоны (при объединении — все части
                     // одной штриховкой, фидбэк №2 п.1) с вычетом проёмов
@@ -430,6 +483,42 @@ namespace AFacadesPlugin
                     StoreZoneData(tr, hat, zdata);
                     StoreZoneData(tr, mt, zdata);
 
+                    // 29.09 (Герман): исполнительная схема — откосы и отливы окон, откосы
+                    // дверей, примыкания витражей — полилиниями по кромкам проёмов на своих
+                    // слоях; хэндлы линий — в метке проёма (повтор ATFZONE их заменит)
+                    var lns = Get(z, "lines") as object[];
+                    var newByHole = new Dictionary<string, List<string>>();
+                    if (lns != null)
+                        foreach (var lo in lns)
+                        {
+                            var ld = lo as Dictionary<string, object>;
+                            var lpts = Get(ld, "pts") as object[];
+                            if (ld == null || lpts == null || lpts.Length < 2) continue;
+                            string lcat = SafeStr(Get(ld, "cat"));
+                            var lpl = new Polyline();
+                            for (int vi = 0; vi < lpts.Length; vi++)
+                            {
+                                var xy = lpts[vi] as object[];
+                                if (xy == null || xy.Length < 2) continue;
+                                lpl.AddVertexAt(lpl.NumberOfVertices, new Point2d(ToD(xy[0]), ToD(xy[1])), 0, 0, 0);
+                            }
+                            if (lpl.NumberOfVertices < 2) { lpl.Dispose(); continue; }
+                            lpl.Layer = LineLayer(tr, db, lcat);
+                            btr.AppendEntity(lpl);
+                            tr.AddNewlyCreatedDBObject(lpl, true);
+                            string loid = SafeStr(Get(ld, "opening_id"));
+                            List<string> lst;
+                            if (!newByHole.TryGetValue(loid, out lst)) newByHole[loid] = lst = new List<string>();
+                            lst.Add(Hnd(lpl));
+                            linesMade++;
+                        }
+                    foreach (var kvh in holeByH)
+                    {
+                        List<string> lst;
+                        if (!newByHole.TryGetValue(kvh.Key, out lst)) lst = new List<string>();
+                        StoreZoneData(tr, kvh.Value, ser.Serialize(lst), LinesKey);
+                    }
+
                     // линейные размеры по образцу Германа («Проба 4»):
                     // высота каждой части; цепочка по низу + габарит — только
                     // при разрывах нижней кромки (двери/проёмы в пол)
@@ -442,6 +531,42 @@ namespace AFacadesPlugin
                     made++;
                 }
 
+                // 29.09 (Герман): парапеты — контуры на слой «Парапет», марка с площадью
+                // у правого верхнего угла; данные — в метке марки (для ATFTABLE)
+                var parapetRows = new List<Dictionary<string, object>>();
+                int pk = 0;
+                foreach (var po in parapets)
+                {
+                    var pd = po as Dictionary<string, object>;
+                    string pid = SafeStr(Get(pd, "id"));
+                    ObjectId poid;
+                    if (pd == null || !parapetIds.TryGetValue(pid, out poid)) continue;
+                    pk++;
+                    var pent = (Entity)tr.GetObject(poid, OpenMode.ForWrite);
+                    pent.Layer = EnsureNamed(tr, db, LayerParapet, 2);
+                    string mark = "П-" + pk;
+                    pd["mark"] = mark;
+                    var plp = Get(pd, "label_pt") as object[];
+                    double off2 = 0.5 * form.TextHeight;
+                    var pmt = new MText
+                    {
+                        Location = new Point3d((plp != null ? ToD(plp[0]) : 0) - off2,
+                                               (plp != null ? ToD(plp[1]) : 0) - off2, 0),
+                        TextHeight = form.TextHeight,
+                        Layer = LayerParapet,
+                        Attachment = AttachmentPoint.TopRight,
+                        Contents = "Парапет " + mark + @"\PS = " + F3(Get(pd, "area_m2")) + " м²",
+                    };
+                    btr.AppendEntity(pmt);
+                    tr.AddNewlyCreatedDBObject(pmt, true);
+                    StoreZoneData(tr, pmt, ser.Serialize(pd), ParapetKey);
+                    parapetRows.Add(pd);
+                    var pws = Get(pd, "warnings") as object[];
+                    if (pws != null)
+                        foreach (var pw in pws)
+                            ed.WriteMessage("\n  ! парапет " + mark + ": " + SafeStr(pw));
+                }
+
                 if (doTable)
                 {
                     var rowsData = new List<Dictionary<string, object>>();
@@ -450,7 +575,7 @@ namespace AFacadesPlugin
                         var z = zo as Dictionary<string, object>;
                         if (z != null) rowsData.Add(z);
                     }
-                    InsertTable(tr, db, btr, tablePt, rowsData,
+                    InsertTable(tr, db, btr, tablePt, rowsData, parapetRows,
                                 form.TextHeight);
                 }
 
@@ -468,65 +593,83 @@ namespace AFacadesPlugin
                 "; отливы " + F3(Get(sum, "sills_total_m")) + " м.п." +
                 "; откосы " + F3(Get(sum, "jambs_total_m")) + " м.п." +
                 "; слой «" + layer + "»." + SkippedMsg(skipped));
+            // 29.09 (Герман): проёмы по типам, погонаж по категориям, парапеты, линии схемы
+            ed.WriteMessage("\n  проёмы: окна " + SafeStr(Get(sum, "window_count")) + " (" +
+                F3(Get(sum, "window_area_m2")) + " м²), витражи " + SafeStr(Get(sum, "vitrage_count")) +
+                " (" + F3(Get(sum, "vitrage_area_m2")) + " м²), двери " + SafeStr(Get(sum, "door_count")) +
+                " (" + F3(Get(sum, "door_area_m2")) + " м²); откосы окон " + F3(Get(sum, "window_slopes_m")) +
+                ", отливы окон " + F3(Get(sum, "window_sills_m")) + ", откосы дверей " +
+                F3(Get(sum, "door_slopes_m")) + ", примыкания витражей " +
+                F3(ToD(Get(sum, "vitrage_side_m")) + ToD(Get(sum, "vitrage_top_m")) +
+                   ToD(Get(sum, "vitrage_bottom_m"))) + " м.п." +
+                (parapets.Length > 0 ? "; парапетов " + parapets.Length + " (" +
+                 F3(Get(sum, "parapets_area_m2")) + " м², по верху " + F3(Get(sum, "parapets_top_m")) + " м.п.)" : "") +
+                "; линий схемы " + linesMade + (linesErased > 0 ? " (прежних заменено " + linesErased + ")" : "") + ".");
         }
 
         // ── таблица площадей и погонажей (общая с ATFTABLE) ──
         internal static void InsertTable(Transaction tr, Database db,
             BlockTableRecord btr, Point3d pt,
             List<Dictionary<string, object>> zones, double h)
+        { InsertTable(tr, db, btr, pt, zones, null, h); }
+
+        // 29.09 (Герман: «все площади — в типовую таблицу, в свободной и удобной форме»):
+        // проёмы по типам, погонаж по категориям (ZoneTable — без AutoCAD), шапка в две
+        // строки со слияниями; парапеты — отдельной таблицей под основной
+        internal static void InsertTable(Transaction tr, Database db,
+            BlockTableRecord btr, Point3d pt,
+            List<Dictionary<string, object>> zones,
+            List<Dictionary<string, object>> parapets, double h)
         {
-            int rows = zones.Count + 3;        // title + header + zones + итого
+            var data = ZoneTable.ZoneRows(zones, z => SafeStr(Get(z, "zone_id")),
+                                          z => SafeStr(Get(z, "cladding")));
+            int cols = ZoneTable.Cols;
+            int rows = 3 + data.Count;         // заголовок + 2 строки шапки + зоны + итого
             var tb = new Table();
             tb.TableStyle = db.Tablestyle;
-            tb.SetSize(rows, 7);
+            tb.SetSize(rows, cols);
             tb.Position = pt;
-            // заголовки — терминология Германа (фидбэк №2 п.5)
-            string[] head = { "Марка", "Облицовка", "S участка, м²",
-                              "S проёмов, м²", "S облицовки, м²",
-                              "Отливы, м.п.", "Откосы, м.п." };
-            double[] w = { 6 * h, 18 * h, 7 * h, 7 * h, 7 * h, 7 * h, 7 * h };
-            for (int c = 0; c < 7; c++) tb.Columns[c].Width = w[c];
+            for (int c = 0; c < cols; c++) tb.Columns[c].Width = (c == 0 ? 6 : c == 1 ? 16 : 6.5) * h;
             for (int r = 0; r < rows; r++) tb.Rows[r].Height = 2.2 * h;
-
+            tb.Rows[2].Height = 3.2 * h;
             tb.Cells[0, 0].TextString = "Ведомость зон облицовки";
-            for (int c = 0; c < 7; c++)
-                tb.Cells[1, c].TextString = head[c];
-
-            double tGross = 0, tOp = 0, tNet = 0, tSill = 0, tJamb = 0;
-            for (int i = 0; i < zones.Count; i++)
+            for (int c = 0; c < cols; c++)
             {
-                var z = zones[i];
-                var rep = Get(z, "report") as Dictionary<string, object>;
-                double g = ToD(Get(rep, "area_outer_m2")),
-                       o = ToD(Get(rep, "openings_total_m2")),
-                       n = ToD(Get(rep, "area_net_m2")),
-                       s = ToD(Get(rep, "sills_total_m")),
-                       j = ToD(Get(rep, "jambs_total_m"));
-                tGross += g; tOp += o; tNet += n; tSill += s; tJamb += j;
-                int r = 2 + i;
-                tb.Cells[r, 0].TextString = SafeStr(Get(z, "zone_id"));
-                tb.Cells[r, 1].TextString = SafeStr(Get(z, "cladding"));
-                tb.Cells[r, 2].TextString = F3(g);
-                tb.Cells[r, 3].TextString = F3(o);
-                tb.Cells[r, 4].TextString = F3(n);
-                tb.Cells[r, 5].TextString = F3(s);
-                tb.Cells[r, 6].TextString = F3(j);
+                tb.Cells[1, c].TextString = ZoneTable.Group[c];
+                tb.Cells[2, c].TextString = ZoneTable.Sub[c];
             }
-            int last = rows - 1;
-            tb.Cells[last, 0].TextString = "ИТОГО";
-            tb.Cells[last, 2].TextString = F3(tGross);
-            tb.Cells[last, 3].TextString = F3(tOp);
-            tb.Cells[last, 4].TextString = F3(tNet);
-            tb.Cells[last, 5].TextString = F3(tSill);
-            tb.Cells[last, 6].TextString = F3(tJamb);
-
+            foreach (var m in ZoneTable.HeaderMerges)
+                tb.MergeCells(CellRange.Create(tb, 1 + m[0], m[1], 1 + m[2], m[3]));
+            for (int i = 0; i < data.Count; i++)
+                for (int c = 0; c < cols; c++)
+                    tb.Cells[3 + i, c].TextString = data[i][c];
             for (int r = 0; r < rows; r++)
-                for (int c = 0; c < 7; c++)
+                for (int c = 0; c < cols; c++)
                     tb.Cells[r, c].TextHeight = h;
-
             tb.GenerateLayout();
             btr.AppendEntity(tb);
             tr.AddNewlyCreatedDBObject(tb, true);
+
+            var prow = ZoneTable.ParapetRows(parapets);
+            if (prow.Count == 0) return;
+            var tp = new Table();
+            tp.TableStyle = db.Tablestyle;
+            tp.SetSize(prow.Count + 2, 4);
+            tp.Position = new Point3d(pt.X, pt.Y - tb.Height - 2 * h, pt.Z);
+            double[] pw = { 8 * h, 7 * h, 10 * h, 7 * h };
+            for (int c = 0; c < 4; c++) tp.Columns[c].Width = pw[c];
+            for (int r = 0; r < prow.Count + 2; r++) tp.Rows[r].Height = 2.2 * h;
+            tp.Cells[0, 0].TextString = "Парапеты";
+            for (int c = 0; c < 4; c++) tp.Cells[1, c].TextString = ZoneTable.ParapetHead[c];
+            for (int i = 0; i < prow.Count; i++)
+                for (int c = 0; c < 4; c++)
+                    tp.Cells[2 + i, c].TextString = prow[i][c];
+            for (int r = 0; r < prow.Count + 2; r++)
+                for (int c = 0; c < 4; c++)
+                    tp.Cells[r, c].TextHeight = h;
+            tp.GenerateLayout();
+            btr.AppendEntity(tp);
+            tr.AddNewlyCreatedDBObject(tp, true);
         }
 
         // ── *_fzones.json: merge по id зон ──
@@ -733,6 +876,124 @@ namespace AFacadesPlugin
         }
 
         // ── служебное ──
+
+        // 29.09 (Герман): слои схемы — его названия; цвет — только при создании слоя
+        internal const string LinesKey = "ATFZONE_LINES";
+        internal const string ParapetKey = "ATFZONE_PARAPET";
+        private const string LayerParapet = "Парапет";
+        private static readonly string[] SchemeLayers =
+        {
+            "Оконные откосы", "Оконные отливы", "Примыкание к витражам",
+        };
+
+        private static string EnsureNamed(Transaction tr, Database db, string name, short aci)
+        {
+            var lt = (LayerTable)tr.GetObject(db.LayerTableId, OpenMode.ForRead);
+            if (lt.Has(name)) return name;
+            lt.UpgradeOpen();
+            var rec = new LayerTableRecord { Name = name };
+            rec.Color = Autodesk.AutoCAD.Colors.Color.FromColorIndex(
+                Autodesk.AutoCAD.Colors.ColorMethod.ByAci, aci);
+            lt.Add(rec);
+            tr.AddNewlyCreatedDBObject(rec, true);
+            return name;
+        }
+
+        private static string OpeningLayer(Transaction tr, Database db, string kind)
+        {
+            if (kind == "vitrage") return EnsureNamed(tr, db, "Контур витражей", 3);
+            if (kind == "door") return EnsureNamed(tr, db, "Контур дверей", 30);
+            return EnsureNamed(tr, db, "Контур окон", 4);
+        }
+
+        private static string LineLayer(Transaction tr, Database db, string cat)
+        {
+            if (cat == "window_sill") return EnsureNamed(tr, db, SchemeLayers[1], 5);
+            if (cat.StartsWith("vitrage")) return EnsureNamed(tr, db, SchemeLayers[2], 6);
+            return EnsureNamed(tr, db, SchemeLayers[0], 1);      // откосы окон и дверей
+        }
+
+        // линии схемы, созданные прошлым ATFZONE для этого проёма (хэндлы — в метке
+        // проёма): удалить, если ещё на месте и на слоях схемы
+        private static int EraseOldLines(Transaction tr, Database db, JavaScriptSerializer ser, Entity hole)
+        {
+            string j = ReadZoneData(tr, hole, LinesKey);
+            if (j == null) return 0;
+            int n = 0;
+            object[] arr = null;
+            try { arr = ser.DeserializeObject(j) as object[]; } catch { }
+            if (arr == null) return 0;
+            foreach (var ho in arr)
+                try
+                {
+                    var id = db.GetObjectId(false, new Handle(Convert.ToInt64(SafeStr(ho), 16)), 0);
+                    if (id.IsNull || id.IsErased) continue;
+                    var e = tr.GetObject(id, OpenMode.ForWrite) as Entity;
+                    if (e == null || Array.IndexOf(SchemeLayers, e.Layer) < 0) continue;
+                    e.Erase();
+                    n++;
+                }
+                catch { }
+            return n;
+        }
+
+        // выбор среди уже выбранных контуров; false — Esc (отмена команды)
+        private static bool PickHandles(Editor ed, string msg, SelectionFilter filter,
+            Dictionary<string, ObjectId> known, out List<string> handles)
+        {
+            handles = new List<string>();
+            var res = ed.GetSelection(new PromptSelectionOptions { MessageForAdding = msg }, filter);
+            if (res.Status == PromptStatus.Cancel) return false;
+            if (res.Status != PromptStatus.OK) return true;          // Enter — нет
+            int other = 0;
+            foreach (SelectedObject so in res.Value)
+            {
+                string h = so.ObjectId.Handle.ToString();
+                if (known.ContainsKey(h)) { if (!handles.Contains(h)) handles.Add(h); }
+                else other++;
+            }
+            if (other > 0)
+                ed.WriteMessage("\n  " + other + " объект(ов) не из выбранных контуров — пропущены.");
+            return true;
+        }
+
+        private static bool PickParapets(Editor ed, Database db, SelectionFilter filter,
+            List<Dictionary<string, object>> outList, Dictionary<string, ObjectId> ids,
+            List<string> skipped)
+        {
+            var res = ed.GetSelection(new PromptSelectionOptions
+            { MessageForAdding = "\nВыберите контуры ПАРАПЕТА (Enter — нет): " }, filter);
+            if (res.Status == PromptStatus.Cancel) return false;
+            if (res.Status != PromptStatus.OK) return true;
+            using (var tr = db.TransactionManager.StartTransaction())
+            {
+                foreach (SelectedObject so in res.Value)
+                {
+                    var pl = tr.GetObject(so.ObjectId, OpenMode.ForRead) as Polyline;
+                    if (pl == null) continue;
+                    string h = Hnd(pl);
+                    int n = pl.NumberOfVertices;
+                    if (n < 3) { skipped.Add(h + " (парапет, <3 вершин)"); continue; }
+                    bool closed = pl.Closed ||
+                        pl.GetPoint2dAt(0).GetDistanceTo(pl.GetPoint2dAt(n - 1)) <= CloseTol;
+                    if (!closed) { skipped.Add(h + " (парапет не замкнут)"); continue; }
+                    var pts = new List<object>();
+                    var bulges = new List<object>();
+                    for (int i = 0; i < n; i++)
+                    {
+                        Point2d p = pl.GetPoint2dAt(i);
+                        pts.Add(new[] { p.X, p.Y });
+                        bulges.Add(pl.GetBulgeAt(i));
+                    }
+                    if (ids.ContainsKey(h)) continue;
+                    ids[h] = pl.ObjectId;
+                    outList.Add(new Dictionary<string, object>
+                    { { "id", h }, { "pts", pts }, { "bulges", bulges } });
+                }
+                tr.Commit();
+            }
+            return true;
+        }
 
         private static void EnsureLayer(Transaction tr, Database db,
                                         string name)

@@ -3,7 +3,7 @@
 // штриховки — хотелось бы, чтобы они сохранялись»), отказ не сохраняет, снимок окна.
 // Сборка (из Facades):
 //   mcs -out:zoneui.exe -r:System.Windows.Forms.dll -r:System.Drawing.dll -r:System.Web.Extensions.dll \
-//       tools/zone_ui/UiCheck.cs src/AFacadesPlugin/ZoneForm.cs
+//       tools/zone_ui/UiCheck.cs src/AFacadesPlugin/ZoneForm.cs src/AFacadesPlugin/ZoneTable.cs
 //   HOME=/tmp/zone_home xvfb-run -a mono zoneui.exe /tmp/zone_ui
 // (HOME — чтобы не трогать настоящие настройки: под mono %APPDATA% = $HOME/.config)
 using System;
@@ -110,6 +110,54 @@ static class ZoneUiCheck
             Ok(f.TextHeight == 250 && f.Pattern == "ANSI31", "битый файл — умолчания");
             CloseWith(f, DialogResult.Cancel);
         }
+        // 5. флажок «после OK указать витражи, двери и парапет» — по умолчанию включён, запоминается
+        if (File.Exists(sp)) File.Delete(sp);
+        NewSession();
+        using (var f = new ZoneForm(2))
+        {
+            f.Show(); Application.DoEvents();
+            Ok(f.AskKinds, "по умолчанию вопросы про витражи/двери/парапет включены");
+            F<CheckBox>(f, "_kinds").Checked = false;
+            CloseWith(f, DialogResult.OK);
+        }
+        NewSession();
+        using (var f = new ZoneForm(2))
+        {
+            f.Show(); Application.DoEvents();
+            Ok(!f.AskKinds, "флажок вопросов запомнился выключенным");
+            CloseWith(f, DialogResult.Cancel);
+        }
+
+        // 6. ведомость (ZoneTable — общая для ATFZONE, ATFTABLE и Excel)
+        var ser = new System.Web.Script.Serialization.JavaScriptSerializer();
+        Func<string, Dictionary<string, object>> J = t => ser.DeserializeObject(t) as Dictionary<string, object>;
+        var zNew = J("{\"zone_id\":\"Ф-1\",\"cladding\":\"клинкер\",\"report\":{\"area_outer_m2\":60,\"area_net_m2\":41.75," +
+                     "\"openings_count\":5,\"openings_total_m2\":18.25,\"window_count\":2,\"window_area_m2\":3.05," +
+                     "\"vitrage_count\":1,\"vitrage_area_m2\":10.5,\"door_count\":2,\"door_area_m2\":4.7," +
+                     "\"window_sills_m\":2.3,\"window_slopes_m\":6.3,\"door_slopes_m\":11.4,\"vitrage_side_m\":7," +
+                     "\"vitrage_top_m\":3,\"vitrage_bottom_m\":3,\"sills_total_m\":2.3,\"jambs_total_m\":17.7}}");
+        var zOld = J("{\"zone_id\":\"Ф-2\",\"cladding\":\"керамогранит\",\"report\":{\"area_outer_m2\":20," +
+                     "\"area_net_m2\":18,\"openings_count\":2,\"openings_total_m2\":2,\"sills_total_m\":2," +
+                     "\"jambs_total_m\":6}}");
+        var rowsT = ZoneTable.ZoneRows(new List<Dictionary<string, object>> { zNew, zOld },
+                                       z => (string)z["zone_id"], z => (string)z["cladding"]);
+        Ok(rowsT.Count == 3 && rowsT[0].Length == ZoneTable.Cols && ZoneTable.Group.Length == ZoneTable.Cols &&
+           ZoneTable.Sub.Length == ZoneTable.Cols, "ведомость: 2 зоны + итого, 16 колонок");
+        Ok(rowsT[0][3] == "2" && rowsT[0][5] == "1" && rowsT[0][7] == "2" && rowsT[0][12] == "11.400" &&
+           rowsT[0][13] == "7.000", "новая зона: окна 2, витражи 1, двери 2, откосы дверей 11.4, витражи бок 7");
+        Ok(rowsT[1][3] == "2" && rowsT[1][4] == "2.000" && rowsT[1][10] == "2.000" && rowsT[1][11] == "6.000" &&
+           rowsT[1][5] == "0", "зона старой сборки: проёмы — окна (штуки, площадь, отливы, откосы)");
+        Ok(rowsT[2][0] == "ИТОГО" && rowsT[2][2] == "80.000" && rowsT[2][9] == "59.750" && rowsT[2][3] == "4",
+           "итого: S участков 80, нетто 59.75, окон 4");
+        var prowsT = ZoneTable.ParapetRows(new List<Dictionary<string, object>>
+            { J("{\"mark\":\"П-1\",\"area_m2\":6,\"top_m\":10,\"width_m\":10}"),
+              J("{\"area_m2\":2.1,\"top_m\":3,\"width_m\":3}") });
+        Ok(prowsT.Count == 3 && prowsT[0][0] == "П-1" && prowsT[1][0] == "П-2" && prowsT[2][1] == "8.100" &&
+           prowsT[2][2] == "13.000", "парапеты: марки, итого площадь 8.1 и по верху 13");
+        Ok(ZoneTable.ParapetRows(null).Count == 0, "нет парапетов — нет блока");
+        foreach (var m in ZoneTable.HeaderMerges)
+            Ok(m[3] < ZoneTable.Cols && m[2] <= 1, "слияние шапки в пределах двух строк и 16 колонок");
+
         Console.WriteLine(fails == 0 ? "ZONE UI: OK" : "ZONE UI: провалов " + fails);
         return fails == 0 ? 0 : 1;
     }

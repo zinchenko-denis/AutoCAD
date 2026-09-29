@@ -25,7 +25,13 @@ facades_engine, ревью 23.09) против НЕЗАВИСИМОГО орак
  Z10 обход вершин, Z11 единицы м↔мм, Z12 сдвиг — отчёт не меняется;
  Z13 группировка: зоны = контуры верхнего уровня (shapely), проёмы —
     вложенные 1-го уровня, глубже — E_NESTED_DEEP;
- Z14 нумерация «снизу вверх, справа налево» (ряды по низу зоны).
+ Z14 нумерация «снизу вверх, справа налево» (ряды по низу зоны);
+ Z15 (29.09, типы проёмов) суммы по типам = оракул: окно — отлив = низ,
+    откосы = верх+бока; дверь — откосы = верх+бока, низ не считается;
+    витраж — примыкания бок/верх/низ (тип — детерминированно от сценария);
+ Z16 линии схемы лежат на контуре своего проёма, их длины = суммам отчёта;
+ Z17 горизонтальные куски линий не лежат на границе зоны (бок окна, частично
+    на краю, — откос целиком: правило Германа 23.09n).
 
 Запуск (из корня): PYTHONUTF8=1 python3 Facades/tools/zones_synth.py
   [--seed N] [--n N] [--quick] [--dump DIR]. Выход ≠ 0 при нарушениях.
@@ -280,6 +286,76 @@ def engine_report(zone_c, ops, units="mm", k=1.0):
     return fz.zone_report(z, iss), []
 
 
+_KINDS = ("window", "window", "door", "vitrage")
+
+
+def check_kinds(zc, ops, tag, bad):
+    """Z15–Z17: типы проёмов и линии исполнительной схемы (просьба Германа 29.09)."""
+    import zlib
+    kinds = {}
+    for i in range(len(ops)):
+        kinds["O%d" % i] = _KINDS[zlib.crc32(("%s/%d" % (tag, i)).encode()) % 4]
+    contours = [dict(zc, id="Z")] + [dict(o, id="O%d" % i) for i, o in enumerate(ops)]
+    res = fe.run({"op": "zones", "contours": contours, "units": "mm", "cladding": "к",
+                  "zone_prefix": "Ф-", "start_index": 1, "opening_kinds": kinds})
+    if not res.get("ok") or len(res.get("zones") or []) != 1:
+        bad.append(("Z15", "%s: CLI с типами проёмов отказал: %s" % (tag, res.get("error") or res.get("failed"))))
+        return
+    z = res["zones"][0]
+    rep = z["report"]
+    wall = poly_of(zc)
+    arcs = any(o.get("bulges") for o in ops + [zc])
+    exp = dict((k, 0.0) for k in ("window_sills_m", "window_slopes_m", "door_slopes_m",
+                                  "vitrage_side_m", "vitrage_top_m", "vitrage_bottom_m"))
+    for i, oc in enumerate(ops):
+        e = edge_classes(ring(oc["pts"], oc.get("bulges")), wall)
+        kd = kinds["O%d" % i]
+        if kd == "window":
+            exp["window_sills_m"] += e["bottom"] / 1000.0
+            exp["window_slopes_m"] += (e["top"] + e["sides"]) / 1000.0
+        elif kd == "door":
+            exp["door_slopes_m"] += (e["top"] + e["sides"]) / 1000.0
+        else:
+            exp["vitrage_side_m"] += e["sides"] / 1000.0
+            exp["vitrage_top_m"] += e["top"] / 1000.0
+            exp["vitrage_bottom_m"] += e["bottom"] / 1000.0
+    if not arcs:
+        for key, v in exp.items():
+            if not near(rep[key], v, TOL_L):
+                bad.append(("Z15", "%s: %s движок %.4f, оракул %.4f" % (tag, key, rep[key], v)))
+                break
+    cat_key = {"window_slope": "window_slopes_m", "window_sill": "window_sills_m",
+               "door_slope": "door_slopes_m", "vitrage_side": "vitrage_side_m",
+               "vitrage_top": "vitrage_top_m", "vitrage_bottom": "vitrage_bottom_m"}
+    tot = dict((k, 0.0) for k in cat_key.values())
+    rings = dict(("O%d" % i, Polygon(ring(o["pts"], o.get("bulges"))).exterior) for i, o in enumerate(ops))
+    bnd = wall.exterior.buffer(0.3)
+    for ln in z["lines"]:
+        ls = LineString(ln["pts"])
+        tot[cat_key[ln["cat"]]] += ln["len_m"]
+        if abs(ls.length / 1000.0 - ln["len_m"]) > 0.001:
+            bad.append(("Z16", "%s: линия %s длиной %.4f, по точкам %.4f" % (tag, ln["cat"], ln["len_m"],
+                                                                          ls.length / 1000.0)))
+            break
+        rg = rings[ln["opening_id"]]
+        dev = max(rg.distance(Point(q)) for q in ln["pts"])
+        if dev > (2.0 if arcs else 0.6):
+            bad.append(("Z16", "%s: линия %s проёма %s не на его контуре (%.1f мм)"
+                        % (tag, ln["cat"], ln["opening_id"], dev)))
+            break
+        for a, c in zip(ln["pts"], ln["pts"][1:]):
+            # как у оракула кромок: касание дугой/углом даёт миллиметры — не «по границе»
+            if abs(c[1] - a[1]) <= abs(c[0] - a[0]) and \
+                    LineString([a, c]).intersection(bnd).length > 20.0:
+                bad.append(("Z17", "%s: линия %s проёма %s идёт по границе зоны" % (tag, ln["cat"],
+                                                                                 ln["opening_id"])))
+                break
+    for key, v in tot.items():
+        if not near(rep[key], v, 0.001):
+            bad.append(("Z16", "%s: сумма линий %s %.4f, отчёт %.4f" % (tag, key, v, rep[key])))
+            break
+
+
 def run_good(rng, fam, idx, bad):
     zc = outer_shape(rng, fam)
     wall = poly_of(zc)
@@ -337,6 +413,7 @@ def run_good(rng, fam, idx, bad):
         bad.append(("Z12", "%s: сдвиг чертежа меняет отчёт (%s)" % (tag, err4 or "числа")))
     elif any(abs(e4[k] - eng[k]) > 1e-6 for k in ("sills_total_m", "jambs_total_m")):
         SHIFT_ARC.append(max(abs(e4[k] - eng[k]) for k in ("sills_total_m", "jambs_total_m")))
+    check_kinds(zc, ops, tag, bad)
     return len(ops)
 
 

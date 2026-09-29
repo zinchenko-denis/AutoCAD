@@ -323,5 +323,134 @@ class TestLabelAnchor(unittest.TestCase):
         self.assertEqual(res["zones"][0]["label_pt"], [5000, 6200])
 
 
+
+def _R(x0, y0, x1, y1):
+    return [[x0, y0], [x1, y0], [x1, y1], [x0, y1]]
+
+
+class TestOpeningKinds(unittest.TestCase):
+    """29.09 (просьба Германа): проёмы — окна, витражи, двери; линии схемы:
+    окно — откосы (верх+бока одной П-линией) и отлив (низ); дверь — откосы
+    (бока+верх), низ — порог; витраж — примыкания бок/верх/низ; кромка на
+    границе зоны линий не даёт. Парапет — своя площадь и длина по верху."""
+
+    def run_zone(self, contours, kinds=None, parapets=None, merge=False):
+        req = {"op": "zones", "cladding": "клинкер", "zone_prefix": "Ф-", "start_index": 1,
+               "units": "mm", "merge": merge, "contours": contours,
+               "opening_kinds": kinds or {}, "parapets": parapets or []}
+        res = fe.run(req)
+        self.assertTrue(res["ok"], msg=str(res))
+        return res
+
+    def base(self):
+        return [{"id": "Z", "pts": _R(0, 0, 10000, 6000)},
+                {"id": "W", "pts": _R(1000, 1000, 2500, 2500)},
+                {"id": "D", "pts": _R(3000, 0, 4000, 2200)},
+                {"id": "V", "pts": _R(5000, 500, 8000, 4000)},
+                {"id": "D2", "pts": _R(8500, 3000, 9500, 5500)},
+                {"id": "WS", "pts": _R(0, 3000, 800, 4000)}]
+
+    def test_sums_by_kind(self):
+        res = self.run_zone(self.base(), {"D": "door", "V": "vitrage", "D2": "door"})
+        rep = res["zones"][0]["report"]
+        self.assertEqual((rep["window_count"], rep["vitrage_count"], rep["door_count"]), (2, 1, 2))
+        self.assertAlmostEqual(rep["window_area_m2"], 2.25 + 0.8)
+        self.assertAlmostEqual(rep["window_sills_m"], 1.5 + 0.8)          # отливы — низ окон
+        self.assertAlmostEqual(rep["window_slopes_m"], 4.5 + 1.8)         # у края — без левого бока
+        self.assertAlmostEqual(rep["door_slopes_m"], 5.4 + 6.0)           # низ двери — порог
+        self.assertAlmostEqual(rep["vitrage_side_m"], 7.0)
+        self.assertAlmostEqual(rep["vitrage_top_m"], 3.0)
+        self.assertAlmostEqual(rep["vitrage_bottom_m"], 3.0)
+        self.assertAlmostEqual(rep["sills_total_m"], rep["window_sills_m"])
+        self.assertAlmostEqual(rep["jambs_total_m"], rep["window_slopes_m"] + rep["door_slopes_m"])
+        self.assertAlmostEqual(res["summary"]["door_slopes_m"], 11.4)
+
+    def test_lines_geometry(self):
+        res = self.run_zone(self.base(), {"D": "door", "V": "vitrage", "D2": "door"})
+        by = {}
+        for ln in res["zones"][0]["lines"]:
+            by.setdefault((ln["opening_id"], ln["cat"]), []).append(ln)
+        # окно: П-линия откосов 4 точки, отлив — одна прямая
+        self.assertEqual(by[("W", "window_slope")][0]["pts"],
+                         [[2500, 1000], [2500, 2500], [1000, 2500], [1000, 1000]])
+        self.assertEqual(by[("W", "window_sill")][0]["pts"], [[1000, 1000], [2500, 1000]])
+        # дверь в пол: откосы П, порога и линии на границе нет
+        self.assertNotIn(("D", "door_sill"), by)
+        self.assertEqual(len(by[("D", "door_slope")]), 1)
+        self.assertAlmostEqual(by[("D", "door_slope")][0]["len_m"], 5.4)
+        # витраж: два боковых, верх и низ отдельно
+        self.assertEqual(len(by[("V", "vitrage_side")]), 2)
+        self.assertEqual(len(by[("V", "vitrage_top")]), 1)
+        self.assertEqual(len(by[("V", "vitrage_bottom")]), 1)
+        # сумма длин линий = суммы отчёта (линии «показывают, что посчитано»)
+        rep = res["zones"][0]["report"]
+        tot = dict((c, 0.0) for c in fz.LINE_CATS)
+        for ln in res["zones"][0]["lines"]:
+            tot[ln["cat"]] += ln["len_m"]
+        for cat, key in (("window_slope", "window_slopes_m"), ("window_sill", "window_sills_m"),
+                         ("door_slope", "door_slopes_m"), ("vitrage_side", "vitrage_side_m"),
+                         ("vitrage_top", "vitrage_top_m"), ("vitrage_bottom", "vitrage_bottom_m")):
+            self.assertAlmostEqual(tot[cat], rep[key], msg=cat)
+
+    def test_slope_line_joins_across_start_vertex(self):
+        # обход начинается с середины верха — откосы всё равно одной линией
+        w = [[1750, 2500], [1000, 2500], [1000, 1000], [2500, 1000], [2500, 2500]]
+        res = self.run_zone([{"id": "Z", "pts": _R(0, 0, 5000, 4000)}, {"id": "W", "pts": w}])
+        sl = [ln for ln in res["zones"][0]["lines"] if ln["cat"] == "window_slope"]
+        self.assertEqual(len(sl), 1)
+        self.assertAlmostEqual(sl[0]["len_m"], 4.5)
+        self.assertEqual(len(sl[0]["pts"]), 5)          # П из двух половин верха
+
+    def test_arched_window_lines_equal_report(self):
+        # арка сверху: хорды дуги — в верх/бока по наклону, сумма линий = отчёт
+        w = {"id": "A", "pts": [[1000, 1000], [2000, 1000], [2000, 2000], [1000, 2000]],
+             "bulges": [0, 0, 1.0, 0]}
+        res = self.run_zone([{"id": "Z", "pts": _R(0, 0, 5000, 5000)}, w])
+        rep = res["zones"][0]["report"]
+        got = sum(ln["len_m"] for ln in res["zones"][0]["lines"] if ln["cat"] == "window_slope")
+        self.assertAlmostEqual(got, rep["window_slopes_m"], places=6)
+        self.assertAlmostEqual(rep["window_slopes_m"], 2.0 + math.pi * 0.5, places=2)
+
+    def test_default_kind_is_window_and_unknown_kind(self):
+        res = self.run_zone(self.base()[:2], {"W": "garage"})
+        self.assertEqual(res["zones"][0]["opening_kinds"]["W"], "window")
+        self.assertEqual(res["zones"][0]["report"]["window_count"], 1)
+
+    def test_kind_on_outer_contour_warns(self):
+        res = self.run_zone(self.base()[:2], {"Z": "door"})
+        self.assertIn("W_KIND_ON_ZONE", [i["code"] for i in res["issues"]])
+
+    def test_merged_zone_sums_and_lines(self):
+        cs = [{"id": "A", "pts": _R(0, 0, 4000, 3000)}, {"id": "WA", "pts": _R(500, 500, 1500, 1500)},
+              {"id": "B", "pts": _R(4000, 0, 8000, 3000)}, {"id": "VB", "pts": _R(5000, 500, 7000, 2500)}]
+        res = self.run_zone(cs, {"VB": "vitrage"}, merge=True)
+        z = res["zones"][0]
+        self.assertEqual(z["report"]["window_count"], 1)
+        self.assertEqual(z["report"]["vitrage_count"], 1)
+        self.assertAlmostEqual(z["report"]["vitrage_side_m"], 4.0)
+        self.assertEqual(set(ln["opening_id"] for ln in z["lines"]), {"WA", "VB"})
+        self.assertEqual(z["opening_kinds"], {"WA": "window", "VB": "vitrage"})
+
+    def test_parapets(self):
+        res = self.run_zone(self.base()[:1], parapets=[
+            {"id": "P", "pts": _R(0, 6000, 10000, 6600)},
+            {"id": "P2", "pts": _R(0, 5500, 3000, 6200)},
+            {"id": "BAD", "pts": [[0, 7000], [1000, 8000], [1000, 7000], [0, 8000]]}])
+        pp = dict((p["id"], p) for p in res["parapets"])
+        self.assertAlmostEqual(pp["P"]["area_m2"], 6.0)
+        self.assertAlmostEqual(pp["P"]["top_m"], 10.0)
+        self.assertEqual(pp["P"]["warnings"], [])              # касание зоны — не наложение
+        self.assertTrue(pp["P2"]["warnings"])                   # заходит на зону
+        self.assertNotIn("BAD", pp)
+        self.assertIn("E_BAD_PARAPET", [i["code"] for i in res["issues"]])
+        self.assertAlmostEqual(res["summary"]["parapets_area_m2"], 6.0 + 2.1)
+
+    def test_parapet_stepped_top(self):
+        # ступенчатый верх парапета: по верху — только горизонтальные кромки сверху
+        pts = [[0, 0], [6000, 0], [6000, 900], [3000, 900], [3000, 600], [0, 600]]
+        res = self.run_zone(self.base()[:1], parapets=[{"id": "S", "pts": [[x, y + 7000] for x, y in pts]}])
+        self.assertAlmostEqual(res["parapets"][0]["top_m"], 6.0)
+
+
 if __name__ == "__main__":
     unittest.main()

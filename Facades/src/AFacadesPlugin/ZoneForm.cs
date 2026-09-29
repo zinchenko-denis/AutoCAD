@@ -31,6 +31,8 @@ namespace AFacadesPlugin
         private readonly CheckBox _json = new CheckBox();
         private readonly CheckBox _merge = new CheckBox();
         private readonly CheckBox _dims = new CheckBox();
+        // 29.09 (Герман): проёмы по типам и парапет — вопросы после OK (можно выключить)
+        private readonly CheckBox _kinds = new CheckBox();
         private readonly Button _add = new Button();
 
         /// <summary>Колбэк «+ Добавить контуры» (возвращает новое общее
@@ -57,6 +59,7 @@ namespace AFacadesPlugin
         internal bool WriteJson { get { return _json.Checked; } }
         internal bool MergeZones { get { return _merge.Checked; } }
         internal bool MakeDims { get { return _dims.Checked; } }
+        internal bool AskKinds { get { return _kinds.Checked; } }
 
         private static double ParseD(string s, double dflt)
         {
@@ -75,7 +78,7 @@ namespace AFacadesPlugin
             FormBorderStyle = FormBorderStyle.FixedDialog;
             MaximizeBox = false; MinimizeBox = false;
             StartPosition = FormStartPosition.CenterScreen;
-            ClientSize = new Size(430, 385);
+            ClientSize = new Size(430, 411);
             Font = new Font("Segoe UI", 9f);
 
             int y = 12;
@@ -157,6 +160,11 @@ namespace AFacadesPlugin
             _json.Text = "Сохранить зоны в JSON рядом с чертежом (*_fzones.json)";
             _json.Checked = true;
             Controls.Add(_json);
+            y += 26;
+            _kinds.SetBounds(12, y, 406, 22);
+            _kinds.Text = "После OK указать витражи, двери и парапет";
+            _kinds.Checked = true;
+            Controls.Add(_kinds);
             y += 34;
 
             _add.Text = "+ Добавить контуры";
@@ -237,6 +245,7 @@ namespace AFacadesPlugin
             if ((b = Bool(d, "dims")).HasValue) _dims.Checked = b.Value;
             if ((b = Bool(d, "table")).HasValue) _table.Checked = b.Value;
             if ((b = Bool(d, "json")).HasValue) _json.Checked = b.Value;
+            if ((b = Bool(d, "ask_kinds")).HasValue) _kinds.Checked = b.Value;
         }
 
         private void SaveCurrent()
@@ -251,6 +260,7 @@ namespace AFacadesPlugin
                     { "color", _color.Text.Trim() },
                     { "merge", _merge.Checked }, { "dims", _dims.Checked },
                     { "table", _table.Checked }, { "json", _json.Checked },
+                    { "ask_kinds", _kinds.Checked },
                 };
                 string p = SettingsPath();
                 Directory.CreateDirectory(Path.GetDirectoryName(p));
