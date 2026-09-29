@@ -65,6 +65,12 @@ zone_id в attref-цикле; подробно — AFrame/docs/NEXT.md §В-ю).
 (см. §Статус 22.07c).
 
 ## Статус
+- **29.09r — «Собираем» №28 (Денис 29.09) — ВЫЛОЖЕНО. build-bundle #101 (workflow_dispatch build.yml на
+  feat/auto-reactor, 0b58b0d): test → build зелёные; тег build-101 → 0b58b0d; latest = build-101 (дайджесты
+  sha256 всех пяти архивов совпали); build-info.json — 101 / 0b58b0d / feat/auto-reactor; ссылки PDF (latest
+  и build-101) отдают 206. main НЕ трогали (f4abeb2) — «Пушим» отдельно. PDF Герману —
+  AFrame/docs/FACADES_build28_2909.pdf (генератор make_build28_2909.py 101 0b58b0d). В AClad изменений НЕТ** (архив пересобран из того же кода);
+  вопрос 9л (раскладка фронтона) повторён в PDF №28 (6з).
 - **29.09j — ответы Германа на вопросы PDF №27 пришли (AFrame NEXT 29.09j, Facades NEXT 29.09j); на 9л
   (нужна ли раскладка фронтона в ATTILE) ответа НЕТ — переспросить в №28. Код AClad не меняется.**
 - **29.09i — «Собираем» №27 (Денис) — ВЫЛОЖЕНО; в AClad изменений НЕТ.** Сборка про ATFRAME под плитку
