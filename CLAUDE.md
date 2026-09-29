@@ -29,10 +29,13 @@ python3 tools/xmod_check.py --no-fixture      # стыки модулей (ATSPE
 python3 AFrame/tools/frame_synth.py --quick   # синтетика подсистемы (F16 — известное, «только кляммеры»)
 python3 Facades/tools/zones_synth.py --quick
 python3 AClad/tools/attile_synth.py --quick
+python3 tools/roles_synth.py --quick          # «в ролях конструктора»: ATFZONE → раскладка → ATFRAME (нужен mono)
 ```
 C# (AutoCAD) здесь не компилируется: только `mcs --parse <файл>`; окна
-ATTILE/ATFRAME — прогон под mono (`AClad/tools/attile_ui`, `AFrame/tools/frame_ui`,
-команды сборки в шапке UiCheck.cs). Настоящая компиляция — CI `check` на
+ATTILE/ATFRAME/ATFZONE — прогон под mono (`AClad/tools/attile_ui`, `AFrame/tools/frame_ui`,
+`Facades/tools/zone_ui`, команды сборки в шапке UiCheck.cs). Запрос движку из окна ATFRAME —
+`FrameSettings.EngineParams` (его же зовёт `tools/roles_synth.py` через
+`AFrame/tools/roles/RolesDump.cs`): новые поля окна — туда, не в FrameCommand. Настоящая компиляция — CI `check` на
 каждый push; дождаться зелёного, при красном — прочитать аннотации.
 
 ## Сборка («Собираем» — только по слову Дениса)

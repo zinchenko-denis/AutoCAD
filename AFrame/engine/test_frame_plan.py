@@ -1319,4 +1319,20 @@ ok(all(h["profile"] == "ШК-40" for h in pb["hrails"] if h["kind"].startswith("
    pb["summary"]["shina_start"] == 1 and near(pb["summary"]["shina_start_lm"], 3.0),
    "FR-T13: марка в профиле шин, хлыст 3000 — стартовая одним куском (%s)" % pb["summary"])
 
+# FR-O-DUP (29.09, синтетика «в ролях»): ортогональная — две оси руста у граней соседних окон
+# с узким простенком (швы раскладки 1164 и 1176) смещались в одну точку x=1260: два одинаковых
+# Z-профиля в одном месте. Теперь куски сводятся по оси, как в вертикальной (04.08)
+_wa = rect(410, 540, 1160, 2290)
+_wb = rect(1180, 830, 1830, 2280)
+_od = frame_plan({"system": "Ортогональная", "sub_type": "ortho",
+                  "contours": [{"outer": rect(0, 0, 4000, 3000), "holes": [_wa, _wb]}],
+                  "joints_x": [406, 785, 1164, 1176, 1505, 1834, 2241, 2849, 3256]})
+_ov = []
+for _i, _r in enumerate(_od["rails"]):
+    for _q in _od["rails"][_i + 1:]:
+        if abs(_r["x"] - _q["x"]) <= 1e-6 and min(_r["y1"], _q["y1"]) - max(_r["y0"], _q["y0"]) > 1e-6:
+            _ov.append((_r["x"], _r["y0"], _r["y1"], _q["y0"], _q["y1"]))
+ok(_od["ok"] and not _ov and any(abs(_r["x"] - 1260) < 1e-6 for _r in _od["rails"]),
+   "FR-O-DUP: ортогональная — у граней соседних окон нет двух профилей в одном месте (%s)" % _ov[:3])
+
 print("frame_plan: %d проверок OK" % _n)

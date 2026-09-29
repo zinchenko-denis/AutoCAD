@@ -115,6 +115,30 @@ static class FrameUiCheck
         Ok(FrameSettings.FromDict(new Dictionary<string, object> { { "cladding", "дерево" } }).Cladding == "porcelain",
            "неизвестная облицовка в метке — керамогранит");
 
+        // 3в. 29.09: запрос движку из окна — FrameSettings.EngineParams (команда и синтетика
+        //     «в ролях» пользуются одним методом): прежняя раскладка полей сохранена
+        var ep0 = new FrameSettings().EngineParams(0);
+        Ok((string)ep0["sub_type"] == "vertical" && (string)((Dictionary<string, object>)ep0["system"])["name"] == "Вектор-1" &&
+           ep0.ContainsKey("calc") && !ep0.ContainsKey("exact_step") && (double)ep0["floor_step"] == 0 &&
+           (string)ep0["cladding"] == "porcelain" && !ep0.ContainsKey("parts") && !ep0.ContainsKey("tile_step_x"),
+           "запрос по умолчанию: вертикальная, Вектор-1, расчёт, без ручного шага, керамогранит");
+        var epm = new FrameSettings { Steps = "manual", RailStepCorner = 400, Mode = "frame" }.EngineParams(0);
+        Ok(epm.ContainsKey("exact_step") && (double)epm["rail_step_corner"] == 400 && !epm.ContainsKey("calc") &&
+           (string)epm["parts"] == "frame", "вручную: буквальный шаг, шаг стоек в угловой, без расчёта, только подсистема");
+        var fi = new FrameSettings { FloorStep = 3300 }; fi.SetSubType("interfloor");
+        Ok((double)fi.EngineParams(0)["floor_step"] == 3300 && (double)fi.EngineParams(2)["floor_step"] == 0 &&
+           (string)fi.EngineParams(0)["nsp_type"] == "НСП-1", "межэтажная: шаг этажа только без отметок");
+        var ft = new FrameSettings { Cladding = "clinker", TileStepH = 550, TileStepHCorner = 400, TileWhip = 3000, RowStep = 88 };
+        ft.RailBrand = " ШК-40 "; ft.SetSubType("ortho");
+        var ept = ft.EngineParams(0);
+        Ok((string)ept["sub_type"] == "ortho" && (double)ept["tile_step_x"] == 550 && (double)ept["tile_step_x_corner"] == 400 &&
+           (double)ept["tile_whip"] == 3000 && (string)ept["tile_rail_brand"] == "ШК-40" && (double)ept["tile_row_step"] == 88 &&
+           (string)ept["parts"] == "frame" && ept.ContainsKey("calc"), "плитка: все поля плитки, тип, расчёт, без кляммеров");
+        var epc = new FrameSettings { Mode = "clamps" }.EngineParams(0);
+        Ok((string)epc["parts"] == "clamps" && !epc.ContainsKey("calc"), "только кляммеры: parts=clamps, расчёта нет");
+        Ok(!new FrameSettings { Cladding = "concrete", Mode = "clamps" }.EngineParams(0)["parts"].Equals("clamps"),
+           "плитка «только кляммеры» не шлёт (кляммеров у плитки нет)");
+
         // 4. окно: снимки, пересечения, ОК
         var shots = new List<Tuple<string, FrameSettings, bool>>();
         shots.Add(Tuple.Create("frame_default", new FrameSettings(), true));

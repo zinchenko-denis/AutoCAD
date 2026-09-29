@@ -138,3 +138,7 @@ jobs:
           python Facades/tools/zones_synth.py --quick
           python AClad/tools/attile_synth.py --quick
           python AFrame/tools/frame_synth.py --quick --allow F16
+          # 29.09: синтетика «в ролях конструктора» — ATFZONE → раскладка → ATFRAME с настройками
+          # окна через настоящий FrameSettings (консольный дампер под .NET Framework)
+          dotnet build AFrame/tools/roles/RolesDump.csproj -c Release -o build_roles
+          ROLES_DUMP_EXE=build_roles/RolesDump.exe python tools/roles_synth.py --quick

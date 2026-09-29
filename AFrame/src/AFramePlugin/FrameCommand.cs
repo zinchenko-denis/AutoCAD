@@ -424,21 +424,11 @@ namespace AFramePlugin
                         "по краям контуров.");
             }
 
-            double? railStepCorner = null;
-            bool manualStep = false;
-            string railProfile = fs.RailProfileOrNull, nspType = fs.NspTypeOrNull;
-            var sysOverride = fs.SysOverride();
-            Dictionary<string, object> calcDict = clampsOnly ? null : fs.CalcDict();
-            if (calcDict != null && subType == "vertical")
+            // 29.09: параметры окна → запрос движку — FrameSettings.EngineParams (одна логика
+            // с синтетикой «в ролях», tools/roles); здесь только сообщения
+            if (!clampsOnly && fs.CalcDict() != null && subType == "vertical")
                 ed.WriteMessage("\n  расчётный пресет: Вектор-1 " +
                     "(КР2-70 + УК-70-1,2 + ГП-40-40-1,2).");
-            if (fs.Manual && !clampsOnly)
-            {
-                // 04.08 (Герман п.1): шаг, заданный РУКАМИ, ставится буквально
-                manualStep = true;
-                // 04.08 (Герман п.2): шаг СТОЕК в угловой зоне (0 — по рустам)
-                if (!fs.IsTile && fs.RailStepCorner > 1.0) railStepCorner = fs.RailStepCorner;
-            }
 
             // ── 3а. знаки: условные или ОБРАЗЦЫ боевых блоков Германа ──
             ObjectId smpMain = ObjectId.Null, smpRow = ObjectId.Null;
@@ -520,37 +510,16 @@ namespace AFramePlugin
             var payload = new Dictionary<string, object>
             {
                 { "op", "frame" },
-                { "sub_type", subType },
-                { "system", sysOverride },
                 { "zones", zonesPayload },
                 { "contours", contoursPayload },
                 { "joints_x", joints },
                 { "floors_y", floors },
                 { "rows_y", rowsY },
-                { "floor_step", floorStep },
-                { "rail_profile", railProfile },
-                { "nsp_type", nspType },
             };
-            if (calcDict != null) payload["calc"] = calcDict;
+            // ГРАБЛЯ-13: поля окна — одним словарём (тип, система, расчёт, ручные шаги,
+            // что раскладывать, облицовка, плитка), проверяется синтетикой «в ролях»
+            foreach (var kvp in fs.EngineParams(floors.Count)) payload[kvp.Key] = kvp.Value;
             if (cornersX.Count > 0) payload["corners_x"] = cornersX;
-            // ГРАБЛЯ-13: новые поля запроса пробрасывать ЯВНО
-            if (railStepCorner.HasValue)
-                payload["rail_step_corner"] = railStepCorner.Value;
-            if (manualStep) payload["exact_step"] = true;
-            // 23.09b (Герман): что раскладывать
-            if (fs.Mode == "frame") payload["parts"] = "frame";
-            // 26.09 (Денис): облицовка; у плитки — шаг стоек и без кляммеров
-            payload["cladding"] = fs.Cladding;
-            if (fs.IsTile)
-            {
-                // 29.09c (Герман): шаг направляющих (и в угловой зоне), хлыст и марка шины
-                payload["tile_step_x"] = fs.TileStepH;
-                if (fs.TileStepHCorner > 0) payload["tile_step_x_corner"] = fs.TileStepHCorner;
-                payload["tile_whip"] = fs.TileWhip;
-                payload["tile_rail_brand"] = fs.RailBrand.Trim();
-                if (fs.RowStep >= 50) payload["tile_row_step"] = fs.RowStep;   // зоны без раскладки
-                payload["parts"] = "frame";
-            }
             if (clampsOnly)
             {
                 // существующие направляющие: из прошлой подсистемы зон (метка

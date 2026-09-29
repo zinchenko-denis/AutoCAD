@@ -1582,6 +1582,7 @@ def frame_plan(req):
                           for i in range(len(jx_o) - 1)
                           if jx_o[i + 1] - jx_o[i] > mid_over + EPS]
                 jx_o = sorted(jx_o + mids_o)
+            staged_o = []
             for jx in jx_o:
                 if jx < x0 - EPS or jx > x1 + EPS:
                     continue
@@ -1626,42 +1627,50 @@ def frame_plan(req):
                     for a4, b4 in spans:
                         cut2.append((a4, b4, xe))
                 pieces = _clip_pieces(outer, cut2)
-                for s_lo, s_hi, s_x in pieces:
-                    if s_hi - s_lo <= EPS:
-                        continue
-                    side = abs(s_x - jx) > EPS
-                    if side:
-                        zone_side.add(round(s_x, 4))
-                    if stock > EPS and s_hi - s_lo > stock + EPS:
-                        notes.append("ШП X=%.0f длиной %.0f > хлыста "
-                                     "%.0f" % (s_x, s_hi - s_lo,
-                                               stock))
-                    if not side and s_hi - top_y > ortho_oh + EPS:
-                        notes.append("ШП X=%.0f: консольный свес "
-                                     "%.0f > %.0f" %
-                                     (s_x, s_hi - top_y, ortho_oh))
-                    # п.11 (Герман 30.07): профиль стандартный 3000,
-                    # свес ≤300, стык ПОСЕРЕДИНЕ между кронштейнами.
-                    # Раньше клали ОДНИМ куском на всю высоту зоны —
-                    # динблок столько не растягивался («профилей нет
-                    # выше первого этажа», фидбэк по сборке №10)
-                    segs_o = _cut_by_len(s_lo, s_hi, rail_std, gap)
-                    for za, zb in segs_o:
-                        rails.append({"x": round(s_x, 4),
-                                      "y0": round(za, 4),
-                                      "y1": round(zb, 4),
-                                      "len": round(zb - za, 4),
-                                      "kind": "Z-профиль" if side
-                                      else "ШП-60-20"})
-                    # стыки кусков ШП → комбинированный на первом шве
-                    # выше (полигон: КОМБ 61 на орто стоят над стыками)
-                    seams_o = [zb for za, zb in segs_o[:-1]]
-                    _piece_clamps(clamps, rows, s_lo, s_hi, s_x,
-                                  side, seams_o, wedges,
-                                  on_seam=_on_seam(jx))
-                    if not side:
-                        _edge_top_clamps(clamps, rows, s_lo, s_hi,
-                                         s_x, _ytop(outer, s_x, s_hi, y1), hole_boxes)
+                # 29.09 (синтетика «в ролях»): две оси руста у одной грани окна (швы
+                # раскладки 1164 и 1176 у окон с узким простенком) смещались в одну и ту же
+                # точку — два одинаковых Z-профиля в одном месте. Как в вертикальной
+                # (04.08, D-сверка полигона): куски копим и сводим по оси — собственная
+                # ось важнее смещённой, от смещённой остаётся незанятое, осколки < 100 — нет
+                for _p in pieces:
+                    if _p[1] - _p[0] > EPS:
+                        staged_o.append((_p[0], _p[1], _p[2], jx, None))
+            for s_lo, s_hi, s_x, jx, _st in _dedup_pieces(staged_o):
+                if s_hi - s_lo <= EPS:
+                    continue
+                side = abs(s_x - jx) > EPS
+                if side:
+                    zone_side.add(round(s_x, 4))
+                if stock > EPS and s_hi - s_lo > stock + EPS:
+                    notes.append("ШП X=%.0f длиной %.0f > хлыста "
+                                 "%.0f" % (s_x, s_hi - s_lo,
+                                           stock))
+                if not side and s_hi - top_y > ortho_oh + EPS:
+                    notes.append("ШП X=%.0f: консольный свес "
+                                 "%.0f > %.0f" %
+                                 (s_x, s_hi - top_y, ortho_oh))
+                # п.11 (Герман 30.07): профиль стандартный 3000,
+                # свес ≤300, стык ПОСЕРЕДИНЕ между кронштейнами.
+                # Раньше клали ОДНИМ куском на всю высоту зоны —
+                # динблок столько не растягивался («профилей нет
+                # выше первого этажа», фидбэк по сборке №10)
+                segs_o = _cut_by_len(s_lo, s_hi, rail_std, gap)
+                for za, zb in segs_o:
+                    rails.append({"x": round(s_x, 4),
+                                  "y0": round(za, 4),
+                                  "y1": round(zb, 4),
+                                  "len": round(zb - za, 4),
+                                  "kind": "Z-профиль" if side
+                                  else "ШП-60-20"})
+                # стыки кусков ШП → комбинированный на первом шве
+                # выше (полигон: КОМБ 61 на орто стоят над стыками)
+                seams_o = [zb for za, zb in segs_o[:-1]]
+                _piece_clamps(clamps, rows, s_lo, s_hi, s_x,
+                              side, seams_o, wedges,
+                              on_seam=_on_seam(jx))
+                if not side:
+                    _edge_top_clamps(clamps, rows, s_lo, s_hi,
+                                     s_x, _ytop(outer, s_x, s_hi, y1), hole_boxes)
             # 23.09n (Герман, ответ по сборке №24): кусок вертикали выше
             # последнего ГП, не опирающийся ни на один ГП, ДЛИННЕЕ 300 мм —
             # добавить ГП у верха: на 300 ниже верха куска («300 от торца»,

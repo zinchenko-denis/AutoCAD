@@ -161,6 +161,49 @@ namespace AFramePlugin
             };
         }
 
+        /// <summary>Параметры запроса движку, которые задаёт окно (без геометрии зон, осей,
+        /// рядов, углов и отметок — их даёт чертёж). 29.09 (синтетика «в ролях»): одна логика
+        /// для команды ATFRAME и для проверок tools/roles — ГРАБЛЯ-13 (поле окна не дошло до
+        /// движка) ловится прогоном, а не в AutoCAD. floorsPicked — сколько отметок перекрытий
+        /// указано на чертеже (0 — межэтажная берёт шаг этажа из окна).</summary>
+        public Dictionary<string, object> EngineParams(int floorsPicked)
+        {
+            bool clampsOnly = ClampsOnly;
+            var d = new Dictionary<string, object>
+            {
+                { "sub_type", EffSubType },
+                { "system", SysOverride() },
+                { "rail_profile", RailProfileOrNull },
+                { "nsp_type", NspTypeOrNull },
+                { "cladding", Cladding },
+            };
+            var calc = clampsOnly ? null : CalcDict();
+            if (calc != null) d["calc"] = calc;
+            if (Manual && !clampsOnly)
+            {
+                // 04.08 (Герман п.1): шаг, заданный РУКАМИ, ставится буквально
+                d["exact_step"] = true;
+                // 04.08 (Герман п.2): шаг СТОЕК в угловой зоне (0 — по рустам)
+                if (!IsTile && RailStepCorner > 1.0) d["rail_step_corner"] = RailStepCorner;
+            }
+            // Герман 07.08 (В-ад): отметки не указаны — хлысты снизу; автоперекрытия шагом
+            // этажа — только у межэтажной
+            d["floor_step"] = floorsPicked == 0 && InterFloor && FloorStep >= 1 ? FloorStep : 0.0;
+            if (Mode == "frame") d["parts"] = "frame";
+            if (IsTile)
+            {
+                // 29.09c (Герман): шаг направляющих (и в угловой зоне), хлыст и марка шины
+                d["tile_step_x"] = TileStepH;
+                if (TileStepHCorner > 0) d["tile_step_x_corner"] = TileStepHCorner;
+                d["tile_whip"] = TileWhip;
+                d["tile_rail_brand"] = RailBrand.Trim();
+                if (RowStep >= 50) d["tile_row_step"] = RowStep;   // зоны без раскладки
+                d["parts"] = "frame";
+            }
+            if (clampsOnly) d["parts"] = "clamps";
+            return d;
+        }
+
         /// <summary>Смена типа: вес облицовки по умолчанию был разный
         /// (межэтажная 8, остальные 25) — меняем, только если не трогали.</summary>
         public void SetSubType(string sub)
