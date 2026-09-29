@@ -36,6 +36,9 @@ namespace AFramePlugin
         private const string LayerRails = "_01_ПС_НАПРАВЛЯЮЩИЕ";
         private const string LayerBrackets = "_01_ПС_кронштейны";
         private const string LayerClamps = "_01_ПС_КЛЯММЕРЫ";
+        // 26.09: горизонтальные шины под бетонную/клинкерную плитку — свой слой
+        // (для спецификации отдельно от вертикальных профилей)
+        private const string LayerTileRails = "_01_ПС_ШИНЫ";
         private const string SubsystemLayerPrefix = "_01_ПС_";   // 23.09n: область ATDEDUP
 
         private const string BlkMain = "AFRAME_КР_НЕСУЩИЙ";
@@ -257,7 +260,10 @@ namespace AFramePlugin
                         if (xy[1] > bby1) bby1 = xy[1];
                     }
                 }
-                if (fs.Axes == "points")
+                // 26.09: у плитки оси стоек строит движок шагом от края зоны —
+                // первую ось не спрашиваем; ряды для шин — шагом швов ниже
+                if (fs.IsTile) { }
+                else if (fs.Axes == "points")
                 {
                     while (true)
                     {
@@ -290,9 +296,9 @@ namespace AFramePlugin
                     ed.WriteMessage("\n  осей по шагу " + F0(jstep) +
                         ": " + joints.Count);
                 }
-                if (joints.Count == 0)
+                if (joints.Count == 0 && !fs.IsTile)
                 { ed.WriteMessage("\nОсей нет — отмена."); return; }
-                if (rowsY.Count == 0)
+                if (rowsY.Count == 0 && !fs.IsTile)   // у плитки — ряды от низа каждой зоны, в движке
                 {
                     double rstep = fs.RowStep;
                     if (rstep >= 50)
@@ -384,15 +390,15 @@ namespace AFramePlugin
             //    шаги по расчёту/вручную (этап 4, 04.08 п.1–2), знаки ──
             bool interFloor = fs.InterFloor;
             bool ortho = fs.Ortho;
-            string subType = fs.SubType;
+            string subType = fs.EffSubType;   // у плитки — вертикальная
             string sysName = fs.SysName;
-            string typKey = fs.TypeTitle + (clampsOnly ? ", только кляммеры"
+            string typKey = fs.TypeTitle + (fs.IsTile ? ", шины по рядам" : clampsOnly ? ", только кляммеры"
                 : fs.Mode == "frame" ? ", без кляммеров" : "");
 
             // углы здания (фидбэк Германа 27.07): угловая зона (1500)
             // отсчитывается от УКАЗАННЫХ внешних углов; нет точек — по краям
             var cornersX = new List<object>();
-            if (fs.AskCorners && !clampsOnly)
+            if (fs.AskCorners && !clampsOnly && !fs.IsTile)
             {
                 while (true)
                 {
@@ -423,7 +429,7 @@ namespace AFramePlugin
                 // 04.08 (Герман п.1): шаг, заданный РУКАМИ, ставится буквально
                 manualStep = true;
                 // 04.08 (Герман п.2): шаг СТОЕК в угловой зоне (0 — по рустам)
-                if (fs.RailStepCorner > 1.0) railStepCorner = fs.RailStepCorner;
+                if (!fs.IsTile && fs.RailStepCorner > 1.0) railStepCorner = fs.RailStepCorner;
             }
 
             // ── 3а. знаки: условные или ОБРАЗЦЫ боевых блоков Германа ──
@@ -444,6 +450,8 @@ namespace AFramePlugin
                     smpRow = PickBlock(ed, db,
                         "\nОбразец ОПОРНОГО кронштейна (Enter — усл.): ");
                 }
+                if (!fs.IsTile)
+                {
                 smpClampRow = PickBlock(ed, db,
                     "\nОбразец кляммера РЯДОВОГО (Enter — усл.): ");
                 smpClampStart = PickBlock(ed, db,
@@ -453,6 +461,7 @@ namespace AFramePlugin
                 smpClampCombo = PickBlock(ed, db,
                     "\nОбразец кляммера КОМБИНИРОВАННОГО " +
                     "(Enter — усл.): ");
+                }
                 if (!clampsOnly)
                     smpRail = PickBlock(ed, db,
                         "\nОбразец НАПРАВЛЯЮЩЕЙ — динамический блок " +
@@ -474,7 +483,7 @@ namespace AFramePlugin
                                     " (всего " + floors.Count + ")");
                 }
             // ТЗ Германа 26.07 п.5 + 23.09: «только подсистема» — без кляммеров
-            if (fs.Mode == "frame")
+            if (fs.Mode == "frame" && !fs.IsTile)   // у плитки ряды нужны — по ним шины
                 rowsY.Clear();
 
             // Ответ Германа 07.08 (В-ад): отметки УКАЗАНЫ — несущий на центре
@@ -522,6 +531,14 @@ namespace AFramePlugin
             if (manualStep) payload["exact_step"] = true;
             // 23.09b (Герман): что раскладывать
             if (fs.Mode == "frame") payload["parts"] = "frame";
+            // 26.09 (Денис): облицовка; у плитки — шаг стоек и без кляммеров
+            payload["cladding"] = fs.Cladding;
+            if (fs.IsTile)
+            {
+                payload["tile_step_x"] = fs.TileStepH;
+                if (fs.RowStep >= 50) payload["tile_row_step"] = fs.RowStep;   // зоны без раскладки
+                payload["parts"] = "frame";
+            }
             if (clampsOnly)
             {
                 // существующие направляющие: из прошлой подсистемы зон (метка
@@ -729,6 +746,7 @@ namespace AFramePlugin
 
                 // горизонтальные профили (НГП/ГП/СП межэтажной и
                 // ортогональной) — прямоугольники по оси
+                bool shinaLayer = false;
                 if (hrails != null)
                     foreach (var ro in hrails)
                     {
@@ -737,6 +755,7 @@ namespace AFramePlugin
                         double y = ToD(Get(r, "y")),
                                hx0 = ToD(Get(r, "x0")),
                                hx1 = ToD(Get(r, "x1"));
+                        bool shina = SafeStr(Get(r, "kind")) == "шина";
                         var pl = new Polyline();
                         pl.AddVertexAt(0, new Point2d(hx0, y - railW / 2),
                                        0, 0, 0);
@@ -747,7 +766,8 @@ namespace AFramePlugin
                         pl.AddVertexAt(3, new Point2d(hx0, y + railW / 2),
                                        0, 0, 0);
                         pl.Closed = true;
-                        pl.Layer = LayerRails;
+                        if (shina && !shinaLayer) { EnsureLayer(tr, db, LayerTileRails); shinaLayer = true; }
+                        pl.Layer = shina ? LayerTileRails : LayerRails;
                         ms.AppendEntity(pl);
                         tr.AddNewlyCreatedDBObject(pl, true);
                         Remember(handlesByRoot, partToRoot,
@@ -886,7 +906,7 @@ namespace AFramePlugin
                 SafeStr(Get(sum, "rails")) + " (" +
                 SafeStr(Get(sum, "rails_lm")) + " м.п., хлыстов ~" +
                 SafeStr(Get(sum, "rail_stock_est")) +
-                "), горизонтальных " + SafeStr(Get(sum, "hrails")) +
+                (fs.IsTile ? "), шин " : "), горизонтальных ") + SafeStr(Get(sum, "hrails")) +
                 " (" + SafeStr(Get(sum, "hrails_lm")) + " м.п.)" +
                 ", кронштейнов несущих " +
                 SafeStr(Get(sum, "brackets_main")) +

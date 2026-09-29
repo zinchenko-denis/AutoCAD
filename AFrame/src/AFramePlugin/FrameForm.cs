@@ -21,6 +21,12 @@ namespace AFramePlugin
         private readonly bool _hasLayout;
         private bool _loading;
 
+        // 26.09 (Денис): первым пунктом — что облицовываем
+        private readonly RadioButton _cPorc = new RadioButton(), _cComp = new RadioButton(),
+                                     _cConc = new RadioButton(), _cClink = new RadioButton();
+        private readonly NumericUpDown _tileV = Num(100, 3000, 0), _tileH = Num(100, 3000, 0);
+        private readonly List<Control> _tileCtl = new List<Control>();
+        private GroupBox _g1;
         private readonly RadioButton _mAll = new RadioButton(), _mFrame = new RadioButton(), _mClamps = new RadioButton();
         private readonly RadioButton _tVert = new RadioButton(), _tInter = new RadioButton(), _tOrtho = new RadioButton();
         private readonly ComboBox _profile = new ComboBox();
@@ -68,10 +74,19 @@ namespace AFramePlugin
             MinimizeBox = false;
             MaximizeBox = false;
             ShowInTaskbar = false;
-            ClientSize = new Size(860, 612);
+            ClientSize = new Size(860, 686);
 
-            // ── 1. что раскладывать ──
-            var g1 = new GroupBox { Text = "1. Что раскладывать", Left = 10, Top = 6, Width = 470, Height = 94 };
+            // ── 1. облицовка (26.09, Денис: «первым пунктом») ──
+            var gc = new GroupBox { Text = "1. Облицовка", Left = 10, Top = 6, Width = 470, Height = 70 };
+            _cPorc.Text = "керамогранит"; _cComp.Text = "композит";
+            _cConc.Text = "бетонная плитка"; _cClink.Text = "клинкерная плитка";
+            Place(_cPorc, 10, 18, 220); Place(_cComp, 240, 18, 220);
+            Place(_cConc, 10, 42, 220); Place(_cClink, 240, 42, 220);
+            gc.Controls.AddRange(new Control[] { _cPorc, _cComp, _cConc, _cClink });
+
+            // ── 2. что раскладывать ──
+            var g1 = new GroupBox { Text = "2. Что раскладывать", Left = 10, Top = 80, Width = 470, Height = 94 };
+            _g1 = g1;
             _mAll.Text = "подсистему и кляммеры";
             _mFrame.Text = "только подсистему (без кляммеров)";
             _mClamps.Text = "только кляммеры (на существующие направляющие)";
@@ -79,7 +94,7 @@ namespace AFramePlugin
             g1.Controls.AddRange(new Control[] { _mAll, _mFrame, _mClamps });
 
             // ── 2. подсистема ──
-            _g2 = new GroupBox { Text = "2. Подсистема", Left = 10, Top = 104, Width = 470, Height = 78 };
+            _g2 = new GroupBox { Text = "3. Подсистема", Left = 10, Top = 178, Width = 470, Height = 78 };
             _tVert.Text = "вертикальная"; _tInter.Text = "межэтажная"; _tOrtho.Text = "ортогональная";
             Place(_tVert, 10, 20, 130); Place(_tInter, 150, 20, 130); Place(_tOrtho, 290, 20, 160);
             _profile.DropDownStyle = ComboBoxStyle.DropDownList;
@@ -87,7 +102,7 @@ namespace AFramePlugin
             _g2.Controls.AddRange(new Control[] { _tVert, _tInter, _tOrtho, L("Профиль:", 10, 46, 130), _profile });
 
             // ── 3. шаги кронштейнов ──
-            _g3 = new GroupBox { Text = "3. Шаги кронштейнов", Left = 10, Top = 186, Width = 470, Height = 136 };
+            _g3 = new GroupBox { Text = "4. Шаги кронштейнов", Left = 10, Top = 260, Width = 470, Height = 136 };
             _calc.Text = "по расчёту несущей способности"; _manual.Text = "вручную";
             Place(_calc, 10, 20, 240); Place(_manual, 260, 20, 200);
             _wind.DropDownStyle = ComboBoxStyle.DropDownList; _wind.Items.AddRange(FrameSettings.Winds);
@@ -98,12 +113,19 @@ namespace AFramePlugin
             AddPair(_manCtl, "Шаг рядовой, мм:", _stepMain, 10, 48); AddPair(_manCtl, "Шаг угловой, мм:", _stepCorner, 240, 48);
             AddPair(_manCtl, "Стойки в угл., мм:", _railStepC, 10, 76); AddPair(_manCtl, "Старт кронштейна:", _startOff, 240, 76);
             AddPair(_manCtl, "Зазор стыка, мм:", _railGap, 10, 104); AddPair(_manCtl, "Угловая зона, мм:", _cornerZone, 240, 104);
+            // плитка: два стандартных шага вместо расчёта/ручного набора
+            AddPair(_tileCtl, "По вертикали, мм:", _tileV, 10, 24); AddPair(_tileCtl, "По горизонтали, мм:", _tileH, 240, 24);
+            _tileCtl.Add(new Label { Text = "Стойки — шагом по горизонтали от края зоны, не по швам облицовки;",
+                                     Left = 10, Top = 58, Width = 450, Height = 18 });
+            _tileCtl.Add(new Label { Text = "кронштейны на стойках — шагом по вертикали; по рядам плитки — шины.",
+                                     Left = 10, Top = 78, Width = 450, Height = 18 });
             _g3.Controls.AddRange(new Control[] { _calc, _manual });
+            foreach (var c in _tileCtl) _g3.Controls.Add(c);
             foreach (var c in _calcCtl) _g3.Controls.Add(c);
             foreach (var c in _manCtl) _g3.Controls.Add(c);
 
             // ── 4. оси и швы (если у зон нет раскладки) ──
-            _g4 = new GroupBox { Text = "4. Оси стоек и швы", Left = 10, Top = 326, Width = 470, Height = 102 };
+            _g4 = new GroupBox { Text = "5. Оси стоек и швы", Left = 10, Top = 400, Width = 470, Height = 102 };
             _layoutInfo.Left = 10; _layoutInfo.Top = 20; _layoutInfo.Width = 450; _layoutInfo.Height = 18;
             _layoutInfo.Text = hasLayout ? "Оси стоек и швы берутся из раскладки выбранных зон (ATTILE/ATCLAD)."
                                          : "У выбранных зон нет раскладки — оси и швы задать здесь:";
@@ -115,7 +137,7 @@ namespace AFramePlugin
                 _axisStep, L("Шаг швов (0 — нет):", 240, 70, 138), _rowStep });
 
             // ── 5. после «Разложить» ──
-            var g5 = new GroupBox { Text = "5. После «Разложить» указать на чертеже", Left = 10, Top = 432, Width = 470, Height = 76 };
+            var g5 = new GroupBox { Text = "6. После «Разложить» указать на чертеже", Left = 10, Top = 506, Width = 470, Height = 76 };
             _corners.Text = "внешние углы здания (угловые зоны)";
             _floors.Text = "отметки перекрытий";
             Place(_corners, 10, 20, 450); Place(_floors, 10, 46, 200);
@@ -123,29 +145,30 @@ namespace AFramePlugin
             g5.Controls.AddRange(new Control[] { _corners, _floors, L("Этаж без отметок, мм:", 230, 46, 148), _floorStep });
 
             // ── 6. знаки ──
-            var g6 = new GroupBox { Text = "6. Знаки кронштейнов и кляммеров", Left = 10, Top = 512, Width = 470, Height = 50 };
+            var g6 = new GroupBox { Text = "7. Знаки кронштейнов и кляммеров", Left = 10, Top = 586, Width = 470, Height = 50 };
             _sCond.Text = "условные"; _sSamples.Text = "образцы блоков с чертежа (указать после ОК)";
             Place(_sCond, 10, 20, 110); Place(_sSamples, 130, 20, 330);
             g6.Controls.AddRange(new Control[] { _sCond, _sSamples });
 
             // ── что будет ──
-            var gd = new GroupBox { Text = "Что будет", Left = 490, Top = 6, Width = 360, Height = 556 };
-            _desc.Left = 10; _desc.Top = 22; _desc.Width = 340; _desc.Height = 524; _desc.AutoSize = false;
+            var gd = new GroupBox { Text = "Что будет", Left = 490, Top = 6, Width = 360, Height = 630 };
+            _desc.Left = 10; _desc.Top = 22; _desc.Width = 340; _desc.Height = 598; _desc.AutoSize = false;
             gd.Controls.Add(_desc);
 
-            var reset = new Button { Text = "Сброс", Left = 10, Top = 572, Width = 110, Height = 30 };
-            var ok = new Button { Text = "Разложить", Left = 630, Top = 572, Width = 106, Height = 30 };
-            var cancel = new Button { Text = "Отмена", Left = 744, Top = 572, Width = 106, Height = 30,
+            var reset = new Button { Text = "Сброс", Left = 10, Top = 646, Width = 110, Height = 30 };
+            var ok = new Button { Text = "Разложить", Left = 630, Top = 646, Width = 106, Height = 30 };
+            var cancel = new Button { Text = "Отмена", Left = 744, Top = 646, Width = 106, Height = 30,
                                       DialogResult = DialogResult.Cancel };
             AcceptButton = ok;
             CancelButton = cancel;
-            Controls.AddRange(new Control[] { g1, _g2, _g3, _g4, g5, g6, gd, reset, ok, cancel });
+            Controls.AddRange(new Control[] { gc, g1, _g2, _g3, _g4, g5, g6, gd, reset, ok, cancel });
 
             LoadControls();
 
             // ── события ──
             EventHandler upd = delegate { if (!_loading) { ReadControls(); LoadControls(); } };
-            foreach (var rb in new[] { _mAll, _mFrame, _mClamps, _calc, _manual, _axStep, _axPoints, _sCond, _sSamples })
+            foreach (var rb in new[] { _mAll, _mFrame, _mClamps, _calc, _manual, _axStep, _axPoints, _sCond, _sSamples,
+                                       _cPorc, _cComp, _cConc, _cClink })
                 rb.CheckedChanged += upd;
             foreach (var rb in new[] { _tVert, _tInter, _tOrtho })
                 rb.CheckedChanged += delegate(object o, EventArgs e)
@@ -157,7 +180,7 @@ namespace AFramePlugin
                 };
             foreach (var cb in new[] { _profile, _wind, _terr }) cb.SelectedIndexChanged += upd;
             foreach (var nu in new[] { _height, _qclad, _offset, _na, _stepMain, _stepCorner, _railStepC, _startOff,
-                                       _railGap, _cornerZone, _axisStep, _rowStep, _floorStep })
+                                       _railGap, _cornerZone, _axisStep, _rowStep, _floorStep, _tileV, _tileH })
                 nu.ValueChanged += upd;
             foreach (var ch in new[] { _corners, _floors }) ch.CheckedChanged += upd;
             reset.Click += delegate
@@ -165,6 +188,7 @@ namespace AFramePlugin
                 var d = new FrameSettings();
                 d.SetSubType(_s.SubType);
                 d.Mode = _s.Mode;
+                d.Cladding = _s.Cladding;
                 CopyInto(d, _s);
                 LoadControls();
             };
@@ -209,10 +233,14 @@ namespace AFramePlugin
             _loading = true;
             try
             {
-                _mAll.Checked = _s.Mode == "all"; _mFrame.Checked = _s.Mode == "frame"; _mClamps.Checked = _s.ClampsOnly;
-                _tVert.Checked = _s.SubType == "vertical"; _tInter.Checked = _s.InterFloor; _tOrtho.Checked = _s.Ortho;
+                bool tile = _s.IsTile;
+                _cPorc.Checked = _s.Cladding == "porcelain"; _cComp.Checked = _s.Cladding == "composite";
+                _cConc.Checked = _s.Cladding == "concrete"; _cClink.Checked = _s.Cladding == "clinker";
+                _tileV.Value = Dec(_s.TileStepV, _tileV); _tileH.Value = Dec(_s.TileStepH, _tileH);
+                _mAll.Checked = _s.Mode == "all"; _mFrame.Checked = _s.Mode == "frame"; _mClamps.Checked = _s.Mode == "clamps";
+                _tVert.Checked = _s.EffSubType == "vertical"; _tInter.Checked = _s.InterFloor; _tOrtho.Checked = _s.Ortho;
                 _profile.Items.Clear();
-                string[] prs = FrameSettings.ProfilesFor(_s.SubType);
+                string[] prs = FrameSettings.ProfilesFor(_s.EffSubType);
                 if (prs.Length == 0) { _profile.Items.Add("ШП/ZП — автоматом"); _profile.SelectedIndex = 0; }
                 else
                 {
@@ -220,7 +248,9 @@ namespace AFramePlugin
                     int k = Array.IndexOf(prs, _s.Profile);
                     _profile.SelectedIndex = k >= 0 ? k : 0;
                 }
-                _calc.Checked = !_s.Manual; _manual.Checked = _s.Manual;
+                // по полю Steps, а не Manual: у плитки Manual всегда true, а выбор
+                // «расчёт/вручную» для керамогранита должен сохраниться
+                _calc.Checked = _s.Steps != "manual"; _manual.Checked = _s.Steps == "manual";
                 _wind.SelectedIndex = Math.Max(0, Array.IndexOf(FrameSettings.Winds, _s.WindRegion));
                 _terr.SelectedIndex = Math.Max(0, Array.IndexOf(FrameSettings.Terrains, _s.Terrain));
                 _height.Value = Dec(_s.Height, _height); _qclad.Value = Dec(_s.QClad, _qclad);
@@ -235,13 +265,26 @@ namespace AFramePlugin
                 _sCond.Checked = _s.Signs == "cond"; _sSamples.Checked = _s.Signs == "samples";
 
                 bool frameParts = !_s.ClampsOnly;
+                // плитка: кляммеров нет (что раскладывать — только подсистема с
+                // шинами), тип — вертикальный, шаги — два стандартных
+                _g1.Enabled = !tile;
+                foreach (var rb in new[] { _tVert, _tInter, _tOrtho }) rb.Enabled = !tile;
                 _profile.Enabled = frameParts && prs.Length > 0;
                 _g3.Enabled = frameParts;
-                foreach (var c in _calcCtl) c.Visible = !_s.Manual;
-                foreach (var c in _manCtl) c.Visible = _s.Manual;
-                foreach (Control c in _g4.Controls) if (c != _layoutInfo) c.Enabled = !_hasLayout;
-                _axisStep.Enabled = !_hasLayout && _s.Axes == "step";
-                _corners.Enabled = frameParts;
+                _calc.Visible = _manual.Visible = !tile;
+                foreach (var c in _calcCtl) c.Visible = !tile && !_s.Manual;
+                foreach (var c in _manCtl) c.Visible = !tile && _s.Manual;
+                foreach (var c in _tileCtl) c.Visible = tile;
+                foreach (Control c in _g4.Controls) if (c != _layoutInfo) c.Enabled = !_hasLayout && !tile;
+                _axisStep.Enabled = !_hasLayout && !tile && _s.Axes == "step";
+                _rowStep.Enabled = !_hasLayout;
+                _layoutInfo.Text = tile
+                    ? (_hasLayout ? "Шины — по рядам раскладки зон (ATTILE); стойки — шагом от края зоны."
+                                  : "У зон нет раскладки — шины по шагу швов (рядов плитки):")
+                    : (_hasLayout ? "Оси стоек и швы берутся из раскладки выбранных зон (ATTILE/ATCLAD)."
+                                  : "У выбранных зон нет раскладки — оси и швы задать здесь:");
+                _layoutInfo.ForeColor = _hasLayout ? Color.DarkGreen : Color.Firebrick;
+                _corners.Enabled = frameParts && !tile;
                 _floorStep.Enabled = _s.InterFloor && frameParts;
                 string err = _s.Validate(_hasLayout);
                 _desc.ForeColor = err == null ? SystemColors.ControlText : Color.Firebrick;
@@ -253,7 +296,8 @@ namespace AFramePlugin
         private void ReadControls()
         {
             _s.Mode = _mClamps.Checked ? "clamps" : _mFrame.Checked ? "frame" : "all";
-            string[] prs = FrameSettings.ProfilesFor(_s.SubType);
+            // профиль — по списку, который сейчас в окне (облицовку меняем ниже)
+            string[] prs = FrameSettings.ProfilesFor(_s.EffSubType);
             if (prs.Length > 0 && _profile.SelectedIndex >= 0 && _profile.SelectedIndex < prs.Length)
                 _s.Profile = prs[_profile.SelectedIndex];
             _s.Steps = _manual.Checked ? "manual" : "calc";
@@ -269,6 +313,8 @@ namespace AFramePlugin
             _s.AskCorners = _corners.Checked; _s.AskFloors = _floors.Checked;
             _s.FloorStep = (double)_floorStep.Value;
             _s.Signs = _sSamples.Checked ? "samples" : "cond";
+            _s.TileStepV = (double)_tileV.Value; _s.TileStepH = (double)_tileH.Value;
+            _s.Cladding = _cClink.Checked ? "clinker" : _cConc.Checked ? "concrete" : _cComp.Checked ? "composite" : "porcelain";
         }
     }
 }

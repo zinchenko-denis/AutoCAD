@@ -251,6 +251,26 @@ def _span_points(a, b, step):
     return [a + L * j / k for j in range(k + 1)]
 
 
+def _tile_axes(x0, x1, step, edge=100.0, tol=50.0):
+    """Оси стоек под бетонную/клинкерную плитку (Денис 26.09): НЕ по швам
+    облицовки, а стандартным шагом. Первая стойка — в edge (100 мм) от
+    левого края зоны (как краевая стойка и стойка у окна), дальше РОВНО
+    шагом (ручной шаг ставится буквально — Герман 04.08 п.1), последняя —
+    в edge от правого края, если до неё больше tol; короче шага выходит
+    только последний пролёт. Зона уже 2×edge — одна стойка посередине."""
+    a, b = x0 + edge, x1 - edge
+    if b - a <= EPS:
+        return [round((x0 + x1) / 2.0, 4)]
+    out = []
+    x = a
+    while x <= b + EPS:
+        out.append(x)
+        x += step
+    if b - out[-1] > tol:
+        out.append(b)
+    return [round(v, 4) for v in out]
+
+
 def _zone_rail_axes(x0, x1, corners, czone, step_corner, step_main,
                     off=100.0, tol=50.0):
     """Оси стоек в УГЛОВЫХ и КРАЕВЫХ зонах (фидбэк Германа 04.08 п.2:
@@ -946,16 +966,50 @@ def frame_plan(req):
 
     notes, rails, brackets, clamps = [], [], [], []
     hrails, fittings = [], []
+    # 26.09 (Денис): облицовка. Керамогранит/композит — как было (стойки по
+    # швам раскладки, кляммеры). Бетонная/клинкерная плитка — подсистема БЕЗ
+    # привязки к вертикальным швам: вертикальные стойки стандартным шагом по
+    # горизонтали (tile_step_x), кронштейны на них шагом по вертикали
+    # (bracket_step, ручной — буквально), а по рядам плитки (rows_y —
+    # центры горизонтальных швов) — горизонтальные ШИНЫ, на которые вешается
+    # облицовка. Кляммеров у плитки нет.
+    cladding = str(req.get("cladding") or "porcelain").strip().lower()
+    if cladding not in ("porcelain", "composite", "concrete", "clinker"):
+        return {"ok": False,
+                "error": "cladding: porcelain|composite|concrete|clinker "
+                         "(получено %r)" % cladding}
+    tile = cladding in ("concrete", "clinker")
+    tile_step, tile_rows, tile_row_step = 0.0, [], 0.0
+    if tile:
+        try:
+            tile_step = float(req.get("tile_step_x") or 0.0)
+        except (TypeError, ValueError):
+            tile_step = 0.0
+        if tile_step < 100.0 - EPS:
+            return {"ok": False,
+                    "error": "плитка: шаг стоек по горизонтали (tile_step_x) "
+                             "— не меньше 100 мм"}
+        sub = "vertical"
+        try:
+            tile_row_step = float(req.get("tile_row_step") or 0.0)
+        except (TypeError, ValueError):
+            tile_row_step = 0.0
+        tile_rows = list(rows)
+        rows = []            # кляммеров у плитки нет — ряды идут в шины
+        mid_over = None      # стойки ровно шагом, без серединных
     # 23.09b (Герман): что раскладывать — all | frame (без кляммеров) |
     # clamps (только кляммеры; по rails_fixed — существующим направляющим)
     parts = str(req.get("parts") or "all").strip().lower()
     if parts not in ("all", "frame", "clamps"):
         return {"ok": False, "error": "parts: all|frame|clamps (получено %r)" % parts}
+    if tile and parts == "clamps":
+        return {"ok": False, "error": "у бетонной/клинкерной плитки кляммеров нет — "
+                                      "«только кляммеры» не применяется"}
     if parts == "clamps" and req.get("rails_fixed") is not None:
         return _clamps_on_rails(req, sub, system, joints, rows, floors)
     if parts == "frame":
         rows = []
-    if not joints:
+    if not joints and not tile:
         return {"ok": False,
                 "error": "нет осей стоек (joints_x) — раскладка "
                          "ATCLAD не выбрана и оси не заданы"}
@@ -978,6 +1032,10 @@ def frame_plan(req):
     rail_prof_req = (str(req.get("rail_profile") or "").strip()
                      or None)
     calc_in = req.get("calc")
+    if tile and calc_in is not None:
+        # у плитки шаги задаются вручную (стандартные) — расчёт не применяем
+        notes.append("плитка: шаги кронштейнов заданы вручную — расчёт не применяется")
+        calc_in = None
     if rail_prof_req and calc_in is not None:
         cands = _USER_PROF.get(rail_prof_req)
         if cands:
@@ -1038,6 +1096,43 @@ def frame_plan(req):
             if ha < (hb[2] - hb[0]) * (hb[3] - hb[1]) * (1.0 - 1e-6):
                 notes.append("проём %d не прямоугольный — подсистема обходит его по "
                              "габариту %.0f×%.0f" % (hi + 1, hb[2] - hb[0], hb[3] - hb[1]))
+        if tile:
+            # стойки — стандартным шагом от края зоны (оси раскладки не нужны);
+            # у окон вертикальная ветка сама ставит стойки у каждой грани
+            joints = _tile_axes(x0, x1, tile_step, edge_rail)
+            n_sh, n_rows = 0, 0
+            rows_c = [r for r in tile_rows if y0 + EPS < r < y1 - EPS]
+            if not rows_c and tile_row_step >= 50.0:
+                # раскладки у зоны нет — ряды шагом швов от низа зоны
+                k = 1
+                while y0 + k * tile_row_step < y1 - EPS:
+                    rows_c.append(y0 + k * tile_row_step)
+                    k += 1
+            for yy in rows_c:
+                if yy <= y0 + EPS or yy >= y1 - EPS:
+                    continue
+                segs = list(_hspans(outer, yy))
+                for bx0, by0, bx1, by1 in hole_boxes:
+                    if by0 - EPS < yy < by1 + EPS:
+                        segs = [(sa2, sb2) for sa, sb in segs
+                                for sa2, sb2 in ((sa, min(sb, bx0)), (max(sa, bx1), sb))
+                                if sb2 - sa2 > EPS]
+                got = False
+                for sa, sb in segs:
+                    if sb - sa <= EPS:
+                        continue
+                    hrails.append({"y": round(yy, 4), "x0": round(sa, 4),
+                                   "x1": round(sb, 4), "len": round(sb - sa, 4),
+                                   "kind": "шина"})
+                    n_sh += 1
+                    got = True
+                n_rows += 1 if got else 0
+            notes.append("контур %d: плитка — стоек %d шагом %.0f мм от края зоны "
+                         "(не по швам), шин %d на %d рядах" %
+                         (ci + 1, len(joints), tile_step, n_sh, n_rows))
+            if not rows_c:
+                notes.append("контур %d: у плитки нет рядов (нет раскладки ATTILE и шага "
+                             "швов) — шины не поставлены" % (ci + 1))
         wedges = _win_edges(hole_boxes,
                             [j for j in joints if x0 - EPS <= j <= x1 + EPS],
                             edge_off)

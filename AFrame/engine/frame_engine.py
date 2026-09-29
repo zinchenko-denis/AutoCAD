@@ -15,6 +15,8 @@ op="frame" — расстановка подсистемы (команда ATFRA
   "joints_x": [x, ...],   // оси стоек (из метки ATCLAD)
   "floors_y": [y, ...],   // отметки перекрытий (диалог)
   "rows_y":   [y, ...],   // центры горизонтальных швов (метка ATCLAD)
+  // 26.09: "cladding": porcelain|composite|concrete|clinker; у плитки
+  // (concrete/clinker) — "tile_step_x" (шаг стоек), шины по rows_y
   "parts"?: "all" | "frame" | "clamps",       // 23.09b: что раскладывать
   "rails_fixed"?: [{x, y0, y1}, ...]  // только кляммеры — по этим направляющим
 }
@@ -299,6 +301,10 @@ def op_frame(req):
             # 04.08 (Герман п.2): стойки угловых/краевых зон
             "rail_step_corner": req.get("rail_step_corner"),
             "rail_step_main": req.get("rail_step_main"),
+            # 26.09 (Денис): облицовка и шаг стоек под плитку — ГРАБЛЯ-13
+            "cladding": req.get("cladding"),
+            "tile_step_x": req.get("tile_step_x"),
+            "tile_row_step": req.get("tile_row_step"),
             "edge_rail_off": req.get("edge_rail_off"),
             "calc": req.get("calc"),
             # 23.09b (Герман): что раскладывать + существующие направляющие

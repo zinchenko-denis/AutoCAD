@@ -133,6 +133,26 @@ class TestFrameEngine(unittest.TestCase):
         self.assertTrue(res["ok"])
         self.assertEqual(res["summary"]["rails"], 1)
 
+    def test_tile_cladding_passes_through_zones(self):
+        """26.09 (Денис): облицовка «клинкер» и шаг стоек доходят до каждой
+        зоны (ГРАБЛЯ-13): стойки шагом, а не по своим швам зоны; шины по
+        рядам зоны; кляммеров нет."""
+        res = fe.run({
+            "op": "frame", "sub_type": "vertical", "parts": "frame",
+            "system": {"name": "Standart", "bracket_step": 600,
+                       "bracket_step_corner": 600},
+            "exact_step": True, "cladding": "clinker", "tile_step_x": 600,
+            "contours": [{"id": "A", "pts": rect(0, 0, 2000, 1500),
+                          "joints_x": [130 * k for k in range(1, 15)],
+                          "rows_y": [72 * k for k in range(1, 20)]}]})
+        self.assertTrue(res["ok"], res)
+        xs = sorted(set(r["x"] for r in res["rails"]))
+        self.assertEqual(xs, [100.0, 700.0, 1300.0, 1900.0])
+        self.assertEqual(len(res["hrails"]), 19)
+        self.assertTrue(all(h["kind"] == "шина" and h["zone"] == "контур A"
+                            for h in res["hrails"]))
+        self.assertEqual(len(res["clamps"]), 0)
+
 
 if __name__ == "__main__":
     unittest.main()

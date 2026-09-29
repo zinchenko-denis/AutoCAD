@@ -75,6 +75,30 @@ static class FrameUiCheck
            "мусор в метке — умолчания");
         Ok(d.Describe(true).Contains("кляммеры") && full.Describe(false).Contains("Только кляммеры"), "описание");
 
+        // 3б. облицовка (26.09, Денис): плитка — стойки шагом, шины, без кляммеров
+        Ok(d.Cladding == "porcelain" && !d.IsTile, "по умолчанию — керамогранит, прежний алгоритм");
+        var tk = new FrameSettings { Cladding = "clinker", TileStepV = 700, TileStepH = 550 };
+        var tso = tk.SysOverride();
+        Ok(tk.IsTile && tk.Manual && tk.CalcDict() == null && (string)tso["name"] == "Standart" &&
+           (double)tso["bracket_step"] == 700 && (double)tso["bracket_step_corner"] == 700,
+           "плитка: шаги ручные 700/700, расчёта нет");
+        var tko = new FrameSettings { Cladding = "concrete", Mode = "clamps" };
+        tko.SetSubType("ortho");
+        Ok(!tko.ClampsOnly && tko.EffSubType == "vertical" && !tko.Ortho && tko.SubType == "ortho",
+           "плитка: не «только кляммеры», тип вертикальный, сохранённый тип не трогается");
+        Ok(new FrameSettings { Cladding = "clinker", RowStep = 0 }.Validate(false) != null,
+           "плитка без раскладки и без шага швов — ошибка (шинам нужны ряды)");
+        Ok(new FrameSettings { Cladding = "clinker", RowStep = 0 }.Validate(true) == null,
+           "плитка с раскладкой — шаг швов не нужен");
+        Ok(new FrameSettings { Cladding = "clinker", TileStepH = 50 }.Validate(true) != null, "шаг по горизонтали 50 — ошибка");
+        Ok(new FrameSettings { Cladding = "clinker", Height = 0 }.Validate(true) == null, "плитка — высота здания не нужна");
+        Ok(tk.Describe(true).Contains("шины") && tk.Describe(true).Contains("550") && tk.TypeTitle.Contains("клинкерная"),
+           "плитка: описание про шины и шаг");
+        var tr2 = FrameSettings.FromDict(ser.DeserializeObject(ser.Serialize(tk.ToDict())) as Dictionary<string, object>);
+        Ok(tr2.Cladding == "clinker" && tr2.TileStepV == 700 && tr2.TileStepH == 550, "плитка: ToDict/FromDict");
+        Ok(FrameSettings.FromDict(new Dictionary<string, object> { { "cladding", "дерево" } }).Cladding == "porcelain",
+           "неизвестная облицовка в метке — керамогранит");
+
         // 4. окно: снимки, пересечения, ОК
         var shots = new List<Tuple<string, FrameSettings, bool>>();
         shots.Add(Tuple.Create("frame_default", new FrameSettings(), true));
@@ -89,6 +113,8 @@ static class FrameUiCheck
         var sbad = new FrameSettings { AskFloors = false, FloorStep = 0 };
         sbad.SetSubType("interfloor");
         shots.Add(Tuple.Create("frame_error", sbad, true));
+        shots.Add(Tuple.Create("frame_tile", new FrameSettings { Cladding = "clinker" }, true));
+        shots.Add(Tuple.Create("frame_tile_nolayout", new FrameSettings { Cladding = "concrete", RowStep = 72 }, false));
         foreach (var kv in shots)
         {
             using (var f = new FrameForm(kv.Item2, kv.Item3))
@@ -113,8 +139,17 @@ static class FrameUiCheck
                     if (grp is GroupBox)
                         foreach (Control c in grp.Controls)
                             if (c.Visible)
+                            {
                                 Ok(c.Right <= grp.Width - 2 && c.Bottom <= grp.Height,
                                    kv.Item1 + ": «" + c.Text + "» вылезает из группы «" + grp.Text + "»");
+                                // 26.09: подпись не обрезана (переключатель/флажок — плюс кружок ~20)
+                                int extra = (c is RadioButton || c is CheckBox) ? 20 : 0;
+                                if ((c is RadioButton || c is CheckBox || c is Label) && c.Text.Length > 0 &&
+                                    !(c is Label && ((Label)c).AutoSize == false && c.Height > 30))
+                                    Ok(TextRenderer.MeasureText(c.Text, c.Font).Width + extra <= c.Width + 4,
+                                       kv.Item1 + ": подпись «" + c.Text + "» не влезает (" +
+                                       (TextRenderer.MeasureText(c.Text, c.Font).Width + extra) + " > " + c.Width + ")");
+                            }
                 }
                 bool valid = kv.Item2.Validate(kv.Item3) == null;
                 ((Button)f.AcceptButton).PerformClick();
