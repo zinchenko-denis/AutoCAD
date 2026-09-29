@@ -543,22 +543,43 @@ namespace AFacadesPlugin
                     ObjectId poid;
                     if (pd == null || !parapetIds.TryGetValue(pid, out poid)) continue;
                     var pent = (Entity)tr.GetObject(poid, OpenMode.ForWrite);
-                    pent.Layer = EnsureNamed(tr, db, LayerParapet, 2);
                     string ptop = F3(Get(pd, "top_m"));
-                    var plp = Get(pd, "label_pt") as object[];
-                    double off2 = 0.5 * form.TextHeight;
-                    var pmt = new MText
+                    // 29.09p (Герман, 29.09n: «парапеты маркировать не надо — отрисовать их
+                    // полилиниями, как откосы, и дать погонаж»): метки нет. Замкнутый контур — на
+                    // слой «Контур парапета», по его верху — линия(и) на слое «Парапет» (что
+                    // посчитано); открытая полилиния — сама линия парапета, на слой «Парапет».
+                    // Данные — в самом контуре/линии (для ATFTABLE); повтор стирает прежние линии.
+                    linesErased += EraseOldParapetLines(tr, db, ser, pent);
+                    bool pclosed = !(Get(pd, "closed") is bool) || (bool)Get(pd, "closed");
+                    var phs = new List<object>();
+                    if (pclosed)
                     {
-                        Location = new Point3d((plp != null ? ToD(plp[0]) : 0) - off2,
-                                               (plp != null ? ToD(plp[1]) : 0) - off2, 0),
-                        TextHeight = form.TextHeight,
-                        Layer = LayerParapet,
-                        Attachment = AttachmentPoint.TopRight,
-                        Contents = @"Парапет\PL = " + ptop + " м.п.",
-                    };
-                    btr.AppendEntity(pmt);
-                    tr.AddNewlyCreatedDBObject(pmt, true);
-                    StoreZoneData(tr, pmt, ser.Serialize(pd), ParapetKey);
+                        pent.Layer = EnsureNamed(tr, db, LayerParapetContour, 2);
+                        var ptl = Get(pd, "top_lines") as object[];
+                        if (ptl != null)
+                            foreach (var pch in ptl)
+                            {
+                                var ppts = pch as object[];
+                                if (ppts == null || ppts.Length < 2) continue;
+                                var ppl = new Polyline();
+                                for (int pvi = 0; pvi < ppts.Length; pvi++)
+                                {
+                                    var pxy = ppts[pvi] as object[];
+                                    if (pxy == null || pxy.Length < 2) continue;
+                                    ppl.AddVertexAt(ppl.NumberOfVertices, new Point2d(ToD(pxy[0]), ToD(pxy[1])), 0, 0, 0);
+                                }
+                                if (ppl.NumberOfVertices < 2) { ppl.Dispose(); continue; }
+                                ppl.Layer = EnsureNamed(tr, db, LayerParapet, 2);
+                                btr.AppendEntity(ppl);
+                                tr.AddNewlyCreatedDBObject(ppl, true);
+                                phs.Add(Hnd(ppl));
+                                linesMade++;
+                            }
+                    }
+                    else
+                        pent.Layer = EnsureNamed(tr, db, LayerParapet, 2);
+                    pd["lines"] = phs.ToArray();
+                    StoreZoneData(tr, pent, ser.Serialize(pd), ParapetKey);
                     parapetRows.Add(pd);
                     var pws = Get(pd, "warnings") as object[];
                     if (pws != null)
@@ -882,6 +903,7 @@ namespace AFacadesPlugin
         internal const string LinesKey = "ATFZONE_LINES";
         internal const string ParapetKey = "ATFZONE_PARAPET";
         private const string LayerParapet = "Парапет";
+        private const string LayerParapetContour = "Контур парапета";   // 29.09p: линия — на «Парапет»
         private static readonly string[] SchemeLayers =
         {
             "Оконные откосы", "Оконные отливы", "Примыкание к витражам",
@@ -938,6 +960,30 @@ namespace AFacadesPlugin
             return n;
         }
 
+        // 29.09p: линии парапета, нарисованные прошлым ATFZONE по этому контуру (хэндлы — в его
+        // данных): удалить, если ещё на месте и на слое «Парапет»
+        private static int EraseOldParapetLines(Transaction tr, Database db, JavaScriptSerializer ser, Entity pent)
+        {
+            string j = ReadZoneData(tr, pent, ParapetKey);
+            if (j == null) return 0;
+            int n = 0;
+            var d = ser.DeserializeObject(j) as Dictionary<string, object>;
+            var arr = Get(d, "lines") as object[];
+            if (arr == null) return 0;
+            foreach (var ho in arr)
+                try
+                {
+                    var id = db.GetObjectId(false, new Handle(Convert.ToInt64(SafeStr(ho), 16)), 0);
+                    if (id.IsNull || id.IsErased || id == pent.ObjectId) continue;
+                    var e = tr.GetObject(id, OpenMode.ForWrite) as Entity;
+                    if (e == null || e.Layer != LayerParapet) continue;
+                    e.Erase();
+                    n++;
+                }
+                catch { }
+            return n;
+        }
+
         // выбор среди уже выбранных контуров; false — Esc (отмена команды)
         private static bool PickHandles(Editor ed, string msg, SelectionFilter filter,
             Dictionary<string, ObjectId> known, out List<string> handles)
@@ -963,7 +1009,7 @@ namespace AFacadesPlugin
             List<string> skipped)
         {
             var res = ed.GetSelection(new PromptSelectionOptions
-            { MessageForAdding = "\nВыберите контуры ПАРАПЕТА (Enter — нет): " }, filter);
+            { MessageForAdding = "\nВыберите ПАРАПЕТ — контуры или линии по верху (Enter — нет): " }, filter);
             if (res.Status == PromptStatus.Cancel) return false;
             if (res.Status != PromptStatus.OK) return true;
             using (var tr = db.TransactionManager.StartTransaction())
@@ -974,10 +1020,11 @@ namespace AFacadesPlugin
                     if (pl == null) continue;
                     string h = Hnd(pl);
                     int n = pl.NumberOfVertices;
-                    if (n < 3) { skipped.Add(h + " (парапет, <3 вершин)"); continue; }
-                    bool closed = pl.Closed ||
-                        pl.GetPoint2dAt(0).GetDistanceTo(pl.GetPoint2dAt(n - 1)) <= CloseTol;
-                    if (!closed) { skipped.Add(h + " (парапет не замкнут)"); continue; }
+                    // 29.09p (Герман: «отрисовать полилиниями, как откосы»): открытая полилиния —
+                    // сама линия парапета (погонаж = её длина), замкнутая — контур (по верху)
+                    if (n < 2) { skipped.Add(h + " (парапет, <2 вершин)"); continue; }
+                    bool closed = n >= 3 && (pl.Closed ||
+                        pl.GetPoint2dAt(0).GetDistanceTo(pl.GetPoint2dAt(n - 1)) <= CloseTol);
                     var pts = new List<object>();
                     var bulges = new List<object>();
                     for (int i = 0; i < n; i++)
@@ -989,7 +1036,7 @@ namespace AFacadesPlugin
                     if (ids.ContainsKey(h)) continue;
                     ids[h] = pl.ObjectId;
                     outList.Add(new Dictionary<string, object>
-                    { { "id", h }, { "pts", pts }, { "bulges", bulges } });
+                    { { "id", h }, { "pts", pts }, { "bulges", bulges }, { "closed", closed } });
                 }
                 tr.Commit();
             }

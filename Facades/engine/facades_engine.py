@@ -33,7 +33,7 @@ op="zones" — ручной режим Германа (этап 1): плоски
                "lines": [{"opening_id", "cat", "pts", "len_m"}],  // схема (29.09)
                "label_pt": [x, y],  // правый верхний угол области (21.07 п.1)
                "report": {facade_zone_report/1} } ],
-  "parapets": [ {"id", "top_m", "perimeter_m", "label_pt", "warnings"} ],
+  "parapets": [ {"id", "closed", "top_m", "top_lines", "perimeter_m", "label_pt", "warnings"} ],
                                                  // 29.09j: только м.п. по верху
   "zones_full": [ {facade_zone/1} ],              // для *_fzones.json
   "failed": [ { "zone_id", "outer_id", "issues": [...] } ],

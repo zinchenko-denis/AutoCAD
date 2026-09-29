@@ -456,6 +456,24 @@ class TestOpeningKinds(unittest.TestCase):
         res = self.run_zone(self.base()[:1], parapets=[{"id": "S", "pts": [[x, y + 7000] for x, y in pts]}])
         self.assertAlmostEqual(res["parapets"][0]["top_m"], 6.0)
 
+    def test_parapet_lines_and_open_polyline(self):
+        # 29.09p (Герман): «отрисовать полилиниями, как откосы, и дать погонаж» — линии по верху
+        # ступенчатого парапета: две полилинии, их длина = погонажу; открытая полилиния — сама линия
+        pts = [[0, 0], [6000, 0], [6000, 900], [3000, 900], [3000, 600], [0, 600]]
+        res = self.run_zone(self.base()[:1], parapets=[{"id": "S", "pts": [[x, y + 7000] for x, y in pts]},
+                                                       {"id": "L", "pts": [[0, 8000], [4000, 8000], [4000, 9000]],
+                                                        "closed": False}])
+        pp = dict((p["id"], p) for p in res["parapets"])
+        tl = pp["S"]["top_lines"]
+        self.assertEqual(len(tl), 2)
+        self.assertAlmostEqual(sum(math.hypot(b[0] - a[0], b[1] - a[1]) for ln in tl for a, b in zip(ln, ln[1:])) / 1000.0,
+                               pp["S"]["top_m"], places=6)
+        self.assertTrue(pp["S"]["closed"])
+        self.assertFalse(pp["L"]["closed"])
+        self.assertAlmostEqual(pp["L"]["top_m"], 5.0, places=6)
+        self.assertEqual(pp["L"]["top_lines"], [])
+        self.assertAlmostEqual(res["summary"]["parapets_top_m"], 6.0 + 5.0, places=6)
+
     def test_parapet_sloped_and_arched_top(self):
         # 29.09j: м.п. — единственная величина парапета, поэтому наклонный верх (фронтон,
         # не круче 45°) и пологая дуга считаются по настоящей длине; торцы — нет

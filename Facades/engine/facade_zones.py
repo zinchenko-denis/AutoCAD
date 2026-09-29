@@ -925,9 +925,23 @@ def parapet_report(contour, zone_outers_mm=(), units="mm"):
     метрах погонных; площадь считать не нужно — развёртки на разных объектах
     разные»; марок и нумерации нет — «просто парапет». Площади и ширины в ответе
     больше нет.
-    contour: {"id", "pts", "bulges"?}; zone_outers_mm — полигоны зон (мм)."""
+    29.09p (Герман, 29.09n: «парапеты маркировать не надо — отрисовать их полилиниями, как откосы, и
+    дать погонаж»): top_lines — линии по верху (что посчитано), их рисует ATFZONE; открытая полилиния
+    (closed: false) — сама линия парапета, погонаж = её длина.
+    contour: {"id", "pts", "bulges"?, "closed"?}; zone_outers_mm — полигоны зон (мм)."""
     k = _UNIT_TO_MM.get(units, 1.0)
     cid = str(contour.get("id", "?"))
+    if contour.get("closed", True) is False:
+        pts = contour.get("pts") or []
+        if len(pts) < 2:
+            raise ZoneFormatError("парапет %s: меньше 2 вершин" % cid)
+        bul = list(contour.get("bulges") or [])
+        L = 0.0
+        for i in range(len(pts) - 1):
+            b = float(bul[i] or 0.0) if i < len(bul) else 0.0
+            L += _arc_len(pts[i], pts[i + 1], b) if abs(b) > EPS else _dist(pts[i], pts[i + 1])
+        return {"id": cid, "closed": False, "perimeter_m": L * k / 1e3, "top_m": L * k / 1e3,
+                "top_lines": [], "label_pt": [float(pts[-1][0]), float(pts[-1][1])], "warnings": []}
     poly = Poly(contour.get("pts") or [], contour.get("bulges"))
     if poly.n() < 3:
         raise ZoneFormatError("парапет %s: меньше 3 вершин" % cid)
@@ -936,14 +950,34 @@ def parapet_report(contour, zone_outers_mm=(), units="mm"):
         raise ZoneFormatError("парапет %s: контур самопересекается" % cid)
     top = 0.0
     n = len(pts_mm)
+    is_top = []
     for i in range(n):
         a, c = pts_mm[i], pts_mm[(i + 1) % n]
         dx, dy = abs(c[0] - a[0]), abs(c[1] - a[1])
-        if dx <= GEO_TOL or dy > dx:
-            continue                     # вертикаль, торец, круче 45° — не верх
         mx, my = (a[0] + c[0]) / 2.0, (a[1] + c[1]) / 2.0
-        if _pip((mx, my - 2.0), pts_mm) and not _pip((mx, my + 2.0), pts_mm):
+        # вертикаль, торец, круче 45° — не верх
+        t = not (dx <= GEO_TOL or dy > dx) and _pip((mx, my - 2.0), pts_mm) and \
+            not _pip((mx, my + 2.0), pts_mm)
+        is_top.append(t)
+        if t:
             top += math.hypot(dx, dy)
+    # линии по верху: подряд идущие кромки верха — одной полилинией
+    chains, cur = [], None
+    if any(is_top) and not all(is_top):
+        s0 = is_top.index(False)
+        for kk in range(1, n + 1):
+            i = (s0 + kk) % n
+            if is_top[i]:
+                a, c = pts_mm[i], pts_mm[(i + 1) % n]
+                if cur is None:
+                    cur = [a, c]
+                else:
+                    cur.append(c)
+            elif cur:
+                chains.append(cur)
+                cur = None
+        if cur:
+            chains.append(cur)
     warns = []
     for zi, zp in enumerate(zone_outers_mm or ()):
         if _interiors_overlap(pts_mm, zp) or _contains(zp, pts_mm) or _contains(pts_mm, zp):
@@ -951,7 +985,8 @@ def parapet_report(contour, zone_outers_mm=(), units="mm"):
                          "площадь зоны")
             break
     la = label_anchor(pts_mm, GEO_TOL)
-    return {"id": cid, "perimeter_m": poly.perimeter() * k / 1e3, "top_m": top / 1e3,
+    return {"id": cid, "closed": True, "perimeter_m": poly.perimeter() * k / 1e3, "top_m": top / 1e3,
+            "top_lines": [[[q[0] / k, q[1] / k] for q in ch] for ch in chains],
             "label_pt": [la[0] / k, la[1] / k], "warnings": warns}
 
 
