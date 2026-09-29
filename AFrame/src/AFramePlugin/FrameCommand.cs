@@ -913,8 +913,8 @@ namespace AFramePlugin
                     ": стартовые " + SafeStr(Get(sum, "shina_start_lm")) + " м.п., рядовые " +
                     SafeStr(Get(sum, "shina_row_lm")) + " м.п., концевые " +
                     SafeStr(Get(sum, "shina_end_lm")) + " м.п.; всего " + SafeStr(Get(sum, "shina_lm")) +
-                    " м.п. = хлыстов " + SafeStr(Get(sum, "shina_pieces")) + " (по " +
-                    F0(ToD(Get(sum, "tile_whip"))) + " мм от левого края, последний в прогоне короче).");
+                    " м.п. = хлыстов " + SafeStr(Get(sum, "shina_pieces")) + " (не длиннее " +
+                    F0(ToD(Get(sum, "tile_whip"))) + " мм, стык на направляющей).");
             }
             PrintCalcReport(ed, Get(res, "calc_report")
                             as Dictionary<string, object>);

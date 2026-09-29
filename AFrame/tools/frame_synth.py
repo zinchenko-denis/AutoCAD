@@ -35,7 +35,9 @@
 случайных чисел (прежние сценарии не сдвигаются), те же F1–F15 плюс:
  T1  вертикальные направляющие в [край+100, край−100] (кроме оконных у граней),
      соседние оси не дальше max(шаг, угловой шаг)+50;
- T2  хлысты: куски прогона стыкуются встык, все, кроме последнего, = хлыст;
+ T2  хлысты: куски прогона стыкуются встык, каждый не длиннее хлыста; стык — на
+     вертикальном профиле через высоту шины (Герман 29.09j, 9в), хлыст самый длинный:
+     дальше в пределах хлыста профиля нет (кроме последнего в прогоне);
  T3  стартовая = горизонтальные кромки низа стены минус проёмы, концевая —
      кромки верха минус проёмы (оракул shapely, ±1 мм на прогон);
  T4  рядовая на отметке ряда = ширина стены на этой отметке минус проёмы
@@ -268,19 +270,45 @@ def check_tile(sc, res):
             if abs(a["x1"] - b["x0"]) > T or abs(a["y"] - b["y"]) > T:
                 bad.append(("T2", "прогон %s: куски не встык (%.0f / %.0f)" % (key, a["x1"], b["x0"])))
                 break
-        if any(abs(h["len"] - t["whip"]) > T for h in ps[:-1]) or ps[-1]["len"] > t["whip"] + T:
-            bad.append(("T2", "прогон %s: хлыст не %.0f" % (key, t["whip"])))
+        if any(h["len"] > t["whip"] + T for h in ps):
+            bad.append(("T2", "прогон %s: кусок длиннее хлыста %.0f" % (key, t["whip"])))
+        yy, sa, sb = ps[0]["y"], ps[0]["x0"], ps[-1]["x1"]
+        sup = sorted({round(r["x"], 1) for r in rails
+                      if r["y0"] - 20.0 - 1e-6 <= yy <= r["y1"] + 20.0 + 1e-6 and sa + T < r["x"] < sb - T})
+        prev = sa
+        for h in ps[1:]:
+            j = h["x0"]
+            # досягаемость — строго по длине хлыста (2500,2 мм — уже длиннее хлыста)
+            reach = [x for x in sup if prev + 300.0 - 1e-6 <= x <= prev + t["whip"] + 1e-6]
+            on = any(abs(j - x) <= T for x in sup)
+            if reach and not on:
+                bad.append(("T2", "прогон %s: стык %.0f не на направляющей (в пределах хлыста есть %s)"
+                            % (key, j, reach[-3:])))
+                break
+            longer = [x for x in reach if x > j + T and x < sup[-1] - T]
+            if on and longer:
+                bad.append(("T2", "прогон %s: стык %.0f, а дальше в пределах хлыста направляющая %.0f"
+                            % (key, j, longer[-1])))
+                break
+            prev = j
     ops_u = unary_union([Polygon([(a, b), (c, b), (c, d), (a, d)]) for a, b, c, d in boxes]) if boxes else None
     exp = {"низ": 0.0, "верх": 0.0}
     for ln, side in _hedges_oracle(wall):
         exp[side] += (ln.difference(ops_u) if ops_u is not None else ln).length
+    # 29.09l (Герман, 9б): стартовая — и над каждым проёмом, концевая — и под ним, по ширине
+    # проёма там, где за кромкой стена (пробой в 2 мм за кромкой, мимо других проёмов)
+    for bx0, by0, bx1, by1 in boxes:
+        for yy, side in ((by1 + 2.0, "низ"), (by0 - 2.0, "верх")):
+            ln = LineString([(bx0, yy), (bx1, yy)]).intersection(wall)
+            exp[side] += (ln.difference(ops_u) if ops_u is not None else ln).length
     got_s = sum(h["len"] for h in sh if h["kind"] == "шина стартовая")
     got_e = sum(h["len"] for h in sh if h["kind"] == "шина концевая")
     if abs(got_s - exp["низ"]) > T * (1 + len(runs)):
         bad.append(("T3", "стартовая %.0f мм, по кромкам низа %.0f" % (got_s, exp["низ"])))
     if abs(got_e - exp["верх"]) > T * (1 + len(runs)):
         bad.append(("T3", "концевая %.0f мм, по кромкам верха %.0f" % (got_e, exp["верх"])))
-    ey = [ln.coords[0][1] for ln, _s in _hedges_oracle(wall)]
+    ey = [ln.coords[0][1] for ln, _s in _hedges_oracle(wall)] + \
+        [v for b in boxes for v in (b[1], b[3])]      # 29.09l: у кромок проёмов — свои шины
     for yy in t["rows"]:
         if any(abs(yy - e) < 20.0 + T for e in ey):
             continue

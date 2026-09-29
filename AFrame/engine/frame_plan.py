@@ -345,26 +345,34 @@ def _cut_boxes_h(segs, y, boxes):
     return segs
 
 
-def _tile_rails(outer, boxes, rows, whip, merge=20.0):
+TILE_SUP_TOL = 20.0      # шина держится на профиле, если её высота в пределах профиля ±20 мм
+TILE_MIN_WHIP = 300.0    # кусок шины короче 300 мм стыком не режем (тот же минимум, что у хлыста)
+
+
+def _tile_rails(outer, boxes, rows, merge=20.0):
     """Шины под бетонную/клинкерную плитку (Герман 29.09, ответ по №27 пп.1–2):
     «Шины бывают трех видов: стартовая, рядовая и концевая. Стартовая шина
     ставится внизу зоны, рядовая — по центру горизонтального шва, концевая —
-    по верхней границе зоны. Хлыст длиной два с половиной метра раскладывается
-    ровным шагом от левого края, последний пролет короче».
+    по верхней границе зоны».
+    29.09l (Герман, ответ на 9б и 9д PDF №27): «стартовая, концевая ставится
+    также над окнами и под окнами»; «концевая по наклону не нужна».
 
     - стартовая — по каждой ГОРИЗОНТАЛЬНОЙ кромке контура, над которой стена
-      (низ зоны; у ступенчатой/Г-образной — на каждой ступени), концевая — по
-      каждой горизонтальной кромке, под которой стена (верх зоны); наклонные
-      кромки (фронтон) шину не получают — длина в ноте;
+      (низ зоны; у ступенчатой/Г-образной — на каждой ступени), и по ВЕРХУ
+      каждого проёма, над которым стена; концевая — по каждой горизонтальной
+      кромке, под которой стена (верх зоны), и по НИЗУ каждого проёма, под
+      которым стена. У проёма — по ширине его габарита, по контуру стены и
+      мимо соседних проёмов; наклонные кромки (фронтон) шину не получают;
     - рядовая — по центру каждого горизонтального шва (rows), по контуру стены;
-      ряд ближе merge к стартовой/концевой линии на том же участке не ставится;
+      ряд ближе merge к стартовой/концевой линии на её участке не ставится;
     - окна режут шину по габариту проёма;
-    - каждый прогон (кусок между краями стены и окнами) режется на хлысты whip
-      от ЛЕВОГО конца прогона, последний короче.
+    - прогон (кусок между краями стены и окнами) возвращается ЦЕЛИКОМ: на хлысты
+      его режет frame_plan по вертикальным профилям этой зоны, когда они
+      расставлены (_whip_cuts: стык — на направляющей).
 
-    Возвращает (hrails, sloped_top_mm) — куски шин {y, x0, x1, len, kind, run}
-    и длину наклонных кромок верха без концевой шины."""
-    edges = []                               # (y, lo, hi, kind)
+    Возвращает (runs, sloped_top_mm) — прогоны {y, x0, x1, len, kind, run} и
+    длину наклонных кромок верха (концевой там нет)."""
+    edges = []                               # (y, [(lo, hi)], kind)
     sloped = 0.0
     n = len(outer)
     for i in range(n):
@@ -381,20 +389,31 @@ def _tile_rails(outer, boxes, rows, whip, merge=20.0):
         up = _pip_strict(outer, xm, ym + 2.0)
         dn = _pip_strict(outer, xm, ym - 2.0)
         if up and not dn:
-            edges.append((ym, lo, hi, "шина стартовая"))
+            edges.append((ym, _cut_boxes_h([(lo, hi)], ym, boxes), "шина стартовая"))
         elif dn and not up:
-            edges.append((ym, lo, hi, "шина концевая"))
-    lines = []                               # (y, [(sa, sb)], kind)
-    for ym, lo, hi, kind in edges:
-        lines.append((ym, _cut_boxes_h([(lo, hi)], ym, boxes), kind))
+            edges.append((ym, _cut_boxes_h([(lo, hi)], ym, boxes), "шина концевая"))
+    # 29.09l: над проёмом — стартовая, под проёмом — концевая (где за кромкой стена;
+    # _hspans прижимает отметку к габариту стены — за верхом/низом стены проверяем сами)
+    ys_o = [q[1] for q in outer]
+    for bi, (bx0, by0, bx1, by1) in enumerate(boxes):
+        others = boxes[:bi] + boxes[bi + 1:]
+        for yy, kind, pr in ((by1, "шина стартовая", 2.0), (by0, "шина концевая", -2.0)):
+            if not (min(ys_o) + EPS < yy + pr < max(ys_o) - EPS):
+                continue                     # за кромкой проёма — не стена (верх/низ зоны)
+            segs = [(max(sa, bx0), min(sb, bx1)) for sa, sb in _hspans(outer, yy + pr)]
+            segs = _cut_boxes_h([(sa, sb) for sa, sb in segs if sb - sa > EPS], yy + pr, others)
+            if segs:
+                edges.append((yy, segs, kind))
+    lines = list(edges)                      # (y, [(sa, sb)], kind)
     for yy in rows:
         segs = list(_hspans(outer, yy))
-        for ey, lo, hi, _k in edges:
+        for ey, esegs, _k in edges:
             if abs(ey - yy) < merge:
                 # место занято стартовой/концевой на этом участке
-                segs = [(sa2, sb2) for sa, sb in segs
-                        for sa2, sb2 in ((sa, min(sb, lo)), (max(sa, hi), sb))
-                        if sb2 - sa2 > EPS]
+                for lo, hi in esegs:
+                    segs = [(sa2, sb2) for sa, sb in segs
+                            for sa2, sb2 in ((sa, min(sb, lo)), (max(sa, hi), sb))
+                            if sb2 - sa2 > EPS]
         lines.append((yy, _cut_boxes_h(segs, yy, boxes), "шина рядовая"))
     out, run = [], 0
     for yy, segs, kind in lines:
@@ -402,14 +421,38 @@ def _tile_rails(outer, boxes, rows, whip, merge=20.0):
             if sb - sa <= EPS:
                 continue
             run += 1
-            xq = sa
-            while sb - xq > EPS:
-                xe = min(xq + whip, sb)
-                out.append({"y": round(yy, 4), "x0": round(xq, 4),
-                            "x1": round(xe, 4), "len": round(xe - xq, 4),
-                            "kind": kind, "run": run})
-                xq = xe
+            out.append({"y": round(yy, 4), "x0": round(sa, 4), "x1": round(sb, 4),
+                        "len": round(sb - sa, 4), "kind": kind, "run": run})
     return out, sloped
+
+
+def _whip_cuts(sa, sb, sup, whip, min_piece=TILE_MIN_WHIP):
+    """Стыки хлыстов прогона шины [sa, sb] — на направляющих (29.09l, Герман, ответ на
+    9в PDF №27: «лучше делать стык хлыстов на направляющей; если шаг 600 — длина хлыста
+    2400, стандартная 2500 подходит для шага 500»). sup — X вертикальных профилей, через
+    которые шина проходит на своей высоте.
+
+    От начала прогона (после окна — от грани проёма: «хлысты после окна считаются
+    заново», 9а) стык ставится на САМУЮ ДАЛЬНЮЮ направляющую не дальше whip от
+    предыдущего стыка — хлыст кратен шагу (600 → 2400, 500 → 2500); не на последнюю
+    направляющую прогона (за ней — огрызок на одной опоре) и не ближе min_piece.
+    Прогон не длиннее whip — один хлыст. Направляющей в пределах хлыста нет — стык на
+    длине whip, без опоры (считается).
+    Возвращает (стыки, стыков без направляющей)."""
+    sup = sorted(x for x in sup if sa + EPS < x < sb - EPS)
+    cuts, air, cur = [], 0, sa
+    while sb - cur > whip + EPS:
+        cand = [x for x in sup if cur + min_piece - EPS <= x <= cur + whip + EPS]
+        good = [x for x in cand if x < sup[-1] - EPS]
+        if good:
+            nx = good[-1]
+        elif cand:
+            nx = cand[-1]
+        else:
+            nx, air = cur + whip, air + 1
+        cuts.append(nx)
+        cur = nx
+    return cuts, air
 
 
 def _zone_rail_axes(x0, x1, corners, czone, step_corner, step_main,
@@ -1258,7 +1301,9 @@ def frame_plan(req):
         if calc_rep.get("bc_note"):
             notes.append(calc_rep["bc_note"])
 
+    rail_from = []       # 29.09l: (контур, индекс его первой стойки в rails) — для стыков шин
     for ci, c in enumerate(req.get("contours") or []):
+        rail_from.append((ci, len(rails)))
         outer = _closed(c.get("outer") or [])
         if len(outer) < 3:
             # 24.09 (рецензия): треугольный фасад (≥3 вершины) раньше
@@ -1291,7 +1336,9 @@ def frame_plan(req):
                 while y0 + k * tile_row_step < y1 - EPS:
                     rows_c.append(y0 + k * tile_row_step)
                     k += 1
-            tile_hr, sloped = _tile_rails(outer, hole_boxes, rows_c, tile_whip)
+            tile_hr, _sloped = _tile_rails(outer, hole_boxes, rows_c)
+            for h in tile_hr:
+                h["_c"] = ci         # хлысты режутся после расстановки (стык — на направляющей)
             def _rl(kind):
                 hs = [h for h in tile_hr if h["kind"] == kind]
                 return len(set(h["run"] for h in hs)), sum(h["len"] for h in hs) / 1000.0
@@ -1299,14 +1346,12 @@ def frame_plan(req):
             tile_notes.append(
                 "контур %d: плитка — вертикальных направляющих %d шагом %.0f мм от края "
                 "зоны (не по швам)%s; шины: стартовых прогонов %d (%.1f м), рядовых %d "
-                "(%.1f м), концевых %d (%.1f м) — хлыстов %d по %.0f мм (последний в "
-                "прогоне короче)" %
+                "(%.1f м), концевых %d (%.1f м)" %
                 (ci + 1, len(joints), tile_step,
                  (", в угловых зонах %.0f" % tile_step_c) if tile_step_c > EPS else "",
-                 rs, ls, rr, lr, re_, le, len(tile_hr), tile_whip))
-            if sloped > 100.0:
-                tile_notes.append("контур %d: верх зоны наклонный на %.1f м — концевая шина "
-                                  "на наклонных участках не ставится" % (ci + 1, sloped / 1000.0))
+                 rs, ls, rr, lr, re_, le))
+            # 29.09l (Герман, 9д): концевая по наклону фронтона не нужна — нота о длине
+            # наклона снята (вопрос закрыт)
             if not rows_c:
                 tile_notes.append("контур %d: у плитки нет рядов (нет раскладки ATTILE и шага "
                                   "швов) — только стартовая и концевая шины" % (ci + 1))
@@ -1984,6 +2029,43 @@ def frame_plan(req):
                                                  "kind": "рядовой"})
                         _piece_clamps(clamps, rows, za, zb, zx,
                                       True, [], wedges)
+
+    # 29.09l (Герман, ответ на 9в PDF №27): «лучше делать стык хлыстов на
+    # направляющей». Прогоны шин режутся на хлысты ПОСЛЕ расстановки: стык — на
+    # вертикальном профиле ЭТОЙ зоны, проходящем через высоту шины (±TILE_SUP_TOL).
+    # Номера прогонов — сквозные по всем зонам.
+    if tile:
+        bnd = rail_from + [(None, len(rails))]
+        sup_c = dict((c0, rails[i0:i1]) for (c0, i0), (_c1, i1) in zip(bnd, bnd[1:]))
+        new_hr, run_id, n_air, n_bare = [], {}, 0, 0
+        for h in hrails:
+            if "_c" not in h:
+                new_hr.append(h)
+                continue
+            yy, sa, sb = h["y"], h["x0"], h["x1"]
+            sup = sorted(set(round(r["x"], 4) for r in sup_c.get(h["_c"], ())
+                             if r["y0"] - TILE_SUP_TOL <= yy <= r["y1"] + TILE_SUP_TOL
+                             and sa - EPS <= r["x"] <= sb + EPS))
+            cuts, air = _whip_cuts(sa, sb, sup, tile_whip)
+            n_air += air
+            rid = run_id.setdefault((h["_c"], h["run"]), len(run_id) + 1)
+            pts = [sa] + cuts + [sb]
+            for xa, xb in zip(pts, pts[1:]):
+                if not any(xa - EPS <= x <= xb + EPS for x in sup):
+                    n_bare += 1
+                new_hr.append({"y": yy, "x0": round(xa, 4), "x1": round(xb, 4),
+                               "len": round(xb - xa, 4), "kind": h["kind"], "run": rid})
+        hrails = new_hr
+        n_wh = sum(1 for h in hrails if h["kind"] in SHINA_KINDS)
+        if n_wh:
+            notes.append("плитка: хлыстов шины %d — не длиннее %.0f мм, стык на направляющей "
+                         "(после окна — заново от грани проёма)" % (n_wh, tile_whip))
+        if n_air:
+            notes.append("плитка: стыков шины без направляющей %d — в пределах хлыста %.0f мм "
+                         "направляющей нет" % (n_air, tile_whip))
+        if n_bare:
+            notes.append("плитка: кусков шины без направляющей под ними %d (узкий простенок "
+                         "или проём уже шага) — проверьте" % n_bare)
 
     clamps = _merge_clamps(clamps)
     # 01.08 (письмо Германа, п.2): марка профиля для СОСТОЯНИЯ
