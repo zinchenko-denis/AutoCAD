@@ -4,6 +4,7 @@ using System.Globalization;
 using System.IO;
 using System.IO.Compression;
 using System.Text;
+using System.Xml;
 
 namespace AFacadesPlugin
 {
@@ -16,6 +17,16 @@ namespace AFacadesPlugin
     {
         internal static void Write(string path, string sheetName,
                                    List<object[]> rows)
+        { WriteCore(path, sheetName, rows, false); }
+
+        // Ведомости элементов сохраняют исходную точность чисел, а не строку
+        // отображения таблицы DWG. Старые ведомости сохраняют прежний формат.
+        internal static void WriteExact(string path, string sheetName,
+                                        List<object[]> rows)
+        { WriteCore(path, sheetName, rows, true); }
+
+        private static void WriteCore(string path, string sheetName,
+                                      List<object[]> rows, bool exact)
         {
             using (var fs = new FileStream(path, FileMode.Create,
                                            FileAccess.Write))
@@ -45,11 +56,11 @@ namespace AFacadesPlugin
 "<Relationships xmlns=\"http://schemas.openxmlformats.org/package/2006/relationships\">" +
 "<Relationship Id=\"rId1\" Type=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet\" Target=\"worksheets/sheet1.xml\"/>" +
 "</Relationships>");
-                Put(zip, "xl/worksheets/sheet1.xml", Sheet(rows));
+                Put(zip, "xl/worksheets/sheet1.xml", Sheet(rows, exact));
             }
         }
 
-        private static string Sheet(List<object[]> rows)
+        private static string Sheet(List<object[]> rows, bool exact)
         {
             var sb = new StringBuilder();
             sb.Append("<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>");
@@ -66,8 +77,10 @@ namespace AFacadesPlugin
                     {
                         double d = Convert.ToDouble(
                             v, CultureInfo.InvariantCulture);
+                        if (double.IsNaN(d) || double.IsInfinity(d))
+                            throw new InvalidDataException("Число ведомости не является конечным.");
                         sb.Append("<c r=\"").Append(cell).Append("\"><v>")
-                          .Append(d.ToString("0.###",
+                          .Append(d.ToString(exact ? "R" : "0.###",
                                   CultureInfo.InvariantCulture))
                           .Append("</v></c>");
                     }
@@ -101,6 +114,12 @@ namespace AFacadesPlugin
 
         private static string Esc(string s)
         {
+            try { XmlConvert.VerifyXmlChars(s ?? ""); }
+            catch (XmlException ex)
+            {
+                throw new InvalidDataException("В тексте ведомости есть недопустимый управляющий символ. " +
+                    "Удалите его из примечания или исходных подписей.", ex);
+            }
             return (s ?? "").Replace("&", "&amp;").Replace("<", "&lt;")
                             .Replace(">", "&gt;").Replace("\"", "&quot;");
         }

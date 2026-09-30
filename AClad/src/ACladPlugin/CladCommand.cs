@@ -436,15 +436,19 @@ namespace ACladPlugin
                     string.Join(", ", missingMembers.ToArray()) + ". Выберите всю группу. Прежняя раскладка сохранена.");
                 return;
             }
-            if (inserts == null || inserts.Length == 0)
+            if (inserts == null)
             {
-                ed.WriteMessage("\nРаскладка пуста (см. замечания).");
+                ed.WriteMessage("\nДвижок не вернул состав раскладки. Прежние объекты сохранены.");
                 PrintNotes(ed, Get(res, "notes") as object[]);
                 return;
             }
 
             // ── 6. чертёж: удалить прежние камни, вставить новые, метки ──
             var handlesByRoot = new Dictionary<string, List<string>>();
+            var quantities = new CladdingQuantities(XKeyClad, res, payload, partToRoot,
+                cladType, tileW, tileH, geometrySnapshot);
+            var quantityCarriers = new List<Entity>();
+            int quantityIndex = -1;
             int erased = 0, made = 0, dynFail = 0, slopeMade = 0;
             using (doc.LockDocument())
             using (var tr = db.TransactionManager.StartTransaction())
@@ -524,6 +528,7 @@ namespace ACladPlugin
 
                 foreach (var itObj in inserts)
                 {
+                    quantityIndex++;
                     var it = itObj as Dictionary<string, object>;
                     if (it == null) continue;
                     double x = ToD(Get(it, "x")),
@@ -556,6 +561,7 @@ namespace ACladPlugin
                             if (!handlesByRoot.ContainsKey(sRoot))
                                 handlesByRoot[sRoot] = new List<string>();
                             handlesByRoot[sRoot].Add(spl.Handle.ToString());
+                            quantities.Add(tr, quantityIndex, spl, "outer");
                             made++;
                             slopeMade++;
                         }
@@ -619,6 +625,7 @@ namespace ACladPlugin
                     if (!handlesByRoot.ContainsKey(root))
                         handlesByRoot[root] = new List<string>();
                     handlesByRoot[root].Add(br.Handle.ToString());
+                    quantities.Add(tr, quantityIndex, br, "block");
                     made++;
                 }
 
@@ -636,6 +643,11 @@ namespace ACladPlugin
                         if (pzd == null) continue;
                         string pid2 = SafeStr(Get(pzd, "zone_id")), root2;
                         if (!partToRoot.TryGetValue(pid2, out root2)) root2 = pid2;
+                        // A successfully processed source can have no pieces
+                        // (for example, wholly below the selected datum). It
+                        // still belongs to this run and needs an owner passport.
+                        if (!handlesByRoot.ContainsKey(root2))
+                            handlesByRoot[root2] = new List<string>();
                         var jxl = Get(pzd, "joints_x") as object[];
                         var ryl = Get(pzd, "rows_y") as object[];
                         if (jxl == null) continue;
@@ -685,6 +697,8 @@ namespace ACladPlugin
                             meta["owner"] = te.Handle.ToString();
                             StoreData(tr, te, ser.Serialize(meta), XKeyClad, kv.Value);
                             LayoutGeometryGuard.Store(tr, db, te, XKeyClad, geometrySnapshot);
+                            quantityCarriers.Add(te);
+                            quantities.Owner(te, root);
                         }
                     else
                     {
@@ -699,9 +713,12 @@ namespace ACladPlugin
                             meta["owner"] = te.Handle.ToString();
                             StoreData(tr, te, ser.Serialize(meta), XKeyClad, kv.Value);
                             LayoutGeometryGuard.Store(tr, db, te, XKeyClad, geometrySnapshot);
+                            quantityCarriers.Add(te);
+                            quantities.Owner(te, root);
                         }
                     }
                 }
+                quantities.Store(tr, db, quantityCarriers);
                 tr.Commit();
             }
 
@@ -714,7 +731,7 @@ namespace ACladPlugin
                 "; блок «" + blockName + "», слой «" + cladLayer + "».");
             if (slopeMade > 0)
                 ed.WriteMessage("\n  у скатов фронтона фигурных кусков " + slopeMade +
-                    " — полилинии в слое облицовки (плита на кусок; в спецификацию блоков не входят).");
+                    " — полилинии в слое облицовки; каждая физическая деталь учтена в ведомости облицовки.");
             var perZone = Get(res, "per_zone") as object[];
             if (perZone != null && perZone.Length > 1)
                 foreach (var pz in AggregateByRoot(perZone, partToRoot))
@@ -724,6 +741,7 @@ namespace ACladPlugin
                     "выставились «ширина»/«высота» — проверьте параметры " +
                     "блока.");
             PrintNotes(ed, Get(res, "notes") as object[]);
+            ed.WriteMessage("\nВедомость облицовки — ATFTABLE → Облицовка (блоки и фигурные детали).");
         }
 
         // ══ ATCLADDIM — «размеры облицовки» (просьба Германа 26.07):
@@ -1372,6 +1390,8 @@ namespace ACladPlugin
         /// ATCLAD ↔ ATTILE на одной зоне).</summary>
         internal static void RemoveData(Transaction tr, Entity ent, string key)
         {
+            if (key == XKeyClad || key == TilePatternCommand.XKeyTile)
+                FacadeQuantityStore.RemoveForLayout(tr, ent, key);
             if (ent.ExtensionDictionary.IsNull) return;
             var ext = (DBDictionary)tr.GetObject(ent.ExtensionDictionary,
                                                  OpenMode.ForWrite);

@@ -500,9 +500,9 @@ namespace ACladPlugin
                     string.Join(", ", missingMembers.ToArray()) + ". Выберите всю группу. Прежняя раскладка сохранена.");
                 return;
             }
-            if (pieces == null || pieces.Length == 0)
+            if (pieces == null)
             {
-                ed.WriteMessage("\nРаскладка пуста (см. замечания).");
+                ed.WriteMessage("\nДвижок не вернул состав раскладки. Прежние объекты сохранены.");
                 PrintNotes(ed, CladCommand.Get(res, "notes") as object[]);
                 return;
             }
@@ -531,6 +531,8 @@ namespace ACladPlugin
             bool dyn = st.Element.Length > 0;
             var sampleLayersUsed = new List<string>();
             var handlesByZone = new Dictionary<string, List<string>>();
+            var quantities = new CladdingQuantities(XKeyTile, res, payload, partToRoot,
+                st.Name, st.W, st.H, geometrySnapshot);
             string dynW = null, dynH = null;
             ObjectId dynDef = ObjectId.Null;
             var types = new List<string>();
@@ -637,6 +639,7 @@ namespace ACladPlugin
                     catch { oldMutt = null; }
                     try { prog = new TileProgressForm("ATTILE — раскладка", total); }
                     catch { prog = null; }
+                    if (total == 0 && UserWantsStop(prog)) cancelled = true;
                     while (idx < total && !cancelled)
                     {
                         var bCreated = new List<ObjectId>();
@@ -652,6 +655,7 @@ namespace ACladPlugin
                             {
                                 if (inBatch >= BatchMax || (inBatch > 0 && swBatch.ElapsedMilliseconds > BatchMs)) break;
                                 if ((inBatch & 63) == 0 && UserWantsStop(prog)) { cancelled = true; break; }
+                                int pieceIndex = idx;
                                 var it = pieces[idx] as Dictionary<string, object>;
                                 idx++;
                                 inBatch++;
@@ -682,7 +686,7 @@ namespace ACladPlugin
                                         // такая плитка уже есть — копия после записи пачки
                                         List<Pend> pl;
                                         if (!pending.TryGetValue(key, out pl)) pending[key] = pl = new List<Pend>();
-                                        pl.Add(new Pend { Dx = x - pr.X, Dy = y - pr.Y, Zone = zone });
+                                        pl.Add(new Pend { Dx = x - pr.X, Dy = y - pr.Y, Zone = zone, PieceIndex = pieceIndex });
                                         if (pr.Fail) bFail++;
                                     }
                                     else
@@ -702,6 +706,7 @@ namespace ACladPlugin
                                         bEval++;
                                         bCreated.Add(br.ObjectId);
                                         bHandles.Add(new KeyValuePair<string, string>(zone, br.Handle.ToString()));
+                                        quantities.Add(tr, pieceIndex, br, "block");
                                         if (cloneOk) protoByKey[key] = np;
                                     }
                                     bMade++;
@@ -722,6 +727,7 @@ namespace ACladPlugin
                                     }
                                     bCreated.Add(br.ObjectId);
                                     bHandles.Add(new KeyValuePair<string, string>(zone, br.Handle.ToString()));
+                                    quantities.Add(tr, pieceIndex, br, "block");
                                     bMade++;
                                 }
                                 else
@@ -735,6 +741,7 @@ namespace ACladPlugin
                                         tr.AddNewlyCreatedDBObject(pl, true);
                                         bCreated.Add(pl.ObjectId);
                                         bHandles.Add(new KeyValuePair<string, string>(zone, pl.Handle.ToString()));
+                                        quantities.Add(tr, pieceIndex, pl, k == 0 ? "outer" : "inner");
                                     }
                                     if (multi)
                                     {
@@ -743,6 +750,7 @@ namespace ACladPlugin
                                         {
                                             bCreated.Add(hh.ObjectId);
                                             bHandles.Add(new KeyValuePair<string, string>(zone, hh.Handle.ToString()));
+                                            quantities.Add(tr, pieceIndex, hh, "fill");
                                         }
                                         else bFillFail++;
                                     }
@@ -758,6 +766,7 @@ namespace ACladPlugin
                                     tr.AddNewlyCreatedDBObject(sp, true);
                                     bCreated.Add(sp.ObjectId);
                                     bHandles.Add(new KeyValuePair<string, string>(zone, sp.Handle.ToString()));
+                                    quantities.Add(tr, pieceIndex, sp, "warning");
                                     bSmall++;
                                 }
                                 if (prog != null) prog.Report(idx, false);
@@ -775,6 +784,7 @@ namespace ACladPlugin
                         {
                             var cCreated = new List<ObjectId>();
                             var cHandles = new List<KeyValuePair<string, string>>();
+                            var cQuantities = new List<KeyValuePair<int, QuantityCadEntity>>();
                             try
                             {
                                 using (var tr = db.TransactionManager.StartTransaction())
@@ -794,12 +804,15 @@ namespace ACladPlugin
                                             ce.TransformBy(Matrix3d.Displacement(new Vector3d(pl[i].Dx, pl[i].Dy, 0)));
                                             cCreated.Add(ids[i]);
                                             cHandles.Add(new KeyValuePair<string, string>(pl[i].Zone, ids[i].Handle.ToString()));
+                                            cQuantities.Add(new KeyValuePair<int, QuantityCadEntity>(
+                                                pl[i].PieceIndex, FacadeQuantityStore.CaptureEntity(tr, ce, "block")));
                                         }
                                     }
                                     tr.Commit();
                                 }
                                 created.AddRange(cCreated);
                                 foreach (var kv in cHandles) AddToMap(handlesByZone, kv.Key, kv.Value);
+                                foreach (var kv in cQuantities) quantities.Add(kv.Key, kv.Value);
                                 cloned += cCreated.Count;
                                 pending.Clear();
                             }
@@ -825,6 +838,7 @@ namespace ACladPlugin
                                         dynEval++;
                                         created.Add(br.ObjectId);
                                         AddToMap(handlesByZone, p.Zone, br.Handle.ToString());
+                                        quantities.Add(tr, p.PieceIndex, br, "block");
                                     }
                                 }
                                 tr.Commit();
@@ -922,6 +936,8 @@ namespace ACladPlugin
                     var perZone = CladCommand.Get(res, "per_zone") as object[];
                     string stamp = DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:ssZ", CultureInfo.InvariantCulture);
                     var agg = new Dictionary<ObjectId, LabelAgg>();
+                    var quantityCarriers = new List<Entity>();
+                    var quantityOwnerZones = new Dictionary<ObjectId, string>();
                     if (perZone != null)
                         foreach (var pzObj in perZone)
                         {
@@ -937,6 +953,7 @@ namespace ACladPlugin
                                 if (partToRoot.TryGetValue(mm, out root)) mm = root;
                                 foreach (var oid in OwnersOf(mm, zoneObjs, polyByHandle))
                                 {
+                                    quantityOwnerZones[oid] = mm;
                                     LabelAgg la;
                                     if (!agg.TryGetValue(oid, out la)) agg[oid] = la = new LabelAgg();
                                     la.Add(zid, mem, hl, CladCommand.Get(pz, "joints_x") as object[],
@@ -973,7 +990,10 @@ namespace ACladPlugin
                         };
                         CladCommand.StoreData(tr, ent, ser.Serialize(meta), XKeyTile, la.Handles);
                         LayoutGeometryGuard.Store(tr, db, ent, XKeyTile, geometrySnapshot);
+                        quantityCarriers.Add(ent);
+                        quantities.Owner(ent, quantityOwnerZones[kv.Key]);
                     }
+                    quantities.Store(tr, db, quantityCarriers);
                     tr.Commit();
                 }
                 }
@@ -1029,12 +1049,8 @@ namespace ACladPlugin
             if (multi) PrintByType(ed, sum);
             PrintNotes(ed, CladCommand.Get(res, "notes") as object[]);
             if (sampleLayersUsed.Count > 0)
-                ed.WriteMessage("\nПлитки — на слоях образца: " + string.Join(", ", sampleLayersUsed.ToArray()) +
-                    " (новые слои не создавались); спецификация — ATSPEC по этим слоям.");
-            else
-                ed.WriteMessage("\nСпецификация — ATSPEC по слою «" + st.LayerFor("", false) +
-                    (multi ? " …»" : "»") + (dyn ? " (все камни — блок «" + st.Element +
-                    "» с размерами)." : " (целые — блоки «" + st.BlockFor("", false) + "»)."));
+                ed.WriteMessage("\nПлитки — на слоях образца: " + string.Join(", ", sampleLayersUsed.ToArray()) + ".");
+            ed.WriteMessage("\nВедомость облицовки — ATFTABLE → Облицовка (установленные детали; раскрой — отдельной группой).");
         }
 
         // ── помощники ──
@@ -1059,6 +1075,7 @@ namespace ACladPlugin
         {
             public double Dx, Dy;
             public string Zone;
+            public int PieceIndex;
         }
 
         private static bool UserWantsStop(TileProgressForm prog)

@@ -1,0 +1,15 @@
+{
+  "schema": "facade_quantities_publication/1",
+  "repository": "zinchenko-denis/AutoCAD",
+  "branch": "feat/auto-reactor",
+  "base_commit": "1c7864411e76c16b8c0ae773c12ba422e0c5a122",
+  "product_commit": null,
+  "status": "prepared_for_source_publication",
+  "local_verification": "verification_manifest.json",
+  "check_workflow": {
+    "status": "not_started"
+  },
+  "live_autocad_checked": false,
+  "release_published": false,
+  "main_changed": false
+}

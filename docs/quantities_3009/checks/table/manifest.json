@@ -1,0 +1,12 @@
+{
+  "status": "PASS",
+  "xlsx_checks": 14,
+  "live_autocad_checked": false,
+  "source_sha256": {
+    "tools/quantities_3009/CladdingTableProbe.cs": "dead4e1a6a1494626225a2ea55dcc3b44dd599ec0d9e15dd83e02e002a783651",
+    "Common/FacadeQuantities.cs": "5b9be37459fa38b4cadc730852dcb97c52ab67ff90877f8fb240d968f10442b6",
+    "Facades/src/AFacadesPlugin/CladdingTableData.cs": "d454475aebcb5113e0f24871191026c23c5b8de70b29fe5ce1ab3f3e17878d52",
+    "Facades/src/AFacadesPlugin/QuantityXlsxFile.cs": "4defa571ebaba5182952838e8e32c97d2c541858f2ebebff91e2e79bd637555d",
+    "Facades/src/AFacadesPlugin/XlsxWriter.cs": "6c4ef614b5fde416fa91ce29adc0ebf99599bb21b285bd7d885bf00469c428fc"
+  }
+}

@@ -20,8 +20,12 @@ namespace AFacadesPlugin
 
         /// <summary>layers: имя слоя → число зон на нём; checkedByDefault — отмечены при открытии.</summary>
         internal LayerPickForm(IDictionary<string, int> layers, ICollection<string> checkedByDefault, string purpose)
+            : this(layers, checkedByDefault, purpose, null, "зон") { }
+
+        internal LayerPickForm(IDictionary<string, int> layers, ICollection<string> checkedByDefault,
+            string purpose, string instruction, string countLabel)
         {
-            Text = "ATFTABLE — слои штриховок";
+            Text = instruction == null ? "ATFTABLE — слои штриховок" : "ATFTABLE — слои облицовки";
             FormBorderStyle = FormBorderStyle.FixedDialog;
             MaximizeBox = MinimizeBox = false;
             StartPosition = FormStartPosition.CenterParent;
@@ -30,8 +34,8 @@ namespace AFacadesPlugin
 
             var lbl = new Label
             {
-                Text = "Отметьте слои со штриховками зон" + (string.IsNullOrEmpty(purpose) ? "" : " — " + purpose) +
-                       ". Несколько слоёв: площадь общая, утеплитель — по толщине из имени слоя.",
+                Text = instruction ?? ("Отметьте слои со штриховками зон" + (string.IsNullOrEmpty(purpose) ? "" : " — " + purpose) +
+                       ". Несколько слоёв: площадь общая, утеплитель — по толщине из имени слоя."),
                 Location = new Point(10, 8), Size = new Size(400, 36)
             };
             _list.Location = new Point(10, 48);
@@ -42,7 +46,7 @@ namespace AFacadesPlugin
             foreach (var k in keys)
             {
                 _names.Add(k);
-                int i = _list.Items.Add(k + "   (зон: " + layers[k] + ")");
+                int i = _list.Items.Add(k + "   (" + countLabel + ": " + layers[k] + ")");
                 if (checkedByDefault != null && checkedByDefault.Contains(k)) _list.SetItemChecked(i, true);
             }
             if (_list.CheckedIndices.Count == 0 && _list.Items.Count == 1) _list.SetItemChecked(0, true);

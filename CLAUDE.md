@@ -5,8 +5,8 @@
 проверить, потом писать. Честность важнее лести.
 
 ## Что где
-- Актуальный план единого комплекса НВФ/СФТК — `docs/FACADE_COMPLEX_ROADMAP_30.09.md`: расширение существующей ATFTABLE, паспорта фактических элементов, каталог/соединения, параметрические узлы и материалы. Это план, не новые реализованные команды; ближайший кодовой этап Q-01…Q-04 — ведомость облицовки.
-- Последняя передача контекста — `docs/HANDOFF_NEXT_SESSION_30.09.md`; подтверждение отправки и CI — `docs/static_review_3009/github_publication.json` (предыдущая ревизия — `docs/atr_review_3009/github_publication.json`).
+- Актуальный план единого комплекса НВФ/СФТК — `docs/FACADE_COMPLEX_ROADMAP_30.09.md`. Q-01…Q-04 реализованы: `ATFTABLE → Облицовка`, паспорта физических деталей AClad, проверка актуальности и общий вывод DWG/XLSX. Поведение/границы — `docs/CLADDING_QUANTITIES_30.09.md`; затем Q-05 (подсистема), Q-06 (ручные образцы), каталог/соединения, узлы и материалы.
+- Последняя передача контекста — `docs/HANDOFF_NEXT_SESSION_30.09.md`; актуальные проверки — `docs/quantities_3009/verification_manifest.json`, подтверждение отправки и CI — `docs/quantities_3009/github_publication.json` (предыдущие — `docs/static_review_3009/` и `docs/atr_review_3009/`).
 - Продолжение статической ревизии после `ad2a0a2` — `docs/STATIC_MODEL_REVIEW_30.09.md`, актуальные проверки — `docs/static_review_3009/verification_manifest.json`. Межэтажная расчётная выдача заблокирована до модели опор/стыков; manual сохранён. Полная статическая модель vertical/ortho также не подтверждена, даже если ограниченная цепочка и screening прошли.
 - Рабочая ветка — `feat/auto-reactor` (`main` сильно отстаёт; слияние в `main`
   — ТОЛЬКО по слову Дениса «Пушим»).
@@ -42,6 +42,7 @@ python3 Facades/tools/zones_synth.py --quick
 python3 AClad/tools/attile_synth.py --quick
 python3 tools/roles_synth.py --quick          # «в ролях конструктора»: ATFZONE → раскладка → ATFRAME (нужен mono)
 python3 tools/fixes_3009/run_facade_regressions.py  # shapely/openpyxl + mono/mcs; --python-only — неполный набор
+python3 tools/atr_review_3009/run_checks.py --out <папка> # все 28 групп, включая 4 новых группы ведомостей
 ```
 C# фасадов можно проверить полной компиляцией через
 `tools/fixes_3009/compile_facades.py` (dotnet либо Roslyn/Mono с официальными

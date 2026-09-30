@@ -1,0 +1,71 @@
+[
+  {
+    "plugin": "AFacadesPlugin",
+    "returncode": 0,
+    "method": "Roslyn 4.8 with net48/AutoCAD 24.0.0 reference assemblies",
+    "source_sha256": {
+      "Common/FacadeQuantities.cs": "5b9be37459fa38b4cadc730852dcb97c52ab67ff90877f8fb240d968f10442b6",
+      "Common/FacadeQuantityStore.cs": "2c9096e0b099061f434e7b54bd3b8d127272d66286672b33a724c74d543c1fb3",
+      "Common/GeometryFingerprint.cs": "24114ef7a18a56415313b009d7819c94190efa5ea517df2081d1f51951819332",
+      "Common/LayoutGeometryGuard.cs": "289d6d51ede5861c7b27ff106c150aa7b5fa456ddce86ef5e0b5ee727c0eae9d",
+      "Common/ZoneGeometryGuard.cs": "daf06e2822a4d9ef2be818df1bf904779fa202adb1e5bce7fc0ba49c084970b8",
+      "Facades/src/AFacadesPlugin/CladdingTableCommand.cs": "26ed6ab72eaf751ba0bbd3f795854488c5d4308db41a812cbf2d2028e18f832f",
+      "Facades/src/AFacadesPlugin/CladdingTableData.cs": "d454475aebcb5113e0f24871191026c23c5b8de70b29fe5ce1ab3f3e17878d52",
+      "Facades/src/AFacadesPlugin/CladdingTablePreview.cs": "a9ef4e2a152f7688905386f7de260f2883dba30869db7709a239b0f75133e83b",
+      "Facades/src/AFacadesPlugin/FacadesClassic.cs": "ccc1f1d9d0462ee4cea1b68d9a4383d30c112360b0cf198e852e81b2ba039327",
+      "Facades/src/AFacadesPlugin/FacadesRibbon.cs": "3a1f467a5691c6f3f5654dad38e94e1c94bfcdfe4ac261f6ccd3f55c7705dd75",
+      "Facades/src/AFacadesPlugin/LayerPickForm.cs": "b457767262fd19cdd2007ff58aacb61860cae6eaca13fc0dcb6655f50e77b869",
+      "Facades/src/AFacadesPlugin/Plugin.cs": "d486cb0746e6edef83c41a68f85f1e60b19a3c764c317a170de1e92b9db38476",
+      "Facades/src/AFacadesPlugin/QuantityXlsxFile.cs": "4defa571ebaba5182952838e8e32c97d2c541858f2ebebff91e2e79bd637555d",
+      "Facades/src/AFacadesPlugin/TableCommand.cs": "7aca29e4cbea7911f5bdbea9e3828a347f38b53496bb779e4d05f73758615818",
+      "Facades/src/AFacadesPlugin/WorkStatement.cs": "428f45e464ca264df513e31ca0f17f70a46422509e37d4a3ca1902d2e2a68858",
+      "Facades/src/AFacadesPlugin/XlsxWriter.cs": "6c4ef614b5fde416fa91ce29adc0ebf99599bb21b285bd7d885bf00469c428fc",
+      "Facades/src/AFacadesPlugin/ZoneCommand.cs": "f4eee2cf9e1b3b4fcca7b34ac9d7d8c4a0d48ea2d6c543a5c7eee176f96bbdbb",
+      "Facades/src/AFacadesPlugin/ZoneForm.cs": "30cc49edd277ffcdfe03261bdb82e4ff92dbaccca51284b543509ab86c40f178",
+      "Facades/src/AFacadesPlugin/ZoneTable.cs": "9aad9aa85ebf1d41c40e6d3577a5df4e05ae207923f9658d790b39ad030c2c4b"
+    }
+  },
+  {
+    "plugin": "ACladPlugin",
+    "returncode": 0,
+    "method": "Roslyn 4.8 with net48/AutoCAD 24.0.0 reference assemblies",
+    "source_sha256": {
+      "AClad/src/ACladPlugin/BondForm.cs": "48f9d6918f97d2206f849b686683c1d862e538e8a2cf27e12df51bb576611466",
+      "AClad/src/ACladPlugin/BondSettings.cs": "c30e687bfee933011fb98b1587bb4a1603d2425055a0046c61a33a28713aa914",
+      "AClad/src/ACladPlugin/CladCommand.cs": "2fa0e907f4d0d629a65039dc05659f2b8a6718415bda92d9ca0121994c4a6ca8",
+      "AClad/src/ACladPlugin/CladdingQuantities.cs": "e1c49a0ca2833bbc96cd93fd723cfd49c84a53a1c57a0a72f35c2fdad240e3a9",
+      "AClad/src/ACladPlugin/DimForm.cs": "6e1a13c33151308b678b3070c4e6b04dff93f0ca2834b675e1bea6e51f077031",
+      "AClad/src/ACladPlugin/FacadesClassic.cs": "ccb7bffde646144f90b0db1f89ec89c7f252e44f2a523378e6b631e61fe9ec14",
+      "AClad/src/ACladPlugin/FacadesRibbon.cs": "89d60014a94534f720bf09f7a32bfab2ad61428414258ff183bd48ccf7671854",
+      "AClad/src/ACladPlugin/LayerPickForm.cs": "bd16924dbf9bf9ea8133b5c721fff2f020c86510af972b13411039fd7b5eb848",
+      "AClad/src/ACladPlugin/LayoutSafety.cs": "dfe26a34bd41119e5e611c930f45a237bac7332c3797c4ffa77c29340078a3cb",
+      "AClad/src/ACladPlugin/Plugin.cs": "b34ef3887f249b0b6c4fb84fffda9ac70a14bdb76ee6e8d20a45669b863149f6",
+      "AClad/src/ACladPlugin/TilePatternCommand.cs": "fca8d7e6db587b7c5e12cfac8e7fe83199fc0882d98a1cad4ca34ad9f9ee9afe",
+      "AClad/src/ACladPlugin/TileProgress.cs": "e2745014a01f444ce3be158d1e56d93acea50759943178417218c50e41916711",
+      "Common/FacadeQuantities.cs": "5b9be37459fa38b4cadc730852dcb97c52ab67ff90877f8fb240d968f10442b6",
+      "Common/FacadeQuantityStore.cs": "2c9096e0b099061f434e7b54bd3b8d127272d66286672b33a724c74d543c1fb3",
+      "Common/GeometryFingerprint.cs": "24114ef7a18a56415313b009d7819c94190efa5ea517df2081d1f51951819332",
+      "Common/LayoutGeometryGuard.cs": "289d6d51ede5861c7b27ff106c150aa7b5fa456ddce86ef5e0b5ee727c0eae9d",
+      "Common/ZoneGeometryGuard.cs": "daf06e2822a4d9ef2be818df1bf904779fa202adb1e5bce7fc0ba49c084970b8"
+    }
+  },
+  {
+    "plugin": "AFramePlugin",
+    "returncode": 0,
+    "method": "Roslyn 4.8 with net48/AutoCAD 24.0.0 reference assemblies",
+    "source_sha256": {
+      "AFrame/src/AFramePlugin/DimForm.cs": "86ec69c3200f8f4232c7b855a13147367d199cd42a14928c31f8678b28230717",
+      "AFrame/src/AFramePlugin/FacadesClassic.cs": "ec03c5c3f08289c92e97cd6b17de8e9852fbfee5a0ddd3d953dafa2a70657673",
+      "AFrame/src/AFramePlugin/FacadesRibbon.cs": "af48c14c864659f95f58669fa631a3b3fbb24f64e686769e8e288e32d71c0119",
+      "AFrame/src/AFramePlugin/FrameCommand.cs": "fb1dd291ef102efd49ad72d21eb8decac33011373e7a06e46a39a92cda2c1a02",
+      "AFrame/src/AFramePlugin/FrameForm.cs": "d7ae2edcaaec82065061ca58addf08c51123f7fb4d3b7d68c95d8784034cfc51",
+      "AFrame/src/AFramePlugin/FrameSettings.cs": "726318cfb93822262855d5f6e7f1e3f6b274a4770cf7e66ef8700642d12006fa",
+      "AFrame/src/AFramePlugin/Plugin.cs": "e679e02c78b770152163b0cd4a691d39ea44bddb422da49aa128e5d13ec631c4",
+      "Common/FacadeQuantities.cs": "5b9be37459fa38b4cadc730852dcb97c52ab67ff90877f8fb240d968f10442b6",
+      "Common/FacadeQuantityStore.cs": "2c9096e0b099061f434e7b54bd3b8d127272d66286672b33a724c74d543c1fb3",
+      "Common/GeometryFingerprint.cs": "24114ef7a18a56415313b009d7819c94190efa5ea517df2081d1f51951819332",
+      "Common/LayoutGeometryGuard.cs": "289d6d51ede5861c7b27ff106c150aa7b5fa456ddce86ef5e0b5ee727c0eae9d",
+      "Common/ZoneGeometryGuard.cs": "daf06e2822a4d9ef2be818df1bf904779fa202adb1e5bce7fc0ba49c084970b8"
+    }
+  }
+]

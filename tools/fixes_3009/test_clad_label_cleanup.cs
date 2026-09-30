@@ -5,6 +5,7 @@ using System.Globalization;
 using System.Text;
 using Autodesk.AutoCAD.DatabaseServices;
 using ACladPlugin;
+using FacadeSafety;
 
 internal static class CladLabelCleanupCheck
 {
@@ -73,7 +74,11 @@ internal static class CladLabelCleanupCheck
     {
         var f = WithBothLayouts();
         string proof = previous + "_GEOMETRY";
+        FacadeQuantityStore.Reset();
         CladCommand.RemoveData(f.Tr, f.Carrier, previous);
+        Check(previous + ":quantity_cleanup_before_layout", FacadeQuantityStore.Calls == 1 &&
+              FacadeQuantityStore.LastKey == previous && FacadeQuantityStore.LastCarrier == f.Carrier &&
+              FacadeQuantityStore.HadLayout);
         Check(previous + ":metadata_removed", !f.Ext.Contains(previous));
         Check(previous + ":metadata_erased", f.Records[previous].IsErased);
         Check(previous + ":proof_removed", !f.Ext.Contains(proof));
@@ -88,6 +93,7 @@ internal static class CladLabelCleanupCheck
         Check(previous + ":unrelated_records_unchanged", f.Untouched("OTHER") && f.Untouched("OTHER_GEOMETRY"));
         int count = f.Ext.Items.Count;
         CladCommand.RemoveData(f.Tr, f.Carrier, previous);
+        Check(previous + ":quantity_cleanup_repeat", FacadeQuantityStore.Calls == 2);
         Check(previous + ":repeat_safe", f.Ext.Items.Count == count && f.Untouched(current) &&
               f.Untouched(current + "_GEOMETRY") && f.Untouched("ATLAYOUT_CURRENT"));
     }
@@ -97,7 +103,10 @@ internal static class CladLabelCleanupCheck
         var f = new Fixture();
         string proof = previous + "_GEOMETRY";
         foreach (string key in new[] { proof, current, current + "_GEOMETRY", "ATLAYOUT_CURRENT" }) f.Add(key);
+        FacadeQuantityStore.Reset();
         CladCommand.RemoveData(f.Tr, f.Carrier, previous);
+        Check(previous + ":orphan_quantity_cleanup", FacadeQuantityStore.Calls == 1 &&
+              FacadeQuantityStore.LastKey == previous && !FacadeQuantityStore.HadLayout);
         Check(previous + ":orphan_proof_removed", !f.Ext.Contains(proof));
         Check(previous + ":orphan_proof_erased", f.Records[proof].IsErased);
         Check(previous + ":orphan_cleanup_preserves_current", f.Untouched(current) &&
@@ -110,6 +119,7 @@ internal static class CladLabelCleanupCheck
     private static void UnrelatedKeys()
     {
         var f = WithBothLayouts();
+        FacadeQuantityStore.Reset();
         CladCommand.RemoveData(f.Tr, f.Carrier, "OTHER");
         Check("unrelated:requested_key_removed", !f.Ext.Contains("OTHER"));
         Check("unrelated:requested_record_erased", f.Records["OTHER"].IsErased);
@@ -128,6 +138,7 @@ internal static class CladLabelCleanupCheck
         Check("unrelated:orphan_proof_preserved", f.Untouched("MISSING_GEOMETRY"));
         Check("unrelated:missing_key_does_not_touch_current", f.Untouched(CladCommand.XKeyClad) &&
               f.Untouched(TilePatternCommand.XKeyTile) && f.Untouched("ATLAYOUT_CURRENT"));
+        Check("unrelated:no_quantity_cleanup", FacadeQuantityStore.Calls == 0);
     }
 
     private static void EmptyExtension()
@@ -135,11 +146,15 @@ internal static class CladLabelCleanupCheck
         var db = new Database();
         var carrier = db.Add(new Entity());
         var tr = new Transaction(db);
+        FacadeQuantityStore.Reset();
         CladCommand.RemoveData(tr, carrier, CladCommand.XKeyClad);
+        Check("empty_extension:quantity_cleanup", FacadeQuantityStore.Calls == 1 &&
+              FacadeQuantityStore.LastCarrier == carrier && !FacadeQuantityStore.HadLayout);
         Check("empty_extension:no_dictionary_created", carrier.ExtensionDictionary.IsNull);
         CladCommand.RemoveData(tr, carrier, TilePatternCommand.XKeyTile);
         CladCommand.RemoveData(tr, carrier, "OTHER");
         Check("empty_extension:repeat_safe", carrier.ExtensionDictionary.IsNull);
+        Check("empty_extension:quantity_cleanup_only_layouts", FacadeQuantityStore.Calls == 2);
     }
 
     public static int Main()
@@ -157,5 +172,29 @@ internal static class CladLabelCleanupCheck
         Console.WriteLine("CladLabelCleanupCheck: checks=" + checks + ", failures=" + failures +
                           "; actual RemoveData with CAD doubles, not AutoCAD");
         return failures == 0 ? 0 : 1;
+    }
+}
+
+// Spy only for delegation from RemoveData. Actual quantity record cleanup has
+// separate tests against Common/FacadeQuantityStore.cs, not this implementation.
+namespace FacadeSafety
+{
+    internal static class FacadeQuantityStore
+    {
+        internal static int Calls;
+        internal static string LastKey;
+        internal static Entity LastCarrier;
+        internal static bool HadLayout;
+        internal static void Reset()
+        { Calls = 0; LastKey = null; LastCarrier = null; HadLayout = false; }
+        internal static void RemoveForLayout(Transaction tr, Entity carrier, string key)
+        {
+            Calls++; LastKey = key; LastCarrier = carrier; HadLayout = false;
+            if (!carrier.ExtensionDictionary.IsNull)
+            {
+                var ext = (DBDictionary)tr.GetObject(carrier.ExtensionDictionary, OpenMode.ForRead);
+                HadLayout = ext.Contains(key);
+            }
+        }
     }
 }

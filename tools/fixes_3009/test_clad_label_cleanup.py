@@ -85,7 +85,7 @@ def main():
     driver = Path(__file__).with_suffix(".cs")
     doubles = Path(__file__).with_name("test_zone_geometry_cad_doubles.cs")
     sources = [clad, tile, driver, doubles, Path(__file__)]
-    report = {"status": "BLOCKED", "scope": "Actual unmodified RemoveData; native Mono, CAD API doubles, not AutoCAD.",
+    report = {"status": "BLOCKED", "scope": "Actual unmodified RemoveData; quantity-cleanup hook spy, native Mono, CAD API doubles, not AutoCAD. Real quantity store checked separately.",
               "source_sha256": {str(p.relative_to(ROOT)): sha(p.read_bytes()) for p in sources}}
 
     def finish(code):
@@ -107,7 +107,7 @@ def main():
                                   "XKeyTile": sha(tile_key.encode("utf-8"))}
     wrapper = out / "ActualCladRemoveData.cs"
     wrapper.write_text("using System;\nusing System.Collections.Generic;\n"
-                       "using Autodesk.AutoCAD.DatabaseServices;\nnamespace ACladPlugin {\n"
+                       "using Autodesk.AutoCAD.DatabaseServices;\nusing FacadeSafety;\nnamespace ACladPlugin {\n"
                        "internal static class CladCommand {\n" + clad_key + "\n" + method + "\n}\n"
                        "internal static class TilePatternCommand {\n" + tile_key + "\n}\n}\n", encoding="utf-8")
     report["wrapper_sha256"] = sha(wrapper.read_bytes())

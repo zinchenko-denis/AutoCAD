@@ -1,0 +1,514 @@
+// Executes the actual quantity store AND existing zone/layout guards.
+// CAD doubles explicitly omit native transactions, COPY remapping, Save and Undo.
+// Input reports and facade_zone/1 parts come from the actual Python engine.
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Web.Script.Serialization;
+using Autodesk.AutoCAD.DatabaseServices;
+using Autodesk.AutoCAD.Geometry;
+using FacadeSafety;
+
+internal static class QuantityStoreCheck
+{
+    private static readonly JavaScriptSerializer Json = new JavaScriptSerializer { MaxJsonLength = Int32.MaxValue };
+    private static readonly List<Dictionary<string, object>> Results = new List<Dictionary<string, object>>();
+    private static Dictionary<string, object> Fixtures;
+    private static Dictionary<string, object> Dict(object value) { return (Dictionary<string, object>)value; }
+    private static object[] Items(object value) { return (object[])value; }
+    private static void Require(bool condition, string reason) { if (!condition) throw new InvalidOperationException(reason); }
+
+    private static void WriteRecord(Transaction tr, Entity entity, string key, string text, IEnumerable<ObjectId> refs = null)
+    {
+        if (entity.ExtensionDictionary.IsNull) entity.CreateExtensionDictionary();
+        var ext = (DBDictionary)tr.GetObject(entity.ExtensionDictionary, OpenMode.ForWrite);
+        var data = new ResultBuffer(new TypedValue((int)DxfCode.Text, text));
+        if (refs != null) foreach (var id in refs) data.Add(new TypedValue((int)DxfCode.SoftPointerId, id));
+        if (ext.Contains(key)) ((Xrecord)tr.GetObject(ext.GetAt(key), OpenMode.ForWrite)).Data = data;
+        else ext.SetAt(key, new Xrecord { Data = data, XlateReferences = true });
+    }
+
+    private static Xrecord Record(Transaction tr, Entity entity, string key)
+    {
+        var ext = (DBDictionary)tr.GetObject(entity.ExtensionDictionary, OpenMode.ForRead);
+        return (Xrecord)tr.GetObject(ext.GetAt(key), OpenMode.ForRead);
+    }
+
+    private static void CopyRecords(Transaction tr, Entity source, Entity target)
+    {
+        var ext = (DBDictionary)tr.GetObject(source.ExtensionDictionary, OpenMode.ForRead);
+        foreach (var entry in ext.Items) {
+            var old = (Xrecord)tr.GetObject(entry.Value, OpenMode.ForRead);
+            if (target.ExtensionDictionary.IsNull) target.CreateExtensionDictionary();
+            var destination = (DBDictionary)tr.GetObject(target.ExtensionDictionary, OpenMode.ForWrite);
+            // Clone metadata bytes and retain old pointer IDs deliberately. This
+            // is one explicit carrier-copy state, not a simulated AutoCAD COPY.
+            destination.SetAt(entry.Key, new Xrecord {
+                Data = new ResultBuffer(old.Data.Select(v => new TypedValue(v.TypeCode, v.Value)).ToArray()),
+                XlateReferences = old.XlateReferences
+            });
+        }
+    }
+
+    private sealed class Fixture
+    {
+        public readonly Database Db;
+        public readonly Transaction Tr;
+        public readonly List<Polyline> Outers = new List<Polyline>();
+        public readonly List<Polyline> Holes = new List<Polyline>();
+        public readonly List<Dictionary<string, object>> Parts;
+        public readonly Dictionary<string, object> Data;
+        public readonly Hatch Hatch;
+        public readonly MText Mark;
+        public readonly ZoneGeometryResult Captured;
+
+        public Fixture(string key, Database sharedDatabase = null, string renamedZone = null)
+        {
+            Db = sharedDatabase ?? new Database();
+            Tr = new Transaction(Db);
+            // Roundtrip each fixture so mutations in one test cannot affect others.
+            var fixture = Dict(Json.DeserializeObject(Json.Serialize(Fixtures[key])));
+            var request = Dict(fixture["request"]); var result = Dict(fixture["result"]);
+            var zone = Dict(Items(result["zones"])[0]);
+            if (renamedZone != null) {
+                string prior = (string)zone["zone_id"]; zone["zone_id"] = renamedZone;
+                Dict(zone["report"])["zone_id"] = renamedZone;
+                foreach (object raw in Items(result["zones_full"])) {
+                    var part = Dict(raw); part["id"] = ((string)part["id"]).Replace(prior,renamedZone);
+                }
+            }
+            var byHandle = new Dictionary<string, Polyline>();
+            foreach (var raw in Items(request["contours"])) {
+                var contour = Dict(raw); var p = Db.Add(new Polyline());
+                var pts = Items(contour["pts"]);
+                double[] bulges = contour.ContainsKey("bulges") ? Items(contour["bulges"]).Select(Convert.ToDouble).ToArray() : new double[pts.Length];
+                for (int i = 0; i < pts.Length; i++) {
+                    var xy = Items(pts[i]);
+                    p.AddVertexAt(i, new Point2d(Convert.ToDouble(xy[0]), Convert.ToDouble(xy[1])), bulges[i], 0, 0);
+                }
+                if (sharedDatabase == null) Require(p.Handle.ToString() == (string)contour["id"], "fixture native/engine handles diverged");
+                byHandle.Add((string)contour["id"], p);
+            }
+            foreach (var id in Items(zone["outer_ids"])) Outers.Add(byHandle[(string)id]);
+            foreach (var id in Items(zone["opening_ids"])) Holes.Add(byHandle[(string)id]);
+            Hatch = Db.Add(new Hatch()); Mark = Db.Add(new MText { Location = new Point3d(5900,5900,0) });
+            Hatch.Area = Convert.ToDouble(Dict(zone["report"])["area_net_m2"]) * 1e6;
+            RefreshHatchFromSources();
+            Parts = Items(result["zones_full"]).Select(Dict).ToList();
+            Data = new Dictionary<string, object> {
+                { "zone_id", zone["zone_id"] }, { "cladding", zone["cladding"] }, { "report", zone["report"] }
+            };
+            WriteRecord(Tr, Hatch, "ATFZONE", Json.Serialize(Data));
+            WriteRecord(Tr, Mark, "ATFZONE", Json.Serialize(Data));
+            Captured = ZoneGeometryGuard.Capture(Tr, Db, Hatch, Mark, Data, Parts,
+                Outers.Select(p=>p.ObjectId).ToList(), Holes.Select(p=>p.ObjectId).ToList());
+        }
+
+        public void RefreshHatchFromSources()
+        {
+            Hatch.Loops.Clear(); Hatch.AssociatedIds.Clear();
+            foreach (var p in Outers.Concat(Holes)) {
+                var loop = new HatchLoop { LoopType = Outers.Contains(p) ? HatchLoopTypes.External : HatchLoopTypes.Default };
+                for (int i = 0; i < p.NumberOfVertices; i++) loop.Polyline.Add(new BulgeVertex(p.GetPoint2dAt(i), p.GetBulgeAt(i)));
+                Hatch.Loops.Add(loop); Hatch.AssociatedIds.Add(new ObjectIdCollection(new[] { p.ObjectId }));
+            }
+        }
+
+        public Dictionary<string, Dictionary<string, object>> Sidecar()
+        {
+            return Parts.ToDictionary(p=>(string)p["id"], p=>Dict(Json.DeserializeObject(Json.Serialize(p))));
+        }
+
+        public ZoneGeometryResult Verify(Entity carrier, IDictionary<string, Dictionary<string, object>> sidecar = null)
+        { return ZoneGeometryGuard.Verify(Tr, Db, carrier, sidecar); }
+
+        public void Fresh()
+        {
+            Require(Captured.Ok, "fresh Capture failed: " + Captured.Reason);
+            var hatch = Verify(Hatch); var mark = Verify(Mark);
+            Require(hatch.Ok, "fresh Hatch rejected: " + hatch.Reason);
+            Require(mark.Ok, "fresh mark rejected: " + mark.Reason);
+            Require(hatch.HatchId == Hatch.ObjectId && mark.HatchId == Hatch.ObjectId, "carriers resolved different Hatch");
+            Require(hatch.Fingerprint == mark.Fingerprint && hatch.Fingerprint == Captured.Fingerprint, "fresh carrier revisions disagree");
+            Require(hatch.Parts.Count == Parts.Count && mark.Parts.Count == Parts.Count, "fresh merged parts dropped");
+            var sidecar = Verify(Mark, Sidecar());
+            Require(sidecar.Ok && sidecar.Parts.Count == Parts.Count, "fresh engine sidecar rejected: " + sidecar.Reason);
+        }
+    }
+
+    private static void Shift(Polyline poly, double x, double y)
+    { for (int i=0; i<poly.Points.Count; i++) poly.Points[i] = new Point2d(poly.Points[i].X+x, poly.Points[i].Y+y); }
+
+    private sealed class QuantityFixture
+    {
+        public readonly Fixture Zone;
+        public readonly Polyline Piece;
+        public readonly QuantityReport Report;
+        public readonly string LayoutKey;
+        public QuantityFixture(string zoneKind = "single", string key = "ATTILE", bool persist = true)
+        {
+            Zone = new Fixture(zoneKind); Zone.Fresh(); LayoutKey = key;
+            var snapshot = LayoutGeometryGuard.Capture(Zone.Tr, Zone.Db, new ObjectId[0], new[] { Zone.Verify(Zone.Hatch) });
+            foreach (var carrier in new Entity[] { Zone.Hatch, Zone.Mark }) {
+                WriteRecord(Zone.Tr, carrier, key, "{\"joints_x\":[0,600,1200],\"rows_y\":[0,600,1200]}");
+                LayoutGeometryGuard.Store(Zone.Tr, Zone.Db, carrier, key, snapshot);
+            }
+            Piece = Zone.Db.Add(new Polyline());
+            Piece.AddVertexAt(0, new Point2d(0,0),0,0,0); Piece.AddVertexAt(1,new Point2d(600,0),0,0,0);
+            Piece.AddVertexAt(2, new Point2d(600,600),0,0,0); Piece.AddVertexAt(3,new Point2d(0,600),0,0,0);
+            var rings = new List<QuantityRing> { new QuantityRing { points = new[] {
+                new[] {0.0,0.0}, new[] {600.0,0.0}, new[] {600.0,600.0}, new[] {0.0,600.0} } } };
+            QuantityShape shape; string reason;
+            Require(FacadeQuantitiesCore.TryShape(rings, out shape, out reason),"fixture shape failed: " + reason);
+            string zid = (string)Zone.Data["zone_id"];
+            Report = new QuantityReport {
+                report_id = "synthetic-report-1", run_id = "synthetic-run-1", kind = "cladding", scope = "whole_layout_run",
+                algorithm = key + "/facade_quantities/1", completeness = "complete", engineering_coverage = "geometry_only",
+                zone_ids = new List<string> { zid },
+                source_revisions = new Dictionary<string,string> { {"layout_revision",snapshot.Revision}, {"layout_geometry",snapshot.Fingerprint} },
+                elements = new List<QuantityElement> { new QuantityElement {
+                    element_id = "synthetic-piece-1", zone_id = zid, zone_ids = new List<string> {zid}, role = "cladding",
+                    material = "porcelain", type = "A", origin = "generated:" + key, orientation = "XY; rotation=0; mirror=false",
+                    piece_kind = "full", width_mm = 600, height_mm = 600, area_mm2 = 360000, shape_id = shape.shape_id,
+                    rings = rings, cad_entities = new List<QuantityCadEntity> { FacadeQuantityStore.CaptureEntity(Zone.Tr, Piece, "outer") }
+                } }
+            };
+            if (persist) Store();
+        }
+        public void Store() {
+            foreach (Entity owner in new Entity[] { Zone.Hatch, Zone.Mark })
+                Report.source_revisions["owner_zone:" + owner.Handle.ToString()] = (string)Zone.Data["zone_id"];
+            FacadeQuantityStore.Store(Zone.Tr, Zone.Db, new Entity[] { Zone.Hatch, Zone.Mark }, LayoutKey, Report);
+        }
+        public QuantitySelection Read(params Entity[] entities)
+        { return FacadeQuantityStore.ReadCladding(Zone.Tr, Zone.Db, entities.Select(e => e.ObjectId)); }
+        public void Fresh()
+        {
+            foreach (Entity entity in new Entity[] { Zone.Hatch, Zone.Mark }) {
+                var result = Read(entity);
+                Accepted(result, 1);
+                Require(result.Reports[0].elements.Count == 1, "one physical piece changed count during persistence");
+                Require(result.Reports[0].elements[0].cad_entities.Count == 1, "CAD mapping was lost");
+                Require(result.SelectedZoneIds.Contains((string)Zone.Data["zone_id"]), "selected zone missing");
+            }
+        }
+    }
+    private static void Accepted(QuantitySelection result, int reports)
+    {
+        Require(result.Ok, "fresh quantity selection refused: " + result.Reason);
+        Require(result.Reports.Count == reports, "report count incorrect: " + result.Reports.Count);
+        Require(result.SelectedZoneIds.Count > 0, "successful selection contains no zones");
+    }
+    private static void Rejected(QuantitySelection result)
+    {
+        Require(!result.Ok, "stale or corrupt quantities accepted as current");
+        Require(!String.IsNullOrWhiteSpace(result.Reason), "refusal has no diagnostic");
+        Require(result.Reports.Count == 0, "refusal exposed stale reports");
+    }
+    private static void Throws(Action action)
+    {
+        try { action(); }
+        catch (InvalidOperationException ex) { Require(!String.IsNullOrWhiteSpace(ex.Message), "refusal has no reason"); return; }
+        throw new InvalidOperationException("invalid persistence accepted");
+    }
+    private static void CheckPayloadBoundary(long bytes)
+    {
+        // Exercise the common production bound directly without allocating a
+        // 256 MiB string, UTF-8 buffer, decompression stream and duplicate JSON.
+        // Compress/Decompress use this same helper; ordinary persisted Unicode
+        // report roundtrips above exercise both call paths under the bound.
+        var method = typeof(FacadeQuantityStore).GetMethod("CheckPayloadSize",
+            System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
+        Require(method != null,"production payload-size check missing");
+        try { method.Invoke(null,new object[] {bytes}); }
+        catch (System.Reflection.TargetInvocationException ex) {
+            if (ex.InnerException is InvalidOperationException) throw (InvalidOperationException)ex.InnerException;
+            throw;
+        }
+    }
+    private sealed class BlockFixture
+    {
+        public readonly QuantityFixture F = new QuantityFixture("single","ATCLAD",false);
+        public readonly BlockReference Block;
+        public readonly BlockTableRecord Definition;
+        public readonly AttributeReference Attribute;
+        public BlockFixture(bool dynamic = false)
+        {
+            Definition = F.Zone.Db.Add(new BlockTableRecord { Name = "SyntheticPlate600x600" });
+            Definition.AppendEntity(F.Piece);
+            Block = F.Zone.Db.Add(new BlockReference { BlockTableRecord = Definition.ObjectId,
+                IsDynamicBlock = dynamic, DynamicBlockTableRecord = Definition.ObjectId });
+            if (dynamic) Block.DynamicBlockReferencePropertyCollection.Add(
+                new DynamicBlockReferenceProperty { PropertyName = "Width", Value = 600.0 });
+            Attribute = F.Zone.Db.Add(new AttributeReference { Tag = "MARK", TextString = "A-1" });
+            Block.AttributeCollection.Add(Attribute.ObjectId);
+            F.Report.elements[0].cad_entities.Clear();
+            F.Report.elements[0].cad_entities.Add(FacadeQuantityStore.CaptureEntity(F.Zone.Tr,Block,"block"));
+            F.Store();
+        }
+    }
+    private static Fixture AddMergedGroup(QuantityFixture f, bool sharedPiece = true, bool emptySecondZone = false)
+    {
+        // Two independently captured zones, deliberately coincident synthetic
+        // geometry: this case tests selection identity/scope, not layout nesting.
+        var second = new Fixture("single",f.Zone.Db,"F-2"); second.Fresh();
+        var source = LayoutGeometryGuard.Capture(f.Zone.Tr,f.Zone.Db,new ObjectId[0],
+            new[] { f.Zone.Verify(f.Zone.Hatch), second.Verify(second.Hatch) });
+        var owners = new Entity[] { f.Zone.Hatch,f.Zone.Mark,second.Hatch,second.Mark };
+        f.Report.zone_ids.Add("F-2");
+        if (sharedPiece) {
+            f.Report.elements[0].zone_ids.Add("F-2");
+            f.Report.elements[0].zone_id = "F-1+F-2";
+        } else if (!emptySecondZone) {
+            var piece = f.Zone.Db.Add(new Polyline());
+            for (int i=0;i<4;i++) piece.AddVertexAt(i,f.Piece.Points[i],0,0,0);
+            var item = Json.Deserialize<QuantityElement>(Json.Serialize(f.Report.elements[0]));
+            item.element_id = "synthetic-piece-2"; item.zone_id = "F-2"; item.zone_ids = new List<string> {"F-2"};
+            item.cad_entities = new List<QuantityCadEntity> { FacadeQuantityStore.CaptureEntity(f.Zone.Tr,piece,"outer") };
+            f.Report.elements.Add(item);
+            f.Report.cutting.Add(new QuantityCuttingGroup {
+                group_id = "synthetic-joint-cutting", scope_zone_ids = new List<string> {"F-1","F-2"},
+                rows = new List<QuantityRow> {new QuantityRow { basis = "cutting", role = "blanks_total", quantity = 2,
+                    zone_id = "F-1+F-2", zone_ids = new List<string> {"F-1","F-2"}, material = "porcelain", type = "A",
+                    width_mm = 600, height_mm = 600, unit = "шт." }}
+            });
+        }
+        foreach (var owner in owners) {
+            WriteRecord(f.Zone.Tr,owner,f.LayoutKey,"{\"joints_x\":[0,600,1200],\"rows_y\":[0,600,1200]}");
+            LayoutGeometryGuard.Store(f.Zone.Tr,f.Zone.Db,owner,f.LayoutKey,source);
+            f.Report.source_revisions["owner_zone:" + owner.Handle.ToString()] =
+                owner == second.Hatch || owner == second.Mark ? "F-2" : "F-1";
+        }
+        FacadeQuantityStore.Store(f.Zone.Tr,f.Zone.Db,owners,f.LayoutKey,f.Report);
+        return second;
+    }
+    private static void Test(string name, Action action)
+    {
+        try { action(); Results.Add(new Dictionary<string,object> { {"name", name}, {"status", "PASS"} }); Console.WriteLine("PASS " + name); }
+        catch (Exception ex) { Results.Add(new Dictionary<string,object> { {"name", name}, {"status", "FAIL"}, {"detail", ex.Message} }); Console.WriteLine("FAIL " + name + ": " + ex.Message); }
+    }
+    public static int Main(string[] args)
+    {
+        if (args.Length != 4 || args[0] != "--fixtures" || args[2] != "--report") {
+            Console.Error.WriteLine("Usage: QuantityStoreCheck.exe --fixtures fixtures.json --report cases.json"); return 2;
+        }
+        Fixtures = Dict(Json.DeserializeObject(File.ReadAllText(args[1])));
+        Test("attile_quantity_roundtrip_hatch_and_mark", () => new QuantityFixture().Fresh());
+        Test("atclad_quantity_roundtrip_hatch_and_mark", () => new QuantityFixture("single","ATCLAD").Fresh());
+        Test("merged_zone_all_parts_current", () => { var f = new QuantityFixture("merged"); f.Fresh(); Require(f.Zone.Parts.Count == 2, "fixture has no merged parts"); });
+        Test("carrier_selection_deduplicated", () => {
+            var f = new QuantityFixture(); var result = f.Read(f.Zone.Hatch, f.Zone.Mark, f.Zone.Mark);
+            Accepted(result,1); Require(result.Reports[0].elements.Count == 1, "duplicate physical piece");
+        });
+        Test("deleted_physical_piece_refused", () => { var f = new QuantityFixture(); f.Piece.Erase(); Rejected(f.Read(f.Zone.Hatch)); });
+        Test("moved_physical_piece_refused", () => { var f = new QuantityFixture(); Shift(f.Piece,50,0); Rejected(f.Read(f.Zone.Hatch)); });
+        Test("changed_same_area_piece_refused", () => {
+            var f = new QuantityFixture(); // 600x600 -> 1200x300: exact equal area, different actual element.
+            f.Piece.Points[1] = new Point2d(1200,0); f.Piece.Points[2] = new Point2d(1200,300); f.Piece.Points[3] = new Point2d(0,300);
+            Rejected(f.Read(f.Zone.Mark));
+        });
+        Test("moved_source_window_same_area_refused", () => {
+            var f = new QuantityFixture(); Shift(f.Zone.Holes[0],100,0); f.Zone.RefreshHatchFromSources();
+            Rejected(f.Read(f.Zone.Hatch));
+        });
+        Test("deleted_source_refused", () => { var f = new QuantityFixture(); f.Zone.Outers[0].Erase(); Rejected(f.Read(f.Zone.Mark)); });
+        Test("copied_carrier_metadata_retaining_old_pointers_refused", () => {
+            var f = new QuantityFixture(); var copy = f.Zone.Db.Add(new MText { Location = f.Zone.Mark.Location, Contents = f.Zone.Mark.Contents });
+            CopyRecords(f.Zone.Tr,f.Zone.Mark,copy); Rejected(f.Read(copy));
+        });
+        Test("layout_label_tamper_refused", () => {
+            var f = new QuantityFixture(); WriteRecord(f.Zone.Tr, f.Zone.Hatch, "ATTILE", "{\"joints_x\":[0,700,1400],\"rows_y\":[0,600,1200]}");
+            Rejected(f.Read(f.Zone.Hatch));
+        });
+        Test("previous_layout_generation_refused", () => {
+            var f = new QuantityFixture();
+            var source = LayoutGeometryGuard.Capture(f.Zone.Tr,f.Zone.Db,new ObjectId[0],new[] { f.Zone.Verify(f.Zone.Hatch) });
+            // Same geometry and arithmetic payload, genuinely new source revision.
+            LayoutGeometryGuard.Store(f.Zone.Tr,f.Zone.Db,f.Zone.Hatch,"ATTILE",source);
+            Rejected(f.Read(f.Zone.Hatch)); Rejected(f.Read(f.Zone.Mark));
+        });
+        Test("old_layout_without_quantity_passport_refused", () => {
+            var f = new QuantityFixture("single","ATTILE",false); Rejected(f.Read(f.Zone.Hatch));
+        });
+        Test("old_zone_without_geometry_passport_refused", () => {
+            var f = new QuantityFixture(); var ext = (DBDictionary)f.Zone.Tr.GetObject(f.Zone.Hatch.ExtensionDictionary,OpenMode.ForWrite);
+            ext.Remove(ZoneGeometryGuard.Key); Rejected(f.Read(f.Zone.Hatch));
+        });
+        Test("missing_canonical_hatch_refused", () => { var f = new QuantityFixture(); f.Zone.Hatch.Erase(); Rejected(f.Read(f.Zone.Mark)); });
+        Test("piece_selection_returns_explicit_whole_zone_scope", () => {
+            var f = new QuantityFixture(); var read = f.Read(f.Piece); Accepted(read,1);
+            Require(read.SelectedZoneIds.SequenceEqual(new[] {"F-1"}),"piece selection did not expose expanded scope to UI");
+            Require(read.Reports[0].elements.Count == 1,"whole zone piece set lost");
+        });
+        Test("selected_manual_object_explicitly_excluded", () => {
+            var f = new QuantityFixture(); var manual = f.Zone.Db.Add(new Line());
+            var read = f.Read(f.Zone.Hatch,manual); Accepted(read,1);
+            Require(read.Warnings.Count > 0,"manual object silently discarded");
+            Require(read.Reports[0].elements.Count == 1,"manual unregistered line counted as manufactured part");
+        });
+        Test("old_frame_metadata_not_counted_as_cladding", () => {
+            var f = new QuantityFixture(); var frame = f.Zone.Db.Add(new Line());
+            WriteRecord(f.Zone.Tr,frame,"ATFRAME","{\"profiles\":99,\"stale\":true}");
+            Require(!FacadeQuantityStore.IsCandidate(f.Zone.Tr,frame),"frame metadata used as cladding candidate");
+            var read = f.Read(f.Zone.Hatch,frame); Accepted(read,1);
+            Require(read.Reports[0].elements.Count == 1 && read.Warnings.Count > 0,"stale frame report leaked into quantities");
+        });
+        Test("table_with_copied_metadata_never_candidate", () => {
+            var f = new QuantityFixture(); var table = f.Zone.Db.Add(new Table());
+            CopyRecords(f.Zone.Tr,f.Zone.Hatch,table);
+            Require(!FacadeQuantityStore.IsCandidate(f.Zone.Tr,table),"old result table became a source");
+        });
+        Test("unselected_copied_piece_detected_by_modelspace_scan", () => {
+            var f = new QuantityFixture(); f.Fresh(); // Instantiate modelspace before adding another entity.
+            var copy = f.Zone.Db.Add(new Polyline());
+            for (int i=0;i<4;i++) copy.AddVertexAt(i,f.Piece.Points[i],0,0,0);
+            CopyRecords(f.Zone.Tr,f.Piece,copy);
+            Rejected(f.Read(f.Zone.Hatch));
+        });
+        Test("piece_stamp_tamper_refused", () => {
+            var f = new QuantityFixture();
+            var record = Record(f.Zone.Tr,f.Piece,FacadeQuantityStore.ElementKey);
+            string text = String.Concat(record.Data.Select(v => (string)v.Value));
+            WriteRecord(f.Zone.Tr,f.Piece,FacadeQuantityStore.ElementKey,text.Replace("synthetic-piece-1","synthetic-piece-2"));
+            Rejected(f.Read(f.Zone.Hatch));
+        });
+        Test("multiple_graphics_one_physical_element", () => {
+            var f = new QuantityFixture("single","ATTILE",false);
+            var hatch = f.Zone.Db.Add(new Hatch()); var loop = new HatchLoop();
+            foreach (var point in f.Piece.Points) loop.Polyline.Add(new BulgeVertex(point,0));
+            hatch.Loops.Add(loop);
+            var warning = f.Zone.Db.Add(new MText { Contents = "cut" });
+            f.Report.elements[0].cad_entities.Add(FacadeQuantityStore.CaptureEntity(f.Zone.Tr,hatch,"hatch"));
+            f.Report.elements[0].cad_entities.Add(FacadeQuantityStore.CaptureEntity(f.Zone.Tr,warning,"warning"));
+            f.Store(); var read = f.Read(f.Zone.Hatch); Accepted(read,1);
+            Require(read.Reports[0].elements.Count == 1 && read.Reports[0].elements[0].cad_entities.Count == 3,
+                "graphic representations incorrectly counted as multiple physical pieces");
+            warning.Contents = "changed mark"; Rejected(f.Read(f.Zone.Hatch));
+        });
+        Test("deleted_auxiliary_hatch_refused", () => {
+            var f = new QuantityFixture("single","ATTILE",false); var hatch = f.Zone.Db.Add(new Hatch());
+            f.Report.elements[0].cad_entities.Add(FacadeQuantityStore.CaptureEntity(f.Zone.Tr,hatch,"hatch"));
+            f.Store(); hatch.Erase(); Rejected(f.Read(f.Zone.Hatch));
+        });
+        Test("layer_color_change_refused", () => {
+            var f = new QuantityFixture("single","ATTILE",false); var layer = f.Zone.Db.Add(new LayerTableRecord());
+            f.Piece.LayerId = layer.ObjectId;
+            f.Report.elements[0].cad_entities[0] = FacadeQuantityStore.CaptureEntity(f.Zone.Tr,f.Piece,"outer");
+            f.Store(); layer.Color.ColorIndex = 3; Rejected(f.Read(f.Zone.Hatch));
+        });
+        Test("piece_changed_between_capture_and_store_refused", () => {
+            var f = new QuantityFixture("single","ATTILE",false); Shift(f.Piece,10,0);
+            Throws(f.Store); Rejected(f.Read(f.Zone.Hatch));
+        });
+        Test("unsupported_sample_entity_capture_refused", () => {
+            var f = new QuantityFixture(); var unsupported = f.Zone.Db.Add(new Entity());
+            Throws(() => FacadeQuantityStore.CaptureEntity(f.Zone.Tr,unsupported,"block"));
+        });
+        Test("static_block_roundtrip_and_definition_change", () => {
+            var f = new BlockFixture(); Accepted(f.F.Read(f.F.Zone.Hatch),1);
+            Shift(f.F.Piece,30,0); Rejected(f.F.Read(f.F.Zone.Hatch));
+        });
+        Test("block_attribute_change_refused", () => {
+            var f = new BlockFixture(); f.Attribute.TextString = "A-2"; Rejected(f.F.Read(f.F.Zone.Hatch));
+        });
+        Test("block_scale_change_refused", () => {
+            var f = new BlockFixture(); f.Block.ScaleFactors = new Scale3d(2,1,1); Rejected(f.F.Read(f.F.Zone.Hatch));
+        });
+        Test("block_dynamic_property_change_refused", () => {
+            var f = new BlockFixture(true); Accepted(f.F.Read(f.F.Zone.Hatch),1);
+            f.Block.DynamicBlockReferencePropertyCollection[0].Value = 750.0; Rejected(f.F.Read(f.F.Zone.Hatch));
+        });
+        Test("whole_merged_group_deduplicates_shared_piece", () => {
+            var f = new QuantityFixture("single","ATTILE",false); var second = AddMergedGroup(f);
+            var read = f.Read(f.Zone.Hatch,second.Mark); Accepted(read,1);
+            Require(read.SelectedZoneIds.Count == 2 && read.Reports[0].elements.Count == 1,"shared piece counted twice");
+        });
+        Test("partial_merged_group_selection_refused_without_stale_rows", () => {
+            var f = new QuantityFixture("single","ATTILE",false); AddMergedGroup(f);
+            Rejected(f.Read(f.Zone.Hatch));
+        });
+        Test("unselected_merged_group_source_change_refused", () => {
+            var f = new QuantityFixture("single","ATTILE",false); var second = AddMergedGroup(f);
+            Shift(second.Outers[0],50,0); Rejected(f.Read(f.Zone.Hatch,second.Hatch));
+        });
+        Test("partial_independent_zone_quantities_allowed_joint_cutting_refused", () => {
+            var f = new QuantityFixture("single","ATTILE",false); var second = AddMergedGroup(f,false);
+            var read = f.Read(f.Zone.Hatch); Accepted(read,1);
+            Require(read.SelectedZoneIds.SequenceEqual(new[] {"F-1"}),"partial zone selection silently expanded");
+            var installed = FacadeQuantitiesCore.BuildRows(read.Reports,read.SelectedZoneIds,true,false);
+            Require(installed.ok && installed.rows.Sum(r=>r.quantity) == 1,"independent partial zone elements not limited");
+            var cutting = FacadeQuantitiesCore.BuildRows(read.Reports,read.SelectedZoneIds,true,true);
+            Require(!cutting.ok && cutting.rows.Count == 0 && cutting.issues.Any(i=>i.code == "Q_CUTTING_SCOPE_PARTIAL"),
+                "joint cutting allocated to a selected subset");
+            Accepted(f.Read(f.Zone.Hatch,second.Hatch),1);
+        });
+        Test("raw_contour_layout_roundtrip_and_same_area_move_refused", () => {
+            var f = new QuantityFixture("single","ATTILE",false); var carrier = f.Zone.Outers[0];
+            var source = LayoutGeometryGuard.Capture(f.Zone.Tr,f.Zone.Db,
+                f.Zone.Outers.Concat(f.Zone.Holes).Select(p=>p.ObjectId),new ZoneGeometryResult[0]);
+            WriteRecord(f.Zone.Tr,carrier,"ATTILE","{\"joints_x\":[0,600],\"rows_y\":[0,600]}");
+            LayoutGeometryGuard.Store(f.Zone.Tr,f.Zone.Db,carrier,"ATTILE",source);
+            f.Report.zone_ids = new List<string> {"RAW-1"};
+            f.Report.elements[0].zone_id = "RAW-1"; f.Report.elements[0].zone_ids = new List<string> {"RAW-1"};
+            f.Report.source_revisions["owner_zone:" + carrier.Handle.ToString()] = "RAW-1";
+            FacadeQuantityStore.Store(f.Zone.Tr,f.Zone.Db,new Entity[] {carrier},"ATTILE",f.Report);
+            Accepted(f.Read(carrier),1); Shift(f.Zone.Holes[0],50,0); Rejected(f.Read(carrier));
+        });
+        Test("foreign_database_selection_refused", () => {
+            var first = new QuantityFixture(); var foreign = new QuantityFixture();
+            var read = FacadeQuantityStore.ReadCladding(first.Zone.Tr,first.Zone.Db,new[] { first.Zone.Hatch.ObjectId, foreign.Zone.Hatch.ObjectId });
+            Rejected(read);
+        });
+        Test("explicit_known_empty_run_stored_and_read_as_zero", () => {
+            var f = new QuantityFixture("single","ATCLAD",false); f.Report.elements.Clear(); f.Piece.Erase();
+            f.Store(); var read = f.Read(f.Zone.Hatch); Accepted(read,1);
+            Require(read.Reports[0].elements != null && read.Reports[0].elements.Count == 0,
+                "known zero result was replaced by missing data or fabricated elements");
+            var rows = FacadeQuantitiesCore.BuildRows(read.Reports,read.SelectedZoneIds,true,false);
+            Require(rows.ok && rows.rows.Count == 0,"known zero result not explicitly preserved");
+        });
+        Test("selected_known_empty_zone_of_mixed_run_is_zero", () => {
+            var f = new QuantityFixture("single","ATCLAD",false); var empty = AddMergedGroup(f,false,true);
+            var read = f.Read(empty.Hatch); Accepted(read,1);
+            Require(read.SelectedZoneIds.SequenceEqual(new[] {"F-2"}) && read.Reports[0].elements.Count == 1,
+                "empty selected zone lost scope or imported another zone's elements");
+            var rows = FacadeQuantitiesCore.BuildRows(read.Reports,read.SelectedZoneIds,true,false);
+            Require(rows.ok && rows.rows.Count == 0,"selected known empty zone emitted quantities from another zone");
+            var full = f.Read(f.Zone.Hatch,empty.Hatch); Accepted(full,1);
+            var fullRows = FacadeQuantitiesCore.BuildRows(full.Reports,full.SelectedZoneIds,true,false);
+            Require(fullRows.ok && fullRows.rows.Sum(r=>r.quantity) == 1,"zero zone altered nonempty neighbour's count");
+        });
+        Test("null_element_list_is_missing_data_not_known_zero", () => {
+            var f = new QuantityFixture("single","ATCLAD",false); f.Report.elements = null;
+            Throws(f.Store); Rejected(f.Read(f.Zone.Hatch));
+        });
+        Test("payload_boundary_exactly_256_mib_accepted_without_allocation", () => {
+            CheckPayloadBoundary(256L * 1024 * 1024);
+        });
+        Test("payload_boundary_one_byte_over_256_mib_refused_without_allocation", () => {
+            Throws(() => CheckPayloadBoundary(256L * 1024 * 1024 + 1));
+            Throws(() => CheckPayloadBoundary(long.MaxValue));
+        });
+        Test("malformed_selected_piece_stamp_has_actionable_russian_refusal", () => {
+            var f = new QuantityFixture();
+            WriteRecord(f.Zone.Tr,f.Piece,FacadeQuantityStore.ElementKey,"{invalid-json");
+            var read = f.Read(f.Piece); Rejected(read);
+            Require(read.Reason.StartsWith("Повреждён паспорт объекта облицовки. Восстановите",StringComparison.Ordinal),
+                "malformed selected passport exposed a serializer diagnostic");
+        });
+        Test("malformed_unselected_stamp_scan_refuses_unknown_run_with_russian_reason", () => {
+            var f = new QuantityFixture(); var unrelated = f.Zone.Db.Add(new Line());
+            WriteRecord(f.Zone.Tr,unrelated,FacadeQuantityStore.ElementKey,"{invalid-json");
+            var read = f.Read(f.Zone.Hatch); Rejected(read);
+            Require(read.Reason.StartsWith("Повреждён паспорт объекта облицовки. Восстановите",StringComparison.Ordinal),
+                "unknown-run corrupted stamp was ignored or exposed a serializer diagnostic");
+        });
+        int passed = Results.Count(r => (string)r["status"] == "PASS");
+        File.WriteAllText(args[3],Json.Serialize(new Dictionary<string,object> {
+            {"scope","Actual production quantity store and actual geometry guards with CAD doubles. No AutoCAD runtime claimed."},
+            {"total",Results.Count}, {"passed",passed}, {"failed",Results.Count-passed}, {"cases",Results} }));
+        Console.WriteLine("Quantity store: " + passed + "/" + Results.Count);
+        return passed == Results.Count ? 0 : 1;
+    }
+}

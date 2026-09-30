@@ -1,0 +1,483 @@
+{
+  "schema": "facade_quantities_verification/1",
+  "base_commit": "1c7864411e76c16b8c0ae773c12ba422e0c5a122",
+  "status": "PASS_WITH_EXPLICIT_COMPOSITE_PROVENANCE",
+  "baseline": {
+    "groups": 24,
+    "passed": 24,
+    "compiled_plugins": 3,
+    "private_fixture_checks_executed": 4
+  },
+  "gates": {
+    "groups": 28,
+    "passed": 28,
+    "manifest": "logs/gates/manifest.json",
+    "subsequent_source_changes": [
+      "Common/FacadeQuantityStore.cs"
+    ],
+    "affected_gate_reexecuted": "checks/store/manifest.json"
+  },
+  "new_checks": {
+    "core": 36,
+    "producer": 99,
+    "table_csharp": 44,
+    "table_xlsx": 14,
+    "store_after_review": 43
+  },
+  "compile": {
+    "plugins": 3,
+    "passed": 3,
+    "manifest": "logs/compile/manifest.json",
+    "all_source_hashes_match_current": true
+  },
+  "full_synthetic": {
+    "groups": 8,
+    "passed": 8,
+    "manifest": "logs/full/manifest.json",
+    "broad_source_hash_unchanged": false,
+    "changed_paths": [
+      "Common/FacadeQuantityStore.cs"
+    ],
+    "note": "The broad stamp changed only in FacadeQuantityStore.cs during independent review. These full engine/role suites do not compile or execute that store. Their actual source inputs remained unchanged; the store and all three plugins were rechecked afterward.",
+    "actual_tested_sources_unchanged": true,
+    "actual_source_sha256": {
+      "Facades/engine/test_facade_zones.py": "8465ae98a8b412db6e6f7b23242a34dada7475450b47294fb22785a02b47caf4",
+      "Facades/engine/facades_engine.py": "f0046539d586d75f0d3042b83b7e155f06762f84869721544cd6542fa27ad306",
+      "Facades/engine/facade_zones.py": "a6d93dfc7b9e399be3dab4bb2a624c714b12fe79236503fe54c105122bfeea01",
+      "Facades/engine/test_facades_engine.py": "ce0f692df8747f5666aea690c6e346b79a7a4a65d54f8a48161c6af6a353d509",
+      "Facades/tools/zones_synth.py": "f8374fd437b8929af49b1d7cee6f68f2e0586d86579a7ec8539fe6961ba35131",
+      "AClad/engine/polygon_clip.py": "06bf6d81181d8f0732827a53169cbc5c8aa4f5615e7cc5ed5306b2ac4ae4c60f",
+      "AClad/engine/test_cladding_plan.py": "4461dea9f1f00e926d52f3d0b64562a281f036b8baed4dba8656c3d89314f97a",
+      "AClad/engine/test_tile_pattern.py": "d489eae004c47dde8fc3f32108e5721c6e050387dd8e8539b3e01f37f9e640c3",
+      "AClad/engine/audit_clad.py": "881ae022233fbc6ff178d2ea2f4842eb4cf7547a8cb33a8a29e69c435aad8a92",
+      "AClad/engine/tile_pattern.py": "3af9df2b123585ce33d0b8a616956c0c0ef5ba7a822acb6fa06555ace81eafce",
+      "AClad/engine/test_clad_engine.py": "7f4133e8cb1c5e139752ad16c8a26777ee691940169c8eb2c13f5b5f1972569b",
+      "AClad/engine/cladding_plan.py": "0eb923685b4a1319a31f8eb17bfe25059aaee22b8c7b85d40982b812af5e2e8e",
+      "AClad/engine/clad_engine.py": "cf7e3739c74517a6d4483572d19330901b11d6ef8f3eb4e95c42104645257e1e",
+      "AClad/tools/attile_synth.py": "85d734564895b88cbeb53f892e87b360db1063a36d01fdd624a923034c3b09a0",
+      "AFrame/engine/systems.json": "e9ee0a4cf0c535473dd9931f9b2a3d86dd1d932fe18f84682ef3fd221fbc03c3",
+      "AFrame/engine/dsverka_poligon.py": "a971bd36882c6663c0fcbc466de5e288d9aa1f4d1f6d55e5eb462ae5d635a1ec",
+      "AFrame/engine/test_frame_engine.py": "3d32ffb69a6e9bc5d229ed11201e7e09500b5f193859b6a2cbab190c73679270",
+      "AFrame/engine/audit_frame.py": "7ce9adac3adddcb7619b88d789b78f4b811f9c890e9fd9b08f884b32ee4e2d48",
+      "AFrame/engine/test_frame_rules.py": "0f629daa13207e436eb5e425e1f4e3d7189d205ffc6956bceca0427eb237b26e",
+      "AFrame/engine/frame_topology.py": "498d18f252d6160856a3cd4a90a7ada47f80c6ff463994ab801f2de0e3f72ebb",
+      "AFrame/engine/test_frame_plan.py": "990d3a933eab94f1b967ea17606be1db462936cc1cb0cb0e74c5da198d4b5ded",
+      "AFrame/engine/assembly_catalog.json": "a202410e6c9872b73cf9f06183c6fc22b22280fb0dcbfb68e71561117d65456e",
+      "AFrame/engine/frame_calc.py": "abe20fd3c0de0937ba0636914f083f7c48a7a65b3b4c85f05673278a95e1da88",
+      "AFrame/engine/analiz_klu_poligon.py": "903a3080c4b01dea51e936560adba060f12f172fe13887bd2785456881f5fa27",
+      "AFrame/engine/frame_engine.py": "59cc9afbb80e948c368b41e980627da3031ac37fedede27242424fc8c6a4557a",
+      "AFrame/engine/test_frame_topology.py": "88f59edd4e8543ec3c444eb3557dbe7a10b922318362ca82360675da1c11586c",
+      "AFrame/engine/test_frame_calc.py": "f72160fe7a3483c35a6c0d7ef669a612e6e44defb95c33916a850c2a605d5239",
+      "AFrame/engine/frame_plan.py": "33e686df9f388ab82c9c0da8282584d2150e482da610ea8ad2cccdfc60db6c5e",
+      "AFrame/engine/frame_rules.py": "511ec4ec48331034257859ccac70ef028a8c4b398acd7d5b238d778e3c63ea6f",
+      "AFrame/tools/frame_synth.py": "fb0507eefce7efdd8293bb895b6159eeca3c28643709e679a2d7f9f4c767c013",
+      "AFrame/src/AFramePlugin/FrameSettings.cs": "726318cfb93822262855d5f6e7f1e3f6b274a4770cf7e66ef8700642d12006fa",
+      "AFrame/tools/roles/RolesDump.cs": "e9c9ab08adcc6e98969b8b23306cb56815a29921efe838cdc1ca9f461a63a280",
+      "tools/roles_synth.py": "61dc9ea3c48fae82de4597ced67138055cb2da1e810d1ced758f8f28124c5436"
+    },
+    "zones": 840,
+    "openings": 2419,
+    "tile_cases": 741,
+    "tile_pieces": 376086,
+    "frame_seeds": [
+      2909,
+      77,
+      5
+    ],
+    "frame_cases": 2880,
+    "roles": 21,
+    "role_facades_per_seed": 168,
+    "known_exclusion": "X6 belongs to unchanged ATSPEC; existing typed static-model refusals remain separately reported"
+  },
+  "source_sha256": {
+    "AClad/engine/audit_clad.py": "881ae022233fbc6ff178d2ea2f4842eb4cf7547a8cb33a8a29e69c435aad8a92",
+    "AClad/engine/clad_engine.py": "cf7e3739c74517a6d4483572d19330901b11d6ef8f3eb4e95c42104645257e1e",
+    "AClad/engine/cladding_plan.py": "0eb923685b4a1319a31f8eb17bfe25059aaee22b8c7b85d40982b812af5e2e8e",
+    "AClad/engine/polygon_clip.py": "06bf6d81181d8f0732827a53169cbc5c8aa4f5615e7cc5ed5306b2ac4ae4c60f",
+    "AClad/engine/test_clad_engine.py": "7f4133e8cb1c5e139752ad16c8a26777ee691940169c8eb2c13f5b5f1972569b",
+    "AClad/engine/test_cladding_plan.py": "4461dea9f1f00e926d52f3d0b64562a281f036b8baed4dba8656c3d89314f97a",
+    "AClad/engine/test_tile_pattern.py": "d489eae004c47dde8fc3f32108e5721c6e050387dd8e8539b3e01f37f9e640c3",
+    "AClad/engine/tile_pattern.py": "3af9df2b123585ce33d0b8a616956c0c0ef5ba7a822acb6fa06555ace81eafce",
+    "AClad/src/ACladPlugin/ACladPlugin.csproj": "11061df272fb61c4f9977677c58b8189c25b2ef0005f0404ddffbbc66f90ff41",
+    "AClad/src/ACladPlugin/BondForm.cs": "48f9d6918f97d2206f849b686683c1d862e538e8a2cf27e12df51bb576611466",
+    "AClad/src/ACladPlugin/BondSettings.cs": "c30e687bfee933011fb98b1587bb4a1603d2425055a0046c61a33a28713aa914",
+    "AClad/src/ACladPlugin/CladCommand.cs": "2fa0e907f4d0d629a65039dc05659f2b8a6718415bda92d9ca0121994c4a6ca8",
+    "AClad/src/ACladPlugin/CladdingQuantities.cs": "e1c49a0ca2833bbc96cd93fd723cfd49c84a53a1c57a0a72f35c2fdad240e3a9",
+    "AClad/src/ACladPlugin/DimForm.cs": "6e1a13c33151308b678b3070c4e6b04dff93f0ca2834b675e1bea6e51f077031",
+    "AClad/src/ACladPlugin/FacadesClassic.cs": "ccb7bffde646144f90b0db1f89ec89c7f252e44f2a523378e6b631e61fe9ec14",
+    "AClad/src/ACladPlugin/FacadesRibbon.cs": "89d60014a94534f720bf09f7a32bfab2ad61428414258ff183bd48ccf7671854",
+    "AClad/src/ACladPlugin/LayerPickForm.cs": "bd16924dbf9bf9ea8133b5c721fff2f020c86510af972b13411039fd7b5eb848",
+    "AClad/src/ACladPlugin/LayoutSafety.cs": "dfe26a34bd41119e5e611c930f45a237bac7332c3797c4ffa77c29340078a3cb",
+    "AClad/src/ACladPlugin/Plugin.cs": "b34ef3887f249b0b6c4fb84fffda9ac70a14bdb76ee6e8d20a45669b863149f6",
+    "AClad/src/ACladPlugin/TilePatternCommand.cs": "fca8d7e6db587b7c5e12cfac8e7fe83199fc0882d98a1cad4ca34ad9f9ee9afe",
+    "AClad/src/ACladPlugin/TileProgress.cs": "e2745014a01f444ce3be158d1e56d93acea50759943178417218c50e41916711",
+    "AFrame/engine/analiz_klu_poligon.py": "903a3080c4b01dea51e936560adba060f12f172fe13887bd2785456881f5fa27",
+    "AFrame/engine/assembly_catalog.json": "a202410e6c9872b73cf9f06183c6fc22b22280fb0dcbfb68e71561117d65456e",
+    "AFrame/engine/audit_frame.py": "7ce9adac3adddcb7619b88d789b78f4b811f9c890e9fd9b08f884b32ee4e2d48",
+    "AFrame/engine/dsverka_poligon.py": "a971bd36882c6663c0fcbc466de5e288d9aa1f4d1f6d55e5eb462ae5d635a1ec",
+    "AFrame/engine/frame_calc.py": "abe20fd3c0de0937ba0636914f083f7c48a7a65b3b4c85f05673278a95e1da88",
+    "AFrame/engine/frame_engine.py": "59cc9afbb80e948c368b41e980627da3031ac37fedede27242424fc8c6a4557a",
+    "AFrame/engine/frame_plan.py": "33e686df9f388ab82c9c0da8282584d2150e482da610ea8ad2cccdfc60db6c5e",
+    "AFrame/engine/frame_rules.py": "511ec4ec48331034257859ccac70ef028a8c4b398acd7d5b238d778e3c63ea6f",
+    "AFrame/engine/frame_topology.py": "498d18f252d6160856a3cd4a90a7ada47f80c6ff463994ab801f2de0e3f72ebb",
+    "AFrame/engine/systems.json": "e9ee0a4cf0c535473dd9931f9b2a3d86dd1d932fe18f84682ef3fd221fbc03c3",
+    "AFrame/engine/test_frame_calc.py": "f72160fe7a3483c35a6c0d7ef669a612e6e44defb95c33916a850c2a605d5239",
+    "AFrame/engine/test_frame_engine.py": "3d32ffb69a6e9bc5d229ed11201e7e09500b5f193859b6a2cbab190c73679270",
+    "AFrame/engine/test_frame_plan.py": "990d3a933eab94f1b967ea17606be1db462936cc1cb0cb0e74c5da198d4b5ded",
+    "AFrame/engine/test_frame_rules.py": "0f629daa13207e436eb5e425e1f4e3d7189d205ffc6956bceca0427eb237b26e",
+    "AFrame/engine/test_frame_topology.py": "88f59edd4e8543ec3c444eb3557dbe7a10b922318362ca82360675da1c11586c",
+    "AFrame/src/AFramePlugin/AFramePlugin.csproj": "05bf948e7393d46af7411e1eb529bf5f36a77550dc4150d539bedcc03b621baf",
+    "AFrame/src/AFramePlugin/DimForm.cs": "86ec69c3200f8f4232c7b855a13147367d199cd42a14928c31f8678b28230717",
+    "AFrame/src/AFramePlugin/FacadesClassic.cs": "ec03c5c3f08289c92e97cd6b17de8e9852fbfee5a0ddd3d953dafa2a70657673",
+    "AFrame/src/AFramePlugin/FacadesRibbon.cs": "af48c14c864659f95f58669fa631a3b3fbb24f64e686769e8e288e32d71c0119",
+    "AFrame/src/AFramePlugin/FrameCommand.cs": "fb1dd291ef102efd49ad72d21eb8decac33011373e7a06e46a39a92cda2c1a02",
+    "AFrame/src/AFramePlugin/FrameForm.cs": "d7ae2edcaaec82065061ca58addf08c51123f7fb4d3b7d68c95d8784034cfc51",
+    "AFrame/src/AFramePlugin/FrameSettings.cs": "726318cfb93822262855d5f6e7f1e3f6b274a4770cf7e66ef8700642d12006fa",
+    "AFrame/src/AFramePlugin/Plugin.cs": "e679e02c78b770152163b0cd4a691d39ea44bddb422da49aa128e5d13ec631c4",
+    "Common/FacadeQuantities.cs": "5b9be37459fa38b4cadc730852dcb97c52ab67ff90877f8fb240d968f10442b6",
+    "Common/FacadeQuantityStore.cs": "2c9096e0b099061f434e7b54bd3b8d127272d66286672b33a724c74d543c1fb3",
+    "Common/GeometryFingerprint.cs": "24114ef7a18a56415313b009d7819c94190efa5ea517df2081d1f51951819332",
+    "Common/LayoutGeometryGuard.cs": "289d6d51ede5861c7b27ff106c150aa7b5fa456ddce86ef5e0b5ee727c0eae9d",
+    "Common/ZoneGeometryGuard.cs": "daf06e2822a4d9ef2be818df1bf904779fa202adb1e5bce7fc0ba49c084970b8",
+    "Facades/engine/facade_zones.py": "a6d93dfc7b9e399be3dab4bb2a624c714b12fe79236503fe54c105122bfeea01",
+    "Facades/engine/facades_engine.py": "f0046539d586d75f0d3042b83b7e155f06762f84869721544cd6542fa27ad306",
+    "Facades/engine/test_facade_zones.py": "8465ae98a8b412db6e6f7b23242a34dada7475450b47294fb22785a02b47caf4",
+    "Facades/engine/test_facades_engine.py": "ce0f692df8747f5666aea690c6e346b79a7a4a65d54f8a48161c6af6a353d509",
+    "Facades/src/AFacadesPlugin/AFacadesPlugin.csproj": "e7ebcc765975ab12da71ac8c5b76083f36d93154c10ad3d4a86fe0c33ab52590",
+    "Facades/src/AFacadesPlugin/CladdingTableCommand.cs": "26ed6ab72eaf751ba0bbd3f795854488c5d4308db41a812cbf2d2028e18f832f",
+    "Facades/src/AFacadesPlugin/CladdingTableData.cs": "d454475aebcb5113e0f24871191026c23c5b8de70b29fe5ce1ab3f3e17878d52",
+    "Facades/src/AFacadesPlugin/CladdingTablePreview.cs": "a9ef4e2a152f7688905386f7de260f2883dba30869db7709a239b0f75133e83b",
+    "Facades/src/AFacadesPlugin/FacadesClassic.cs": "ccc1f1d9d0462ee4cea1b68d9a4383d30c112360b0cf198e852e81b2ba039327",
+    "Facades/src/AFacadesPlugin/FacadesRibbon.cs": "3a1f467a5691c6f3f5654dad38e94e1c94bfcdfe4ac261f6ccd3f55c7705dd75",
+    "Facades/src/AFacadesPlugin/LayerPickForm.cs": "b457767262fd19cdd2007ff58aacb61860cae6eaca13fc0dcb6655f50e77b869",
+    "Facades/src/AFacadesPlugin/Plugin.cs": "d486cb0746e6edef83c41a68f85f1e60b19a3c764c317a170de1e92b9db38476",
+    "Facades/src/AFacadesPlugin/QuantityXlsxFile.cs": "4defa571ebaba5182952838e8e32c97d2c541858f2ebebff91e2e79bd637555d",
+    "Facades/src/AFacadesPlugin/TableCommand.cs": "7aca29e4cbea7911f5bdbea9e3828a347f38b53496bb779e4d05f73758615818",
+    "Facades/src/AFacadesPlugin/WorkStatement.cs": "428f45e464ca264df513e31ca0f17f70a46422509e37d4a3ca1902d2e2a68858",
+    "Facades/src/AFacadesPlugin/XlsxWriter.cs": "6c4ef614b5fde416fa91ce29adc0ebf99599bb21b285bd7d885bf00469c428fc",
+    "Facades/src/AFacadesPlugin/ZoneCommand.cs": "f4eee2cf9e1b3b4fcca7b34ac9d7d8c4a0d48ea2d6c543a5c7eee176f96bbdbb",
+    "Facades/src/AFacadesPlugin/ZoneForm.cs": "30cc49edd277ffcdfe03261bdb82e4ff92dbaccca51284b543509ab86c40f178",
+    "Facades/src/AFacadesPlugin/ZoneTable.cs": "9aad9aa85ebf1d41c40e6d3577a5df4e05ae207923f9658d790b39ad030c2c4b"
+  },
+  "limitations": {
+    "live_autocad_checked": false,
+    "native_ui_checked": false,
+    "autocad_save_reopen_copy_undo_checked": false,
+    "static_model_verified": false,
+    "release_published": false,
+    "main_changed": false
+  },
+  "logs": {
+    "normalization": "Trailing whitespace removed; original hashes retained. No private fixtures or binaries copied.",
+    "files": [
+      {
+        "path": "logs/gates/AClad_audit_clad.log",
+        "sha256": "a2f6aaac440d718657c20aef378a79bbc2eb6e86f3c51ec13f0d5cf0f5009e78",
+        "original_sha256": "a2f6aaac440d718657c20aef378a79bbc2eb6e86f3c51ec13f0d5cf0f5009e78"
+      },
+      {
+        "path": "logs/gates/AClad_test_clad_engine.log",
+        "sha256": "bcec33b1e2feacdbbbb366f02f2fb9a06b407974100716ad6cadd2c096a7c049",
+        "original_sha256": "bcec33b1e2feacdbbbb366f02f2fb9a06b407974100716ad6cadd2c096a7c049"
+      },
+      {
+        "path": "logs/gates/AClad_test_cladding_plan.log",
+        "sha256": "e0689849851ad742cab653bcff3d18fc6730eb297aeed59e3d9d4019208778a5",
+        "original_sha256": "e0689849851ad742cab653bcff3d18fc6730eb297aeed59e3d9d4019208778a5"
+      },
+      {
+        "path": "logs/gates/AClad_test_tile_pattern.log",
+        "sha256": "7f1f94ad3bee670c22186792c90baf0f3f630205e2442a2c8b33671139f873ed",
+        "original_sha256": "7f1f94ad3bee670c22186792c90baf0f3f630205e2442a2c8b33671139f873ed"
+      },
+      {
+        "path": "logs/gates/AFrame_audit_frame.log",
+        "sha256": "9943cf1ede683bf854f5038dbdb7087581a101c376be14e67df1f55978aa29f3",
+        "original_sha256": "9943cf1ede683bf854f5038dbdb7087581a101c376be14e67df1f55978aa29f3"
+      },
+      {
+        "path": "logs/gates/AFrame_test_frame_calc.log",
+        "sha256": "1fe027d61c1fef7e7202946e116762fb2959808c4c88e0eab3d3ea43fa2d97e1",
+        "original_sha256": "1fe027d61c1fef7e7202946e116762fb2959808c4c88e0eab3d3ea43fa2d97e1"
+      },
+      {
+        "path": "logs/gates/AFrame_test_frame_engine.log",
+        "sha256": "ca76ae23d74a4f8311220fb98bf9133410292fe2127b0b3238e002043c23db77",
+        "original_sha256": "ca76ae23d74a4f8311220fb98bf9133410292fe2127b0b3238e002043c23db77"
+      },
+      {
+        "path": "logs/gates/AFrame_test_frame_plan.log",
+        "sha256": "28f6f86f76154edae791d32e831caf08beaebf30e14956cdef63cd1f94372e19",
+        "original_sha256": "28f6f86f76154edae791d32e831caf08beaebf30e14956cdef63cd1f94372e19"
+      },
+      {
+        "path": "logs/gates/AFrame_test_frame_rules.log",
+        "sha256": "1fae746628b5d5df248d10ee77a02e48424bd1fbd7e58718534422a7e79f4628",
+        "original_sha256": "1fae746628b5d5df248d10ee77a02e48424bd1fbd7e58718534422a7e79f4628"
+      },
+      {
+        "path": "logs/gates/AFrame_test_frame_topology.log",
+        "sha256": "98e2c1e6dafa9adb3a4f63f209231ed30ebe6a2630338bfd8598bb714b880db7",
+        "original_sha256": "98e2c1e6dafa9adb3a4f63f209231ed30ebe6a2630338bfd8598bb714b880db7"
+      },
+      {
+        "path": "logs/gates/Facades_test_facade_zones.log",
+        "sha256": "4af4506f72e6dbac9833cb0d848bd95d0d4b886e2b641a0e82062928f311cd6b",
+        "original_sha256": "4af4506f72e6dbac9833cb0d848bd95d0d4b886e2b641a0e82062928f311cd6b"
+      },
+      {
+        "path": "logs/gates/Facades_test_facades_engine.log",
+        "sha256": "6ee4b2fcfd7778b22bfb2e8e54854b55abf5a4829e7287ec51b1133e2d7f4cfb",
+        "original_sha256": "6ee4b2fcfd7778b22bfb2e8e54854b55abf5a4829e7287ec51b1133e2d7f4cfb"
+      },
+      {
+        "path": "logs/gates/atr_architecture.log",
+        "sha256": "4fb4a0fe3715d96d5a7263de116d20adbd3c1190433ff8013388140290136be2",
+        "original_sha256": "4fb4a0fe3715d96d5a7263de116d20adbd3c1190433ff8013388140290136be2"
+      },
+      {
+        "path": "logs/gates/atr_mass.log",
+        "sha256": "db79083641a6648ed17a9564654efbbe5246651a67aae21e624430c621016253",
+        "original_sha256": "db79083641a6648ed17a9564654efbbe5246651a67aae21e624430c621016253"
+      },
+      {
+        "path": "logs/gates/atr_topology.log",
+        "sha256": "4366528b8633dbf9db83366e3e007af2d19535ead947b4f09f1bc9729983a27b",
+        "original_sha256": "4366528b8633dbf9db83366e3e007af2d19535ead947b4f09f1bc9729983a27b"
+      },
+      {
+        "path": "logs/gates/atr_vector5.log",
+        "sha256": "5ecd64543668c33205e58053dde2b0ff52621885db4e3a7d5eb7c4f5ab4e476f",
+        "original_sha256": "5ecd64543668c33205e58053dde2b0ff52621885db4e3a7d5eb7c4f5ab4e476f"
+      },
+      {
+        "path": "logs/gates/engine_contract.log",
+        "sha256": "0c8d97ea1bb600edd0c3bffd1b7df81c97b63925e0b812cc96d130875ac41abb",
+        "original_sha256": "0c8d97ea1bb600edd0c3bffd1b7df81c97b63925e0b812cc96d130875ac41abb"
+      },
+      {
+        "path": "logs/gates/facade_regressions.log",
+        "sha256": "47e1e6bf6049f5a87c2d1dfbb89e4346eca1c5c795e39171ca1f5c7f897e7efb",
+        "original_sha256": "47e1e6bf6049f5a87c2d1dfbb89e4346eca1c5c795e39171ca1f5c7f897e7efb"
+      },
+      {
+        "path": "logs/gates/frame_quick.log",
+        "sha256": "2c63c2d7861e766b8bee52aef86abae210981d4c190658c3ee5bf147eb5ff2b9",
+        "original_sha256": "aa8ddb50d0a25dd83969ad5e68228bcaeaa5dd61cbbd3cc94bcb9ccf6bbfa42a"
+      },
+      {
+        "path": "logs/gates/quantities_core.log",
+        "sha256": "ba8e27a8f92a8b0212627efdbab1c77917eaf7b630b40187fe5f235d13222b7b",
+        "original_sha256": "ba8e27a8f92a8b0212627efdbab1c77917eaf7b630b40187fe5f235d13222b7b"
+      },
+      {
+        "path": "logs/gates/quantities_producer.log",
+        "sha256": "8ceb6f4e4f0b49a3964fe2a830f3e944717bdcd32b5fc8d554e4b4eace077c70",
+        "original_sha256": "8ceb6f4e4f0b49a3964fe2a830f3e944717bdcd32b5fc8d554e4b4eace077c70"
+      },
+      {
+        "path": "logs/gates/quantities_store.log",
+        "sha256": "a9209178edb346403c8964ea0314549916edb00cdc6eb1343d3e25775d625d85",
+        "original_sha256": "a9209178edb346403c8964ea0314549916edb00cdc6eb1343d3e25775d625d85"
+      },
+      {
+        "path": "logs/gates/quantities_table.log",
+        "sha256": "67872f5ad32c6044e0f793b210ee95fc29f1aff1e04c39a279de4cc30e1019f0",
+        "original_sha256": "67872f5ad32c6044e0f793b210ee95fc29f1aff1e04c39a279de4cc30e1019f0"
+      },
+      {
+        "path": "logs/gates/roles_quick.log",
+        "sha256": "820424844d7d11c015e0086e44baf9f99e2d4079a24abe4601a5c47ad5cff324",
+        "original_sha256": "820424844d7d11c015e0086e44baf9f99e2d4079a24abe4601a5c47ad5cff324"
+      },
+      {
+        "path": "logs/gates/static_model_gap.log",
+        "sha256": "225e16f340eac01e8df5a3024b6183006297bd88eceb91ad439b6840378cbd26",
+        "original_sha256": "225e16f340eac01e8df5a3024b6183006297bd88eceb91ad439b6840378cbd26"
+      },
+      {
+        "path": "logs/gates/tile_quick.log",
+        "sha256": "504f277d0678dc7cb00c68332d9b15c2e2d759366991a0399b00ec0060380a5c",
+        "original_sha256": "504f277d0678dc7cb00c68332d9b15c2e2d759366991a0399b00ec0060380a5c"
+      },
+      {
+        "path": "logs/gates/xmod.log",
+        "sha256": "4609007e9ee2278de928a70e0ec59b821d36df9de0cb822cf00fd607ae196bda",
+        "original_sha256": "4609007e9ee2278de928a70e0ec59b821d36df9de0cb822cf00fd607ae196bda"
+      },
+      {
+        "path": "logs/gates/zones_quick.log",
+        "sha256": "1078b4f92b682a12528f14f80b495a9be01ae03228644bdfd8f02c34681430e9",
+        "original_sha256": "1078b4f92b682a12528f14f80b495a9be01ae03228644bdfd8f02c34681430e9"
+      },
+      {
+        "path": "logs/gates/manifest.json",
+        "sha256": "24b9f84e8c28d304c73a9cd26b7f9d5f4d6cc0832f2fe7d8d851058584c260a1",
+        "original_sha256": "24b9f84e8c28d304c73a9cd26b7f9d5f4d6cc0832f2fe7d8d851058584c260a1"
+      },
+      {
+        "path": "logs/full/frame_2909.log",
+        "sha256": "df5ba0207cb4936589e8b8d0f12c80aaab22138f3e7a64af46aec334426bb988",
+        "original_sha256": "6230c9c3db5ff83f4cfb8d3f3e31a5a05030133761ef6caa871998fb765d9f20"
+      },
+      {
+        "path": "logs/full/frame_5.log",
+        "sha256": "75efd6f5a62e8c31fc9395ad4cbad3b881f12aea14283a5bbd385ba638d536fb",
+        "original_sha256": "2b8afd7847aa162199d1f7724978755e5700d3e5ff4734bec5990640579fdab1"
+      },
+      {
+        "path": "logs/full/frame_77.log",
+        "sha256": "589567b286db814c7c70d646019f7bdf31188e28e7f34317a5489f3338b91afe",
+        "original_sha256": "83e9e19af10e72d2888421f73e7f2590976b2c92fbfc9c9b99d6417ce378bcc9"
+      },
+      {
+        "path": "logs/full/roles_2909.log",
+        "sha256": "8fcf4395bcb262b1ce6fbfb9baac978a83dca0ec1f72b790d1741647b2c47bde",
+        "original_sha256": "8fcf4395bcb262b1ce6fbfb9baac978a83dca0ec1f72b790d1741647b2c47bde"
+      },
+      {
+        "path": "logs/full/roles_5.log",
+        "sha256": "a094bbf2197025780b946fa3813a1908dd984f30a9b957baefba3c8a2cbac33d",
+        "original_sha256": "a094bbf2197025780b946fa3813a1908dd984f30a9b957baefba3c8a2cbac33d"
+      },
+      {
+        "path": "logs/full/roles_77.log",
+        "sha256": "062ce0de6191aae6adf4180cf7ff176d91f46c9a91264c3996db47a60e98fca4",
+        "original_sha256": "062ce0de6191aae6adf4180cf7ff176d91f46c9a91264c3996db47a60e98fca4"
+      },
+      {
+        "path": "logs/full/tile.log",
+        "sha256": "137c0d8d31df5c2fff61418c56df8af04f311c21f4b32cbce6af0827362490f6",
+        "original_sha256": "137c0d8d31df5c2fff61418c56df8af04f311c21f4b32cbce6af0827362490f6"
+      },
+      {
+        "path": "logs/full/zones.log",
+        "sha256": "eb3fdf6b9cce9352cc1db2cc777f145b570bac01584ae06ddb68b779d7e3c89c",
+        "original_sha256": "eb3fdf6b9cce9352cc1db2cc777f145b570bac01584ae06ddb68b779d7e3c89c"
+      },
+      {
+        "path": "logs/full/manifest.json",
+        "sha256": "a7cc20ecdb228794b55ef194b7de964b27ba6b4b9283d3c8982800fef096d37f",
+        "original_sha256": "a7cc20ecdb228794b55ef194b7de964b27ba6b4b9283d3c8982800fef096d37f"
+      },
+      {
+        "path": "logs/compile/ACladPlugin.log",
+        "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b",
+        "original_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "path": "logs/compile/AFacadesPlugin.log",
+        "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b",
+        "original_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "path": "logs/compile/AFramePlugin.log",
+        "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b",
+        "original_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "path": "logs/compile/manifest.json",
+        "sha256": "a613e605c2d09291465908365aff7ba0ad8b12f2e8be9d53470b5c60ec4e4f74",
+        "original_sha256": "2127d75bf16ca6e1cfa441223a3a744116c5651336573aab132405c4b5e2d85c"
+      },
+      {
+        "path": "checks/core/manifest.json",
+        "sha256": "e257fa553438fa8b25a7e8c27bc388cb894df5caa688c4229ac1f724eb804a50",
+        "original_sha256": "824805df5fb5a4b72cbd0f451000cff6d76cdc7f49931dd2f02e64e04b9b4f97"
+      },
+      {
+        "path": "checks/core/cases.json",
+        "sha256": "d1254e4a23afeb4bc9b7ad8a3989035233a9c712232352f3d86fec37fe8f0b5c",
+        "original_sha256": "f992f80144007b9bac483885280b8c90a062c7065f0e7331698c642688be8310"
+      },
+      {
+        "path": "checks/core/compile.log",
+        "sha256": "a74e3502c53859017cddad6823283237e5557d7bfe3fec23c94453153a7354b4",
+        "original_sha256": "a74e3502c53859017cddad6823283237e5557d7bfe3fec23c94453153a7354b4"
+      },
+      {
+        "path": "checks/core/run.log",
+        "sha256": "d9bdb5be0e1def0c62c5aaba89cb4e169a7036421d10a782cac29ac2916d7fee",
+        "original_sha256": "d9bdb5be0e1def0c62c5aaba89cb4e169a7036421d10a782cac29ac2916d7fee"
+      },
+      {
+        "path": "checks/producer/manifest.json",
+        "sha256": "4140c979e5a31af9ccb3b5e225a952ffb6ec5e768b7e6a8baa73f69ac8dbfc20",
+        "original_sha256": "4140c979e5a31af9ccb3b5e225a952ffb6ec5e768b7e6a8baa73f69ac8dbfc20"
+      },
+      {
+        "path": "checks/producer/compile.log",
+        "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b",
+        "original_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "path": "checks/table/manifest.json",
+        "sha256": "1209f4d26a31452173ba3c8a1dc7c48a92f0b930efcdde389706085199b739b0",
+        "original_sha256": "1209f4d26a31452173ba3c8a1dc7c48a92f0b930efcdde389706085199b739b0"
+      },
+      {
+        "path": "checks/table/compile.log",
+        "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b",
+        "original_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "path": "checks/store/manifest.json",
+        "sha256": "909bcd50bc94c59a1502ca394c4cb14549dea2e5b1f244af5ac617028fa22e21",
+        "original_sha256": "4af9afbfe40b7be60ce5822a0d639bf5e97f834b67152bc0b3d72a6ff4ca6f45"
+      },
+      {
+        "path": "checks/store/cases.json",
+        "sha256": "3aad6f15e23d15137e4d10d9019f7a9c414dd0811b0b88c99add394ca3eddf75",
+        "original_sha256": "791a02da07ae1d5e5a1016abc498edb52165d0c8fff8a771f8745f3c248ffaa5"
+      },
+      {
+        "path": "checks/store/compile.log",
+        "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b",
+        "original_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "path": "checks/store/run.log",
+        "sha256": "481d4a529a7328930da8c6891261d5c415bce5f867d46e25708775ace59786dc",
+        "original_sha256": "481d4a529a7328930da8c6891261d5c415bce5f867d46e25708775ace59786dc"
+      },
+      {
+        "path": "baseline_gates_manifest.json",
+        "sha256": "0584e0e3efa4d3ed934dcdac03340fbc9cfa51f2b64d31d5897a268df0d06e9d",
+        "original_sha256": "0584e0e3efa4d3ed934dcdac03340fbc9cfa51f2b64d31d5897a268df0d06e9d"
+      },
+      {
+        "path": "baseline_compile_manifest.json",
+        "sha256": "c1a2e87cc65ca5d31183368644b5b2e910fdf6307a1a22d91cc104ea7cdf4cab",
+        "original_sha256": "a6ff1d81da65b1a44a687c194d216640fc49d5e9fa1e390c2ef051d5286d5fca"
+      }
+    ]
+  },
+  "environment": {
+    "python": "3.12.14",
+    "mono_mcs": "6.8.0.105",
+    "shapely": "2.1.2",
+    "openpyxl": "3.1.5",
+    "ezdxf": "1.4.4",
+    "AutoCAD.NET": "24.0.0",
+    "Microsoft.NETFramework.ReferenceAssemblies.net48": "1.0.3",
+    "Microsoft.Net.Compilers.Toolset": "4.8.0"
+  },
+  "core_performance": {
+    "scope": "150000 synthetic DTO elements in 8 predefined sizes; pure core, not AutoCAD/DWG performance. Timings are observations of this environment, not limits.",
+    "reports": [
+      {
+        "path": "checks/core/perf_150k_compact_aggregated.json",
+        "sha256": "26b69c7ece565c0c3ec96abab83fe3c5f4d5e8fe5d5a5279ac1368f1598b53d3"
+      },
+      {
+        "path": "checks/core/perf_150k_rings_aggregated.json",
+        "sha256": "6b64e90792f140418f08e1cac5ea002c3cbe249e835a4c44adfce75023a745a8"
+      }
+    ],
+    "core_source_sha256": "5b9be37459fa38b4cadc730852dcb97c52ab67ff90877f8fb240d968f10442b6",
+    "harness": {
+      "path": "checks/core/CorePerformanceProbe.cs",
+      "sha256": "1ce043a847b132d0f0d24dc29a92315125b6a63f2b1dd7df33dc3e3d172ff04c"
+    }
+  }
+}

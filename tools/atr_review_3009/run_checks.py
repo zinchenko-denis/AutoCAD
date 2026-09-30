@@ -54,6 +54,14 @@ def main():
                           '--out', str(out / 'mass_review.json')]),
         ('static_model_gap', '.', ['tools/static_review_3009/reproduce_model_gap.py',
                                  '--out', str(out / 'static_model_gap.json')]),
+        ('quantities_core', '.', ['tools/quantities_3009/test_quantities_core.py',
+                                 '--out', str(out / 'quantities_core')]),
+        ('quantities_producer', '.', ['tools/quantities_3009/test_cladding_producer.py',
+                                     '--out', str(out / 'quantities_producer')]),
+        ('quantities_table', '.', ['tools/quantities_3009/test_cladding_table.py',
+                                  '--out', str(out / 'quantities_table')]),
+        ('quantities_store', '.', ['tools/quantities_3009/test_quantity_store.py',
+                                  '--out', str(out / 'quantities_store')]),
     ])
     results = []
     for name, cwd, arguments in jobs:

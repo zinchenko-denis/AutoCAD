@@ -138,6 +138,25 @@ jobs:
           python tools/fixes_3009/test_zone_geometry_adapter.py --exe build_geometry_adapter/ZoneGeometryAdapterCheck.exe --out geometry_adapter_results
           exit $LASTEXITCODE
 
+      - name: Cladding quantities (native core, real producers, XLSX, CAD API doubles)
+        shell: pwsh
+        env:
+          PYTHONUTF8: "1"
+          PYTHONIOENCODING: "utf-8"
+        run: |
+          pip install shapely openpyxl
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          python tools/quantities_3009/test_quantities_core.py --out quantity_core_results
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          python tools/quantities_3009/test_cladding_producer.py --out quantity_producer_results
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          python tools/quantities_3009/test_cladding_table.py --out quantity_table_results
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          dotnet build tools/quantities_3009/QuantityStoreCheck.csproj -c Release -o build_quantity_store
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          python tools/quantities_3009/test_quantity_store.py --exe build_quantity_store/QuantityStoreCheck.exe --out quantity_store_results
+          exit $LASTEXITCODE
+
       # 24.09 (рецензия): краш-аудиты, стыки модулей, контракт ключей и
       # короткая синтетика фасадов — обязательны. Известные открытые вопросы
       # X6 — ATSPEC, модуль Алексея — остаётся явным исключением.
