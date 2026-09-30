@@ -1,0 +1,18 @@
+{
+  "docx_sha256": "8133cfa741b50391a17d63e270204e7b7fce7f6c611228fec3b2371f0b8e472c",
+  "pages": 8,
+  "visual_review": "PASS",
+  "reviewer": "runtime_setup",
+  "method": "Every final page individually inspected; tables, typography, margins and pagination checked. Root also inspected earlier delivery pages 1 and 7.",
+  "page_sha256": {
+    "page-1.png": "183b320749c20111f165f0cc597ad78afa2c1c1a12e77f0460dec64c1879c8c2",
+    "page-2.png": "5782772e07695b929fed914589930f214a6778017918e4a8e8e89e9366cde9ee",
+    "page-3.png": "a588ffd289acaf1ee4d22678fd4283aa72b169f1bb5fca395e04ffe94c4c741c",
+    "page-4.png": "e211311a30c4a25dfb2a5f152ad35ab9775ee7217d976bc313fe38345d8d0dbe",
+    "page-5.png": "0cf7486c9d466088ab654de86f39d7ca4f91ceb7048ce7d18b25cfd2abc5d474",
+    "page-6.png": "2e0a1152b12a02334374726a32e18b7f49db5806b91cf6f6554ab208093b94c4",
+    "page-7.png": "d1145020aa97f94eafe24a1a90b9475e56d76847b132a9b5266d4552d3a39cb2",
+    "page-8.png": "f81c599e9c6c80957d3e6fcbacdce1e88d968732a1dc0c4a372e4a75dd7c2eb5"
+  },
+  "live_autocad": false
+}

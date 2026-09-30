@@ -1,8 +1,8 @@
 {
-  "product_commit": "2f838e871f2b81bd5a92d8c3084056574ffdb82d",
+  "product_commit": "19e3dd0b2a415f8758c1075668cef4d0f0c64bc7",
   "illustration_product_commit": "8360c238f342d82c1dd83c63789729506c34df18",
   "illustration_source_manifest": "assets/source_manifest.json",
-  "illustration_engine_hashes_match_current": true,
+  "illustration_engine_hashes_match_current": false,
   "illustration_source_manifest_changed_files": [
     "AClad/src/ACladPlugin/CladCommand.cs",
     "AClad/src/ACladPlugin/LayoutSafety.cs",
@@ -11,12 +11,15 @@
     "Facades/src/AFacadesPlugin/TableCommand.cs",
     "Facades/src/AFacadesPlugin/ZoneCommand.cs"
   ],
-  "current_product_source_manifest": "../fixes_3009/geometry_verification_manifest.json",
-  "docx_sha256": "3636d861b2b86ab825fee63c5a83bd010a1197466bb5887098b73a27f69cbb50",
+  "current_product_source_manifest": "../atr_review_3009/verification_manifest.json",
+  "docx_sha256": "117a21c552f1045cc157d1372a810400dbb5565800d178c727ac9a5f0005fbe8",
   "pages": 34,
   "chapters": 20,
   "figures": 10,
   "dxf_files": 4,
   "live_autocad_checked": false,
-  "release_published": false
+  "release_published": false,
+  "illustration_replay_manifest": "../atr_review_3009/logs/manual_examples.json",
+  "illustration_geometry_matches_current": true,
+  "provenance_note": "Illustrations generated at 8360c23; current engines changed. Five saved requests replayed with identical geometry and quantities; new frame scope/notes intentionally differ."
 }

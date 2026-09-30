@@ -1,0 +1,15 @@
+{
+  "document": "AutoCAD_ATR_Audit_30.09.docx",
+  "facts_supplied": true,
+  "facts_sha256": "30c31aa38707ae6d6001c8a4504a8d99a6d0f1c51e00978cd8aaa037a16fbfa0",
+  "source_sha256": {
+    "docs/atr_review_3009/Vector1.md": "8c7e9b970798c0e2c4270119d44ef30f8de7c1c9e527134839370a90fca5db72",
+    "docs/atr_review_3009/Vector5.md": "d810d1b0e4107102eb4a47a0c4c99a09e5cb2509098820d5f5c9dcc873a71c25",
+    "docs/atr_review_3009/NordFOX.md": "21b6aeab24d56f6667abdd764de8853f8ac87880709ae0763f48889d6da54f3f",
+    "docs/atr_review_3009/Project_vs_rules.md": "00d3936458f8a5c8ea6e4b46b1d2a35e07523f33425e692a6451312b2858b539",
+    "docs/atr_review_3009/Rule_sources.md": "9d38d9834cbb133a13d23c6f1a97fe4aeb0c1b06dad891d58d5ffce9627f5ed7",
+    "docs/atr_review_3009/Architecture.md": "16724c13299c0d6a53deb8dd7da244cd03aa38dc0071601656543310fb50894f"
+  },
+  "generator_sha256": "92de44272f899866cf88e66603f5d9d553ce4a474afd9ac25fdcdfbcb831ffff",
+  "verification_claims": "supplied facts only; missing groups remain pending"
+}
