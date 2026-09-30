@@ -1,0 +1,41 @@
+[
+  {
+    "count": 10000,
+    "rings": false,
+    "generated_s": 0.1948993,
+    "core_s": 0.0999438,
+    "serialize_s": 0.5136265,
+    "ok": true,
+    "rows": 8,
+    "issues": 1,
+    "json_bytes": 6230563,
+    "managed_bytes": 15055424,
+    "peak_working_set": 0
+  },
+  {
+    "count": 50000,
+    "rings": false,
+    "generated_s": 0.9944031999999999,
+    "core_s": 0.5338545,
+    "serialize_s": 2.2950836,
+    "ok": true,
+    "rows": 8,
+    "issues": 1,
+    "json_bytes": 31195563,
+    "managed_bytes": 58762776,
+    "peak_working_set": 0
+  },
+  {
+    "count": 150000,
+    "rings": false,
+    "generated_s": 2.7069741,
+    "core_s": 1.6230007,
+    "serialize_s": 6.554430399999999,
+    "ok": true,
+    "rows": 8,
+    "issues": 1,
+    "json_bytes": 93754872,
+    "managed_bytes": 169885416,
+    "peak_working_set": 0
+  }
+]

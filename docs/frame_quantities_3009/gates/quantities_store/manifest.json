@@ -1,0 +1,283 @@
+{
+  "status": "PASS",
+  "scope": "Run the actual quantity store and geometry guards against explicit CAD doubles.\n\nFixtures are produced by the actual zone engine using the existing adapter\nfixture builder. This is a persistence/freshness contract check, not AutoCAD\nruntime, transaction rollback, COPY, Undo, Save or reopen verification.\n",
+  "source_sha256": {
+    "Common/GeometryFingerprint.cs": "24114ef7a18a56415313b009d7819c94190efa5ea517df2081d1f51951819332",
+    "Common/ZoneGeometryGuard.cs": "daf06e2822a4d9ef2be818df1bf904779fa202adb1e5bce7fc0ba49c084970b8",
+    "Common/LayoutGeometryGuard.cs": "b582662e3557d023b8a318cf3fc59175616b0ac4f8bdbba0eccf4c2c960338da",
+    "Common/FacadeQuantities.cs": "3b63d40603e95b7215bc946af16b9b694142b89e648cd6520bc481bc2b984c19",
+    "Common/FacadeQuantityStore.cs": "88cf7723fdf913a28a161a0de4c1a4fe5d3b2259c2e580c450129eb6c953b293",
+    "Common/FacadeQuantityStore.Frame.cs": "e7abeee9029ebdb074bdd0fe5de08d7ebe9fa3a7b2378c6289a2a222c83ce3e5",
+    "tools/quantities_3009/QuantityStoreCheck.cs": "364d04b761b5ef625638c18e6062884e5b06884d94e7bf1465d84ad71b3f4c11",
+    "tools/quantities_3009/QuantityCadDoubles.cs": "c99fc91fd51834c9129aeee613f365a302ad96f33ebd26a69a6d6a9e2d009770",
+    "tools/quantities_3009/test_quantity_store.py": "aeae90530ac529cd62183fe4600e91a8b8d3d673751c7021fbe9d682e4774249",
+    "tools/fixes_3009/test_zone_geometry_adapter.py": "95bc79a705323e1ca7a33e0ada636d6c3b52ff9261bb65dbc4c66ab66b304630",
+    "tools/quantities_3009/fixtures/cladding_v1_6222041_xrecords.json": "3fd4952bdcc9a98b89ab86f2cbda055ef57cd81d91668d76188286131be342dd",
+    "Facades/engine/facade_zones.py": "a6d93dfc7b9e399be3dab4bb2a624c714b12fe79236503fe54c105122bfeea01",
+    "Facades/engine/facades_engine.py": "f0046539d586d75f0d3042b83b7e155f06762f84869721544cd6542fa27ad306"
+  },
+  "fixtures_sha256": "37eccaee9e5fb37e05ce0bf0dc7347a6675fe86387b9eb997acee9d08e5ca30e",
+  "compile_returncode": 0,
+  "run_returncode": 0,
+  "result": {
+    "scope": "Actual production quantity store and actual geometry guards with CAD doubles. No AutoCAD runtime claimed.",
+    "total": 63,
+    "passed": 63,
+    "failed": 0,
+    "cases": [
+      {
+        "name": "attile_quantity_roundtrip_hatch_and_mark",
+        "status": "PASS"
+      },
+      {
+        "name": "atclad_quantity_roundtrip_hatch_and_mark",
+        "status": "PASS"
+      },
+      {
+        "name": "merged_zone_all_parts_current",
+        "status": "PASS"
+      },
+      {
+        "name": "carrier_selection_deduplicated",
+        "status": "PASS"
+      },
+      {
+        "name": "deleted_physical_piece_refused",
+        "status": "PASS"
+      },
+      {
+        "name": "moved_physical_piece_refused",
+        "status": "PASS"
+      },
+      {
+        "name": "changed_same_area_piece_refused",
+        "status": "PASS"
+      },
+      {
+        "name": "moved_source_window_same_area_refused",
+        "status": "PASS"
+      },
+      {
+        "name": "deleted_source_refused",
+        "status": "PASS"
+      },
+      {
+        "name": "copied_carrier_metadata_retaining_old_pointers_refused",
+        "status": "PASS"
+      },
+      {
+        "name": "layout_label_tamper_refused",
+        "status": "PASS"
+      },
+      {
+        "name": "previous_layout_generation_refused",
+        "status": "PASS"
+      },
+      {
+        "name": "old_layout_without_quantity_passport_refused",
+        "status": "PASS"
+      },
+      {
+        "name": "old_zone_without_geometry_passport_refused",
+        "status": "PASS"
+      },
+      {
+        "name": "missing_canonical_hatch_refused",
+        "status": "PASS"
+      },
+      {
+        "name": "piece_selection_returns_explicit_whole_zone_scope",
+        "status": "PASS"
+      },
+      {
+        "name": "selected_manual_object_explicitly_excluded",
+        "status": "PASS"
+      },
+      {
+        "name": "old_frame_metadata_not_counted_as_cladding",
+        "status": "PASS"
+      },
+      {
+        "name": "table_with_copied_metadata_never_candidate",
+        "status": "PASS"
+      },
+      {
+        "name": "unselected_copied_piece_detected_by_modelspace_scan",
+        "status": "PASS"
+      },
+      {
+        "name": "piece_stamp_tamper_refused",
+        "status": "PASS"
+      },
+      {
+        "name": "multiple_graphics_one_physical_element",
+        "status": "PASS"
+      },
+      {
+        "name": "deleted_auxiliary_hatch_refused",
+        "status": "PASS"
+      },
+      {
+        "name": "layer_color_change_refused",
+        "status": "PASS"
+      },
+      {
+        "name": "piece_changed_between_capture_and_store_refused",
+        "status": "PASS"
+      },
+      {
+        "name": "unsupported_sample_entity_capture_refused",
+        "status": "PASS"
+      },
+      {
+        "name": "static_block_roundtrip_and_definition_change",
+        "status": "PASS"
+      },
+      {
+        "name": "block_attribute_change_refused",
+        "status": "PASS"
+      },
+      {
+        "name": "block_scale_change_refused",
+        "status": "PASS"
+      },
+      {
+        "name": "block_dynamic_property_change_refused",
+        "status": "PASS"
+      },
+      {
+        "name": "whole_merged_group_deduplicates_shared_piece",
+        "status": "PASS"
+      },
+      {
+        "name": "partial_merged_group_selection_refused_without_stale_rows",
+        "status": "PASS"
+      },
+      {
+        "name": "unselected_merged_group_source_change_refused",
+        "status": "PASS"
+      },
+      {
+        "name": "partial_independent_zone_quantities_allowed_joint_cutting_refused",
+        "status": "PASS"
+      },
+      {
+        "name": "raw_contour_layout_roundtrip_and_same_area_move_refused",
+        "status": "PASS"
+      },
+      {
+        "name": "foreign_database_selection_refused",
+        "status": "PASS"
+      },
+      {
+        "name": "explicit_known_empty_run_stored_and_read_as_zero",
+        "status": "PASS"
+      },
+      {
+        "name": "selected_known_empty_zone_of_mixed_run_is_zero",
+        "status": "PASS"
+      },
+      {
+        "name": "null_element_list_is_missing_data_not_known_zero",
+        "status": "PASS"
+      },
+      {
+        "name": "payload_boundary_exactly_256_mib_accepted_without_allocation",
+        "status": "PASS"
+      },
+      {
+        "name": "payload_boundary_one_byte_over_256_mib_refused_without_allocation",
+        "status": "PASS"
+      },
+      {
+        "name": "malformed_selected_piece_stamp_has_actionable_russian_refusal",
+        "status": "PASS"
+      },
+      {
+        "name": "malformed_unselected_stamp_scan_refuses_unknown_run_with_russian_reason",
+        "status": "PASS"
+      },
+      {
+        "name": "frame_and_cladding_passports_coexist_without_axis_stamp_overwrite",
+        "status": "PASS"
+      },
+      {
+        "name": "frame_read_reuses_ready_rows_and_stable_selection_fingerprint",
+        "status": "PASS"
+      },
+      {
+        "name": "frame_deleted_element_refused_cladding_still_current",
+        "status": "PASS"
+      },
+      {
+        "name": "frame_changed_length_refused_after_prior_successful_read",
+        "status": "PASS"
+      },
+      {
+        "name": "frame_copied_element_detected_without_affecting_cladding",
+        "status": "PASS"
+      },
+      {
+        "name": "frame_same_area_source_window_move_refused_after_read",
+        "status": "PASS"
+      },
+      {
+        "name": "frame_hatch_style_mutation_refused",
+        "status": "PASS"
+      },
+      {
+        "name": "frame_hatch_associativity_mutation_refused",
+        "status": "PASS"
+      },
+      {
+        "name": "frame_hatch_associated_source_pointer_mutation_refused",
+        "status": "PASS"
+      },
+      {
+        "name": "frame_cladding_axes_metadata_change_refused",
+        "status": "PASS"
+      },
+      {
+        "name": "frame_source_changed_between_capture_and_store_refused",
+        "status": "PASS"
+      },
+      {
+        "name": "frame_incomplete_legacy_clamps_marker_blocks_frame_only",
+        "status": "PASS"
+      },
+      {
+        "name": "frame_owner_label_tamper_refused",
+        "status": "PASS"
+      },
+      {
+        "name": "frame_copied_owner_stamp_refused",
+        "status": "PASS"
+      },
+      {
+        "name": "frame_known_zero_result_preserved",
+        "status": "PASS"
+      },
+      {
+        "name": "frame_source_capture_rejects_legacy_zone_without_geometry",
+        "status": "PASS"
+      },
+      {
+        "name": "all_piece_selection_matches_owner_scope_counts_and_fingerprint",
+        "status": "PASS"
+      },
+      {
+        "name": "conflicting_selected_piece_digest_refused",
+        "status": "PASS"
+      },
+      {
+        "name": "frame_retained_rail_plus_new_clamp_is_one_complete_generation",
+        "status": "PASS"
+      },
+      {
+        "name": "actual_published_schema1_xrecords_remain_readable",
+        "status": "PASS"
+      }
+    ]
+  },
+  "sources_unchanged_during_run": true
+}

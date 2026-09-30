@@ -51,7 +51,8 @@ internal static class QuantityStoreCheck
         }
     }
 
-    private sealed class Fixture
+    // Shared only with the operation-count benchmark in the test assembly.
+    internal sealed class Fixture
     {
         public readonly Database Db;
         public readonly Transaction Tr;
@@ -227,6 +228,16 @@ internal static class QuantityStoreCheck
             throw;
         }
     }
+    private static Polyline AddCladdingPiece(QuantityFixture f,string id,double shift)
+    {
+        var item=Json.Deserialize<QuantityElement>(Json.Serialize(f.Report.elements[0]));
+        item.element_id=id;
+        foreach(var ring in item.rings) foreach(var point in ring.points) point[0]+=shift;
+        var piece=f.Zone.Db.Add(new Polyline());
+        foreach(var point in item.rings[0].points) piece.AddVertexAt(piece.NumberOfVertices,new Point2d(point[0],point[1]),0,0,0);
+        item.cad_entities=new List<QuantityCadEntity>{FacadeQuantityStore.CaptureEntity(f.Zone.Tr,piece,"outer")};
+        f.Report.elements.Add(item);return piece;
+    }
     private sealed class BlockFixture
     {
         public readonly QuantityFixture F = new QuantityFixture("single","ATCLAD",false);
@@ -246,6 +257,50 @@ internal static class QuantityStoreCheck
             F.Report.elements[0].cad_entities.Clear();
             F.Report.elements[0].cad_entities.Add(FacadeQuantityStore.CaptureEntity(F.Zone.Tr,Block,"block"));
             F.Store();
+        }
+    }
+    private sealed class FrameFixture
+    {
+        public readonly QuantityFixture Cladding = new QuantityFixture();
+        public readonly Line Rail;
+        public readonly QuantityReport Report;
+        public readonly FacadeQuantityStore.FrameSources Sources;
+        public readonly string CladdingCurrent;
+        public FrameFixture(bool persist = true)
+        {
+            var z=Cladding.Zone;
+            CladdingCurrent=String.Concat(Record(z.Tr,z.Hatch,"ATLAYOUT_CURRENT").Data
+                .Where(v=>v.TypeCode==(int)DxfCode.Text).Select(v=>(string)v.Value));
+            Sources=FacadeQuantityStore.CaptureFrameSources(z.Tr,z.Db,new[] {z.Hatch.ObjectId,z.Mark.ObjectId,z.Hatch.ObjectId});
+            Rail=z.Db.Add(new Line {StartPoint=new Point3d(300,0,0),EndPoint=new Point3d(300,1000,0)});
+            Report=new QuantityReport { report_id="frame-report-1",run_id="frame-run-1",kind="frame",
+                scope="whole_layout_run",algorithm="synthetic-frame-store-check",completeness="partial",
+                engineering_coverage="geometry_only",zone_ids=new List<string>{"F-1"},
+                elements=new List<QuantityElement>{new QuantityElement {
+                    element_id="frame-rail-1",zone_id="F-1",zone_ids=new List<string>{"F-1"},role="rail",
+                    product_id=null,mark=null,type="synthetic rail",material=null,coating=null,system="synthetic-test-system",
+                    length_mm=1000,origin="test",cad_entities=new List<QuantityCadEntity>{FacadeQuantityStore.CaptureEntity(z.Tr,Rail,"rail")}
+                }}
+            };
+            foreach(var owner in new Entity[]{z.Hatch,z.Mark}) {
+                WriteRecord(z.Tr,owner,"ATFRAME",Json.Serialize(new Dictionary<string,object> {
+                    {"owner",owner.Handle.ToString()},{"mode","manual"},{"rail_count",1}
+                }));
+                Report.source_revisions["owner_zone:"+owner.Handle]="F-1";
+            }
+            if(persist) Store();
+        }
+        public void Store() { var z=Cladding.Zone; FacadeQuantityStore.StoreFrame(z.Tr,z.Db,new Entity[]{z.Hatch,z.Mark},Report,Sources); }
+        public QuantitySelection Read(params Entity[] entities) {
+            var z=Cladding.Zone;
+            return FacadeQuantityStore.ReadFrame(z.Tr,z.Db,(entities.Length==0 ? new Entity[]{z.Hatch} : entities).Select(e=>e.ObjectId));
+        }
+        public void Fresh() {
+            var read=Read();Accepted(read,1);
+            Require(read.Reports[0].kind=="frame" && read.Reports[0].elements.Count==1,"frame report changed physical count");
+            Require(read.Rows!=null && read.Rows.ok && read.Rows.rows.Sum(r=>r.quantity)==1,"validated frame rows not returned");
+            Require(!String.IsNullOrWhiteSpace(read.Fingerprint),"frame selection fingerprint missing");
+            Cladding.Fresh();
         }
     }
     private static Fixture AddMergedGroup(QuantityFixture f, bool sharedPiece = true, bool emptySecondZone = false)
@@ -503,6 +558,127 @@ internal static class QuantityStoreCheck
             var read = f.Read(f.Zone.Hatch); Rejected(read);
             Require(read.Reason.StartsWith("Повреждён паспорт объекта облицовки. Восстановите",StringComparison.Ordinal),
                 "unknown-run corrupted stamp was ignored or exposed a serializer diagnostic");
+        });
+        Test("frame_and_cladding_passports_coexist_without_axis_stamp_overwrite", () => {
+            var f=new FrameFixture();f.Fresh();var z=f.Cladding.Zone;
+            string current=String.Concat(Record(z.Tr,z.Hatch,"ATLAYOUT_CURRENT").Data
+                .Where(v=>v.TypeCode==(int)DxfCode.Text).Select(v=>(string)v.Value));
+            Require(current==f.CladdingCurrent,"frame storage overwrote current cladding layout");
+            Require(f.Sources.sources.Select(s=>s.handle).Distinct().Count()==f.Sources.sources.Count,"frame source graph contains duplicate objects");
+            Require(!f.Sources.sources.Any(s=>s.handle==f.Cladding.Piece.Handle.ToString()),"frame source guard traversed cladding rendering entities");
+        });
+        Test("frame_read_reuses_ready_rows_and_stable_selection_fingerprint", () => {
+            var f=new FrameFixture();var a=f.Read(f.Cladding.Zone.Hatch);var b=f.Read(f.Cladding.Zone.Hatch,f.Cladding.Zone.Mark);
+            Accepted(a,1);Accepted(b,1);Require(a.Fingerprint==b.Fingerprint,"redundant carrier changes selection fingerprint");
+            Require(a.Rows!=null && a.Rows.ok,"frame caller would need to reaggregate missing rows");
+        });
+        Test("frame_deleted_element_refused_cladding_still_current", () => {
+            var f=new FrameFixture();f.Rail.Erase();Rejected(f.Read());f.Cladding.Fresh();
+        });
+        Test("frame_changed_length_refused_after_prior_successful_read", () => {
+            var f=new FrameFixture();f.Fresh();f.Rail.EndPoint=new Point3d(300,1200,0);Rejected(f.Read());
+        });
+        Test("frame_copied_element_detected_without_affecting_cladding", () => {
+            var f=new FrameFixture();f.Fresh();var z=f.Cladding.Zone;
+            var copy=z.Db.Add(new Line {StartPoint=f.Rail.StartPoint,EndPoint=f.Rail.EndPoint});
+            CopyRecords(z.Tr,f.Rail,copy);Rejected(f.Read());f.Cladding.Fresh();
+        });
+        Test("frame_same_area_source_window_move_refused_after_read", () => {
+            var f=new FrameFixture();f.Fresh();Shift(f.Cladding.Zone.Holes[0],100,0);
+            f.Cladding.Zone.RefreshHatchFromSources();Rejected(f.Read());
+        });
+        Test("frame_hatch_style_mutation_refused", () => {
+            var f=new FrameFixture();f.Cladding.Zone.Hatch.HatchStyle=HatchStyle.Ignore;Rejected(f.Read());
+        });
+        Test("frame_hatch_associativity_mutation_refused", () => {
+            var f=new FrameFixture();f.Cladding.Zone.Hatch.Associative=false;Rejected(f.Read());
+        });
+        Test("frame_hatch_associated_source_pointer_mutation_refused", () => {
+            var f=new FrameFixture();var z=f.Cladding.Zone;
+            z.Hatch.AssociatedIds[0]=new ObjectIdCollection(new[]{z.Holes[0].ObjectId});Rejected(f.Read());
+        });
+        Test("frame_cladding_axes_metadata_change_refused", () => {
+            var f=new FrameFixture();var z=f.Cladding.Zone;
+            WriteRecord(z.Tr,z.Hatch,"ATTILE","{\"joints_x\":[0,700,1400],\"rows_y\":[0,600,1200]}");Rejected(f.Read());
+        });
+        Test("frame_source_changed_between_capture_and_store_refused", () => {
+            var f=new FrameFixture(false);Shift(f.Cladding.Zone.Holes[0],50,0);Throws(f.Store);Rejected(f.Read());
+        });
+        Test("frame_incomplete_legacy_clamps_marker_blocks_frame_only", () => {
+            var f=new FrameFixture();var z=f.Cladding.Zone;
+            FacadeQuantityStore.MarkFrameUnavailable(z.Tr,z.Db,new Entity[]{z.Hatch,z.Mark},"Требуется полное построение ATFRAME для подтверждения состава.");
+            var read=f.Read();Rejected(read);Require(read.Reason.Contains("полное построение ATFRAME"),"unavailable-frame reason lost");
+            f.Cladding.Fresh();
+        });
+        Test("frame_owner_label_tamper_refused", () => {
+            var f=new FrameFixture();var z=f.Cladding.Zone;
+            WriteRecord(z.Tr,z.Hatch,"ATFRAME",Json.Serialize(new Dictionary<string,object>{{"owner",z.Hatch.Handle.ToString()},{"mode","manual"},{"rail_count",99}}));
+            Rejected(f.Read());
+        });
+        Test("frame_copied_owner_stamp_refused", () => {
+            var f=new FrameFixture();var z=f.Cladding.Zone;var copy=z.Db.Add(new MText());
+            CopyRecords(z.Tr,z.Mark,copy);Rejected(f.Read(copy));
+        });
+        Test("frame_known_zero_result_preserved", () => {
+            var f=new FrameFixture(false);f.Report.elements.Clear();f.Rail.Erase();f.Store();
+            var read=f.Read();Accepted(read,1);Require(read.Rows.ok && read.Rows.rows.Count==0,"known zero frame fabricated physical parts");
+        });
+        Test("frame_source_capture_rejects_legacy_zone_without_geometry", () => {
+            var f=new QuantityFixture();var z=f.Zone;
+            ((DBDictionary)z.Tr.GetObject(z.Hatch.ExtensionDictionary,OpenMode.ForWrite)).Remove(ZoneGeometryGuard.Key);
+            Throws(()=>FacadeQuantityStore.CaptureFrameSources(z.Tr,z.Db,new[]{z.Hatch.ObjectId}));
+        });
+        Test("all_piece_selection_matches_owner_scope_counts_and_fingerprint", () => {
+            var f=new QuantityFixture("single","ATTILE",false);
+            var second=AddCladdingPiece(f,"synthetic-piece-2",1000);var third=AddCladdingPiece(f,"synthetic-piece-3",2000);f.Store();
+            var owners=f.Read(f.Zone.Hatch,f.Zone.Mark);var pieces=f.Read(f.Piece,second,third,second);
+            Accepted(owners,1);Accepted(pieces,1);
+            Require(pieces.Rows!=null && pieces.Rows.ok && pieces.Rows.rows.Sum(r=>r.quantity)==3,"selection of every piece changes physical quantity");
+            Require(pieces.Fingerprint==owners.Fingerprint,"same complete scope has different owner/piece selection fingerprints");
+        });
+        Test("conflicting_selected_piece_digest_refused", () => {
+            var f=new QuantityFixture("single","ATTILE",false);var second=AddCladdingPiece(f,"synthetic-piece-2",1000);f.Store();
+            var record=Record(f.Zone.Tr,second,FacadeQuantityStore.ElementKey);
+            var stamp=Json.Deserialize<FacadeQuantityStore.Stamp>(String.Concat(record.Data.Where(v=>v.TypeCode==(int)DxfCode.Text).Select(v=>(string)v.Value)));
+            stamp.entry_digest=new String('0',64);WriteRecord(f.Zone.Tr,second,FacadeQuantityStore.ElementKey,Json.Serialize(stamp));
+            Rejected(f.Read(f.Piece,second));
+        });
+        Test("frame_retained_rail_plus_new_clamp_is_one_complete_generation", () => {
+            var f=new FrameFixture();var z=f.Cladding.Zone;
+            var sources=FacadeQuantityStore.CaptureFrameSources(z.Tr,z.Db,new[]{z.Hatch.ObjectId,z.Mark.ObjectId,f.Rail.ObjectId});
+            var next=Json.Deserialize<QuantityReport>(Json.Serialize(f.Report));next.report_id="frame-report-2";next.run_id="frame-run-2";
+            var clamp=z.Db.Add(new Circle {Center=new Point3d(300,500,0),Radius=5});
+            next.elements.Add(new QuantityElement {element_id="frame-clamp-2",zone_id="F-1",zone_ids=new List<string>{"F-1"},
+                role="clamp",type="synthetic clamp",system="synthetic-test-system",origin="test",
+                cad_entities=new List<QuantityCadEntity>{FacadeQuantityStore.CaptureEntity(z.Tr,clamp,"clamp")}});
+            foreach(var owner in new Entity[]{z.Hatch,z.Mark})
+                WriteRecord(z.Tr,owner,"ATFRAME",Json.Serialize(new Dictionary<string,object>{{"owner",owner.Handle.ToString()},{"mode","retained_rails_plus_new_clamps"}}));
+            FacadeQuantityStore.StoreFrame(z.Tr,z.Db,new Entity[]{z.Hatch,z.Mark},next,sources);
+            var read=f.Read();Accepted(read,1);
+            Require(read.Reports[0].run_id==next.run_id && read.Reports[0].elements.Count==2,"complete retained/new generation lost or duplicated elements");
+            Require(read.Rows.ok && read.Rows.rows.Sum(r=>r.quantity)==2 && read.Reports[0].estimates.Count==0,
+                "retained rail, new clamp or absent new anchor estimate counted incorrectly");
+            f.Cladding.Fresh();
+        });
+        Test("actual_published_schema1_xrecords_remain_readable", () => {
+            var f=new QuantityFixture();var z=f.Zone;var saved=Items(Fixtures["legacy_xrecords"]);
+            var objects=(Dictionary<long,DBObject>)typeof(Database).GetField("objects",
+                System.Reflection.BindingFlags.Instance|System.Reflection.BindingFlags.NonPublic).GetValue(z.Db);
+            Require(saved.Length==14 && objects.Values.OfType<Xrecord>().Count()==14,"old/current synthetic fixture object topology differs");
+            foreach(var raw in saved) {
+                var record=Dict(raw);var id=z.Db.GetObjectId(false,new Handle(Convert.ToInt64((string)record["handle"],16)),0);
+                var xr=z.Tr.GetObject(id,OpenMode.ForWrite) as Xrecord;Require(xr!=null,"old record destination is not an Xrecord");
+                xr.Data=new ResultBuffer(Items(record["values"]).Select(v=> {
+                    var value=Dict(v);int code=Convert.ToInt32(value["code"]);string text=(string)value["value"];
+                    return new TypedValue(code,code==(int)DxfCode.SoftPointerId ?
+                        (object)z.Db.GetObjectId(false,new Handle(Convert.ToInt64(text,16)),0) : (object)text);
+                }).ToArray());
+            }
+            // These are the old writer's complete bytes and digests, not a new
+            // report with its schema changed or a digest recomputed by this test.
+            var read=f.Read(z.Hatch,z.Mark);Accepted(read,1);
+            Require(read.Rows.ok && read.Rows.rows.Sum(r=>r.quantity)==1 &&
+                Math.Abs(read.Rows.rows.Sum(r=>r.area_m2??0)-0.36)<1e-9,"published v1 quantity result changed");
         });
         int passed = Results.Count(r => (string)r["status"] == "PASS");
         File.WriteAllText(args[3],Json.Serialize(new Dictionary<string,object> {

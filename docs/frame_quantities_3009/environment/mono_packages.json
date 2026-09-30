@@ -1,0 +1,302 @@
+[
+  {
+    "package": "libmono-accessibility4.0-cil",
+    "version": "6.8.0.105+dfsg-3.6ubuntu2",
+    "sha256": "a30804e172b96d54862c5cbc2f2ac2e77291fed6dc1ed926fe48d7573c01d319",
+    "url": "https://archive.ubuntu.com/ubuntu/pool/universe/m/mono/libmono-accessibility4.0-cil_6.8.0.105+dfsg-3.6ubuntu2_all.deb"
+  },
+  {
+    "package": "libmono-corlib4.5-cil",
+    "version": "6.8.0.105+dfsg-3.6ubuntu2",
+    "sha256": "08df32be89c105f20361fb8fe5ce9733f79d9fb4c40e5299ea347b48c78d0005",
+    "url": "https://archive.ubuntu.com/ubuntu/pool/universe/m/mono/libmono-corlib4.5-cil_6.8.0.105+dfsg-3.6ubuntu2_all.deb"
+  },
+  {
+    "package": "libmono-corlib4.5-dll",
+    "version": "6.8.0.105+dfsg-3.6ubuntu2",
+    "sha256": "55e9869a02429fd62be0a38f7e600b0cc042b92a8ce3ec5c7a55a729afc22d78",
+    "url": "https://archive.ubuntu.com/ubuntu/pool/universe/m/mono/libmono-corlib4.5-dll_6.8.0.105+dfsg-3.6ubuntu2_all.deb"
+  },
+  {
+    "package": "libmono-i18n-west4.0-cil",
+    "version": "6.8.0.105+dfsg-3.6ubuntu2",
+    "sha256": "09eb826ae0741712c00eac82fdd3de33a8a603fb67db3b4ac27c5a0fd9ecb3c6",
+    "url": "https://archive.ubuntu.com/ubuntu/pool/universe/m/mono/libmono-i18n-west4.0-cil_6.8.0.105+dfsg-3.6ubuntu2_all.deb"
+  },
+  {
+    "package": "libmono-i18n4.0-cil",
+    "version": "6.8.0.105+dfsg-3.6ubuntu2",
+    "sha256": "688d3c69d5fc9fb7abc495ad40150d947fba8059a44f389459c5ebb0d379c1c3",
+    "url": "https://archive.ubuntu.com/ubuntu/pool/universe/m/mono/libmono-i18n4.0-cil_6.8.0.105+dfsg-3.6ubuntu2_all.deb"
+  },
+  {
+    "package": "libmono-ldap4.0-cil",
+    "version": "6.8.0.105+dfsg-3.6ubuntu2",
+    "sha256": "6695ae4d68cca85d817b0e02ddbc0d800e3a4a180a3e8ebfa13b9b69d17fc693",
+    "url": "https://archive.ubuntu.com/ubuntu/pool/universe/m/mono/libmono-ldap4.0-cil_6.8.0.105+dfsg-3.6ubuntu2_all.deb"
+  },
+  {
+    "package": "libmono-messaging4.0-cil",
+    "version": "6.8.0.105+dfsg-3.6ubuntu2",
+    "sha256": "2922c58cb511a41440530fdb05fe7eeadc866232dafd13396c13ce6079ddeef9",
+    "url": "https://archive.ubuntu.com/ubuntu/pool/universe/m/mono/libmono-messaging4.0-cil_6.8.0.105+dfsg-3.6ubuntu2_all.deb"
+  },
+  {
+    "package": "libmono-microsoft-csharp4.0-cil",
+    "version": "6.8.0.105+dfsg-3.6ubuntu2",
+    "sha256": "ab77fdc7507ee37a975dbf609e55cd9edcf9137ca53467ca82390af095ac665b",
+    "url": "https://archive.ubuntu.com/ubuntu/pool/universe/m/mono/libmono-microsoft-csharp4.0-cil_6.8.0.105+dfsg-3.6ubuntu2_all.deb"
+  },
+  {
+    "package": "libmono-posix4.0-cil",
+    "version": "6.8.0.105+dfsg-3.6ubuntu2",
+    "sha256": "0f17fbe7a874b1a77ba3b0c4584f0b4ee5e6475c726e7ccee91e20b46a273437",
+    "url": "https://archive.ubuntu.com/ubuntu/pool/universe/m/mono/libmono-posix4.0-cil_6.8.0.105+dfsg-3.6ubuntu2_all.deb"
+  },
+  {
+    "package": "libmono-security4.0-cil",
+    "version": "6.8.0.105+dfsg-3.6ubuntu2",
+    "sha256": "f4427c632c2da0ad47ff4d827a9bdc7dbd38596da711bdf4727d911c56e6fca4",
+    "url": "https://archive.ubuntu.com/ubuntu/pool/universe/m/mono/libmono-security4.0-cil_6.8.0.105+dfsg-3.6ubuntu2_all.deb"
+  },
+  {
+    "package": "libmono-sqlite4.0-cil",
+    "version": "6.8.0.105+dfsg-3.6ubuntu2",
+    "sha256": "7d2c06f2d5451bef8f2c329cddfa80d71a7a7709c574327b73d7482fa9820d79",
+    "url": "https://archive.ubuntu.com/ubuntu/pool/universe/m/mono/libmono-sqlite4.0-cil_6.8.0.105+dfsg-3.6ubuntu2_all.deb"
+  },
+  {
+    "package": "libmono-system-componentmodel-dataannotations4.0-cil",
+    "version": "6.8.0.105+dfsg-3.6ubuntu2",
+    "sha256": "1a7ecf696da0ad038468133b7044aa7d00273b03f6ddcbeac85707812cd36123",
+    "url": "https://archive.ubuntu.com/ubuntu/pool/universe/m/mono/libmono-system-componentmodel-dataannotations4.0-cil_6.8.0.105+dfsg-3.6ubuntu2_all.deb"
+  },
+  {
+    "package": "libmono-system-configuration-install4.0-cil",
+    "version": "6.8.0.105+dfsg-3.6ubuntu2",
+    "sha256": "3feca5c121851708dc2bc0999c814a5e7cd0954cd524fc451334784e5ebe4177",
+    "url": "https://archive.ubuntu.com/ubuntu/pool/universe/m/mono/libmono-system-configuration-install4.0-cil_6.8.0.105+dfsg-3.6ubuntu2_all.deb"
+  },
+  {
+    "package": "libmono-system-configuration4.0-cil",
+    "version": "6.8.0.105+dfsg-3.6ubuntu2",
+    "sha256": "a1c61c61a185cd4fe0dc4987bf6300328e0f1862b06d0c4deec2767e4c88b311",
+    "url": "https://archive.ubuntu.com/ubuntu/pool/universe/m/mono/libmono-system-configuration4.0-cil_6.8.0.105+dfsg-3.6ubuntu2_all.deb"
+  },
+  {
+    "package": "libmono-system-core4.0-cil",
+    "version": "6.8.0.105+dfsg-3.6ubuntu2",
+    "sha256": "58f72b3081a834850447c22568a173120cd39f6c5048596ec262eb7ea8dff113",
+    "url": "https://archive.ubuntu.com/ubuntu/pool/universe/m/mono/libmono-system-core4.0-cil_6.8.0.105+dfsg-3.6ubuntu2_all.deb"
+  },
+  {
+    "package": "libmono-system-data-linq4.0-cil",
+    "version": "6.8.0.105+dfsg-3.6ubuntu2",
+    "sha256": "969d41770d4a62be0dc60f5d21a6723fb95b9a5eeb2fe095110700204c2e69ee",
+    "url": "https://archive.ubuntu.com/ubuntu/pool/universe/m/mono/libmono-system-data-linq4.0-cil_6.8.0.105+dfsg-3.6ubuntu2_all.deb"
+  },
+  {
+    "package": "libmono-system-data4.0-cil",
+    "version": "6.8.0.105+dfsg-3.6ubuntu2",
+    "sha256": "d3637f4a4ab44e97e5ff9a8b974e6b924b49405936e05743fcd16c2de2cc7091",
+    "url": "https://archive.ubuntu.com/ubuntu/pool/universe/m/mono/libmono-system-data4.0-cil_6.8.0.105+dfsg-3.6ubuntu2_all.deb"
+  },
+  {
+    "package": "libmono-system-design4.0-cil",
+    "version": "6.8.0.105+dfsg-3.6ubuntu2",
+    "sha256": "dfedb4accd62fa0b9787cfa5b1ad6383f0782a5a0f75e5171cf02be3db5c0b05",
+    "url": "https://archive.ubuntu.com/ubuntu/pool/universe/m/mono/libmono-system-design4.0-cil_6.8.0.105+dfsg-3.6ubuntu2_all.deb"
+  },
+  {
+    "package": "libmono-system-drawing4.0-cil",
+    "version": "6.8.0.105+dfsg-3.6ubuntu2",
+    "sha256": "10614c7b797551207b97f66c8bd2ebe77b1117939d2e801e0807e493e64e4a4c",
+    "url": "https://archive.ubuntu.com/ubuntu/pool/universe/m/mono/libmono-system-drawing4.0-cil_6.8.0.105+dfsg-3.6ubuntu2_all.deb"
+  },
+  {
+    "package": "libmono-system-enterpriseservices4.0-cil",
+    "version": "6.8.0.105+dfsg-3.6ubuntu2",
+    "sha256": "81fc9fb5ad4556826857773c59fa6596ff9c36b3e2e673cd8187ff42fefbfc69",
+    "url": "https://archive.ubuntu.com/ubuntu/pool/universe/m/mono/libmono-system-enterpriseservices4.0-cil_6.8.0.105+dfsg-3.6ubuntu2_all.deb"
+  },
+  {
+    "package": "libmono-system-identitymodel-selectors4.0-cil",
+    "version": "6.8.0.105+dfsg-3.6ubuntu2",
+    "sha256": "8ea73a315d90474ed38ea46358f1e3cb0f2d034a13a60c2db7d93338d113b08b",
+    "url": "https://archive.ubuntu.com/ubuntu/pool/universe/m/mono/libmono-system-identitymodel-selectors4.0-cil_6.8.0.105+dfsg-3.6ubuntu2_all.deb"
+  },
+  {
+    "package": "libmono-system-identitymodel4.0-cil",
+    "version": "6.8.0.105+dfsg-3.6ubuntu2",
+    "sha256": "919c955b0cdaabb85fc4ad5387a25bb652344f6566f04470ef09a58824359740",
+    "url": "https://archive.ubuntu.com/ubuntu/pool/universe/m/mono/libmono-system-identitymodel4.0-cil_6.8.0.105+dfsg-3.6ubuntu2_all.deb"
+  },
+  {
+    "package": "libmono-system-io-compression-filesystem4.0-cil",
+    "version": "6.8.0.105+dfsg-3.6ubuntu2",
+    "sha256": "98a5be45bbc93e49e5593573a291ec88c3bdab68d05b8bee55e37e8510a096f9",
+    "url": "https://archive.ubuntu.com/ubuntu/pool/universe/m/mono/libmono-system-io-compression-filesystem4.0-cil_6.8.0.105+dfsg-3.6ubuntu2_all.deb"
+  },
+  {
+    "package": "libmono-system-io-compression4.0-cil",
+    "version": "6.8.0.105+dfsg-3.6ubuntu2",
+    "sha256": "bd3d07504f5dcdd5df1dd4fc7dfbcbd2ad9d05d160468cdccbc7a7b83761c28b",
+    "url": "https://archive.ubuntu.com/ubuntu/pool/universe/m/mono/libmono-system-io-compression4.0-cil_6.8.0.105+dfsg-3.6ubuntu2_all.deb"
+  },
+  {
+    "package": "libmono-system-ldap4.0-cil",
+    "version": "6.8.0.105+dfsg-3.6ubuntu2",
+    "sha256": "f766749e38384854d3df48e409da49839642c520a2b2e2aab54758670a03c2b2",
+    "url": "https://archive.ubuntu.com/ubuntu/pool/universe/m/mono/libmono-system-ldap4.0-cil_6.8.0.105+dfsg-3.6ubuntu2_all.deb"
+  },
+  {
+    "package": "libmono-system-messaging4.0-cil",
+    "version": "6.8.0.105+dfsg-3.6ubuntu2",
+    "sha256": "3ee7f81edeb9abfd26fe2f75ba43e6209fcb13fc9b59856c4c488d099a81c0fa",
+    "url": "https://archive.ubuntu.com/ubuntu/pool/universe/m/mono/libmono-system-messaging4.0-cil_6.8.0.105+dfsg-3.6ubuntu2_all.deb"
+  },
+  {
+    "package": "libmono-system-numerics4.0-cil",
+    "version": "6.8.0.105+dfsg-3.6ubuntu2",
+    "sha256": "b58ddba7e3f3e515d8d6cad8b045999938ff949d297ced17732d7ad73ef0c541",
+    "url": "https://archive.ubuntu.com/ubuntu/pool/universe/m/mono/libmono-system-numerics4.0-cil_6.8.0.105+dfsg-3.6ubuntu2_all.deb"
+  },
+  {
+    "package": "libmono-system-runtime-serialization-formatters-soap4.0-cil",
+    "version": "6.8.0.105+dfsg-3.6ubuntu2",
+    "sha256": "71277b164538970c2ff4e899e22f6eead92695aa48c4b9d675987883474f67a3",
+    "url": "https://archive.ubuntu.com/ubuntu/pool/universe/m/mono/libmono-system-runtime-serialization-formatters-soap4.0-cil_6.8.0.105+dfsg-3.6ubuntu2_all.deb"
+  },
+  {
+    "package": "libmono-system-runtime-serialization4.0-cil",
+    "version": "6.8.0.105+dfsg-3.6ubuntu2",
+    "sha256": "db9f8169c41666897d499a6f2d49dd31f437ed2a1aa9760779dd8251537c3a85",
+    "url": "https://archive.ubuntu.com/ubuntu/pool/universe/m/mono/libmono-system-runtime-serialization4.0-cil_6.8.0.105+dfsg-3.6ubuntu2_all.deb"
+  },
+  {
+    "package": "libmono-system-security4.0-cil",
+    "version": "6.8.0.105+dfsg-3.6ubuntu2",
+    "sha256": "b200b40938d2cf1cdf45e4b84d947571b77942cb0e0b9436babd203250737299",
+    "url": "https://archive.ubuntu.com/ubuntu/pool/universe/m/mono/libmono-system-security4.0-cil_6.8.0.105+dfsg-3.6ubuntu2_all.deb"
+  },
+  {
+    "package": "libmono-system-servicemodel-activation4.0-cil",
+    "version": "6.8.0.105+dfsg-3.6ubuntu2",
+    "sha256": "8dac0ae162c63a73233ae53afb54ecbe353f3c4d733d57c476de89c2b359ebae",
+    "url": "https://archive.ubuntu.com/ubuntu/pool/universe/m/mono/libmono-system-servicemodel-activation4.0-cil_6.8.0.105+dfsg-3.6ubuntu2_all.deb"
+  },
+  {
+    "package": "libmono-system-servicemodel-internals0.0-cil",
+    "version": "6.8.0.105+dfsg-3.6ubuntu2",
+    "sha256": "be2a9d202726404498d3b78851fcd9a234748d0c0301014b94bb49b8c201cb85",
+    "url": "https://archive.ubuntu.com/ubuntu/pool/universe/m/mono/libmono-system-servicemodel-internals0.0-cil_6.8.0.105+dfsg-3.6ubuntu2_all.deb"
+  },
+  {
+    "package": "libmono-system-servicemodel4.0a-cil",
+    "version": "6.8.0.105+dfsg-3.6ubuntu2",
+    "sha256": "f05c5227e292dcdc1441c6a8a8009c27cb76104174b20b108807c225a23cb57c",
+    "url": "https://archive.ubuntu.com/ubuntu/pool/universe/m/mono/libmono-system-servicemodel4.0a-cil_6.8.0.105+dfsg-3.6ubuntu2_all.deb"
+  },
+  {
+    "package": "libmono-system-transactions4.0-cil",
+    "version": "6.8.0.105+dfsg-3.6ubuntu2",
+    "sha256": "e613ec56ee3938314684fda2e4947d4216413b618bde03d988188c5ea4fa0232",
+    "url": "https://archive.ubuntu.com/ubuntu/pool/universe/m/mono/libmono-system-transactions4.0-cil_6.8.0.105+dfsg-3.6ubuntu2_all.deb"
+  },
+  {
+    "package": "libmono-system-web-applicationservices4.0-cil",
+    "version": "6.8.0.105+dfsg-3.6ubuntu2",
+    "sha256": "fbb3ebe71851f9aaf5d6d965d85b8faaa3a51fbd499a6737f5aa12ffdad96a98",
+    "url": "https://archive.ubuntu.com/ubuntu/pool/universe/m/mono/libmono-system-web-applicationservices4.0-cil_6.8.0.105+dfsg-3.6ubuntu2_all.deb"
+  },
+  {
+    "package": "libmono-system-web-extensions4.0-cil",
+    "version": "6.8.0.105+dfsg-3.6ubuntu2",
+    "sha256": "cc29482b763f91fd8256e937c36510157d3720731dca2695f4bf7169b67fc854",
+    "url": "https://archive.ubuntu.com/ubuntu/pool/universe/m/mono/libmono-system-web-extensions4.0-cil_6.8.0.105+dfsg-3.6ubuntu2_all.deb"
+  },
+  {
+    "package": "libmono-system-web-services4.0-cil",
+    "version": "6.8.0.105+dfsg-3.6ubuntu2",
+    "sha256": "5199e92bc61c131b77577704c1b9aa9c50aa4bb4c19c4d518a2ee9e0d48e35eb",
+    "url": "https://archive.ubuntu.com/ubuntu/pool/universe/m/mono/libmono-system-web-services4.0-cil_6.8.0.105+dfsg-3.6ubuntu2_all.deb"
+  },
+  {
+    "package": "libmono-system-web4.0-cil",
+    "version": "6.8.0.105+dfsg-3.6ubuntu2",
+    "sha256": "3ad60931f70e95be6e0300f4b30f1144932a9b1941bd28781aff774b60397cf1",
+    "url": "https://archive.ubuntu.com/ubuntu/pool/universe/m/mono/libmono-system-web4.0-cil_6.8.0.105+dfsg-3.6ubuntu2_all.deb"
+  },
+  {
+    "package": "libmono-system-windows-forms4.0-cil",
+    "version": "6.8.0.105+dfsg-3.6ubuntu2",
+    "sha256": "656de0ca7c6a184038aeb86d2aadc25490cd8a5e8c7e3b7eabd024330a31ec6a",
+    "url": "https://archive.ubuntu.com/ubuntu/pool/universe/m/mono/libmono-system-windows-forms4.0-cil_6.8.0.105+dfsg-3.6ubuntu2_all.deb"
+  },
+  {
+    "package": "libmono-system-xml-linq4.0-cil",
+    "version": "6.8.0.105+dfsg-3.6ubuntu2",
+    "sha256": "f184fb1f0e9773b54cd789bdb3ff1d20ab94a43faff931bc890538324604a057",
+    "url": "https://archive.ubuntu.com/ubuntu/pool/universe/m/mono/libmono-system-xml-linq4.0-cil_6.8.0.105+dfsg-3.6ubuntu2_all.deb"
+  },
+  {
+    "package": "libmono-system-xml4.0-cil",
+    "version": "6.8.0.105+dfsg-3.6ubuntu2",
+    "sha256": "2e90f4bf2119ba5f56fe26486f6d9fe1a9e20402b3629d6607f9f49ecb24e926",
+    "url": "https://archive.ubuntu.com/ubuntu/pool/universe/m/mono/libmono-system-xml4.0-cil_6.8.0.105+dfsg-3.6ubuntu2_all.deb"
+  },
+  {
+    "package": "libmono-system4.0-cil",
+    "version": "6.8.0.105+dfsg-3.6ubuntu2",
+    "sha256": "1603e4dd3ac7960a219bcc4982a25ccbbbb44af7540b4e8715f323104e4a5ce4",
+    "url": "https://archive.ubuntu.com/ubuntu/pool/universe/m/mono/libmono-system4.0-cil_6.8.0.105+dfsg-3.6ubuntu2_all.deb"
+  },
+  {
+    "package": "libmono-webbrowser4.0-cil",
+    "version": "6.8.0.105+dfsg-3.6ubuntu2",
+    "sha256": "5df8ba7a36496c035f88bb88b3ddc66f5043cf8075e71d0391074202eb518fdc",
+    "url": "https://archive.ubuntu.com/ubuntu/pool/universe/m/mono/libmono-webbrowser4.0-cil_6.8.0.105+dfsg-3.6ubuntu2_all.deb"
+  },
+  {
+    "package": "mono-4.0-gac",
+    "version": "6.8.0.105+dfsg-3.6ubuntu2",
+    "sha256": "2e26bbed48a215ceb98da08fbc7ebf4849687452fd5efa901555215bc0da7a40",
+    "url": "https://archive.ubuntu.com/ubuntu/pool/universe/m/mono/mono-4.0-gac_6.8.0.105+dfsg-3.6ubuntu2_all.deb"
+  },
+  {
+    "package": "mono-gac",
+    "version": "6.8.0.105+dfsg-3.6ubuntu2",
+    "sha256": "ab2475510353aed9326760e16877375ad8704639e6b606f0bc44c325a5eb72f5",
+    "url": "https://archive.ubuntu.com/ubuntu/pool/universe/m/mono/mono-gac_6.8.0.105+dfsg-3.6ubuntu2_all.deb"
+  },
+  {
+    "package": "mono-mcs",
+    "version": "6.8.0.105+dfsg-3.6ubuntu2",
+    "sha256": "87b9845bd1de0e6ce7523cf8de1e3001d9d7bc4c16f977d7f38605fbf07fcd14",
+    "url": "https://archive.ubuntu.com/ubuntu/pool/universe/m/mono/mono-mcs_6.8.0.105+dfsg-3.6ubuntu2_all.deb"
+  },
+  {
+    "package": "mono-runtime",
+    "version": "6.8.0.105+dfsg-3.6ubuntu2",
+    "sha256": "978c89afceb4cfa2664a54ff50c69a8fe9ab5085731fe93b404e8833c2ce5d58",
+    "url": "https://archive.ubuntu.com/ubuntu/pool/universe/m/mono/mono-runtime_6.8.0.105+dfsg-3.6ubuntu2_amd64.deb"
+  },
+  {
+    "package": "mono-runtime-common",
+    "version": "6.8.0.105+dfsg-3.6ubuntu2",
+    "sha256": "1dcd262226d3c435113ceebf7a983a2f66c0cc8d00e7e40c5a38e044646fd7dd",
+    "url": "https://archive.ubuntu.com/ubuntu/pool/universe/m/mono/mono-runtime-common_6.8.0.105+dfsg-3.6ubuntu2_amd64.deb"
+  },
+  {
+    "package": "mono-runtime-sgen",
+    "version": "6.8.0.105+dfsg-3.6ubuntu2",
+    "sha256": "8683d9cdeb53189d2475e27c20261295e7b8ca018fe63b5a2b976325e6546c9b",
+    "url": "https://archive.ubuntu.com/ubuntu/pool/universe/m/mono/mono-runtime-sgen_6.8.0.105+dfsg-3.6ubuntu2_amd64.deb"
+  },
+  {
+    "package": "mono-devel",
+    "version": "6.8.0.105+dfsg-3.6ubuntu2",
+    "sha256": "bc903e90d0b014f1c886e7826c74b5f65d1e7279ab927e16348af2c7a013784c",
+    "url": "https://archive.ubuntu.com/ubuntu/pool/universe/m/mono/mono-devel_6.8.0.105+dfsg-3.6ubuntu2_all.deb"
+  }
+]

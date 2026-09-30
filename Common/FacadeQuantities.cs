@@ -24,6 +24,7 @@ namespace FacadeSafety
         public Dictionary<string, object> engine_summary { get; set; } = new Dictionary<string, object>();
         public List<QuantityElement> elements { get; set; } = new List<QuantityElement>();
         public List<QuantityCuttingGroup> cutting { get; set; } = new List<QuantityCuttingGroup>();
+        public List<QuantityEstimateGroup> estimates { get; set; } = new List<QuantityEstimateGroup>();
         public List<QuantityIssue> issues { get; set; } = new List<QuantityIssue>();
     }
 
@@ -37,12 +38,15 @@ namespace FacadeSafety
         public string mark { get; set; }
         public string type { get; set; }
         public string material { get; set; }
+        public string coating { get; set; }
+        public string system { get; set; }
         public string color { get; set; }
         public string orientation { get; set; }
         public string piece_kind { get; set; }
         public double? width_mm { get; set; }
         public double? height_mm { get; set; }
         public double? area_mm2 { get; set; }
+        public double? length_mm { get; set; }
         public string shape_id { get; set; }
         public string origin { get; set; }
         public List<QuantityRing> rings { get; set; } = new List<QuantityRing>();
@@ -88,6 +92,8 @@ namespace FacadeSafety
         public string mark { get; set; }
         public string type { get; set; }
         public string material { get; set; }
+        public string coating { get; set; }
+        public string system { get; set; }
         public string color { get; set; }
         public string orientation { get; set; }
         public string piece_kind { get; set; }
@@ -97,8 +103,18 @@ namespace FacadeSafety
         public string unit { get; set; } = "шт.";
         public double quantity { get; set; }
         public double? area_m2 { get; set; }
+        public double? length_mm { get; set; }
+        public double? total_length_m { get; set; }
         public List<string> element_ids { get; set; } = new List<string>();
         public string note { get; set; }
+    }
+
+    public sealed class QuantityEstimateGroup
+    {
+        public string group_id { get; set; }
+        public List<string> scope_zone_ids { get; set; } = new List<string>();
+        public Dictionary<string, object> parameters { get; set; } = new Dictionary<string, object>();
+        public List<QuantityRow> rows { get; set; } = new List<QuantityRow>();
     }
 
     public sealed class QuantityIssue
@@ -117,8 +133,24 @@ namespace FacadeSafety
         public bool ok { get; set; }
         public string completeness { get; set; }
         public string engineering_coverage { get; set; } = "geometry_only";
+        public List<string> source_engineering_coverage { get; set; } = new List<string>();
         public List<QuantityRow> rows { get; set; } = new List<QuantityRow>();
         public List<QuantityIssue> issues { get; set; } = new List<QuantityIssue>();
+    }
+
+    /// <summary>Deterministic operation counters for diagnostics; no wall-clock correctness threshold.</summary>
+    public sealed class QuantityDiagnostics
+    {
+        public long reports_seen { get; set; }
+        public long reports_compared { get; set; }
+        public long elements_seen { get; set; }
+        public long elements_validated { get; set; }
+        public long elements_compared { get; set; }
+        public long cad_links_checked { get; set; }
+        public long shapes_validated { get; set; }
+        public long canonical_report_keys { get; set; }
+        public long canonical_element_keys { get; set; }
+        public long aggregate_keys_built { get; set; }
     }
 
     public static class FacadeQuantitiesCore
@@ -126,66 +158,84 @@ namespace FacadeSafety
         public const string Schema = "facade_quantities/1";
         public static QuantityResult BuildRows(IEnumerable<QuantityReport> reports,
             IEnumerable<string> selectedZoneIds, bool byZone, bool includeCutting)
+        { return BuildRows(reports, selectedZoneIds, byZone, includeCutting, null); }
+
+        public static QuantityResult BuildRows(IEnumerable<QuantityReport> reports,
+            IEnumerable<string> selectedZoneIds, bool byZone, bool includeCutting, QuantityDiagnostics diagnostics)
         {
+            diagnostics = diagnostics ?? new QuantityDiagnostics();
+            Reset(diagnostics);
             var result = new QuantityResult { completeness = "partial" };
             var uniqueReports = new List<QuantityReport>();
-            var reportKeys = new Dictionary<string, string>(StringComparer.Ordinal);
+            var reportsById = new Dictionary<string, QuantityReport>(StringComparer.Ordinal);
             var allZones = new HashSet<string>(StringComparer.Ordinal);
             var elements = new Dictionary<string, QuantityElement>(StringComparer.Ordinal);
-            var elementKeys = new Dictionary<string, string>(StringComparer.Ordinal);
             var handles = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
             var unknownIssues = new Dictionary<string, QuantityIssue>(StringComparer.Ordinal);
-            string document = null;
+            var coverage = new HashSet<string>(StringComparer.Ordinal);
+            string document = null, kind = null;
             bool sourcesComplete = true;
             if (reports != null)
                 foreach (var report in reports)
                 {
-                    if (report == null || report.schema != Schema || report.kind != "cladding" ||
+                    diagnostics.reports_seen++;
+                    if (report == null || report.schema != Schema || (report.kind != "cladding" && report.kind != "frame") ||
                         Empty(report.report_id) || Empty(report.run_id) || Empty(report.document_id))
-                    { Error(result, "Q_REPORT_INVALID", "Паспорт облицовки отсутствует, повреждён или имеет неподдержанную версию.", report); continue; }
+                    { Error(result, "Q_REPORT_INVALID", "Паспорт элементов отсутствует, повреждён или имеет неподдержанную версию.", report); continue; }
                     if (document == null) document = report.document_id;
                     if (document != report.document_id)
                         Error(result, "Q_DOCUMENT_MISMATCH", "Ведомость поддерживает только один исходный чертёж.", report);
+                    if (kind == null) kind = report.kind;
+                    if (kind != report.kind)
+                        Error(result, "Q_KIND_MISMATCH", "Облицовка и подсистема выводятся отдельными ведомостями.", report);
                     var scope = Set(report.zone_ids);
                     if (scope.Count == 0)
                         Error(result, "Q_SCOPE_EMPTY", "Не указана полная область исходной раскладки.", report);
                     foreach (string z in scope) allZones.Add(z);
-                    string reportKey = ReportKey(report), priorReport;
-                    if (reportKeys.TryGetValue(report.report_id, out priorReport))
+                    QuantityReport priorReport;
+                    if (reportsById.TryGetValue(report.report_id, out priorReport))
                     {
-                        if (priorReport != reportKey)
+                        diagnostics.reports_compared++;
+                        // A normal read provides one unique run. Canonicalizing its whole
+                        // payload would duplicate all per-element work and allocate a large string.
+                        // Deep identity comparison is needed only when a report ID repeats.
+                        if (!ReferenceEquals(priorReport, report) && ReportKey(priorReport, diagnostics) != ReportKey(report, diagnostics))
                             Error(result, "Q_REPORT_CONFLICT", "Копии паспорта одного результата имеют разный состав.", report);
                         continue;
                     }
-                    reportKeys.Add(report.report_id, reportKey);
+                    reportsById.Add(report.report_id, report);
                     uniqueReports.Add(report);
+                    if (!Empty(report.engineering_coverage)) coverage.Add(report.engineering_coverage);
                     if (report.completeness != "complete") sourcesComplete = false;
                     if (Empty(report.algorithm)) result.issues.Add(new QuantityIssue { code = "Q_ALGORITHM_UNKNOWN", report_id = report.report_id,
                         message = "В паспорте не указана версия алгоритма раскладки." });
                     if (report.issues != null)
                         foreach (var issue in report.issues) if (issue != null) result.issues.Add(issue);
                     if (report.elements == null)
-                    { Error(result, "Q_ELEMENTS_MISSING", "В паспорте отсутствует состав физических элементов облицовки.", report); continue; }
+                    { Error(result, "Q_ELEMENTS_MISSING", "В паспорте отсутствует состав физических элементов.", report); continue; }
                     foreach (var element in report.elements)
                     {
+                        diagnostics.elements_seen++;
                         if (element == null || Empty(element.element_id))
                         { Error(result, "Q_ELEMENT_INVALID", "У физической детали отсутствует идентификатор.", report); continue; }
                         var zones = ElementZones(element);
                         if (zones.Count == 0 || !zones.IsSubsetOf(scope))
                             Error(result, "Q_ELEMENT_SCOPE", "Область детали отсутствует или выходит за область раскладки.", report, element);
-                        string elementKey = ElementKey(element), priorElement;
-                        if (elementKeys.TryGetValue(element.element_id, out priorElement))
+                        QuantityElement priorElement;
+                        if (elements.TryGetValue(element.element_id, out priorElement))
                         {
-                            if (priorElement != elementKey)
+                            diagnostics.elements_compared++;
+                            if (!ReferenceEquals(priorElement, element) && ElementKey(priorElement, diagnostics) != ElementKey(element, diagnostics))
                                 Error(result, "Q_ELEMENT_CONFLICT", "Один идентификатор физической детали имеет разные данные.", report, element);
                             continue;
                         }
-                        elementKeys.Add(element.element_id, elementKey);
                         elements.Add(element.element_id, element);
-                        ValidateElement(result, report, element, unknownIssues);
+                        diagnostics.elements_validated++;
+                        ValidateElement(result, report, element, unknownIssues, diagnostics);
                         if (element.cad_entities != null)
                             foreach (var cad in element.cad_entities)
                             {
+                                diagnostics.cad_links_checked++;
                                 if (cad == null || Empty(cad.handle) || Empty(cad.role) || Empty(cad.fingerprint))
                                 { Error(result, "Q_CAD_LINK_INVALID", "Неполная ссылка на объект чертежа.", report, element); continue; }
                                 string owner;
@@ -195,7 +245,9 @@ namespace FacadeSafety
                             }
                     }
                     ValidateCutting(result, report, scope);
+                    ValidateEstimates(result, report, scope);
                 }
+            result.source_engineering_coverage = Sorted(coverage);
             foreach (var issue in unknownIssues.Values)
             {
                 issue.element_ids.Sort(StringComparer.Ordinal);
@@ -219,6 +271,7 @@ namespace FacadeSafety
                 if (!zones.IsSubsetOf(selected))
                 { Error(result, "Q_SHARED_PIECE_PARTIAL", "Физическая деталь относится к нескольким зонам. Выберите всю её область.", null, element); continue; }
                 var row = InstalledRow(element, zones, byZone);
+                diagnostics.aggregate_keys_built++;
                 string key = RowKey(row, byZone);
                 QuantityRow aggregate;
                 if (!rows.TryGetValue(key, out aggregate)) { aggregate = row; rows.Add(key, row); }
@@ -227,6 +280,8 @@ namespace FacadeSafety
                     aggregate.quantity += 1;
                     aggregate.area_m2 = aggregate.area_m2.HasValue && row.area_m2.HasValue
                         ? aggregate.area_m2.Value + row.area_m2.Value : (double?)null;
+                    aggregate.total_length_m = aggregate.total_length_m.HasValue && row.total_length_m.HasValue
+                        ? aggregate.total_length_m.Value + row.total_length_m.Value : (double?)null;
                     aggregate.element_ids.Add(element.element_id);
                     aggregate.zone_ids = SortedUnion(aggregate.zone_ids, row.zone_ids);
                 }
@@ -259,15 +314,41 @@ namespace FacadeSafety
                                 result.rows.Add(copy);
                             }
                         }
+            foreach (var report in uniqueReports)
+                if (report.estimates != null)
+                    foreach (var group in report.estimates)
+                    {
+                        if (group == null) continue;
+                        var scope = Set(group.scope_zone_ids);
+                        if (!scope.Overlaps(selected)) continue;
+                        if (!scope.IsSubsetOf(selected))
+                        {
+                            result.issues.Add(new QuantityIssue { code = "Q_ESTIMATE_SCOPE_PARTIAL", severity = "info",
+                                report_id = report.report_id,
+                                message = "Оценка хлыстов не включена: она относится ко всей группе зон " + string.Join(" + ", Sorted(scope).ToArray()) + ". Установленные элементы выбранных зон учтены отдельно." });
+                            continue;
+                        }
+                        if (group.rows == null) continue;
+                        foreach (var row in group.rows)
+                        {
+                            if (row == null) continue;
+                            var copy = CopyRow(row);
+                            copy.basis = "estimate";
+                            copy.zone_ids = Sorted(scope);
+                            copy.zone_id = string.Join(" + ", copy.zone_ids.ToArray());
+                            copy.note = JoinNote(copy.note, "Оценка хлыстов по сумме длин; не раскрой и не закупка. Область: " + copy.zone_id);
+                            result.rows.Add(copy);
+                        }
+                    }
             if (result.rows.Count == 0 && !HasErrors(result))
                 result.issues.Add(new QuantityIssue { code = "Q_ZERO_INSTALLED_ELEMENTS", severity = "info",
-                    message = "В выбранной проверенной области нет установленных деталей облицовки. Количество: 0 шт." });
+                    message = "В выбранной проверенной области нет установленных элементов" + (kind == "frame" ? " подсистемы" : " облицовки") + ". Количество: 0 шт." });
             result.rows.Sort(delegate(QuantityRow a, QuantityRow b)
             {
                 int basisOrder = (a.basis == "installed" ? 0 : 1).CompareTo(b.basis == "installed" ? 0 : 1);
                 if (basisOrder != 0) return basisOrder;
-                return string.CompareOrdinal(Tokens(RowKey(a, true), a.note, F(a.quantity), N(a.area_m2)),
-                    Tokens(RowKey(b, true), b.note, F(b.quantity), N(b.area_m2)));
+                return string.CompareOrdinal(Tokens(RowKey(a, true), a.note, F(a.quantity), N(a.area_m2), N(a.total_length_m)),
+                    Tokens(RowKey(b, true), b.note, F(b.quantity), N(b.area_m2), N(b.total_length_m)));
             });
             result.ok = !HasErrors(result);
             if (!result.ok) result.rows.Clear();
@@ -335,40 +416,61 @@ namespace FacadeSafety
         }
 
         private static void ValidateElement(QuantityResult result, QuantityReport report, QuantityElement e,
-            Dictionary<string, QuantityIssue> unknownIssues)
+            Dictionary<string, QuantityIssue> unknownIssues, QuantityDiagnostics diagnostics)
         {
             if (e.cad_entities == null || e.cad_entities.Count == 0)
                 Error(result, "Q_CAD_LINK_MISSING", "У физической детали нет проверяемых объектов чертежа.", report, e);
-            if (!ValidOptional(e.width_mm) || !ValidOptional(e.height_mm) || !ValidOptional(e.area_mm2))
-                Error(result, "Q_MEASURE_INVALID", "Размер или площадь детали неположительны либо не являются конечным числом.", report, e);
+            if (!ValidOptional(e.width_mm) || !ValidOptional(e.height_mm) || !ValidOptional(e.area_mm2) || !ValidOptional(e.length_mm))
+                Error(result, "Q_MEASURE_INVALID", "Размер, длина или площадь элемента неположительны либо не являются конечным числом.", report, e);
             QuantityShape shape; string reason;
-            if (e.rings == null || e.rings.Count == 0)
+            bool frame = report.kind == "frame";
+            if (frame)
+            {
+                if (!IsFrameRole(e.role))
+                    Error(result, "Q_FRAME_ROLE_INVALID", "Не распознана категория физического элемента подсистемы.", report, e);
+                if (e.area_mm2.HasValue || !Empty(e.shape_id) || (e.rings != null && e.rings.Count > 0))
+                    Error(result, "Q_FRAME_GEOMETRY_INVALID", "Элемент подсистемы не должен содержать условную площадь или контуры плиты облицовки.", report, e);
+            }
+            else if (e.rings == null || e.rings.Count == 0)
             {
                 // A compact passport may omit rings only after the DWG adapter has captured
                 // its geometry and retained the shape identity. The adapter still verifies every CAD link.
                 if (Empty(e.shape_id)) Error(result, "Q_GEOMETRY_MISSING", "У детали отсутствует идентификатор проверенной формы.", report, e);
             }
-            else if (!TryShape(e.rings, out shape, out reason))
-                Error(result, "Q_GEOMETRY_INVALID", "Невозможно проверить форму детали: " + reason + ".", report, e);
             else
             {
-                if (e.shape_id != shape.shape_id)
-                    Error(result, "Q_SHAPE_MISMATCH", "Идентификатор формы не соответствует сохранённым контурам детали.", report, e);
-                if ((e.area_mm2.HasValue && !Close(e.area_mm2.Value, shape.area_mm2, 0.01)) ||
-                    (e.width_mm.HasValue && !Close(e.width_mm.Value, shape.width_mm, 0.001)) ||
-                    (e.height_mm.HasValue && !Close(e.height_mm.Value, shape.height_mm, 0.001)))
-                    Error(result, "Q_MEASURE_MISMATCH", "Размер или площадь не соответствует сохранённым контурам детали.", report, e);
+                diagnostics.shapes_validated++;
+                if (!TryShape(e.rings, out shape, out reason))
+                    Error(result, "Q_GEOMETRY_INVALID", "Невозможно проверить форму детали: " + reason + ".", report, e);
+                else
+                {
+                    if (e.shape_id != shape.shape_id)
+                        Error(result, "Q_SHAPE_MISMATCH", "Идентификатор формы не соответствует сохранённым контурам детали.", report, e);
+                    if ((e.area_mm2.HasValue && !Close(e.area_mm2.Value, shape.area_mm2, 0.01)) ||
+                        (e.width_mm.HasValue && !Close(e.width_mm.Value, shape.width_mm, 0.001)) ||
+                        (e.height_mm.HasValue && !Close(e.height_mm.Value, shape.height_mm, 0.001)))
+                        Error(result, "Q_MEASURE_MISMATCH", "Размер или площадь не соответствует сохранённым контурам детали.", report, e);
+                }
             }
             var missing = new List<string>();
             if (Empty(e.product_id)) missing.Add("каталожное изделие");
             if (Empty(e.mark)) missing.Add("марка");
             if (Empty(e.material)) missing.Add("материал");
             if (Empty(e.type)) missing.Add("тип");
-            if (Empty(e.color)) missing.Add("цвет");
-            if (Empty(e.orientation)) missing.Add("ориентация значимой поверхности");
-            if (Empty(e.piece_kind)) missing.Add("класс детали");
-            if (!e.width_mm.HasValue || !e.height_mm.HasValue) missing.Add("размеры");
-            if (!e.area_mm2.HasValue) missing.Add("площадь");
+            if (frame)
+            {
+                if (Empty(e.coating)) missing.Add("покрытие");
+                if (Empty(e.system)) missing.Add("система");
+                if (IsLinearRole(e.role) && !e.length_mm.HasValue) missing.Add("длина");
+            }
+            else
+            {
+                if (Empty(e.color)) missing.Add("цвет");
+                if (Empty(e.orientation)) missing.Add("ориентация значимой поверхности");
+                if (Empty(e.piece_kind)) missing.Add("класс детали");
+                if (!e.width_mm.HasValue || !e.height_mm.HasValue) missing.Add("размеры");
+                if (!e.area_mm2.HasValue) missing.Add("площадь");
+            }
             if (missing.Count > 0)
             {
                 string missingText = string.Join(", ", missing.ToArray());
@@ -389,6 +491,8 @@ namespace FacadeSafety
         {
             var groups = new HashSet<string>(StringComparer.Ordinal);
             if (report.cutting == null) return;
+            if (report.kind == "frame" && report.cutting.Count > 0)
+                Error(result, "Q_FRAME_CUTTING_UNSUPPORTED", "Раскрой подсистемы не реализован. Оценка хлыстов должна иметь отдельное основание «estimate».", report);
             foreach (var group in report.cutting)
             {
                 if (group == null || Empty(group.group_id) || !groups.Add(group.group_id) ||
@@ -409,14 +513,39 @@ namespace FacadeSafety
             }
         }
 
+        private static void ValidateEstimates(QuantityResult result, QuantityReport report, HashSet<string> scope)
+        {
+            if (report.estimates == null) return;
+            if (report.kind != "frame" && report.estimates.Count > 0)
+                Error(result, "Q_ESTIMATES_UNSUPPORTED", "Оценка хлыстов относится только к ведомости подсистемы.", report);
+            var groups = new HashSet<string>(StringComparer.Ordinal);
+            foreach (var group in report.estimates)
+            {
+                if (group == null || Empty(group.group_id) || !groups.Add(group.group_id) ||
+                    Set(group.scope_zone_ids).Count == 0 || !Set(group.scope_zone_ids).IsSubsetOf(scope))
+                { Error(result, "Q_ESTIMATE_GROUP_INVALID", "Не задана или повторяется группа оценки хлыстов либо неверна её область.", report); continue; }
+                if (group.rows == null)
+                { Error(result, "Q_ESTIMATE_ROW_INVALID", "Нет строк сохранённой оценки хлыстов.", report); continue; }
+                foreach (var row in group.rows)
+                {
+                    if (row == null || row.basis != "estimate" || row.role != "rail_stock_est" || row.unit != "шт." ||
+                        !Finite(row.quantity) || row.quantity < 0 || Math.Abs(row.quantity - Math.Round(row.quantity)) > 1e-9 ||
+                        !ValidOptional(row.length_mm) || (row.total_length_m.HasValue && (!Finite(row.total_length_m.Value) || row.total_length_m.Value < 0)) ||
+                        row.area_m2.HasValue)
+                        Error(result, "Q_ESTIMATE_ROW_INVALID", "Оценка хлыстов содержит неверное основание, единицу или количество.", report);
+                }
+            }
+        }
+
         private static QuantityRow InstalledRow(QuantityElement e, HashSet<string> zones, bool byZone)
         {
             var sorted = Sorted(zones);
             return new QuantityRow { basis = "installed", zone_id = byZone ? string.Join(" + ", sorted.ToArray()) : "Все выбранные",
                 zone_ids = sorted, role = e.role, product_id = e.product_id, mark = e.mark, type = e.type,
-                material = e.material, color = e.color, orientation = e.orientation, piece_kind = e.piece_kind,
+                material = e.material, coating = e.coating, system = e.system, color = e.color, orientation = e.orientation, piece_kind = e.piece_kind,
                 width_mm = e.width_mm, height_mm = e.height_mm, shape_id = e.shape_id, quantity = 1,
                 area_m2 = e.area_mm2.HasValue ? e.area_mm2.Value / 1000000.0 : (double?)null,
+                length_mm = e.length_mm, total_length_m = IsLinearRole(e.role) && e.length_mm.HasValue ? e.length_mm.Value / 1000.0 : (double?)null,
                 element_ids = new List<string> { e.element_id } };
         }
 
@@ -424,6 +553,7 @@ namespace FacadeSafety
         {
             return new QuantityRow { basis = r.basis, zone_id = r.zone_id, zone_ids = r.zone_ids == null ? new List<string>() : new List<string>(r.zone_ids),
                 role = r.role, product_id = r.product_id, mark = r.mark, type = r.type, material = r.material, color = r.color,
+                coating = r.coating, system = r.system, length_mm = r.length_mm, total_length_m = r.total_length_m,
                 orientation = r.orientation, piece_kind = r.piece_kind, width_mm = r.width_mm, height_mm = r.height_mm,
                 shape_id = r.shape_id, unit = r.unit, quantity = r.quantity, area_m2 = r.area_m2,
                 element_ids = r.element_ids == null ? new List<string>() : new List<string>(r.element_ids), note = r.note };
@@ -432,13 +562,15 @@ namespace FacadeSafety
         private static string RowKey(QuantityRow row, bool byZone)
         {
             return Tokens(byZone ? Tokens(Sorted(Set(row.zone_ids)).ToArray()) : null, row.basis, row.role, row.product_id, row.mark,
-                row.type, row.material, row.color, row.orientation, row.piece_kind, N(row.width_mm), N(row.height_mm), row.shape_id, row.unit);
+                row.type, row.material, row.coating, row.system, row.color, row.orientation, row.piece_kind,
+                N(row.width_mm), N(row.height_mm), N(row.length_mm), row.shape_id, row.unit);
         }
-        private static string ElementKey(QuantityElement e)
+        private static string ElementKey(QuantityElement e, QuantityDiagnostics diagnostics)
         {
+            diagnostics.canonical_element_keys++;
             var sb = new StringBuilder(Tokens(e.element_id, e.zone_id, Tokens(Sorted(ElementZones(e)).ToArray()),
-                e.role, e.product_id, e.mark, e.type, e.material, e.color, e.orientation, e.piece_kind,
-                N(e.width_mm), N(e.height_mm), N(e.area_mm2), e.shape_id, e.origin));
+                e.role, e.product_id, e.mark, e.type, e.material, e.coating, e.system, e.color, e.orientation, e.piece_kind,
+                N(e.width_mm), N(e.height_mm), N(e.area_mm2), N(e.length_mm), e.shape_id, e.origin));
             if (e.rings != null) foreach (var ring in e.rings)
             {
                 if (ring == null) { sb.Append("nullring"); continue; }
@@ -450,14 +582,15 @@ namespace FacadeSafety
                 sb.Append(cad == null ? "nullcad" : Tokens(cad.handle, cad.role, cad.fingerprint));
             return Hash(sb.ToString());
         }
-        private static string ReportKey(QuantityReport r)
+        private static string ReportKey(QuantityReport r, QuantityDiagnostics diagnostics)
         {
+            diagnostics.canonical_report_keys++;
             var sb = new StringBuilder(Tokens(r.schema, r.report_id, r.kind, r.document_id, r.scope, r.run_id, r.algorithm,
                 r.completeness, r.engineering_coverage, Tokens(Sorted(Set(r.zone_ids)).ToArray())));
             if (r.source_revisions != null)
                 foreach (string key in Sorted(r.source_revisions.Keys)) sb.Append(Tokens(key, r.source_revisions[key]));
             sb.Append(Tokens(ObjectKey(r.parameters), ObjectKey(r.engine_summary)));
-            if (r.elements != null) foreach (var e in r.elements) sb.Append(e == null ? "nullelement" : ElementKey(e));
+            if (r.elements != null) foreach (var e in r.elements) sb.Append(e == null ? "nullelement" : ElementKey(e, diagnostics));
             if (r.cutting != null) foreach (var group in r.cutting)
             {
                 if (group == null) { sb.Append("nullgroup"); continue; }
@@ -465,7 +598,15 @@ namespace FacadeSafety
                 if (group.parameters != null)
                     foreach (string key in Sorted(group.parameters.Keys)) sb.Append(Tokens(key, ObjectKey(group.parameters[key])));
                 if (group.rows != null) foreach (var row in group.rows)
-                    sb.Append(row == null ? "nullrow" : Tokens(RowKey(row, true), F(row.quantity), N(row.area_m2), row.note,
+                    sb.Append(row == null ? "nullrow" : Tokens(RowKey(row, true), F(row.quantity), N(row.area_m2), N(row.total_length_m), row.note,
+                        Tokens(Sorted(Set(row.zone_ids)).ToArray()), Tokens(Sorted(Set(row.element_ids)).ToArray())));
+            }
+            if (r.estimates != null) foreach (var group in r.estimates)
+            {
+                if (group == null) { sb.Append("nullestimate"); continue; }
+                sb.Append(Tokens(group.group_id, Tokens(Sorted(Set(group.scope_zone_ids)).ToArray()), ObjectKey(group.parameters)));
+                if (group.rows != null) foreach (var row in group.rows)
+                    sb.Append(row == null ? "nullestimaterow" : Tokens(RowKey(row, true), F(row.quantity), N(row.area_m2), N(row.total_length_m), row.note,
                         Tokens(Sorted(Set(row.zone_ids)).ToArray()), Tokens(Sorted(Set(row.element_ids)).ToArray())));
             }
             if (r.issues != null) foreach (var issue in r.issues)
@@ -510,6 +651,14 @@ namespace FacadeSafety
         private static List<string> SortedUnion(IEnumerable<string> a, IEnumerable<string> b)
         { var s = Set(a); if (b != null) foreach (string v in b) s.Add(v); return Sorted(s); }
         private static bool Empty(string value) { return string.IsNullOrWhiteSpace(value); }
+        private static bool IsLinearRole(string role) { return role == "rail" || role == "hrail" || role == "shina"; }
+        private static bool IsFrameRole(string role) { return IsLinearRole(role) || role == "bracket" || role == "clamp" || role == "fitting"; }
+        private static void Reset(QuantityDiagnostics diagnostics)
+        {
+            diagnostics.reports_seen = diagnostics.reports_compared = diagnostics.elements_seen = diagnostics.elements_validated =
+                diagnostics.elements_compared = diagnostics.cad_links_checked = diagnostics.shapes_validated =
+                diagnostics.canonical_report_keys = diagnostics.canonical_element_keys = diagnostics.aggregate_keys_built = 0;
+        }
         private static string JoinNote(string a, string b) { return Empty(a) ? b : a + "; " + b; }
         private static bool Finite(double value) { return !double.IsNaN(value) && !double.IsInfinity(value); }
         private static bool ValidOptional(double? value) { return !value.HasValue || (Finite(value.Value) && value.Value > 0); }

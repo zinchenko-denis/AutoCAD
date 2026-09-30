@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Globalization;
+using System.Diagnostics;
 using System.IO;
 using System.IO.Compression;
 using System.Runtime.CompilerServices;
@@ -16,6 +17,10 @@ namespace FacadeSafety
     {
         internal bool Ok;
         internal string Reason;
+        internal QuantityResult Rows;
+        internal string Fingerprint;
+        internal double VerificationMilliseconds;
+        internal double AggregationMilliseconds;
         internal readonly List<QuantityReport> Reports = new List<QuantityReport>();
         internal readonly List<string> SelectedZoneIds = new List<string>();
         internal readonly List<string> Warnings = new List<string>();
@@ -24,7 +29,7 @@ namespace FacadeSafety
     // One compressed, versioned ledger per complete generation in the DWG NOD.
     // Carrier/element stamps bind it to live objects. Handles are checked against
     // soft references; COPY is not silently adopted as a second physical part.
-    internal static class FacadeQuantityStore
+    internal static partial class FacadeQuantityStore
     {
         internal const string OwnerKey = "AFACADE_QUANTITY_OWNER";
         internal const string ElementKey = "AFACADE_QUANTITY_ELEMENT";
@@ -50,8 +55,10 @@ namespace FacadeSafety
             public string run_id { get; set; }
             public string layout_key { get; set; }
             public string report_json { get; set; }
+            public QuantityReport quantity_report { get; set; }
             public List<Owner> owners { get; set; }
             public List<string> entity_handles { get; set; }
+            public FrameSources frame_sources { get; set; }
         }
         public sealed class Stamp
         {
@@ -84,10 +91,22 @@ namespace FacadeSafety
         internal static void Store(Transaction tr, Database db, IEnumerable<Entity> carriers,
             string layoutKey, QuantityReport report)
         {
-            if (layoutKey != "ATTILE" && layoutKey != "ATCLAD")
+            StoreCore(tr, db, carriers, layoutKey, report, null);
+        }
+
+        private static void StoreCore(Transaction tr, Database db, IEnumerable<Entity> carriers,
+            string layoutKey, QuantityReport report, FrameSources frameSources)
+        {
+            bool frame = layoutKey == "ATFRAME";
+            string ownerKey = frame ? FrameOwnerKey : OwnerKey, elementKey = frame ? FrameElementKey : ElementKey;
+            var validationContext = new LayoutGeometryGuard.VerificationContext();
+            if (frame) { DefinitionCaches.Remove(tr); VerifyFrameSources(tr, db, frameSources); }
+            if (!frame && layoutKey != "ATTILE" && layoutKey != "ATCLAD")
                 throw new InvalidOperationException("Неизвестный источник ведомости облицовки.");
             if (report == null || !SafeId(report.run_id) || !SafeId(report.report_id))
                 throw new InvalidOperationException("Нет идентификатора результата облицовки.");
+            if (report.kind != (frame ? "frame" : "cladding"))
+                throw new InvalidOperationException("Вид паспорта не соответствует источнику ведомости.");
             var root = Root(tr, db, true);
             string documentId = ReadRecord(tr, root, DocumentKey, null);
             if (string.IsNullOrEmpty(documentId))
@@ -103,14 +122,14 @@ namespace FacadeSafety
             foreach (Entity e in carriers ?? new Entity[0])
             {
                 if (e == null || !ownerIds.Add(e.ObjectId)) continue;
-                var current = LayoutGeometryGuard.Verify(tr, db, e, layoutKey);
+                var current = frame ? FrameOwnerState(tr, e) : LayoutGeometryGuard.Verify(tr, db, e, layoutKey, validationContext);
                 if (!current.Ok) throw new InvalidOperationException(current.Reason);
                 string handle = e.Handle.ToString();
                 string zone;
                 if (report.source_revisions == null || !report.source_revisions.TryGetValue("owner_zone:" + handle, out zone) ||
                     string.IsNullOrEmpty(zone) || !report.zone_ids.Contains(zone))
                     throw new InvalidOperationException("Нет однозначной связи владельца раскладки с зоной ведомости.");
-                var previous = ReadStamp(tr, e, OwnerKey);
+                var previous = ReadStamp(tr, e, ownerKey);
                 if (previous != null && SafeId(previous.run_id)) oldRuns.Add(previous.run_id);
                 owners.Add(new Owner { handle = handle, zone_ids = new List<string> { zone },
                     revision = current.Revision, fingerprint = current.Fingerprint, layout_digest = current.LayoutDigest });
@@ -142,8 +161,12 @@ namespace FacadeSafety
                     handles.Add(link.handle);
                     refs.Add(id);
                 }
-            var entry = new Entry { schema = 1, document_id = documentId, run_id = report.run_id,
-                layout_key = layoutKey, report_json = Serializer().Serialize(report), owners = owners, entity_handles = handles };
+            // Entry v2 stores a typed report once: embedding its escaped JSON string would
+            // serialize/parse the largest payload twice. Published cladding v1 stays readable.
+            var entry = new Entry { schema = 2, document_id = documentId, run_id = report.run_id,
+                layout_key = layoutKey, quantity_report = report,
+                owners = owners, entity_handles = handles, frame_sources = frameSources };
+            if (frame) foreach (var source in frameSources.sources) refs.Add(Resolve(db, source.handle));
             string json = Serializer().Serialize(entry), digest = Hash(json);
             if (root.Contains(Prefix + report.run_id))
                 throw new InvalidOperationException("Идентификатор нового построения уже используется.");
@@ -151,7 +174,7 @@ namespace FacadeSafety
             foreach (Owner owner in owners)
             {
                 var e = Live(tr, Resolve(db, owner.handle));
-                Write(tr, e, OwnerKey, Serializer().Serialize(new Stamp { schema = 1, owner = owner.handle,
+                Write(tr, e, ownerKey, Serializer().Serialize(new Stamp { schema = 1, owner = owner.handle,
                     document_id = documentId, run_id = report.run_id, layout_key = layoutKey,
                     entry_digest = digest, zone_ids = owner.zone_ids }));
             }
@@ -159,7 +182,7 @@ namespace FacadeSafety
                 foreach (QuantityCadEntity link in element.cad_entities)
                 {
                     var e = Live(tr, Resolve(db, link.handle));
-                    Write(tr, e, ElementKey, Serializer().Serialize(new Stamp { schema = 1, owner = link.handle,
+                    Write(tr, e, elementKey, Serializer().Serialize(new Stamp { schema = 1, owner = link.handle,
                         document_id = documentId, run_id = report.run_id, layout_key = layoutKey,
                         entry_digest = digest, element_id = element.element_id, role = link.role,
                         zone_ids = element.zone_ids }));
@@ -179,38 +202,59 @@ namespace FacadeSafety
 
         internal static QuantitySelection ReadCladding(Transaction tr, Database db, IEnumerable<ObjectId> selectedIds)
         {
+            return ReadCore(tr, db, selectedIds, false, true, false);
+        }
+        internal static QuantitySelection ReadCladding(Transaction tr, Database db, IEnumerable<ObjectId> selectedIds,
+            bool byZone, bool includeCutting)
+        { return ReadCore(tr, db, selectedIds, false, byZone, includeCutting); }
+
+        private static QuantitySelection ReadCore(Transaction tr, Database db, IEnumerable<ObjectId> selectedIds,
+            bool frame, bool byZone, bool includeCutting)
+        {
             var result = new QuantitySelection();
+            string ownerKey = frame ? FrameOwnerKey : OwnerKey, elementKey = frame ? FrameElementKey : ElementKey;
+            var validationContext = new LayoutGeometryGuard.VerificationContext();
+            var digestParts = new List<string>();
+            var frameObserved = new Dictionary<string, FrameSource>();
+            var timer = Stopwatch.StartNew();
             try
             {
                 var root = Root(tr, db, false);
                 string document = root == null ? null : ReadRecord(tr, root, DocumentKey, null);
-                var requested = new Dictionary<string, List<Stamp>>();
+                var requested = new Dictionary<string, Stamp>();
                 var chosen = new HashSet<ObjectId>();
+                var selectedZones = new HashSet<string>(StringComparer.Ordinal);
                 int unknown = 0;
                 foreach (ObjectId id in selectedIds ?? new ObjectId[0])
                 {
                     if (!chosen.Add(id)) continue;
                     var e = Live(tr, id);
                     if (e == null) throw new InvalidOperationException("Один из выбранных объектов отсутствует.");
-                    var stamp = ReadStamp(tr, e, OwnerKey);
-                    if (stamp == null) stamp = ReadStamp(tr, e, ElementKey);
+                    var stamp = ReadStamp(tr, e, ownerKey);
+                    if (stamp == null) stamp = ReadStamp(tr, e, elementKey);
                     if (stamp == null)
                     {
-                        if (IsCandidate(tr, e))
-                            throw new InvalidOperationException("У выбранной зоны или раскладки нет паспорта деталей. Повторите ATTILE или ATCLAD новой версией, затем сформируйте ведомость.");
+                        if (frame) CheckFrameUnavailable(tr, e);
+                        if (frame ? IsFrameCandidate(tr, e) : IsCandidate(tr, e))
+                            throw new InvalidOperationException("У выбранной зоны или раскладки нет паспорта деталей. Повторите построение этой раскладки новой версией, затем сформируйте ведомость.");
                         unknown++; continue;
                     }
                     if (stamp.schema != 1 || stamp.owner != e.Handle.ToString() || stamp.document_id != document ||
                         !SafeId(stamp.run_id) || stamp.zone_ids == null || stamp.zone_ids.Count == 0)
                         throw new InvalidOperationException("Выбранный паспорт скопирован или повреждён. Повторите раскладку.");
-                    List<Stamp> stamps;
-                    if (!requested.TryGetValue(stamp.run_id, out stamps)) requested[stamp.run_id] = stamps = new List<Stamp>();
-                    stamps.Add(stamp);
-                    foreach (string z in stamp.zone_ids) if (!result.SelectedZoneIds.Contains(z)) result.SelectedZoneIds.Add(z);
+                    Stamp prior;
+                    if (requested.TryGetValue(stamp.run_id, out prior))
+                    {
+                        if (prior.entry_digest != stamp.entry_digest || prior.layout_key != stamp.layout_key)
+                            throw new InvalidOperationException("Выбранные метки одного построения имеют разный состав.");
+                    }
+                    else requested[stamp.run_id] = stamp;
+                    foreach (string z in stamp.zone_ids) if (selectedZones.Add(z)) result.SelectedZoneIds.Add(z);
                 }
                 if (requested.Count == 0)
                     throw new InvalidOperationException("В выборке нет облицовки с проверяемым паспортом. Выберите её зоны, марки или созданные детали.");
                 var known = new Dictionary<string, HashSet<string>>();
+                var verifiedEntities = new HashSet<ObjectId>();
                 var zones = new Dictionary<string, string>();
                 DefinitionCaches.Remove(tr);
                 foreach (var request in requested)
@@ -220,17 +264,19 @@ namespace FacadeSafety
                     if (string.IsNullOrEmpty(packed)) throw new InvalidOperationException("Сохранённый состав раскладки отсутствует. Повторите ATTILE или ATCLAD.");
                     string json = Decompress(packed), digest = Hash(json);
                     var entry = Serializer().Deserialize<Entry>(json);
-                    if (entry == null || entry.schema != 1 || entry.document_id != document || entry.run_id != request.Key ||
-                        (entry.layout_key != "ATCLAD" && entry.layout_key != "ATTILE") || entry.owners == null ||
+                    if (entry == null || (entry.schema != 2 && (frame || entry.schema != 1)) || entry.document_id != document || entry.run_id != request.Key ||
+                        (frame ? entry.layout_key != "ATFRAME" : (entry.layout_key != "ATCLAD" && entry.layout_key != "ATTILE")) || entry.owners == null ||
                         entry.entity_handles == null || entry.owners.Count == 0)
                         throw new InvalidOperationException("Несовместимый паспорт деталей; повторите раскладку.");
-                    foreach (Stamp stamp in request.Value)
-                        if (stamp.entry_digest != digest || stamp.layout_key != entry.layout_key)
-                            throw new InvalidOperationException("Состав раскладки не соответствует выбранной метке.");
-                    var report = Serializer().Deserialize<QuantityReport>(entry.report_json);
-                    if (report == null || report.document_id != document || report.run_id != entry.run_id)
+                    if (request.Value.entry_digest != digest || request.Value.layout_key != entry.layout_key)
+                        throw new InvalidOperationException("Состав раскладки не соответствует выбранной метке.");
+                    var report = entry.schema == 2 ? entry.quantity_report : Serializer().Deserialize<QuantityReport>(entry.report_json);
+                    if (report == null || report.document_id != document || report.run_id != entry.run_id || report.kind != (frame ? "frame" : "cladding"))
                         throw new InvalidOperationException("Паспорт деталей повреждён.");
-                    VerifyEntry(tr, db, entry, report, digest, refs);
+                    VerifyEntry(tr, db, entry, report, digest, refs, validationContext, frameObserved);
+                    for (int i = entry.owners.Count; i < entry.owners.Count + entry.entity_handles.Count; i++)
+                        verifiedEntities.Add(refs[i]);
+                    digestParts.Add(entry.run_id + ":" + digest);
                     foreach (string z in report.zone_ids)
                     {
                         string prior;
@@ -247,32 +293,49 @@ namespace FacadeSafety
                 var ms = (BlockTableRecord)tr.GetObject(bt[BlockTableRecord.ModelSpace], OpenMode.ForRead);
                 foreach (ObjectId id in ms)
                 {
+                    // VerifyEntry already checked these exact objects, including their stamps.
+                    // Copies have new ObjectIds and must still be inspected during this scan.
+                    if (verifiedEntities.Contains(id)) continue;
                     var e = Live(tr, id);
-                    if (e == null || !Has(tr, e, ElementKey)) continue;
-                    var stamp = ReadStamp(tr, e, ElementKey);
+                    if (e == null || !Has(tr, e, elementKey)) continue;
+                    var stamp = ReadStamp(tr, e, elementKey);
                     HashSet<string> expected;
                     if (stamp == null) throw new InvalidOperationException("Повреждён паспорт одной из деталей облицовки.");
                     if (known.TryGetValue(stamp.run_id ?? "", out expected) &&
                         (stamp.owner != e.Handle.ToString() || !expected.Contains(e.Handle.ToString())))
                         throw new InvalidOperationException("Обнаружена копия или лишняя деталь выбранной раскладки. Ведомость не создана; приведите состав в соответствие и повторите построение.");
                 }
-                var validation = FacadeQuantitiesCore.BuildRows(result.Reports, result.SelectedZoneIds, true, false);
+                result.VerificationMilliseconds = timer.Elapsed.TotalMilliseconds;
+                timer.Restart();
+                var validation = FacadeQuantitiesCore.BuildRows(result.Reports, result.SelectedZoneIds, byZone, includeCutting);
+                result.AggregationMilliseconds = timer.Elapsed.TotalMilliseconds;
                 if (!validation.ok) throw new InvalidOperationException(FirstIssue(validation));
                 if (unknown > 0) result.Warnings.Add("Не учтены выбранные объекты без паспорта: " + unknown + ". Импорт ручных деталей в этой версии не поддерживается.");
+                result.Rows = validation;
+                digestParts.Sort(StringComparer.Ordinal);
+                var scope = new List<string>(result.SelectedZoneIds); scope.Sort(StringComparer.Ordinal);
+                result.Fingerprint = Hash(Serializer().Serialize(new object[] { digestParts, scope, result.Warnings, byZone, includeCutting }));
                 result.Ok = true;
             }
             catch (Exception ex)
             {
                 result.Ok = false; result.Reason = ex.Message;
+                if (frame) result.Reason = result.Reason.Replace("облицовки", "подсистемы")
+                    .Replace("облицовку", "подсистему").Replace("ATTILE или ATCLAD", "ATFRAME")
+                    .Replace("ATTILE/ATCLAD", "ATFRAME");
                 result.Reports.Clear(); result.SelectedZoneIds.Clear();
             }
             return result;
         }
 
         private static void VerifyEntry(Transaction tr, Database db, Entry entry, QuantityReport report,
-            string digest, List<ObjectId> refs)
+            string digest, List<ObjectId> refs, LayoutGeometryGuard.VerificationContext validationContext,
+            Dictionary<string, FrameSource> frameObserved)
         {
-            if (refs.Count != entry.owners.Count + entry.entity_handles.Count)
+            bool frame = entry.layout_key == "ATFRAME";
+            string ownerKey = frame ? FrameOwnerKey : OwnerKey, elementKey = frame ? FrameElementKey : ElementKey;
+            int sourceCount = frame && entry.frame_sources != null && entry.frame_sources.sources != null ? entry.frame_sources.sources.Count : 0;
+            if (refs.Count != entry.owners.Count + entry.entity_handles.Count + sourceCount)
                 throw new InvalidOperationException("Неполные связи паспорта деталей.");
             int pos = 0;
             var ownerHandles = new HashSet<string>();
@@ -281,10 +344,10 @@ namespace FacadeSafety
                 var e = Live(tr, refs[pos++]);
                 if (e == null || e.Handle.ToString() != owner.handle || !ownerHandles.Add(owner.handle))
                     throw new InvalidOperationException("Владелец раскладки удалён или скопирован; повторите построение.");
-                var stamp = ReadStamp(tr, e, OwnerKey);
+                var stamp = ReadStamp(tr, e, ownerKey);
                 if (!Matches(stamp, entry, digest, owner.handle) || !SameSet(stamp.zone_ids, owner.zone_ids))
                     throw new InvalidOperationException("Часть группы раскладки заменена или имеет другую ревизию. Повторите всю группу.");
-                var current = LayoutGeometryGuard.Verify(tr, db, e, entry.layout_key);
+                var current = frame ? FrameOwnerState(tr, e) : LayoutGeometryGuard.Verify(tr, db, e, entry.layout_key, validationContext);
                 if (!current.Ok) throw new InvalidOperationException(current.Reason);
                 if (current.Revision != owner.revision || current.Fingerprint != owner.fingerprint || current.LayoutDigest != owner.layout_digest)
                     throw new InvalidOperationException("Источник ведомости изменился после построения.");
@@ -308,12 +371,19 @@ namespace FacadeSafety
                 if (!seen.Add(handle) || e == null || e.Handle.ToString() != handle || !byHandle.TryGetValue(handle, out link))
                     throw new InvalidOperationException("Деталь или её графика удалена/заменена. Повторите раскладку.");
                 var element = elementOf[handle];
-                var stamp = ReadStamp(tr, e, ElementKey);
+                var stamp = ReadStamp(tr, e, elementKey);
                 if (!Matches(stamp, entry, digest, handle) || stamp.element_id != element.element_id || stamp.role != link.role ||
                     !SameSet(stamp.zone_ids, element.zone_ids))
                     throw new InvalidOperationException("Метка физической детали изменена или скопирована.");
                 if (Fingerprint(tr, e, cache, new HashSet<ObjectId>()) != link.fingerprint)
                     throw new InvalidOperationException("Геометрия, свойства или марка детали изменены после раскладки. Повторите ATTILE/ATCLAD; старые количества не используются.");
+            }
+            if (frame)
+            {
+                for (int i = 0; i < sourceCount; i++)
+                    if (refs[pos++].IsNull || refs[pos - 1].Handle.ToString() != entry.frame_sources.sources[i].handle)
+                        throw new InvalidOperationException("Ссылка на источник подсистемы изменена или скопирована.");
+                VerifyFrameSources(tr, db, entry.frame_sources, frameObserved);
             }
         }
 
@@ -346,7 +416,7 @@ namespace FacadeSafety
             foreach (Owner owner in entry.owners)
             {
                 var e = Live(tr, Resolve(db, owner.handle));
-                var stamp = e == null ? null : ReadStamp(tr, e, OwnerKey);
+                var stamp = e == null ? null : ReadStamp(tr, e, entry.layout_key == "ATFRAME" ? FrameOwnerKey : OwnerKey);
                 if (stamp != null && stamp.owner == owner.handle && stamp.run_id == run) return;
             }
             if (!root.IsWriteEnabled) root.UpgradeOpen();
@@ -457,7 +527,30 @@ namespace FacadeSafety
         private static void Point(StringBuilder s, Point3d p) { Number(s, p.X); Number(s, p.Y); Number(s, p.Z); }
         private static void Vector(StringBuilder s, Vector3d p) { Number(s, p.X); Number(s, p.Y); Number(s, p.Z); }
         private static string Hash(string text)
-        { using (var h = SHA256.Create()) return BitConverter.ToString(h.ComputeHash(Encoding.UTF8.GetBytes(text))).Replace("-", ""); }
+        {
+            using (var h = SHA256.Create())
+            {
+                // Most fingerprints are tiny; reserve chunk buffers only for large ledgers.
+                if (text.Length <= 4096) return BitConverter.ToString(h.ComputeHash(Encoding.UTF8.GetBytes(text))).Replace("-", "");
+                EncodeUtf8(text, (bytes, count) => h.TransformBlock(bytes, 0, count, bytes, 0));
+                h.TransformFinalBlock(new byte[0], 0, 0);
+                return BitConverter.ToString(h.Hash).Replace("-", "");
+            }
+        }
+        private static void EncodeUtf8(string text, Action<byte[], int> consume)
+        {
+            var chars = new char[4096];
+            var bytes = new byte[Encoding.UTF8.GetMaxByteCount(chars.Length)];
+            var encoder = Encoding.UTF8.GetEncoder();
+            for (int offset = 0; offset < text.Length;)
+            {
+                int count = Math.Min(chars.Length, text.Length - offset);
+                text.CopyTo(offset, chars, 0, count); offset += count;
+                // Retain encoder state when a surrogate pair crosses a chunk boundary.
+                int length = encoder.GetBytes(chars, 0, count, bytes, 0, offset == text.Length);
+                consume(bytes, length);
+            }
+        }
         private static JavaScriptSerializer Serializer() { return new JavaScriptSerializer { MaxJsonLength = int.MaxValue, RecursionLimit = 200 }; }
 
         private static ObjectId Resolve(Database db, string handle)
@@ -531,11 +624,11 @@ namespace FacadeSafety
         private static string Compress(string json)
         {
             CheckPayloadSize(Encoding.UTF8.GetByteCount(json));
-            byte[] data = Encoding.UTF8.GetBytes(json);
             using (var stream = new MemoryStream())
             {
-                using (var zip = new GZipStream(stream, CompressionMode.Compress, true)) zip.Write(data, 0, data.Length);
-                return "gzip1:" + Convert.ToBase64String(stream.ToArray());
+                using (var zip = new GZipStream(stream, CompressionMode.Compress, true))
+                    EncodeUtf8(json, (bytes, count) => zip.Write(bytes, 0, count));
+                return "gzip1:" + Convert.ToBase64String(stream.GetBuffer(), 0, checked((int)stream.Length));
             }
         }
         private static string Decompress(string packed)
@@ -551,7 +644,7 @@ namespace FacadeSafety
                     CheckPayloadSize(output.Length + count);
                     output.Write(buffer, 0, count);
                 }
-                return Encoding.UTF8.GetString(output.ToArray());
+                return Encoding.UTF8.GetString(output.GetBuffer(), 0, checked((int)output.Length));
             }
         }
         private static void CheckPayloadSize(long bytes)

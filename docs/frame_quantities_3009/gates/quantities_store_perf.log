@@ -1,0 +1,5 @@
+cladding_z10_p3 PASS
+cladding_z40_p3 PASS
+frame_z10_p3 PASS
+frame_z40_p3 PASS
+Quantity store performance: PASS report: /workspace/scratch/ba306982747c/frame_quantities_verification/final2/gates/quantities_store_perf/manifest.json

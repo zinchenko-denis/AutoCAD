@@ -1,0 +1,25 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net48</TargetFramework>
+    <LangVersion>latest</LangVersion>
+    <AssemblyName>QuantityStorePerfCheck</AssemblyName>
+    <StartupObject>QuantityStorePerfCheck</StartupObject>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+    <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="QuantityStoreCheck.cs" />
+    <Compile Include="QuantityStorePerfCheck.cs" />
+    <Compile Include="QuantityCadDoubles.cs" />
+    <Compile Include="../../Common/GeometryFingerprint.cs" Link="GeometryFingerprint.cs" />
+    <Compile Include="../../Common/ZoneGeometryGuard.cs" Link="ZoneGeometryGuard.cs" />
+    <Compile Include="../../Common/LayoutGeometryGuard.cs" Link="LayoutGeometryGuard.cs" />
+    <Compile Include="../../Common/FacadeQuantities.cs" Link="FacadeQuantities.cs" />
+    <Compile Include="../../Common/FacadeQuantityStore.cs" Link="FacadeQuantityStore.cs" />
+    <Compile Include="../../Common/FacadeQuantityStore.Frame.cs" Link="FacadeQuantityStore.Frame.cs" />
+    <Reference Include="System.Web.Extensions" />
+    <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.3" PrivateAssets="all" />
+  </ItemGroup>
+</Project>

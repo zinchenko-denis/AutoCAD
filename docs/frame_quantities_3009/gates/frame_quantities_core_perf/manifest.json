@@ -1,0 +1,122 @@
+{
+  "scope": "Production pure C# frame quantities; no live AutoCAD validation.",
+  "status": "PASS",
+  "sizes": [
+    10000,
+    50000
+  ],
+  "clock_is_observation_only": true,
+  "source_sha256": {
+    "Common/FacadeQuantities.cs": "3b63d40603e95b7215bc946af16b9b694142b89e648cd6520bc481bc2b984c19",
+    "tools/frame_quantities_3009/FrameCorePerf.cs": "1fe36ad3dd60b2b03d5631b9f4123579133d9eb11dfc093645b9b28c39ec4685"
+  },
+  "results": [
+    {
+      "count": 10000,
+      "status": "PASS",
+      "clock_is_observation_only": true,
+      "generated_s": 0.0229111,
+      "managed_bytes": 18488904,
+      "peak_working_set": null,
+      "scope": "Pure C# frame quantities; no AutoCAD host, DWG or UI.",
+      "workloads": [
+        {
+          "selection": "all",
+          "count": 10000,
+          "selected_count": 10000,
+          "status": "PASS",
+          "core_s": 0.0929661,
+          "rows": 27,
+          "actual_length_m": 9438.825000000004,
+          "diagnostics": {
+            "reports_seen": 1,
+            "reports_compared": 0,
+            "elements_seen": 10000,
+            "elements_validated": 10000,
+            "elements_compared": 0,
+            "cad_links_checked": 20000,
+            "shapes_validated": 0,
+            "canonical_report_keys": 0,
+            "canonical_element_keys": 0,
+            "aggregate_keys_built": 10000
+          }
+        },
+        {
+          "selection": "Z0",
+          "count": 10000,
+          "selected_count": 2500,
+          "status": "PASS",
+          "core_s": 0.032100199999999995,
+          "rows": 9,
+          "actual_length_m": 3146.275000000001,
+          "diagnostics": {
+            "reports_seen": 1,
+            "reports_compared": 0,
+            "elements_seen": 10000,
+            "elements_validated": 10000,
+            "elements_compared": 0,
+            "cad_links_checked": 20000,
+            "shapes_validated": 0,
+            "canonical_report_keys": 0,
+            "canonical_element_keys": 0,
+            "aggregate_keys_built": 2500
+          }
+        }
+      ]
+    },
+    {
+      "count": 50000,
+      "status": "PASS",
+      "clock_is_observation_only": true,
+      "generated_s": 0.0792462,
+      "managed_bytes": 57781504,
+      "peak_working_set": null,
+      "scope": "Pure C# frame quantities; no AutoCAD host, DWG or UI.",
+      "workloads": [
+        {
+          "selection": "all",
+          "count": 50000,
+          "selected_count": 50000,
+          "status": "PASS",
+          "core_s": 0.43803129999999996,
+          "rows": 27,
+          "actual_length_m": 47188.89999999989,
+          "diagnostics": {
+            "reports_seen": 1,
+            "reports_compared": 0,
+            "elements_seen": 50000,
+            "elements_validated": 50000,
+            "elements_compared": 0,
+            "cad_links_checked": 100000,
+            "shapes_validated": 0,
+            "canonical_report_keys": 0,
+            "canonical_element_keys": 0,
+            "aggregate_keys_built": 50000
+          }
+        },
+        {
+          "selection": "Z0",
+          "count": 50000,
+          "selected_count": 12500,
+          "status": "PASS",
+          "core_s": 0.231228,
+          "rows": 9,
+          "actual_length_m": 15728.349999999962,
+          "diagnostics": {
+            "reports_seen": 1,
+            "reports_compared": 0,
+            "elements_seen": 50000,
+            "elements_validated": 50000,
+            "elements_compared": 0,
+            "cad_links_checked": 100000,
+            "shapes_validated": 0,
+            "canonical_report_keys": 0,
+            "canonical_element_keys": 0,
+            "aggregate_keys_built": 12500
+          }
+        }
+      ]
+    }
+  ],
+  "compile_returncode": 0
+}

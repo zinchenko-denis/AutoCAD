@@ -33,6 +33,23 @@ namespace FacadeSafety
             public readonly List<ObjectId> ZoneHatchIds = new List<ObjectId>();
         }
 
+        // One read-only validation operation only. Never retain across a dialog,
+        // transaction mutation, regeneration or a later command.
+        internal sealed class VerificationContext
+        {
+            internal readonly Dictionary<ObjectId, ZoneGeometryResult> Zones = new Dictionary<ObjectId, ZoneGeometryResult>();
+            internal readonly Dictionary<string, List<ObjectId>> SourceGroups = new Dictionary<string, List<ObjectId>>();
+        }
+
+        private static ZoneGeometryResult VerifyZone(Transaction tr, Database db, Entity entity, VerificationContext context)
+        {
+            ZoneGeometryResult result;
+            if (context != null && context.Zones.TryGetValue(entity.ObjectId, out result)) return result;
+            result = ZoneGeometryGuard.Verify(tr, db, entity, null);
+            if (context != null && result.Ok) context.Zones[entity.ObjectId] = result;
+            return result;
+        }
+
         internal static Snapshot Capture(Transaction tr, Database db, IEnumerable<ObjectId> rawSourceIds,
             IEnumerable<ZoneGeometryResult> zoneSources)
         {
@@ -96,9 +113,12 @@ namespace FacadeSafety
         }
 
         internal static Result Verify(Transaction tr, Database db, Entity carrier, string layoutKey)
-        { return VerifyCore(tr, db, carrier, layoutKey, true); }
+        { return VerifyCore(tr, db, carrier, layoutKey, true, null); }
 
-        private static Result VerifyCore(Transaction tr, Database db, Entity carrier, string layoutKey, bool checkCanonical)
+        internal static Result Verify(Transaction tr, Database db, Entity carrier, string layoutKey, VerificationContext context)
+        { return VerifyCore(tr, db, carrier, layoutKey, true, context); }
+
+        private static Result VerifyCore(Transaction tr, Database db, Entity carrier, string layoutKey, bool checkCanonical, VerificationContext context)
         {
             try
             {
@@ -124,17 +144,24 @@ namespace FacadeSafety
                 if (Text(d, "fingerprint") != Digest(Serializer().Serialize(sources)))
                     return Fail("Снимок источников повреждён. Повторите раскладку.");
                 string reason;
-                if (!SourcesMatch(tr, db, sources, refs, out reason)) return Fail(reason);
+                List<ObjectId> priorRefs = null;
+                string group = Text(d, "fingerprint");
+                bool prior = context != null && context.SourceGroups.TryGetValue(group, out priorRefs) && SameRefs(priorRefs, refs);
+                if (!prior)
+                {
+                    if (!SourcesMatch(tr, db, sources, refs, out reason, context)) return Fail(reason);
+                    if (context != null) context.SourceGroups[group] = new List<ObjectId>(refs);
+                }
                 var result = new Result { Ok = true, Reason = "", Fingerprint = Text(d, "fingerprint"),
                     Revision = Text(d, "revision"), LayoutDigest = Text(d, "layout_digest") };
                 for (int i = 0; i < sources.Count; i++)
                     (Text(sources[i], "kind") == "raw" ? result.RawSourceIds : result.ZoneHatchIds).Add(refs[i]);
                 if (checkCanonical && (carrier is Hatch || carrier is MText))
                 {
-                    var zone = ZoneGeometryGuard.Verify(tr, db, carrier, null);
+                    var zone = VerifyZone(tr, db, carrier, context);
                     if (!zone.Ok) return Fail(zone.Reason);
                     var hatch = tr.GetObject(zone.HatchId, OpenMode.ForRead) as Entity;
-                    var current = carrier.ObjectId == zone.HatchId ? result : VerifyCore(tr, db, hatch, layoutKey, false);
+                    var current = carrier.ObjectId == zone.HatchId ? result : VerifyCore(tr, db, hatch, layoutKey, false, context);
                     string stampJson = Read(tr, hatch, CurrentKey, null);
                     var stamp = string.IsNullOrEmpty(stampJson) ? null :
                         Serializer().DeserializeObject(stampJson) as Dictionary<string, object>;
@@ -149,8 +176,15 @@ namespace FacadeSafety
             catch (Exception) { return Fail("Не удалось проверить источники раскладки. Повторите ATTILE или ATCLAD."); }
         }
 
+        private static bool SameRefs(List<ObjectId> a, List<ObjectId> b)
+        {
+            if (a == null || a.Count != b.Count) return false;
+            for (int i = 0; i < a.Count; i++) if (a[i] != b[i]) return false;
+            return true;
+        }
+
         private static bool SourcesMatch(Transaction tr, Database db, List<Dictionary<string, object>> sources,
-            List<ObjectId> refs, out string reason)
+            List<ObjectId> refs, out string reason, VerificationContext context = null)
         {
             reason = "Исходные контуры или зона изменены. Повторите ATTILE или ATCLAD; для зоны сначала ATFZONE.";
             if (sources == null || refs == null || sources.Count == 0 || sources.Count != refs.Count) return false;
@@ -167,7 +201,7 @@ namespace FacadeSafety
                 }
                 else if (Text(source, "kind") == "zone")
                 {
-                    var zone = ZoneGeometryGuard.Verify(tr, db, ent, null);
+                    var zone = VerifyZone(tr, db, ent, context);
                     if (!zone.Ok || zone.ZoneId != Text(source, "zone_id") || zone.Fingerprint != Text(source, "geometry"))
                         return false;
                 }

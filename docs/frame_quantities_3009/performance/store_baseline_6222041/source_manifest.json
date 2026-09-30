@@ -1,0 +1,13 @@
+{
+  "revision": "6222041b38cf63b19373c6c155319b850264652f",
+  "source_sha256": {
+    "Common/GeometryFingerprint.cs": "24114ef7a18a56415313b009d7819c94190efa5ea517df2081d1f51951819332",
+    "Common/ZoneGeometryGuard.cs": "daf06e2822a4d9ef2be818df1bf904779fa202adb1e5bce7fc0ba49c084970b8",
+    "Common/LayoutGeometryGuard.cs": "289d6d51ede5861c7b27ff106c150aa7b5fa456ddce86ef5e0b5ee727c0eae9d",
+    "Common/FacadeQuantities.cs": "5b9be37459fa38b4cadc730852dcb97c52ab67ff90877f8fb240d968f10442b6",
+    "Common/FacadeQuantityStore.cs": "2c9096e0b099061f434e7b54bd3b8d127272d66286672b33a724c74d543c1fb3",
+    "tools/quantities_3009/QuantityStoreCheck.cs": "91101273c73a62d552b20b5d0379517dc9f2dca329ca0285c2b65f571432b9ce",
+    "tools/quantities_3009/QuantityCadDoubles.cs": "79d8e825e451790429ef8def05c08adf181be77191b1a57a6d77eafaaae12d10"
+  },
+  "scope": "Scratch instrumented CAD doubles; production files extracted byte-exactly from Git. No AutoCAD runtime timings."
+}

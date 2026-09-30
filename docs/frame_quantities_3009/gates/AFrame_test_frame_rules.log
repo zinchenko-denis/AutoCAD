@@ -1,0 +1,27 @@
+test_cladding_attachment_scope_is_separate_from_scheme (__main__.ContractTests.test_cladding_attachment_scope_is_separate_from_scheme) ... ok
+test_default_identity_matches_existing_planner_default (__main__.ContractTests.test_default_identity_matches_existing_planner_default) ... ok
+test_fire_note_is_conditional_without_universal_number (__main__.ContractTests.test_fire_note_is_conditional_without_universal_number) ... ok
+test_frame_only_does_not_claim_attachment_output (__main__.ContractTests.test_frame_only_does_not_claim_attachment_output) ... ok
+test_known_named_overrides_do_not_mutate_inputs (__main__.ContractTests.test_known_named_overrides_do_not_mutate_inputs) ... ok
+test_manual_preset_is_not_a_calculation_limit (__main__.ContractTests.test_manual_preset_is_not_a_calculation_limit) ... ok
+test_named_presets_and_three_schemes_remain_available (__main__.ContractTests.test_named_presets_and_three_schemes_remain_available) ... ok
+test_nordfox_is_separate_aluminium_and_unsupported (__main__.ContractTests.test_nordfox_is_separate_aluminium_and_unsupported) ... ok
+test_returned_metadata_cannot_mutate_registry_or_contract (__main__.ContractTests.test_returned_metadata_cannot_mutate_registry_or_contract) ... ok
+test_runtime_contract_does_not_open_catalog_files (__main__.ContractTests.test_runtime_contract_does_not_open_catalog_files) ... ok
+test_type5_is_not_mapped_to_interfloor (__main__.ContractTests.test_type5_is_not_mapped_to_interfloor) ... ok
+test_unknown_cladding_is_not_porcelain (__main__.ContractTests.test_unknown_cladding_is_not_porcelain) ... ok
+test_unknown_named_override_is_not_custom (__main__.ContractTests.test_unknown_named_override_is_not_custom) ... ok
+test_unknown_scheme_does_not_fall_through_to_vertical (__main__.ContractTests.test_unknown_scheme_does_not_fall_through_to_vertical) ... ok
+test_unnamed_custom_keeps_parameters_without_manufacturer_claim (__main__.ContractTests.test_unnamed_custom_keeps_parameters_without_manufacturer_claim) ... ok
+test_engine_retains_each_zones_opening_scope (__main__.PlannerIntegration.test_engine_retains_each_zones_opening_scope) ... ok
+test_scope_survives_clamps_only_early_return (__main__.PlannerIntegration.test_scope_survives_clamps_only_early_return) ... ok
+test_unknown_identity_refused_before_all_geometry_modes (__main__.PlannerIntegration.test_unknown_identity_refused_before_all_geometry_modes) ... ok
+test_generated_json_matches_single_python_source (__main__.RegistryIntegrity.test_generated_json_matches_single_python_source) ... ok
+test_known_names_match_actual_preset_catalog (__main__.RegistryIntegrity.test_known_names_match_actual_preset_catalog) ... ok
+test_public_source_links_exist_without_private_repository (__main__.RegistryIntegrity.test_public_source_links_exist_without_private_repository) ... ok
+test_registry_references_and_page_identities_resolve (__main__.RegistryIntegrity.test_registry_references_and_page_identities_resolve) ... ok
+
+----------------------------------------------------------------------
+Ran 22 tests in 0.007s
+
+OK

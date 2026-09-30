@@ -1,0 +1,245 @@
+{
+  "scope": "Instrumented CAD doubles, cladding baseline 6222041 versus final Q05. Times are observations; process peak includes preceding phases. Source geometries intentionally coincide, physical polylines have no separate LayerId/dynamic definitions. Not AutoCAD.",
+  "cases": [
+    {
+      "case": "z10_p300",
+      "phase": "quantity_store",
+      "before": {
+        "get_object_read": 10040,
+        "hatch_loops_read": 640,
+        "modelspace_visits": 0,
+        "elapsed_ms": 1121.1770000000001,
+        "peak_working_set_bytes": 60497920,
+        "managed_live_bytes_after": 31721080
+      },
+      "after": {
+        "get_object_read": 6450,
+        "hatch_loops_read": 40,
+        "modelspace_visits": 0,
+        "elapsed_ms": 519.2578,
+        "peak_working_set_bytes": 54280192,
+        "managed_live_bytes_after": 26414128
+      }
+    },
+    {
+      "case": "z10_p300",
+      "phase": "quantity_read",
+      "before": {
+        "get_object_read": 25156,
+        "hatch_loops_read": 640,
+        "modelspace_visits": 3040,
+        "elapsed_ms": 1623.1199000000001,
+        "peak_working_set_bytes": 74715136,
+        "managed_live_bytes_after": 46778376
+      },
+      "after": {
+        "get_object_read": 9566,
+        "hatch_loops_read": 40,
+        "modelspace_visits": 3040,
+        "elapsed_ms": 895.6353,
+        "peak_working_set_bytes": 69271552,
+        "managed_live_bytes_after": 40182000
+      }
+    },
+    {
+      "case": "z50_p300",
+      "phase": "quantity_store",
+      "before": {
+        "get_object_read": 122200,
+        "hatch_loops_read": 15200,
+        "modelspace_visits": 0,
+        "elapsed_ms": 14224.2135,
+        "peak_working_set_bytes": 164458496,
+        "managed_live_bytes_after": 105184824
+      },
+      "after": {
+        "get_object_read": 32250,
+        "hatch_loops_read": 200,
+        "modelspace_visits": 0,
+        "elapsed_ms": 2654.6147,
+        "peak_working_set_bytes": 141320192,
+        "managed_live_bytes_after": 86263624
+      }
+    },
+    {
+      "case": "z50_p300",
+      "phase": "quantity_read",
+      "before": {
+        "get_object_read": 197756,
+        "hatch_loops_read": 15200,
+        "modelspace_visits": 15200,
+        "elapsed_ms": 17307.4607,
+        "peak_working_set_bytes": 269656064,
+        "managed_live_bytes_after": 230467968
+      },
+      "after": {
+        "get_object_read": 47806,
+        "hatch_loops_read": 200,
+        "modelspace_visits": 15200,
+        "elapsed_ms": 4291.839,
+        "peak_working_set_bytes": 229519360,
+        "managed_live_bytes_after": 195195584
+      }
+    },
+    {
+      "case": "z100_p300",
+      "phase": "quantity_store",
+      "before": {
+        "get_object_read": 424400,
+        "hatch_loops_read": 60400,
+        "modelspace_visits": 0,
+        "elapsed_ms": 54195.894100000005,
+        "peak_working_set_bytes": 300326912,
+        "managed_live_bytes_after": 212446176
+      },
+      "after": {
+        "get_object_read": 64500,
+        "hatch_loops_read": 400,
+        "modelspace_visits": 0,
+        "elapsed_ms": 5383.8229,
+        "peak_working_set_bytes": 257253376,
+        "managed_live_bytes_after": 174428544
+      }
+    },
+    {
+      "case": "z100_p300",
+      "phase": "quantity_read",
+      "before": {
+        "get_object_read": 575506,
+        "hatch_loops_read": 60400,
+        "modelspace_visits": 30400,
+        "elapsed_ms": 59815.3865,
+        "peak_working_set_bytes": 551469056,
+        "managed_live_bytes_after": 451844528
+      },
+      "after": {
+        "get_object_read": 95606,
+        "hatch_loops_read": 400,
+        "modelspace_visits": 30400,
+        "elapsed_ms": 9219.241600000001,
+        "peak_working_set_bytes": 462299136,
+        "managed_live_bytes_after": 421163496
+      }
+    },
+    {
+      "case": "z1_p10000",
+      "phase": "quantity_store",
+      "before": {
+        "get_object_read": 20080,
+        "hatch_loops_read": 10,
+        "modelspace_visits": 0,
+        "elapsed_ms": 2370.9141,
+        "peak_working_set_bytes": 109940736,
+        "managed_live_bytes_after": 70356264
+      },
+      "after": {
+        "get_object_read": 20045,
+        "hatch_loops_read": 4,
+        "modelspace_visits": 0,
+        "elapsed_ms": 1929.4449000000002,
+        "peak_working_set_bytes": 101179392,
+        "managed_live_bytes_after": 54803696
+      }
+    },
+    {
+      "case": "z1_p10000",
+      "phase": "quantity_read",
+      "before": {
+        "get_object_read": 70097,
+        "hatch_loops_read": 10,
+        "modelspace_visits": 10004,
+        "elapsed_ms": 3979.9147000000003,
+        "peak_working_set_bytes": 167813120,
+        "managed_live_bytes_after": 137321704
+      },
+      "after": {
+        "get_object_read": 30062,
+        "hatch_loops_read": 4,
+        "modelspace_visits": 10004,
+        "elapsed_ms": 3218.5987,
+        "peak_working_set_bytes": 152915968,
+        "managed_live_bytes_after": 121966288
+      }
+    },
+    {
+      "case": "z1_p50000",
+      "phase": "quantity_store",
+      "before": {
+        "get_object_read": 100080,
+        "hatch_loops_read": 10,
+        "modelspace_visits": 0,
+        "elapsed_ms": 10990.4071,
+        "peak_working_set_bytes": 422227968,
+        "managed_live_bytes_after": 335050136
+      },
+      "after": {
+        "get_object_read": 100045,
+        "hatch_loops_read": 4,
+        "modelspace_visits": 0,
+        "elapsed_ms": 7868.3525,
+        "peak_working_set_bytes": 360710144,
+        "managed_live_bytes_after": 258548448
+      }
+    },
+    {
+      "case": "z1_p50000",
+      "phase": "quantity_read",
+      "before": {
+        "get_object_read": 350097,
+        "hatch_loops_read": 10,
+        "modelspace_visits": 50004,
+        "elapsed_ms": 21246.195200000002,
+        "peak_working_set_bytes": 699981824,
+        "managed_live_bytes_after": 663178144
+      },
+      "after": {
+        "get_object_read": 150062,
+        "hatch_loops_read": 4,
+        "modelspace_visits": 50004,
+        "elapsed_ms": 15657.485700000001,
+        "peak_working_set_bytes": 622862336,
+        "managed_live_bytes_after": 585343984
+      }
+    },
+    {
+      "case": "z1_p150000",
+      "phase": "quantity_store",
+      "before": {
+        "get_object_read": 300080,
+        "hatch_loops_read": 10,
+        "modelspace_visits": 0,
+        "elapsed_ms": 32610.5341,
+        "peak_working_set_bytes": 1203757056,
+        "managed_live_bytes_after": 1017482872
+      },
+      "after": {
+        "get_object_read": 300045,
+        "hatch_loops_read": 4,
+        "modelspace_visits": 0,
+        "elapsed_ms": 26262.7503,
+        "peak_working_set_bytes": 819138560,
+        "managed_live_bytes_after": 785391376
+      }
+    },
+    {
+      "case": "z1_p150000",
+      "phase": "quantity_read",
+      "before": {
+        "get_object_read": 1050097,
+        "hatch_loops_read": 10,
+        "modelspace_visits": 150004,
+        "elapsed_ms": 66810.56880000001,
+        "peak_working_set_bytes": 2056896512,
+        "managed_live_bytes_after": 2005819576
+      },
+      "after": {
+        "get_object_read": 450062,
+        "hatch_loops_read": 4,
+        "modelspace_visits": 150004,
+        "elapsed_ms": 44811.8193,
+        "peak_working_set_bytes": 1792798720,
+        "managed_live_bytes_after": 1742027648
+      }
+    }
+  ]
+}

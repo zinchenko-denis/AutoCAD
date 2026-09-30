@@ -1,0 +1,19 @@
+{
+  "description": "Synthetic fixture: complete Xrecord data written by actual published production Store at 6222041. Not private project data or native DWG save/reopen simulation.",
+  "writer_revision": "6222041b38cf63b19373c6c155319b850264652f",
+  "writer_production_sha256": {
+    "Common/GeometryFingerprint.cs": "24114ef7a18a56415313b009d7819c94190efa5ea517df2081d1f51951819332",
+    "Common/ZoneGeometryGuard.cs": "daf06e2822a4d9ef2be818df1bf904779fa202adb1e5bce7fc0ba49c084970b8",
+    "Common/LayoutGeometryGuard.cs": "289d6d51ede5861c7b27ff106c150aa7b5fa456ddce86ef5e0b5ee727c0eae9d",
+    "Common/FacadeQuantities.cs": "5b9be37459fa38b4cadc730852dcb97c52ab67ff90877f8fb240d968f10442b6",
+    "Common/FacadeQuantityStore.cs": "2c9096e0b099061f434e7b54bd3b8d127272d66286672b33a724c74d543c1fb3"
+  },
+  "fixture_sha256": "3fd4952bdcc9a98b89ab86f2cbda055ef57cd81d91668d76188286131be342dd",
+  "records": 14,
+  "expected": {
+    "physical_elements": 1,
+    "area_m2": 0.36
+  },
+  "generation_probe": "../QuantityLegacyCompatibilityProbe.cs",
+  "creation": "Compile the probe with writer revision production and original CAD doubles/test fixtures; run write fixtures.json cladding_v1_6222041_xrecords.json. Current integration test imports every original record/soft reference, without regenerating its entry digest."
+}

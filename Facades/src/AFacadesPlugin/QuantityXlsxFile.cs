@@ -11,12 +11,15 @@ namespace AFacadesPlugin
         private readonly string _path, _temporary, _backup;
         private bool _published, _complete, _hadFile;
         internal QuantityXlsxFile(string path, List<object[]> rows)
+            : this(path, "Облицовка", rows) { }
+
+        internal QuantityXlsxFile(string path, string sheetName, List<object[]> rows)
         {
             _path = Path.GetFullPath(path);
             string token = Guid.NewGuid().ToString("N");
             _temporary = _path + "." + token + ".tmp";
             _backup = _path + "." + token + ".bak";
-            try { XlsxWriter.WriteExact(_temporary, "Облицовка", rows); }
+            try { XlsxWriter.WriteExact(_temporary, sheetName, rows); }
             catch { Delete(_temporary); throw; }
         }
         internal void Publish()

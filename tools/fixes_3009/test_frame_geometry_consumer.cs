@@ -55,6 +55,8 @@ namespace FacadeSafety
     }
     static class LayoutGeometryGuard
     {
+        public class VerificationContext { }
+        public static VerificationContext LastContext;
         public class Result
         {
             public bool Ok;
@@ -68,6 +70,11 @@ namespace FacadeSafety
             Keys.Add(key);
             if (e.ThrowGuard) throw new InvalidOperationException("unreadable snapshot");
             return e.Layouts.ContainsKey(key) ? e.Layouts[key] : new Result { Ok = false, Reason = "missing snapshot" };
+        }
+        public static Result Verify(Transaction tr, Database db, Entity e, string key, VerificationContext context)
+        {
+            LastContext = context;
+            return Verify(tr, db, e, key);
         }
     }
 }
@@ -123,6 +130,10 @@ __ACTUAL_METHODS__
         Check(TryReadVerifiedLayout(tr, db, e, ser, out metadata, out proof, out reason)
             && ((object[])metadata["joints_x"]).Length == 1 && proof.RawSourceIds.Count == 2,
             "fresh raw outer and opening proof accompanies axes");
+        var context = new FacadeSafety.LayoutGeometryGuard.VerificationContext();
+        Check(TryReadVerifiedLayout(tr, db, e, ser, out metadata, out proof, out reason, context)
+            && Object.ReferenceEquals(context, FacadeSafety.LayoutGeometryGuard.LastContext),
+            "shared verification context is passed to the actual layout guard call");
         e.Layouts["ATCLAD"].Ok = false; e.Layouts["ATCLAD"].Reason = "source changed with same area";
         Check(!TryReadVerifiedLayout(tr, db, e, ser, out metadata, out proof, out reason)
             && metadata == null && reason.Contains("same area"), "same-area source rejection stops old axes");

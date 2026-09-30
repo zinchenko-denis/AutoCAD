@@ -161,6 +161,29 @@ jobs:
       # короткая синтетика фасадов — обязательны. Известные открытые вопросы
       # X6 — ATSPEC, модуль Алексея — остаётся явным исключением.
       # Фасадные регрессии 30.09 обязательны; прежнее исключение F16 снято.
+      - name: Frame quantities (core, real producers, XLSX and bounded operation counts)
+        shell: pwsh
+        env:
+          PYTHONUTF8: "1"
+          PYTHONIOENCODING: "utf-8"
+        run: |
+          python tools/frame_quantities_3009/test_frame_core.py --out frame_quantity_core_results
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          python tools/frame_quantities_3009/test_frame_core_perf.py --quick --out frame_quantity_perf_results
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          python tools/frame_quantities_3009/test_frame_producer.py --out frame_quantity_producer_results
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          python tools/frame_quantities_3009/test_frame_table.py --out frame_quantity_table_results
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          python tools/frame_quantities_3009/test_frame_engine_perf.py --targets "1000,3000" --out frame_engine_perf_results
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          dotnet build tools/quantities_3009/QuantityStorePerfCheck.csproj -c Release -o build_quantity_store_perf
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          python tools/quantities_3009/test_quantity_store_perf.py --exe build_quantity_store_perf/QuantityStorePerfCheck.exe --quick --out quantity_store_perf_results
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          python tools/frame_quantities_3009/test_store_encoding.py --out quantity_store_encoding_results
+          exit $LASTEXITCODE
+
       - name: Facades quick gates (audits, contracts, synth)
         shell: bash
         env:

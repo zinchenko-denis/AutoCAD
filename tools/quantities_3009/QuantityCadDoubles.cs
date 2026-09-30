@@ -8,6 +8,26 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 
+internal static class CadCounters
+{
+    public static long ObjectReads, ObjectWrites, DictionaryContains, DictionaryGet, DictionarySet,
+        XrecordReads, XrecordWrites, BufferEnumerations, BufferValues, BufferTextChars,
+        PointsRead, BulgesRead, HatchLoopsRead, TypedValuesAllocated, ObjectsCreated, ModelSpaceVisits;
+    public static void Reset() {
+        ObjectReads=ObjectWrites=DictionaryContains=DictionaryGet=DictionarySet=XrecordReads=XrecordWrites=0;
+        BufferEnumerations=BufferValues=BufferTextChars=PointsRead=BulgesRead=HatchLoopsRead=TypedValuesAllocated=ObjectsCreated=ModelSpaceVisits=0;
+    }
+    public static Dictionary<string,object> Snapshot() {
+        return new Dictionary<string,object> {
+            {"get_object_read",ObjectReads},{"get_object_write",ObjectWrites},
+            {"dictionary_contains",DictionaryContains},{"dictionary_get",DictionaryGet},{"dictionary_set",DictionarySet},
+            {"xrecord_data_get",XrecordReads},{"xrecord_data_set",XrecordWrites},
+            {"buffer_enumerations",BufferEnumerations},{"buffer_values",BufferValues},{"buffer_text_chars",BufferTextChars},
+            {"points_read",PointsRead},{"bulges_read",BulgesRead},{"hatch_loops_read",HatchLoopsRead},
+            {"typed_values_allocated",TypedValuesAllocated},{"objects_created",ObjectsCreated},{"modelspace_visits",ModelSpaceVisits}
+        };
+    }
+}
 namespace Autodesk.AutoCAD.Geometry
 {
     public struct Point2d
@@ -139,7 +159,7 @@ namespace Autodesk.AutoCAD.DatabaseServices
         {
             if (!obj.ObjectId.IsNull) return obj;
             obj.Database = this; obj.Handle = new Handle(++next); obj.ObjectId = new ObjectId { Item = obj };
-            objects.Add(obj.Handle.Value, obj);
+            objects.Add(obj.Handle.Value, obj); CadCounters.ObjectsCreated++;
             if (modelSpace != null && obj is Entity) modelSpace.Children.Add(obj.ObjectId);
             return obj;
         }
@@ -162,6 +182,7 @@ namespace Autodesk.AutoCAD.DatabaseServices
         public Transaction(Database db) { database = db; }
         public DBObject GetObject(ObjectId id, OpenMode mode)
         {
+            if (mode == OpenMode.ForRead) CadCounters.ObjectReads++; else CadCounters.ObjectWrites++;
             if (id.IsNull || id.IsErased) throw new InvalidOperationException("Missing/erased object");
             if (id.Item.Database != database) throw new InvalidOperationException("Foreign database object");
             return id.Item;
@@ -173,15 +194,15 @@ namespace Autodesk.AutoCAD.DatabaseServices
     public class DBDictionary : DBObject
     {
         public readonly Dictionary<string, ObjectId> Items = new Dictionary<string, ObjectId>();
-        public bool Contains(string key) { return Items.ContainsKey(key); }
-        public ObjectId GetAt(string key) { return Items[key]; }
-        public ObjectId SetAt(string key, DBObject value) { Items[key] = Database.Add(value).ObjectId; return value.ObjectId; }
+        public bool Contains(string key) { CadCounters.DictionaryContains++; return Items.ContainsKey(key); }
+        public ObjectId GetAt(string key) { CadCounters.DictionaryGet++; return Items[key]; }
+        public ObjectId SetAt(string key, DBObject value) { CadCounters.DictionarySet++; Items[key] = Database.Add(value).ObjectId; return value.ObjectId; }
         public ObjectId Remove(string key) { var old = Items[key]; Items.Remove(key); return old; }
     }
     public class TypedValue
     {
         public int TypeCode; public object Value;
-        public TypedValue(int typeCode, object value) { TypeCode=typeCode; Value=value; }
+        public TypedValue(int typeCode, object value) { CadCounters.TypedValuesAllocated++; TypeCode=typeCode; Value=value; }
     }
     public class ResultBuffer : IEnumerable<TypedValue>, IDisposable
     {
@@ -189,11 +210,20 @@ namespace Autodesk.AutoCAD.DatabaseServices
         public ResultBuffer(params TypedValue[] initial) { values = new List<TypedValue>(initial); }
         public void Add(TypedValue value) { values.Add(value); }
         public TypedValue[] AsArray() { return values.ToArray(); }
-        public IEnumerator<TypedValue> GetEnumerator() { return values.GetEnumerator(); }
+        public IEnumerator<TypedValue> GetEnumerator() {
+            CadCounters.BufferEnumerations++;
+            foreach (var item in values) {
+                CadCounters.BufferValues++;
+                if (item.TypeCode == (int)DxfCode.Text && item.Value is string) CadCounters.BufferTextChars+=((string)item.Value).Length;
+                yield return item;
+            }
+        }
         IEnumerator IEnumerable.GetEnumerator() { return GetEnumerator(); }
         public void Dispose() { }
     }
-    public class Xrecord : DBObject { public ResultBuffer Data; public bool XlateReferences; }
+    public class Xrecord : DBObject { private ResultBuffer data;
+        public ResultBuffer Data { get { CadCounters.XrecordReads++; return data; } set { CadCounters.XrecordWrites++; data=value; } }
+        public bool XlateReferences; }
     public class LayerTableRecord : DBObject { public Autodesk.AutoCAD.Colors.Color Color = new Autodesk.AutoCAD.Colors.Color(); }
     public class Table : Entity { }
     public class Line : Entity { public Point3d StartPoint, EndPoint; public Vector3d Normal = Vector3d.ZAxis; }
@@ -207,7 +237,7 @@ namespace Autodesk.AutoCAD.DatabaseServices
     public class AttributeDefinition : DBText { public string Tag; public bool Constant; }
     public class AttributeReference : DBText { public string Tag; }
     public class DBPoint : Entity { public Point3d Position; }
-    public class Solid : Entity { public readonly Point3d[] Points = new Point3d[4]; public Point3d GetPointAt(int i) { return Points[i]; } }
+    public class Solid : Entity { public readonly Point3d[] Points = new Point3d[4]; public Point3d GetPointAt(int i) { CadCounters.PointsRead++; return Points[i]; } }
     public class BlockTable : DBObject {
         public readonly Dictionary<string,ObjectId> Items = new Dictionary<string,ObjectId>();
         public ObjectId this[string name] { get { return Items[name]; } }
@@ -219,7 +249,9 @@ namespace Autodesk.AutoCAD.DatabaseServices
         public Point3d Origin;
         public readonly List<ObjectId> Children = new List<ObjectId>();
         public ObjectId AppendEntity(Entity entity) { Database.Add(entity); Children.Add(entity.ObjectId); return entity.ObjectId; }
-        public IEnumerator<ObjectId> GetEnumerator() { return Children.GetEnumerator(); }
+        public IEnumerator<ObjectId> GetEnumerator() {
+            foreach(var child in Children) { if (Name == ModelSpace) CadCounters.ModelSpaceVisits++; yield return child; }
+        }
         IEnumerator IEnumerable.GetEnumerator() { return GetEnumerator(); }
     }
     public class BlockReference : Entity
@@ -246,9 +278,9 @@ namespace Autodesk.AutoCAD.DatabaseServices
         public readonly List<double> EndWidths = new List<double>();
         public Vector3d Normal = Vector3d.ZAxis;
         public int NumberOfVertices { get { return Points.Count; } }
-        public Point2d GetPoint2dAt(int i) { return Points[i]; }
-        public Point3d GetPoint3dAt(int i) { return new Point3d(Points[i].X, Points[i].Y, Elevation); }
-        public double GetBulgeAt(int i) { return Bulges[i]; }
+        public Point2d GetPoint2dAt(int i) { CadCounters.PointsRead++; return Points[i]; }
+        public Point3d GetPoint3dAt(int i) { CadCounters.PointsRead++; return new Point3d(Points[i].X, Points[i].Y, Elevation); }
+        public double GetBulgeAt(int i) { CadCounters.BulgesRead++; return Bulges[i]; }
         public double GetStartWidthAt(int i) { return StartWidths[i]; }
         public double GetEndWidthAt(int i) { return EndWidths[i]; }
         public void AddVertexAt(int i, Point2d p, double bulge, double startWidth, double endWidth) {
@@ -280,7 +312,7 @@ namespace Autodesk.AutoCAD.DatabaseServices
         public Vector3d Normal = Vector3d.ZAxis;
         public double Area;
         public int NumberOfLoops { get { return Loops.Count; } }
-        public HatchLoop GetLoopAt(int i) { return Loops[i]; }
+        public HatchLoop GetLoopAt(int i) { CadCounters.HatchLoopsRead++; return Loops[i]; }
         public ObjectIdCollection GetAssociatedObjectIdsAt(int i) { return AssociatedIds[i]; }
         public ObjectIdCollection GetAssociatedObjectIds() { return new ObjectIdCollection(AssociatedIds.SelectMany(ids=>ids).ToArray()); }
     }

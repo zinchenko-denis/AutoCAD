@@ -1,0 +1,110 @@
+{
+  "passed": 16,
+  "failed": 0,
+  "checks": [
+    {
+      "name": "supported_vertical: successful engine result",
+      "ok": true,
+      "actual": null
+    },
+    {
+      "name": "supported_vertical: arithmetic does not approve static model",
+      "ok": true,
+      "actual": null
+    },
+    {
+      "name": "supported_vertical: rail gamma 1.05 applied once",
+      "ok": true,
+      "actual": {
+        "q_rails": 0.745,
+        "Np": 13.8,
+        "expected": 13.8
+      }
+    },
+    {
+      "name": "supported_ortho: successful engine result",
+      "ok": true,
+      "actual": null
+    },
+    {
+      "name": "supported_ortho: arithmetic does not approve static model",
+      "ok": true,
+      "actual": null
+    },
+    {
+      "name": "supported_ortho: rail gamma 1.05 applied once",
+      "ok": true,
+      "actual": {
+        "q_rails": 1.9649999999999999,
+        "Np": 11.1,
+        "expected": 11.1
+      }
+    },
+    {
+      "name": "native_shp_mass: successful engine result",
+      "ok": true,
+      "actual": null
+    },
+    {
+      "name": "native_shp_mass: arithmetic does not approve static model",
+      "ok": true,
+      "actual": null
+    },
+    {
+      "name": "native_shp_mass: rail gamma 1.05 applied once",
+      "ok": true,
+      "actual": {
+        "q_rails": 1.21,
+        "Np": 4.4,
+        "expected": 4.4
+      }
+    },
+    {
+      "name": "ortho emitted ShP plus horizontal GP mass",
+      "ok": true,
+      "actual": 1.9649999999999999
+    },
+    {
+      "name": "interfloor has exact model refusal and no drawable geometry or passing report",
+      "ok": true,
+      "actual": null
+    },
+    {
+      "name": "refused interfloor diagnostic inputs retain project total 3.71 and horizontal minimum 1.4",
+      "ok": true,
+      "actual": null
+    },
+    {
+      "name": "refused interfloor isolated arithmetic applies rail gamma once; no layout approval",
+      "ok": true,
+      "actual": {
+        "Np": 36.4,
+        "expected": 36.4
+      }
+    },
+    {
+      "name": "row candidate GP independent of seed GP/ShP at 470 N",
+      "ok": true,
+      "actual": {
+        "GP": 250,
+        "ShP": 250
+      }
+    },
+    {
+      "name": "successful two-zone report independent of seed at 600 N",
+      "ok": true,
+      "actual": null
+    },
+    {
+      "name": "explicit project total 5 preserved",
+      "ok": true,
+      "actual": null
+    }
+  ],
+  "scope": "Mass arithmetic only. Static models remain not_verified; interfloor layout is refused.",
+  "source_sha256": {
+    "AFrame/engine/frame_calc.py": "abe20fd3c0de0937ba0636914f083f7c48a7a65b3b4c85f05673278a95e1da88",
+    "AFrame/engine/frame_plan.py": "33e686df9f388ab82c9c0da8282584d2150e482da610ea8ad2cccdfc60db6c5e",
+    "AFrame/engine/frame_topology.py": "498d18f252d6160856a3cd4a90a7ada47f80c6ff463994ab801f2de0e3f72ebb"
+  }
+}

@@ -1,0 +1,37 @@
+[
+  {
+    "package": "autocad.net",
+    "version": "24.0.0",
+    "url": "https://api.nuget.org/v3-flatcontainer/autocad.net/24.0.0/autocad.net.24.0.0.nupkg",
+    "sha256": "8470e433ba8e0aa9f7baa7b1c1317e64efb6542c6ca3d8f58c1699a8d3dea07d",
+    "size": 4003453
+  },
+  {
+    "package": "autocad.net.core",
+    "version": "24.0.0",
+    "url": "https://api.nuget.org/v3-flatcontainer/autocad.net.core/24.0.0/autocad.net.core.24.0.0.nupkg",
+    "sha256": "b9d5eb6fdb3bb61d03d99be52af85108f65171439bd91098716618c52703e526",
+    "size": 155058
+  },
+  {
+    "package": "autocad.net.model",
+    "version": "24.0.0",
+    "url": "https://api.nuget.org/v3-flatcontainer/autocad.net.model/24.0.0/autocad.net.model.24.0.0.nupkg",
+    "sha256": "0853021823c038f88cd0055910150ffa951bf4e5ada810f8469c08e8bff66408",
+    "size": 838760
+  },
+  {
+    "package": "microsoft.netframework.referenceassemblies.net48",
+    "version": "1.0.3",
+    "url": "https://api.nuget.org/v3-flatcontainer/microsoft.netframework.referenceassemblies.net48/1.0.3/microsoft.netframework.referenceassemblies.net48.1.0.3.nupkg",
+    "sha256": "8a7e348538e7eb91351696911689f49e3d4f63f8bab517432bbe159b8b1104a2",
+    "size": 20997929
+  },
+  {
+    "package": "microsoft.net.compilers.toolset",
+    "version": "4.8.0",
+    "url": "https://api.nuget.org/v3-flatcontainer/microsoft.net.compilers.toolset/4.8.0/microsoft.net.compilers.toolset.4.8.0.nupkg",
+    "sha256": "37333f4f1e2ce55e621355d6da651dc23d4cb5f94a8f76b9478816e87f110ad9",
+    "size": 21868065
+  }
+]

@@ -25,7 +25,7 @@ namespace AFacadesPlugin
         internal LayerPickForm(IDictionary<string, int> layers, ICollection<string> checkedByDefault,
             string purpose, string instruction, string countLabel)
         {
-            Text = instruction == null ? "ATFTABLE — слои штриховок" : "ATFTABLE — слои облицовки";
+            Text = instruction == null ? "ATFTABLE — слои штриховок" : "ATFTABLE — слои " + purpose;
             FormBorderStyle = FormBorderStyle.FixedDialog;
             MaximizeBox = MinimizeBox = false;
             StartPosition = FormStartPosition.CenterParent;

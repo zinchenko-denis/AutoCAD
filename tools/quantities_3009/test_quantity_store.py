@@ -32,10 +32,11 @@ def main():
     local = Path(__file__).resolve().parent
     sources = [ROOT / "Common" / name for name in (
         "GeometryFingerprint.cs", "ZoneGeometryGuard.cs", "LayoutGeometryGuard.cs",
-        "FacadeQuantities.cs", "FacadeQuantityStore.cs")]
+        "FacadeQuantities.cs", "FacadeQuantityStore.cs", "FacadeQuantityStore.Frame.cs")]
     sources += [local / "QuantityStoreCheck.cs", local / "QuantityCadDoubles.cs"]
     fixture_builder = ROOT / "tools/fixes_3009/test_zone_geometry_adapter.py"
-    tracked = sources + [Path(__file__).resolve(), fixture_builder,
+    legacy_fixture = local / "fixtures/cladding_v1_6222041_xrecords.json"
+    tracked = sources + [Path(__file__).resolve(), fixture_builder, legacy_fixture,
                         ROOT / "Facades/engine/facade_zones.py", ROOT / "Facades/engine/facades_engine.py"]
     manifest = {"status": "BLOCKED", "scope": __doc__, "source_sha256": {
         str(path.relative_to(ROOT)): digest(path) for path in tracked if path.is_file()}}
@@ -52,7 +53,9 @@ def main():
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
     fixture_file = out / "fixtures.json"
-    fixture_file.write_text(json.dumps(module.make_fixtures(), ensure_ascii=False, indent=2), encoding="utf-8")
+    fixtures = module.make_fixtures()
+    fixtures["legacy_xrecords"] = json.loads(legacy_fixture.read_text(encoding="utf-8"))
+    fixture_file.write_text(json.dumps(fixtures, ensure_ascii=False, indent=2), encoding="utf-8")
     manifest["fixtures_sha256"] = digest(fixture_file)
     if args.exe:
         executable = args.exe.resolve()

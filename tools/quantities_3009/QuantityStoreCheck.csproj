@@ -16,6 +16,7 @@
     <Compile Include="../../Common/LayoutGeometryGuard.cs" Link="LayoutGeometryGuard.cs" />
     <Compile Include="../../Common/FacadeQuantities.cs" Link="FacadeQuantities.cs" />
     <Compile Include="../../Common/FacadeQuantityStore.cs" Link="FacadeQuantityStore.cs" />
+    <Compile Include="../../Common/FacadeQuantityStore.Frame.cs" Link="FacadeQuantityStore.Frame.cs" />
     <Reference Include="System.Web.Extensions" />
     <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.3" PrivateAssets="all" />
   </ItemGroup>

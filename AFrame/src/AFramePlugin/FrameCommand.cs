@@ -4,6 +4,7 @@ using System.Globalization;
 using System.IO;
 using System.Text;
 using System.Web.Script.Serialization;
+using FacadeSafety;
 using Autodesk.AutoCAD.DatabaseServices;
 using Autodesk.AutoCAD.EditorInput;
 using Autodesk.AutoCAD.Geometry;
@@ -61,6 +62,8 @@ namespace AFramePlugin
             var doc = AcApp.DocumentManager.MdiActiveDocument;
             if (doc == null) return;
             try { RunCore(doc); }
+            catch (OperationCanceledException)
+            { doc.Editor.WriteMessage("\nATFRAME отменено. Прежняя подсистема сохранена."); }
             catch (System.Exception ex)
             {
                 try
@@ -118,11 +121,13 @@ namespace AFramePlugin
             var jxByZone = new Dictionary<string, object[]>();
             var ryByZone = new Dictionary<string, object[]>();
             var layoutSources = new List<FacadeSafety.LayoutGeometryGuard.Result>();
+            var quantitySourceCarriers = new HashSet<ObjectId>();
             int noClad = 0;
             int oldMeta = 0;
             using (var tr = db.TransactionManager.StartTransaction())
             {
                 int metas = 0;
+                var layoutVerification = new LayoutGeometryGuard.VerificationContext();
                 foreach (SelectedObject so in sel.Value)
                 {
                     var ent = tr.GetObject(so.ObjectId, OpenMode.ForRead)
@@ -133,7 +138,7 @@ namespace AFramePlugin
                     Dictionary<string, object> m;
                     FacadeSafety.LayoutGeometryGuard.Result source;
                     string layoutReason;
-                    if (!TryReadVerifiedLayout(tr, db, ent, ser, out m, out source, out layoutReason))
+                    if (!TryReadVerifiedLayout(tr, db, ent, ser, out m, out source, out layoutReason, layoutVerification))
                     {
                         ed.WriteMessage("\nATFRAME: нельзя использовать оси прежней раскладки: " + layoutReason +
                             "\nОбновите ATFZONE (если это зона), затем ATCLAD/ATTILE и повторите ATFRAME. " +
@@ -143,6 +148,7 @@ namespace AFramePlugin
                     if (m != null)
                     {
                         layoutSources.Add(source);
+                        quantitySourceCarriers.Add(ent.ObjectId);
                         var jx = Get(m, "joints_x") as object[];
                         var ry = Get(m, "rows_y") as object[];
                         if (jx == null)
@@ -576,12 +582,56 @@ namespace AFramePlugin
                 payload["parts"] = "clamps";
                 payload["rails_fixed"] = railsFixed;
             }
+            // Capture once, before calculation. The guard owns shared-source
+            // deduplication; the drawing loop never serializes source payloads.
+            var quantitySourceWatch = System.Diagnostics.Stopwatch.StartNew();
+            FacadeQuantityStore.FrameSources quantitySources = null;
+            QuantitySelection previousQuantities = null;
+            string quantitySourceReason = null;
+            try
+            {
+                using (var qtr = db.TransactionManager.StartTransaction())
+                {
+                    var sourceIds = new HashSet<ObjectId>(rawPayloadIds);
+                    foreach (var id in verifiedZoneHatches) sourceIds.Add(id);
+                    foreach (var id in quantitySourceCarriers) sourceIds.Add(id);
+                    var fixedRails = Get(payload, "rails_fixed") as List<object>;
+                    if (fixedRails != null)
+                        foreach (var item in fixedRails)
+                        {
+                            string handle = SafeStr(Get(item as Dictionary<string, object>, "source_handle"));
+                            foreach (var id in IdsOf(db, new[] { handle })) sourceIds.Add(id);
+                        }
+                    if (clampsOnly)
+                    {
+                        var oldOwners = new HashSet<ObjectId>();
+                        foreach (string root in oldByRoot.Keys)
+                        {
+                            List<ObjectId> ids;
+                            if (zoneObjs.TryGetValue(root, out ids)) foreach (var id in ids) oldOwners.Add(id);
+                            else
+                            {
+                                string handle = root.StartsWith("контур ") ? root.Substring(7) : root;
+                                ObjectId id; if (polyByHandle.TryGetValue(handle, out id)) oldOwners.Add(id);
+                            }
+                        }
+                        previousQuantities = FacadeQuantityStore.ReadFrame(qtr, db, oldOwners);
+                    }
+                    quantitySources = FacadeQuantityStore.CaptureFrameSources(qtr, db, sourceIds);
+                    qtr.Commit();
+                }
+            }
+            catch (OperationCanceledException) { throw; }
+            catch (System.Exception ex) { quantitySourceReason = "Источники ведомости подсистемы не подтверждены: " + ex.Message; }
+            quantitySourceWatch.Stop();
+            FrameQuantities.CheckCancel();
             string baseDir = Path.GetDirectoryName(
                 System.Reflection.Assembly.GetExecutingAssembly().Location)
                 ?? ".";
             string engineExe = Path.GetFullPath(Path.Combine(
                 baseDir, "..", "engine", "frame_engine.exe"));
             Dictionary<string, object> res;
+            var quantityEngineWatch = System.Diagnostics.Stopwatch.StartNew();
             try
             {
                 res = ser.DeserializeObject(CallEngine(
@@ -593,6 +643,8 @@ namespace AFramePlugin
                 ed.WriteMessage("\nОшибка движка: " + ex.Message);
                 return;
             }
+            quantityEngineWatch.Stop();
+            FrameQuantities.CheckCancel();
             if (res == null || !GetBool(res, "ok"))
             {
                 ed.WriteMessage("\nДвижок отказал: " + SafeStr(
@@ -613,6 +665,14 @@ namespace AFramePlugin
 
             // ── 6. чертёж ──
             var handlesByRoot = new Dictionary<string, List<string>>();
+            var quantityPrepareWatch = System.Diagnostics.Stopwatch.StartNew();
+            var quantities = new FrameQuantities(res, payload, partToRoot, clampsOnly, previousQuantities);
+            if (quantitySourceReason != null) quantities.Unavailable(quantitySourceReason);
+            quantityPrepareWatch.Stop();
+            var quantityCarriers = new List<Entity>();
+            var quantityDrawWatch = System.Diagnostics.Stopwatch.StartNew();
+            long quantityStoreMs = 0;
+            bool quantityKeptPrevious = false;
             var erasedH = new HashSet<string>();
             // 23.09n: клоны копии по зонам — в «только кляммеры» оставшиеся клоны
             // (направляющие, кронштейны) входят в новую метку, иначе осиротеют
@@ -647,6 +707,7 @@ namespace AFramePlugin
                 // 24.09 (рецензия): прежнее — только у зон, получивших результат
                 // (зона, пропущенная движком, сохраняет свою подсистему)
                 var okRoots = new HashSet<string>();
+                var emptyQuantityRoots = new HashSet<string>();
                 var pzs = Get(res, "per_zone") as object[];
                 if (pzs != null)
                     foreach (var pzo in pzs)
@@ -656,10 +717,21 @@ namespace AFramePlugin
                         double cnt = ToD(Get(pzd, "rails")) + ToD(Get(pzd, "clamps")) +
                                      ToD(Get(pzd, "hrails")) + ToD(Get(pzd, "brackets_main")) +
                                      ToD(Get(pzd, "brackets_row"));
-                        if (cnt <= 0) continue;
                         string pzid = SafeStr(Get(pzd, "zone_id")), proot;
-                        okRoots.Add(partToRoot.TryGetValue(pzid, out proot) ? proot : pzid);
+                        string quantityRoot = partToRoot.TryGetValue(pzid, out proot) ? proot : pzid;
+                        if (cnt <= 0) { emptyQuantityRoots.Add(quantityRoot); continue; }
+                        okRoots.Add(quantityRoot);
                     }
+                foreach (string root in emptyQuantityRoots)
+                {
+                    if (okRoots.Contains(root)) continue;
+                    List<string> previous;
+                    if (!oldByRoot.TryGetValue(root, out previous) || previous.Count == 0)
+                        handlesByRoot[root] = new List<string>(); // explicit, known zero on a new source
+                    else if (!clampsOnly)
+                        quantities.Unavailable("Зона «" + root + "» не получила новых элементов; прежняя подсистема сохранена. " +
+                            "Смешанный новый состав нельзя объявить полной ведомостью.");
+                }
                 foreach (var kvd in dropRoot)
                     if (okRoots.Contains(kvd.Value)) okRoots.Add(kvd.Key);
                 var eraseSet = new HashSet<string>();
@@ -723,9 +795,12 @@ namespace AFramePlugin
                         "иначе новая подсистема ляжет поверх.");
 
                 // направляющие — прямоугольники по оси
+                int quantityRailIndex = -1;
                 if (rails != null)
                     foreach (var ro in rails)
                     {
+                        quantities.Poll();
+                        quantityRailIndex++;
                         var r = ro as Dictionary<string, object>;
                         if (r == null) continue;
                         double x = ToD(Get(r, "x")),
@@ -739,7 +814,11 @@ namespace AFramePlugin
                             if (rh != null)
                             {
                                 foreach (var rid in IdsOf(db, new[] { rh }))
-                                    StoreRailRole(tr, (Entity)tr.GetObject(rid, OpenMode.ForWrite), r, true);
+                                {
+                                    var entity = (Entity)tr.GetObject(rid, OpenMode.ForWrite);
+                                    StoreRailRole(tr, entity, r, true);
+                                    quantities.Add(tr, "rails", quantityRailIndex, entity);
+                                }
                                 Remember(handlesByRoot, partToRoot,
                                          SafeStr(Get(r, "zone")), rh);
                                 made++;
@@ -760,6 +839,7 @@ namespace AFramePlugin
                         ms.AppendEntity(pl);
                         tr.AddNewlyCreatedDBObject(pl, true);
                         StoreRailRole(tr, pl, r, true);
+                        quantities.Add(tr, "rails", quantityRailIndex, pl);
                         Remember(handlesByRoot, partToRoot,
                                  SafeStr(Get(r, "zone")),
                                  pl.Handle.ToString());
@@ -769,9 +849,12 @@ namespace AFramePlugin
                 // горизонтальные профили (НГП/ГП/СП межэтажной и
                 // ортогональной) — прямоугольники по оси
                 var shinaMade = new HashSet<string>();
+                int quantityHrailIndex = -1;
                 if (hrails != null)
                     foreach (var ro in hrails)
                     {
+                        quantities.Poll();
+                        quantityHrailIndex++;
                         var r = ro as Dictionary<string, object>;
                         if (r == null) continue;
                         double y = ToD(Get(r, "y")),
@@ -797,6 +880,7 @@ namespace AFramePlugin
                         ms.AppendEntity(pl);
                         tr.AddNewlyCreatedDBObject(pl, true);
                         StoreRailRole(tr, pl, r, false);
+                        quantities.Add(tr, "hrails", quantityHrailIndex, pl);
                         Remember(handlesByRoot, partToRoot,
                                  SafeStr(Get(r, "zone")),
                                  pl.Handle.ToString());
@@ -806,7 +890,7 @@ namespace AFramePlugin
                 // кронштейны — блоки-знаки или образцы Германа
                 InsertSigns(tr, ms, brackets, blkMain, blkRow,
                             "несущий", "кронштейн ", LayerBrackets,
-                            handlesByRoot, partToRoot, ref made);
+                            handlesByRoot, partToRoot, ref made, quantities, "brackets");
                 // кляммеры: 4 вида (ТЗ 26.07)
                 var clampBlk = new Dictionary<string, ObjectId>
                 {
@@ -822,9 +906,12 @@ namespace AFramePlugin
                         : smpClampCombo },
                 };
                 var clampDx = new Dictionary<ObjectId, double>();
+                int quantityClampIndex = -1;
                 if (clamps != null)
                     foreach (var io2 in clamps)
                     {
+                        quantities.Poll();
+                        quantityClampIndex++;
                         var it = io2 as Dictionary<string, object>;
                         if (it == null) continue;
                         string ck = SafeStr(Get(it, "kind"));
@@ -861,6 +948,7 @@ namespace AFramePlugin
                         tr.AddNewlyCreatedDBObject(br2, true);
                         FillAttrs(tr, br2, ("кляммер " + ck).Trim(),
                                   RootOf(partToRoot, cpid));
+                        quantities.Add(tr, "clamps", quantityClampIndex, br2);
                         Remember(handlesByRoot, partToRoot, cpid,
                                  br2.Handle.ToString());
                         made++;
@@ -868,25 +956,27 @@ namespace AFramePlugin
                 // метизы межэтажной: вставки и скобы С1
                 InsertSigns(tr, ms, fittings, fitIns, fitSc,
                             "вставка", "", LayerBrackets,
-                            handlesByRoot, partToRoot, ref made);
+                            handlesByRoot, partToRoot, ref made, quantities, "fittings");
 
                 // метка ATFRAME на объекты зоны / контуры; «только кляммеры» —
                 // прежние хэндлы зоны без удалённых кляммеров + новые кляммеры
                 var roots = new List<string>(handlesByRoot.Keys);
+                var rootSet = new HashSet<string>(roots, StringComparer.Ordinal);
                 if (clampsOnly)
                     foreach (var k0 in oldByRoot.Keys)
-                        if (!roots.Contains(k0)) roots.Add(k0);
+                        if (rootSet.Add(k0)) roots.Add(k0);
                 foreach (var root in roots)
                 {
                     var hl = new List<string>();
+                    var keptHandles = new HashSet<string>(StringComparer.Ordinal);
                     List<string> prevH;
                     if (clampsOnly && oldByRoot.TryGetValue(root, out prevH))
                         foreach (var h0 in prevH)
-                            if (!erasedH.Contains(h0) && !hl.Contains(h0)) hl.Add(h0);
+                            if (!erasedH.Contains(h0) && keptHandles.Add(h0)) hl.Add(h0);
                     List<string> keptCl;
                     if (clampsOnly && clonesByRoot.TryGetValue(root, out keptCl))
                         foreach (var h1 in keptCl)
-                            if (!erasedH.Contains(h1) && !hl.Contains(h1)) hl.Add(h1);
+                            if (!erasedH.Contains(h1) && keptHandles.Add(h1)) hl.Add(h1);
                     List<string> newH;
                     if (handlesByRoot.TryGetValue(root, out newH)) hl.AddRange(newH);
                     var meta = new Dictionary<string, object>
@@ -910,6 +1000,8 @@ namespace AFramePlugin
                                 OpenMode.ForWrite);
                             meta["owner"] = te.Handle.ToString();
                             StoreData(tr, te, ser.Serialize(meta), XKeyFrame, hl);
+                            quantityCarriers.Add(te);
+                            quantities.Owner(te, root);
                         }
                     else
                     {
@@ -922,10 +1014,19 @@ namespace AFramePlugin
                                 OpenMode.ForWrite);
                             meta["owner"] = te.Handle.ToString();
                             StoreData(tr, te, ser.Serialize(meta), XKeyFrame, hl);
+                            quantityCarriers.Add(te);
+                            quantities.Owner(te, root);
                         }
                     }
                 }
+                quantityDrawWatch.Stop();
+                var quantityStoreWatch = System.Diagnostics.Stopwatch.StartNew();
+                if (quantityCarriers.Count > 0)
+                    quantities.Store(tr, db, quantityCarriers, quantitySources, erasedH);
+                else quantityKeptPrevious = true;
+                FrameQuantities.CheckCancel();
                 tr.Commit();
+                quantityStoreMs = quantityStoreWatch.ElapsedMilliseconds;
             }
 
             // ── 7. отчёт ──
@@ -962,6 +1063,16 @@ namespace AFramePlugin
             PrintCalcReport(ed, Get(res, "calc_report")
                             as Dictionary<string, object>);
             PrintNotes(ed, Get(res, "notes") as object[]);
+            ed.WriteMessage("\n  время: источники " + (quantitySourceWatch.ElapsedMilliseconds / 1000.0).ToString("0.00", CultureInfo.InvariantCulture) +
+                " с, расчёт " + (quantityEngineWatch.ElapsedMilliseconds / 1000.0).ToString("0.00", CultureInfo.InvariantCulture) +
+                " с, чертёж " + (quantityDrawWatch.ElapsedMilliseconds / 1000.0).ToString("0.00", CultureInfo.InvariantCulture) +
+                " с (проверка элементов " + (quantities.CaptureMilliseconds / 1000.0).ToString("0.00", CultureInfo.InvariantCulture) +
+                " с), паспорт " + ((quantityPrepareWatch.ElapsedMilliseconds + quantityStoreMs) / 1000.0).ToString("0.00", CultureInfo.InvariantCulture) + " с.");
+            if (quantityKeptPrevious)
+                ed.WriteMessage("\nНовый паспорт не записан: подсистема не изменилась, прежний состав сохранён. Его актуальность проверяет ATFTABLE → Подсистема.");
+            else if (quantities.UnavailableReason == null)
+                ed.WriteMessage("\nВедомость подсистемы — ATFTABLE → Подсистема. Это количества схемы, не полный комплект узлов и не подтверждение статики.");
+            else ed.WriteMessage("\nВедомость подсистемы недоступна: " + quantities.UnavailableReason);
         }
 
         // отчёт этапа 4: шаги по расчёту + цепочка проверок с
@@ -1092,11 +1203,15 @@ namespace AFramePlugin
             BlockTableRecord ms, object[] items, ObjectId blkA,
             ObjectId blkB, string kindA, string markPrefix, string layer,
             Dictionary<string, List<string>> handlesByRoot,
-            Dictionary<string, string> partToRoot, ref int made)
+            Dictionary<string, string> partToRoot, ref int made,
+            FrameQuantities quantities, string quantityCategory)
         {
             if (items == null) return;
+            int quantityIndex = -1;
             foreach (var io in items)
             {
+                quantities.Poll();
+                quantityIndex++;
                 var it = io as Dictionary<string, object>;
                 if (it == null) continue;
                 double x = ToD(Get(it, "x")), y = ToD(Get(it, "y"));
@@ -1115,6 +1230,7 @@ namespace AFramePlugin
                 tr.AddNewlyCreatedDBObject(br, true);
                 FillAttrs(tr, br, (markPrefix + kind).Trim(),
                           RootOf(partToRoot, pid));
+                quantities.Add(tr, quantityCategory, quantityIndex, br);
                 Remember(handlesByRoot, partToRoot, pid,
                          br.Handle.ToString());
                 made++;
@@ -1800,12 +1916,12 @@ namespace AFramePlugin
                     var ownRail = ReadRailRole(tr, e);
                     if (ownRail != null)
                     {
-                        if (ownRail.ContainsKey("x")) out1.Add(ownRail);
+                        if (ownRail.ContainsKey("x")) { ownRail["source_handle"] = e.Handle.ToString(); out1.Add(ownRail); }
                         continue;
                     }
                     double x, y0, y1;
                     if (RailGeom(e, out x, out y0, out y1))
-                        out1.Add(new Dictionary<string, object> { { "x", x }, { "y0", y0 }, { "y1", y1 } });
+                        out1.Add(new Dictionary<string, object> { { "x", x }, { "y0", y0 }, { "y1", y1 }, { "source_handle", e.Handle.ToString() } });
                     else
                     {
                         // Old conditional rails have no direction tag. Do not
@@ -1848,13 +1964,13 @@ namespace AFramePlugin
                     var ownRail = e == null ? null : ReadRailRole(tr, e);
                     if (ownRail != null)
                     {
-                        if (ownRail.ContainsKey("x")) out1.Add(ownRail);
+                        if (ownRail.ContainsKey("x")) { ownRail["source_handle"] = e.Handle.ToString(); out1.Add(ownRail); }
                         else skipped++;
                         continue;
                     }
                     double x, y0, y1;
                     if (e != null && RailGeom(e, out x, out y0, out y1))
-                        out1.Add(new Dictionary<string, object> { { "x", x }, { "y0", y0 }, { "y1", y1 } });
+                        out1.Add(new Dictionary<string, object> { { "x", x }, { "y0", y0 }, { "y1", y1 }, { "source_handle", e.Handle.ToString() } });
                     else skipped++;
                 }
                 tr.Commit();
@@ -1942,7 +2058,8 @@ namespace AFramePlugin
         // them separate from UI/deletion so the consumer contract is testable.
         internal static bool TryReadVerifiedLayout(Transaction tr, Database db, Entity carrier,
             JavaScriptSerializer ser, out Dictionary<string, object> metadata,
-            out FacadeSafety.LayoutGeometryGuard.Result source, out string reason)
+            out FacadeSafety.LayoutGeometryGuard.Result source, out string reason,
+            FacadeSafety.LayoutGeometryGuard.VerificationContext context = null)
         {
             metadata = null;
             source = null;
@@ -1966,7 +2083,8 @@ namespace AFramePlugin
                 // No derived axes: the existing manual/raw-contour path stays
                 // available and uses live points read from the selected polylines.
                 if (json == null) return true;
-                source = FacadeSafety.LayoutGeometryGuard.Verify(tr, db, carrier, key);
+                source = context == null ? FacadeSafety.LayoutGeometryGuard.Verify(tr, db, carrier, key) :
+                    FacadeSafety.LayoutGeometryGuard.Verify(tr, db, carrier, key, context);
                 if (!source.Ok)
                 {
                     reason = source.Reason;

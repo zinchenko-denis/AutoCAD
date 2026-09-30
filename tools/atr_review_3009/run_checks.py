@@ -62,6 +62,20 @@ def main():
                                   '--out', str(out / 'quantities_table')]),
         ('quantities_store', '.', ['tools/quantities_3009/test_quantity_store.py',
                                   '--out', str(out / 'quantities_store')]),
+        ('frame_quantities_core', '.', ['tools/frame_quantities_3009/test_frame_core.py',
+                                       '--out', str(out / 'frame_quantities_core')]),
+        ('frame_quantities_core_perf', '.', ['tools/frame_quantities_3009/test_frame_core_perf.py', '--quick',
+                                            '--out', str(out / 'frame_quantities_core_perf')]),
+        ('frame_quantities_producer', '.', ['tools/frame_quantities_3009/test_frame_producer.py',
+                                           '--out', str(out / 'frame_quantities_producer')]),
+        ('frame_quantities_table', '.', ['tools/frame_quantities_3009/test_frame_table.py',
+                                        '--out', str(out / 'frame_quantities_table')]),
+        ('frame_engine_perf', '.', ['tools/frame_quantities_3009/test_frame_engine_perf.py', '--targets', '1000,3000',
+                                   '--out', str(out / 'frame_engine_perf')]),
+        ('quantities_store_perf', '.', ['tools/quantities_3009/test_quantity_store_perf.py', '--quick',
+                                       '--out', str(out / 'quantities_store_perf')]),
+        ('quantities_store_encoding', '.', ['tools/frame_quantities_3009/test_store_encoding.py',
+                                           '--out', str(out / 'quantities_store_encoding')]),
     ])
     results = []
     for name, cwd, arguments in jobs:

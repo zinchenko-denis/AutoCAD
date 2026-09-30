@@ -1,0 +1,139 @@
+{
+  "status": "PASS",
+  "scope": "Check actual store UTF-8 hashing/compression against legacy whole-buffer operations.\n\nTests empty text, Cyrillic, chunk boundaries, split surrogate pairs and standard\nfallback for isolated surrogates. CAD doubles satisfy compilation only; no DWG,\nAutoCAD host, UI, transaction or installer is exercised. Exit 2 means blocked.\n",
+  "source_sha256": {
+    "Common/GeometryFingerprint.cs": "24114ef7a18a56415313b009d7819c94190efa5ea517df2081d1f51951819332",
+    "Common/ZoneGeometryGuard.cs": "daf06e2822a4d9ef2be818df1bf904779fa202adb1e5bce7fc0ba49c084970b8",
+    "Common/LayoutGeometryGuard.cs": "b582662e3557d023b8a318cf3fc59175616b0ac4f8bdbba0eccf4c2c960338da",
+    "Common/FacadeQuantities.cs": "3b63d40603e95b7215bc946af16b9b694142b89e648cd6520bc481bc2b984c19",
+    "Common/FacadeQuantityStore.cs": "88cf7723fdf913a28a161a0de4c1a4fe5d3b2259c2e580c450129eb6c953b293",
+    "Common/FacadeQuantityStore.Frame.cs": "e7abeee9029ebdb074bdd0fe5de08d7ebe9fa3a7b2378c6289a2a222c83ce3e5",
+    "tools/quantities_3009/QuantityCadDoubles.cs": "c99fc91fd51834c9129aeee613f365a302ad96f33ebd26a69a6d6a9e2d009770",
+    "tools/frame_quantities_3009/StoreEncodingProbe.cs": "98cbe82eec7d4acde52c655e6eb294a841497432d3f11ef2d656c07ef07ed1c9",
+    "tools/frame_quantities_3009/test_store_encoding.py": "ccd16045ffd4c6821ecd6160141474522387508afa95c6c004b65db30a3cfe12",
+    "tools/quantities_3009/probe_runtime.py": "2d37fb13990a1b24129dfe79a81ce138875e3c86ef3211d1a3a4f9ec40d150e5"
+  },
+  "compile_returncode": 0,
+  "run_returncode": 0,
+  "result": {
+    "scope": "Production Hash/Compress/Decompress only; no AutoCAD host, database, UI or transaction behavior.",
+    "total": 16,
+    "passed": 16,
+    "failed": 0,
+    "cases": [
+      {
+        "name": "empty",
+        "chars": 0,
+        "utf8_bytes": 0,
+        "status": "PASS",
+        "error": null
+      },
+      {
+        "name": "short_cyrillic",
+        "chars": 40,
+        "utf8_bytes": 74,
+        "status": "PASS",
+        "error": null
+      },
+      {
+        "name": "ascii_1",
+        "chars": 1,
+        "utf8_bytes": 1,
+        "status": "PASS",
+        "error": null
+      },
+      {
+        "name": "ascii_4095",
+        "chars": 4095,
+        "utf8_bytes": 4095,
+        "status": "PASS",
+        "error": null
+      },
+      {
+        "name": "ascii_4096",
+        "chars": 4096,
+        "utf8_bytes": 4096,
+        "status": "PASS",
+        "error": null
+      },
+      {
+        "name": "ascii_4097",
+        "chars": 4097,
+        "utf8_bytes": 4097,
+        "status": "PASS",
+        "error": null
+      },
+      {
+        "name": "ascii_8191",
+        "chars": 8191,
+        "utf8_bytes": 8191,
+        "status": "PASS",
+        "error": null
+      },
+      {
+        "name": "ascii_8192",
+        "chars": 8192,
+        "utf8_bytes": 8192,
+        "status": "PASS",
+        "error": null
+      },
+      {
+        "name": "ascii_8193",
+        "chars": 8193,
+        "utf8_bytes": 8193,
+        "status": "PASS",
+        "error": null
+      },
+      {
+        "name": "ascii_65535",
+        "chars": 65535,
+        "utf8_bytes": 65535,
+        "status": "PASS",
+        "error": null
+      },
+      {
+        "name": "surrogate_pair_cross_4096",
+        "chars": 12597,
+        "utf8_bytes": 21099,
+        "status": "PASS",
+        "error": null
+      },
+      {
+        "name": "surrogate_pair_cross_8192",
+        "chars": 8196,
+        "utf8_bytes": 16389,
+        "status": "PASS",
+        "error": null
+      },
+      {
+        "name": "lonely_high_boundary",
+        "chars": 8194,
+        "utf8_bytes": 12293,
+        "status": "PASS",
+        "error": null
+      },
+      {
+        "name": "lonely_low_boundary",
+        "chars": 8193,
+        "utf8_bytes": 12291,
+        "status": "PASS",
+        "error": null
+      },
+      {
+        "name": "lonely_high_final",
+        "chars": 8192,
+        "utf8_bytes": 8194,
+        "status": "PASS",
+        "error": null
+      },
+      {
+        "name": "repeated_non_bmp",
+        "chars": 16386,
+        "utf8_bytes": 32772,
+        "status": "PASS",
+        "error": null
+      }
+    ]
+  },
+  "sources_unchanged_during_run": true
+}
