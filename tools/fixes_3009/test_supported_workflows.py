@@ -13,7 +13,8 @@ class SupportedFrames(unittest.TestCase):
         for scheme in ("vertical", "interfloor", "ortho"):
             with self.subTest(scheme=scheme):
                 result = frame_plan({
-                    "system": "Межэтажная" if scheme == "interfloor" else "Вектор-1",
+                    "system": {"vertical": "Вектор-1", "interfloor": "Межэтажная",
+                               "ortho": "Ортогональная"}[scheme],
                     "sub_type": scheme, "cladding": "porcelain", "nsp_type": "НСП-1",
                     "contours": [{"outer": [[0, 0], [6000, 0], [6000, 6000], [0, 6000]]}],
                     "joints_x": list(range(0, 6001, 600)),
@@ -26,6 +27,7 @@ class SupportedFrames(unittest.TestCase):
                 self.assertTrue(result["rails"])
                 self.assertTrue(result["brackets"])
                 self.assertTrue(result["calc_report"])
+                self.assertEqual(result["calc_report"]["inputs"]["scheme"], scheme)
                 self.assertGreater(result["calc_report"]["steps"]["main"], 0)
 
 

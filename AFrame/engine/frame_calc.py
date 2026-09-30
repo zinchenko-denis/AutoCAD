@@ -184,6 +184,14 @@ def resolved_inputs(inp):
             prof[key] = value            # арифметика получает проверенные числа, не строки
     if custom_profile:
         p["profile"] = prof
+    # A profile candidate changes not only stiffness but also dead load.
+    # q_rails is a user/preset lower bound for the total. Extra members and
+    # an emitted section heavier than the checked (weaker) section are
+    # explicit in frame_plan; never reduce a larger project allowance.
+    p["q_rails_extra"] = _number("q_rails_extra", p.get("q_rails_extra", 0), zero=True)
+    p["q_rails_profile_min"] = _number("q_rails_profile_min", p.get("q_rails_profile_min", 0), zero=True)
+    profile_mass = _number("profile.q", prof["q"]) if prof.get("q") is not None else 0.0
+    p["q_rails"] = max(p["q_rails"], max(profile_mass, p["q_rails_profile_min"]) + p["q_rails_extra"])
     if p["scheme"] == "ortho":
         p["v_step"] = _number("v_step", p.get("v_step"))
     if p.get("n_p_profile") is not None:
@@ -244,7 +252,10 @@ def calc_chain(inp, step, zone):
       w0 | wind_region, terrain, height
       ice_region (опц., дефолт II)
       q_clad (кг/м² нормативный), gamma_clad
-      q_rails (кг/м суммарный нормативный вес направляющих: верт+гориз)
+      q_rails (кг/м нижняя граница суммарного нормативного веса направляющих)
+      q_rails_extra (опц., кг/м других элементов: например, горизонтальный профиль)
+      q_rails_profile_min (опц., масса фактически выдаваемого вертикального профиля,
+                           если проверяемое на прочность сечение легче)
       offset (вынос e, мм), na_max (Н)
       bracket, extender (None для interfloor_direct), profile (имя или
         dict), n_rivets (дефолт 2; тип-5 — 4)
@@ -442,9 +453,15 @@ def binding_check(inp, zone, step, candidates=None):
 
 def report(inp, candidates=None):
     """Отчёт по обеим зонам: {'row': {...}, 'corner': {...}}."""
+    requested_mass = inp.get("q_rails", 0)
     inp = resolved_inputs(inp)
     out = {}
     auto = bool(inp.get("auto_profile"))
+    if auto:
+        # Resolve and validate the seed, but do not turn its self-weight
+        # into a permanent floor for every other candidate. Each trial's
+        # calc_chain adds its own section mass and the common extra load.
+        inp["q_rails"] = _number("q_rails", requested_mass, zero=True)
     for zone in ("row", "corner"):
         if auto:
             # п.2 (30.07): профиль подбирается вместе с шагом

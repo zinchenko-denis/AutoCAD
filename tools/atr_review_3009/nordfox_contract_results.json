@@ -1,0 +1,215 @@
+{
+  "source_kind": "git_archive",
+  "source_revision": "5cdd34ec4dc963d12b58b0fe508617f29a4944d6",
+  "working_tree_dirty": true,
+  "scope": "Observed API behaviour only; true observations are not engineering acceptance.",
+  "base_request": {
+    "op": "frame",
+    "system": "Standart",
+    "sub_type": "vertical",
+    "cladding": "porcelain",
+    "contours": [
+      {
+        "id": "wall",
+        "pts": [
+          [
+            0,
+            0
+          ],
+          [
+            1200,
+            0
+          ],
+          [
+            1200,
+            9000
+          ],
+          [
+            0,
+            9000
+          ]
+        ]
+      }
+    ],
+    "joints_x": [
+      300,
+      900
+    ],
+    "rows_y": [
+      0,
+      600,
+      1200,
+      1800,
+      2400,
+      3000,
+      3600,
+      4200,
+      4800,
+      5400,
+      6000,
+      6600,
+      7200,
+      7800,
+      8400,
+      9000
+    ],
+    "corners_x": []
+  },
+  "cases": {
+    "manual_control": {
+      "request_overrides": {},
+      "summary": {
+        "ok": true,
+        "error": null,
+        "system_name": "Standart",
+        "rails": 12,
+        "brackets": 48,
+        "clamps": 60,
+        "calc_scheme": null,
+        "layout_verification_passed": null,
+        "checked_intervals": {}
+      }
+    },
+    "unknown_system_string": {
+      "request_overrides": {
+        "system": "NordFOX"
+      },
+      "summary": {
+        "ok": false,
+        "error": "контур wall: \"система 'NordFOX' не найдена в systems.json\"",
+        "system_name": null,
+        "rails": 0,
+        "brackets": 0,
+        "clamps": 0,
+        "calc_scheme": null,
+        "layout_verification_passed": null,
+        "checked_intervals": {}
+      }
+    },
+    "unknown_system_name_dict": {
+      "request_overrides": {
+        "system": {
+          "name": "NordFOX"
+        }
+      },
+      "summary": {
+        "ok": true,
+        "error": null,
+        "system_name": "NordFOX",
+        "rails": 12,
+        "brackets": 0,
+        "clamps": 60,
+        "calc_scheme": null,
+        "layout_verification_passed": null,
+        "checked_intervals": {}
+      }
+    },
+    "manual_unknown_sub_type": {
+      "request_overrides": {
+        "sub_type": "nordfox"
+      },
+      "summary": {
+        "ok": true,
+        "error": null,
+        "system_name": "Standart",
+        "rails": 12,
+        "brackets": 48,
+        "clamps": 60,
+        "calc_scheme": null,
+        "layout_verification_passed": null,
+        "checked_intervals": {}
+      }
+    },
+    "calc_control": {
+      "request_overrides": {
+        "system": "Вектор-1",
+        "calc": {
+          "wind_region": "II",
+          "terrain": "B",
+          "height": 30,
+          "q_clad": 25,
+          "offset": 230,
+          "na_max": 3000
+        }
+      },
+      "summary": {
+        "ok": true,
+        "error": null,
+        "system_name": "Вектор-1",
+        "rails": 12,
+        "brackets": 48,
+        "clamps": 60,
+        "calc_scheme": "vertical",
+        "layout_verification_passed": true,
+        "checked_intervals": {
+          "row": 36,
+          "corner": 0
+        }
+      }
+    },
+    "calc_unknown_sub_type": {
+      "request_overrides": {
+        "system": "Вектор-1",
+        "calc": {
+          "wind_region": "II",
+          "terrain": "B",
+          "height": 30,
+          "q_clad": 25,
+          "offset": 230,
+          "na_max": 3000
+        },
+        "sub_type": "nordfox"
+      },
+      "summary": {
+        "ok": true,
+        "error": null,
+        "system_name": "Вектор-1",
+        "rails": 12,
+        "brackets": 48,
+        "clamps": 60,
+        "calc_scheme": "vertical",
+        "layout_verification_passed": true,
+        "checked_intervals": {
+          "row": 0,
+          "corner": 0
+        }
+      }
+    },
+    "calc_unknown_scheme": {
+      "request_overrides": {
+        "system": "Вектор-1",
+        "calc": {
+          "wind_region": "II",
+          "terrain": "B",
+          "height": 30,
+          "q_clad": 25,
+          "offset": 230,
+          "na_max": 3000,
+          "scheme": "nordfox"
+        }
+      },
+      "summary": {
+        "ok": false,
+        "error": "контур wall: расчёт: неизвестная расчётная схема",
+        "system_name": null,
+        "rails": 0,
+        "brackets": 0,
+        "clamps": 0,
+        "calc_scheme": null,
+        "layout_verification_passed": null,
+        "checked_intervals": {}
+      }
+    }
+  },
+  "observations": {
+    "manual_control_has_12_rails_and_48_brackets": true,
+    "unknown_system_string_is_rejected": true,
+    "unknown_system_dict_is_accepted_with_12_rails_and_no_brackets": true,
+    "unknown_sub_type_produces_control_geometry": true,
+    "calc_control_checks_36_intervals": true,
+    "calc_unknown_sub_type_produces_control_geometry": true,
+    "calc_unknown_sub_type_passes_verification_without_checked_intervals": true,
+    "unknown_calc_scheme_is_rejected": true
+  },
+  "all_recorded_observations_reproduced": true
+}

@@ -1,0 +1,20 @@
+test_atclad_cli_triangle_and_rejected_zone_contract (__main__.FrontonOracleReview.test_atclad_cli_triangle_and_rejected_zone_contract) ... ok
+test_atclad_general_slopes_match_independent_polygon (__main__.FrontonOracleReview.test_atclad_general_slopes_match_independent_polygon) ... ok
+test_attile_general_slopes_match_independent_grid (__main__.FrontonOracleReview.test_attile_general_slopes_match_independent_grid) ... ok
+test_attile_nonzero_joints_preserve_concave_boundary_and_holes (__main__.FrontonOracleReview.test_attile_nonzero_joints_preserve_concave_boundary_and_holes) ... ok
+test_disconnected_fragments_of_one_source_tile_survive (__main__.FrontonOracleReview.test_disconnected_fragments_of_one_source_tile_survive) ... ok
+test_enclosed_holes_and_winding_match_polygon (__main__.FrontonOracleReview.test_enclosed_holes_and_winding_match_polygon) ... ok
+test_large_coordinate_translation_preserves_geometry (__main__.FrontonOracleReview.test_large_coordinate_translation_preserves_geometry) ... ok
+test_atclad_accepts_triangular_fronton (__main__.FrontonReview.test_atclad_accepts_triangular_fronton) ... ok
+test_atclad_concave_roof_preserves_coverage (__main__.FrontonReview.test_atclad_concave_roof_preserves_coverage) ... ok
+test_atclad_rejected_zone_not_listed_as_success (__main__.FrontonReview.test_atclad_rejected_zone_not_listed_as_success) ... ok
+test_attile_concave_roof_preserves_coverage (__main__.FrontonReview.test_attile_concave_roof_preserves_coverage) ... ok
+test_attile_keeps_enclosed_opening_after_slope_clip (__main__.FrontonReview.test_attile_keeps_enclosed_opening_after_slope_clip) ... ok
+test_attile_large_coordinate_translation_preserves_pieces (__main__.FrontonReview.test_attile_large_coordinate_translation_preserves_pieces) ... ok
+test_collinear_boundaries_and_point_contacts (__main__.PolygonClipOracleReview.test_collinear_boundaries_and_point_contacts) ... ok
+test_deterministic_200_intersections_against_shapely (__main__.PolygonClipOracleReview.test_deterministic_200_intersections_against_shapely) ... ok
+
+----------------------------------------------------------------------
+Ran 15 tests in 0.656s
+
+OK

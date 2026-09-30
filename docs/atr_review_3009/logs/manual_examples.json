@@ -1,0 +1,68 @@
+{
+  "baseline_commit": "8360c238f342d82c1dd83c63789729506c34df18",
+  "comparison": "Saved tutorial requests replayed; geometry and quantities unchanged. New frame notes/design_scope are intentional.",
+  "checks": [
+    {
+      "example": "rect_zone",
+      "equal_fields": [
+        "ok",
+        "zones",
+        "zones_full",
+        "parapets",
+        "failed",
+        "issues",
+        "summary"
+      ],
+      "passed": true
+    },
+    {
+      "example": "gable_zone",
+      "equal_fields": [
+        "ok",
+        "zones",
+        "zones_full",
+        "parapets",
+        "failed",
+        "issues",
+        "summary"
+      ],
+      "passed": true
+    },
+    {
+      "example": "rect_tile",
+      "equal_fields": [
+        "ok",
+        "pieces",
+        "per_zone",
+        "summary",
+        "notes"
+      ],
+      "passed": true
+    },
+    {
+      "example": "gable_tile",
+      "equal_fields": [
+        "ok",
+        "pieces",
+        "per_zone",
+        "summary",
+        "notes"
+      ],
+      "passed": true
+    },
+    {
+      "example": "rect_frame",
+      "equal_fields": [
+        "rails",
+        "hrails",
+        "brackets",
+        "clamps",
+        "fittings",
+        "summary",
+        "per_zone"
+      ],
+      "passed": true
+    }
+  ],
+  "live_autocad_checked": false
+}

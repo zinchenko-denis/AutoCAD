@@ -249,6 +249,8 @@ namespace AFramePlugin
             }
             if (!ClampsOnly && !Manual)
             {
+                if (EffSubType == "vertical" && Profile == "ГП-60-40")
+                    return "Для ГП-60-40 не подтверждены расчётное сечение и масса. Выберите профиль с известными характеристиками или ручные шаги по отдельному инженерному расчёту.";
                 if (InterFloor && NspTypeOrNull == "НСП-2")
                     return "Для НСП-2 не подтверждено расчётное сечение. Выберите НСП-1 или ручные шаги по отдельному инженерному расчёту.";
                 if (!Finite(Height) || !Finite(QClad) || !Finite(Offset) || !Finite(NaMax))
@@ -277,6 +279,8 @@ namespace AFramePlugin
         /// <summary>Что произойдёт по «Разложить» — текст для окна.</summary>
         public string Describe(bool hasLayout)
         {
+            if (!ClampsOnly && !Manual && EffSubType == "vertical" && Profile == "ГП-60-40")
+                return "Расчёт ГП-60-40 недоступен: нужны подтверждённые характеристики сечения и масса профиля. Расчёт по ГП-40-40 не подтверждает выбранный ГП-60-40. Выберите другой профиль либо ручной режим по отдельному инженерному расчёту.";
             var sb = new StringBuilder();
             if (IsTile)
             {

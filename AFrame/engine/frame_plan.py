@@ -66,6 +66,8 @@ import math
 import os
 import sys
 
+from frame_rules import resolve_layout_contract, declared_scope
+
 EPS = 1e-6
 CLAMP_MERGE = 100.0  # мм: ближе — один кляммер (кромка откоса
                      # и шов раскладки почти совпали, 30.07 п.5)
@@ -828,6 +830,16 @@ def _max_floor_span(contours, floors, floor_step):
     return longest
 
 
+def _resolve_calc_scheme(calc_req, system, sub):
+    """One geometry has one supported calculation scheme; a preset cannot change it."""
+    scheme = calc_req.get("scheme") or (system.get("calc") or {}).get("scheme") or sub
+    if sub not in ("vertical", "interfloor", "ortho") or scheme != sub:
+        raise ValueError("Расчётная схема «%s» не соответствует подсистеме «%s». "
+                         "Выберите согласованный пресет и схему. Тип 5 (interfloor_direct) "
+                         "не реализован как самостоятельная геометрия." % (scheme, sub))
+    return scheme
+
+
 def _apply_calc(calc_req, system, sub, joints, floors, floor_step,
                 corners=None, contours=None):
     """Подбор шагов кронштейнов расчётом frame_calc (этап 4).
@@ -863,9 +875,10 @@ def _apply_calc(calc_req, system, sub, joints, floors, floor_step,
     if sub == "interfloor":
         # A shorter manually supplied value must not understate generated spans.
         rail_len = max(rail_len, _max_floor_span(contours, floors, floor_step))
-    scheme = p.get("scheme") or \
-        {"vertical": "vertical", "interfloor": "interfloor",
-         "ortho": "ortho"}.get(sub, "vertical")
+    try:
+        scheme = _resolve_calc_scheme(calc_req, system, sub)
+    except ValueError as e:
+        return None, str(e), None
     inp = dict(scheme=scheme, terrain=str(p["terrain"]),
                height=float(p["height"]), q_clad=float(p["q_clad"]),
                gamma_clad=float(p["gamma_clad"] if p.get("gamma_clad") is not None else 1.1),
@@ -881,6 +894,22 @@ def _apply_calc(calc_req, system, sub, joints, floors, floor_step,
                # п.2 (30.07): подбирать профиль вместе с шагом
                auto_profile=bool(p.get("auto_profile", True)),
                profile_candidates=p.get("profile_candidates"))
+    # Dead load belongs to the emitted assembly, not just the weaker
+    # section used for its strength check. Keep project loads above these
+    # known minima. The horizontal member remains included when candidates
+    # change; orthogonal output contains ШП even though Z bounds strength.
+    try:
+        extra = frame_calc._number("q_rails_extra", p.get("q_rails_extra", 0), zero=True)
+        vertical_min = frame_calc._number("q_rails_profile_min", p.get("q_rails_profile_min", 0), zero=True)
+        if sub == "interfloor":
+            extra = max(extra, frame_calc.PROFILES["НГП-60-50-1,5"]["q"])
+        elif sub == "ortho":
+            extra = max(extra, frame_calc.PROFILES["ГП-40-40-1,2"]["q"])
+            vertical_min = max(vertical_min, frame_calc.PROFILES["ШП-60-20-1,2"]["q"])
+        inp["q_rails_extra"] = extra
+        inp["q_rails_profile_min"] = vertical_min
+    except ValueError as e:
+        return None, "расчёт: %s" % e, None
     # В-ш (ЗАКРЫТ письмом Германа 01.08): допустимые сечения
     # ВЕРТИКАЛЬНЫХ направляющих по типу системы — подбор больше не
     # гуляет по всему справочнику (НСП/НШП в вертикальной).
@@ -976,7 +1005,7 @@ def _apply_calc(calc_req, system, sub, joints, floors, floor_step,
            "steps": {"main": rep["row"]["step"],
                      "corner": rep["corner"]["step"]},
            "scheme": scheme,
-           "inputs": frame_calc.resolved_inputs(inp),
+           "inputs": frame_calc.resolved_inputs(dict(inp, profile=rep["row"]["profile"])),
            # п.2 (30.07): подобранный профиль, ограничивающий узел и
            # таблица вариантов — чтобы конструктор видел, ЧТО режет шаг
            # (на боевых числах это анкер, а не сечение профиля)
@@ -1190,6 +1219,21 @@ def shina_summary(hrails):
 
 
 def frame_plan(req):
+    """Validate source identity before geometry; retain scope for every mode."""
+    sub = (req.get("sub_type") or "vertical").strip().lower()
+    resolved = resolve_layout_contract(req, {}, sub)
+    if not resolved["ok"]:
+        return resolved
+    out = _frame_plan(req)
+    if out.get("ok"):
+        scope = declared_scope(resolved["contract"], any(
+            c.get("holes") for c in req.get("contours") or []))
+        out["design_scope"] = scope["metadata"]
+        out.setdefault("notes", []).extend(scope["notes"])
+    return out
+
+
+def _frame_plan(req):
     try:
         system = load_system(req.get("system") or "Standart",
                              req.get("_systems_dir"))
@@ -1361,13 +1405,15 @@ def frame_plan(req):
     # порядок Дениса 24.07: расчёт → шаги → расстановка.
     calc_rep = None
     # 01.08 (письмо Германа, п.2): явный выбор профиля вертикальной
-    # направляющей сужает подбор до этого сечения. ГП-60-40 в
-    # расчётном справочнике НЕТ — считаем по ГП-40-40 (в запас),
-    # рисуем выбранную видимость.
+    # направляющей сужает подбор до подтверждённого сечения.
+    # ГП-60-40 без Wx/Jx/A/q не заменяется сечением ГП-40-40:
+    # меньшая масса такого заместителя не является расчётом «в запас».
     _USER_PROF = {
         "ГП-40-40": ["ГП-40-40-1,2"],
-        "ГП-60-40": ["ГП-40-40-1,2"],
         "ШП-60-20": ["ШП-60-20-1,2", "ШП-60-20-20-1,2"],
+        "ГП-40-40-1,2": ["ГП-40-40-1,2"],
+        "ШП-60-20-1,2": ["ШП-60-20-1,2"],
+        "ШП-60-20-20-1,2": ["ШП-60-20-20-1,2"],
     }
     rail_prof_req = (str(req.get("rail_profile") or "").strip()
                      or None)
@@ -1375,6 +1421,23 @@ def frame_plan(req):
     if calc_in is not None:
         import frame_calc
         calc_in = dict(calc_in or {})
+        try:
+            _resolve_calc_scheme(calc_in, system, sub)
+        except ValueError as e:
+            return {"ok": False, "error_code": "E_CALC_SCHEME_MISMATCH", "error": str(e)}
+        if sub == "vertical":
+            allowed = {"ГП-40-40-1,2", "ШП-60-20-1,2", "ШП-60-20-20-1,2"}
+            candidates = calc_in.get("profile_candidates")
+            explicit = calc_in.get("profile")
+            unknown_mark = rail_prof_req and rail_prof_req not in _USER_PROF
+            bad_candidates = candidates is not None and (not isinstance(candidates, (list, tuple)) or
+                              not candidates or any(not isinstance(c, str) or c not in allowed for c in candidates))
+            bad_profile = explicit is not None and (not isinstance(explicit, str) or explicit not in allowed)
+            if unknown_mark or bad_candidates or bad_profile:
+                return {"ok": False, "error_code": "E_PROFILE_SECTION_UNCONFIRMED",
+                        "error": "Для выбранной марки вертикального профиля нет подтверждённых "
+                                 "характеристик сечения Wx/Jx/A и массы q в этой схеме. "
+                                 "Выберите ГП-40-40/ШП-60-20 или ручной режим по отдельному инженерному расчёту."}
         calc_in.setdefault("gamma_clad", frame_calc.cladding_gamma(cladding))
         if sub == "interfloor":
             if str(req.get("nsp_type") or "НСП-1") != "НСП-1":
@@ -1408,11 +1471,6 @@ def frame_plan(req):
             calc_in["profile_candidates"] = cands
             if not calc_in.get("auto_profile", True):
                 calc_in["profile"] = cands[0]
-            if rail_prof_req == "ГП-60-40":
-                notes.append(
-                    "сечения ГП-60-40 нет в расчётном справочнике — "
-                    "несущая способность посчитана по ГП-40-40 "
-                    "(в запас); нужны характеристики профиля")
     if calc_in is not None and not tile:
         # 24.09 (независимая рецензия): грузовая ширина бралась медианой
         # ИСХОДНЫХ осей раскладки, а стойки потом достраивались (серединные
@@ -2509,9 +2567,11 @@ def frame_plan(req):
                     "notes": notes}
 
     if calc_rep is not None and sub == "interfloor":
-        # A chain for a supported span must not approve a geometrically
-        # single-supported NSP. This is an intersection check, not a connection
-        # strength model. Manual engineering layouts remain available.
+        # A supported-span chain cannot approve an unmodelled free end.
+        # Existing support_tol only matches endpoints across the splice gap;
+        # it is not an engineering allowance for a cantilever. Intersections
+        # do not prove connection strength or continuity through a splice.
+        # Manual engineering layouts remain available.
         missing = []
         support_tol = gap / 2.0 + 1.0
         ngp = [h for h in hrails if h["kind"] == "НГП"]
@@ -2521,13 +2581,18 @@ def frame_plan(req):
             supports = sorted(set(h["y"] for h in ngp
                                   if h["x0"] - EPS <= rail["x"] <= h["x1"] + EPS and
                                   rail["y0"] - support_tol <= h["y"] <= rail["y1"] + support_tol))
-            if len(supports) < 2:
+            bottom_free = max(0.0, supports[0] - rail["y0"]) if supports else rail["y1"] - rail["y0"]
+            top_free = max(0.0, rail["y1"] - supports[-1]) if supports else rail["y1"] - rail["y0"]
+            if len(supports) < 2 or max(bottom_free, top_free) > support_tol:
                 missing.append({"x": rail["x"], "y0": rail["y0"], "y1": rail["y1"],
-                                "support_y": supports})
+                                "support_y": supports, "bottom_free": round(bottom_free, 4),
+                                "top_free": round(top_free, 4), "match_tolerance": support_tol,
+                                "reason": "fewer_than_two_supports" if len(supports) < 2 else "unsupported_free_end"})
         if missing:
             return {"ok": False, "error_code": "E_CALC_TOPOLOGY_UNSUPPORTED",
-                    "error": "Расчёт не применён: %d кусков НСП имеют менее двух геометрических пересечений с НГП. "
-                             "Консольная/одноопорная схема этой расчётной цепочкой не проверяется. "
+                    "error": "Расчёт не применён: %d кусков НСП имеют менее двух пересечений с НГП "
+                             "либо свободный конец за крайней опорой. Консольная/одноопорная схема "
+                             "этой расчётной цепочкой не проверяется. "
                              "Уточните отметки/опоры либо используйте ручной режим по проектному расчёту; "
                              "прежняя подсистема сохранена." % len(missing),
                     "unsupported": missing, "unsupported_counts": {"nsp_pieces": len(missing)},

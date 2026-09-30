@@ -897,6 +897,7 @@ namespace AFramePlugin
                         { "count", hl.Count },
                         { "handles", hl },
                         { "settings", fs.ToDict() },
+                        { "design_scope", Get(res, "design_scope") },
                         { "parts", fs.Mode },
                         { "schema", 2 },
                         { "refs", true },      // 23.09n: мягкие ссылки на элементы (COPY)

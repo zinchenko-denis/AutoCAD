@@ -38,6 +38,13 @@ static class FrameSettingsProbe
         nsp2.Steps = "manual";
         if (nsp2.Validate(true) != null || !nsp2.Describe(true).Contains("не проверяется")) failures++;
         if (new FrameSettings { QClad = double.NaN }.Validate(true) == null) failures++;
+        var gp60 = new FrameSettings { Profile = "ГП-60-40", Mode = "frame" };
+        if (gp60.Validate(true) == null || !gp60.Describe(true).Contains("масса")) failures++;
+        gp60.Steps = "manual";
+        if (gp60.Validate(true) != null || !gp60.Describe(true).Contains("не проверяется")) failures++;
+        gp60.Steps = "calc";
+        gp60.Mode = "clamps";
+        if (gp60.Validate(true) != null) failures++;
         Console.WriteLine("Domain settings failures: {0}", failures);
         return failures == 0 ? 0 : 1;
     }

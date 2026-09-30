@@ -1,0 +1,207 @@
+{
+  "mode": "regression",
+  "scope": "Actual native FrameSettings and Python engines; no AutoCAD host or engineering certification.",
+  "source_revision": "5cdd34ec4dc963d12b58b0fe508617f29a4944d6",
+  "source_kind": "working_tree",
+  "source_sha256": {
+    "AFrame/tools/roles/RolesDump.cs": "e9c9ab08adcc6e98969b8b23306cb56815a29921efe838cdc1ca9f461a63a280",
+    "AFrame/src/AFramePlugin/FrameSettings.cs": "3aac502ac226865cdcf9be575caa0a23d918de114422476bf9ab1a8fd99be881",
+    "AFrame/engine/frame_plan.py": "a02c8d765d7ba2787bdf7906a92785d4d51040530034ed5763c044cf6db91fef",
+    "AFrame/engine/frame_calc.py": "81c854e1213b175724a53f9a94d11c5b0774ef695df0a59d7cf5e5579e68aa06",
+    "AFrame/engine/frame_engine.py": "2c989944d9b3e9e192fab3abc9ed80d0e7b1208098e0320ef28d1b2d2db9f23d",
+    "AFrame/engine/systems.json": "e9ee0a4cf0c535473dd9931f9b2a3d86dd1d932fe18f84682ef3fd221fbc03c3"
+  },
+  "probe_sha256": "9c92c817f41621df0caa74acea70231d34f91334cab5a772106b8b939ca11401",
+  "total": 35,
+  "passed": 35,
+  "failed": 0,
+  "cases": [
+    {
+      "name": "native_roundtrip_all",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "name": "previous_fix_weight_is_42",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "name": "previous_fix_composite_all_clamps_refused",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "name": "previous_fix_nsp2_calc_refused_manual_allowed",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "name": "material_gamma_native",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "name": "supported_vertical_positive",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "name": "supported_interfloor_positive",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "name": "supported_ortho_positive",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "name": "mixed_system_scheme_refused",
+      "passed": true,
+      "detail": "контур outer: Расчётная схема «vertical» не соответствует подсистеме «interfloor». Выберите согласованный пресет и схему. Тип 5 (interfloor_direct) не реализован как самостоятельная геометрия."
+    },
+    {
+      "name": "explicit_wrong_calc_scheme_refused",
+      "passed": true,
+      "detail": "контур outer: Расчётная схема «vertical» не соответствует подсистеме «interfloor». Выберите согласованный пресет и схему. Тип 5 (interfloor_direct) не реализован как самостоятельная геометрия."
+    },
+    {
+      "name": "type5_geometry_refused",
+      "passed": true,
+      "detail": "контур outer: Расчётная схема «interfloor_direct» не соответствует подсистеме «interfloor». Выберите согласованный пресет и схему. Тип 5 (interfloor_direct) не реализован как самостоятельная геометрия."
+    },
+    {
+      "name": "native_shp_positive",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "name": "native_selected_profile_mass",
+      "passed": true,
+      "detail": {
+        "q_rails": 1.21,
+        "profiles": {
+          "row": "ШП-60-20-20-1,2",
+          "corner": "ШП-60-20-20-1,2"
+        }
+      }
+    },
+    {
+      "name": "native_actual_spacing_with_actual_mass_passes",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "name": "fixed_profile_mass_ГП-40-40-1,2",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "name": "candidate_mass_ГП-40-40-1,2",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "name": "fixed_profile_mass_ШП-60-20-1,2",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "name": "candidate_mass_ШП-60-20-1,2",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "name": "fixed_profile_mass_ШП-60-20-20-1,2",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "name": "candidate_mass_ШП-60-20-20-1,2",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "name": "single_candidate_mass_independent_of_unused_seed",
+      "passed": true,
+      "detail": {
+        "gp_seed_step": 250,
+        "shp_seed_step": 250
+      }
+    },
+    {
+      "name": "both_zone_candidates_independent_of_seed",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "name": "explicit_heavier_mass_preserved",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "name": "ortho_real_shp_and_horizontal_gp_mass",
+      "passed": true,
+      "detail": {
+        "actual": 1.9649999999999999,
+        "required_catalog_sum": 1.9649999999999999
+      }
+    },
+    {
+      "name": "interfloor_horizontal_mass_not_reduced",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "name": "gp60_calc_typed_refusal",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "name": "gp60_native_early_refusal",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "name": "gp60_manual_kept",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "name": "gp60_clamps_kept",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "name": "unknown_mark_typed_refusal",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "name": "wrong_family_profile_typed_refusal",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "name": "wrong_family_candidate_typed_refusal",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "name": "known_exact_ГП-40-40-1,2",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "name": "known_exact_ШП-60-20-1,2",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "name": "known_exact_ШП-60-20-20-1,2",
+      "passed": true,
+      "detail": null
+    }
+  ]
+}

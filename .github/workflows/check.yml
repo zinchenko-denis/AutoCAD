@@ -119,6 +119,7 @@ jobs:
           # 23.09 (ревью): расчёт несущей способности и CLI в CI не гонялись
           python test_frame_calc.py
           python test_frame_engine.py
+          python test_frame_rules.py
 
       - name: Native zone geometry regressions (no AutoCAD host)
         shell: pwsh

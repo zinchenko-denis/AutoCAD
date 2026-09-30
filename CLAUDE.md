@@ -17,6 +17,7 @@
   исправлено — `docs/REVIEW_23.09.md`.
 - История проекта — `docs/CHRONOLOGY.md` + `docs/CHRONOLOGY_INDEX.md`
   (генератор `tools/make_chronology.py`); ревизия — `docs/HANDOFF_REVIEW_3009.md`.
+- Повторный аудит альбомов и методологии — `docs/ATR_REVIEW_30.09.md`; источники и ограничения — `AFrame/engine/frame_rules.py`. Успех расстановки не означает выполнение всех узлов альбома.
 - Исправления независимой ревизии — `docs/FIXES_30.09.md`; руководство
   новичка с учебными DXF — `docs/facades_beginner_3009/`. Пока это исходники
   для будущего выпуска, не новая установленная сборка.

@@ -1,0 +1,551 @@
+{
+  "interpretation": "Three typed empty refusals; supported calc control; three manual project-layout controls.",
+  "passed_cases": 7,
+  "cases": [
+    {
+      "name": "default_two_inner_supports",
+      "request": {
+        "system": {
+          "name": "Межэтажная"
+        },
+        "sub_type": "interfloor",
+        "parts": "frame",
+        "cladding": "porcelain",
+        "contours": [
+          {
+            "outer": [
+              [
+                0,
+                0
+              ],
+              [
+                3000,
+                0
+              ],
+              [
+                3000,
+                3000
+              ],
+              [
+                0,
+                3000
+              ]
+            ]
+          }
+        ],
+        "joints_x": [
+          300,
+          900,
+          1500,
+          2100,
+          2700
+        ],
+        "floors_y": [
+          1000,
+          2000
+        ],
+        "corners_x": [],
+        "calc": {
+          "wind_region": "II",
+          "terrain": "B",
+          "height": 6,
+          "q_clad": 25,
+          "offset": 170,
+          "na_max": 3000
+        }
+      },
+      "ok": false,
+      "error_code": "E_CALC_TOPOLOGY_UNSUPPORTED",
+      "empty_geometry": true,
+      "unsupported_center": [
+        {
+          "x": 1500.0,
+          "y0": 0.0,
+          "y1": 3000.0,
+          "support_y": [
+            1000.0,
+            2000.0
+          ],
+          "bottom_free": 1000.0,
+          "top_free": 1000.0,
+          "match_tolerance": 6.0,
+          "reason": "unsupported_free_end"
+        }
+      ],
+      "error": "Расчёт не применён: 7 кусков НСП имеют менее двух пересечений с НГП либо свободный конец за крайней опорой. Консольная/одноопорная схема этой расчётной цепочкой не проверяется. Уточните отметки/опоры либо используйте ручной режим по проектному расчёту; прежняя подсистема сохранена."
+    },
+    {
+      "name": "default_clustered_supports",
+      "request": {
+        "system": {
+          "name": "Межэтажная"
+        },
+        "sub_type": "interfloor",
+        "parts": "frame",
+        "cladding": "porcelain",
+        "contours": [
+          {
+            "outer": [
+              [
+                0,
+                0
+              ],
+              [
+                3000,
+                0
+              ],
+              [
+                3000,
+                3000
+              ],
+              [
+                0,
+                3000
+              ]
+            ]
+          }
+        ],
+        "joints_x": [
+          300,
+          900,
+          1500,
+          2100,
+          2700
+        ],
+        "floors_y": [
+          1400,
+          1600
+        ],
+        "corners_x": [],
+        "calc": {
+          "wind_region": "II",
+          "terrain": "B",
+          "height": 6,
+          "q_clad": 25,
+          "offset": 170,
+          "na_max": 3000
+        }
+      },
+      "ok": false,
+      "error_code": "E_CALC_TOPOLOGY_UNSUPPORTED",
+      "empty_geometry": true,
+      "unsupported_center": [
+        {
+          "x": 1500.0,
+          "y0": 0.0,
+          "y1": 3000.0,
+          "support_y": [
+            1400.0,
+            1600.0
+          ],
+          "bottom_free": 1400.0,
+          "top_free": 1400.0,
+          "match_tolerance": 6.0,
+          "reason": "unsupported_free_end"
+        }
+      ],
+      "error": "Расчёт не применён: 7 кусков НСП имеют менее двух пересечений с НГП либо свободный конец за крайней опорой. Консольная/одноопорная схема этой расчётной цепочкой не проверяется. Уточните отметки/опоры либо используйте ручной режим по проектному расчёту; прежняя подсистема сохранена."
+    },
+    {
+      "name": "custom_long_member",
+      "request": {
+        "system": {
+          "name": "Межэтажная",
+          "rail_std": 9000
+        },
+        "sub_type": "interfloor",
+        "parts": "frame",
+        "cladding": "porcelain",
+        "contours": [
+          {
+            "outer": [
+              [
+                0,
+                0
+              ],
+              [
+                3000,
+                0
+              ],
+              [
+                3000,
+                9000
+              ],
+              [
+                0,
+                9000
+              ]
+            ]
+          }
+        ],
+        "joints_x": [
+          300,
+          900,
+          1500,
+          2100,
+          2700
+        ],
+        "floors_y": [
+          3000,
+          6000
+        ],
+        "corners_x": [],
+        "calc": {
+          "wind_region": "II",
+          "terrain": "B",
+          "height": 6,
+          "q_clad": 25,
+          "offset": 170,
+          "na_max": 3000
+        }
+      },
+      "ok": false,
+      "error_code": "E_CALC_TOPOLOGY_UNSUPPORTED",
+      "empty_geometry": true,
+      "unsupported_center": [
+        {
+          "x": 1500.0,
+          "y0": 0.0,
+          "y1": 9000.0,
+          "support_y": [
+            3000.0,
+            6000.0
+          ],
+          "bottom_free": 3000.0,
+          "top_free": 3000.0,
+          "match_tolerance": 6.0,
+          "reason": "unsupported_free_end"
+        }
+      ],
+      "error": "Расчёт не применён: 7 кусков НСП имеют менее двух пересечений с НГП либо свободный конец за крайней опорой. Консольная/одноопорная схема этой расчётной цепочкой не проверяется. Уточните отметки/опоры либо используйте ручной режим по проектному расчёту; прежняя подсистема сохранена."
+    },
+    {
+      "name": "end_supported_control",
+      "request": {
+        "system": {
+          "name": "Межэтажная"
+        },
+        "sub_type": "interfloor",
+        "parts": "frame",
+        "cladding": "porcelain",
+        "contours": [
+          {
+            "outer": [
+              [
+                0,
+                0
+              ],
+              [
+                3000,
+                0
+              ],
+              [
+                3000,
+                3000
+              ],
+              [
+                0,
+                3000
+              ]
+            ]
+          }
+        ],
+        "joints_x": [
+          300,
+          900,
+          1500,
+          2100,
+          2700
+        ],
+        "floors_y": [
+          0,
+          750,
+          1500,
+          2250,
+          3000
+        ],
+        "corners_x": [],
+        "calc": {
+          "wind_region": "II",
+          "terrain": "B",
+          "height": 6,
+          "q_clad": 25,
+          "offset": 170,
+          "na_max": 3000
+        }
+      },
+      "ok": true,
+      "members": [
+        {
+          "rail": {
+            "x": 1500.0,
+            "y0": 0.0,
+            "y1": 3000.0,
+            "len": 3000.0,
+            "clamp_role": "regular",
+            "kind": "НСП",
+            "profile": "НСП-1"
+          },
+          "supports_y": [
+            0.0,
+            750.0,
+            1500.0,
+            2250.0,
+            3000.0
+          ],
+          "support_count": 5,
+          "supported_span_count": 4,
+          "supported_spans": [
+            750.0,
+            750.0,
+            750.0,
+            750.0
+          ],
+          "free_end_lengths": [
+            0.0,
+            0.0
+          ]
+        }
+      ],
+      "calculation_requested": true,
+      "rail_len_used": 750.0,
+      "steps": {
+        "main": 800,
+        "corner": 800
+      },
+      "cM_k_cf": [
+        0.106,
+        1.132,
+        0.0063
+      ],
+      "row_passed": true,
+      "corner_passed": true,
+      "layout_verification_passed": true,
+      "method": {
+        "name": "Вектор — цепочка по переданным статическим расчётам",
+        "version": "review-3009",
+        "coverage": "Проверены расчётные цепочки и выданные шаги. Монтажные узлы, консоли, горизонтальные НГП/СП и проект в целом требуют отдельной проверки конструктора."
+      }
+    },
+    {
+      "name": "manual_two_inner_supports",
+      "request": {
+        "system": {
+          "name": "Межэтажная"
+        },
+        "sub_type": "interfloor",
+        "parts": "frame",
+        "cladding": "porcelain",
+        "contours": [
+          {
+            "outer": [
+              [
+                0,
+                0
+              ],
+              [
+                3000,
+                0
+              ],
+              [
+                3000,
+                3000
+              ],
+              [
+                0,
+                3000
+              ]
+            ]
+          }
+        ],
+        "joints_x": [
+          300,
+          900,
+          1500,
+          2100,
+          2700
+        ],
+        "floors_y": [
+          1000,
+          2000
+        ],
+        "corners_x": []
+      },
+      "ok": true,
+      "members": [
+        {
+          "rail": {
+            "x": 1500.0,
+            "y0": 0.0,
+            "y1": 3000.0,
+            "len": 3000.0,
+            "clamp_role": "regular",
+            "kind": "НСП",
+            "profile": "НСП-1"
+          },
+          "supports_y": [
+            1000.0,
+            2000.0
+          ],
+          "support_count": 2,
+          "supported_span_count": 1,
+          "supported_spans": [
+            1000.0
+          ],
+          "free_end_lengths": [
+            1000.0,
+            1000.0
+          ]
+        }
+      ],
+      "calculation_requested": false
+    },
+    {
+      "name": "manual_clustered_supports",
+      "request": {
+        "system": {
+          "name": "Межэтажная"
+        },
+        "sub_type": "interfloor",
+        "parts": "frame",
+        "cladding": "porcelain",
+        "contours": [
+          {
+            "outer": [
+              [
+                0,
+                0
+              ],
+              [
+                3000,
+                0
+              ],
+              [
+                3000,
+                3000
+              ],
+              [
+                0,
+                3000
+              ]
+            ]
+          }
+        ],
+        "joints_x": [
+          300,
+          900,
+          1500,
+          2100,
+          2700
+        ],
+        "floors_y": [
+          1400,
+          1600
+        ],
+        "corners_x": []
+      },
+      "ok": true,
+      "members": [
+        {
+          "rail": {
+            "x": 1500.0,
+            "y0": 0.0,
+            "y1": 3000.0,
+            "len": 3000.0,
+            "clamp_role": "regular",
+            "kind": "НСП",
+            "profile": "НСП-1"
+          },
+          "supports_y": [
+            1400.0,
+            1600.0
+          ],
+          "support_count": 2,
+          "supported_span_count": 1,
+          "supported_spans": [
+            200.0
+          ],
+          "free_end_lengths": [
+            1400.0,
+            1400.0
+          ]
+        }
+      ],
+      "calculation_requested": false
+    },
+    {
+      "name": "manual_long_member",
+      "request": {
+        "system": {
+          "name": "Межэтажная",
+          "rail_std": 9000
+        },
+        "sub_type": "interfloor",
+        "parts": "frame",
+        "cladding": "porcelain",
+        "contours": [
+          {
+            "outer": [
+              [
+                0,
+                0
+              ],
+              [
+                3000,
+                0
+              ],
+              [
+                3000,
+                9000
+              ],
+              [
+                0,
+                9000
+              ]
+            ]
+          }
+        ],
+        "joints_x": [
+          300,
+          900,
+          1500,
+          2100,
+          2700
+        ],
+        "floors_y": [
+          3000,
+          6000
+        ],
+        "corners_x": []
+      },
+      "ok": true,
+      "members": [
+        {
+          "rail": {
+            "x": 1500.0,
+            "y0": 0.0,
+            "y1": 9000.0,
+            "len": 9000.0,
+            "clamp_role": "regular",
+            "kind": "НСП",
+            "profile": "НСП-1"
+          },
+          "supports_y": [
+            3000.0,
+            6000.0
+          ],
+          "support_count": 2,
+          "supported_span_count": 1,
+          "supported_spans": [
+            3000.0
+          ],
+          "free_end_lengths": [
+            3000.0,
+            3000.0
+          ]
+        }
+      ],
+      "calculation_requested": false
+    }
+  ]
+}

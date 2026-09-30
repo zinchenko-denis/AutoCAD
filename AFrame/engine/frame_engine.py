@@ -321,6 +321,7 @@ def op_frame(req):
     hrails, fittings = [], []
     system_used, calc_report = None, None
     calc_reports = []
+    design_scopes = []
     for zone_id, contour in items:
         creq = dict(base)
         # 23.09 (ревью): оси швов — СВОИ у каждой зоны (из её метки
@@ -339,6 +340,7 @@ def op_frame(req):
                     "unsupported_counts": res.get("unsupported_counts") or {},
                     "notes": notes + list(res.get("notes") or [])}
         system_used = res.get("system_used") or system_used
+        design_scopes.append({"zone_id": zone_id, "scope": res["design_scope"]})
         if res.get("calc_report"):
             # 24.09 (рецензия): в ответе оставался отчёт ПОСЛЕДНЕЙ зоны, хотя
             # у зон свои оси и шаги — теперь все, верхний — самый жёсткий
@@ -404,7 +406,9 @@ def op_frame(req):
         "ok": True, "rails": rails, "hrails": hrails,
         "brackets": brackets, "clamps": clamps,
         "fittings": fittings, "per_zone": per_zone, "notes": notes,
-        "system_used": system_used, "summary": summary}
+        "system_used": system_used, "summary": summary,
+        "design_scope": {"schema": "aframe_design_scope/1", "per_zone": design_scopes,
+                         "manufacturer_compliance": "not_asserted"}}
     if calc_report is not None:
         out["calc_report"] = calc_report
         out["calc_reports"] = calc_reports

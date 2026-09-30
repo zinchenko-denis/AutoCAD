@@ -654,19 +654,26 @@ ok(all(r["profile"] == "ГП-40-40-1,2" for r in p_p4["rails"]),
    "FR-P4: вертикальная без калка — марка из пресета системы (%s)"
    % sorted({r["profile"] for r in p_p4["rails"]}))
 
-# P5: явный выбор ГП-60-40 — видимость ГП-60-40, расчёт по ГП-40-40
-# (в запас) + note; кандидаты подбора сужены
+# P5: ГП-60-40 без подтверждённых Wx/Jx/A/q — адресный расчётный отказ.
+# Подмена ГП-40-40 не доказана "в запас": её собственная масса меньше.
+# Исходный расчётный запрос сохранён; ручной выбор марки остаётся доступен.
 _CALC = dict(wind_region="IV", terrain="B", height=30.0, q_clad=50.0,
              offset=150.0, na_max=6000.0)
 p_p5 = frame_plan({"system": "Вектор-1", "sub_type": "vertical",
                    "rail_profile": "ГП-60-40", "calc": dict(_CALC),
                    "contours": [{"outer": rect(0, 0, 1200, 3000)}],
                    "joints_x": [600], "floors_y": [3000]})
-ok(all(r["profile"] == "ГП-60-40" for r in p_p5["rails"]) and
-   any("ГП-60-40" in n for n in p_p5["notes"]) and
-   p_p5["calc_report"]["profile"]["row"] == "ГП-40-40-1,2",
-   "FR-P5: ГП-60-40 — видимость своя, расчёт по ГП-40-40 в запас "
-   "(%s)" % p_p5["calc_report"]["profile"])
+ok(not p_p5["ok"] and p_p5.get("error_code") == "E_PROFILE_SECTION_UNCONFIRMED"
+   and not any(p_p5.get(k) for k in ("rails", "hrails", "brackets", "clamps")),
+   "FR-P5: ГП-60-40 не получает положительный расчёт другого профиля")
+p_p5_manual = frame_plan({"system": "Вектор-1", "sub_type": "vertical",
+                         "rail_profile": "ГП-60-40",
+                         "contours": [{"outer": rect(0, 0, 1200, 3000)}],
+                         "joints_x": [600], "floors_y": [3000]})
+ok(p_p5_manual["ok"] and p_p5_manual["rails"] and
+   all(r["profile"] == "ГП-60-40" for r in p_p5_manual["rails"]) and
+   "calc_report" not in p_p5_manual,
+   "FR-P5-manual: ручная марка ГП-60-40 сохранена без утверждения расчёта")
 
 # P6: авто-подбор вертикальной гуляет ТОЛЬКО по допустимым (В-ш)
 p_p6 = frame_plan({"system": "Вектор-1", "sub_type": "vertical",

@@ -1,0 +1,94 @@
+{
+  "passed": 13,
+  "failed": 0,
+  "checks": [
+    {
+      "name": "supported_vertical: successful engine result",
+      "ok": true,
+      "actual": null
+    },
+    {
+      "name": "supported_vertical: rail gamma 1.05 applied once",
+      "ok": true,
+      "actual": {
+        "q_rails": 0.745,
+        "Np": 13.8,
+        "expected": 13.8
+      }
+    },
+    {
+      "name": "supported_interfloor: successful engine result",
+      "ok": true,
+      "actual": null
+    },
+    {
+      "name": "supported_interfloor: rail gamma 1.05 applied once",
+      "ok": true,
+      "actual": {
+        "q_rails": 3.71,
+        "Np": 40.6,
+        "expected": 40.6
+      }
+    },
+    {
+      "name": "supported_ortho: successful engine result",
+      "ok": true,
+      "actual": null
+    },
+    {
+      "name": "supported_ortho: rail gamma 1.05 applied once",
+      "ok": true,
+      "actual": {
+        "q_rails": 1.9649999999999999,
+        "Np": 11.1,
+        "expected": 11.1
+      }
+    },
+    {
+      "name": "native_shp_mass: successful engine result",
+      "ok": true,
+      "actual": null
+    },
+    {
+      "name": "native_shp_mass: rail gamma 1.05 applied once",
+      "ok": true,
+      "actual": {
+        "q_rails": 1.21,
+        "Np": 4.4,
+        "expected": 4.4
+      }
+    },
+    {
+      "name": "ortho emitted ShP plus horizontal GP mass",
+      "ok": true,
+      "actual": 1.9649999999999999
+    },
+    {
+      "name": "interfloor retains project total 3.71 and horizontal minimum 1.4",
+      "ok": true,
+      "actual": null
+    },
+    {
+      "name": "row candidate GP independent of seed GP/ShP at 470 N",
+      "ok": true,
+      "actual": {
+        "GP": 250,
+        "ShP": 250
+      }
+    },
+    {
+      "name": "successful two-zone report independent of seed at 600 N",
+      "ok": true,
+      "actual": null
+    },
+    {
+      "name": "explicit project total 5 preserved",
+      "ok": true,
+      "actual": null
+    }
+  ],
+  "source_sha256": {
+    "AFrame/engine/frame_calc.py": "81c854e1213b175724a53f9a94d11c5b0774ef695df0a59d7cf5e5579e68aa06",
+    "AFrame/engine/frame_plan.py": "a02c8d765d7ba2787bdf7906a92785d4d51040530034ed5763c044cf6db91fef"
+  }
+}
