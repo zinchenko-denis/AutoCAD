@@ -1,5 +1,5 @@
 {
-  "product_commit": null,
+  "product_commit": "5dfb01ca13941f1f7e9ee3f92fa3cd10037eb074",
   "illustration_product_commit": "8360c238f342d82c1dd83c63789729506c34df18",
   "illustration_source_manifest": "assets/source_manifest.json",
   "illustration_engine_hashes_match_current": false,
@@ -28,7 +28,7 @@
   "illustration_geometry_matches_current": true,
   "provenance_note": "Q-06 guide describes explicit manual registration, mixed quantities, unaccounted objects and removal of registration without deleting geometry. Product commit and exact verified source hashes are to be filled from ../manual_quantities_0110/verification_manifest.json after final gates. All 41 manual pages were visually inspected; ten illustrations and four DXF files remain unchanged, their replay provenance is retained. Live AutoCAD and a new installer release remain pending.",
   "product_base_commit": "2e0abf221871480a9551b452f7ce51abbd6c4e92",
-  "product_source_state": "verified_working_tree",
+  "product_source_state": "committed_and_ci_verified",
   "product_source_sha256": {
     "AClad/src/ACladPlugin/ACladPlugin.csproj": "11061df272fb61c4f9977677c58b8189c25b2ef0005f0404ddffbbc66f90ff41",
     "AClad/src/ACladPlugin/BondForm.cs": "48f9d6918f97d2206f849b686683c1d862e538e8a2cf27e12df51bb576611466",
@@ -83,5 +83,7 @@
     "Facades/src/AFacadesPlugin/ZoneCommand.cs": "f4eee2cf9e1b3b4fcca7b34ac9d7d8c4a0d48ea2d6c543a5c7eee176f96bbdbb",
     "Facades/src/AFacadesPlugin/ZoneForm.cs": "30cc49edd277ffcdfe03261bdb82e4ff92dbaccca51284b543509ab86c40f178",
     "Facades/src/AFacadesPlugin/ZoneTable.cs": "9aad9aa85ebf1d41c40e6d3577a5df4e05ae207923f9658d790b39ad030c2c4b"
-  }
+  },
+  "github_actions_run": 36783340523,
+  "github_actions_conclusion": "success"
 }
