@@ -1,0 +1,23 @@
+{
+  "repository": "zinchenko-denis/AutoCAD",
+  "branch": "feat/auto-reactor",
+  "base_commit": "e2a4e4df69a1936664c76c44cacff311ad44b07d",
+  "published_snapshot_commit": "771212a1ee1823be86969686d4bb9d29902410b0",
+  "product_commit": "19e3dd0b2a415f8758c1075668cef4d0f0c64bc7",
+  "published_commits": 8,
+  "remote_ref_verified": true,
+  "verification_method": "Successful fast-forward git push and independent GitHub ref read",
+  "ci": {
+    "name": "check",
+    "run_id": 36724684279,
+    "head_sha": "771212a1ee1823be86969686d4bb9d29902410b0",
+    "status": "completed",
+    "conclusion": "success",
+    "url": "https://github.com/zinchenko-denis/AutoCAD/actions/runs/36724684279"
+  },
+  "handoff_note": "This receipt and HANDOFF_NEXT_SESSION are in the following documentation-only commit. Read the current remote branch for its exact SHA. Historical reports describe the pre-publication snapshot.",
+  "private_testdata": "Existing private repository, clean working tree; no new changes needed publication.",
+  "live_autocad_checked": false,
+  "release_published": false,
+  "main_changed": false
+}
