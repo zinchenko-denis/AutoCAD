@@ -65,6 +65,15 @@ zone_id в attref-цикле; подробно — AFrame/docs/NEXT.md §В-ю).
 (см. §Статус 22.07c).
 
 ## Статус
+- **30.09e — «Собираем» №30 (Денис 30.09) — ВЫЛОЖЕНО. build-bundle #103 (workflow_dispatch build.yml на
+  feat/auto-reactor, 611bdf3): test → build зелёные; тег build-103 → 611bdf3; latest = build-103 (дайджесты
+  sha256 всех пяти архивов совпали); build-info.json — 103 / 611bdf3 / feat/auto-reactor; в ACladPlugin.dll —
+  «у скатов фронтона фигурных кусков»; в движках (pyinstxtractor) — новый frame_plan и cladding_plan; у AFacades —
+  формы в Contents/templates; ссылки PDF (latest и build-103) отдают 206. PDF Герману —
+  AFrame/docs/FACADES_build30_3009.pdf (генератор make_build30_3009.py 103 611bdf3, картинки make_pics30.py).
+  «Пушим» — тем же заходом (main ← feat/auto-reactor, верхний коммит [skip ci]).**
+  Состав AClad: фронтон ATCLAD под керамогранит (30.09c). ВОПРОС №30 (а): фигурные куски у ската — полилинии,
+  в спецификацию блоков не входят — оставить или считать плитой по габариту?
 - **30.09c — (б) СДЕЛАНО (в сборку не выпущено, пойдёт в №30; в AutoCAD не проверено): ФРОНТОН В ATCLAD
   (керамогранит)** по ответу Германа 30.09a — тем же приёмом, что ATTILE 29.09v:
   - cladding_plan: контур с наклонными рёбрами (скат круче 2°; проёмы ортогональны) не отклоняется —

@@ -235,6 +235,14 @@ extension dictionary штриховки зоны (паттерн StoreZoneData �
 сообщением.)
 
 ## Статус
+- **30.09e — «Собираем» №30 (Денис 30.09) — ВЫЛОЖЕНО. build-bundle #103 (workflow_dispatch build.yml на
+  feat/auto-reactor, 611bdf3): test → build зелёные; тег build-103 → 611bdf3; latest = build-103 (дайджесты
+  sha256 всех пяти архивов совпали); build-info.json — 103 / 611bdf3 / feat/auto-reactor; в ACladPlugin.dll —
+  «у скатов фронтона фигурных кусков»; в движках (pyinstxtractor) — новый frame_plan и cladding_plan; у AFacades —
+  формы в Contents/templates; ссылки PDF (latest и build-103) отдают 206. PDF Герману —
+  AFrame/docs/FACADES_build30_3009.pdf (генератор make_build30_3009.py 103 611bdf3, картинки make_pics30.py).
+  «Пушим» — тем же заходом (main ← feat/auto-reactor, верхний коммит [skip ci]).**
+  Состав AFacades: без изменений с №29 (обновлять вместе — меню общее).
 - **29.09w — «Собираем» №29 (Денис 29.09) — ВЫЛОЖЕНО. build-bundle #102 (workflow_dispatch build.yml на
   feat/auto-reactor, 72ee0d4): test → build зелёные; тег build-102 → 72ee0d4; latest = build-102 (дайджесты
   sha256 всех пяти архивов совпали); build-info.json — 102 / 72ee0d4 / feat/auto-reactor; ссылки PDF (latest
