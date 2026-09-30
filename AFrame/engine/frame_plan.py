@@ -804,8 +804,32 @@ def _median_gap(vals, default):
     return iv[len(iv) // 2]
 
 
+def _max_floor_span(contours, floors, floor_step):
+    """Longest actual floor interval of the selected walls (mm).
+
+    Include wall ends so the first/last partial storey cannot be hidden by
+    a median. Floors of other selected facades outside this wall are ignored.
+    This does not introduce a calculation model for cantilevers or connections.
+    """
+    longest = 0.0
+    for c in contours or []:
+        outer = _closed(c.get("outer") or [])
+        if len(outer) < 3:
+            continue
+        _x0, y0, _x1, y1 = _bbox(outer)
+        levels = [y for y in floors if y0 + EPS < y < y1 - EPS]
+        if not floors and floor_step and floor_step > EPS:
+            y = y0 + floor_step
+            while y < y1 - EPS:
+                levels.append(y)
+                y += floor_step
+        levels = sorted(set([y0] + levels + [y1]))
+        longest = max(longest, max((b - a for a, b in zip(levels, levels[1:])), default=0.0))
+    return longest
+
+
 def _apply_calc(calc_req, system, sub, joints, floors, floor_step,
-                corners=None):
+                corners=None, contours=None):
     """Подбор шагов кронштейнов расчётом frame_calc (этап 4).
 
     Возвращает (report, err, (step_main, step_corner)). Пресет
@@ -824,24 +848,36 @@ def _apply_calc(calc_req, system, sub, joints, floors, floor_step,
     if not p.get("bracket") or not p.get("profile"):
         return None, ("расчёт: для системы нет расчётного пресета "
                       "(кронштейн/профиль) — systems.json calc"), None
-    b = float(p.get("b") or _median_gap(joints, 600.0))
-    rail_len = float(p.get("rail_len") or floor_step or
-                     _median_gap(floors, 3000.0))
+    # Explicit invalid values are errors, never requests for an implicit default.
+    for key in ("b", "b_corner", "rail_len", "max_step"):
+        if p.get(key) is not None:
+            try:
+                value = float(p[key])
+                if not math.isfinite(value) or value <= 0:
+                    raise ValueError()
+            except (TypeError, ValueError):
+                return None, "расчёт: %s должно быть конечным числом больше нуля" % key, None
+    b = float(p["b"] if p.get("b") is not None else _median_gap(joints, 600.0))
+    rail_len = float(p["rail_len"] if p.get("rail_len") is not None else
+                     (floor_step or _median_gap(floors, 3000.0)))
+    if sub == "interfloor":
+        # A shorter manually supplied value must not understate generated spans.
+        rail_len = max(rail_len, _max_floor_span(contours, floors, floor_step))
     scheme = p.get("scheme") or \
         {"vertical": "vertical", "interfloor": "interfloor",
          "ortho": "ortho"}.get(sub, "vertical")
     inp = dict(scheme=scheme, terrain=str(p["terrain"]),
                height=float(p["height"]), q_clad=float(p["q_clad"]),
-               gamma_clad=float(p.get("gamma_clad") or 1.1),
+               gamma_clad=float(p["gamma_clad"] if p.get("gamma_clad") is not None else 1.1),
                q_rails=float(p.get("q_rails") or 0.0),
                offset=float(p["offset"]), na_max=float(p["na_max"]),
                bracket=str(p["bracket"]),
                extender=p.get("extender") or None,
                profile=p["profile"], b_row=b,
-               b_corner=float(p.get("b_corner") or 0) or None,
+               b_corner=float(p["b_corner"]) if p.get("b_corner") is not None else None,
                rail_len=rail_len,
-               max_step=float(p.get("max_step") or 800.0),
-               n_rivets=int(p.get("n_rivets") or 2),
+               max_step=float(p["max_step"] if p.get("max_step") is not None else 800.0),
+               n_rivets=p["n_rivets"] if p.get("n_rivets") is not None else 2,
                # п.2 (30.07): подбирать профиль вместе с шагом
                auto_profile=bool(p.get("auto_profile", True)),
                profile_candidates=p.get("profile_candidates"))
@@ -894,6 +930,27 @@ def _apply_calc(calc_req, system, sub, joints, floors, floor_step,
                               system.get("ortho_v_step") or 600.0)
     try:
         rep = frame_calc.report(inp)
+        # A single vertical mark is emitted for the facade. If independent
+        # optimisation chose different row/corner sections, select one section
+        # that passes both zones rather than drawing only the row winner.
+        if sub == "vertical" and inp["auto_profile"] and \
+                rep["row"].get("profile") != rep["corner"].get("profile"):
+            common = []
+            for profile in inp.get("profile_candidates") or []:
+                trial = dict(inp, profile=profile, auto_profile=False)
+                both = frame_calc.report(trial)
+                if all(both[z].get("step") for z in ("row", "corner")):
+                    mass = sum(frame_calc.PROFILES[profile]["q"] / (inp["b_" + z] / 1000.0) +
+                               frame_calc.M_BRACKET / ((inp["b_" + z] / 1000.0) *
+                                                      both[z]["step"] / 1000.0)
+                               for z in ("row", "corner"))
+                    common.append((mass, profile, both))
+            if not common:
+                return None, ("расчёт: нет единого профиля, проходящего в рядовой и угловой зонах; "
+                              "уточните сечение или исходные нагрузки"), None
+            _mass, profile, rep = min(common, key=lambda v: (v[0], v[1]))
+            inp["profile"] = profile
+            inp["auto_profile"] = False
     except (KeyError, TypeError, ValueError) as e:
         return None, "расчёт: %s" % e, None
     for zone, name in (("row", "рядовой"), ("corner", "угловой")):
@@ -919,10 +976,7 @@ def _apply_calc(calc_req, system, sub, joints, floors, floor_step,
            "steps": {"main": rep["row"]["step"],
                      "corner": rep["corner"]["step"]},
            "scheme": scheme,
-           "inputs": {k: inp[k] for k in
-                      ("terrain", "height", "q_clad", "offset",
-                       "na_max", "b_row", "b_corner", "rail_len",
-                       "max_step")},
+           "inputs": frame_calc.resolved_inputs(inp),
            # п.2 (30.07): подобранный профиль, ограничивающий узел и
            # таблица вариантов — чтобы конструктор видел, ЧТО режет шаг
            # (на боевых числах это анкер, а не сечение профиля)
@@ -934,6 +988,51 @@ def _apply_calc(calc_req, system, sub, joints, floors, floor_step,
            "bc_note": bc_note}
     return out, None, (float(rep["row"]["step"]),
                        float(rep["corner"]["step"]))
+
+
+
+def _verify_calc_spacing(report, req, sub, rails, hrails, brackets, corners, corner_zone):
+    """Recheck emitted adjacent support intervals within each continuous member.
+
+    This verifies the spacing/longest-storey contract of the existing chain;
+    it is not a new analysis of cantilevers, connection nodes or horizontal beams.
+    """
+    import frame_calc
+    bounds = [_bbox(_closed(c.get("outer") or []))
+              for c in req.get("contours") or [] if len(c.get("outer") or []) >= 3]
+    intervals = {"row": [], "corner": []}
+    members = rails if sub == "vertical" else [h for h in hrails if h["kind"] not in SHINA_KINDS]
+    for member in members:
+        if sub == "vertical":
+            points = sorted(set(b["y"] for b in brackets if abs(b["x"] - member["x"]) <= 0.5
+                                and member["y0"] - 0.5 <= b["y"] <= member["y1"] + 0.5))
+        else:
+            points = sorted(set(b["x"] for b in brackets if abs(b["y"] - member["y"]) <= 0.5
+                                and member["x0"] - 0.5 <= b["x"] <= member["x1"] + 0.5))
+        for a, b in zip(points, points[1:]):
+            x, y = ((member["x"], (a + b) / 2.0) if sub == "vertical" else
+                    ((a + b) / 2.0, member["y"]))
+            boxes = [box for box in bounds if box[0] - 0.5 <= x <= box[2] + 0.5 and
+                     box[1] - 0.5 <= y <= box[3] + 0.5]
+            corner = any(_in_corner(x, box[0], box[2], corner_zone, corners) for box in boxes)
+            intervals["corner" if corner else "row"].append(b - a)
+    checked = {}
+    for zone in ("row", "corner"):
+        if not intervals[zone]:
+            checked[zone] = {"intervals": 0, "max_step": None}
+            continue
+        step = max(intervals[zone])
+        limit = report["steps"]["corner" if zone == "corner" else "main"]
+        inp = dict(report["inputs"], profile=report["profile"][zone])
+        chain = frame_calc.calc_chain(inp, step, zone)
+        if step > limit + 0.5 or not chain["passed"]:
+            return None, ("Расчёт выданной геометрии не проходит: %s зона, фактический шаг %.1f мм "
+                          "(расчётный предел %.1f мм). Подсистема не выдана; прежняя сохранена." %
+                          ("угловая" if zone == "corner" else "рядовая", step, limit))
+        checked[zone] = {"intervals": len(intervals[zone]), "max_step": round(step, 4), "chain": chain}
+    return {"passed": True, "scope": "Интервалы между соседними кронштейнами на непрерывных элементах; "
+            "для межэтажной цепочки — максимальный фактический интервал отметок/границ стены.",
+            "rail_len": report["inputs"]["rail_len"], "zones": checked}, None
 
 
 def _clamps_on_rails(req, sub, system, joints, rows, floors, seam_tol=2.0):
@@ -958,7 +1057,10 @@ def _clamps_on_rails(req, sub, system, joints, rows, floors, seam_tol=2.0):
         except (KeyError, TypeError, ValueError):
             continue
         if abs(b - a) > EPS:
-            fixed.append((round(x, 4), min(a, b), max(a, b)))
+            role = str(r.get("clamp_role") or "")
+            if role not in ("", "regular", "window", "flank"):
+                return {"ok": False, "error": "неизвестная роль направляющей — перестройте подсистему"}
+            fixed.append((round(x, 4), min(a, b), max(a, b), role))
     if not fixed:
         return {"ok": False, "error": "нет направляющих для кляммеров (rails_fixed пуст)"}
     clamps, used = [], set()
@@ -973,18 +1075,18 @@ def _clamps_on_rails(req, sub, system, joints, rows, floors, seam_tol=2.0):
         # мимо проёмов, а не по габариту (ручная стойка через «пустоту»
         # Г-стены давала кляммеры вне стены)
         mine = []
-        for x, a, b in fixed:
+        for x, a, b, role in fixed:
             if not (x0 - EPS <= x <= x1 + EPS and a < y1 - EPS and b > y0 + EPS):
                 continue
             spans = [(c0, c1) for c0, c1, _xe in _clip_pieces(outer, [(a, b, x)])]
             for bx0, by0, bx1, by1 in hole_boxes:
                 if bx0 + EPS < x < bx1 - EPS:
                     spans = _sub_y(spans, by0, by1)
-            mine.extend((x, c0, c1) for c0, c1 in spans if c1 - c0 > EPS)
+            mine.extend((x, c0, c1, role) for c0, c1 in spans if c1 - c0 > EPS)
         mine.sort()
         if not mine:
             continue
-        used.update((x, a) for x, a, _b in mine)
+        used.update((x, a) for x, a, _b, _role in mine)
         # межэтажная без отметок: перекрытия шагом этажа от низа контура —
         # ровно как при полной расстановке (кляммер над стыком — комбинированный)
         floors_c = floors
@@ -999,11 +1101,12 @@ def _clamps_on_rails(req, sub, system, joints, rows, floors, seam_tol=2.0):
                     floors_c.append(f)
                     f += fs
         zj = [j for j in joints if x0 - EPS <= j <= x1 + EPS]
-        wedges = _win_edges(hole_boxes, zj or sorted({x for x, _a, _b in mine}), edge_off)
+        wedges = _win_edges(hole_boxes, zj or sorted({x for x, _a, _b, _role in mine}), edge_off)
         # стойки: куски одной оси с малым зазором
         stands = []
-        for x, a, b in mine:
-            if stands and abs(stands[-1][0] - x) <= EPS and a - stands[-1][2] <= 50.0 + EPS:
+        for x, a, b, role in mine:
+            if stands and abs(stands[-1][0] - x) <= EPS and a - stands[-1][2] <= 50.0 + EPS and \
+                    role == stands[-1][4]:
                 st = stands[-1]
                 # стык: межэтажная и с отметками — центр зазора (= отметка),
                 # хлысты/ортогональная — верх нижнего куска (как движок)
@@ -1012,22 +1115,25 @@ def _clamps_on_rails(req, sub, system, joints, rows, floors, seam_tol=2.0):
                              else st[2])
                 st[2] = max(st[2], b)
             else:
-                stands.append([x, a, b, []])
+                stands.append([x, a, b, [], role])
         # хлыст, не дошедший до ВЕРХА стены на зазор стыка (остаток ≤ зазора
         # хлыстом не закрывается) — стойка, как при расстановке, до верха
         tail = float(system.get("rail_gap") or 0.0) + 1.0
-        for st in stands:
-            yt = _ytop(outer, st[0], st[2], y1)
-            if 0.0 < yt - st[2] <= tail:
-                st[2] = yt
-        for x, a, b, seams in stands:
-            side = False
-            if sub != "interfloor" and edge_off > EPS:
+        for x, a, b, seams, role in stands:
+            # Determine the window role BEFORE extending a small stock tail to
+            # the wall top: that extension used to turn a window profile into
+            # a regular one (F16, including vertical systems).
+            side = role == "window"
+            if not role and sub != "interfloor" and edge_off > EPS:
                 for bx0, by0, bx1, by1 in hole_boxes:
                     if (abs(x - (bx0 - edge_off)) <= 0.5 or abs(x - (bx1 + edge_off)) <= 0.5) and \
                             a >= by0 - overhang - 1.0 and b <= by1 + overhang + 1.0:
                         side = True
                         break
+            if not side:
+                yt = _ytop(outer, x, b, y1)
+                if 0.0 < yt - b <= tail:
+                    b = yt
             # отметки перекрытий — стыки для вертикальной и межэтажной; у
             # ортогональной комбинированный только над стыками кусков
             fl_in = seams + [f for f in (floors_c if sub != "ortho" else [])
@@ -1044,7 +1150,7 @@ def _clamps_on_rails(req, sub, system, joints, rows, floors, seam_tol=2.0):
             if not side or sub == "interfloor":
                 _edge_top_clamps(clamps, rows, a, b, x, _ytop(outer, x, b, y1), hole_boxes)
     clamps = _merge_clamps(clamps)
-    skipped = len(fixed) - len({(x, a) for x, a, _b in fixed if (x, a) in used or
+    skipped = len(fixed) - len({(x, a) for x, a, _b, _role in fixed if (x, a) in used or
                                 any(abs(x - ux) <= EPS and a <= ua + EPS for ux, ua in used)})
     notes.append("кляммеры по существующим направляющим: %d кусков, кляммеров %d"
                  % (len(fixed), len(clamps)))
@@ -1232,6 +1338,10 @@ def frame_plan(req):
     parts = str(req.get("parts") or "all").strip().lower()
     if parts not in ("all", "frame", "clamps"):
         return {"ok": False, "error": "parts: all|frame|clamps (получено %r)" % parts}
+    if cladding == "composite" and parts != "frame":
+        return {"ok": False, "error_code": "E_COMPOSITE_FASTENERS_UNSUPPORTED",
+                "error": "Крепления композитных кассет не реализованы. Выберите «Только подсистема»; "
+                         "кляммеры керамогранита для композита не применяются."}
     if tile and parts == "clamps":
         return {"ok": False, "error": "у бетонной/клинкерной плитки кляммеров нет — "
                                       "«только кляммеры» не применяется"}
@@ -1262,20 +1372,42 @@ def frame_plan(req):
     rail_prof_req = (str(req.get("rail_profile") or "").strip()
                      or None)
     calc_in = req.get("calc")
+    if calc_in is not None:
+        import frame_calc
+        calc_in = dict(calc_in or {})
+        calc_in.setdefault("gamma_clad", frame_calc.cladding_gamma(cladding))
+        if sub == "interfloor":
+            if str(req.get("nsp_type") or "НСП-1") != "НСП-1":
+                return {"ok": False, "error_code": "E_NSP_SECTION_UNCONFIRMED",
+                        "error": "Для расчёта НСП-2 нет подтверждённого сечения. Выберите НСП-1 "
+                                 "или ручной режим по проверенному инженерному расчёту."}
+            # METHOD_CALC: NSP-1 = НСП-69-60. The emitted mark must be the
+            # same section whose strength the calculation checks.
+            calc_in["profile"] = "НСП-69-60-1,2"
+            calc_in["profile_candidates"] = ["НСП-69-60-1,2"]
+            calc_in["auto_profile"] = False
+        elif sub == "ortho":
+            # Both ШП-60-20 and window ZП-40-20 are emitted. Z has the smaller
+            # Wx, Jx and A, so checking it bounds both actual vertical sections.
+            calc_in["profile"] = "ЗП-40-20-1,2"
+            calc_in["profile_candidates"] = ["ЗП-40-20-1,2"]
+            calc_in["auto_profile"] = False
     if tile and calc_in is not None:
         # 29.09c (Герман): у плитки кронштейны — по расчёту. Грузовая ширина
         # направляющей = заданный шаг по горизонтали (оси ровные, крайний
         # пролёт короче), в угловой зоне — свой шаг, если задан
         calc_in = dict(calc_in or {})
-        if not calc_in.get("b"):
+        if calc_in.get("b") is None:
             calc_in["b"] = tile_step
-        if not calc_in.get("b_corner"):
+        if calc_in.get("b_corner") is None:
             calc_in["b_corner"] = tile_step_c if tile_step_c > EPS else tile_step
-    if rail_prof_req and calc_in is not None:
+    if sub == "vertical" and rail_prof_req and calc_in is not None:
         cands = _USER_PROF.get(rail_prof_req)
         if cands:
             calc_in = dict(calc_in or {})
-            calc_in.setdefault("profile_candidates", cands)
+            calc_in["profile_candidates"] = cands
+            if not calc_in.get("auto_profile", True):
+                calc_in["profile"] = cands[0]
             if rail_prof_req == "ГП-60-40":
                 notes.append(
                     "сечения ГП-60-40 нет в расчётном справочнике — "
@@ -1293,7 +1425,7 @@ def frame_plan(req):
         if b_fact:
             calc_in = dict(calc_in or {})
             b_med = _median_gap(joints, 600.0)
-            if not calc_in.get("b") and b_fact > b_med + 0.5:
+            if calc_in.get("b") is None and b_fact > b_med + 0.5:
                 calc_in["b"] = b_fact
                 notes.append("грузовая ширина для расчёта %.0f мм — максимальная по "
                              "итоговым осям стоек (медиана исходных осей %.0f)"
@@ -1301,9 +1433,9 @@ def frame_plan(req):
     if calc_in is not None:
         calc_rep, cerr, csteps = _apply_calc(
             calc_in or {}, system, sub, joints, floors,
-            floor_step, corners)
+            floor_step, corners, req.get("contours"))
         if cerr:
-            return {"ok": False, "error": cerr}
+            return {"ok": False, "error_code": "E_CALC_NOT_PASSED", "error": cerr}
         step_main, step_corner = csteps
         notes.append(
             "шаги кронштейнов ПО РАСЧЁТУ: рядовая %.0f / угловая %.0f "
@@ -1489,6 +1621,7 @@ def frame_plan(req):
                                       "y0": round(a2, 4),
                                       "y1": round(b2, 4),
                                       "len": round(b2 - a2, 4),
+                                      "clamp_role": "flank" if flank else "regular",
                                       "kind": "ШП-60-20" if is_shp
                                       else "НСП"})
                         made += 1
@@ -1862,6 +1995,7 @@ def frame_plan(req):
                                   "y0": round(za, 4),
                                   "y1": round(zb, 4),
                                   "len": round(zb - za, 4),
+                                  "clamp_role": "window" if side else "regular",
                                   "kind": "Z-профиль" if side
                                   else "ШП-60-20"})
                 # стыки кусков ШП → комбинированный на первом шве
@@ -1951,6 +2085,7 @@ def frame_plan(req):
                                               "y0": round(za, 4),
                                               "y1": round(zb, 4),
                                               "len": round(zb - za, 4),
+                                              "clamp_role": "window",
                                               "kind": "Z-профиль"})
                             _piece_clamps(clamps, rows, sa, sb, zx,
                                           True, [], wedges)
@@ -2055,7 +2190,11 @@ def frame_plan(req):
             # копим, потом дедуп по оси (приоритет — собственная).
             for _p in pieces:
                 if _p[1] - _p[0] > EPS:
-                    staged.append((_p[0], _p[1], _p[2], jx, step))
+                    # Moving an opening rail across a corner-zone boundary
+                    # changes its design pressure: use the emitted axis, not
+                    # the original cladding joint axis.
+                    piece_step = step_corner if _in_corner(_p[2], x0, x1, corner_zone, corners) else step_main
+                    staged.append((_p[0], _p[1], _p[2], jx, piece_step))
 
         for s_lo, s_hi, s_x, jx, step in _dedup_pieces(staged):
             if True:
@@ -2107,6 +2246,7 @@ def frame_plan(req):
                                   "y0": round(a, 4),
                                   "y1": round(b, 4),
                                   "len": round(b - a, 4),
+                                  "clamp_role": "window" if side else "regular",
                                   "kind": "направляющая"})
                     if step is not None and start_off is not None:
                         pos = _rail_brackets(a, b, float(start_off),
@@ -2175,6 +2315,7 @@ def frame_plan(req):
                                       "y0": round(za, 4),
                                       "y1": round(zb, 4),
                                       "len": round(zb - za, 4),
+                                      "clamp_role": "window",
                                       "kind": "направляющая"})
                         if stp is not None and start_off is not None:
                             for y in _rail_brackets(za, zb,
@@ -2228,12 +2369,12 @@ def frame_plan(req):
                     if abs(rr["x"] - zx) <= 50.0:
                         spans = _sub_y(spans, rr["y0"], rr["y1"])
                 for za, zb in [(a5, b5) for a5, b5 in spans if b5 - a5 > 100.0]:
-                    yq, parts = za, []
+                    yq, rail_parts = za, []
                     while zb - yq > EPS:
                         ce = min(yq + rail_std, zb) if rail_std > EPS else zb
-                        parts.append((yq, ce))
+                        rail_parts.append((yq, ce))
                         yq = ce + gap_v
-                    for pa, pb in parts:
+                    for pa, pb in rail_parts:
                         if pb - pa <= EPS:
                             continue
                         piece = {"x": round(zx, 4), "y0": round(pa, 4), "y1": round(pb, 4),
@@ -2310,16 +2451,16 @@ def frame_plan(req):
                         continue                 # стартовая/концевая рядовой не уступает
                     if g["x1"] <= nx0 + EPS or g["x0"] >= nx1 - EPS:
                         continue
-                    parts = [q for q in ((g["x0"], min(g["x1"], nx0)), (max(g["x0"], nx1), g["x1"]))
+                    remaining = [q for q in ((g["x0"], min(g["x1"], nx0)), (max(g["x0"], nx1), g["x1"]))
                              if q[1] - q[0] >= TILE_MIN_RUN]
-                    if not parts:
+                    if not remaining:
                         g["_dead"] = True
                         continue
-                    g["x0"], g["x1"] = round(parts[0][0], 4), round(parts[0][1], 4)
+                    g["x0"], g["x1"] = round(remaining[0][0], 4), round(remaining[0][1], 4)
                     g["len"] = round(g["x1"] - g["x0"], 4)
-                    if len(parts) > 1:
-                        extra.append(dict(g, x0=round(parts[1][0], 4), x1=round(parts[1][1], 4),
-                                          len=round(parts[1][1] - parts[1][0], 4), run=nxt_run))
+                    if len(remaining) > 1:
+                        extra.append(dict(g, x0=round(remaining[1][0], 4), x1=round(remaining[1][1], 4),
+                                          len=round(remaining[1][1] - remaining[1][0], 4), run=nxt_run))
                         nxt_run += 1
             extra_all.extend(extra)
         if n_ext or extra_all:
@@ -2356,7 +2497,52 @@ def frame_plan(req):
         if n_bare:
             notes.append("плитка: кусков шины без направляющей под ними %d — удлинить не до чего (в "
                          "простенке или у края нет направляющих) — проверьте" % n_bare)
+        if n_air or n_bare:
+            unsupported = [dict(h) for h in hrails if h["kind"] in SHINA_KINDS and
+                           not any(r["y0"] - TILE_SUP_TOL <= h["y"] <= r["y1"] + TILE_SUP_TOL and
+                                   h["x0"] - EPS <= r["x"] <= h["x1"] + EPS for r in rails)]
+            return {"ok": False, "error_code": "E_UNSUPPORTED_SHINA",
+                    "error": "Подсистема не построена: шин без направляющей %d, стыков без опоры %d. "
+                             "Измените шаг направляющих/границы участка или разработайте узел с конструктором. "
+                             "Прежняя подсистема сохранена." % (n_bare, n_air),
+                    "unsupported": unsupported, "unsupported_counts": {"pieces": n_bare, "joints": n_air},
+                    "notes": notes}
 
+    if calc_rep is not None and sub == "interfloor":
+        # A chain for a supported span must not approve a geometrically
+        # single-supported NSP. This is an intersection check, not a connection
+        # strength model. Manual engineering layouts remain available.
+        missing = []
+        support_tol = gap / 2.0 + 1.0
+        ngp = [h for h in hrails if h["kind"] == "НГП"]
+        for rail in rails:
+            if rail["kind"] != "НСП":
+                continue
+            supports = sorted(set(h["y"] for h in ngp
+                                  if h["x0"] - EPS <= rail["x"] <= h["x1"] + EPS and
+                                  rail["y0"] - support_tol <= h["y"] <= rail["y1"] + support_tol))
+            if len(supports) < 2:
+                missing.append({"x": rail["x"], "y0": rail["y0"], "y1": rail["y1"],
+                                "support_y": supports})
+        if missing:
+            return {"ok": False, "error_code": "E_CALC_TOPOLOGY_UNSUPPORTED",
+                    "error": "Расчёт не применён: %d кусков НСП имеют менее двух геометрических пересечений с НГП. "
+                             "Консольная/одноопорная схема этой расчётной цепочкой не проверяется. "
+                             "Уточните отметки/опоры либо используйте ручной режим по проектному расчёту; "
+                             "прежняя подсистема сохранена." % len(missing),
+                    "unsupported": missing, "unsupported_counts": {"nsp_pieces": len(missing)},
+                    "calc_inputs": calc_rep["inputs"]}
+    if calc_rep is not None:
+        verification, error = _verify_calc_spacing(calc_rep, req, sub, rails, hrails, brackets,
+                                                   corners, corner_zone)
+        if error:
+            return {"ok": False, "error_code": "E_CALC_LAYOUT", "error": error}
+        calc_rep["layout_verification"] = verification
+        calc_rep["method"] = {
+            "name": "Вектор — цепочка по переданным статическим расчётам",
+            "version": "review-3009",
+            "coverage": "Проверены расчётные цепочки и выданные шаги. Монтажные узлы, "
+                        "консоли, горизонтальные НГП/СП и проект в целом требуют отдельной проверки конструктора."}
     clamps = _merge_clamps(clamps)
     # 01.08 (письмо Германа, п.2): марка профиля для СОСТОЯНИЯ
     # ВИДИМОСТИ динблока (C# ставит видимость по этому полю).

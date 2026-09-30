@@ -31,6 +31,7 @@ namespace AFramePlugin
     {
         internal const string XKeyClad = "ATCLAD";
         internal const string XKeyFrame = "ATFRAME";
+        internal const string XKeyRail = "ATFRAME_RAIL";
         private const double CloseTol = 0.5;
 
         private const string LayerRails = "_01_ПС_НАПРАВЛЯЮЩИЕ";
@@ -414,6 +415,7 @@ namespace AFramePlugin
                         "\nТочка на ВНЕШНЕМ углу здания (Enter — дальше): ")
                     { AllowNone = true };
                     var pcv = ed.GetPoint(pco);
+                    if (pcv.Status == PromptStatus.Cancel) return;
                     if (pcv.Status != PromptStatus.OK) break;
                     cornersX.Add(pcv.Value.X);
                     ed.WriteMessage("\n  угол X = " + F0(pcv.Value.X) +
@@ -475,6 +477,7 @@ namespace AFramePlugin
                         "\nТочка на отметке перекрытия (Enter — дальше): ")
                     { AllowNone = true };
                     var pv = ed.GetPoint(ppo);
+                    if (pv.Status == PromptStatus.Cancel) return;
                     if (pv.Status != PromptStatus.OK) break;
                     floors.Add(pv.Value.Y);
                     ed.WriteMessage("\n  перекрытие Y = " + F0(pv.Value.Y) +
@@ -700,6 +703,8 @@ namespace AFramePlugin
                                 x, y0, y1 - y0, LayerRails, rprof);
                             if (rh != null)
                             {
+                                foreach (var rid in IdsOf(db, new[] { rh }))
+                                    StoreRailRole(tr, (Entity)tr.GetObject(rid, OpenMode.ForWrite), r, true);
                                 Remember(handlesByRoot, partToRoot,
                                          SafeStr(Get(r, "zone")), rh);
                                 made++;
@@ -719,6 +724,7 @@ namespace AFramePlugin
                         pl.Layer = LayerRails;
                         ms.AppendEntity(pl);
                         tr.AddNewlyCreatedDBObject(pl, true);
+                        StoreRailRole(tr, pl, r, true);
                         Remember(handlesByRoot, partToRoot,
                                  SafeStr(Get(r, "zone")),
                                  pl.Handle.ToString());
@@ -755,6 +761,7 @@ namespace AFramePlugin
                         pl.Layer = shina ? shLayer : LayerRails;
                         ms.AppendEntity(pl);
                         tr.AddNewlyCreatedDBObject(pl, true);
+                        StoreRailRole(tr, pl, r, false);
                         Remember(handlesByRoot, partToRoot,
                                  SafeStr(Get(r, "zone")),
                                  pl.Handle.ToString());
@@ -934,6 +941,9 @@ namespace AFramePlugin
                     "рядовая зона " + SafeStr(Get(steps, "main")) +
                     " / угловая " + SafeStr(Get(steps, "corner")) +
                     " мм.");
+            var method = Get(rep, "method") as Dictionary<string, object>;
+            if (method != null)
+                ed.WriteMessage("\n  " + SafeStr(Get(method, "coverage")));
             // п.2 (Герман 30.07): подобранный профиль и ЧТО режет шаг.
             // На боевых числах узкое место — анкер, а не сечение:
             // конструктору важно видеть это, иначе он думает, что
@@ -1675,6 +1685,62 @@ namespace AFramePlugin
             return true;
         }
 
+        // Own rails carry their direction/role. Their length can be shorter
+        // than their width; the manual-selection aspect heuristic is not an ID.
+        private static void StoreRailRole(Transaction tr, Entity ent,
+            Dictionary<string, object> rail, bool vertical)
+        {
+            var d = new Dictionary<string, object> { { "schema", 1 }, { "axis", vertical ? "v" : "h" } };
+            if (vertical)
+            {
+                Extents3d ex = ent.GeometricExtents;
+                d["width"] = ex.MaxPoint.X - ex.MinPoint.X;
+                d["height"] = ex.MaxPoint.Y - ex.MinPoint.Y;
+                d["x_rel"] = ToD(Get(rail, "x")) - ex.MinPoint.X;
+                d["y0_rel"] = ToD(Get(rail, "y0")) - ex.MinPoint.Y;
+                d["y1_rel"] = ToD(Get(rail, "y1")) - ex.MinPoint.Y;
+                d["clamp_role"] = SafeStr(Get(rail, "clamp_role"));
+                var br = ent as BlockReference;
+                if (br != null)
+                {
+                    d["rotation"] = br.Rotation;
+                    d["sx"] = br.ScaleFactors.X;
+                    d["sy"] = br.ScaleFactors.Y;
+                    d["sz"] = br.ScaleFactors.Z;
+                }
+            }
+            StoreData(tr, ent, new JavaScriptSerializer().Serialize(d), XKeyRail);
+        }
+
+        private static Dictionary<string, object> ReadRailRole(Transaction tr, Entity ent)
+        {
+            string json = ReadData(tr, ent, XKeyRail);
+            if (json == null) return null;
+            var d = new JavaScriptSerializer().DeserializeObject(json) as Dictionary<string, object>;
+            if (SafeStr(Get(d, "axis")) == "h") return new Dictionary<string, object>();
+            if (SafeStr(Get(d, "axis")) != "v")
+                throw new InvalidOperationException("Неизвестная метка направляющей — перестройте подсистему полностью.");
+            Extents3d ex = ent.GeometricExtents;
+            bool changed = Math.Abs(ex.MaxPoint.X - ex.MinPoint.X - ToD(Get(d, "width"))) > 1.0 ||
+                           Math.Abs(ex.MaxPoint.Y - ex.MinPoint.Y - ToD(Get(d, "height"))) > 1.0;
+            var br = ent as BlockReference;
+            if (br != null)
+                changed |= Math.Abs(br.Rotation - ToD(Get(d, "rotation"))) > 1e-6 ||
+                           Math.Abs(br.ScaleFactors.X - ToD(Get(d, "sx"))) > 1e-6 ||
+                           Math.Abs(br.ScaleFactors.Y - ToD(Get(d, "sy"))) > 1e-6 ||
+                           Math.Abs(br.ScaleFactors.Z - ToD(Get(d, "sz"))) > 1e-6;
+            if (changed)
+                throw new InvalidOperationException("Геометрия направляющей изменена после ATFRAME. " +
+                    "Перестройте подсистему полностью перед повтором кляммеров; прежняя схема сохранена.");
+            return new Dictionary<string, object>
+            {
+                { "x", ex.MinPoint.X + ToD(Get(d, "x_rel")) },
+                { "y0", ex.MinPoint.Y + ToD(Get(d, "y0_rel")) },
+                { "y1", ex.MinPoint.Y + ToD(Get(d, "y1_rel")) },
+                { "clamp_role", SafeStr(Get(d, "clamp_role")) },
+            };
+        }
+
         private static List<object> RailsFromHandles(Database db, HashSet<string> handles)
         {
             var out1 = new List<object>();
@@ -1691,9 +1757,26 @@ namespace AFramePlugin
                     var e = tr.GetObject(id, OpenMode.ForRead, false) as Entity;
                     if (e == null || !string.Equals(e.Layer, LayerRails, StringComparison.OrdinalIgnoreCase))
                         continue;
+                    var ownRail = ReadRailRole(tr, e);
+                    if (ownRail != null)
+                    {
+                        if (ownRail.ContainsKey("x")) out1.Add(ownRail);
+                        continue;
+                    }
                     double x, y0, y1;
                     if (RailGeom(e, out x, out y0, out y1))
                         out1.Add(new Dictionary<string, object> { { "x", x }, { "y0", y0 }, { "y1", y1 } });
+                    else
+                    {
+                        // Old conditional rails have no direction tag. Do not
+                        // silently erase their clamps when a short rectangle
+                        // cannot be classified safely from extents alone.
+                        Extents3d ex = e.GeometricExtents;
+                        double w = ex.MaxPoint.X - ex.MinPoint.X, h = ex.MaxPoint.Y - ex.MinPoint.Y;
+                        if (h > 1.0 && w > 1.0)
+                            throw new InvalidOperationException("Направляющая старой сборки не имеет однозначной метки направления. " +
+                                "Перестройте подсистему полностью перед повтором кляммеров; прежняя схема сохранена.");
+                    }
                 }
                 tr.Commit();
             }
@@ -1722,6 +1805,13 @@ namespace AFramePlugin
                 foreach (SelectedObject so in sel.Value)
                 {
                     var e = tr.GetObject(so.ObjectId, OpenMode.ForRead) as Entity;
+                    var ownRail = e == null ? null : ReadRailRole(tr, e);
+                    if (ownRail != null)
+                    {
+                        if (ownRail.ContainsKey("x")) out1.Add(ownRail);
+                        else skipped++;
+                        continue;
+                    }
                     double x, y0, y1;
                     if (e != null && RailGeom(e, out x, out y0, out y1))
                         out1.Add(new Dictionary<string, object> { { "x", x }, { "y0", y0 }, { "y1", y1 } });

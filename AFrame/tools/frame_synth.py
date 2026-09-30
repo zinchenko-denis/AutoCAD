@@ -86,6 +86,7 @@ T = 1.0        # мм, геометрический допуск
 T_CLAMP = 60.0  # мм, кляммеры у торцов кусков (как R3 краш-аудита)
 SHIFT = (47621.3, 24070.3)
 SYSTEMS = {"vertical": "Standart", "interfloor": "Межэтажная", "ortho": "Ортогональная"}
+REFUSED = Counter()  # explicit structural refusals, never counted as built facades
 
 
 # ── сценарии ─────────────────────────────────────────────────────────
@@ -604,6 +605,20 @@ def run_scenario(sc, rng):
     res = fre.run(json.loads(json.dumps(sc["req"])))
     dt = time.time() - t0
     if not res.get("ok"):
+        if res.get("error_code") == "E_UNSUPPORTED_SHINA" and sc.get("tile"):
+            counts = res.get("unsupported_counts") or {}
+            valid = bool(res.get("error")) and sum(counts.values()) > 0 and \
+                    not any(res.get(k) for k in ("rails", "hrails", "brackets", "clamps", "fittings"))
+            reordered = _reordered(sc["req"], rng)
+            for q in (sc["req"], _shifted(sc["req"], *SHIFT), reordered):
+                check = fre.run(json.loads(json.dumps(q)))
+                valid = valid and not check.get("ok") and check.get("error_code") == "E_UNSUPPORTED_SHINA" and \
+                        check.get("unsupported_counts") == counts and \
+                        not any(check.get(k) for k in ("rails", "hrails", "brackets", "clamps", "fittings"))
+            if valid:
+                REFUSED[sc["sub"]] += 1
+                return [], dt, 0
+            return [("F0", "неустойчивый или непустой отказ по опорам шин")], dt, 0
         return [("F0", "движок отказал: %s" % res.get("error"))], dt, 0
     step_max = None
     su = res.get("system_used") or {}
@@ -637,6 +652,13 @@ def run_scenario(sc, rng):
         if not r5.get("ok") or a != b:
             viol.append(("F16", "только кляммеры по направляющим ≠ полной расстановке (%s)"
                          % (sum(((a - b) + (b - a)).values()) if r5.get("ok") else r5.get("error"))))
+        q5["rails_fixed"] = [{k: r[k] for k in ("x", "y0", "y1", "clamp_role") if k in r}
+                             for r in res["rails"]]
+        tagged = fre.run(q5)
+        ctag = Counter((round(c["x"], 3), round(c["y"], 3), c["kind"], c.get("orient"))
+                       for c in (tagged.get("clamps") or []))
+        if not tagged.get("ok") or a != ctag:
+            viol.append(("F16", "только кляммеры по направляющим с сохранённой ролью ≠ полной расстановке"))
     n = len(res["rails"]) + len(res["brackets"]) + len(res["clamps"]) + len(res.get("hrails") or [])
     return viol, dt, n
 
@@ -727,6 +749,7 @@ def check_calc(rng, n_rand):
 
 
 def main(argv):
+    REFUSED.clear()
     ap = argparse.ArgumentParser()
     ap.add_argument("--seed", type=int, default=2309)
     ap.add_argument("--n", type=int, default=24, help="сценариев на пару (форма, подсистема)")
@@ -787,6 +810,8 @@ def main(argv):
                     if c not in tfirst:
                         tfirst[c] = (sc, [m for cc, m in viol if cc == c][:3])
     print("ПЛИТКА: сценариев %d, нарушений %s" % (ttotal, dict(tstats) or "нет"))
+    print("  построено %d; безопасно ОТКЛОНЕНО (не выдано): %d %s" %
+          (ttotal - sum(REFUSED.values()), sum(REFUSED.values()), dict(REFUSED)))
     for c, (sc, msgs) in sorted(tfirst.items()):
         print("  · %s %s: %s" % (c, sc["id"], "; ".join(msgs)))
         if a.dump:

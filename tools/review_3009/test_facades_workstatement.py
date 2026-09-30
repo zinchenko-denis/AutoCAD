@@ -34,6 +34,11 @@ static class IndependentVedomost {
         WorkStatement.Build(Path.Combine(a[1],"vent_two.xlsx"),reused,
             new List<WorkStatement.Group>{G("НВФ утеплитель 150 мм",300)},
             0,Path.Combine(a[1],"reused_single.xlsx"));
+        WorkStatement.Build(Path.Combine(a[1],"vent_two.xlsx"),reused,
+            new List<WorkStatement.Group>{G("150 мм",100),G("100 мм",200),G("80 мм",300)},
+            0,Path.Combine(a[1],"reused_three.xlsx"));
+        WorkStatement.Build(Path.Combine(a[1],"vent_two.xlsx"),reused,
+            new List<WorkStatement.Group>(),5,Path.Combine(a[1],"parapet_only.xlsx"));
     }
 }
 '''
@@ -62,9 +67,9 @@ def main():
     subprocess.run(["mcs", "-out:"+str(executable), *flags, str(source), str(product)], check=True)
     subprocess.run(["mono", str(executable), str(tpl), str(out)], check=True)
     results = {}
-    for name in ("unknown_thickness", "reused_single"):
+    for name in ("unknown_thickness", "reused_single", "reused_three", "parapet_only"):
         ws = openpyxl.load_workbook(out/(name+".xlsx")).worksheets[0]
-        results[name] = {a:ws[a].value for a in ("D3","B5","D5","B6","D6")}
+        results[name] = {a:ws[a].value for a in ("D3","D4","B5","D5","B6","D6","B7","D7")}
     print(json.dumps(results, ensure_ascii=False, indent=2))
     (out/"independent_results.json").write_text(json.dumps(results, ensure_ascii=False, indent=2),encoding="utf-8")
     fails=[]
@@ -72,6 +77,14 @@ def main():
         fails.append("one 150 mm group has area 300 m2, but its cell D5 remains stale")
     if "150" in results["unknown_thickness"]["B6"]:
         fails.append("unknown-thickness group was labelled 150 mm without input evidence")
+    if results["reused_single"]["D6"] != 0:
+        fails.append("obsolete 100 mm row must be zero after changing to one 150 mm group")
+    if (results["reused_three"]["D3"],results["reused_three"]["D5"],results["reused_three"]["D6"],results["reused_three"]["D7"]) != (600,100,300,200):
+        fails.append("2 to 3 thicknesses must reallocate 600 m2 exactly to 100/300/200")
+    if any(results["parapet_only"][a] != 0 for a in ("D3","D5","D6")):
+        fails.append("parapet-only statement must clear all previous insulation quantities")
+    if any(v["D4"] is not None for v in results.values()):
+        fails.append("section header cells must remain blank")
     for message in fails:
         print("FAIL:", message)
     return int(bool(fails))

@@ -356,9 +356,9 @@ ok(p["ok"] and "calc_report" not in p and
    "calc_steps" not in p["summary"],
    "FR-C4: без calc — прежнее поведение")
 
-# C5: межэтажная Нижнекаменская-кейс (61.2 м, кассеты 8) →
-# гориз. шаг 350 (ограничитель — удлинитель УК-85, как их верхний
-# диапазон 45..65 м)
+# C5: historical Нижнекаменская inputs cannot approve the currently
+# emitted NSP-1 (69-60): the old planner silently selected a stronger
+# section while drawing NSP-1. Formula reproduction stays in test_frame_calc.
 p = frame_plan({"system": "Межэтажная", "sub_type": "interfloor",
                 "contours": [{"outer": rect(0, 0, 5000, 9000)}],
                 "joints_x": [i * 800.0 + 400 for i in range(6)],
@@ -367,15 +367,10 @@ p = frame_plan({"system": "Межэтажная", "sub_type": "interfloor",
                          "height": 61.2, "q_clad": 8,
                          "gamma_clad": 1.05, "offset": 280,
                          "na_max": 3960, "b_corner": 450}})
-ok(p["ok"], "FR-C5: ok (%s)" % p.get("error"))
-ok(p["summary"]["calc_steps"]["main"] == 350,
-   "FR-C5: межэтажная 61.2 м — гориз. шаг ПО РАСЧЁТУ 350 (как "
-   "Нижнекаменская 45..65 м) (%s)" % p["summary"].get("calc_steps"))
-xs = sorted(b["x"] for b in p["brackets"]
-            if abs(b["y"] - 2930) < 1 and 1500 < b["x"] < 3500)
-dxs = [xs[i + 1] - xs[i] for i in range(len(xs) - 1)]
-ok(dxs and max(dxs) <= 350 + 1,
-   "FR-C5: кронштейны по перекрытию с шагом <=350")
+ok(not p["ok"] and p.get("error_code") == "E_CALC_NOT_PASSED",
+   "FR-C5: the actual NSP-1 section is rejected (%s)" % p.get("error"))
+ok("профиль" in p["error"], "FR-C5: failed physical component is named")
+ok(not p.get("rails") and not p.get("brackets"), "FR-C5: rejected calculation emits no construction")
 
 # C6: ортогональная Новгород-кейс (район I, анкер 1280, вынос 260)
 p = frame_plan({"system": "Ортогональная", "sub_type": "ortho",
@@ -416,8 +411,19 @@ p = frame_plan({"system": "Вектор-1", "contours":
 ok(p["ok"] and max(_steps_at(p, 304.0)) > 800 + 1,
    "FR-G2: corners_x=[] — весь фасад рядовой")
 
-# G3: межэтажная + расчёт БЕЗ b_corner — авто 450 + note
-p = frame_plan({"system": "Межэтажная", "sub_type": "interfloor",
+# G3/G4: historical loads remain unchanged. NSP-1 cannot use the stronger
+# implicit NSP-95 section; reject the layout, while still checking the b_corner
+# value actually passed to the calculator (not merely comparing two failures).
+from unittest.mock import patch
+import frame_calc as _fc_g
+
+def _observed_calc_plan(request):
+    with patch.object(_fc_g, "report", wraps=_fc_g.report) as observed:
+        result = frame_plan(request)
+    return result, observed.call_args_list[0].args[0]
+
+# G3: межэтажная + расчёт БЕЗ b_corner — авто 450
+p, _g_input = _observed_calc_plan({"system": "Межэтажная", "sub_type": "interfloor",
                 "contours": [{"outer": rect(0, 0, 5000, 9000)}],
                 "joints_x": [i * 800.0 + 400 for i in range(6)],
                 "floor_step": 2930,
@@ -425,15 +431,14 @@ p = frame_plan({"system": "Межэтажная", "sub_type": "interfloor",
                          "height": 61.2, "q_clad": 8,
                          "gamma_clad": 1.05, "offset": 280,
                          "na_max": 3960}})
-ok(p["ok"], "FR-G3: ok (%s)" % p.get("error"))
-ok(p["calc_report"]["inputs"]["b_corner"] == 450.0 and
-   any("принят 450" in n for n in p["notes"]),
-   "FR-G3: b_corner авто 450 + note (%s)" %
-   p["calc_report"]["inputs"].get("b_corner"))
+ok(not p["ok"] and p.get("error_code") == "E_CALC_NOT_PASSED" and not p.get("rails"),
+   "FR-G3: historical loads refuse unconfirmed stronger NSP section (%s)" % p.get("error"))
+ok(_g_input["b_corner"] == 450.0,
+   "FR-G3: calculator actually received auto b_corner=450 (%s)" % _g_input["b_corner"])
 
 # G4: межэтажная + углы + оси чаще в углу — b_corner из осей
 jx = [200, 650, 1100, 1550] + [2400 + i * 800.0 for i in range(4)]
-p = frame_plan({"system": "Межэтажная", "sub_type": "interfloor",
+p, _g_input = _observed_calc_plan({"system": "Межэтажная", "sub_type": "interfloor",
                 "contours": [{"outer": rect(0, 0, 6000, 9000)}],
                 "joints_x": jx, "floor_step": 2930,
                 "corners_x": [0.0],
@@ -441,11 +446,10 @@ p = frame_plan({"system": "Межэтажная", "sub_type": "interfloor",
                          "height": 61.2, "q_clad": 8,
                          "gamma_clad": 1.05, "offset": 280,
                          "na_max": 3960}})
-ok(p["ok"], "FR-G4: ok (%s)" % p.get("error"))
-ok(abs(p["calc_report"]["inputs"]["b_corner"] - 450.0) < 1 and
-   any("из осей раскладки" in n for n in p["notes"]),
-   "FR-G4: b_corner из осей в угловой полосе = 450 (%s)" %
-   p["calc_report"]["inputs"].get("b_corner"))
+ok(not p["ok"] and p.get("error_code") == "E_CALC_NOT_PASSED" and not p.get("rails"),
+   "FR-G4: historical loads refuse unconfirmed stronger NSP section (%s)" % p.get("error"))
+ok(abs(_g_input["b_corner"] - 450.0) < 1,
+   "FR-G4: calculator actually received b_corner=450 from corner axes (%s)" % _g_input["b_corner"])
 
 # ── FR-H (фидбэк Германа 30.07, ответы по сборке №10) ──
 # H1/H2: ЗАДВОЕНИЕ КЛЯММЕРОВ. Причина найдена прогоном: верх откоса
@@ -1379,12 +1383,12 @@ ok((1500, 2800, 3500) in _en15 and not any(e[0] == 0 for e in _en15) and
    not any(e[0] == 3000 and e[1] < 3500 and e[2] > 2800 for e in _en15),
    "FR-T15: концевая — под окном у верха; над ним по верху зоны — нет (%s)" % _en15)
 
-# FR-T16 (9в): направляющих в пределах хлыста нет (шаг больше хлыста) — стык без опоры,
-# в замечаниях — счёт
+# FR-T16: a stock splice without a rail is an explicit refusal, not a
+# successfully generated unsupported construction.
 _pa = frame_plan(dict(treq, tile_step_x=3000, rows_y=[], contours=[{"outer": rect(0, 0, 7000, 1000)}]))
-ok(_pa["ok"] and any("без направляющей" in n for n in _pa["notes"]) and
-   all(h["len"] >= 300 - 1e-6 for h in _pa["hrails"]),
-   "FR-T16: шаг 3000 > хлыста — стыки без опоры в замечаниях, кусков короче 300 нет (%s)"
+ok(not _pa["ok"] and _pa.get("error_code") == "E_UNSUPPORTED_SHINA" and
+   not _pa.get("hrails") and _pa["unsupported_counts"]["joints"] == 4,
+   "FR-T16: шаг 3000 > хлыста — точный отказ с числом неподопёртых стыков (%s)"
    % [n for n in _pa["notes"] if "шины" in n])
 
 # FR-T17: две зоны рядом — стыки каждой только на её направляющих, номера прогонов сквозные

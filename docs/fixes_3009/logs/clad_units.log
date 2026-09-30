@@ -1,0 +1,15 @@
+test_cladding_plan.py EXIT 0
+cladding_plan: 66 проверок OK
+
+test_clad_engine.py EXIT 0
+............
+----------------------------------------------------------------------
+Ran 12 tests in 0.033s
+
+OK
+
+test_tile_pattern.py EXIT 0
+tile_pattern: OK, 180 проверок
+
+audit_clad.py EXIT 0
+сценариев: 124 нарушений: 0 крашей: 0

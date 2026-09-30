@@ -235,7 +235,7 @@ namespace ACladPlugin
                 var br = (BlockReference)tr.GetObject(pres.ObjectId,
                                                       OpenMode.ForRead);
                 var btr = (BlockTableRecord)tr.GetObject(
-                    br.DynamicBlockTableRecord, OpenMode.ForRead);
+                    br.IsDynamicBlock ? br.DynamicBlockTableRecord : br.BlockTableRecord, OpenMode.ForRead);
                 blockName = btr.Name;   // эффективное имя (динам. блоки)
                 blockLayer = br.Layer;
                 if (br.IsDynamicBlock)
@@ -256,9 +256,12 @@ namespace ACladPlugin
                 tr.Commit();
             }
             if (dynW == null || dynH == null)
+            {
                 ed.WriteMessage("\nУ блока «" + blockName + "» не найдены " +
-                    "динпараметры «ширина»/«высота» — камни будут " +
-                    "вставлены без подгонки размеров.");
+                    "динпараметры «ширина»/«высота». Выберите блок с этими параметрами; " +
+                    "раскладка не изменена.");
+                return;
+            }
 
             // ── 3а. максимальный размер облицовки (ТЗ 2.2): дефолт — с
             //    образца; введённое программа выставит и образцу ──
@@ -412,6 +415,14 @@ namespace ACladPlugin
                 return;
             }
             var inserts = Get(res, "inserts") as object[];
+            var incomplete = LayoutSafety.IncompleteRoots(Get(res, "per_zone") as object[], partToRoot);
+            if (incomplete.Count > 0)
+            {
+                ed.WriteMessage("\nНе все части зоны рассчитаны: " + string.Join(", ", incomplete.ToArray()) +
+                    ". Исправьте контуры и повторите команду. Прежняя раскладка сохранена.");
+                PrintNotes(ed, Get(res, "notes") as object[]);
+                return;
+            }
             if (inserts == null || inserts.Length == 0)
             {
                 ed.WriteMessage("\nРаскладка пуста (см. замечания).");
@@ -559,8 +570,11 @@ namespace ACladPlugin
                             else if (pr.PropertyName == dynH)
                                 okH = TrySetNum(pr, h);
                         }
-                        if (!okW || !okH) dynFail++;
+                        if (!okW || !okH || !DynSizeMatches(br, dynW, dynH, w, h))
+                            throw new InvalidOperationException("Блок «" + blockName + "» не принимает размер " +
+                                F0(w) + "×" + F0(h) + " мм. Раскладка отменена; прежние объекты сохранены.");
                     }
+                    RequirePlacement(tr, br, x, y, w, h);
 
                     string pid = SafeStr(Get(it, "zone"));
                     string root;
@@ -766,7 +780,7 @@ namespace ACladPlugin
                     {
                         var ent = tr.GetObject(eid, OpenMode.ForRead)
                                   as Entity;
-                        if (!(ent is Curve)) continue;
+                        if (!(ent is Curve) || !ent.Visible) continue;
                         try
                         {
                             Extents3d ex = ent.GeometricExtents;
@@ -1109,21 +1123,41 @@ namespace ACladPlugin
         internal static bool TrySetNum(DynamicBlockReferenceProperty pr,
                                       double v)
         {
-            try
+            return LayoutSafety.SetNumberChecked(() => pr.Value, value => pr.Value = value, v);
+        }
+
+        internal static bool DynSizeMatches(BlockReference br, string pw, string ph, double w, double h)
+        {
+            bool gotW = false, gotH = false;
+            foreach (DynamicBlockReferenceProperty pr in br.DynamicBlockReferencePropertyCollection)
             {
-                // 26.09: значение уже такое — не выставляем: каждое выставление —
-                // пересчёт динблока вместе со штриховками внутри
-                try
-                {
-                    if (Math.Abs(Convert.ToDouble(pr.Value, CultureInfo.InvariantCulture) - v) < 1e-6)
-                        return true;
-                }
-                catch { }
-                pr.Value = Convert.ChangeType(v, pr.Value.GetType(),
-                                              CultureInfo.InvariantCulture);
-                return true;
+                if (pr.PropertyName != pw && pr.PropertyName != ph) continue;
+                double actual;
+                try { actual = Convert.ToDouble(pr.Value, CultureInfo.InvariantCulture); }
+                catch { return false; }
+                if (double.IsNaN(actual) || double.IsInfinity(actual)) return false;
+                if (pr.PropertyName == pw) gotW = Math.Abs(actual - w) <= 1e-6;
+                if (pr.PropertyName == ph) gotH = Math.Abs(actual - h) <= 1e-6;
             }
-            catch { return false; }
+            return gotW && gotH;
+        }
+
+        // Числовой параметр ещё не доказывает правильную геометрию блока.
+        // Ошибку габарита/базы обнаруживаем до Commit; не двигаем неизвестный
+        // динблок на основании предположения о его правилах растяжки.
+        internal static void RequirePlacement(Transaction tr, BlockReference br,
+            double x, double y, double w, double h)
+        {
+            Extents3d ex = CellExtents(tr, br);
+            double ew = ex.MaxPoint.X - ex.MinPoint.X, eh = ex.MaxPoint.Y - ex.MinPoint.Y;
+            double dx = ex.MinPoint.X - x, dy = ex.MinPoint.Y - y;
+            if (double.IsNaN(ew) || double.IsNaN(eh) || double.IsInfinity(ew) || double.IsInfinity(eh) ||
+                double.IsNaN(dx) || double.IsNaN(dy) || double.IsInfinity(dx) || double.IsInfinity(dy) ||
+                Math.Abs(ew - w) > 0.5 || Math.Abs(eh - h) > 0.5 ||
+                Math.Abs(dx) > 0.5 || Math.Abs(dy) > 0.5)
+                throw new InvalidOperationException("Габарит или базовая точка блока не совпадает с рассчитанной плиткой. " +
+                    "Используйте прямоугольник ATTILE либо блок с базой в левом нижнем углу. " +
+                    "Прежняя раскладка сохранена.");
         }
 
         /// <summary>Значения динсвойства совпадают (число — с допуском).</summary>

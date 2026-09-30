@@ -1,0 +1,11 @@
+test_clinker_interfloor_keeps_clinker_load_factor (__main__.MaterialRules.test_clinker_interfloor_keeps_clinker_load_factor) ... ok
+test_composite_all_must_not_produce_porcelain_clamps (__main__.MaterialRules.test_composite_all_must_not_produce_porcelain_clamps) ... ok
+test_composite_interfloor_uses_akp_load_factor (__main__.MaterialRules.test_composite_interfloor_uses_akp_load_factor) ... ok
+test_porcelain_interfloor_keeps_porcelain_load_factor (__main__.MaterialRules.test_porcelain_interfloor_keeps_porcelain_load_factor) ... ok
+
+----------------------------------------------------------------------
+Ran 4 tests in 0.007s
+
+OK
+
+EXIT_CODE=0

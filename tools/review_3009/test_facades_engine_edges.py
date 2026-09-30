@@ -25,6 +25,13 @@ class IndependentFacadesEdges(unittest.TestCase):
         self.assertEqual(out["zones"], [])
         self.assertEqual(out["summary"]["parapets_top_m"], 5.0)
 
+    def test_open_parapet_without_a_facade_zone(self):
+        out = fe.run({"op": "zones", "units": "mm", "contours": [],
+                      "parapets": [{"id": "P-open", "closed": False, "pts": [[0, 0], [3000, 4000]]}]})
+        self.assertTrue(out["ok"], out)
+        self.assertEqual(out["zones"], [])
+        self.assertEqual(out["summary"]["parapets_top_m"], 5.0)
+
     def test_merged_label_is_invariant_under_metre_millimetre_conversion(self):
         contours = [
             {"id": "A", "pts": [[0, 0], [4, 0], [4, 3.4], [0, 3.4]]},

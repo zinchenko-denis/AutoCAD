@@ -1,0 +1,5 @@
+porcelain: mass and material factor checked across 3 masses x 3 frame types
+composite: mass and material factor checked across 3 masses x 3 frame types
+concrete: mass and material factor checked across 3 masses x 3 frame types
+clinker: mass and material factor checked across 3 masses x 3 frame types
+Domain settings failures: 0

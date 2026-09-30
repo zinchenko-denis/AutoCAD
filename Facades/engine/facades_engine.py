@@ -84,8 +84,10 @@ def _merge_reports(reps):
 
 def op_zones(req):
     contours = req.get("contours") or []
-    if not isinstance(contours, list) or not contours:
-        return {"ok": False, "error": "contours: пустой список"}
+    if not isinstance(contours, list):
+        return {"ok": False, "error": "contours: ожидается список"}
+    if not contours and not req.get("parapets"):
+        return {"ok": False, "error": "Не выбраны ни зоны, ни парапеты"}
     cladding = str(req.get("cladding") or "").strip()
     prefix = str(req.get("zone_prefix") or "Ф-")
     try:
@@ -149,7 +151,7 @@ def op_zones(req):
         # правом верхнем углу объединения (экстремум якорей частей),
         # размеры по каждой части
         zid = "%s%d" % (prefix, start)
-        anchor = fz.label_anchor([p[5] for p in parts])
+        anchor = fz.label_anchor([p[5] for p in parts], fz.GEO_TOL / parts[0][1].to_mm())
         rep = _merge_reports([p[3] for p in parts])
         bb = [min(p[0]["meta"]["bbox"][0] for p in parts),
               min(p[0]["meta"]["bbox"][1] for p in parts),

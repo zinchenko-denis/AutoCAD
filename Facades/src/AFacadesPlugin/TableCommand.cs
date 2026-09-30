@@ -108,7 +108,7 @@ namespace AFacadesPlugin
                     var ent = tr.GetObject(oid, OpenMode.ForRead)
                               as Entity;
                     if (ent == null) continue;
-                    string pj = ZoneCommand.ReadZoneData(tr, ent, ZoneCommand.ParapetKey);
+                    string pj = ZoneCommand.ReadParapetData(tr, ent);
                     if (pj != null)
                     {
                         var pd = ser.DeserializeObject(pj) as Dictionary<string, object>;
@@ -186,10 +186,13 @@ namespace AFacadesPlugin
 
             if (works)
             {
-                MakeWorks(ed, db, kind, zones, parapets);
                 if (stale.Count > 0)
-                    ed.WriteMessage("\nВНИМАНИЕ: зоны изменены после обсчёта: " +
-                        string.Join(", ", stale.ToArray()) + " — перезапустите ATFZONE по этим зонам.");
+                {
+                    ed.WriteMessage("\nВедомость работ не создана: зоны изменены после обсчёта: " +
+                        string.Join(", ", stale.ToArray()) + " — сначала повторите ATFZONE по этим зонам.");
+                    return;
+                }
+                MakeWorks(ed, db, kind, zones, parapets);
                 return;
             }
 
@@ -320,7 +323,7 @@ namespace AFacadesPlugin
                 {
                     var ent = tr.GetObject(oid, OpenMode.ForRead) as Entity;
                     if (ent == null) continue;
-                    string pj = ZoneCommand.ReadZoneData(tr, ent, ZoneCommand.ParapetKey);
+                    string pj = ZoneCommand.ReadParapetData(tr, ent);
                     if (pj == null) continue;
                     var pd = ser.DeserializeObject(pj) as Dictionary<string, object>;
                     string pid = ZoneCommand.SafeStr(ZoneCommand.Get(pd, "id"));
@@ -352,7 +355,7 @@ namespace AFacadesPlugin
                 foreach (SelectedObject so in sel.Value)
                 {
                     var ent = tr.GetObject(so.ObjectId, OpenMode.ForRead) as Entity;
-                    string pj = ent == null ? null : ZoneCommand.ReadZoneData(tr, ent, ZoneCommand.ParapetKey);
+                    string pj = ent == null ? null : ZoneCommand.ReadParapetData(tr, ent);
                     if (pj == null) continue;
                     var pd = ser.DeserializeObject(pj) as Dictionary<string, object>;
                     if (pd != null && seenP.Add(ZoneCommand.SafeStr(ZoneCommand.Get(pd, "id")))) parapets.Add(pd);

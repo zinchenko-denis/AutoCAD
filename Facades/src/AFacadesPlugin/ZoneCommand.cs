@@ -48,16 +48,87 @@ namespace AFacadesPlugin
             }
         }
 
+        [CommandMethod("ATFZONERESET", CommandFlags.Modal)]
+        public void ResetSchemeLinks()
+        {
+            var doc = AcApp.DocumentManager.MdiActiveDocument;
+            if (doc == null) return;
+            var ed = doc.Editor;
+            var db = doc.Database;
+            var filter = new SelectionFilter(new[] { new TypedValue((int)DxfCode.Start, "LWPOLYLINE") });
+            var contours = ed.GetSelection(new PromptSelectionOptions
+            { MessageForAdding = "\nВыберите контуры проёмов/парапетов для новой связи (геометрия сохранится): " }, filter);
+            if (contours.Status != PromptStatus.OK) { ed.WriteMessage("\nОтменено без изменений."); return; }
+            var sourceIds = new HashSet<ObjectId>();
+            using (var tr = db.TransactionManager.StartTransaction())
+                foreach (SelectedObject so in contours.Value)
+                {
+                    var e = tr.GetObject(so.ObjectId, OpenMode.ForRead) as Polyline;
+                    if (e != null && (ReadZoneData(tr, e, LinesKey) != null || ReadZoneData(tr, e, ParapetKey) != null))
+                        sourceIds.Add(e.ObjectId);
+                }
+            if (sourceIds.Count == 0) { ed.WriteMessage("\nУ выбранных контуров нет связей схемы. Изменений нет."); return; }
+            var lines = ed.GetSelection(new PromptSelectionOptions
+            { MessageForAdding = "\nВыберите ТОЛЬКО старые линии схемы этого участка для удаления (Enter — таких линий нет): " }, filter);
+            if (lines.Status == PromptStatus.Cancel) { ed.WriteMessage("\nОтменено без изменений."); return; }
+            if (lines.Status != PromptStatus.OK && lines.Status != PromptStatus.None)
+            { ed.WriteMessage("\nВыбор не завершён. Изменений нет."); return; }
+            try
+            {
+                int erased = 0, skipped = 0;
+                using (doc.LockDocument())
+                using (var tr = db.TransactionManager.StartTransaction())
+                {
+                    if (lines.Status == PromptStatus.OK)
+                        foreach (SelectedObject so in lines.Value)
+                        {
+                            var line = tr.GetObject(so.ObjectId, OpenMode.ForRead) as Polyline;
+                            // Исходные контуры, даже на слое «Парапет», удалять нельзя.
+                            if (!CanResetErase(tr, sourceIds, line))
+                            { skipped++; continue; }
+                            line.UpgradeOpen();
+                            line.Erase();
+                            erased++;
+                        }
+                    foreach (var oid in sourceIds)
+                    {
+                        var e = (Entity)tr.GetObject(oid, OpenMode.ForWrite);
+                        RemoveZoneData(tr, e, LinesKey);
+                        RemoveZoneData(tr, e, ParapetKey);
+                    }
+                    tr.Commit();
+                }
+                ed.WriteMessage("\nСвязи сброшены у контуров: " + sourceIds.Count + "; выбранных линий удалено: " + erased +
+                    "; неподходящих объектов пропущено: " + skipped + ". Контуры сохранены. Повторите ATFZONE на этом участке.");
+            }
+            catch (System.Exception ex) { ed.WriteMessage("\nСброс не выполнен: " + ex.Message); }
+        }
+
+        private static bool CanResetErase(Transaction tr, HashSet<ObjectId> sources, Entity candidate)
+        {
+            var line = candidate as Polyline;
+            return line != null && !sources.Contains(line.ObjectId) &&
+                ReadZoneData(tr, line, LinesKey) == null && ReadZoneData(tr, line, ParapetKey) == null &&
+                (line.Layer == LayerParapet || Array.IndexOf(SchemeLayers, line.Layer) >= 0);
+        }
+
         private void RunCore(Autodesk.AutoCAD.ApplicationServices.Document doc)
         {
             var ed = doc.Editor;
             var db = doc.Database;
 
+            var type = ed.GetKeywords(new PromptKeywordOptions(
+                "\nЧто обработать [Зоны/Парапет] <Зоны>: ", "Зоны Парапет"));
+            if (type.Status == PromptStatus.Cancel) { ed.WriteMessage("\nОтменено."); return; }
+            bool parapetOnly = type.Status == PromptStatus.OK && type.StringResult == "Парапет";
+            var initialParapets = new List<Dictionary<string, object>>();
+            var initialParapetIds = new Dictionary<string, ObjectId>();
+
             // ── 1. выбор контуров (внешние + проёмы одной рамкой) ──
             var pso = new PromptSelectionOptions
             {
-                MessageForAdding = "\nВыберите замкнутые контуры зон " +
-                                   "облицовки и проёмов внутри них: "
+                MessageForAdding = parapetOnly ? "\nВыберите контуры парапетов или открытые линии по верху: " :
+                    "\nВыберите замкнутые контуры зон облицовки и проёмов внутри них: "
             };
             var filter = new SelectionFilter(new[]
             { new TypedValue((int)DxfCode.Start, "LWPOLYLINE") });
@@ -76,7 +147,8 @@ namespace AFacadesPlugin
                              as Polyline;
                     if (pl == null) continue;
                     int n = pl.NumberOfVertices;
-                    if (n < 3) { skipped.Add(Hnd(pl) + " (<3 вершин)"); continue; }
+                    if (n < (parapetOnly ? 2 : 3))
+                    { skipped.Add(Hnd(pl) + " (недостаточно вершин)"); continue; }
                     var pts = new List<object>();
                     var bulges = new List<object>();
                     for (int i = 0; i < n; i++)
@@ -92,16 +164,23 @@ namespace AFacadesPlugin
                                 b = pl.GetPoint2dAt(n - 1);
                         closed = a.GetDistanceTo(b) <= CloseTol;
                     }
-                    if (!closed)
+                    if (!closed && !parapetOnly)
                     { skipped.Add(Hnd(pl) + " (не замкнута)"); continue; }
                     string h = Hnd(pl);
+                    if (parapetOnly)
+                    {
+                        initialParapetIds[h] = pl.ObjectId;
+                        initialParapets.Add(new Dictionary<string, object>
+                            { { "id", h }, { "pts", pts }, { "bulges", bulges }, { "closed", closed } });
+                        continue;
+                    }
                     idByHandle[h] = pl.ObjectId;
                     contours.Add(new Dictionary<string, object>
                     { { "id", h }, { "pts", pts }, { "bulges", bulges } });
                 }
                 tr.Commit();
             }
-            if (contours.Count == 0)
+            if (contours.Count == 0 && initialParapets.Count == 0)
             {
                 ed.WriteMessage("\nНет пригодных контуров." + SkippedMsg(skipped));
                 return;
@@ -137,7 +216,7 @@ namespace AFacadesPlugin
                 if (t0 > maxTail) maxTail = t0;
             }
             if (maxTail + 1 > ZoneForm.NextStart) ZoneForm.NextStart = maxTail + 1;
-            ZoneForm form = new ZoneForm(contours.Count, layerNames);
+            ZoneForm form = new ZoneForm(contours.Count + initialParapets.Count, layerNames);
             form.AddPicker = delegate ()
             {
                 // паттерн ATableSpec (ReportBuilderForm): try/finally + End.
@@ -222,6 +301,7 @@ namespace AFacadesPlugin
                 }
                 return contours.Count;
             };
+            if (parapetOnly) { form.AddPicker = null; form.Text = "ATFZONE — парапеты"; }
             if (AcApp.ShowModalDialog(form) != DialogResult.OK)
             { ed.WriteMessage("\nОтменено."); return; }
 
@@ -230,9 +310,9 @@ namespace AFacadesPlugin
             //    кликать — спрашиваем только витражи и двери, остальные проёмы — окна;
             //    парапет — свои замкнутые контуры. Флажок в окне выключает вопросы ──
             var kinds = new Dictionary<string, object>();
-            var parapetContours = new List<Dictionary<string, object>>();
-            var parapetIds = new Dictionary<string, ObjectId>();
-            if (form.AskKinds)
+            var parapetContours = initialParapets;
+            var parapetIds = initialParapetIds;
+            if (form.AskKinds && !parapetOnly)
             {
                 if (contours.Count > 1)
                 {
@@ -341,6 +421,31 @@ namespace AFacadesPlugin
                     ed.WriteMessage("\nОтменено — задайте другой начальный номер или префикс.");
                     return;
                 }
+            }
+
+            // Старые текстовые хэндлы не доказывают принадлежность. До любых правок
+            // остановиться и дать безопасную ручную миграцию, вместо удаления оригинала COPY.
+            var legacy = new List<string>();
+            using (var check = db.TransactionManager.StartTransaction())
+            {
+                foreach (var oid in idByHandle.Values)
+                {
+                    var e = check.GetObject(oid, OpenMode.ForRead) as Entity;
+                    if (NeedsSchemeReset(check, e, LinesKey)) legacy.Add(Hnd(e));
+                }
+                foreach (var oid in parapetIds.Values)
+                {
+                    var e = check.GetObject(oid, OpenMode.ForRead) as Entity;
+                    if (NeedsSchemeReset(check, e, ParapetKey)) legacy.Add(Hnd(e));
+                }
+            }
+            if (legacy.Count > 0)
+            {
+                ed.WriteMessage("\nATFZONE: прежняя схема сохранена, изменения отменены. У контуров " +
+                    string.Join(", ", legacy.ToArray()) + " нет безопасных связей с линиями (старая сборка)." +
+                    "\nВыполните ATFZONERESET: выберите эти контуры и только старые линии их участка; " +
+                    "Enter, если линий на этом участке нет. Затем повторите ATFZONE. Контуры и исходник копии сохраняются.");
+                return;
             }
 
             // ── 4. точка таблицы (до транзакции — один undo-шаг на всё) ──
@@ -507,6 +612,9 @@ namespace AFacadesPlugin
                             btr.AppendEntity(lpl);
                             tr.AddNewlyCreatedDBObject(lpl, true);
                             string loid = SafeStr(Get(ld, "opening_id"));
+                            Entity lineOwner;
+                            if (holeByH.TryGetValue(loid, out lineOwner))
+                                StoreGeneratedOwner(tr, lpl, lineOwner, LinesKey);
                             List<string> lst;
                             if (!newByHole.TryGetValue(loid, out lst)) newByHole[loid] = lst = new List<string>();
                             lst.Add(Hnd(lpl));
@@ -516,7 +624,9 @@ namespace AFacadesPlugin
                     {
                         List<string> lst;
                         if (!newByHole.TryGetValue(kvh.Key, out lst)) lst = new List<string>();
-                        StoreZoneData(tr, kvh.Value, ser.Serialize(lst), LinesKey);
+                        StoreZoneData(tr, kvh.Value, ser.Serialize(new Dictionary<string, object>
+                        { { "schema", 3 }, { "owner", Hnd(kvh.Value) }, { "handles", lst } }),
+                            LinesKey, ResolveHandles(db, lst));
                     }
 
                     // линейные размеры по образцу Германа («Проба 4»):
@@ -573,13 +683,18 @@ namespace AFacadesPlugin
                                 btr.AppendEntity(ppl);
                                 tr.AddNewlyCreatedDBObject(ppl, true);
                                 phs.Add(Hnd(ppl));
+                                StoreGeneratedOwner(tr, ppl, pent, ParapetKey);
                                 linesMade++;
                             }
                     }
                     else
                         pent.Layer = EnsureNamed(tr, db, LayerParapet, 2);
                     pd["lines"] = phs.ToArray();
-                    StoreZoneData(tr, pent, ser.Serialize(pd), ParapetKey);
+                    pd["schema"] = 3;
+                    pd["owner"] = Hnd(pent);
+                    var handles = new List<string>();
+                    foreach (var h in phs) handles.Add(SafeStr(h));
+                    StoreZoneData(tr, pent, ser.Serialize(pd), ParapetKey, ResolveHandles(db, handles));
                     parapetRows.Add(pd);
                     var pws = Get(pd, "warnings") as object[];
                     if (pws != null)
@@ -855,6 +970,10 @@ namespace AFacadesPlugin
 
         internal static void StoreZoneData(Transaction tr, Entity ent,
                                            string json, string key)
+        { StoreZoneData(tr, ent, json, key, null); }
+
+        internal static void StoreZoneData(Transaction tr, Entity ent,
+                                           string json, string key, IEnumerable<ObjectId> refs)
         {
             if (ent.ExtensionDictionary.IsNull)
                 ent.CreateExtensionDictionary();
@@ -864,18 +983,33 @@ namespace AFacadesPlugin
             for (int i = 0; i < json.Length; i += 250)
                 rb.Add(new TypedValue((int)DxfCode.Text,
                     json.Substring(i, Math.Min(250, json.Length - i))));
-            var xr = new Xrecord { Data = rb };
+            if (refs != null)
+                foreach (var id in refs)
+                    if (!id.IsNull && !id.IsErased)
+                        rb.Add(new TypedValue((int)DxfCode.SoftPointerId, id));
+            Xrecord xr;
             if (ext.Contains(key))
             {
-                var old = (Xrecord)tr.GetObject(ext.GetAt(key),
-                                                OpenMode.ForWrite);
-                old.Data = rb;
+                xr = (Xrecord)tr.GetObject(ext.GetAt(key), OpenMode.ForWrite);
+                xr.Data = rb;
             }
             else
             {
+                xr = new Xrecord { Data = rb };
                 ext.SetAt(key, xr);
                 tr.AddNewlyCreatedDBObject(xr, true);
             }
+            xr.XlateReferences = true;
+        }
+
+        private static void RemoveZoneData(Transaction tr, Entity ent, string key)
+        {
+            if (ent.ExtensionDictionary.IsNull) return;
+            var ext = (DBDictionary)tr.GetObject(ent.ExtensionDictionary, OpenMode.ForWrite);
+            if (!ext.Contains(key)) return;
+            var id = ext.GetAt(key);
+            ext.Remove(key);
+            tr.GetObject(id, OpenMode.ForWrite).Erase();
         }
 
         internal static string ReadZoneData(Transaction tr, Entity ent)
@@ -936,52 +1070,114 @@ namespace AFacadesPlugin
             return EnsureNamed(tr, db, SchemeLayers[0], 1);      // откосы окон и дверей
         }
 
-        // линии схемы, созданные прошлым ATFZONE для этого проёма (хэндлы — в метке
-        // проёма): удалить, если ещё на месте и на слоях схемы
+        // 30.09: удалить можно только линию с обратной объектной ссылкой на этот контур.
+        // При COPY вместе с контуром обе ссылки переводятся на клоны; при COPY одного
+        // контура ссылка линии остаётся на оригинале — удаление запрещено.
         private static int EraseOldLines(Transaction tr, Database db, JavaScriptSerializer ser, Entity hole)
+        { return EraseOwnedLines(tr, hole, LinesKey, false); }
+
+        private static int EraseOldParapetLines(Transaction tr, Database db, JavaScriptSerializer ser, Entity pent)
+        { return EraseOwnedLines(tr, pent, ParapetKey, true); }
+
+        private static int EraseOwnedLines(Transaction tr, Entity owner, string key, bool parapet)
         {
-            string j = ReadZoneData(tr, hole, LinesKey);
-            if (j == null) return 0;
+            if (NeedsSchemeReset(tr, owner, key)) return 0;
             int n = 0;
-            object[] arr = null;
-            try { arr = ser.DeserializeObject(j) as object[]; } catch { }
-            if (arr == null) return 0;
-            foreach (var ho in arr)
-                try
-                {
-                    var id = db.GetObjectId(false, new Handle(Convert.ToInt64(SafeStr(ho), 16)), 0);
-                    if (id.IsNull || id.IsErased) continue;
-                    var e = tr.GetObject(id, OpenMode.ForWrite) as Entity;
-                    if (e == null || Array.IndexOf(SchemeLayers, e.Layer) < 0) continue;
-                    e.Erase();
-                    n++;
-                }
-                catch { }
+            foreach (var id in ReadZoneRefs(tr, owner, key))
+            {
+                if (id.IsNull || id.IsErased || id == owner.ObjectId) continue;
+                var line = tr.GetObject(id, OpenMode.ForWrite) as Polyline;
+                if (line == null || !(parapet ? line.Layer == LayerParapet : Array.IndexOf(SchemeLayers, line.Layer) >= 0)) continue;
+                if (!GeneratedOwnerIs(tr, line, owner.ObjectId, key)) continue;
+                line.Erase();
+                n++;
+            }
             return n;
         }
 
-        // 29.09p: линии парапета, нарисованные прошлым ATFZONE по этому контуру (хэндлы — в его
-        // данных): удалить, если ещё на месте и на слое «Парапет»
-        private static int EraseOldParapetLines(Transaction tr, Database db, JavaScriptSerializer ser, Entity pent)
+        private static bool NeedsSchemeReset(Transaction tr, Entity ent, string key)
         {
-            string j = ReadZoneData(tr, pent, ParapetKey);
-            if (j == null) return 0;
-            int n = 0;
-            var d = ser.DeserializeObject(j) as Dictionary<string, object>;
-            var arr = Get(d, "lines") as object[];
-            if (arr == null) return 0;
-            foreach (var ho in arr)
-                try
-                {
-                    var id = db.GetObjectId(false, new Handle(Convert.ToInt64(SafeStr(ho), 16)), 0);
-                    if (id.IsNull || id.IsErased || id == pent.ObjectId) continue;
-                    var e = tr.GetObject(id, OpenMode.ForWrite) as Entity;
-                    if (e == null || e.Layer != LayerParapet) continue;
-                    e.Erase();
-                    n++;
-                }
-                catch { }
-            return n;
+            if (ent == null) return false;
+            string j = ReadZoneData(tr, ent, key);
+            if (j == null) return false;
+            try
+            {
+                var d = new JavaScriptSerializer().DeserializeObject(j) as Dictionary<string, object>;
+                return SafeStr(Get(d, "schema")) != "3";
+            }
+            catch { return true; }
+        }
+
+        private const string SchemeOwnerKey = "ATFZONE_SCHEME_OWNER";
+
+        private static void StoreGeneratedOwner(Transaction tr, Entity line, Entity owner, string key)
+        {
+            var data = new Dictionary<string, object> { { "schema", 3 }, { "kind", key } };
+            StoreZoneData(tr, line, new JavaScriptSerializer().Serialize(data), SchemeOwnerKey,
+                new[] { owner.ObjectId });
+        }
+
+        private static bool GeneratedOwnerIs(Transaction tr, Entity line, ObjectId owner, string key)
+        {
+            string j = ReadZoneData(tr, line, SchemeOwnerKey);
+            if (j == null) return false;
+            var d = new JavaScriptSerializer().DeserializeObject(j) as Dictionary<string, object>;
+            if (SafeStr(Get(d, "schema")) != "3" || SafeStr(Get(d, "kind")) != key) return false;
+            var refs = ReadZoneRefs(tr, line, SchemeOwnerKey);
+            return refs.Count == 1 && refs[0] == owner;
+        }
+
+        internal static List<ObjectId> ReadZoneRefs(Transaction tr, Entity ent, string key)
+        {
+            var ids = new List<ObjectId>();
+            if (ent.ExtensionDictionary.IsNull) return ids;
+            var ext = (DBDictionary)tr.GetObject(ent.ExtensionDictionary, OpenMode.ForRead);
+            if (!ext.Contains(key)) return ids;
+            var xr = (Xrecord)tr.GetObject(ext.GetAt(key), OpenMode.ForRead);
+            if (xr.Data != null)
+                foreach (TypedValue tv in xr.Data)
+                    if (tv.TypeCode == (int)DxfCode.SoftPointerId && tv.Value is ObjectId)
+                        ids.Add((ObjectId)tv.Value);
+            return ids;
+        }
+
+        private static List<ObjectId> ResolveHandles(Database db, IEnumerable<string> handles)
+        {
+            var ids = new List<ObjectId>();
+            foreach (string h in handles)
+            {
+                long v;
+                ObjectId id;
+                if (long.TryParse(h, NumberStyles.HexNumber, CultureInfo.InvariantCulture, out v) &&
+                    db.TryGetObjectId(new Handle(v), out id) && !id.IsNull && !id.IsErased) ids.Add(id);
+            }
+            return ids;
+        }
+
+        // Ведомость принимает сам контур и его линии. Количество берётся у единого
+        // владельца; проверка в обе стороны не позволяет отдельной копии линии
+        // выдать данные парапета-оригинала.
+        internal static string ReadParapetData(Transaction tr, Entity ent)
+        {
+            Entity owner = ent;
+            string json = ReadZoneData(tr, ent, ParapetKey);
+            if (json == null)
+            {
+                var refs = ReadZoneRefs(tr, ent, SchemeOwnerKey);
+                if (refs.Count != 1 || refs[0].IsNull || refs[0].IsErased) return null;
+                owner = tr.GetObject(refs[0], OpenMode.ForRead) as Entity;
+                if (owner == null || !GeneratedOwnerIs(tr, ent, owner.ObjectId, ParapetKey) ||
+                    !ReadZoneRefs(tr, owner, ParapetKey).Contains(ent.ObjectId)) return null;
+                json = ReadZoneData(tr, owner, ParapetKey);
+            }
+            if (json == null) return null;
+            var ser = new JavaScriptSerializer();
+            var d = ser.DeserializeObject(json) as Dictionary<string, object>;
+            if (d == null) return null;
+            // Старые выпуски могли хранить одну метку на нескольких носителях:
+            // их прежний id сохраняем для совместимой дедупликации.
+            if (SafeStr(Get(d, "schema")) == "3") d["id"] = Hnd(owner);
+            return ser.Serialize(d);
         }
 
         // выбор среди уже выбранных контуров; false — Esc (отмена команды)

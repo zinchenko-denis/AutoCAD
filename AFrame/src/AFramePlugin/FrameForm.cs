@@ -82,7 +82,7 @@ namespace AFramePlugin
 
             // ── 1. облицовка (26.09, Денис: «первым пунктом») ──
             var gc = new GroupBox { Text = "1. Облицовка", Left = 10, Top = 6, Width = 470, Height = 70 };
-            _cPorc.Text = "керамогранит"; _cComp.Text = "композит";
+            _cPorc.Text = "керамогранит"; _cComp.Text = "композит (АКП)";
             _cConc.Text = "бетонная плитка"; _cClink.Text = "клинкерная плитка";
             Place(_cPorc, 10, 18, 220); Place(_cComp, 240, 18, 220);
             Place(_cConc, 10, 42, 220); Place(_cClink, 240, 42, 220);
@@ -284,6 +284,9 @@ namespace AFramePlugin
                 // подсистема с шинами); тип и шаги кронштейнов — как у всех облицовок;
                 // в п.5 вместо осей по швам — шаг направляющих, марка и хлыст шины
                 _g1.Enabled = !tile;
+                // Не менять режим молча: прежний all/clamps остаётся видимым,
+                // Validate объяснит отказ, а пользователь выбирает каркас.
+                _mAll.Enabled = _mClamps.Enabled = !_s.IsComposite;
                 _profile.Enabled = frameParts && prs.Length > 0;
                 _g3.Enabled = frameParts;
                 foreach (var c in _calcCtl) c.Visible = !_s.Manual;

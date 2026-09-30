@@ -1,0 +1,32 @@
+[
+  {
+    "seed": 2909,
+    "returncode": 0,
+    "results": [
+      "РОЛИ: ролей 18, фасадов 168, время 16.7 с",
+      "[RESULT] safe_refusal/E_CALC_NOT_PASSED: 36",
+      "[RESULT] safe_refusal/E_UNSUPPORTED_SHINA: 16",
+      "[RESULT] successful_frame_results: 152"
+    ]
+  },
+  {
+    "seed": 77,
+    "returncode": 0,
+    "results": [
+      "РОЛИ: ролей 18, фасадов 168, время 13.3 с",
+      "[RESULT] safe_refusal/E_CALC_NOT_PASSED: 36",
+      "[RESULT] safe_refusal/E_UNSUPPORTED_SHINA: 13",
+      "[RESULT] successful_frame_results: 155"
+    ]
+  },
+  {
+    "seed": 5,
+    "returncode": 0,
+    "results": [
+      "РОЛИ: ролей 18, фасадов 168, время 14.1 с",
+      "[RESULT] safe_refusal/E_CALC_NOT_PASSED: 36",
+      "[RESULT] safe_refusal/E_UNSUPPORTED_SHINA: 16",
+      "[RESULT] successful_frame_results: 152"
+    ]
+  }
+]

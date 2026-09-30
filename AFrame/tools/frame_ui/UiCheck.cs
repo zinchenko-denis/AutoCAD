@@ -49,8 +49,8 @@ static class FrameUiCheck
         m.RailGap = 12;
         Ok(m.MiscChanged && (double)m.SysOverride()["rail_gap"] == 12, "вручную: правленый зазор уходит в систему");
         var i = new FrameSettings(); i.SetSubType("interfloor");
-        Ok(i.QClad == 8 && i.Profile == "НСП-1" && i.NspTypeOrNull == "НСП-1" && i.SysName == "Межэтажная",
-           "межэтажная: вес 8, НСП-1 (как раньше)");
+        Ok(i.QClad == 25 && i.Profile == "НСП-1" && i.NspTypeOrNull == "НСП-1" && i.SysName == "Межэтажная",
+           "межэтажная: масса облицовки сохранена, НСП-1");
         i.SetSubType("vertical");
         Ok(i.QClad == 25 && i.Profile == "Авто", "назад в вертикальную: вес 25, профиль «Авто»");
         var o = new FrameSettings(); o.SetSubType("ortho");

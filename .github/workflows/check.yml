@@ -2,7 +2,7 @@ name: check
 
 # Лёгкая проверка веток (НЕ main): собрать плагин (csproj) и прогнать тест
 # движка. Релиз НЕ публикуется — это делает только build-bundle на main.
-# Нужна, чтобы C#-код, который нельзя собрать в песочнице, проверялся в ветке.
+# Проверяет C# в штатной Windows-среде независимо от локальной компиляции.
 
 on:
   push:
@@ -121,8 +121,8 @@ jobs:
 
       # 24.09 (рецензия): краш-аудиты, стыки модулей, контракт ключей и
       # короткая синтетика фасадов — обязательны. Известные открытые вопросы
-      # (F7/F16 подсистемы — ждут правила Германа; X6 — ATSPEC, модуль
-      # Алексея) печатаются в логе, но не валят проверку (--allow)
+      # X6 — ATSPEC, модуль Алексея — остаётся явным исключением.
+      # Фасадные регрессии 30.09 обязательны; прежнее исключение F16 снято.
       - name: Facades quick gates (audits, contracts, synth)
         shell: bash
         env:
@@ -137,7 +137,8 @@ jobs:
           python tools/label_refs_check.py
           python Facades/tools/zones_synth.py --quick
           python AClad/tools/attile_synth.py --quick
-          python AFrame/tools/frame_synth.py --quick --allow F16
+          python AFrame/tools/frame_synth.py --quick
+          python tools/fixes_3009/run_facade_regressions.py --python-only
           # 29.09: синтетика «в ролях конструктора» — ATFZONE → раскладка → ATFRAME с настройками
           # окна через настоящий FrameSettings (консольный дампер под .NET Framework)
           dotnet build AFrame/tools/roles/RolesDump.csproj -c Release -o build_roles

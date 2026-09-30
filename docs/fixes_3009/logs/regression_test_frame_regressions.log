@@ -1,0 +1,18 @@
+test_actual_generated_spacing_is_checked_before_output (__main__.FrameContractRegressions.test_actual_generated_spacing_is_checked_before_output) ... ok
+test_calculation_covers_longest_given_floor_span (__main__.FrameContractRegressions.test_calculation_covers_longest_given_floor_span) ... ok
+test_empty_local_rows_do_not_inherit_other_zone_rows (__main__.FrameContractRegressions.test_empty_local_rows_do_not_inherit_other_zone_rows) ... ok
+test_explicit_invalid_calc_dimensions_are_not_defaults (__main__.FrameContractRegressions.test_explicit_invalid_calc_dimensions_are_not_defaults) ... ok
+test_generated_short_rails_survive_native_clamp_readback (__main__.FrameContractRegressions.test_generated_short_rails_survive_native_clamp_readback) ... ok
+test_interfloor_calc_requires_two_geometric_ngp_supports (__main__.FrameContractRegressions.test_interfloor_calc_requires_two_geometric_ngp_supports) ... ok
+test_no_common_vertical_profile_refuses_instead_of_mixing_sections (__main__.FrameContractRegressions.test_no_common_vertical_profile_refuses_instead_of_mixing_sections) ... ok
+test_shifted_window_rail_uses_its_actual_corner_zone (__main__.FrameContractRegressions.test_shifted_window_rail_uses_its_actual_corner_zone) ... ok
+test_shina_has_at_least_one_vertical_support (__main__.FrameContractRegressions.test_shina_has_at_least_one_vertical_support) ... ok
+test_shorter_explicit_span_cannot_override_actual_floors (__main__.FrameContractRegressions.test_shorter_explicit_span_cannot_override_actual_floors) ... ok
+test_supported_tile_rectangle_still_builds (__main__.FrameContractRegressions.test_supported_tile_rectangle_still_builds) ... ok
+test_vertical_only_clamps_repeats_full_layout (__main__.FrameContractRegressions.test_vertical_only_clamps_repeats_full_layout) ... ok
+test_vertical_profile_option_cannot_override_nsp_section (__main__.FrameContractRegressions.test_vertical_profile_option_cannot_override_nsp_section) ... ok
+
+----------------------------------------------------------------------
+Ran 13 tests in 0.022s
+
+OK

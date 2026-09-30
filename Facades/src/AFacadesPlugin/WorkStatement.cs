@@ -121,12 +121,20 @@ namespace AFacadesPlugin
         /// «толщиной» или дописать «; N мм».</summary>
         internal static string WithThickness(string text, int mm)
         {
-            string t = text ?? "";
+            string t = (text ?? "").Replace("толщина не указана", mm + " мм");
             var re = new Regex(@"\d+\s*мм", RegexOptions.IgnoreCase);
             if (re.IsMatch(t)) return re.Replace(t, mm + " мм", 1);
             var th = new Regex(@"(толщин\w*)\s*", RegexOptions.IgnoreCase);
             if (th.IsMatch(t)) return th.Replace(t, "$1 " + mm + " мм ", 1).Replace("  ", " ");
             return t.TrimEnd() + "; " + mm + " мм";
+        }
+
+        internal static string WithoutThickness(string text)
+        {
+            string t = text ?? "";
+            var re = new Regex(@"\d+\s*мм", RegexOptions.IgnoreCase);
+            if (re.IsMatch(t)) return re.Replace(t, "толщина не указана", 1);
+            return t.Contains("толщина не указана") ? t : t.TrimEnd(' ', ';') + "; толщина не указана";
         }
 
         // ── сборка ──
@@ -181,7 +189,13 @@ namespace AFacadesPlugin
                 }
                 int insRow = FindInsulationRow(sheetData, ns, shared, cfg);
                 var addrMap = new Dictionary<int, int>();   // старая строка → новая
-                if (insRow > 0 && byMm.Exists(p => p.Key.HasValue))
+                // При отсутствии зон (только парапет) прежние количества также не остаются.
+                if (insRow > 0)
+                    foreach (XmlElement oldRow in sheetData.SelectNodes("m:row", ns))
+                        if (IsInsulation(CellText(oldRow, "B", shared), cfg) &&
+                            (RowNum(oldRow.GetAttribute("r")) == insRow || CellText(oldRow, "C", shared).Trim().Length > 0))
+                            SetNumber(doc, oldRow, ns, "D" + oldRow.GetAttribute("r"), 0);
+                if (insRow > 0 && byMm.Count > 0)
                 {
                     string baseText = CellText(RowOf(sheetData, ns, insRow), "B", shared);
                     // строки формы, где такая толщина уже написана (вопрос Германа: «видит слой
@@ -215,7 +229,7 @@ namespace AFacadesPlugin
                     foreach (var x in existing)
                         rowsFor.Add(new KeyValuePair<int, KeyValuePair<int?, double>>(
                             RowNum(Shift("B" + x.Key, addrMap)), x.Value));
-                    bool one = byMm.Count == 1;     // один утеплитель — формула строки (=D3) остаётся
+                    bool one = byMm.Count == 1;
                     foreach (var x in rowsFor)
                     {
                         int r = x.Key;
@@ -223,9 +237,10 @@ namespace AFacadesPlugin
                         bool mine = r >= insRow && r <= insRow + added;
                         string t = x.Value.Key.HasValue
                                    ? WithThickness(mine ? baseText : CellText(row, "B", shared), x.Value.Key.Value)
-                                   : CellText(row, "B", shared);
+                                   : WithoutThickness(CellText(row, "B", shared));
                         SetText(doc, row, ns, "B" + r, t);
-                        if (!one) SetNumber(doc, row, ns, "D" + r, Math.Round(x.Value.Value, 3));
+                        if (one) SetFormula(doc, row, "D" + r, Shift(FirstAreaCell(cfg), addrMap));
+                        else SetNumber(doc, row, ns, "D" + r, Math.Round(x.Value.Value, 3));
                         res.Lines.Add("строка " + r + " «" + t + "»: " + F3(x.Value.Value) + " м²" +
                                       (x.Value.Key.HasValue ? "" : " (слой без толщины в имени)"));
                     }
@@ -258,6 +273,17 @@ namespace AFacadesPlugin
                 ForceRecalc(zip);
             }
             return res;
+        }
+
+        private static string FirstAreaCell(Config cfg)
+        {
+            foreach (var kv in cfg.Fill)
+            {
+                var keys = Get(kv.Value as Dictionary<string, object>, "sum") as object[];
+                if (keys != null && keys.Length == 1 && Convert.ToString(keys[0], CultureInfo.InvariantCulture).EndsWith("_m2", StringComparison.Ordinal))
+                    return kv.Key.ToUpperInvariant();
+            }
+            return "D3";
         }
 
         private static string FirstAreaKey(Config cfg)
@@ -402,6 +428,15 @@ namespace AFacadesPlugin
             var ve = doc.CreateElement("v", NsMain);
             ve.InnerText = v.ToString("R", CultureInfo.InvariantCulture);
             c.AppendChild(ve);
+        }
+
+        private static void SetFormula(XmlDocument doc, XmlElement row, string addr, string formula)
+        {
+            var c = CellOf(doc, row, addr);
+            Clear(c);
+            var f = doc.CreateElement("f", NsMain);
+            f.InnerText = formula;
+            c.AppendChild(f);
         }
 
         internal static void SetText(XmlDocument doc, XmlElement row, XmlNamespaceManager ns, string addr, string text)

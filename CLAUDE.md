@@ -17,6 +17,9 @@
   исправлено — `docs/REVIEW_23.09.md`.
 - История проекта — `docs/CHRONOLOGY.md` + `docs/CHRONOLOGY_INDEX.md`
   (генератор `tools/make_chronology.py`); ревизия — `docs/HANDOFF_REVIEW_3009.md`.
+- Исправления независимой ревизии — `docs/FIXES_30.09.md`; руководство
+  новичка с учебными DXF — `docs/facades_beginner_3009/`. Пока это исходники
+  для будущего выпуска, не новая установленная сборка.
 - Перед вопросом Герману — альбомы техрешений (`atspec-testdata/docs/facades_atr/`,
   конспекты `Facades/docs/kb/`) и ТЗ: не спрашивать то, что там нарисовано.
 - Тестовые данные — отдельный репо `zinchenko-denis/atspec-testdata` (в
@@ -30,17 +33,22 @@ export PYTHONUTF8=1
 (cd AClad/engine && python3 test_cladding_plan.py && python3 test_clad_engine.py && python3 test_tile_pattern.py && python3 audit_clad.py)
 (cd AFrame/engine && python3 test_frame_plan.py && python3 test_frame_calc.py && python3 test_frame_engine.py && python3 audit_frame.py)
 python3 tools/xmod_check.py --no-fixture      # стыки модулей (ATSPEC X6 — не фасады, известен)
-python3 AFrame/tools/frame_synth.py --quick   # синтетика подсистемы (F16 — известное, «только кляммеры»)
+python3 AFrame/tools/frame_synth.py --quick   # F16 исправлен 30.09; исключение больше не требуется
 python3 Facades/tools/zones_synth.py --quick
 python3 AClad/tools/attile_synth.py --quick
 python3 tools/roles_synth.py --quick          # «в ролях конструктора»: ATFZONE → раскладка → ATFRAME (нужен mono)
+python3 tools/fixes_3009/run_facade_regressions.py  # shapely/openpyxl + mono/mcs; --python-only — неполный набор
 ```
-C# (AutoCAD) здесь не компилируется: только `mcs --parse <файл>`; окна
+C# фасадов можно проверить полной компиляцией через
+`tools/fixes_3009/compile_facades.py` (dotnet либо Roslyn/Mono с официальными
+net48/AutoCAD references; инструкция — `tools/fixes_3009/README.md`).
+Проверка синтаксиса `mcs --parse` не заменяет компиляцию. Окна
 ATTILE/ATFRAME/ATFZONE — прогон под mono (`AClad/tools/attile_ui`, `AFrame/tools/frame_ui`,
 `Facades/tools/zone_ui`, команды сборки в шапке UiCheck.cs). Запрос движку из окна ATFRAME —
 `FrameSettings.EngineParams` (его же зовёт `tools/roles_synth.py` через
-`AFrame/tools/roles/RolesDump.cs`): новые поля окна — туда, не в FrameCommand. Настоящая компиляция — CI `check` на
-каждый push; дождаться зелёного, при красном — прочитать аннотации.
+`AFrame/tools/roles/RolesDump.cs`): новые поля окна — туда, не в FrameCommand.
+После успешного push также дождаться зелёного CI `check`; при красном —
+прочитать аннотации. Компиляция и CAD doubles не заменяют живой AutoCAD.
 
 ## Сборка («Собираем» — только по слову Дениса)
 - Облако (Claude Code cloud): `gh workflow run build.yml --ref <ветка>`, затем

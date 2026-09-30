@@ -1,15 +1,16 @@
 """Independent AFrame regressions, review 30.09.2026.
 
 Run from repo root: python3 tools/review_3009/test_frame_regressions.py
-These assertions intentionally fail on audited HEAD e2a4e4d: they describe
-required behavior, not an assertion that the current defect is acceptable.
-The C# readback case mirrors only the explicit rectangle-aspect-ratio gate;
-it does not pretend to run AutoCAD or validate dynamic-block extents.
+These requirements failed on audited HEAD e2a4e4d. The corrected planner must
+either satisfy the invariant or explicitly refuse without emitted elements.
+The native metadata reader is separately exercised by
+tools/fixes_3009/test_frame_rail_metadata.py using the actual C# methods.
 """
 import copy
 import json
 import sys
 import unittest
+from unittest.mock import patch
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -50,7 +51,10 @@ def long_floor():
                "floors_y": [0, 3000, 6000, 10000],
                "calc": {"terrain": "B", "height": 15, "q_clad": 8,
                         "offset": 150, "na_max": 3000, "wind_region": "II"}}
-    result = fp.frame_plan(copy.deepcopy(request))
+    with patch.object(fc, "report", wraps=fc.report) as observed:
+        result = fp.frame_plan(copy.deepcopy(request))
+    if not result["ok"]:
+        return request, result, {"resolved_input": observed.call_args.args[0]}
     rep = result["calc_report"]
     # Recheck the exact profile that the calculation itself approved, so this
     # failure is independent of any separate mapping of NSP-1/NSP-2 to sections.
@@ -78,11 +82,8 @@ def native_short_rails():
                "calc": {"terrain": "B", "height": 30, "q_clad": 25,
                         "offset": 230, "na_max": 3000, "wind_region": "II"}}
     full = fp.frame_plan(copy.deepcopy(request))
-    width = full["system_used"]["rail_width"]
-    # Conditional rails are emitted by FrameCommand as rectangles of railW.
-    # RailGeom accepts a rectangle/block only when height >= 3*max(width,1).
-    fixed = [{"x": r["x"], "y0": r["y0"], "y1": r["y1"]}
-             for r in full["rails"] if r["len"] >= 3 * max(width, 1)]
+    # ATFRAME_RAIL metadata supplies direction and role without aspect filtering.
+    fixed = [{k: r[k] for k in ("x", "y0", "y1", "clamp_role")} for r in full["rails"]]
     again = fp.frame_plan(dict(copy.deepcopy(request), parts="clamps", rails_fixed=fixed))
     return request, full, fixed, again
 
@@ -122,6 +123,11 @@ class FrameContractRegressions(unittest.TestCase):
 
     def test_calculation_covers_longest_given_floor_span(self):
         _, result, recheck = long_floor()
+        if not result["ok"]:
+            self.assertEqual(result.get("error_code"), "E_CALC_NOT_PASSED")
+            self.assertEqual(recheck["resolved_input"]["rail_len"], 4000)
+            self.assertFalse(any(result.get(k) for k in ("rails", "hrails", "brackets", "clamps")))
+            return
         self.assertTrue(result["ok"])
         self.assertTrue(all(r["passed"] for r in recheck.values()),
                         "Engine approved 3000 mm, but emitted a 4000 mm floor span: " +
@@ -140,6 +146,11 @@ class FrameContractRegressions(unittest.TestCase):
 
     def test_shina_has_at_least_one_vertical_support(self):
         _, result = unsupported_gable_shina()
+        if not result["ok"]:
+            self.assertEqual(result.get("error_code"), "E_UNSUPPORTED_SHINA")
+            self.assertEqual(result["unsupported_counts"], {"pieces": 1, "joints": 0})
+            self.assertFalse(any(result.get(k) for k in ("rails", "hrails", "brackets", "clamps")))
+            return
         unsupported = [h for h in result["hrails"] if h["kind"].startswith("шина")
                        and not any(r["y0"] - 20 <= h["y"] <= r["y1"] + 20
                                    and h["x0"] <= r["x"] <= h["x1"]
@@ -147,6 +158,101 @@ class FrameContractRegressions(unittest.TestCase):
         self.assertFalse(unsupported,
                          "A warning/INFO does not supply a physical connection: " +
                          json.dumps(unsupported, ensure_ascii=False))
+
+    def test_supported_tile_rectangle_still_builds(self):
+        request, _ = unsupported_gable_shina()
+        request["contours"] = [{"id": "rectangle", "pts": rect(0, 0, 4800, 6000)}]
+        result = fe.run(request)
+        self.assertTrue(result["ok"], result.get("error"))
+        self.assertTrue(result["rails"] and result["hrails"])
+
+    def test_interfloor_calc_requires_two_geometric_ngp_supports(self):
+        request = {"system": "Межэтажная", "sub_type": "interfloor",
+                   "contours": [{"outer": rect(0, 0, 3600, 6000)}],
+                   "joints_x": [300, 900, 1500, 2100, 2700, 3300], "floors_y": [3000],
+                   "calc": {"terrain": "B", "height": 15, "q_clad": 8,
+                            "offset": 150, "na_max": 3000, "wind_region": "II"}}
+        single = fp.frame_plan(copy.deepcopy(request))
+        self.assertFalse(single["ok"])
+        self.assertEqual(single["error_code"], "E_CALC_TOPOLOGY_UNSUPPORTED")
+        self.assertGreater(single["unsupported_counts"]["nsp_pieces"], 0)
+        self.assertTrue(all(len(r["support_y"]) == 1 for r in single["unsupported"]))
+        self.assertFalse(any(single.get(k) for k in ("rails", "hrails", "brackets", "clamps")))
+        normal = fp.frame_plan(dict(copy.deepcopy(request), floors_y=[0, 3000, 6000]))
+        self.assertTrue(normal["ok"], normal.get("error"))
+        self.assertTrue(normal["calc_report"]["layout_verification"]["passed"])
+        self.assertEqual(normal["calc_report"]["layout_verification"]["rail_len"], 3000)
+        manual = copy.deepcopy(request)
+        manual.pop("calc")
+        self.assertTrue(fp.frame_plan(manual)["ok"])
+
+    def test_shifted_window_rail_uses_its_actual_corner_zone(self):
+        request = {"system": "Вектор-1", "sub_type": "vertical",
+                   "contours": [{"outer": rect(0, 0, 6000, 6000),
+                                 "holes": [rect(1590, 2170, 2490, 3820)]}],
+                   "joints_x": [600, 1200, 1586, 2040, 2494, 3100, 3700, 4300, 4900, 5500],
+                   "rows_y": [600, 1200, 1800, 2400, 3000, 3600, 4200, 4800, 5400],
+                   "calc": {"terrain": "B", "height": 30, "q_clad": 25,
+                            "offset": 230, "na_max": 3000, "wind_region": "II"}}
+        result = fp.frame_plan(request)
+        self.assertTrue(result["ok"], result.get("error"))
+        points = sorted(b["y"] for b in result["brackets"] if b["x"] == 1490)
+        self.assertGreaterEqual(len(points), 3)
+        maximum = max(b - a for a, b in zip(points, points[1:]))
+        self.assertLessEqual(maximum, result["calc_report"]["steps"]["corner"] + .001)
+        self.assertTrue(result["calc_report"]["layout_verification"]["passed"])
+
+    def test_actual_generated_spacing_is_checked_before_output(self):
+        request, _, _, _ = native_short_rails()
+        # Simulate an over-wide generated interval to exercise the final gate.
+        # The initial calculator remains real and approves the normal steps.
+        with patch.object(fp, "_rail_brackets", side_effect=lambda a, b, *args: [a + 100, b - 100]):
+            result = fp.frame_plan(request)
+        self.assertFalse(result["ok"])
+        self.assertEqual(result["error_code"], "E_CALC_LAYOUT")
+        self.assertFalse(any(result.get(k) for k in ("rails", "hrails", "brackets", "clamps")))
+
+    def test_explicit_invalid_calc_dimensions_are_not_defaults(self):
+        request, _, _ = long_floor()
+        for field in ("b", "b_corner", "rail_len", "max_step"):
+            for value in (0, -1, float("nan"), float("inf")):
+                with self.subTest(field=field, value=value):
+                    req = copy.deepcopy(request)
+                    req["calc"][field] = value
+                    result = fp.frame_plan(req)
+                    self.assertFalse(result["ok"])
+                    self.assertEqual(result["error_code"], "E_CALC_NOT_PASSED")
+                    self.assertIn(field, result["error"])
+                    self.assertFalse(any(result.get(k) for k in ("rails", "hrails", "brackets", "clamps")))
+
+    def test_vertical_profile_option_cannot_override_nsp_section(self):
+        request, _, _ = long_floor()
+        request["rail_profile"] = "ГП-40-40"
+        with patch.object(fc, "report", wraps=fc.report) as observed:
+            fp.frame_plan(request)
+        self.assertEqual(observed.call_args.args[0]["profile"], "НСП-69-60-1,2")
+
+    def test_no_common_vertical_profile_refuses_instead_of_mixing_sections(self):
+        request, _, _, _ = native_short_rails()
+        request.pop("rail_profile", None)
+        differing = {"row": {"profile": "ГП-40-40-1,2", "step": 600},
+                     "corner": {"profile": "ШП-60-20-1,2", "step": 600}}
+        failed = {"row": {"step": None}, "corner": {"step": None}}
+        # Isolate the contractual branch: independent winners are not one
+        # materialised section, even if every shared candidate fails.
+        with patch.object(fc, "report", side_effect=lambda inp: differing if inp["auto_profile"] else failed):
+            result = fp.frame_plan(request)
+        self.assertFalse(result["ok"])
+        self.assertEqual(result["error_code"], "E_CALC_NOT_PASSED")
+        self.assertIn("единого профиля", result["error"])
+        self.assertFalse(result.get("rails"))
+
+    def test_shorter_explicit_span_cannot_override_actual_floors(self):
+        request, _, _ = long_floor()
+        request["calc"]["rail_len"] = 2000
+        with patch.object(fc, "report", wraps=fc.report) as observed:
+            fp.frame_plan(request)
+        self.assertEqual(observed.call_args.args[0]["rail_len"], 4000)
 
 
 if __name__ == "__main__":

@@ -10,7 +10,8 @@ test_frame_calc.py. ВСЕ эталонные числа — из 13 боевы�
 import sys
 from frame_calc import (wind_peak, ice_load, spans_const, calc_chain,
                         pick_profile_step, binding_check, PROFILES,
-                        pick_step, report, WIND_REGIONS)
+                        pick_step, report, WIND_REGIONS,
+                        cladding_gamma, resolved_inputs)
 
 _n = 0
 
@@ -339,5 +340,49 @@ ok(len(_r["variants"]) == len([k for k, v in PROFILES.items()
                                and v.get("A")]),
    "FC-H3: в таблице все расчётные профили справочника (%d)" %
    len(_r["variants"]))
+
+# ── FC-D (30.09): материал независим от каркаса, неконечные/отрицательные
+# входы не превращаются в результат расчёта, исходные восстановимы.
+ok(cladding_gamma("porcelain") == 1.1 and cladding_gamma("clinker") == 1.1
+   and cladding_gamma("concrete") == 1.1 and cladding_gamma("composite") == 1.2,
+   "FC-D1: факторы выбранного материала")
+_snapshot = resolved_inputs(MONO)
+ok(_snapshot["w0"] == 30 and _snapshot["n_rivets"] == 2 and
+   _snapshot["ice_region"] == "II" and _snapshot["e1"] == 165 and
+   _snapshot["ry"] == 2250 and "n_rivets" not in MONO,
+   "FC-D2: разрешённые исходные полны, входной словарь не изменён")
+ok(calc_chain(_snapshot, 800, "row") == calc_chain(MONO, 800, "row"),
+   "FC-D3: расчёт воспроизводится из полного снимка")
+for _key, _value in [("height", float("nan")), ("na_max", float("inf")),
+                     ("gamma_clad", 0), ("b_row", -600), ("rail_len", 0),
+                     ("q_clad", -25), ("e2", 0), ("n_rivets", 1.5)]:
+    _rejected = False
+    try:
+        calc_chain(dict(MONO, **{_key: _value}), 800, "row")
+    except ValueError:
+        _rejected = True
+    ok(_rejected, "FC-D4: отклонён недопустимый %s=%s" % (_key, _value))
+_akp = dict(MONO, cladding="composite")
+del _akp["gamma_clad"]
+ok(resolved_inputs(_akp)["gamma_clad"] == 1.2,
+   "FC-D5: material даёт фактор, если он не указан явно")
+ok(resolved_inputs(dict(_akp, gamma_clad=1.3))["gamma_clad"] == 1.3,
+   "FC-D6: явный согласованный фактор сохранён")
+_string_section = {"Wx": "247.09", "Jx": "6120.39", "A": "91.1"}
+_numeric_section = {key: float(value) for key, value in _string_section.items()}
+_custom_input = dict(MONO, profile=_string_section)
+_custom_resolved = resolved_inputs(_custom_input)
+ok(_custom_resolved["profile"] == _numeric_section and
+   isinstance(_string_section["Wx"], str),
+   "FC-D7: строковые характеристики нормализованы без изменения входного сечения")
+ok(calc_chain(_custom_input, 800, "row") ==
+   calc_chain(dict(MONO, profile=_numeric_section), 800, "row"),
+   "FC-D8: строковые характеристики дают тот же расчёт, а не TypeError")
+_rejected = False
+try:
+    calc_chain(dict(MONO, profile=dict(_string_section, Jx="не число")), 800, "row")
+except ValueError:
+    _rejected = True
+ok(_rejected, "FC-D9: неверная строка характеристики отклонена до арифметики")
 
 print("frame_calc: %d проверок OK" % _n)

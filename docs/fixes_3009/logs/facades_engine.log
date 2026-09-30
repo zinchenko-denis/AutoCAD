@@ -1,0 +1,8 @@
+test_merged_label_is_invariant_under_metre_millimetre_conversion (__main__.IndependentFacadesEdges.test_merged_label_is_invariant_under_metre_millimetre_conversion) ... ok
+test_open_parapet_without_a_facade_zone (__main__.IndependentFacadesEdges.test_open_parapet_without_a_facade_zone) ... ok
+test_parapet_can_be_processed_without_creating_another_facade_zone (__main__.IndependentFacadesEdges.test_parapet_can_be_processed_without_creating_another_facade_zone) ... ok
+
+----------------------------------------------------------------------
+Ran 3 tests in 0.001s
+
+OK

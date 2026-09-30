@@ -1,0 +1,66 @@
+{
+  "scope": "facades only",
+  "python_only": false,
+  "results": [
+    {
+      "name": "test_clad_frontons",
+      "returncode": 0,
+      "seconds": 0.713
+    },
+    {
+      "name": "test_domain_review",
+      "returncode": 0,
+      "seconds": 0.069
+    },
+    {
+      "name": "test_frame_regressions",
+      "returncode": 0,
+      "seconds": 0.094
+    },
+    {
+      "name": "test_facades_engine_edges",
+      "returncode": 0,
+      "seconds": 0.04
+    },
+    {
+      "name": "test_supported_workflows",
+      "returncode": 0,
+      "seconds": 0.052
+    },
+    {
+      "name": "test_facades_copy_handles",
+      "returncode": 0,
+      "seconds": 0.561
+    },
+    {
+      "name": "test_facades_workstatement",
+      "returncode": 0,
+      "seconds": 1.536
+    },
+    {
+      "name": "test_frame_rail_metadata",
+      "returncode": 0,
+      "seconds": 0.572
+    },
+    {
+      "name": "CladSafetyCheck_compile",
+      "returncode": 0,
+      "seconds": 0.459
+    },
+    {
+      "name": "CladSafetyCheck",
+      "returncode": 0,
+      "seconds": 0.048
+    },
+    {
+      "name": "FrameSettingsProbe_compile",
+      "returncode": 0,
+      "seconds": 0.472
+    },
+    {
+      "name": "FrameSettingsProbe",
+      "returncode": 0,
+      "seconds": 0.042
+    }
+  ]
+}

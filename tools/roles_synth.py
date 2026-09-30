@@ -8,7 +8,9 @@ AFrame/tools/roles/RolesDump.cs): «поле окна не дошло до дв�
 
 Проверки:
  R0  действия роли применимы к окну; круг метки (ToDict→FromDict) даёт тот же запрос;
- R1  окно пропустило — движок не отказал; роль «неверный ввод» — окно её ловит (R10);
+ R1  окно пропустило — движок построил схему либо явно отказал по проверке геометрии/расчёта;
+     безопасные отказы считаются отдельно, их нельзя выдавать за построенные фасады;
+     роль «неверный ввод» — окно её ловит (R10);
  A1  ATFZONE: нетто = брутто − (окна + витражи + двери); A2 отливы = низ окон, откосы =
      окна + двери; A3 линии схемы = суммам отчёта; A4 у дверей нет линии по низу;
  F*/T* — инварианты расстановки и шин (AFrame/tools/frame_synth.py) на этой же зоне;
@@ -53,6 +55,7 @@ import facades_engine as fze       # noqa: E402
 
 T = 1.0
 INFO = Counter()
+OUTCOMES = Counter()
 DUMP = {}
 TILES = {"attile290": ((290.0, 82.0), (7.0, 7.0)), "attile240": ((240.0, 71.0), (10.0, 10.0))}
 
@@ -304,6 +307,19 @@ def steps_of(res, params):
     return (float(m) if m else None), (float(c) if c else None)
 
 
+def safe_refusal(res):
+    """Only explicit geometry-dependent refusal with no drawing payload is safe.
+
+    Invalid inputs and unsupported settings are not silently permitted here:
+    FrameSettings must reject those before the role reaches the engine.
+    """
+    return (res.get("ok") is False
+            and res.get("error_code") in ("E_UNSUPPORTED_SHINA", "E_CALC_NOT_PASSED",
+                                          "E_CALC_TOPOLOGY_UNSUPPORTED")
+            and bool(res.get("error"))
+            and not any(res.get(k) for k in ("rails", "brackets", "clamps", "hrails", "fittings")))
+
+
 def run_role(rng, role, dump, n, stats, first, times):
     name = role["name"]
     d = dump[name]
@@ -381,9 +397,14 @@ def run_role(rng, role, dump, n, stats, first, times):
                 req = frame_req(prm, zid, zfull, jx, ry, floors, corners, per_zone)
             res = fre.run(req)
             if not res.get("ok"):
-                bad.append(("R1", "%s: окно пропустило, движок отказал: %s" % (tag, res.get("error"))))
-                DUMP.setdefault((name, "R1"), req)
+                if safe_refusal(res):
+                    OUTCOMES["safe_refusal/" + res["error_code"]] += 1
+                    INFO["безопасный отказ: " + name + " / " + res["error_code"]] += 1
+                else:
+                    bad.append(("R1", "%s: окно пропустило, движок отказал: %s" % (tag, res.get("error"))))
+                    DUMP.setdefault((name, "R1"), req)
                 continue
+            OUTCOMES["successful_frame_results"] += 1
             psub = prm["sub_type"]
             ptile = prm["cladding"] in ("concrete", "clinker")
             sc = {"outer": outer, "holes": holes, "sub": psub, "req": req}
@@ -475,8 +496,14 @@ def run_role(rng, role, dump, n, stats, first, times):
             # R8: только кляммеры по направляющим полного прогона
             if role.get("clamps_after_full"):
                 full = fre.run(frame_req(d["snapshots"][0]["params"], zid, zfull, jx, ry, floors, corners))
+                if not full.get("ok"):
+                    if safe_refusal(full):
+                        OUTCOMES["safe_refusal/full_for_clamps/" + full["error_code"]] += 1
+                    else:
+                        bad.append(("R8", "%s: полный прогон перед повтором отказал без безопасного статуса" % tag))
+                    continue
                 q = frame_req(prm, zid, zfull, jx, ry, floors, corners)
-                q["rails_fixed"] = [{"x": r["x"], "y0": r["y0"], "y1": r["y1"]} for r in full["rails"]]
+                q["rails_fixed"] = [dict(r) for r in full["rails"]]
                 r5 = fre.run(q)
                 key = lambda c: (round(c["x"], 3), round(c["y"], 3), c["kind"], c.get("orient"))
                 if not r5.get("ok") or Counter(map(key, r5["clamps"])) != Counter(map(key, full["clamps"])):
@@ -512,6 +539,8 @@ def main(argv):
     for role in ROLES:
         total += run_role(rng, role, dump, n, stats, first, times)
     print("РОЛИ: ролей %d, фасадов %d, время %.1f с" % (len(ROLES), total, time.time() - t_all))
+    for outcome, count in sorted(OUTCOMES.items()):
+        print("  [RESULT] %s: %d" % (outcome, count))
     for role in ROLES:
         st = stats[role["name"]]
         print("  %-62s %s" % (role["name"], ", ".join("%s×%d" % kv for kv in sorted(st.items())) or "OK"))

@@ -461,6 +461,14 @@ namespace ACladPlugin
                 return;
             }
             var pieces = CladCommand.Get(res, "pieces") as object[];
+            var incomplete = LayoutSafety.IncompleteRoots(CladCommand.Get(res, "per_zone") as object[], partToRoot);
+            if (incomplete.Count > 0)
+            {
+                ed.WriteMessage("\nНе все части зоны рассчитаны: " + string.Join(", ", incomplete.ToArray()) +
+                    ". Исправьте контуры и повторите команду. Прежняя раскладка сохранена.");
+                PrintNotes(ed, CladCommand.Get(res, "notes") as object[]);
+                return;
+            }
             if (pieces == null || pieces.Length == 0)
             {
                 ed.WriteMessage("\nРаскладка пуста (см. замечания).");
@@ -1046,6 +1054,10 @@ namespace ACladPlugin
                 else if (pr.PropertyName == p.PH) okH = CladCommand.TrySetNum(pr, p.H);
             }
             ok = okW && okH;
+            if (!ok || !CladCommand.DynSizeMatches(br, p.PW, p.PH, p.W, p.H))
+                throw new InvalidOperationException("Динамический блок не принимает размер " +
+                    F2(p.W) + "×" + F2(p.H) + " мм. Выберите другой элемент или прямоугольник ATTILE.");
+            CladCommand.RequirePlacement(tr, br, x, y, p.W, p.H);
             FillAttributes(tr, br, p.Root, attCache);
             return br;
         }
@@ -1246,7 +1258,13 @@ namespace ACladPlugin
             string name, double w, double h, bool fill)
         {
             string bn = CladCommand.LayerName(name);
-            if (bt.Has(bn)) return bt[bn];
+            if (bt.Has(bn))
+            {
+                if (!MatchesTileBlock(tr, bt[bn], w, h, fill))
+                    throw new InvalidOperationException("Имя «" + bn + "» занято блоком другого размера или состава. " +
+                        "Измените наименование облицовки; существующее определение не изменено.");
+                return bt[bn];
+            }
             if (!bt.IsWriteEnabled) bt.UpgradeOpen();
             var rec = new BlockTableRecord { Name = bn, Origin = Point3d.Origin };
             bt.Add(rec);
@@ -1265,6 +1283,50 @@ namespace ACladPlugin
                 MakeFill(tr, rec, new List<List<double[]>> { new List<double[]>
                     { new[] { 0.0, 0.0 }, new[] { w, 0.0 }, new[] { w, h }, new[] { 0.0, h } } }, "0", 0);
             return rec.ObjectId;
+        }
+
+        private static bool MatchesTileBlock(Transaction tr, ObjectId id, double w, double h, bool fill)
+        {
+            var btr = tr.GetObject(id, OpenMode.ForRead) as BlockTableRecord;
+            // Accept only the local XY format created by EnsureTileBlock. 2D
+            // vertices alone do not establish a block's origin or entity plane.
+            if (btr == null || btr.IsDynamicBlock || !(btr.Origin.DistanceTo(Point3d.Origin) <= 1e-6))
+                return false;
+            int outlines = 0, fills = 0;
+            var expected = new[] { new Point2d(0, 0), new Point2d(w, 0), new Point2d(w, h), new Point2d(0, h) };
+            foreach (ObjectId eid in btr)
+            {
+                var entity = tr.GetObject(eid, OpenMode.ForRead) as Entity;
+                var pl = entity as Polyline;
+                if (pl != null)
+                {
+                    if (++outlines > 1 || !pl.Closed || pl.NumberOfVertices != 4 ||
+                        !(Math.Abs(pl.ConstantWidth) <= 1e-6) || !(Math.Abs(pl.Elevation) <= 1e-6) ||
+                        !(Math.Abs(pl.Thickness) <= 1e-6) || !((pl.Normal - Vector3d.ZAxis).Length <= 1e-9))
+                        return false;
+                    for (int i = 0; i < 4; i++)
+                        if (!(pl.GetPoint2dAt(i).GetDistanceTo(expected[i]) <= 1e-4) ||
+                            !(Math.Abs(pl.GetBulgeAt(i)) <= 1e-9))
+                            return false;
+                }
+                else if (entity is Hatch)
+                {
+                    var hatch = (Hatch)entity;
+                    if (++fills > 1 || hatch.NumberOfLoops != 1 ||
+                        !(Math.Abs(hatch.Elevation) <= 1e-6) || !((hatch.Normal - Vector3d.ZAxis).Length <= 1e-9) ||
+                        !string.Equals(hatch.PatternName, "SOLID", StringComparison.OrdinalIgnoreCase)) return false;
+                    try
+                    {
+                        var ex = hatch.GeometricExtents;
+                        if (!(Math.Abs(ex.MinPoint.X) <= 1e-4) || !(Math.Abs(ex.MinPoint.Y) <= 1e-4) ||
+                            !(Math.Abs(ex.MaxPoint.X - w) <= 1e-4) || !(Math.Abs(ex.MaxPoint.Y - h) <= 1e-4) ||
+                            !(Math.Abs(ex.MinPoint.Z) <= 1e-6) || !(Math.Abs(ex.MaxPoint.Z) <= 1e-6)) return false;
+                    }
+                    catch { return false; }
+                }
+                else return false;
+            }
+            return outlines == 1 && fills == (fill ? 1 : 0);
         }
 
         // имена динпараметров «ширина»/«высота» (В7 Германа, как ATCLAD) —

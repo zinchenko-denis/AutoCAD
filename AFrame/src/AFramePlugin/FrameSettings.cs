@@ -18,7 +18,9 @@ namespace AFramePlugin
     public class FrameSettings
     {
         // 26.09 (Денис): что облицовываем. Керамогранит/композит — прежний
-        // алгоритм (стойки по швам раскладки, кляммеры); бетонная/клинкерная
+        // алгоритм стоек по швам раскладки; кляммеры — только керамогранит.
+        // Композит (АКП): пока только каркас, узел крепления не реализован.
+        // Бетонная/клинкерная
         // плитка — вертикальные направляющие заданным шагом (не по швам), на
         // них горизонтальные шины, кляммеров нет.
         // 29.09c (Герман, ответ по №27): у плитки те же три типа подсистемы и
@@ -59,6 +61,12 @@ namespace AFramePlugin
         // ── то, что раньше давали ответы в командной строке ──
         /// <summary>Бетонная или клинкерная плитка — подсистема под шины.</summary>
         public bool IsTile { get { return Cladding == "concrete" || Cladding == "clinker"; } }
+        public bool IsComposite { get { return Cladding == "composite"; } }
+        // Рабочая методика Вектор из переданных расчётов: АКП 1.2,
+        // КГ/клинкер 1.1. Для бетонной плитки сохранён рабочий фактор 1.1;
+        // применимость к конкретному изделию подтверждает инженер.
+        // Контракт с frame_calc.cladding_gamma проверяется доменными тестами.
+        public double CladdingLoadFactor { get { return IsComposite ? 1.2 : 1.1; } }
         /// <summary>Тип, который уходит в движок (29.09c: у плитки — любой из трёх, как у всех).</summary>
         public string EffSubType { get { return SubType; } }
         public bool InterFloor { get { return EffSubType == "interfloor"; } }
@@ -159,6 +167,7 @@ namespace AFramePlugin
             {
                 { "wind_region", WindRegion }, { "terrain", Terrain }, { "height", Height },
                 { "q_clad", QClad }, { "offset", Offset }, { "na_max", NaMax },
+                { "gamma_clad", CladdingLoadFactor },
             };
         }
 
@@ -205,15 +214,13 @@ namespace AFramePlugin
             return d;
         }
 
-        /// <summary>Смена типа: вес облицовки по умолчанию был разный
-        /// (межэтажная 8, остальные 25) — меняем, только если не трогали.</summary>
+        /// <summary>Смена схемы каркаса не меняет массу выбранной облицовки.
+        /// Число 25 само по себе не отличает ручной ввод от умолчания.</summary>
         public void SetSubType(string sub)
         {
             string old = SubType;
             SubType = OneOf(sub, "vertical", SubTypes);
             if (old == SubType) return;
-            if (InterFloor && Math.Abs(QClad - 25) < 1e-9) QClad = 8;
-            else if (old == "interfloor" && Math.Abs(QClad - 8) < 1e-9) QClad = 25;
             string[] allowed = ProfilesFor(SubType);
             if (Array.IndexOf(allowed, Profile) < 0) Profile = allowed.Length > 0 ? allowed[0] : "";
         }
@@ -229,6 +236,8 @@ namespace AFramePlugin
         {
             if (Array.IndexOf(Modes, Mode) < 0) return "Неизвестный режим «" + Mode + "».";
             if (Array.IndexOf(Claddings, Cladding) < 0) return "Неизвестная облицовка «" + Cladding + "».";
+            if (IsComposite && Mode != "frame")
+                return "Для композита (АКП) узел крепления облицовки пока не реализован. Выберите «только подсистему (без кляммеров)».";
             if (IsTile)
             {
                 if (TileStepH < 100 || TileStepH > 3000) return "Шаг вертикальных направляющих — от 100 до 3000 мм.";
@@ -240,6 +249,10 @@ namespace AFramePlugin
             }
             if (!ClampsOnly && !Manual)
             {
+                if (InterFloor && NspTypeOrNull == "НСП-2")
+                    return "Для НСП-2 не подтверждено расчётное сечение. Выберите НСП-1 или ручные шаги по отдельному инженерному расчёту.";
+                if (!Finite(Height) || !Finite(QClad) || !Finite(Offset) || !Finite(NaMax))
+                    return "Расчётные исходные данные должны быть конечными числами.";
                 if (Height < 1 || Height > 500) return "Высота здания — от 1 до 500 м.";
                 if (QClad <= 0 || QClad > 500) return "Вес облицовки — больше 0 и не больше 500 кг/м².";
                 if (Offset < 20 || Offset > 1000) return "Вынос облицовки — от 20 до 1000 мм.";
@@ -278,6 +291,7 @@ namespace AFramePlugin
                                    " мм, анкер " + F(NaMax) + " Н");
                 if (SubType == "vertical") sb.Append("; профиль ").Append(Profile == "Авто" ? "подбором" : Profile);
                 if (InterFloor) sb.Append("; ").Append(Profile);
+                if (!Manual) sb.Append("; коэффициент веса ").Append(F(CladdingLoadFactor));
                 sb.Append(". Шины: стартовая по низу зоны и над проёмами, рядовые по центрам горизонтальных швов")
                   .Append(hasLayout ? " (ряды — из раскладки зон)" : " (шагом " + F(RowStep) + " мм от низа зоны)")
                   .Append(", концевая по верху и под проёмами; хлысты не длиннее ").Append(F(TileWhip))
@@ -289,6 +303,7 @@ namespace AFramePlugin
                 if (AskFloors) aft.Add("отметки перекрытий");
                 if (aft.Count > 0) sb.Append(" После «Разложить» указать: ").Append(string.Join(", ", aft.ToArray())).Append(".");
                 if (InterFloor) sb.Append(" Без отметок — перекрытия шагом этажа " + F(FloorStep) + " мм.");
+                if (Manual) sb.Append(" Несущая способность при ручном шаге программой не проверяется.");
                 return sb.ToString();
             }
             if (ClampsOnly)
@@ -306,8 +321,11 @@ namespace AFramePlugin
                                    " мм, анкер " + F(NaMax) + " Н");
                 if (SubType == "vertical") sb.Append("; профиль ").Append(Profile == "Авто" ? "подбором" : Profile);
                 if (InterFloor) sb.Append("; ").Append(Profile);
+                if (!Manual) sb.Append("; коэффициент веса ").Append(F(CladdingLoadFactor));
                 sb.Append(".");
             }
+            if (IsComposite) sb.Append(" Узел крепления АКП в этот результат не входит.");
+            if (Manual && !ClampsOnly) sb.Append(" Несущая способность при ручном шаге программой не проверяется.");
             sb.Append(hasLayout ? " Оси стоек и швы — из раскладки зон."
                                 : " Раскладки у зон нет: оси — " + (Axes == "step" ? "шагом " + F(AxisStep) + " мм от первой оси"
                                                                                   : "точками") +
@@ -324,6 +342,7 @@ namespace AFramePlugin
         }
 
         private static string F(double v) { return v.ToString("0.##", CultureInfo.InvariantCulture); }
+        private static bool Finite(double v) { return !double.IsNaN(v) && !double.IsInfinity(v); }
 
         // ── хранение ──
         public Dictionary<string, object> ToDict()
@@ -390,7 +409,7 @@ namespace AFramePlugin
             s.WindRegion = OneOf(S(d, "wind_region", s.WindRegion), "II", Winds);
             s.Terrain = OneOf(S(d, "terrain", s.Terrain), "B", Terrains);
             s.Height = D(d, "height", s.Height);
-            s.QClad = D(d, "q_clad", s.InterFloor ? 8 : s.QClad);
+            s.QClad = D(d, "q_clad", s.QClad);
             s.Offset = D(d, "offset", s.Offset);
             s.NaMax = D(d, "na_max", s.NaMax);
             s.StepMain = D(d, "step_main", s.StepMain);

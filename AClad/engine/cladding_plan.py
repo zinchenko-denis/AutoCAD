@@ -50,6 +50,9 @@
 PyInstaller).
 """
 
+import math
+from polygon_clip import signed_area
+
 EPS = 1e-6
 SLOPE_SLIVER = 10.0   # 30.09c: кусок у ската тоньше 10 мм — уходит в шов (как у ATTILE min_piece)
 
@@ -212,6 +215,11 @@ def _cut_spans(a, b, joints):
     for j0, j1 in joints:
         nxt = []
         for s0, s1, la, ra in spans:
+            # Нулевой руст всё равно задаёт границу проёма: иначе вычитание
+            # окна по Y снимет целую ширину пересекающего его камня.
+            if abs(j1 - j0) <= EPS and s0 + EPS < j0 < s1 - EPS:
+                nxt.extend([[s0, j0, la, True], [j0, s1, True, ra]])
+                continue
             c0, c1 = max(s0, j0), min(s1, j1)
             if c1 - c0 <= EPS:
                 nxt.append([s0, s1, la, ra])
@@ -451,6 +459,7 @@ def cladding_plan(req):
             continue
     hjoints = sorted(set(hjoints))
     notes, inserts = [], []
+    processed_contours = []
     if w < EPS or h < EPS:
         return {"ok": False, "error": "нулевой размер камня"}
     n_rows = 0
@@ -459,8 +468,8 @@ def cladding_plan(req):
                          # рустов — мост к этапу 3 (AFrame, 24.07)
     for ci, c in enumerate(req.get("contours") or []):
         outer = _closed(c.get("outer") or [])
-        if len(outer) < 4:
-            notes.append("контур %d: меньше 4 вершин — пропуск" % (ci + 1))
+        if len(outer) < 3:
+            notes.append("контур %d: меньше 3 вершин — пропуск" % (ci + 1))
             continue
         holes = [_closed(hh) for hh in (c.get("holes") or [])]
         # 04.08 (фидбэк Германа): контур из АР почти никогда не
@@ -480,6 +489,7 @@ def cladding_plan(req):
         polys = [outer] + holes
         bad = [p for p in polys if not _is_ortho(p)]
         slopes = []
+        true_outer = list(outer)
         if bad and not _is_ortho(outer) and all(_is_ortho(hh) for hh in holes):
             # 30.09c (Герман, ответ на (б) PDF №29: «раскладка нужна не только на плитку, но и на
             # керамогранит — он также может идти вдоль фронтонов»): контур с наклонными рёбрами
@@ -500,6 +510,9 @@ def cladding_plan(req):
                 "отклонение %.1f мм при допуске %.1f) — пропуск; "
                 "выровняйте контур или увеличьте допуск"
                 % (ci + 1, max(_ortho_err(p) for p in bad), ortho_tol))
+            continue
+        if abs(signed_area(true_outer)) < 1.0:
+            notes.append("контур %d: нулевая площадь — пропуск" % (ci + 1))
             continue
         if snapped > EPS:
             notes.append("контур %d: рёбра выпрямлены до ортогональных "
@@ -537,7 +550,9 @@ def cladding_plan(req):
         belts.append((start, y_hi))
         n0_ins = len(inserts)
         for b_lo, b_hi in belts:
-            i = 0
+            # Высокая абсолютная отметка не должна означать миллионы пустых
+            # рядов от datum=0; сохраняем фазу сетки и начинаем у стены.
+            i = max(0, int(math.floor((y_lo - b_lo) / (h + gh))))
             while True:
                 y = b_lo + i * (h + gh)
                 if y >= b_hi - EPS:
@@ -609,52 +624,26 @@ def cladding_plan(req):
                                     "h": round(hc2, 4)})
                 n_rows += 1
         if slopes:
-            # 30.09c: плиты фронтона у ската — прямоугольник плиты ∩ полуплоскости наклонных рёбер,
-            # чей габарит он задевает (у конька — обоих); целиком за скатом — выбрасывается; тоньше
-            # SLOPE_SLIVER — уходит в шов; обрезанная — фигурный кусок: pts многоугольника (в чертеже —
-            # полилиния), x/y/w/h — его габарит; исходный прямоугольник (_r*) — для осей швов
+            # Точное пересечение с контуром (в том числе вогнутым), тем же
+            # stdlib-клиппером, что ATTILE. Исходный прямоугольник — для осей.
             import tile_pattern as _tp
-            sb = [(min(a[0], b[0]), min(a[1], b[1]), max(a[0], b[0]), max(a[1], b[1]), a, b)
-                  for a, b in slopes]
-            kept = []
+            candidates = []
             for t in inserts[n0_ins:]:
                 x, y, wc, hc = t["x"], t["y"], t["w"], t["h"]
-                hit = [(a, b) for sx0, sy0, sx1, sy1, a, b in sb
-                       if x < sx1 - EPS and x + wc > sx0 + EPS and y < sy1 - EPS and y + hc > sy0 + EPS]
-                if not hit:
-                    kept.append(t)
-                    continue
-                poly = [(x, y), (x + wc, y), (x + wc, y + hc), (x, y + hc)]
-                for a, b in hit:
-                    poly = _tp._clip_half(poly, a, b)
-                    if len(poly) < 3:
-                        break
-                area = abs(_tp.signed_area(poly)) if len(poly) >= 3 else 0.0
-                if area < 1.0:
-                    continue                          # плита целиком за скатом
-                if abs(area - wc * hc) < 1.0:
-                    kept.append(t)                    # скат её не задел
-                    continue
-                clean = []
-                for v in poly:
-                    if not clean or abs(clean[-1][0] - v[0]) > 1e-6 or abs(clean[-1][1] - v[1]) > 1e-6:
-                        clean.append(v)
-                if len(clean) > 1 and abs(clean[0][0] - clean[-1][0]) <= 1e-6 and \
-                        abs(clean[0][1] - clean[-1][1]) <= 1e-6:
-                    clean.pop()
-                xs = [v[0] for v in clean]
-                ys = [v[1] for v in clean]
-                bw, bh = max(xs) - min(xs), max(ys) - min(ys)
-                if min(bw, bh) < SLOPE_SLIVER:
-                    n_sliver += 1
-                    continue
-                q = dict(t)
-                q.update({"x": round(min(xs), 4), "y": round(min(ys), 4), "w": round(bw, 4),
-                          "h": round(bh, 4), "pts": [[round(v[0], 4), round(v[1], 4)] for v in clean],
-                          "slope": True, "_rx": x, "_ry": y, "_rw": wc, "_rh": hc})
+                candidates.append(dict(t, area=wc * hc, _rx=x, _ry=y, _rw=wc, _rh=hc))
+            clipped, absorbed, count = _tp._clip_slopes(candidates, SLOPE_SLIVER, true_outer)
+            kept = []
+            for p in clipped:
+                q = {k: p[k] for k in ("x", "y", "w", "h", "_rx", "_ry", "_rw", "_rh")}
+                if p.get("slope"):
+                    if len(p["rings"]) != 1:
+                        raise ValueError("ATCLAD: неожиданный внутренний контур обрезанной плиты")
+                    q.update(pts=p["rings"][0], slope=True)
                 kept.append(q)
-                n_slope += 1
+            n_slope += count
+            n_sliver += absorbed["count"]
             inserts[n0_ins:] = kept
+        processed_contours.append(ci)
     if n_slope or n_sliver:
         notes.append("у скатов фронтона фигурных кусков %d (в чертеже — полилинии)%s"
                      % (n_slope, ("; тоньше %.0f мм — %d, уходят в шов" % (SLOPE_SLIVER, n_sliver))
@@ -680,6 +669,7 @@ def cladding_plan(req):
         for k in ("_rx", "_ry", "_rw", "_rh"):
             t.pop(k, None)
     return {"ok": True, "inserts": inserts, "notes": _dedup_notes(notes),
+            "processed_contours": processed_contours,
             "joints_x": sorted(jx), "rows_y": sorted(ry),
             "summary": {"tiles": len(inserts), "full": full,
                         "cut": len(inserts) - full, "rows": n_rows, "slope_pieces": n_slope}}

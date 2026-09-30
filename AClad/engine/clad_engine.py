@@ -22,6 +22,7 @@ import sys
 import traceback
 
 import cladding_plan as cp
+from polygon_clip import signed_area
 
 _ARC_EPS = 1e-9
 _CLOSE_TOL = 0.5    # мм: дубль замыкающей вершины
@@ -173,9 +174,7 @@ def _group_contours(raw, notes):
         if len(p) < 3:
             notes.append("контур %s: меньше 3 вершин — пропуск" % cid)
             continue
-        area = abs(sum(p[j][0] * p[(j + 1) % len(p)][1] -
-                       p[(j + 1) % len(p)][0] * p[j][1]
-                       for j in range(len(p)))) / 2.0
+        area = abs(signed_area(p))
         xs = [q[0] for q in p]
         ys = [q[1] for q in p]
         probe = [((min(xs) + max(xs)) / 2.0, (min(ys) + max(ys)) / 2.0),
@@ -286,6 +285,11 @@ def op_cladding(req):
         res = cp.cladding_plan(creq)
         if not res.get("ok"):
             return {"ok": False, "error": res.get("error"), "notes": notes}
+        if not res.get("processed_contours"):
+            # Пропуск — не успешный пустой результат. C# удаляет прежние
+            # объекты только для владельцев зон из per_zone.
+            notes.extend("%s: %s" % (zone_id, n) for n in res.get("notes", []))
+            continue
         jx_all.update(res.get("joints_x") or [])
         ry_all.update(res.get("rows_y") or [])
         for t in res["inserts"]:

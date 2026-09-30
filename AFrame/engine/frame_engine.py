@@ -259,7 +259,7 @@ def _group_contours(raw, notes):
         cid, pts, _a, _pr, src = parsed[t]
         item = {"outer": pts, "holes": [parsed[k][1] for k in kids.get(t, [])]}
         for key in ("joints_x", "rows_y"):
-            if src.get(key):
+            if key in src and src[key] is not None:
                 item[key] = src.get(key)
         out.append((cid, item))
     return out
@@ -279,7 +279,7 @@ def op_frame(req):
         c = _zone_to_contour(zd, notes, zone_id)
         if c is not None:
             for key in ("joints_x", "rows_y"):
-                if zrec.get(key):
+                if key in zrec and zrec[key] is not None:
                     c[key] = zrec.get(key)
             items.append((zone_id, c))
     for cid, c in _group_contours(req.get("contours") or [], notes):
@@ -327,13 +327,17 @@ def op_frame(req):
         # раскладки); общий список прогона давал в зоне стойки по швам
         # соседней зоны (цоколь под этажом: стоек 14 → 29)
         for key in ("joints_x", "rows_y"):
-            if contour.get(key):
+            if key in contour and contour[key] is not None:
                 creq[key] = contour.pop(key)
         creq["contours"] = [contour]
         res = fp.frame_plan(creq)
         if not res.get("ok"):
-            return {"ok": False, "error": res.get("error"),
-                    "notes": notes}
+            return {"ok": False, "error": "%s: %s" % (zone_id, res.get("error")),
+                    "error_code": res.get("error_code", "E_FRAME_PLAN"),
+                    "failed_zone": zone_id, "unsupported": res.get("unsupported") or [],
+                    "calc_inputs": res.get("calc_inputs"),
+                    "unsupported_counts": res.get("unsupported_counts") or {},
+                    "notes": notes + list(res.get("notes") or [])}
         system_used = res.get("system_used") or system_used
         if res.get("calc_report"):
             # 24.09 (рецензия): в ответе оставался отчёт ПОСЛЕДНЕЙ зоны, хотя

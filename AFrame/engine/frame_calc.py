@@ -102,6 +102,96 @@ PROFILES = {
     "НГП-60-50-1,5":   dict(Wx=None,   Jx=None,     A=None,  q=1.4),
 }
 
+# Материал и схема каркаса — независимые входы. Источник факторов:
+# переданные статрасчёты Вектор (METHOD_CALC, §1), не универсальная
+# нормативная классификация всех возможных изделий. concrete сохраняет
+# рабочий фактор 1.1; его применимость к изделию подтверждает инженер.
+CLADDING_GAMMA = {"porcelain": 1.1, "clinker": 1.1,
+                  "concrete": 1.1, "composite": 1.2}
+
+
+def cladding_gamma(material):
+    """Фактор веса выбранной облицовки, отдельно от типа каркаса."""
+    name = str(material).strip().lower()
+    if name not in CLADDING_GAMMA:
+        raise ValueError("неизвестная облицовка для расчёта: %s" % material)
+    return CLADDING_GAMMA[name]
+
+
+def _number(name, value, zero=False):
+    """Числовой контракт, без подмены ошибочного ввода рабочим дефолтом."""
+    try:
+        result = float(value)
+    except (TypeError, ValueError, OverflowError):
+        raise ValueError("%s: требуется конечное число" % name)
+    if not math.isfinite(result) or (result < 0 if zero else result <= 0):
+        raise ValueError("%s: требуется конечное %s число" %
+                         (name, "неотрицательное" if zero else "положительное"))
+    return result
+
+
+def resolved_inputs(inp):
+    """Полный разрешённый набор исходных, пригодный для повторного расчёта.
+
+    Сохраняет явные коэффициенты/плечи отдельных первичных статрасчётов.
+    Материал должен разрешать frame_plan ДО применения системного пресета.
+    Снимок не утверждает применимость методики ко всем узлам конструкции.
+    """
+    p = dict(inp)
+    if p.get("scheme") not in ("vertical", "interfloor", "interfloor_direct", "ortho"):
+        raise ValueError("неизвестная расчётная схема")
+    if p.get("terrain") not in TERRAIN:
+        raise ValueError("неизвестный тип местности")
+    if p.get("w0") is None:
+        if p.get("wind_region") not in WIND_REGIONS:
+            raise ValueError("не задан корректный ветровой район или w0")
+        p["w0"] = WIND_REGIONS[p["wind_region"]]
+    if p.get("gamma_clad") is None:
+        if not p.get("cladding"):
+            raise ValueError("не задан коэффициент веса или материал облицовки")
+        p["gamma_clad"] = cladding_gamma(p["cladding"])
+    for key in ("w0", "height", "q_clad", "gamma_clad", "offset", "na_max",
+                "b_row", "b_corner", "rail_len"):
+        p[key] = _number(key, p.get(key))
+    p["q_rails"] = _number("q_rails", p.get("q_rails", 0), zero=True)
+    p["ry"] = _number("ry", p.get("ry", RY_DEFAULT))
+    p["n_rivets"] = _number("n_rivets", p.get("n_rivets", 2))
+    if p["n_rivets"] != int(p["n_rivets"]):
+        raise ValueError("n_rivets: количество заклёпок должно быть целым")
+    p["n_rivets"] = int(p["n_rivets"])
+    p["ice_region"] = p.get("ice_region", "II")
+    if p["ice_region"] not in ICE_REGIONS:
+        raise ValueError("неизвестный гололёдный район")
+    if p.get("bracket") not in BRACKETS:
+        raise ValueError("неизвестное расчётное сечение кронштейна")
+    if p.get("extender") and p["extender"] not in EXTENDERS:
+        raise ValueError("неизвестное расчётное сечение удлинителя")
+    br = BRACKETS[p["bracket"]]
+    for key in ("e1", "e2", "e3", "e4"):
+        default = p["offset"] - br["de1"] if key == "e1" else br[key]
+        p[key] = _number(key, p.get(key, default), zero=key in ("e1", "e3"))
+    prof = p.get("profile")
+    custom_profile = isinstance(prof, dict)
+    if custom_profile:
+        prof = dict(prof)                 # не изменять переданный пользователем словарь
+    else:
+        if prof not in PROFILES:
+            raise ValueError("неизвестное расчётное сечение профиля")
+        prof = PROFILES[prof]
+    for key in ("Wx", "Jx", "A"):
+        value = _number("profile." + key, prof.get(key))
+        if custom_profile:
+            prof[key] = value            # арифметика получает проверенные числа, не строки
+    if custom_profile:
+        p["profile"] = prof
+    if p["scheme"] == "ortho":
+        p["v_step"] = _number("v_step", p.get("v_step"))
+    if p.get("n_p_profile") is not None:
+        p["n_p_profile"] = _number("n_p_profile", p["n_p_profile"], zero=True)
+    if p.get("max_step") is not None:
+        p["max_step"] = _number("max_step", p["max_step"])
+    return p
+
 
 # ---------------------------------------------------------------- нагрузки
 def wind_peak(w0, terrain, h):
@@ -110,6 +200,10 @@ def wind_peak(w0, terrain, h):
     W_p = w0·k(h)·(1+ζ(h))·|c_p|·γ_кор(=1)·γ_в(=1.4);
     k=k10·(h/10)^(2α), ζ=ζ10·(h/10)^(−α).
     """
+    w0 = _number("w0", w0)
+    h = _number("height", h)
+    if terrain not in TERRAIN:
+        raise ValueError("неизвестный тип местности")
     k10, z10, a = TERRAIN[terrain]
     k = k10 * (h / 10.0) ** (2 * a)
     zeta = z10 * (h / 10.0) ** (-a)
@@ -161,9 +255,13 @@ def calc_chain(inp, step, zone):
       vertical: верт. шаг кронштейнов L1; interfloor/ortho: гориз. шаг L2.
     Возвращает dict: checks[], n_p, n_w, w_p, passed.
     """
+    inp = resolved_inputs(inp)
+    step = _number("step", step)
+    if zone not in ("row", "corner"):
+        raise ValueError("неизвестная расчётная зона")
     scheme = inp["scheme"]
     ry = inp.get("ry", RY_DEFAULT)
-    w0 = inp.get("w0") or WIND_REGIONS[inp["wind_region"]]
+    w0 = inp["w0"]
     wp_row, wp_corner = wind_peak(w0, inp["terrain"], inp["height"])
     w_p = wp_row if zone == "row" else wp_corner
     b = (inp["b_row"] if zone == "row" else inp["b_corner"]) / 1000.0
@@ -344,6 +442,7 @@ def binding_check(inp, zone, step, candidates=None):
 
 def report(inp, candidates=None):
     """Отчёт по обеим зонам: {'row': {...}, 'corner': {...}}."""
+    inp = resolved_inputs(inp)
     out = {}
     auto = bool(inp.get("auto_profile"))
     for zone in ("row", "corner"):
