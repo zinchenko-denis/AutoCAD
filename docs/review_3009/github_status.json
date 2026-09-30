@@ -1,0 +1,152 @@
+{
+  "review_base": "e2a4e4df69a1936664c76c44cacff311ad44b07d",
+  "runs": [
+    {
+      "id": 36685320567,
+      "name": "build-bundle",
+      "status": "completed",
+      "conclusion": "success",
+      "sha": "611bdf32a82f357cf63d763a9b7d631e1b6d74df",
+      "branch": "feat/auto-reactor",
+      "run_number": 103,
+      "attempt": 1,
+      "url": "https://github.com/zinchenko-denis/AutoCAD/actions/runs/36685320567"
+    },
+    {
+      "id": 36682232089,
+      "name": "check",
+      "status": "completed",
+      "conclusion": "success",
+      "sha": "00f9710311454ba7b94bee4d1d427b6d2d6de2ec",
+      "branch": "feat/auto-reactor",
+      "run_number": 193,
+      "attempt": 1,
+      "url": "https://github.com/zinchenko-denis/AutoCAD/actions/runs/36682232089"
+    },
+    {
+      "id": 36681339436,
+      "name": "check",
+      "status": "completed",
+      "conclusion": "success",
+      "sha": "968309093f16f4aa45b50d5623c463f3fd2359ec",
+      "branch": "feat/auto-reactor",
+      "run_number": 192,
+      "attempt": 1,
+      "url": "https://github.com/zinchenko-denis/AutoCAD/actions/runs/36681339436"
+    },
+    {
+      "id": 36637441200,
+      "name": "build-bundle",
+      "status": "completed",
+      "conclusion": "success",
+      "sha": "72ee0d405b947b7e211c49a69b2580866b8b2583",
+      "branch": "feat/auto-reactor",
+      "run_number": 102,
+      "attempt": 1,
+      "url": "https://github.com/zinchenko-denis/AutoCAD/actions/runs/36637441200"
+    },
+    {
+      "id": 36637085215,
+      "name": "check",
+      "status": "completed",
+      "conclusion": "success",
+      "sha": "72ee0d405b947b7e211c49a69b2580866b8b2583",
+      "branch": "feat/auto-reactor",
+      "run_number": 191,
+      "attempt": 1,
+      "url": "https://github.com/zinchenko-denis/AutoCAD/actions/runs/36637085215"
+    },
+    {
+      "id": 36635408769,
+      "name": "check",
+      "status": "completed",
+      "conclusion": "success",
+      "sha": "84e3a82edd5271759050ce22f8ab44283fc81608",
+      "branch": "feat/auto-reactor",
+      "run_number": 190,
+      "attempt": 1,
+      "url": "https://github.com/zinchenko-denis/AutoCAD/actions/runs/36635408769"
+    },
+    {
+      "id": 36631778292,
+      "name": "build-bundle",
+      "status": "completed",
+      "conclusion": "success",
+      "sha": "0b58b0df75fad29b0fb3e8dcc6dbec30219bbea8",
+      "branch": "feat/auto-reactor",
+      "run_number": 101,
+      "attempt": 1,
+      "url": "https://github.com/zinchenko-denis/AutoCAD/actions/runs/36631778292"
+    },
+    {
+      "id": 36631483764,
+      "name": "check",
+      "status": "completed",
+      "conclusion": "success",
+      "sha": "0b58b0df75fad29b0fb3e8dcc6dbec30219bbea8",
+      "branch": "feat/auto-reactor",
+      "run_number": 189,
+      "attempt": 1,
+      "url": "https://github.com/zinchenko-denis/AutoCAD/actions/runs/36631483764"
+    }
+  ],
+  "release": {
+    "tag": "build-103",
+    "target": "611bdf32a82f357cf63d763a9b7d631e1b6d74df",
+    "published": "2026-09-30T07:47:34Z",
+    "assets": [
+      {
+        "name": "ABlockGen.bundle.zip",
+        "size": 8187303,
+        "digest": "sha256:f3a22f138f9c6e6254568c11b82d7cd656db5e593421a15ae5b5eb2b4c0406d4"
+      },
+      {
+        "name": "AClad.bundle.zip",
+        "size": 8269102,
+        "digest": "sha256:8fbfec9cf78a60593dc5b10f4d0023cc902a300d3fd17be622b772752913afde"
+      },
+      {
+        "name": "AFacades.bundle.zip",
+        "size": 8230089,
+        "digest": "sha256:3693ec7acc49a4efc82264e1fb4e89b78792a7276424704f0170e1db84cff42d"
+      },
+      {
+        "name": "AFrame.bundle.zip",
+        "size": 8254792,
+        "digest": "sha256:2ad8d7bb8439a0c25113b239fecda53c10f69d340005586b71fb1e2274a1fb98"
+      },
+      {
+        "name": "ATableSpec.bundle.zip",
+        "size": 25629100,
+        "digest": "sha256:954e3e856b9e2488edcba545cf52f073420f2a59a04a70eb61a059ca954eaa3e"
+      }
+    ]
+  },
+  "latest": [
+    {
+      "name": "ABlockGen.bundle.zip",
+      "size": 8187303,
+      "digest": "sha256:f3a22f138f9c6e6254568c11b82d7cd656db5e593421a15ae5b5eb2b4c0406d4"
+    },
+    {
+      "name": "AClad.bundle.zip",
+      "size": 8269102,
+      "digest": "sha256:8fbfec9cf78a60593dc5b10f4d0023cc902a300d3fd17be622b772752913afde"
+    },
+    {
+      "name": "AFacades.bundle.zip",
+      "size": 8230089,
+      "digest": "sha256:3693ec7acc49a4efc82264e1fb4e89b78792a7276424704f0170e1db84cff42d"
+    },
+    {
+      "name": "AFrame.bundle.zip",
+      "size": 8254792,
+      "digest": "sha256:2ad8d7bb8439a0c25113b239fecda53c10f69d340005586b71fb1e2274a1fb98"
+    },
+    {
+      "name": "ATableSpec.bundle.zip",
+      "size": 25629100,
+      "digest": "sha256:954e3e856b9e2488edcba545cf52f073420f2a59a04a70eb61a059ca954eaa3e"
+    }
+  ]
+}

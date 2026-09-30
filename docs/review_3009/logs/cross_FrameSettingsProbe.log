@@ -1,0 +1,5 @@
+porcelain: explicitly entered 25 kg/m2 -> 8 kg/m2, validation=accepted
+composite: explicitly entered 25 kg/m2 -> 8 kg/m2, validation=accepted
+concrete: explicitly entered 25 kg/m2 -> 8 kg/m2, validation=accepted
+clinker: explicitly entered 25 kg/m2 -> 8 kg/m2, validation=accepted
+Unexpected material-mass changes: 4

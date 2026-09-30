@@ -1,0 +1,27 @@
+double-tail rows: [['С1', 1500, 1], ['С1', 1500, 1]]
+space rows: [['С1', 1500, 1], ['С1 ', 1500, 1]]
+test_all_empty_sections_remain_to_clear_previous_table (__main__.ReportReview.test_all_empty_sections_remain_to_clear_previous_table) ... ok
+test_clean_quantities (__main__.ReportReview.test_clean_quantities) ... ok
+test_equivalent_numeric_lengths_form_one_row (__main__.ReportReview.test_equivalent_numeric_lengths_form_one_row) ... FAIL
+test_trimmed_marks_form_one_row (__main__.ReportReview.test_trimmed_marks_form_one_row) ... FAIL
+
+======================================================================
+FAIL: test_equivalent_numeric_lengths_form_one_row (__main__.ReportReview.test_equivalent_numeric_lengths_form_one_row)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "<workspace>/AutoCAD/tools/review_3009/test_spec_review.py", line 28, in test_equivalent_numeric_lengths_form_one_row
+    self.assertEqual(len(rows), 1, rows)
+AssertionError: 2 != 1 : [['С1', 1500, 1], ['С1', 1500, 1]]
+
+======================================================================
+FAIL: test_trimmed_marks_form_one_row (__main__.ReportReview.test_trimmed_marks_form_one_row)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "<workspace>/AutoCAD/tools/review_3009/test_spec_review.py", line 34, in test_trimmed_marks_form_one_row
+    self.assertEqual(len(rows), 1, rows)
+AssertionError: 2 != 1 : [['С1', 1500, 1], ['С1 ', 1500, 1]]
+
+----------------------------------------------------------------------
+Ran 4 tests in 0.001s
+
+FAILED (failures=2)

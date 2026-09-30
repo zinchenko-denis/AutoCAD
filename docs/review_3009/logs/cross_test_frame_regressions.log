@@ -1,0 +1,63 @@
+test_calculation_covers_longest_given_floor_span (__main__.FrameContractRegressions.test_calculation_covers_longest_given_floor_span) ... FAIL
+test_empty_local_rows_do_not_inherit_other_zone_rows (__main__.FrameContractRegressions.test_empty_local_rows_do_not_inherit_other_zone_rows) ... FAIL
+test_generated_short_rails_survive_native_clamp_readback (__main__.FrameContractRegressions.test_generated_short_rails_survive_native_clamp_readback) ... FAIL
+test_vertical_only_clamps_repeats_full_layout (__main__.FrameContractRegressions.test_vertical_only_clamps_repeats_full_layout) ... FAIL
+
+======================================================================
+FAIL: test_calculation_covers_longest_given_floor_span (__main__.FrameContractRegressions.test_calculation_covers_longest_given_floor_span)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "<workspace>/AutoCAD/tools/review_3009/test_frame_regressions.py", line 112, in test_calculation_covers_longest_given_floor_span
+    self.assertTrue(all(r["passed"] for r in recheck.values()),
+AssertionError: False is not true : Engine approved 3000 mm, but emitted a 4000 mm floor span: {"row": {"zone": "row", "step": 550, "w_p": 76.2, "n_p": 34.1, "n_w": 189.7, "checks": [{"name": "анкер, кг", "value": 353.3, "limit": 306.1, "ok": false}, {"name": "кронштейн 1-1, кг/см²", "value": 1843.9, "limit": 2250.0, "ok": true}, {"name": "кронштейн 2-2, кг/см²", "value": 358.0, "limit": 2250.0, "ok": true}, {"name": "удлинитель, кг/см²", "value": 2964.0, "limit": 2250.0, "ok": false}, {"name": "профиль σ, кг/см²", "value": 2271.5, "limit": 2250.0, "ok": false}, {"name": "профиль f, мм", "value": 20.3, "limit": 26.7, "ok": true}, {"name": "заклёпки срез, кг", "value": 96.4, "limit": 253.1, "ok": true}, {"name": "заклёпки смятие, кг/см²", "value": 1912.4, "limit": 2650.0, "ok": true}], "passed": false}, "corner": {"zone": "corner", "step": 300, "w_p": 139.7, "n_p": 25.7, "n_w": 189.7, "checks": [{"name": "анкер, кг", "value": 337.5, "limit": 306.1, "ok": false}, {"name": "кронштейн 1-1, кг/см²", "value": 1800.3, "limit": 2250.0, "ok": true}, {"name": "кронштейн 2-2, кг/см²", "value": 358.0, "limit": 2250.0, "ok": true}, {"name": "удлинитель, кг/см²", "value": 2938.1, "limit": 2250.0, "ok": false}, {"name": "профиль σ, кг/см²", "value": 3114.7, "limit": 2250.0, "ok": false}, {"name": "профиль f, мм", "value": 27.9, "limit": 26.7, "ok": false}, {"name": "заклёпки срез, кг", "value": 95.7, "limit": 253.1, "ok": true}, {"name": "заклёпки смятие, кг/см²", "value": 1899.4, "limit": 2650.0, "ok": true}], "passed": false}}
+
+======================================================================
+FAIL: test_empty_local_rows_do_not_inherit_other_zone_rows (__main__.FrameContractRegressions.test_empty_local_rows_do_not_inherit_other_zone_rows)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "<workspace>/AutoCAD/tools/review_3009/test_frame_regressions.py", line 106, in test_empty_local_rows_do_not_inherit_other_zone_rows
+    self.assertEqual(clamp_set(alone), clamp_set(actual_a),
+AssertionError: Items in the second set but not the first:
+(1500.0, 600.0, 'рядовой', '')
+(300.0, 1000.0, 'боковой', 'h')
+(1500.0, 1000.0, 'боковой', 'h')
+(900.0, 0.0, 'стартовый', '')
+(900.0, 1000.0, 'боковой', 'h')
+(1500.0, 0.0, 'стартовый', '')
+(900.0, 600.0, 'рядовой', '')
+(300.0, 0.0, 'стартовый', '')
+(300.0, 600.0, 'рядовой', '') : Selecting a neighboring zone must not change A's clamps
+
+======================================================================
+FAIL: test_generated_short_rails_survive_native_clamp_readback (__main__.FrameContractRegressions.test_generated_short_rails_survive_native_clamp_readback)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "<workspace>/AutoCAD/tools/review_3009/test_frame_regressions.py", line 118, in test_generated_short_rails_survive_native_clamp_readback
+    self.assertEqual(clamp_set(full), clamp_set(again),
+AssertionError: Items in the first set but not the second:
+(1500.0, 3150.0, 'боковой', 'h')
+(300.0, 3020.0, 'комбинированный', '')
+(900.0, 3020.0, 'комбинированный', '')
+(900.0, 3150.0, 'боковой', 'h')
+(1500.0, 3020.0, 'комбинированный', '')
+(300.0, 3150.0, 'боковой', 'h') : Native RailGeom kept 3 of 6 generated rails
+
+======================================================================
+FAIL: test_vertical_only_clamps_repeats_full_layout (__main__.FrameContractRegressions.test_vertical_only_clamps_repeats_full_layout)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "<workspace>/AutoCAD/tools/review_3009/test_frame_regressions.py", line 124, in test_vertical_only_clamps_repeats_full_layout
+    self.assertEqual(clamp_set(full), clamp_set(again),
+AssertionError: Items in the first set but not the second:
+(40.0, 2440.0, 'боковой', 'v')
+(1640.0, 2440.0, 'боковой', 'v')
+Items in the second set but not the first:
+(1640.0, 3200.0, 'боковой', 'h')
+(40.0, 3200.0, 'боковой', 'h')
+(40.0, 2440.0, 'стартовый', '')
+(1640.0, 2440.0, 'стартовый', '') : The known mismatch is also present in vertical systems
+
+----------------------------------------------------------------------
+Ran 4 tests in 0.008s
+
+FAILED (failures=4)

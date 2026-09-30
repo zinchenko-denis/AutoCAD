@@ -1,0 +1,5 @@
+Traceback (most recent call last):
+  File "<workspace>/AutoCAD/AClad/tools/attile_contract.py", line 16, in <module>
+    dump = json.load(open(sys.argv[1] if len(sys.argv) > 1 else "/tmp/attile_ui/shifts.json", encoding="utf-8"))
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: '/tmp/attile_ui/shifts.json'

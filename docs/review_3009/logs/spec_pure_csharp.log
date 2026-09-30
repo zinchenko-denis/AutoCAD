@@ -1,0 +1,5 @@
+ru-RU: raw=1499.99999999998; cleaned=1500; commaEqualsDot=True
+en-US: raw=1499.99999999998; cleaned=1500; commaEqualsDot=True
+de-DE: raw=1499.99999999998; cleaned=1500; commaEqualsDot=True
+header merges changed: shape before=c3|1t; after=c3|1t; equal=True
+negative dimension parser accepts=-50

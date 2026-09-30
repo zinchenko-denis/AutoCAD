@@ -1,0 +1,18 @@
+{
+  "unknown_thickness": {
+    "D3": 1250,
+    "B5": "Монтаж теплоизоляции Rockwoll Венти Баттс Оптима; 150 мм",
+    "D5": 1000,
+    "B6": "Монтаж теплоизоляции Rockwoll Венти Баттс Оптима; 150мм",
+    "D6": 250
+  },
+  "reused_single": {
+    "D3": 300,
+    "B5": "Монтаж теплоизоляции Rockwoll Венти Баттс Оптима; 150 мм",
+    "D5": 1000,
+    "B6": "Монтаж теплоизоляции Rockwoll Венти Баттс Оптима; 100 мм",
+    "D6": 250
+  }
+}
+FAIL: one 150 mm group has area 300 m2, but its cell D5 remains stale
+FAIL: unknown-thickness group was labelled 150 mm without input evidence

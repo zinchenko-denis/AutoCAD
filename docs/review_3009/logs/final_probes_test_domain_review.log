@@ -1,0 +1,65 @@
+test_clinker_interfloor_keeps_clinker_load_factor (__main__.MaterialRules.test_clinker_interfloor_keeps_clinker_load_factor) ... FAIL
+test_composite_all_must_not_produce_porcelain_clamps (__main__.MaterialRules.test_composite_all_must_not_produce_porcelain_clamps) ... FAIL
+test_composite_interfloor_uses_akp_load_factor (__main__.MaterialRules.test_composite_interfloor_uses_akp_load_factor) ... FAIL
+test_porcelain_interfloor_keeps_porcelain_load_factor (__main__.MaterialRules.test_porcelain_interfloor_keeps_porcelain_load_factor) ... FAIL
+
+======================================================================
+FAIL: test_clinker_interfloor_keeps_clinker_load_factor (__main__.MaterialRules.test_clinker_interfloor_keeps_clinker_load_factor)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "<workspace>/AutoCAD/tools/review_3009/test_domain_review.py", line 44, in test_clinker_interfloor_keeps_clinker_load_factor
+    self.compare_source_gamma(request("clinker", "interfloor", q_clad=45, na_max=3500), 1.1)
+  File "<workspace>/AutoCAD/tools/review_3009/test_domain_review.py", line 37, in compare_source_gamma
+    self.assertEqual(actual["calc_report"]["steps"], reference["calc_report"]["steps"],
+AssertionError: {'main': 350, 'corner': 200} != {'main': 300, 'corner': 200}
+- {'corner': 200, 'main': 350}
+?                          ^
+
++ {'corner': 200, 'main': 300}
+?                          ^
+ : Material selection must retain the load factor from the source method
+
+======================================================================
+FAIL: test_composite_all_must_not_produce_porcelain_clamps (__main__.MaterialRules.test_composite_all_must_not_produce_porcelain_clamps)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "<workspace>/AutoCAD/tools/review_3009/test_domain_review.py", line 54, in test_composite_all_must_not_produce_porcelain_clamps
+    self.assertTrue(not actual["ok"] or not actual.get("clamps")
+AssertionError: False is not true : AKP must not silently reuse the identical porcelain fastening output; a future material-specific collection is allowed by this probe
+
+======================================================================
+FAIL: test_composite_interfloor_uses_akp_load_factor (__main__.MaterialRules.test_composite_interfloor_uses_akp_load_factor)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "<workspace>/AutoCAD/tools/review_3009/test_domain_review.py", line 47, in test_composite_interfloor_uses_akp_load_factor
+    self.compare_source_gamma(request("composite", "interfloor", q_clad=7.2,
+  File "<workspace>/AutoCAD/tools/review_3009/test_domain_review.py", line 37, in compare_source_gamma
+    self.assertEqual(actual["calc_report"]["steps"], reference["calc_report"]["steps"],
+AssertionError: {'main': 350, 'corner': 200} != {'main': 300, 'corner': 200}
+- {'corner': 200, 'main': 350}
+?                          ^
+
++ {'corner': 200, 'main': 300}
+?                          ^
+ : Material selection must retain the load factor from the source method
+
+======================================================================
+FAIL: test_porcelain_interfloor_keeps_porcelain_load_factor (__main__.MaterialRules.test_porcelain_interfloor_keeps_porcelain_load_factor)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "<workspace>/AutoCAD/tools/review_3009/test_domain_review.py", line 41, in test_porcelain_interfloor_keeps_porcelain_load_factor
+    self.compare_source_gamma(request("porcelain", "interfloor", na_max=2820), 1.1)
+  File "<workspace>/AutoCAD/tools/review_3009/test_domain_review.py", line 37, in compare_source_gamma
+    self.assertEqual(actual["calc_report"]["steps"], reference["calc_report"]["steps"],
+AssertionError: {'main': 350, 'corner': 200} != {'main': 300, 'corner': 200}
+- {'corner': 200, 'main': 350}
+?                          ^
+
++ {'corner': 200, 'main': 300}
+?                          ^
+ : Material selection must retain the load factor from the source method
+
+----------------------------------------------------------------------
+Ran 4 tests in 0.020s
+
+FAILED (failures=4)

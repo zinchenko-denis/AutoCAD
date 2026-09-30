@@ -1,0 +1,2 @@
+Compilation succeeded - 1 warning(s)
+Facades/src/AFacadesPlugin/ZoneForm.cs(40,28): warning CS0649: Field `AFacadesPlugin.ZoneForm.AddPicker' is never assigned to, and will always have its default value `null'

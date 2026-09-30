@@ -1,0 +1,14 @@
+{
+  "python": "3.12.14",
+  "platform": "Linux-6.18.44-x86_64-with-glibc2.39",
+  "mono": "6.8.0.105 (local user-space dependency)",
+  "base_commit": "e2a4e4df69a1936664c76c44cacff311ad44b07d",
+  "fixture_commit": "18a80ca049c00627881ddfb16286f0ad9c185a81",
+  "libraries": {
+    "shapely": "2.1.2",
+    "ezdxf": "1.4.4",
+    "openpyxl": "3.1.5",
+    "PyYAML": "6.0.3",
+    "matplotlib": "3.10.8"
+  }
+}

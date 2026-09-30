@@ -1,0 +1,3 @@
+copied opening: original lines erased=2; expected 0
+copied parapet: original lines erased=1; expected 0
+Scope: real product erase methods + in-memory CAD API; AutoCAD COPY not executed.

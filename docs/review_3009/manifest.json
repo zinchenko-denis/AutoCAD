@@ -1,0 +1,108 @@
+{
+  "base_commit": "e2a4e4df69a1936664c76c44cacff311ad44b07d",
+  "python": "3.12.14 (main, Aug 25 2026, 14:00:49) [Clang 22.1.3 ]",
+  "results": [
+    {
+      "name": "test_clad_frontons",
+      "command": [
+        "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python",
+        "<workspace>/AutoCAD/tools/review_3009/test_clad_frontons.py"
+      ],
+      "returncode": 1,
+      "seconds": 0.129
+    },
+    {
+      "name": "test_domain_review",
+      "command": [
+        "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python",
+        "<workspace>/AutoCAD/tools/review_3009/test_domain_review.py"
+      ],
+      "returncode": 1,
+      "seconds": 0.06
+    },
+    {
+      "name": "test_facades_copy_handles",
+      "command": [
+        "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python",
+        "<workspace>/AutoCAD/tools/review_3009/test_facades_copy_handles.py"
+      ],
+      "returncode": 1,
+      "seconds": 0.537
+    },
+    {
+      "name": "test_facades_engine_edges",
+      "command": [
+        "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python",
+        "<workspace>/AutoCAD/tools/review_3009/test_facades_engine_edges.py"
+      ],
+      "returncode": 1,
+      "seconds": 0.043
+    },
+    {
+      "name": "test_facades_workstatement",
+      "command": [
+        "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python",
+        "<workspace>/AutoCAD/tools/review_3009/test_facades_workstatement.py"
+      ],
+      "returncode": 1,
+      "seconds": 1.512
+    },
+    {
+      "name": "test_frame_regressions",
+      "command": [
+        "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python",
+        "<workspace>/AutoCAD/tools/review_3009/test_frame_regressions.py"
+      ],
+      "returncode": 1,
+      "seconds": 0.048
+    },
+    {
+      "name": "test_spec_csharp",
+      "command": [
+        "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python",
+        "<workspace>/AutoCAD/tools/review_3009/test_spec_csharp.py"
+      ],
+      "returncode": 0,
+      "seconds": 0.449
+    },
+    {
+      "name": "test_spec_review",
+      "command": [
+        "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python",
+        "<workspace>/AutoCAD/tools/review_3009/test_spec_review.py"
+      ],
+      "returncode": 1,
+      "seconds": 0.049
+    },
+    {
+      "name": "test_vitrage_review",
+      "command": [
+        "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python",
+        "<workspace>/AutoCAD/tools/review_3009/test_vitrage_review.py"
+      ],
+      "returncode": 1,
+      "seconds": 0.041
+    },
+    {
+      "name": "FrameSettingsProbe_compile",
+      "command": [
+        "mcs",
+        "-r:System.Web.Extensions.dll",
+        "-out:<workspace>/review_work/final_probes/FrameSettingsProbe.exe",
+        "<workspace>/AutoCAD/tools/review_3009/FrameSettingsProbe.cs",
+        "<workspace>/AutoCAD/AFrame/src/AFramePlugin/FrameSettings.cs"
+      ],
+      "returncode": 0,
+      "seconds": 0.432
+    },
+    {
+      "name": "FrameSettingsProbe",
+      "command": [
+        "mono",
+        "<workspace>/review_work/final_probes/FrameSettingsProbe.exe"
+      ],
+      "returncode": 1,
+      "seconds": 0.038
+    }
+  ]
+}

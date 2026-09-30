@@ -1,0 +1,62 @@
+duplicate rail input: rigels: 4 notes: []
+equal dynamic size / differing glass: {'Ширина': 3337.5, 'Высота': 377.2} {'МАРКИРОВКА': 'Сп1', 'РАЗМЕР_ЗАП': '3353Х392'} {'МАРКИРОВКА': 'Сп2', 'РАЗМЕР_ЗАП': '3352Х392'}
+equal rigels: [{'ИМЯ': 'Р1', 'ПРОФ': 'R', 'ДЛИНА': '1985.15'}, {'ИМЯ': 'Р1', 'ПРОФ': 'R', 'ДЛИНА': '1985.15'}, {'ИМЯ': 'Р1', 'ПРОФ': 'R', 'ДЛИНА': '1985.15'}, {'ИМЯ': 'Р2', 'ПРОФ': 'R', 'ДЛИНА': '1985.15'}]
+negative body response: {'ok': True, 'opening': {'x0': 0.0, 'y0': 0.0, 'x1': 3000.0, 'y1': 3000.0, 'w': 3000.0, 'h': 3000.0}, 'inserts': [{'kind': 'stand', 'block': 'S', 'layer': 'RF-стойки', 'x': -25.0, 'y': 0.0, 'rot': 0.0, 'dyn': {'Длина': 3000.0}, 'attrs': {'ИМЯ': 'С1', 'ПРОФ': 'S', 'ДЛИНА': '3000.00'}}, {'kind': 'stand', 'block': 'S', 'layer': 'RF-стойки', 'x': 1500.0, 'y': 0.0, 'rot': 0.0, 'dyn': {'Длина': 3000.0}, 'attrs': {'ИМЯ': 'С1', 'ПРОФ': 'S', 'ДЛИНА': '3000.00'}}, {'kind': 'stand', 'block': 'S', 'layer': 'RF-стойки', 'x': 3025.0, 'y': 0.0, 'rot': 0.0, 'dyn': {'Длина': 3000.0}, 'attrs': {'ИМЯ': 'С1', 'ПРОФ': 'S', 'ДЛИНА': '3000.00'}}, {'kind': 'rigel', 'block': 'R', 'layer': 'RF-ригеля', 'x': -25.0, 'y': 1500.0, 'rot': 0.0, 'dyn': {'Длина': 1525.0}, 'attrs': {'ИМЯ': 'Р1', 'ПРОФ': 'R', 'ДЛИНА': '1525.00'}}, {'kind': 'rigel', 'block': 'R', 'layer': 'RF-ригеля', 'x': 1500.0, 'y': 1500.0, 'rot': 0.0, 'dyn': {'Длина': 1525.0}, 'attrs': {'ИМЯ': 'Р1', 'ПРОФ': 'R', 'ДЛИНА': '1525.00'}}, {'kind': 'fill', 'block': 'F', 'layer': 'RF-заполнения', 'x': -50.0, 'y': 0.0, 'rot': 0, 'dyn': {'Ширина': 1575.0, 'Высота': 1475.0}, 'attrs': {'МАРКИРОВКА': 'Сп1', 'РАЗМЕР_ЗАП': '1590Х1490'}}, {'kind': 'fill', 'block': 'F', 'layer': 'RF-заполнения', 'x': 1475.0, 'y': 0.0, 'rot': 0, 'dyn': {'Ширина': 1575.0, 'Высота': 1475.0}, 'attrs': {'МАРКИРОВКА': 'Сп1', 'РАЗМЕР_ЗАП': '1590Х1490'}}, {'kind': 'fill', 'block': 'F', 'layer': 'RF-заполнения', 'x': -50.0, 'y': 1525.0, 'rot': 0, 'dyn': {'Ширина': 1575.0, 'Высота': 1475.0}, 'attrs': {'МАРКИРОВКА': 'Сп1', 'РАЗМЕР_ЗАП': '1590Х1490'}}, {'kind': 'fill', 'block': 'F', 'layer': 'RF-заполнения', 'x': 1475.0, 'y': 1525.0, 'rot': 0, 'dyn': {'Ширина': 1575.0, 'Высота': 1475.0}, 'attrs': {'МАРКИРОВКА': 'Сп1', 'РАЗМЕР_ЗАП': '1590Х1490'}}], 'dims': [{'dir': 'h', 'ref': 0.0, 'line': -150.0, 'pts': [-25.0, 1500.0, 3025.0]}, {'dir': 'h', 'ref': 0.0, 'line': -300.0, 'pts': [0.0, 3000.0]}, {'dir': 'v', 'ref': 3000.0, 'line': 3150.0, 'pts': [0.0, 1500.0, 3000.0]}, {'dir': 'v', 'ref': 3000.0, 'line': 3300.0, 'pts': [0.0, 3000.0]}], 'summary': {'stands': 3, 'rigels': 2, 'fills': 4, 'axes_x': [-25.0, 1500.0, 3025.0]}, 'notes': []}
+negative gap response: {'ok': True, 'opening': {'x0': 0.0, 'y0': 0.0, 'x1': 3000.0, 'y1': 3000.0, 'w': 3000.0, 'h': 3000.0}, 'inserts': [{'kind': 'stand', 'block': 'S', 'layer': 'RF-стойки', 'x': 25.0, 'y': 0.0, 'rot': 0.0, 'dyn': {'Длина': 1500.0}, 'attrs': {'ИМЯ': 'С1', 'ПРОФ': 'S', 'ДЛИНА': '1500.00'}}, {'kind': 'stand', 'block': 'S', 'layer': 'RF-стойки', 'x': 25.0, 'y': 1490.0, 'rot': 0.0, 'dyn': {'Длина': 1510.0}, 'attrs': {'ИМЯ': 'С2', 'ПРОФ': 'S', 'ДЛИНА': '1510.00'}}, {'kind': 'stand', 'block': 'S', 'layer': 'RF-стойки', 'x': 1500.0, 'y': 0.0, 'rot': 0.0, 'dyn': {'Длина': 1500.0}, 'attrs': {'ИМЯ': 'С1', 'ПРОФ': 'S', 'ДЛИНА': '1500.00'}}, {'kind': 'stand', 'block': 'S', 'layer': 'RF-стойки', 'x': 1500.0, 'y': 1490.0, 'rot': 0.0, 'dyn': {'Длина': 1510.0}, 'attrs': {'ИМЯ': 'С2', 'ПРОФ': 'S', 'ДЛИНА': '1510.00'}}, {'kind': 'stand', 'block': 'S', 'layer': 'RF-стойки', 'x': 2975.0, 'y': 0.0, 'rot': 0.0, 'dyn': {'Длина': 1500.0}, 'attrs': {'ИМЯ': 'С1', 'ПРОФ': 'S', 'ДЛИНА': '1500.00'}}, {'kind': 'stand', 'block': 'S', 'layer': 'RF-стойки', 'x': 2975.0, 'y': 1490.0, 'rot': 0.0, 'dyn': {'Длина': 1510.0}, 'attrs': {'ИМЯ': 'С2', 'ПРОФ': 'S', 'ДЛИНА': '1510.00'}}, {'kind': 'rigel', 'block': 'R', 'layer': 'RF-ригеля', 'x': 25.0, 'y': 1500.0, 'rot': 0.0, 'dyn': {'Длина': 1475.0}, 'attrs': {'ИМЯ': 'Р1', 'ПРОФ': 'R', 'ДЛИНА': '1475.00'}}, {'kind': 'rigel', 'block': 'R', 'layer': 'RF-ригеля', 'x': 1500.0, 'y': 1500.0, 'rot': 0.0, 'dyn': {'Длина': 1475.0}, 'attrs': {'ИМЯ': 'Р1', 'ПРОФ': 'R', 'ДЛИНА': '1475.00'}}, {'kind': 'fill', 'block': 'F', 'layer': 'RF-заполнения', 'x': 50.0, 'y': 0.0, 'rot': 0, 'dyn': {'Ширина': 1425.0, 'Высота': 1475.0}, 'attrs': {'МАРКИРОВКА': 'Сп1', 'РАЗМЕР_ЗАП': '1440Х1490'}}, {'kind': 'fill', 'block': 'F', 'layer': 'RF-заполнения', 'x': 1525.0, 'y': 0.0, 'rot': 0, 'dyn': {'Ширина': 1425.0, 'Высота': 1475.0}, 'attrs': {'МАРКИРОВКА': 'Сп1', 'РАЗМЕР_ЗАП': '1440Х1490'}}, {'kind': 'fill', 'block': 'F', 'layer': 'RF-заполнения', 'x': 50.0, 'y': 1525.0, 'rot': 0, 'dyn': {'Ширина': 1425.0, 'Высота': 1475.0}, 'attrs': {'МАРКИРОВКА': 'Сп1', 'РАЗМЕР_ЗАП': '1440Х1490'}}, {'kind': 'fill', 'block': 'F', 'layer': 'RF-заполнения', 'x': 1525.0, 'y': 1525.0, 'rot': 0, 'dyn': {'Ширина': 1425.0, 'Высота': 1475.0}, 'attrs': {'МАРКИРОВКА': 'Сп1', 'РАЗМЕР_ЗАП': '1440Х1490'}}], 'dims': [{'dir': 'h', 'ref': 0.0, 'line': -200.0, 'pts': [25.0, 1500.0, 2975.0]}, {'dir': 'h', 'ref': 0.0, 'line': -400.0, 'pts': [0.0, 3000.0]}, {'dir': 'v', 'ref': 3000.0, 'line': 3200.0, 'pts': [0.0, 1500.0, 3000.0]}, {'dir': 'v', 'ref': 3000.0, 'line': 3400.0, 'pts': [0.0, 3000.0]}], 'summary': {'stands': 6, 'rigels': 2, 'fills': 4, 'axes_x': [25.0, 1500.0, 2975.0]}, 'notes': []}
+test_duplicate_rail_levels_do_not_duplicate_rigels (__main__.VitrageReview.test_duplicate_rail_levels_do_not_duplicate_rigels) ... FAIL
+test_equal_clear_sizes_have_equal_glass_size_and_mark (__main__.VitrageReview.test_equal_clear_sizes_have_equal_glass_size_and_mark) ... FAIL
+test_equal_rigel_lengths_have_one_mark (__main__.VitrageReview.test_equal_rigel_lengths_have_one_mark) ... FAIL
+test_negative_body_is_rejected (__main__.VitrageReview.test_negative_body_is_rejected) ... FAIL
+test_negative_thermal_gap_is_rejected (__main__.VitrageReview.test_negative_thermal_gap_is_rejected) ... FAIL
+test_positive_input_is_accepted (__main__.VitrageReview.test_positive_input_is_accepted) ... ok
+
+======================================================================
+FAIL: test_duplicate_rail_levels_do_not_duplicate_rigels (__main__.VitrageReview.test_duplicate_rail_levels_do_not_duplicate_rigels)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "<workspace>/AutoCAD/tools/review_3009/test_vitrage_review.py", line 71, in test_duplicate_rail_levels_do_not_duplicate_rigels
+    self.assertEqual(len(rigels), 2, rigels)
+AssertionError: 4 != 2 : [{'kind': 'rigel', 'block': 'R', 'layer': 'RF-ригеля', 'x': 25.0, 'y': 1500.0, 'rot': 0.0, 'dyn': {'Длина': 1475.0}, 'attrs': {'ИМЯ': 'Р1', 'ПРОФ': 'R', 'ДЛИНА': '1475.00'}}, {'kind': 'rigel', 'block': 'R', 'layer': 'RF-ригеля', 'x': 1500.0, 'y': 1500.0, 'rot': 0.0, 'dyn': {'Длина': 1475.0}, 'attrs': {'ИМЯ': 'Р1', 'ПРОФ': 'R', 'ДЛИНА': '1475.00'}}, {'kind': 'rigel', 'block': 'R', 'layer': 'RF-ригеля', 'x': 25.0, 'y': 1500.0, 'rot': 0.0, 'dyn': {'Длина': 1475.0}, 'attrs': {'ИМЯ': 'Р1', 'ПРОФ': 'R', 'ДЛИНА': '1475.00'}}, {'kind': 'rigel', 'block': 'R', 'layer': 'RF-ригеля', 'x': 1500.0, 'y': 1500.0, 'rot': 0.0, 'dyn': {'Длина': 1475.0}, 'attrs': {'ИМЯ': 'Р1', 'ПРОФ': 'R', 'ДЛИНА': '1475.00'}}]
+
+======================================================================
+FAIL: test_equal_clear_sizes_have_equal_glass_size_and_mark (__main__.VitrageReview.test_equal_clear_sizes_have_equal_glass_size_and_mark)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "<workspace>/AutoCAD/tools/review_3009/test_vitrage_review.py", line 32, in test_equal_clear_sizes_have_equal_glass_size_and_mark
+    self.assertEqual(a["attrs"], b["attrs"])
+AssertionError: {'МАРКИРОВКА': 'Сп1', 'РАЗМЕР_ЗАП': '3353Х392'} != {'МАРКИРОВКА': 'Сп2', 'РАЗМЕР_ЗАП': '3352Х392'}
+- {'МАРКИРОВКА': 'Сп1', 'РАЗМЕР_ЗАП': '3353Х392'}
+?                   ^                     ^
+
++ {'МАРКИРОВКА': 'Сп2', 'РАЗМЕР_ЗАП': '3352Х392'}
+?                   ^                     ^
+
+
+======================================================================
+FAIL: test_equal_rigel_lengths_have_one_mark (__main__.VitrageReview.test_equal_rigel_lengths_have_one_mark)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "<workspace>/AutoCAD/tools/review_3009/test_vitrage_review.py", line 43, in test_equal_rigel_lengths_have_one_mark
+    self.assertEqual(len({i["attrs"]["ИМЯ"] for i in rigels}), 1)
+AssertionError: 2 != 1
+
+======================================================================
+FAIL: test_negative_body_is_rejected (__main__.VitrageReview.test_negative_body_is_rejected)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "<workspace>/AutoCAD/tools/review_3009/test_vitrage_review.py", line 53, in test_negative_body_is_rejected
+    self.assertFalse(plan.get("ok"), "Reject invalid dimensions by exception or ok=false")
+AssertionError: True is not false : Reject invalid dimensions by exception or ok=false
+
+======================================================================
+FAIL: test_negative_thermal_gap_is_rejected (__main__.VitrageReview.test_negative_thermal_gap_is_rejected)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "<workspace>/AutoCAD/tools/review_3009/test_vitrage_review.py", line 63, in test_negative_thermal_gap_is_rejected
+    self.assertFalse(plan.get("ok"), "Reject invalid gap by exception or ok=false")
+AssertionError: True is not false : Reject invalid gap by exception or ok=false
+
+----------------------------------------------------------------------
+Ran 6 tests in 0.002s
+
+FAILED (failures=5)

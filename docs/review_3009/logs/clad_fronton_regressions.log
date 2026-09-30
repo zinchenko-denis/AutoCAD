@@ -1,0 +1,59 @@
+test_atclad_accepts_triangular_fronton (__main__.FrontonReview.test_atclad_accepts_triangular_fronton) ... FAIL
+test_atclad_concave_roof_preserves_coverage (__main__.FrontonReview.test_atclad_concave_roof_preserves_coverage) ... FAIL
+test_atclad_rejected_zone_not_listed_as_success (__main__.FrontonReview.test_atclad_rejected_zone_not_listed_as_success) ... FAIL
+test_attile_concave_roof_preserves_coverage (__main__.FrontonReview.test_attile_concave_roof_preserves_coverage) ... FAIL
+test_attile_keeps_enclosed_opening_after_slope_clip (__main__.FrontonReview.test_attile_keeps_enclosed_opening_after_slope_clip) ... FAIL
+test_attile_large_coordinate_translation_preserves_pieces (__main__.FrontonReview.test_attile_large_coordinate_translation_preserves_pieces) ... FAIL
+
+======================================================================
+FAIL: test_atclad_accepts_triangular_fronton (__main__.FrontonReview.test_atclad_accepts_triangular_fronton)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "<workspace>/AutoCAD/tools/review_3009/test_clad_frontons.py", line 78, in test_atclad_accepts_triangular_fronton
+    self.assertGreater(len(result["inserts"]), 0, result["notes"])
+AssertionError: 0 not greater than 0 : ['контур 1: меньше 4 вершин — пропуск']
+
+======================================================================
+FAIL: test_atclad_concave_roof_preserves_coverage (__main__.FrontonReview.test_atclad_concave_roof_preserves_coverage)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "<workspace>/AutoCAD/tools/review_3009/test_clad_frontons.py", line 72, in test_atclad_concave_roof_preserves_coverage
+    self.assertLessEqual(missing, 0.01,
+AssertionError: 720000.0 not less than or equal to 0.01 : Zero joints, zero minimum cut; missing 720000.0 mm2
+
+======================================================================
+FAIL: test_atclad_rejected_zone_not_listed_as_success (__main__.FrontonReview.test_atclad_rejected_zone_not_listed_as_success)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "<workspace>/AutoCAD/tools/review_3009/test_clad_frontons.py", line 92, in test_atclad_rejected_zone_not_listed_as_success
+    self.assertNotIn("BAD", successful, json.dumps(result["per_zone"]))
+AssertionError: 'BAD' unexpectedly found in ['GOOD', 'BAD'] : [{"zone_id": "\u043a\u043e\u043d\u0442\u0443\u0440 GOOD", "tiles": 16, "full": 9, "cut": 7, "rows": 4, "joints_x": [604.0, 1212.0, 1820.0], "rows_y": [604.0, 1212.0, 1820.0], "outer_id": "GOOD"}, {"zone_id": "\u043a\u043e\u043d\u0442\u0443\u0440 BAD", "tiles": 0, "full": 0, "cut": 0, "rows": 0, "joints_x": [], "rows_y": [], "outer_id": "BAD"}]
+
+======================================================================
+FAIL: test_attile_concave_roof_preserves_coverage (__main__.FrontonReview.test_attile_concave_roof_preserves_coverage)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "<workspace>/AutoCAD/tools/review_3009/test_clad_frontons.py", line 65, in test_attile_concave_roof_preserves_coverage
+    self.assertLessEqual(missing, 0.01,
+AssertionError: 720000.0 not less than or equal to 0.01 : Zero joints, zero minimum cut; missing 720000.0 mm2
+
+======================================================================
+FAIL: test_attile_keeps_enclosed_opening_after_slope_clip (__main__.FrontonReview.test_attile_keeps_enclosed_opening_after_slope_clip)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "<workspace>/AutoCAD/tools/review_3009/test_clad_frontons.py", line 58, in test_attile_keeps_enclosed_opening_after_slope_clip
+    self.assertLessEqual(covered, 0.01,
+AssertionError: 90000.0 not less than or equal to 0.01 : Opening must remain empty; covered 90000.0 mm2
+
+======================================================================
+FAIL: test_attile_large_coordinate_translation_preserves_pieces (__main__.FrontonReview.test_attile_large_coordinate_translation_preserves_pieces)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "<workspace>/AutoCAD/tools/review_3009/test_clad_frontons.py", line 103, in test_attile_large_coordinate_translation_preserves_pieces
+    self.assertEqual(len(a["pieces"]), len(b["pieces"]),
+AssertionError: 901 != 899 : Translation must not delete tiles at the slope
+
+----------------------------------------------------------------------
+Ran 6 tests in 0.023s
+
+FAILED (failures=6)

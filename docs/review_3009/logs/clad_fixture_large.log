@@ -1,0 +1,3 @@
+{"case": "public_tiles290_fixture", "ok": true, "contours": 404, "sample": 120, "zones": 17, "seconds": 1.8239367010000933, "pieces": 159695, "full": 118367, "cut": 41328, "blanks_cut": 26966, "tiles_total": 145333, "waste_pct": 3.230554295608547, "json_bytes": 38035339, "peak_rss_kb": 241952}
+{"case": "30000mm_square", "ok": true, "seconds": 0.18084139099983076, "pieces": 34205, "full": 33869, "cut": 336, "tiles_total": 34121, "peak_rss_kb": 241952}
+{"case": "100000mm_square", "ok": true, "seconds": 1.4426077810001061, "pieces": 379350, "full": 377328, "cut": 2022, "tiles_total": 378507, "peak_rss_kb": 272232}
