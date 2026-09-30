@@ -1,0 +1,210 @@
+{
+  "scope": "Production pure C# manual quantities; no live AutoCAD validation.",
+  "status": "PASS",
+  "source_sha256": {
+    "Common/FacadeQuantities.cs": "b092bf95f154d6aa8041936bffa79a82c613d7ac8f27fee9d1e6d7c0cde09f90",
+    "Common/ManualQuantities.cs": "f73ec0d29da2dfe4a61aa496cda5e9ff25632a5dd26bf4d1e2ff85ed6dc3dcb8",
+    "tools/manual_quantities_0110/ManualCoreProbe.cs": "0d480c01de84390acca1e704a910b2289f0fd4d5fcc23c2fea5fe04e70733fc6",
+    "tools/manual_quantities_0110/test_manual_core.py": "6ecfeb272737b059ee6d47cee28abd35020b7e9df19bbaa0c56335315b6bf497",
+    "tools/quantities_3009/probe_runtime.py": "2d37fb13990a1b24129dfe79a81ce138875e3c86ef3211d1a3a4f9ec40d150e5"
+  },
+  "compile_returncode": 0,
+  "run_returncode": 0,
+  "result": {
+    "total": 47,
+    "passed": 47,
+    "failed": 0,
+    "scope": "Pure manual mapping, identity, geometry and preview contract; no AutoCAD host, transaction, live freshness or UI.",
+    "cases": [
+      {
+        "name": "actual line endpoints give independent 3-4-5 length and one physical CAD link",
+        "status": "PASS"
+      },
+      {
+        "name": "boundary uses world polygon area and dimensions",
+        "status": "PASS"
+      },
+      {
+        "name": "nonrectangular boundary uses exact area not bounding rectangle",
+        "status": "PASS"
+      },
+      {
+        "name": "literal attribute and dynamic strings preserve exact mark text",
+        "status": "PASS"
+      },
+      {
+        "name": "missing optional string property stays null with a visible issue",
+        "status": "PASS"
+      },
+      {
+        "name": "present but empty source properties stay unknown and visibly incomplete",
+        "status": "PASS"
+      },
+      {
+        "name": "many missing fields aggregate by pattern while retaining each physical source",
+        "status": "PASS"
+      },
+      {
+        "name": "all configured string mappings reach physical element",
+        "status": "PASS"
+      },
+      {
+        "name": "linear roles all derive actual length independently",
+        "status": "PASS"
+      },
+      {
+        "name": "symbol requires explicit one physical part and yields no fabricated measures",
+        "status": "PASS"
+      },
+      {
+        "name": "different explicit sample is unrecognized without guessed classification",
+        "status": "PASS"
+      },
+      {
+        "name": "generated ownership conflict cannot become accepted manual geometry",
+        "status": "PASS"
+      },
+      {
+        "name": "explicit zone is retained and absent zone is never fabricated",
+        "status": "PASS"
+      },
+      {
+        "name": "millimetres are explicit and unsupported units rejected",
+        "status": "PASS"
+      },
+      {
+        "name": "line numeric verification preserves precision and rejects mismatched declared length",
+        "status": "PASS"
+      },
+      {
+        "name": "declared dimensions verify boundary geometry instead of replacing it",
+        "status": "PASS"
+      },
+      {
+        "name": "missing required numeric mapping rejects linear block",
+        "status": "PASS"
+      },
+      {
+        "name": "linear block X and Y endpoints have independent numeric oracles",
+        "status": "PASS"
+      },
+      {
+        "name": "linear block length checks absolute scale but keeps actual world length",
+        "status": "PASS"
+      },
+      {
+        "name": "invalid numeric mappings and physical geometry reject explicitly",
+        "status": "PASS"
+      },
+      {
+        "name": "block scales must be finite nonzero and supplied",
+        "status": "PASS"
+      },
+      {
+        "name": "capture adapter rejection reasons cannot be bypassed",
+        "status": "PASS"
+      },
+      {
+        "name": "explicit unsupported extraction reason survives missing fingerprints",
+        "status": "PASS"
+      },
+      {
+        "name": "missing physical identity or freshness fingerprint rejects",
+        "status": "PASS"
+      },
+      {
+        "name": "invalid rule schema source and role do not produce elements",
+        "status": "PASS"
+      },
+      {
+        "name": "different sample or mapping content cannot merge unknown catalog rows",
+        "status": "PASS"
+      },
+      {
+        "name": "recreated identical mapping has same grouping but distinct registry fingerprint",
+        "status": "PASS"
+      },
+      {
+        "name": "same rule combines distinct physical instances but never deduplicates geometry",
+        "status": "PASS"
+      },
+      {
+        "name": "same CAD object repeated in selection is evaluated and counted once",
+        "status": "PASS"
+      },
+      {
+        "name": "changed fingerprint for same handle invalidates the previously accepted candidate",
+        "status": "PASS"
+      },
+      {
+        "name": "same absolute geometry with distinct handles warns but counts both",
+        "status": "PASS"
+      },
+      {
+        "name": "actual LINE and reversed block axis share duplicate geometry but equal centers alone do not",
+        "status": "PASS"
+      },
+      {
+        "name": "linear warning buckets absorb transform noise but preserve a real displacement",
+        "status": "PASS"
+      },
+      {
+        "name": "boundary warning snapping never rounds stored shape dimensions or quantity area",
+        "status": "PASS"
+      },
+      {
+        "name": "same bounds with a 0.0001 mm corner difference use distinct boundary warning buckets",
+        "status": "PASS"
+      },
+      {
+        "name": "boundary warning identity ignores vertex start winding closure and redundant collinear points",
+        "status": "PASS"
+      },
+      {
+        "name": "translated equal shapes are not possible absolute-geometry duplicates",
+        "status": "PASS"
+      },
+      {
+        "name": "symbol position separates actual instances",
+        "status": "PASS"
+      },
+      {
+        "name": "different evaluated dynamic symbol geometry is not conflated by base block family",
+        "status": "PASS"
+      },
+      {
+        "name": "dynamic numeric mapping requires explicit distance unit metadata",
+        "status": "PASS"
+      },
+      {
+        "name": "preview includes rejected and unrecognized observations explicitly",
+        "status": "PASS"
+      },
+      {
+        "name": "rule fingerprint is stable across dictionary insertion order and changes with revision",
+        "status": "PASS"
+      },
+      {
+        "name": "preview fingerprint covers zone geometry source and rule",
+        "status": "PASS"
+      },
+      {
+        "name": "manual evaluation and preview never mutate mapping or captured observations",
+        "status": "PASS"
+      },
+      {
+        "name": "prepared evaluation matches direct evaluation for accepted unknown rejected and conflict observations",
+        "status": "PASS"
+      },
+      {
+        "name": "prepared context owns a deep rule snapshot and new preparation sees changed mapping",
+        "status": "PASS"
+      },
+      {
+        "name": "empty reviewed selection is explicit zero without fabricated items",
+        "status": "PASS"
+      }
+    ]
+  },
+  "sources_unchanged_during_run": true
+}

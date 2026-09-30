@@ -1,0 +1,932 @@
+{
+  "mode": "regression",
+  "scope": "Actual native FrameSettings and Python engines; no AutoCAD host or engineering certification.",
+  "source_revision": "0a397c24d49474f4408fcda7e30da71e163202b0",
+  "source_kind": "working_tree",
+  "source_sha256": {
+    "AFrame/tools/roles/RolesDump.cs": "e9c9ab08adcc6e98969b8b23306cb56815a29921efe838cdc1ca9f461a63a280",
+    "AFrame/src/AFramePlugin/FrameSettings.cs": "726318cfb93822262855d5f6e7f1e3f6b274a4770cf7e66ef8700642d12006fa",
+    "AFrame/engine/frame_plan.py": "dfe7b40a75e2b2c05df2e8eb90ce985e60325dbeb1f8cfaa31e4e290aee0a0db",
+    "AFrame/engine/frame_calc.py": "abe20fd3c0de0937ba0636914f083f7c48a7a65b3b4c85f05673278a95e1da88",
+    "AFrame/engine/frame_engine.py": "9f35e1fde7e37a9c569bfda4a6799dc21c6cf88ba818e1af9fbc41d38653a505",
+    "AFrame/engine/systems.json": "e9ee0a4cf0c535473dd9931f9b2a3d86dd1d932fe18f84682ef3fd221fbc03c3",
+    "AFrame/engine/frame_topology.py": "2455ab874309d1382591800acce35dd3bde04ea3be6519f8b1de89dd5514f5d5"
+  },
+  "probe_sha256": "c25412caef525fecb47fc9d2dd6fabd6ce77435924c815348755ff32bd705668",
+  "total": 49,
+  "passed": 49,
+  "failed": 0,
+  "cases": [
+    {
+      "name": "native_roundtrip_all",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "name": "previous_fix_weight_is_42",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "name": "previous_fix_composite_all_clamps_refused",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "name": "previous_fix_nsp2_calc_refused_manual_allowed",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "name": "material_gamma_native",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "name": "interfloor_native_early_model_refusal",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "name": "interfloor_invalid_numeric_precedes_model_refusal",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "name": "supported_vertical_positive",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "name": "vertical_static_model_not_verified",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "name": "interfloor_model_typed_empty_refusal",
+      "passed": true,
+      "detail": "контур outer: Расчёт не применён: для межэтажного каркаса не подтверждена модель соединений и непрерывности НСП через стыки. Используйте ручной режим по отдельному проектному расчёту; прежняя подсистема сохранена."
+    },
+    {
+      "name": "supported_ortho_positive",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "name": "ortho_static_model_not_verified",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "name": "vertical_600_insufficient_supports",
+      "passed": true,
+      "detail": [
+        {
+          "reason": "insufficient_supports",
+          "member_index": 0,
+          "support_count": 1,
+          "span_count": 0,
+          "actual_span_class": "0",
+          "coefficient_span_class": null,
+          "coefficient_span": null
+        },
+        {
+          "reason": "insufficient_supports",
+          "member_index": 1,
+          "support_count": 1,
+          "span_count": 0,
+          "actual_span_class": "0",
+          "coefficient_span_class": null,
+          "coefficient_span": null
+        },
+        {
+          "reason": "insufficient_supports",
+          "member_index": 2,
+          "support_count": 1,
+          "span_count": 0,
+          "actual_span_class": "0",
+          "coefficient_span_class": null,
+          "coefficient_span": null
+        },
+        {
+          "reason": "insufficient_supports",
+          "member_index": 3,
+          "support_count": 1,
+          "span_count": 0,
+          "actual_span_class": "0",
+          "coefficient_span_class": null,
+          "coefficient_span": null
+        },
+        {
+          "reason": "insufficient_supports",
+          "member_index": 4,
+          "support_count": 1,
+          "span_count": 0,
+          "actual_span_class": "0",
+          "coefficient_span_class": null,
+          "coefficient_span": null
+        },
+        {
+          "reason": "insufficient_supports",
+          "member_index": 5,
+          "support_count": 1,
+          "span_count": 0,
+          "actual_span_class": "0",
+          "coefficient_span_class": null,
+          "coefficient_span": null
+        },
+        {
+          "reason": "insufficient_supports",
+          "member_index": 6,
+          "support_count": 1,
+          "span_count": 0,
+          "actual_span_class": "0",
+          "coefficient_span_class": null,
+          "coefficient_span": null
+        },
+        {
+          "reason": "insufficient_supports",
+          "member_index": 7,
+          "support_count": 1,
+          "span_count": 0,
+          "actual_span_class": "0",
+          "coefficient_span_class": null,
+          "coefficient_span": null
+        },
+        {
+          "reason": "insufficient_supports",
+          "member_index": 8,
+          "support_count": 1,
+          "span_count": 0,
+          "actual_span_class": "0",
+          "coefficient_span_class": null,
+          "coefficient_span": null
+        },
+        {
+          "reason": "insufficient_supports",
+          "member_index": 9,
+          "support_count": 1,
+          "span_count": 0,
+          "actual_span_class": "0",
+          "coefficient_span_class": null,
+          "coefficient_span": null
+        },
+        {
+          "reason": "insufficient_supports",
+          "member_index": 10,
+          "support_count": 1,
+          "span_count": 0,
+          "actual_span_class": "0",
+          "coefficient_span_class": null,
+          "coefficient_span": null
+        },
+        {
+          "reason": "insufficient_supports",
+          "member_index": 11,
+          "support_count": 1,
+          "span_count": 0,
+          "actual_span_class": "0",
+          "coefficient_span_class": null,
+          "coefficient_span": null
+        },
+        {
+          "reason": "insufficient_supports",
+          "member_index": 12,
+          "support_count": 1,
+          "span_count": 0,
+          "actual_span_class": "0",
+          "coefficient_span_class": null,
+          "coefficient_span": null
+        }
+      ]
+    },
+    {
+      "name": "vertical_1000_single_span_unsupported",
+      "passed": true,
+      "detail": [
+        {
+          "reason": "single_span_unsupported",
+          "member_index": 0,
+          "support_count": 2,
+          "span_count": 1,
+          "actual_span_class": "1",
+          "coefficient_span_class": "multi",
+          "coefficient_span": 400.0
+        },
+        {
+          "reason": "single_span_unsupported",
+          "member_index": 1,
+          "support_count": 2,
+          "span_count": 1,
+          "actual_span_class": "1",
+          "coefficient_span_class": "multi",
+          "coefficient_span": 400.0
+        },
+        {
+          "reason": "single_span_unsupported",
+          "member_index": 2,
+          "support_count": 2,
+          "span_count": 1,
+          "actual_span_class": "1",
+          "coefficient_span_class": "multi",
+          "coefficient_span": 400.0
+        },
+        {
+          "reason": "single_span_unsupported",
+          "member_index": 3,
+          "support_count": 2,
+          "span_count": 1,
+          "actual_span_class": "1",
+          "coefficient_span_class": "multi",
+          "coefficient_span": 400.0
+        },
+        {
+          "reason": "single_span_unsupported",
+          "member_index": 4,
+          "support_count": 2,
+          "span_count": 1,
+          "actual_span_class": "1",
+          "coefficient_span_class": "multi",
+          "coefficient_span": 400.0
+        },
+        {
+          "reason": "single_span_unsupported",
+          "member_index": 5,
+          "support_count": 2,
+          "span_count": 1,
+          "actual_span_class": "1",
+          "coefficient_span_class": "multi",
+          "coefficient_span": 400.0
+        },
+        {
+          "reason": "single_span_unsupported",
+          "member_index": 6,
+          "support_count": 2,
+          "span_count": 1,
+          "actual_span_class": "1",
+          "coefficient_span_class": "multi",
+          "coefficient_span": 400.0
+        },
+        {
+          "reason": "single_span_unsupported",
+          "member_index": 7,
+          "support_count": 2,
+          "span_count": 1,
+          "actual_span_class": "1",
+          "coefficient_span_class": "multi",
+          "coefficient_span": 400.0
+        },
+        {
+          "reason": "single_span_unsupported",
+          "member_index": 8,
+          "support_count": 2,
+          "span_count": 1,
+          "actual_span_class": "1",
+          "coefficient_span_class": "multi",
+          "coefficient_span": 400.0
+        },
+        {
+          "reason": "single_span_unsupported",
+          "member_index": 9,
+          "support_count": 2,
+          "span_count": 1,
+          "actual_span_class": "1",
+          "coefficient_span_class": "multi",
+          "coefficient_span": 400.0
+        },
+        {
+          "reason": "single_span_unsupported",
+          "member_index": 10,
+          "support_count": 2,
+          "span_count": 1,
+          "actual_span_class": "1",
+          "coefficient_span_class": "multi",
+          "coefficient_span": 400.0
+        },
+        {
+          "reason": "single_span_unsupported",
+          "member_index": 11,
+          "support_count": 2,
+          "span_count": 1,
+          "actual_span_class": "1",
+          "coefficient_span_class": "multi",
+          "coefficient_span": 400.0
+        },
+        {
+          "reason": "single_span_unsupported",
+          "member_index": 12,
+          "support_count": 2,
+          "span_count": 1,
+          "actual_span_class": "1",
+          "coefficient_span_class": "multi",
+          "coefficient_span": 400.0
+        }
+      ]
+    },
+    {
+      "name": "vertical_1800_span_class_mismatch",
+      "passed": true,
+      "detail": [
+        {
+          "reason": "span_class_mismatch",
+          "member_index": 0,
+          "support_count": 3,
+          "span_count": 2,
+          "actual_span_class": "2",
+          "coefficient_span_class": "multi",
+          "coefficient_span": 600.0
+        },
+        {
+          "reason": "span_class_mismatch",
+          "member_index": 1,
+          "support_count": 3,
+          "span_count": 2,
+          "actual_span_class": "2",
+          "coefficient_span_class": "multi",
+          "coefficient_span": 600.0
+        },
+        {
+          "reason": "span_class_mismatch",
+          "member_index": 2,
+          "support_count": 3,
+          "span_count": 2,
+          "actual_span_class": "2",
+          "coefficient_span_class": "multi",
+          "coefficient_span": 600.0
+        },
+        {
+          "reason": "span_class_mismatch",
+          "member_index": 3,
+          "support_count": 3,
+          "span_count": 2,
+          "actual_span_class": "2",
+          "coefficient_span_class": "multi",
+          "coefficient_span": 600.0
+        },
+        {
+          "reason": "span_class_mismatch",
+          "member_index": 4,
+          "support_count": 3,
+          "span_count": 2,
+          "actual_span_class": "2",
+          "coefficient_span_class": "multi",
+          "coefficient_span": 600.0
+        },
+        {
+          "reason": "span_class_mismatch",
+          "member_index": 5,
+          "support_count": 3,
+          "span_count": 2,
+          "actual_span_class": "2",
+          "coefficient_span_class": "multi",
+          "coefficient_span": 600.0
+        },
+        {
+          "reason": "span_class_mismatch",
+          "member_index": 6,
+          "support_count": 3,
+          "span_count": 2,
+          "actual_span_class": "2",
+          "coefficient_span_class": "multi",
+          "coefficient_span": 600.0
+        },
+        {
+          "reason": "span_class_mismatch",
+          "member_index": 7,
+          "support_count": 3,
+          "span_count": 2,
+          "actual_span_class": "2",
+          "coefficient_span_class": "multi",
+          "coefficient_span": 600.0
+        },
+        {
+          "reason": "span_class_mismatch",
+          "member_index": 8,
+          "support_count": 3,
+          "span_count": 2,
+          "actual_span_class": "2",
+          "coefficient_span_class": "multi",
+          "coefficient_span": 600.0
+        },
+        {
+          "reason": "span_class_mismatch",
+          "member_index": 9,
+          "support_count": 3,
+          "span_count": 2,
+          "actual_span_class": "2",
+          "coefficient_span_class": "multi",
+          "coefficient_span": 600.0
+        },
+        {
+          "reason": "span_class_mismatch",
+          "member_index": 10,
+          "support_count": 3,
+          "span_count": 2,
+          "actual_span_class": "2",
+          "coefficient_span_class": "multi",
+          "coefficient_span": 600.0
+        },
+        {
+          "reason": "span_class_mismatch",
+          "member_index": 11,
+          "support_count": 3,
+          "span_count": 2,
+          "actual_span_class": "2",
+          "coefficient_span_class": "multi",
+          "coefficient_span": 600.0
+        },
+        {
+          "reason": "span_class_mismatch",
+          "member_index": 12,
+          "support_count": 3,
+          "span_count": 2,
+          "actual_span_class": "2",
+          "coefficient_span_class": "multi",
+          "coefficient_span": 600.0
+        }
+      ]
+    },
+    {
+      "name": "vertical_manual_kept",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "name": "ortho_600_insufficient_supports",
+      "passed": true,
+      "detail": [
+        {
+          "reason": "insufficient_supports",
+          "member_index": 0,
+          "support_count": 1,
+          "span_count": 0,
+          "actual_span_class": "0",
+          "coefficient_span_class": "multi",
+          "coefficient_span": 600.0
+        },
+        {
+          "reason": "insufficient_supports",
+          "member_index": 1,
+          "support_count": 1,
+          "span_count": 0,
+          "actual_span_class": "0",
+          "coefficient_span_class": "multi",
+          "coefficient_span": 600.0
+        },
+        {
+          "reason": "insufficient_supports",
+          "member_index": 2,
+          "support_count": 1,
+          "span_count": 0,
+          "actual_span_class": "0",
+          "coefficient_span_class": "multi",
+          "coefficient_span": 600.0
+        },
+        {
+          "reason": "insufficient_supports",
+          "member_index": 3,
+          "support_count": 1,
+          "span_count": 0,
+          "actual_span_class": "0",
+          "coefficient_span_class": "multi",
+          "coefficient_span": 600.0
+        },
+        {
+          "reason": "insufficient_supports",
+          "member_index": 4,
+          "support_count": 1,
+          "span_count": 0,
+          "actual_span_class": "0",
+          "coefficient_span_class": "multi",
+          "coefficient_span": 600.0
+        },
+        {
+          "reason": "insufficient_supports",
+          "member_index": 5,
+          "support_count": 1,
+          "span_count": 0,
+          "actual_span_class": "0",
+          "coefficient_span_class": "multi",
+          "coefficient_span": 600.0
+        },
+        {
+          "reason": "insufficient_supports",
+          "member_index": 6,
+          "support_count": 1,
+          "span_count": 0,
+          "actual_span_class": "0",
+          "coefficient_span_class": "multi",
+          "coefficient_span": 600.0
+        },
+        {
+          "reason": "insufficient_supports",
+          "member_index": 7,
+          "support_count": 1,
+          "span_count": 0,
+          "actual_span_class": "0",
+          "coefficient_span_class": "multi",
+          "coefficient_span": 600.0
+        },
+        {
+          "reason": "insufficient_supports",
+          "member_index": 8,
+          "support_count": 1,
+          "span_count": 0,
+          "actual_span_class": "0",
+          "coefficient_span_class": "multi",
+          "coefficient_span": 600.0
+        },
+        {
+          "reason": "insufficient_supports",
+          "member_index": 9,
+          "support_count": 1,
+          "span_count": 0,
+          "actual_span_class": "0",
+          "coefficient_span_class": "multi",
+          "coefficient_span": 600.0
+        },
+        {
+          "reason": "insufficient_supports",
+          "member_index": 10,
+          "support_count": 1,
+          "span_count": 0,
+          "actual_span_class": "0",
+          "coefficient_span_class": "multi",
+          "coefficient_span": 600.0
+        }
+      ]
+    },
+    {
+      "name": "ortho_1000_single_span_unsupported",
+      "passed": true,
+      "detail": [
+        {
+          "reason": "single_span_unsupported",
+          "member_index": 0,
+          "support_count": 2,
+          "span_count": 1,
+          "actual_span_class": "1",
+          "coefficient_span_class": "multi",
+          "coefficient_span": 600.0
+        },
+        {
+          "reason": "single_span_unsupported",
+          "member_index": 1,
+          "support_count": 2,
+          "span_count": 1,
+          "actual_span_class": "1",
+          "coefficient_span_class": "multi",
+          "coefficient_span": 600.0
+        },
+        {
+          "reason": "single_span_unsupported",
+          "member_index": 2,
+          "support_count": 2,
+          "span_count": 1,
+          "actual_span_class": "1",
+          "coefficient_span_class": "multi",
+          "coefficient_span": 600.0
+        },
+        {
+          "reason": "single_span_unsupported",
+          "member_index": 3,
+          "support_count": 2,
+          "span_count": 1,
+          "actual_span_class": "1",
+          "coefficient_span_class": "multi",
+          "coefficient_span": 600.0
+        },
+        {
+          "reason": "single_span_unsupported",
+          "member_index": 4,
+          "support_count": 2,
+          "span_count": 1,
+          "actual_span_class": "1",
+          "coefficient_span_class": "multi",
+          "coefficient_span": 600.0
+        },
+        {
+          "reason": "single_span_unsupported",
+          "member_index": 5,
+          "support_count": 2,
+          "span_count": 1,
+          "actual_span_class": "1",
+          "coefficient_span_class": "multi",
+          "coefficient_span": 600.0
+        },
+        {
+          "reason": "single_span_unsupported",
+          "member_index": 6,
+          "support_count": 2,
+          "span_count": 1,
+          "actual_span_class": "1",
+          "coefficient_span_class": "multi",
+          "coefficient_span": 600.0
+        },
+        {
+          "reason": "single_span_unsupported",
+          "member_index": 7,
+          "support_count": 2,
+          "span_count": 1,
+          "actual_span_class": "1",
+          "coefficient_span_class": "multi",
+          "coefficient_span": 600.0
+        },
+        {
+          "reason": "single_span_unsupported",
+          "member_index": 8,
+          "support_count": 2,
+          "span_count": 1,
+          "actual_span_class": "1",
+          "coefficient_span_class": "multi",
+          "coefficient_span": 600.0
+        },
+        {
+          "reason": "single_span_unsupported",
+          "member_index": 9,
+          "support_count": 2,
+          "span_count": 1,
+          "actual_span_class": "1",
+          "coefficient_span_class": "multi",
+          "coefficient_span": 600.0
+        },
+        {
+          "reason": "single_span_unsupported",
+          "member_index": 10,
+          "support_count": 2,
+          "span_count": 1,
+          "actual_span_class": "1",
+          "coefficient_span_class": "multi",
+          "coefficient_span": 600.0
+        }
+      ]
+    },
+    {
+      "name": "ortho_1800_span_class_mismatch",
+      "passed": true,
+      "detail": [
+        {
+          "reason": "span_class_mismatch",
+          "member_index": 0,
+          "support_count": 3,
+          "span_count": 2,
+          "actual_span_class": "2",
+          "coefficient_span_class": "multi",
+          "coefficient_span": 600.0
+        },
+        {
+          "reason": "span_class_mismatch",
+          "member_index": 1,
+          "support_count": 3,
+          "span_count": 2,
+          "actual_span_class": "2",
+          "coefficient_span_class": "multi",
+          "coefficient_span": 600.0
+        },
+        {
+          "reason": "span_class_mismatch",
+          "member_index": 2,
+          "support_count": 3,
+          "span_count": 2,
+          "actual_span_class": "2",
+          "coefficient_span_class": "multi",
+          "coefficient_span": 600.0
+        },
+        {
+          "reason": "span_class_mismatch",
+          "member_index": 3,
+          "support_count": 3,
+          "span_count": 2,
+          "actual_span_class": "2",
+          "coefficient_span_class": "multi",
+          "coefficient_span": 600.0
+        },
+        {
+          "reason": "span_class_mismatch",
+          "member_index": 4,
+          "support_count": 3,
+          "span_count": 2,
+          "actual_span_class": "2",
+          "coefficient_span_class": "multi",
+          "coefficient_span": 600.0
+        },
+        {
+          "reason": "span_class_mismatch",
+          "member_index": 5,
+          "support_count": 3,
+          "span_count": 2,
+          "actual_span_class": "2",
+          "coefficient_span_class": "multi",
+          "coefficient_span": 600.0
+        },
+        {
+          "reason": "span_class_mismatch",
+          "member_index": 6,
+          "support_count": 3,
+          "span_count": 2,
+          "actual_span_class": "2",
+          "coefficient_span_class": "multi",
+          "coefficient_span": 600.0
+        },
+        {
+          "reason": "span_class_mismatch",
+          "member_index": 7,
+          "support_count": 3,
+          "span_count": 2,
+          "actual_span_class": "2",
+          "coefficient_span_class": "multi",
+          "coefficient_span": 600.0
+        },
+        {
+          "reason": "span_class_mismatch",
+          "member_index": 8,
+          "support_count": 3,
+          "span_count": 2,
+          "actual_span_class": "2",
+          "coefficient_span_class": "multi",
+          "coefficient_span": 600.0
+        },
+        {
+          "reason": "span_class_mismatch",
+          "member_index": 9,
+          "support_count": 3,
+          "span_count": 2,
+          "actual_span_class": "2",
+          "coefficient_span_class": "multi",
+          "coefficient_span": 600.0
+        },
+        {
+          "reason": "span_class_mismatch",
+          "member_index": 10,
+          "support_count": 3,
+          "span_count": 2,
+          "actual_span_class": "2",
+          "coefficient_span_class": "multi",
+          "coefficient_span": 600.0
+        }
+      ]
+    },
+    {
+      "name": "ortho_manual_kept",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "name": "interfloor_manual_kept",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "name": "interfloor_clamps_kept",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "name": "mixed_system_scheme_refused",
+      "passed": true,
+      "detail": "контур outer: Расчётная схема «vertical» не соответствует подсистеме «interfloor». Выберите согласованный пресет и схему. Тип 5 (interfloor_direct) не реализован как самостоятельная геометрия."
+    },
+    {
+      "name": "explicit_wrong_calc_scheme_refused",
+      "passed": true,
+      "detail": "контур outer: Расчётная схема «vertical» не соответствует подсистеме «interfloor». Выберите согласованный пресет и схему. Тип 5 (interfloor_direct) не реализован как самостоятельная геометрия."
+    },
+    {
+      "name": "type5_geometry_refused",
+      "passed": true,
+      "detail": "контур outer: Расчётная схема «interfloor_direct» не соответствует подсистеме «interfloor». Выберите согласованный пресет и схему. Тип 5 (interfloor_direct) не реализован как самостоятельная геометрия."
+    },
+    {
+      "name": "native_shp_positive",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "name": "native_selected_profile_mass",
+      "passed": true,
+      "detail": {
+        "q_rails": 1.21,
+        "profiles": {
+          "row": "ШП-60-20-20-1,2",
+          "corner": "ШП-60-20-20-1,2"
+        }
+      }
+    },
+    {
+      "name": "native_actual_spacing_with_actual_mass_passes",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "name": "fixed_profile_mass_ГП-40-40-1,2",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "name": "candidate_mass_ГП-40-40-1,2",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "name": "fixed_profile_mass_ШП-60-20-1,2",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "name": "candidate_mass_ШП-60-20-1,2",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "name": "fixed_profile_mass_ШП-60-20-20-1,2",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "name": "candidate_mass_ШП-60-20-20-1,2",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "name": "single_candidate_mass_independent_of_unused_seed",
+      "passed": true,
+      "detail": {
+        "gp_seed_step": 250,
+        "shp_seed_step": 250
+      }
+    },
+    {
+      "name": "both_zone_candidates_independent_of_seed",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "name": "explicit_heavier_mass_preserved",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "name": "ortho_real_shp_and_horizontal_gp_mass",
+      "passed": true,
+      "detail": {
+        "actual": 1.9649999999999999,
+        "required_catalog_sum": 1.9649999999999999
+      }
+    },
+    {
+      "name": "interfloor_refused_input_mass_not_reduced",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "name": "gp60_calc_typed_refusal",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "name": "gp60_native_early_refusal",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "name": "gp60_manual_kept",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "name": "gp60_clamps_kept",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "name": "unknown_mark_typed_refusal",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "name": "wrong_family_profile_typed_refusal",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "name": "wrong_family_candidate_typed_refusal",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "name": "known_exact_ГП-40-40-1,2",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "name": "known_exact_ШП-60-20-1,2",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "name": "known_exact_ШП-60-20-20-1,2",
+      "passed": true,
+      "detail": null
+    }
+  ]
+}

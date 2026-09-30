@@ -33,6 +33,7 @@ import json
 import sys
 
 import frame_plan as fp
+from frame_connections import merge_connection_passports
 
 EPS = 1e-6
 
@@ -322,6 +323,7 @@ def op_frame(req):
     system_used, calc_report = None, None
     calc_reports = []
     design_scopes = []
+    connection_passports = []
     for zone_id, contour in items:
         creq = dict(base)
         # 23.09 (ревью): оси швов — СВОИ у каждой зоны (из её метки
@@ -341,6 +343,7 @@ def op_frame(req):
                     "unsupported_counts": res.get("unsupported_counts") or {},
                     "notes": notes + list(res.get("notes") or [])}
         system_used = res.get("system_used") or system_used
+        connection_passports.append((zone_id, res.get("connection_passport"), len(rails), len(brackets)))
         design_scopes.append({"zone_id": zone_id, "scope": res["design_scope"]})
         if res.get("calc_report"):
             # 24.09 (рецензия): в ответе оставался отчёт ПОСЛЕДНЕЙ зоны, хотя
@@ -410,6 +413,7 @@ def op_frame(req):
         "system_used": system_used, "summary": summary,
         "design_scope": {"schema": "aframe_design_scope/1", "per_zone": design_scopes,
                          "manufacturer_compliance": "not_asserted"}}
+    out["connection_passport"] = merge_connection_passports(req, connection_passports)
     if calc_report is not None:
         out["calc_report"] = calc_report
         out["calc_reports"] = calc_reports

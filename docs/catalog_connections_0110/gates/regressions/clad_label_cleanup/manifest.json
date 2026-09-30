@@ -1,0 +1,25 @@
+{
+  "status": "PASS",
+  "scope": "Actual unmodified RemoveData; quantity-cleanup hook spy, native Mono, CAD API doubles, not AutoCAD. Real quantity store checked separately.",
+  "source_sha256": {
+    "AClad/src/ACladPlugin/CladCommand.cs": "2fa0e907f4d0d629a65039dc05659f2b8a6718415bda92d9ca0121994c4a6ca8",
+    "AClad/src/ACladPlugin/TilePatternCommand.cs": "fca8d7e6db587b7c5e12cfac8e7fe83199fc0882d98a1cad4ca34ad9f9ee9afe",
+    "tools/fixes_3009/test_clad_label_cleanup.cs": "a44107c1d206cb0765e11e3fdde9df5382b35ba0e58629475047db902b5521b3",
+    "tools/fixes_3009/test_zone_geometry_cad_doubles.cs": "8bef49b849eeace665ecf2f9dcdcc30798963d4a66b717118074f5f9c4450317",
+    "tools/fixes_3009/test_clad_label_cleanup.py": "93eb8d2117da76cee11bf02e8f930b7f4dc02fa56f944551c397363ca5612b36"
+  },
+  "extracted_method": {
+    "name": "CladCommand.RemoveData",
+    "line": 1391,
+    "sha256": "af19e34c8d0d17b64c8184addebf4cb8df5ea3e0578d5d749e77a183112d0425"
+  },
+  "constant_sha256": {
+    "XKeyClad": "7e9813211a4b780d8e61bcc62166504b966f4d033ed4c2171917c9cf5b200fb4",
+    "XKeyTile": "61524867b7cbddd0dfd7230102e5f350721433365b444a06fa6848fd61fe5df1"
+  },
+  "wrapper_sha256": "ca830ac6965790ea3b474610e79643bd39da66476058e7cef3a80f3f3e709c3f",
+  "compile_returncode": 0,
+  "run_returncode": 0,
+  "checks": 50,
+  "failures": 0
+}

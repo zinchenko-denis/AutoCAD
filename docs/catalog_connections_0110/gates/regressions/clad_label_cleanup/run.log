@@ -1,0 +1,1 @@
+CladLabelCleanupCheck: checks=50, failures=0; actual RemoveData with CAD doubles, not AutoCAD

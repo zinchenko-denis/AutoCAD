@@ -1,0 +1,60 @@
+{
+  "status": "PASS",
+  "checks": 99,
+  "cases": [
+    {
+      "case": "hole",
+      "physical_pieces": 1,
+      "area_mm2": 350000
+    },
+    {
+      "case": "types_cuts",
+      "physical_pieces": 9,
+      "area_mm2": 1906500
+    },
+    {
+      "case": "merged",
+      "physical_pieces": 2,
+      "area_mm2": 540000
+    },
+    {
+      "case": "separate",
+      "physical_pieces": 2,
+      "area_mm2": 720000
+    },
+    {
+      "case": "slope",
+      "physical_pieces": 4,
+      "area_mm2": 999699.1765000001
+    },
+    {
+      "case": "empty_member",
+      "physical_pieces": 2,
+      "area_mm2": 714000
+    },
+    {
+      "case": "whole_empty",
+      "physical_pieces": 0,
+      "area_mm2": 0
+    },
+    {
+      "case": "whole_empty_tile",
+      "physical_pieces": 0,
+      "area_mm2": 0
+    }
+  ],
+  "live_autocad_checked": false,
+  "source_sha256": {
+    "tools/quantities_3009/CladdingProducerProbe.cs": "6e8adb945d6160ea0bfbfc4ceec8a55753a16068d430f34577c9ff24cb3c9345",
+    "Common/FacadeQuantities.cs": "b092bf95f154d6aa8041936bffa79a82c613d7ac8f27fee9d1e6d7c0cde09f90",
+    "AClad/src/ACladPlugin/CladdingQuantities.cs": "e1c49a0ca2833bbc96cd93fd723cfd49c84a53a1c57a0a72f35c2fdad240e3a9",
+    "AClad/engine/polygon_clip.py": "06bf6d81181d8f0732827a53169cbc5c8aa4f5615e7cc5ed5306b2ac4ae4c60f",
+    "AClad/engine/test_cladding_plan.py": "4461dea9f1f00e926d52f3d0b64562a281f036b8baed4dba8656c3d89314f97a",
+    "AClad/engine/test_tile_pattern.py": "d489eae004c47dde8fc3f32108e5721c6e050387dd8e8539b3e01f37f9e640c3",
+    "AClad/engine/audit_clad.py": "881ae022233fbc6ff178d2ea2f4842eb4cf7547a8cb33a8a29e69c435aad8a92",
+    "AClad/engine/tile_pattern.py": "3af9df2b123585ce33d0b8a616956c0c0ef5ba7a822acb6fa06555ace81eafce",
+    "AClad/engine/test_clad_engine.py": "7f4133e8cb1c5e139752ad16c8a26777ee691940169c8eb2c13f5b5f1972569b",
+    "AClad/engine/cladding_plan.py": "0eb923685b4a1319a31f8eb17bfe25059aaee22b8c7b85d40982b812af5e2e8e",
+    "AClad/engine/clad_engine.py": "cf7e3739c74517a6d4483572d19330901b11d6ef8f3eb4e95c42104645257e1e"
+  }
+}

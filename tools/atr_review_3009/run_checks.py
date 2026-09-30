@@ -31,7 +31,8 @@ def main():
                    'test_tile_pattern.py', 'audit_clad.py']),
         ('AFrame', ['test_frame_plan.py', 'test_frame_calc.py',
                     'test_frame_engine.py', 'test_frame_rules.py',
-                    'test_frame_topology.py', 'audit_frame.py']),
+                    'test_frame_topology.py', 'test_frame_topology_index.py',
+                    'test_frame_connections.py', 'audit_frame.py']),
     ):
         jobs.extend((module + '_' + Path(s).stem, module + '/engine', [s])
                     for s in scripts)
@@ -86,6 +87,17 @@ def main():
                                             '--out', str(out / 'manual_quantities_cad_perf')]),
         ('manual_quantities_output', '.', ['tools/manual_quantities_0110/test_manual_output.py',
                                           '--out', str(out / 'manual_quantities_output')]),
+        ('catalog_tutorial_examples', '.', ['docs/facades_beginner_3009/replay_examples.py',
+                                           '--out', str(out / 'catalog_tutorial_examples.json')]),
+        ('catalog_connection_store', '.', ['tools/catalog_connections_0110/test_connection_store.py',
+                                          '--out', str(out / 'catalog_connection_store')]),
+        ('catalog_clamps_manual_boundary', '.', ['tools/catalog_connections_0110/test_clamps_manual_boundary.py',
+                                               '--out', str(out / 'catalog_clamps_manual_boundary')]),
+        ('catalog_connection_table', '.', ['tools/catalog_connections_0110/test_connection_table.py',
+                                          '--out', str(out / 'catalog_connection_table'),
+                                          '--report', str(out / 'catalog_connection_store/independent_zones_report.json')]),
+        ('catalog_topology_performance', '.', ['tools/catalog_connections_0110/reproduce_topology_performance.py',
+                                             '--out', str(out / 'catalog_topology_performance')]),
     ])
     results = []
     for name, cwd, arguments in jobs:

@@ -68,6 +68,7 @@ import sys
 
 from frame_rules import resolve_layout_contract, declared_scope
 from frame_topology import screen_layout, refusal as topology_refusal
+from frame_connections import build_connection_passport
 
 EPS = 1e-6
 CLAMP_MERGE = 100.0  # мм: ближе — один кляммер (кромка откоса
@@ -1231,6 +1232,9 @@ def frame_plan(req):
             c.get("holes") for c in req.get("contours") or []))
         out["design_scope"] = scope["metadata"]
         out.setdefault("notes", []).extend(scope["notes"])
+        model = (out.get("calc_report") or {}).get("static_model") or {}
+        out["connection_passport"] = build_connection_passport(req, out,
+            prepared_members=model.get("members"))
     return out
 
 

@@ -1,0 +1,589 @@
+{
+  "base_commit": "0a397c24d49474f4408fcda7e30da71e163202b0",
+  "results": [
+    {
+      "name": "Facades_test_facade_zones",
+      "cwd": "Facades/engine",
+      "arguments": [
+        "test_facade_zones.py"
+      ],
+      "returncode": 0,
+      "seconds": 0.1
+    },
+    {
+      "name": "Facades_test_facades_engine",
+      "cwd": "Facades/engine",
+      "arguments": [
+        "test_facades_engine.py"
+      ],
+      "returncode": 0,
+      "seconds": 0.123
+    },
+    {
+      "name": "AClad_test_cladding_plan",
+      "cwd": "AClad/engine",
+      "arguments": [
+        "test_cladding_plan.py"
+      ],
+      "returncode": 0,
+      "seconds": 0.031
+    },
+    {
+      "name": "AClad_test_clad_engine",
+      "cwd": "AClad/engine",
+      "arguments": [
+        "test_clad_engine.py"
+      ],
+      "returncode": 0,
+      "seconds": 0.073
+    },
+    {
+      "name": "AClad_test_tile_pattern",
+      "cwd": "AClad/engine",
+      "arguments": [
+        "test_tile_pattern.py"
+      ],
+      "returncode": 0,
+      "seconds": 0.58
+    },
+    {
+      "name": "AClad_audit_clad",
+      "cwd": "AClad/engine",
+      "arguments": [
+        "audit_clad.py"
+      ],
+      "returncode": 0,
+      "seconds": 0.166
+    },
+    {
+      "name": "AFrame_test_frame_plan",
+      "cwd": "AFrame/engine",
+      "arguments": [
+        "test_frame_plan.py"
+      ],
+      "returncode": 0,
+      "seconds": 0.224
+    },
+    {
+      "name": "AFrame_test_frame_calc",
+      "cwd": "AFrame/engine",
+      "arguments": [
+        "test_frame_calc.py"
+      ],
+      "returncode": 0,
+      "seconds": 0.026
+    },
+    {
+      "name": "AFrame_test_frame_engine",
+      "cwd": "AFrame/engine",
+      "arguments": [
+        "test_frame_engine.py"
+      ],
+      "returncode": 0,
+      "seconds": 0.051
+    },
+    {
+      "name": "AFrame_test_frame_rules",
+      "cwd": "AFrame/engine",
+      "arguments": [
+        "test_frame_rules.py"
+      ],
+      "returncode": 0,
+      "seconds": 0.076
+    },
+    {
+      "name": "AFrame_test_frame_topology",
+      "cwd": "AFrame/engine",
+      "arguments": [
+        "test_frame_topology.py"
+      ],
+      "returncode": 0,
+      "seconds": 0.069
+    },
+    {
+      "name": "AFrame_test_frame_topology_index",
+      "cwd": "AFrame/engine",
+      "arguments": [
+        "test_frame_topology_index.py"
+      ],
+      "returncode": 0,
+      "seconds": 3.773
+    },
+    {
+      "name": "AFrame_test_frame_connections",
+      "cwd": "AFrame/engine",
+      "arguments": [
+        "test_frame_connections.py"
+      ],
+      "returncode": 0,
+      "seconds": 0.126
+    },
+    {
+      "name": "AFrame_audit_frame",
+      "cwd": "AFrame/engine",
+      "arguments": [
+        "audit_frame.py"
+      ],
+      "returncode": 0,
+      "seconds": 0.39
+    },
+    {
+      "name": "xmod",
+      "cwd": ".",
+      "arguments": [
+        "tools/xmod_check.py",
+        "--no-fixture",
+        "--allow=X6"
+      ],
+      "returncode": 0,
+      "seconds": 0.056
+    },
+    {
+      "name": "frame_quick",
+      "cwd": ".",
+      "arguments": [
+        "AFrame/tools/frame_synth.py",
+        "--quick"
+      ],
+      "returncode": 0,
+      "seconds": 7.061
+    },
+    {
+      "name": "zones_quick",
+      "cwd": ".",
+      "arguments": [
+        "Facades/tools/zones_synth.py",
+        "--quick"
+      ],
+      "returncode": 0,
+      "seconds": 10.377
+    },
+    {
+      "name": "tile_quick",
+      "cwd": ".",
+      "arguments": [
+        "AClad/tools/attile_synth.py",
+        "--quick"
+      ],
+      "returncode": 0,
+      "seconds": 20.212
+    },
+    {
+      "name": "roles_quick",
+      "cwd": ".",
+      "arguments": [
+        "tools/roles_synth.py",
+        "--quick"
+      ],
+      "returncode": 0,
+      "seconds": 3.738
+    },
+    {
+      "name": "engine_contract",
+      "cwd": ".",
+      "arguments": [
+        "tools/engine_contract.py"
+      ],
+      "returncode": 0,
+      "seconds": 0.509
+    },
+    {
+      "name": "facade_regressions",
+      "cwd": ".",
+      "arguments": [
+        "tools/fixes_3009/run_facade_regressions.py",
+        "--out",
+        "/workspace/scratch/ba306982747c/catalog_connections_validation_final/gates/regressions"
+      ],
+      "returncode": 0,
+      "seconds": 7.892
+    },
+    {
+      "name": "atr_topology",
+      "cwd": ".",
+      "arguments": [
+        "tools/atr_review_3009/vector1_topology.py"
+      ],
+      "returncode": 0,
+      "seconds": 0.038
+    },
+    {
+      "name": "atr_vector5",
+      "cwd": ".",
+      "arguments": [
+        "tools/atr_review_3009/vector5_contract_probe.py",
+        "--out",
+        "/workspace/scratch/ba306982747c/catalog_connections_validation_final/gates/vector5"
+      ],
+      "returncode": 0,
+      "seconds": 0.591
+    },
+    {
+      "name": "atr_architecture",
+      "cwd": ".",
+      "arguments": [
+        "tools/atr_review_3009/architecture_probe.py",
+        "--out",
+        "/workspace/scratch/ba306982747c/catalog_connections_validation_final/gates/architecture"
+      ],
+      "returncode": 0,
+      "seconds": 0.724
+    },
+    {
+      "name": "atr_mass",
+      "cwd": ".",
+      "arguments": [
+        "tools/atr_review_3009/vector5_mass_review.py",
+        "--evidence",
+        "/workspace/scratch/ba306982747c/catalog_connections_validation_final/gates/architecture/evidence.json",
+        "--out",
+        "/workspace/scratch/ba306982747c/catalog_connections_validation_final/gates/mass_review.json"
+      ],
+      "returncode": 0,
+      "seconds": 0.049
+    },
+    {
+      "name": "static_model_gap",
+      "cwd": ".",
+      "arguments": [
+        "tools/static_review_3009/reproduce_model_gap.py",
+        "--out",
+        "/workspace/scratch/ba306982747c/catalog_connections_validation_final/gates/static_model_gap.json"
+      ],
+      "returncode": 0,
+      "seconds": 0.051
+    },
+    {
+      "name": "quantities_core",
+      "cwd": ".",
+      "arguments": [
+        "tools/quantities_3009/test_quantities_core.py",
+        "--out",
+        "/workspace/scratch/ba306982747c/catalog_connections_validation_final/gates/quantities_core"
+      ],
+      "returncode": 0,
+      "seconds": 0.873
+    },
+    {
+      "name": "quantities_producer",
+      "cwd": ".",
+      "arguments": [
+        "tools/quantities_3009/test_cladding_producer.py",
+        "--out",
+        "/workspace/scratch/ba306982747c/catalog_connections_validation_final/gates/quantities_producer"
+      ],
+      "returncode": 0,
+      "seconds": 2.263
+    },
+    {
+      "name": "quantities_table",
+      "cwd": ".",
+      "arguments": [
+        "tools/quantities_3009/test_cladding_table.py",
+        "--out",
+        "/workspace/scratch/ba306982747c/catalog_connections_validation_final/gates/quantities_table"
+      ],
+      "returncode": 0,
+      "seconds": 0.847
+    },
+    {
+      "name": "quantities_store",
+      "cwd": ".",
+      "arguments": [
+        "tools/quantities_3009/test_quantity_store.py",
+        "--out",
+        "/workspace/scratch/ba306982747c/catalog_connections_validation_final/gates/quantities_store"
+      ],
+      "returncode": 0,
+      "seconds": 2.951
+    },
+    {
+      "name": "frame_quantities_core",
+      "cwd": ".",
+      "arguments": [
+        "tools/frame_quantities_3009/test_frame_core.py",
+        "--out",
+        "/workspace/scratch/ba306982747c/catalog_connections_validation_final/gates/frame_quantities_core"
+      ],
+      "returncode": 0,
+      "seconds": 0.828
+    },
+    {
+      "name": "frame_quantities_core_perf",
+      "cwd": ".",
+      "arguments": [
+        "tools/frame_quantities_3009/test_frame_core_perf.py",
+        "--quick",
+        "--out",
+        "/workspace/scratch/ba306982747c/catalog_connections_validation_final/gates/frame_quantities_core_perf"
+      ],
+      "returncode": 0,
+      "seconds": 1.559
+    },
+    {
+      "name": "frame_quantities_producer",
+      "cwd": ".",
+      "arguments": [
+        "tools/frame_quantities_3009/test_frame_producer.py",
+        "--out",
+        "/workspace/scratch/ba306982747c/catalog_connections_validation_final/gates/frame_quantities_producer"
+      ],
+      "returncode": 0,
+      "seconds": 3.568
+    },
+    {
+      "name": "frame_quantities_table",
+      "cwd": ".",
+      "arguments": [
+        "tools/frame_quantities_3009/test_frame_table.py",
+        "--out",
+        "/workspace/scratch/ba306982747c/catalog_connections_validation_final/gates/frame_quantities_table"
+      ],
+      "returncode": 0,
+      "seconds": 0.804
+    },
+    {
+      "name": "frame_engine_perf",
+      "cwd": ".",
+      "arguments": [
+        "tools/frame_quantities_3009/test_frame_engine_perf.py",
+        "--targets",
+        "1000,3000",
+        "--out",
+        "/workspace/scratch/ba306982747c/catalog_connections_validation_final/gates/frame_engine_perf"
+      ],
+      "returncode": 0,
+      "seconds": 0.341
+    },
+    {
+      "name": "quantities_store_perf",
+      "cwd": ".",
+      "arguments": [
+        "tools/quantities_3009/test_quantity_store_perf.py",
+        "--quick",
+        "--out",
+        "/workspace/scratch/ba306982747c/catalog_connections_validation_final/gates/quantities_store_perf"
+      ],
+      "returncode": 0,
+      "seconds": 13.199
+    },
+    {
+      "name": "quantities_store_encoding",
+      "cwd": ".",
+      "arguments": [
+        "tools/frame_quantities_3009/test_store_encoding.py",
+        "--out",
+        "/workspace/scratch/ba306982747c/catalog_connections_validation_final/gates/quantities_store_encoding"
+      ],
+      "returncode": 0,
+      "seconds": 0.871
+    },
+    {
+      "name": "manual_quantities_core",
+      "cwd": ".",
+      "arguments": [
+        "tools/manual_quantities_0110/test_manual_core.py",
+        "--out",
+        "/workspace/scratch/ba306982747c/catalog_connections_validation_final/gates/manual_quantities_core"
+      ],
+      "returncode": 0,
+      "seconds": 0.878
+    },
+    {
+      "name": "manual_quantities_core_perf",
+      "cwd": ".",
+      "arguments": [
+        "tools/manual_quantities_0110/test_manual_core_perf.py",
+        "--quick",
+        "--out",
+        "/workspace/scratch/ba306982747c/catalog_connections_validation_final/gates/manual_quantities_core_perf"
+      ],
+      "returncode": 0,
+      "seconds": 4.617
+    },
+    {
+      "name": "manual_quantities_cad",
+      "cwd": ".",
+      "arguments": [
+        "tools/manual_quantities_0110/test_manual_cad.py",
+        "--out",
+        "/workspace/scratch/ba306982747c/catalog_connections_validation_final/gates/manual_quantities_cad"
+      ],
+      "returncode": 0,
+      "seconds": 2.252
+    },
+    {
+      "name": "manual_quantities_cad_perf",
+      "cwd": ".",
+      "arguments": [
+        "tools/manual_quantities_0110/test_manual_cad.py",
+        "--performance",
+        "--out",
+        "/workspace/scratch/ba306982747c/catalog_connections_validation_final/gates/manual_quantities_cad_perf"
+      ],
+      "returncode": 0,
+      "seconds": 10.99
+    },
+    {
+      "name": "manual_quantities_output",
+      "cwd": ".",
+      "arguments": [
+        "tools/manual_quantities_0110/test_manual_output.py",
+        "--out",
+        "/workspace/scratch/ba306982747c/catalog_connections_validation_final/gates/manual_quantities_output"
+      ],
+      "returncode": 0,
+      "seconds": 0.976
+    },
+    {
+      "name": "catalog_tutorial_examples",
+      "cwd": ".",
+      "arguments": [
+        "docs/facades_beginner_3009/replay_examples.py",
+        "--out",
+        "/workspace/scratch/ba306982747c/catalog_connections_validation_final/gates/catalog_tutorial_examples.json"
+      ],
+      "returncode": 0,
+      "seconds": 0.135
+    },
+    {
+      "name": "catalog_connection_store",
+      "cwd": ".",
+      "arguments": [
+        "tools/catalog_connections_0110/test_connection_store.py",
+        "--out",
+        "/workspace/scratch/ba306982747c/catalog_connections_validation_final/gates/catalog_connection_store"
+      ],
+      "returncode": 0,
+      "seconds": 5.001
+    },
+    {
+      "name": "catalog_clamps_manual_boundary",
+      "cwd": ".",
+      "arguments": [
+        "tools/catalog_connections_0110/test_clamps_manual_boundary.py",
+        "--out",
+        "/workspace/scratch/ba306982747c/catalog_connections_validation_final/gates/catalog_clamps_manual_boundary"
+      ],
+      "returncode": 0,
+      "seconds": 0.754
+    },
+    {
+      "name": "catalog_connection_table",
+      "cwd": ".",
+      "arguments": [
+        "tools/catalog_connections_0110/test_connection_table.py",
+        "--out",
+        "/workspace/scratch/ba306982747c/catalog_connections_validation_final/gates/catalog_connection_table",
+        "--report",
+        "/workspace/scratch/ba306982747c/catalog_connections_validation_final/gates/catalog_connection_store/independent_zones_report.json"
+      ],
+      "returncode": 0,
+      "seconds": 1.133
+    },
+    {
+      "name": "catalog_topology_performance",
+      "cwd": ".",
+      "arguments": [
+        "tools/catalog_connections_0110/reproduce_topology_performance.py",
+        "--out",
+        "/workspace/scratch/ba306982747c/catalog_connections_validation_final/gates/catalog_topology_performance"
+      ],
+      "returncode": 0,
+      "seconds": 59.239
+    }
+  ],
+  "source_sha256": {
+    "AClad/engine/audit_clad.py": "881ae022233fbc6ff178d2ea2f4842eb4cf7547a8cb33a8a29e69c435aad8a92",
+    "AClad/engine/clad_engine.py": "cf7e3739c74517a6d4483572d19330901b11d6ef8f3eb4e95c42104645257e1e",
+    "AClad/engine/cladding_plan.py": "0eb923685b4a1319a31f8eb17bfe25059aaee22b8c7b85d40982b812af5e2e8e",
+    "AClad/engine/polygon_clip.py": "06bf6d81181d8f0732827a53169cbc5c8aa4f5615e7cc5ed5306b2ac4ae4c60f",
+    "AClad/engine/test_clad_engine.py": "7f4133e8cb1c5e139752ad16c8a26777ee691940169c8eb2c13f5b5f1972569b",
+    "AClad/engine/test_cladding_plan.py": "4461dea9f1f00e926d52f3d0b64562a281f036b8baed4dba8656c3d89314f97a",
+    "AClad/engine/test_tile_pattern.py": "d489eae004c47dde8fc3f32108e5721c6e050387dd8e8539b3e01f37f9e640c3",
+    "AClad/engine/tile_pattern.py": "3af9df2b123585ce33d0b8a616956c0c0ef5ba7a822acb6fa06555ace81eafce",
+    "AClad/src/ACladPlugin/ACladPlugin.csproj": "11061df272fb61c4f9977677c58b8189c25b2ef0005f0404ddffbbc66f90ff41",
+    "AClad/src/ACladPlugin/BondForm.cs": "48f9d6918f97d2206f849b686683c1d862e538e8a2cf27e12df51bb576611466",
+    "AClad/src/ACladPlugin/BondSettings.cs": "c30e687bfee933011fb98b1587bb4a1603d2425055a0046c61a33a28713aa914",
+    "AClad/src/ACladPlugin/CladCommand.cs": "2fa0e907f4d0d629a65039dc05659f2b8a6718415bda92d9ca0121994c4a6ca8",
+    "AClad/src/ACladPlugin/CladdingQuantities.cs": "e1c49a0ca2833bbc96cd93fd723cfd49c84a53a1c57a0a72f35c2fdad240e3a9",
+    "AClad/src/ACladPlugin/DimForm.cs": "6e1a13c33151308b678b3070c4e6b04dff93f0ca2834b675e1bea6e51f077031",
+    "AClad/src/ACladPlugin/FacadesClassic.cs": "ccb7bffde646144f90b0db1f89ec89c7f252e44f2a523378e6b631e61fe9ec14",
+    "AClad/src/ACladPlugin/FacadesRibbon.cs": "89d60014a94534f720bf09f7a32bfab2ad61428414258ff183bd48ccf7671854",
+    "AClad/src/ACladPlugin/LayerPickForm.cs": "bd16924dbf9bf9ea8133b5c721fff2f020c86510af972b13411039fd7b5eb848",
+    "AClad/src/ACladPlugin/LayoutSafety.cs": "dfe26a34bd41119e5e611c930f45a237bac7332c3797c4ffa77c29340078a3cb",
+    "AClad/src/ACladPlugin/Plugin.cs": "b34ef3887f249b0b6c4fb84fffda9ac70a14bdb76ee6e8d20a45669b863149f6",
+    "AClad/src/ACladPlugin/TilePatternCommand.cs": "fca8d7e6db587b7c5e12cfac8e7fe83199fc0882d98a1cad4ca34ad9f9ee9afe",
+    "AClad/src/ACladPlugin/TileProgress.cs": "e2745014a01f444ce3be158d1e56d93acea50759943178417218c50e41916711",
+    "AFrame/engine/analiz_klu_poligon.py": "903a3080c4b01dea51e936560adba060f12f172fe13887bd2785456881f5fa27",
+    "AFrame/engine/assembly_catalog.json": "a202410e6c9872b73cf9f06183c6fc22b22280fb0dcbfb68e71561117d65456e",
+    "AFrame/engine/audit_frame.py": "7ce9adac3adddcb7619b88d789b78f4b811f9c890e9fd9b08f884b32ee4e2d48",
+    "AFrame/engine/dsverka_poligon.py": "a971bd36882c6663c0fcbc466de5e288d9aa1f4d1f6d55e5eb462ae5d635a1ec",
+    "AFrame/engine/frame_calc.py": "abe20fd3c0de0937ba0636914f083f7c48a7a65b3b4c85f05673278a95e1da88",
+    "AFrame/engine/frame_catalog.py": "947a0277f3a6202dff365c1de6e86c5832dbc2c97e2a810b99d500a5d6f6b163",
+    "AFrame/engine/frame_connections.py": "d4febc1ce6e147f1cbce29cb64690f2c3b592efe4e40b9c88da5c8a2dcc74985",
+    "AFrame/engine/frame_engine.py": "9f35e1fde7e37a9c569bfda4a6799dc21c6cf88ba818e1af9fbc41d38653a505",
+    "AFrame/engine/frame_plan.py": "dfe7b40a75e2b2c05df2e8eb90ce985e60325dbeb1f8cfaa31e4e290aee0a0db",
+    "AFrame/engine/frame_rules.py": "511ec4ec48331034257859ccac70ef028a8c4b398acd7d5b238d778e3c63ea6f",
+    "AFrame/engine/frame_spatial.py": "003efc0e73b344d50d4465d2bc1bfc87f8ca149c7d443a1e7d9061e6dbfd6cec",
+    "AFrame/engine/frame_topology.py": "2455ab874309d1382591800acce35dd3bde04ea3be6519f8b1de89dd5514f5d5",
+    "AFrame/engine/systems.json": "e9ee0a4cf0c535473dd9931f9b2a3d86dd1d932fe18f84682ef3fd221fbc03c3",
+    "AFrame/engine/test_frame_calc.py": "f72160fe7a3483c35a6c0d7ef669a612e6e44defb95c33916a850c2a605d5239",
+    "AFrame/engine/test_frame_connections.py": "21f2c64b59b1a1f052eadcf1c69d1aa8f0e0e60ad42182f793ac914a16971353",
+    "AFrame/engine/test_frame_engine.py": "3d32ffb69a6e9bc5d229ed11201e7e09500b5f193859b6a2cbab190c73679270",
+    "AFrame/engine/test_frame_plan.py": "990d3a933eab94f1b967ea17606be1db462936cc1cb0cb0e74c5da198d4b5ded",
+    "AFrame/engine/test_frame_rules.py": "0f629daa13207e436eb5e425e1f4e3d7189d205ffc6956bceca0427eb237b26e",
+    "AFrame/engine/test_frame_topology.py": "88f59edd4e8543ec3c444eb3557dbe7a10b922318362ca82360675da1c11586c",
+    "AFrame/engine/test_frame_topology_index.py": "d8e139847c458cdf87fddf24b7c790e15e479ff4c2bbbd3a4848757e6560a1a7",
+    "AFrame/src/AFramePlugin/AFramePlugin.csproj": "05bf948e7393d46af7411e1eb529bf5f36a77550dc4150d539bedcc03b621baf",
+    "AFrame/src/AFramePlugin/DimForm.cs": "86ec69c3200f8f4232c7b855a13147367d199cd42a14928c31f8678b28230717",
+    "AFrame/src/AFramePlugin/FacadesClassic.cs": "ec03c5c3f08289c92e97cd6b17de8e9852fbfee5a0ddd3d953dafa2a70657673",
+    "AFrame/src/AFramePlugin/FacadesRibbon.cs": "af48c14c864659f95f58669fa631a3b3fbb24f64e686769e8e288e32d71c0119",
+    "AFrame/src/AFramePlugin/FrameCommand.cs": "c27b48906411dfaddfec3619ddfad4751a8b68ab2ff11de8cb717120e60840f1",
+    "AFrame/src/AFramePlugin/FrameForm.cs": "d7ae2edcaaec82065061ca58addf08c51123f7fb4d3b7d68c95d8784034cfc51",
+    "AFrame/src/AFramePlugin/FrameQuantities.cs": "2644b53a4de6f4dd7740e22c62675e066c72b487eb37afdc319eafb606a90120",
+    "AFrame/src/AFramePlugin/FrameSettings.cs": "726318cfb93822262855d5f6e7f1e3f6b274a4770cf7e66ef8700642d12006fa",
+    "AFrame/src/AFramePlugin/Plugin.cs": "e679e02c78b770152163b0cd4a691d39ea44bddb422da49aa128e5d13ec631c4",
+    "Common/FacadeQuantities.cs": "b092bf95f154d6aa8041936bffa79a82c613d7ac8f27fee9d1e6d7c0cde09f90",
+    "Common/FacadeQuantityStore.Frame.cs": "e7abeee9029ebdb074bdd0fe5de08d7ebe9fa3a7b2378c6289a2a222c83ce3e5",
+    "Common/FacadeQuantityStore.Manual.cs": "d86511944ec3ee71b44b6539452332ea37a3e4d48823e67ad2275403fb9ce793",
+    "Common/FacadeQuantityStore.cs": "72e8b053ff8f5f87dd0a57ab9a80340f54a845093387e1ffa82348b3d52d5a0a",
+    "Common/GeometryFingerprint.cs": "24114ef7a18a56415313b009d7819c94190efa5ea517df2081d1f51951819332",
+    "Common/LayoutGeometryGuard.cs": "b582662e3557d023b8a318cf3fc59175616b0ac4f8bdbba0eccf4c2c960338da",
+    "Common/ManualQuantities.cs": "f73ec0d29da2dfe4a61aa496cda5e9ff25632a5dd26bf4d1e2ff85ed6dc3dcb8",
+    "Common/ManualQuantityGeometry.cs": "07b975b09199d87405fce4757c959d00293e4fdf4b003572f80a30f240812693",
+    "Common/ZoneGeometryGuard.cs": "daf06e2822a4d9ef2be818df1bf904779fa202adb1e5bce7fc0ba49c084970b8",
+    "Facades/engine/facade_zones.py": "a6d93dfc7b9e399be3dab4bb2a624c714b12fe79236503fe54c105122bfeea01",
+    "Facades/engine/facades_engine.py": "f0046539d586d75f0d3042b83b7e155f06762f84869721544cd6542fa27ad306",
+    "Facades/engine/test_facade_zones.py": "8465ae98a8b412db6e6f7b23242a34dada7475450b47294fb22785a02b47caf4",
+    "Facades/engine/test_facades_engine.py": "ce0f692df8747f5666aea690c6e346b79a7a4a65d54f8a48161c6af6a353d509",
+    "Facades/src/AFacadesPlugin/AFacadesPlugin.csproj": "e7ebcc765975ab12da71ac8c5b76083f36d93154c10ad3d4a86fe0c33ab52590",
+    "Facades/src/AFacadesPlugin/CladdingTableCommand.cs": "f5c9353e43c2f52590885baf6eaef453922ad7eb9c6402625a8dac03031d1785",
+    "Facades/src/AFacadesPlugin/CladdingTableData.cs": "8dec6b35b881f29b9da51d9e2c3769be360f53c6fac06670c2005a60e94405fa",
+    "Facades/src/AFacadesPlugin/CladdingTablePreview.cs": "fe291b7c638cd6c4b8c402ca8a253e3847bdfe804741f9a3f7233d5004345f96",
+    "Facades/src/AFacadesPlugin/ConnectionTableData.cs": "e42c21610f51dfb1d233d6e15397c4094fdb0efa2464cb566150f08ccc65d573",
+    "Facades/src/AFacadesPlugin/FacadeQuantityTableCommand.cs": "198cb83d4fb7c99cc24da4fba81c6cf4c6c14d20d34b320b2da57b72f4fde922",
+    "Facades/src/AFacadesPlugin/FacadesClassic.cs": "ccc1f1d9d0462ee4cea1b68d9a4383d30c112360b0cf198e852e81b2ba039327",
+    "Facades/src/AFacadesPlugin/FacadesRibbon.cs": "3a1f467a5691c6f3f5654dad38e94e1c94bfcdfe4ac261f6ccd3f55c7705dd75",
+    "Facades/src/AFacadesPlugin/FrameTableData.cs": "58de42f818cf70d470bb438b025cb6cb4c70391700d43eeeaee23042281f1ffc",
+    "Facades/src/AFacadesPlugin/LayerPickForm.cs": "7f98c718f0968a76bcdec5c7a503a793a23585b5f36d1456f772a5866e3d2ae0",
+    "Facades/src/AFacadesPlugin/ManualQuantityCommand.cs": "76e397542ba4d41e062fc06ef9a2aa9a7a90a8f85e3fd3189578f4a5e4cd6221",
+    "Facades/src/AFacadesPlugin/ManualQuantityForm.cs": "16865af50294e24ba65b8583352c672ef95b9e3184dec2b95ad712f871000743",
+    "Facades/src/AFacadesPlugin/ManualQuantityView.cs": "fda37a2e20b7a4666dd61682da4db58b672ff27843dae21f13da4f04906ce3cc",
+    "Facades/src/AFacadesPlugin/Plugin.cs": "d486cb0746e6edef83c41a68f85f1e60b19a3c764c317a170de1e92b9db38476",
+    "Facades/src/AFacadesPlugin/QuantityTableIdentity.cs": "82044b27845ff586b475040e4a968398c0325bdf8c6205cd6f5b226597810454",
+    "Facades/src/AFacadesPlugin/QuantityTablePreview.cs": "7e8998347dae61a9389783f481986fe84944f879464f79560585b95db5096116",
+    "Facades/src/AFacadesPlugin/QuantityTableView.Connections.cs": "1dbc4269e64eda11011c6ad63400870072ebe4d37ac7f959bf74e0d18438e8f8",
+    "Facades/src/AFacadesPlugin/QuantityTableView.cs": "9656e74f8c3e4a932e4303e694a0690ddf2e14c308de64afa53bce9a8dc80480",
+    "Facades/src/AFacadesPlugin/QuantityXlsxFile.cs": "3c79e7a701ad6ba50bc81ce41cc88ba5d9c0c76c52e601115ccd3df460c3f75e",
+    "Facades/src/AFacadesPlugin/TableCommand.cs": "8ad19960fee925dd79cff72174f2661fd86c6cc22c32e386615ef9b7004df115",
+    "Facades/src/AFacadesPlugin/WorkStatement.cs": "428f45e464ca264df513e31ca0f17f70a46422509e37d4a3ca1902d2e2a68858",
+    "Facades/src/AFacadesPlugin/XlsxWriter.cs": "6c4ef614b5fde416fa91ce29adc0ebf99599bb21b285bd7d885bf00469c428fc",
+    "Facades/src/AFacadesPlugin/ZoneCommand.cs": "f4eee2cf9e1b3b4fcca7b34ac9d7d8c4a0d48ea2d6c543a5c7eee176f96bbdbb",
+    "Facades/src/AFacadesPlugin/ZoneForm.cs": "30cc49edd277ffcdfe03261bdb82e4ff92dbaccca51284b543509ab86c40f178",
+    "Facades/src/AFacadesPlugin/ZoneTable.cs": "9aad9aa85ebf1d41c40e6d3577a5df4e05ae207923f9658d790b39ad030c2c4b"
+  },
+  "live_autocad_checked": false,
+  "release_published": false,
+  "known_exclusion": "X6 belongs to unchanged ATSPEC"
+}

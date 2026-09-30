@@ -47,8 +47,15 @@ namespace AFacadesPlugin
             var ed = doc.Editor;
             var db = doc.Database;
             bool frame = kind == "frame";
-            string subject = frame ? "подсистемы" : "облицовки";
             string choice;
+            string view = QuantityTableIdentity.Elements;
+            if (frame)
+            {
+                if (!Ask(ed, "\nВид ведомости [Элементы/Соединения] <Элементы>: ", "Элементы Соединения", "Элементы", out choice)) return;
+                if (choice == "Соединения") view = QuantityTableIdentity.Connections;
+            }
+            bool connections = view == QuantityTableIdentity.Connections;
+            string subject = connections ? "соединений подсистемы" : frame ? "подсистемы" : "облицовки";
             if (!Ask(ed, "\nВыбрать область " + subject + " [Слой/Объекты] <Слой>: ", "Слой Объекты", "Слой", out choice)) return;
             List<ObjectId> ids;
             if (choice == "Слой")
@@ -74,7 +81,7 @@ namespace AFacadesPlugin
             string sourceStamp;
             using (var tr = db.TransactionManager.StartTransaction())
             {
-                if (!Read(tr, db, ids, kind, byZone, cutting, true, ed, timings, out data, out sourceStamp)) return;
+                if (!Read(tr, db, ids, kind, view, byZone, cutting, true, ed, timings, out data, out sourceStamp)) return;
                 tr.Commit();
             }
             string note = "";
@@ -100,7 +107,7 @@ namespace AFacadesPlugin
                     {
                         var table = tr.GetObject(target, OpenMode.ForRead) as Table;
                         Dictionary<string, object> old;
-                        if (!ReadTable(tr, table, kind, out old, out oldTargetStamp))
+                        if (!ReadTable(tr, table, kind, view, out old, out oldTargetStamp))
                         { ed.WriteMessage("\nОбновление отменено: выбранная таблица не является ведомостью " + subject + " текущего формата."); return; }
                         point = table.Position;
                         try { height = Convert.ToDouble(old["text_height"], CultureInfo.InvariantCulture); }
@@ -130,7 +137,7 @@ namespace AFacadesPlugin
                 using (var dialog = new System.Windows.Forms.SaveFileDialog {
                     Filter = "Excel (*.xlsx)|*.xlsx", OverwritePrompt = true,
                     FileName = (string.IsNullOrEmpty(db.Filename) ? "ведомость" : Path.GetFileNameWithoutExtension(db.Filename)) +
-                        (frame ? "_подсистема.xlsx" : "_облицовка.xlsx"),
+                        (connections ? "_соединения.xlsx" : frame ? "_подсистема.xlsx" : "_облицовка.xlsx"),
                     InitialDirectory = string.IsNullOrEmpty(db.Filename) ? null : Path.GetDirectoryName(db.Filename) })
                 {
                     if (dialog.ShowDialog() != System.Windows.Forms.DialogResult.OK) { Cancel(ed); return; }
@@ -144,7 +151,7 @@ namespace AFacadesPlugin
             try
             {
                 rows = data.Rows(note);
-                pendingFile = path == null ? null : new QuantityXlsxFile(path, frame ? "Подсистема" : "Облицовка", rows);
+                pendingFile = path == null ? null : new QuantityXlsxFile(path, connections ? "Соединения" : frame ? "Подсистема" : "Облицовка", rows);
             }
             finally { timings.Output += outputTimer.Elapsed.TotalMilliseconds; }
             using (var staged = pendingFile)
@@ -153,7 +160,7 @@ namespace AFacadesPlugin
             {
                 QuantityTableView refreshed;
                 string refreshedStamp;
-                if (!Read(tr, db, ids, kind, byZone, cutting, false, ed, timings, out refreshed, out refreshedStamp)) return;
+                if (!Read(tr, db, ids, kind, view, byZone, cutting, false, ed, timings, out refreshed, out refreshedStamp)) return;
                 if (sourceStamp != refreshedStamp)
                 { ed.WriteMessage("\nВедомость не создана: состав изменился после предпросмотра. Повторите ATFTABLE."); return; }
                 outputTimer.Restart();
@@ -174,12 +181,12 @@ namespace AFacadesPlugin
                             table = tr.GetObject(target, OpenMode.ForWrite) as Table;
                             Dictionary<string, object> prior;
                             string stamp;
-                            if (!ReadTable(tr, table, kind, out prior, out stamp) || stamp != oldTargetStamp)
+                            if (!ReadTable(tr, table, kind, view, out prior, out stamp) || stamp != oldTargetStamp)
                             { ed.WriteMessage("\nОбновление отменено: выбранная таблица изменилась после предпросмотра."); return; }
                         }
                         Fill(table, rows, data.Widths, height);
                         var metadata = new Dictionary<string, object> {
-                            { "schema", TableSchema }, { "kind", kind }, { "owner", table.Handle.ToString() },
+                            { "schema", TableSchema }, { "kind", kind }, { "view", view }, { "owner", table.Handle.ToString() },
                             { "user_note", note }, { "text_height", height }, { "by_zone", byZone },
                             { "include_cutting", cutting }, { "scope", data.Scope }, { "source_snapshot", sourceStamp },
                             { "completeness", data.Complete ? "complete" : "partial" }, { "form_shapes", data.FormShapes }, { "rows", rows } };
@@ -198,7 +205,7 @@ namespace AFacadesPlugin
                 (path == null ? "" : "\nExcel: " + path));
         }
 
-        private static bool Read(Transaction tr, Database db, List<ObjectId> ids, string kind, bool byZone, bool cutting, bool buildView,
+        private static bool Read(Transaction tr, Database db, List<ObjectId> ids, string kind, string view, bool byZone, bool cutting, bool buildView,
             Editor ed, Timings timings, out QuantityTableView data, out string stamp)
         {
             data = null; stamp = null;
@@ -212,7 +219,8 @@ namespace AFacadesPlugin
                 ed.WriteMessage("\nВедомость не создана: " + selection.Reason);
                 if (buildView && selection.Unaccounted.Count > 0)
                 {
-                    var refused = QuantityTableView.Refusal(kind == "frame" ? FrameTableData.Title : CladdingTableData.Title, selection.Reason);
+                    var refused = QuantityTableView.Refusal(view == QuantityTableIdentity.Connections ? ConnectionTableData.Title :
+                        kind == "frame" ? FrameTableData.Title : CladdingTableData.Title, selection.Reason);
                     AddUnaccounted(refused, selection);
                     using (var form = new QuantityTablePreview(refused, "", false)) AcApp.ShowModalDialog(form);
                 }
@@ -229,7 +237,9 @@ namespace AFacadesPlugin
             }
             stamp = selection.Fingerprint;
             if (!buildView) return true;
-            data = kind == "frame" ? QuantityTableView.FromFrame(FrameTableData.Build(result, selection.Reports,
+            data = view == QuantityTableIdentity.Connections ? QuantityTableView.FromConnections(ConnectionTableData.Build(result,
+                selection.Reports, selection.SelectedZoneIds, selection.Warnings, byZone)) :
+                kind == "frame" ? QuantityTableView.FromFrame(FrameTableData.Build(result, selection.Reports,
                 selection.SelectedZoneIds, selection.Warnings, byZone)) :
                 QuantityTableView.FromCladding(CladdingTableData.Build(result, selection.Reports,
                 selection.SelectedZoneIds, selection.Warnings, byZone, cutting));
@@ -290,7 +300,7 @@ namespace AFacadesPlugin
             }
         }
 
-        private static bool ReadTable(Transaction tr, Table table, string kind, out Dictionary<string, object> data, out string raw)
+        private static bool ReadTable(Transaction tr, Table table, string kind, string view, out Dictionary<string, object> data, out string raw)
         {
             data = null; raw = null;
             if (table == null) return false;
@@ -298,9 +308,7 @@ namespace AFacadesPlugin
             if (string.IsNullOrEmpty(raw)) return false;
             try { data = Serializer().DeserializeObject(raw) as Dictionary<string, object>; }
             catch { return false; }
-            return data != null && Text(data, "schema") == TableSchema && Text(data, "owner") == table.Handle.ToString() &&
-                (Text(data, "kind") == kind || (kind == "cladding" && !data.ContainsKey("kind"))) &&
-                data.ContainsKey("user_note") && data.ContainsKey("text_height");
+            return QuantityTableIdentity.Matches(data, TableSchema, table.Handle.ToString(), kind, view);
         }
 
         private static void Fill(Table table, List<object[]> rows, double[] widths, double height)

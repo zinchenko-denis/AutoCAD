@@ -26,6 +26,98 @@ namespace FacadeSafety
         public List<QuantityCuttingGroup> cutting { get; set; } = new List<QuantityCuttingGroup>();
         public List<QuantityEstimateGroup> estimates { get; set; } = new List<QuantityEstimateGroup>();
         public List<QuantityIssue> issues { get; set; } = new List<QuantityIssue>();
+        // Null is the explicit legacy state. Connection inventories are stored once,
+        // independent of quantity rows and never imply a verified static model.
+        public List<QuantityConnectionPassport> connection_passports { get; set; }
+    }
+
+    public sealed class QuantityConnectionPassport
+    {
+        public string schema { get; set; } = "aframe_connection_passport/1";
+        public string passport_id { get; set; }
+        public string source_run_id { get; set; }
+        public List<string> zone_ids { get; set; } = new List<string>();
+        public string status { get; set; }
+        public string reason { get; set; }
+        public string scheme { get; set; }
+        public string catalog_revision { get; set; }
+        public string catalog_scope { get; set; }
+        public List<QuantityConnectionSource> sources { get; set; } = new List<QuantityConnectionSource>();
+        public List<QuantityConnectionReference> references { get; set; } = new List<QuantityConnectionReference>();
+        public List<QuantityConnectionMember> members { get; set; } = new List<QuantityConnectionMember>();
+        public List<QuantityConnectionJoint> joints { get; set; } = new List<QuantityConnectionJoint>();
+        public QuantityConnectionCoverage coverage { get; set; } = new QuantityConnectionCoverage();
+        public QuantityConnectionSummary summary { get; set; } = new QuantityConnectionSummary();
+        public List<QuantityConnectionIssue> issues { get; set; } = new List<QuantityConnectionIssue>();
+    }
+    public sealed class QuantityConnectionSource
+    {
+        public string source_id { get; set; }
+        public string sha256 { get; set; }
+        public string kind { get; set; }
+        public string edition { get; set; }
+        public string locator { get; set; }
+    }
+    public sealed class QuantityConnectionReference
+    {
+        public string reference_id { get; set; }
+        public string kind { get; set; }
+        public string designation { get; set; }
+        public string role { get; set; }
+        public string source_id { get; set; }
+        public List<int> pdf_pages { get; set; } = new List<int>();
+        public string properties_status { get; set; }
+    }
+    public sealed class QuantityConnectionMember
+    {
+        public string rail_element_id { get; set; }
+        public string zone_id { get; set; }
+        public int support_count { get; set; }
+        public int span_count { get; set; }
+        public List<double> intervals_mm { get; set; } = new List<double>();
+        public double bottom_free_mm { get; set; }
+        public double top_free_mm { get; set; }
+        public List<QuantityConnectionSupport> supports { get; set; } = new List<QuantityConnectionSupport>();
+        public QuantityConnectionProfileMatch profile_match { get; set; } = new QuantityConnectionProfileMatch();
+    }
+    public sealed class QuantityConnectionSupport
+    {
+        public double offset_mm { get; set; }
+        public List<string> bracket_element_ids { get; set; } = new List<string>();
+    }
+    public sealed class QuantityConnectionProfileMatch
+    {
+        public string status { get; set; }
+        public List<string> reference_ids { get; set; } = new List<string>();
+    }
+    public sealed class QuantityConnectionJoint
+    {
+        public string first_rail_element_id { get; set; }
+        public string second_rail_element_id { get; set; }
+        public double gap_mm { get; set; }
+        public string status { get; set; }
+    }
+    public sealed class QuantityConnectionCoverage
+    {
+        public string fixed_sliding { get; set; } = "not_modeled";
+        public string splice_continuity { get; set; } = "not_modeled";
+        public string gravity_load_distribution { get; set; } = "not_verified";
+        public string strength { get; set; } = "not_verified";
+    }
+    public sealed class QuantityConnectionSummary
+    {
+        public int members { get; set; }
+        public int support_positions { get; set; }
+        public int support_links { get; set; }
+        public int geometric_joints { get; set; }
+        public int matched_profile_references { get; set; }
+        public int unresolved_profile_references { get; set; }
+    }
+    public sealed class QuantityConnectionIssue
+    {
+        public string code { get; set; }
+        public string message { get; set; }
+        public int count { get; set; }
     }
 
     public sealed class QuantityElement
@@ -153,6 +245,10 @@ namespace FacadeSafety
         public long canonical_report_keys { get; set; }
         public long canonical_element_keys { get; set; }
         public long aggregate_keys_built { get; set; }
+        public long connection_elements_indexed { get; set; }
+        public long connection_members_validated { get; set; }
+        public long connection_supports_validated { get; set; }
+        public long connection_links_validated { get; set; }
     }
 
     public static class FacadeQuantitiesCore
@@ -170,6 +266,7 @@ namespace FacadeSafety
             var result = new QuantityResult { completeness = "partial" };
             var uniqueReports = new List<QuantityReport>();
             var reportsById = new Dictionary<string, QuantityReport>(StringComparer.Ordinal);
+            var connectionsById = new Dictionary<string, QuantityConnectionPassport>(StringComparer.Ordinal);
             var allZones = new HashSet<string>(StringComparer.Ordinal);
             var elements = new Dictionary<string, QuantityElement>(StringComparer.Ordinal);
             var handles = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
@@ -246,6 +343,21 @@ namespace FacadeSafety
                                 else handles.Add(cad.handle, element.element_id);
                             }
                     }
+                    ValidateConnections(result, report, scope, diagnostics);
+                    if (report.connection_passports != null)
+                        foreach (var passport in report.connection_passports)
+                        {
+                            if (passport == null || Empty(passport.passport_id)) continue;
+                            QuantityConnectionPassport oldPassport;
+                            if (connectionsById.TryGetValue(passport.passport_id, out oldPassport))
+                            {
+                                if (!ReferenceEquals(passport, oldPassport) &&
+                                    ConnectionKey(new List<QuantityConnectionPassport> { passport }) !=
+                                    ConnectionKey(new List<QuantityConnectionPassport> { oldPassport }))
+                                    Error(result, "Q_CONNECTION_CONFLICT", "Копии одного паспорта соединений имеют разные данные.", report);
+                            }
+                            else connectionsById.Add(passport.passport_id, passport);
+                        }
                     ValidateCutting(result, report, scope);
                     ValidateEstimates(result, report, scope);
                 }
@@ -489,6 +601,205 @@ namespace FacadeSafety
             }
         }
 
+        private static void ValidateConnections(QuantityResult result, QuantityReport report, HashSet<string> scope, QuantityDiagnostics diagnostics)
+        {
+            if (report.connection_passports == null) return; // published v1/v2 quantity passports
+            if (report.kind != "frame")
+            { Error(result, "Q_CONNECTION_INVALID", "Паспорт соединений относится только к подсистеме.", report); return; }
+            var parts = new Dictionary<string, QuantityElement>(StringComparer.Ordinal);
+            var railsByRun = new Dictionary<string, HashSet<string>>(StringComparer.Ordinal);
+            foreach (var e in report.elements)
+                if (e != null && !Empty(e.element_id) && !parts.ContainsKey(e.element_id))
+                {
+                    diagnostics.connection_elements_indexed++;
+                    parts.Add(e.element_id, e);
+                    int split = e.role == "rail" ? e.element_id.IndexOf(":rails:", StringComparison.Ordinal) : -1;
+                    if (split <= 0) continue;
+                    string run = e.element_id.Substring(0, split);
+                    HashSet<string> railIds;
+                    if (!railsByRun.TryGetValue(run, out railIds))
+                    { railIds = new HashSet<string>(StringComparer.Ordinal); railsByRun.Add(run, railIds); }
+                    railIds.Add(e.element_id);
+                }
+            var ids = new HashSet<string>(StringComparer.Ordinal);
+            var sourceRuns = new HashSet<string>(StringComparer.Ordinal);
+            foreach (var p in report.connection_passports)
+            {
+                string reason = ConnectionProblem(p, parts, railsByRun, scope, diagnostics);
+                if (reason == null && (!ids.Add(p.passport_id) || !sourceRuns.Add(p.source_run_id))) reason = "повторяется паспорт исходного прогона";
+                if (reason != null) Error(result, "Q_CONNECTION_INVALID", "Повреждён паспорт соединений: " + reason + ".", report);
+            }
+        }
+
+        // Pure validation uses one element index for a run. It never reopens CAD
+        // entities and cannot turn geometric candidates into designed supports.
+        private static string ConnectionProblem(QuantityConnectionPassport p,
+            Dictionary<string, QuantityElement> parts, Dictionary<string, HashSet<string>> railsByRun, HashSet<string> reportScope, QuantityDiagnostics diagnostics)
+        {
+            if (p == null || p.schema != "aframe_connection_passport/1" || Empty(p.passport_id) || Empty(p.source_run_id) || p.source_run_id.IndexOf(':') >= 0 ||
+                (p.status != "inventory_only" && p.status != "unavailable")) return "неподдержанная версия или статус";
+            var scope = Set(p.zone_ids);
+            if (scope.Count == 0 || !scope.IsSubsetOf(reportScope)) return "неверная область зон";
+            if (p.coverage == null || p.coverage.fixed_sliding != "not_modeled" ||
+                p.coverage.splice_continuity != "not_modeled" || p.coverage.gravity_load_distribution != "not_verified" ||
+                p.coverage.strength != "not_verified") return "геометрическая опись выдана за инженерную проверку";
+            if (p.sources == null || p.references == null || p.members == null || p.joints == null ||
+                p.summary == null || p.issues == null) return "отсутствует обязательный массив или сводка";
+            if (p.status == "unavailable")
+            {
+                if (Empty(p.reason) || p.members.Count != 0 || p.joints.Count != 0 ||
+                    p.summary.members != 0 || p.summary.support_positions != 0 || p.summary.support_links != 0 ||
+                    p.summary.geometric_joints != 0 || p.summary.matched_profile_references != 0 ||
+                    p.summary.unresolved_profile_references != 0) return "недоступная опись содержит выдаваемые результаты";
+            }
+            else if (p.scheme != "vertical" || !HexHash(p.catalog_revision) || p.catalog_scope != "reference_project_only")
+                return "неподдержанная область каталога";
+            var sources = new HashSet<string>(StringComparer.Ordinal);
+            foreach (var source in p.sources)
+                if (source == null || Empty(source.source_id) || !sources.Add(source.source_id) || !HexHash(source.sha256) ||
+                    Empty(source.kind) || Empty(source.edition) || Empty(source.locator)) return "неполное происхождение источника";
+            var references = new Dictionary<string, QuantityConnectionReference>(StringComparer.Ordinal);
+            foreach (var reference in p.references)
+            {
+                if (reference == null || Empty(reference.reference_id) || references.ContainsKey(reference.reference_id) ||
+                    !sources.Contains(reference.source_id ?? "") || Empty(reference.kind) || Empty(reference.designation) ||
+                    Empty(reference.role) || reference.properties_status != "not_imported" || reference.pdf_pages == null ||
+                    reference.pdf_pages.Count == 0) return "некорректная ссылка на обозначение в источнике";
+                references.Add(reference.reference_id, reference);
+                var pages = new HashSet<int>();
+                foreach (int page in reference.pdf_pages) if (page <= 0 || !pages.Add(page)) return "неверные страницы источника";
+            }
+            if (p.status == "inventory_only" && p.members.Count == 0) return "геометрическая опись направляющих пуста";
+            var memberIds = new HashSet<string>(StringComparer.Ordinal);
+            var memberZones = new HashSet<string>(StringComparer.Ordinal);
+            int positions = 0, links = 0, matched = 0;
+            foreach (var member in p.members)
+            {
+                diagnostics.connection_members_validated++;
+                QuantityElement rail;
+                if (member == null || Empty(member.rail_element_id) || !member.rail_element_id.StartsWith(p.source_run_id + ":rails:", StringComparison.Ordinal) ||
+                    !memberIds.Add(member.rail_element_id) ||
+                    !parts.TryGetValue(member.rail_element_id, out rail) || rail.role != "rail" || !rail.length_mm.HasValue ||
+                    !Finite(rail.length_mm.Value) || rail.length_mm.Value <= 0 || !scope.Contains(member.zone_id ?? "") ||
+                    !ElementZones(rail).SetEquals(new[] { member.zone_id })) return "направляющая отсутствует или относится к другой зоне";
+                memberZones.Add(member.zone_id);
+                if (member.supports == null || member.intervals_mm == null || member.support_count != member.supports.Count ||
+                    member.span_count != Math.Max(0, member.support_count - 1) || member.intervals_mm.Count != member.span_count ||
+                    !Finite(member.bottom_free_mm) || !Finite(member.top_free_mm) || member.bottom_free_mm < 0 ||
+                    member.top_free_mm < 0) return "несогласованное число позиций, интервалов или свободных концов";
+                var bracketIds = new HashSet<string>(StringComparer.Ordinal);
+                double prior = -1;
+                for (int i = 0; i < member.supports.Count; i++)
+                {
+                    diagnostics.connection_supports_validated++;
+                    var support = member.supports[i];
+                    if (support == null || !Finite(support.offset_mm) || support.offset_mm < -0.5001 ||
+                        support.offset_mm > rail.length_mm.Value + 0.5001 || (i > 0 && support.offset_mm <= prior) ||
+                        support.bracket_element_ids == null || support.bracket_element_ids.Count == 0) return "неверная позиция кандидата опоры";
+                    if (i > 0 && (!Finite(member.intervals_mm[i - 1]) || member.intervals_mm[i - 1] <= 0 ||
+                        !Close(member.intervals_mm[i - 1], support.offset_mm - prior, 0.01))) return "интервалы не соответствуют позициям";
+                    foreach (string id in support.bracket_element_ids)
+                    {
+                        diagnostics.connection_links_validated++;
+                        QuantityElement bracket;
+                        if (Empty(id) || !id.StartsWith(p.source_run_id + ":brackets:", StringComparison.Ordinal) ||
+                            !bracketIds.Add(id) || !parts.TryGetValue(id, out bracket) || bracket.role != "bracket" ||
+                            !ElementZones(bracket).SetEquals(new[] { member.zone_id })) return "кронштейн отсутствует, повторяется или относится к другой зоне";
+                        links++;
+                    }
+                    prior = support.offset_mm;
+                }
+                if (member.support_count > 0 && (!Close(member.bottom_free_mm, Math.Max(0, member.supports[0].offset_mm), 0.0002) ||
+                    !Close(member.top_free_mm, Math.Max(0, rail.length_mm.Value - prior), 0.0002))) return "свободные концы не соответствуют длине направляющей";
+                if (member.support_count == 0 && (!Close(member.bottom_free_mm, rail.length_mm.Value, 0.0002) ||
+                    !Close(member.top_free_mm, rail.length_mm.Value, 0.0002))) return "неподтверждённые свободные концы направляющей без опор";
+                var profile = member.profile_match;
+                if (profile == null || profile.reference_ids == null ||
+                    (profile.status != "matched_source_identity" && profile.status != "unknown") ||
+                    (profile.status == "unknown" && profile.reference_ids.Count != 0) ||
+                    (profile.status == "matched_source_identity" && profile.reference_ids.Count == 0)) return "неверный статус обозначения профиля";
+                var profileIds = new HashSet<string>(StringComparer.Ordinal);
+                foreach (string id in profile.reference_ids)
+                    if (id == null || !profileIds.Add(id) || !references.ContainsKey(id) || references[id].role != "rail" ||
+                        references[id].designation != rail.mark) return "обозначение не найдено в источниках или не соответствует марке направляющей";
+                if (profile.status == "matched_source_identity") matched++;
+                positions += member.support_count;
+            }
+            HashSet<string> expectedRails;
+            if (p.status == "inventory_only" && (!railsByRun.TryGetValue(p.source_run_id, out expectedRails) ||
+                !memberIds.SetEquals(expectedRails) || !memberZones.SetEquals(scope))) return "из описи исключена направляющая или зона исходного прогона";
+            var pairs = new HashSet<string>(StringComparer.Ordinal);
+            foreach (var joint in p.joints)
+            {
+                QuantityElement first, second;
+                if (joint == null || Empty(joint.first_rail_element_id) || Empty(joint.second_rail_element_id) ||
+                    joint.first_rail_element_id == joint.second_rail_element_id || !memberIds.Contains(joint.first_rail_element_id) ||
+                    !memberIds.Contains(joint.second_rail_element_id) || joint.status != "geometric_adjacency_only" ||
+                    !Finite(joint.gap_mm)) return "неверная геометрическая смежность направляющих";
+                first = parts[joint.first_rail_element_id]; second = parts[joint.second_rail_element_id];
+                if (!ElementZones(first).SetEquals(ElementZones(second)) ||
+                    !pairs.Add(Tokens(string.CompareOrdinal(joint.first_rail_element_id, joint.second_rail_element_id) < 0 ? joint.first_rail_element_id : joint.second_rail_element_id,
+                        string.CompareOrdinal(joint.first_rail_element_id, joint.second_rail_element_id) < 0 ? joint.second_rail_element_id : joint.first_rail_element_id)))
+                    return "повторная смежность или соединение разных зон";
+            }
+            if (p.summary.members != p.members.Count || p.summary.support_positions != positions || p.summary.support_links != links ||
+                p.summary.geometric_joints != p.joints.Count || p.summary.matched_profile_references != matched ||
+                p.summary.unresolved_profile_references != p.members.Count - matched) return "сводка расходится с физическими ссылками";
+            foreach (var issue in p.issues)
+                if (issue == null || Empty(issue.code) || Empty(issue.message) || issue.count < 0) return "повреждённое замечание";
+            return null;
+        }
+
+        private static bool HexHash(string value)
+        {
+            if (value == null || value.Length != 64) return false;
+            foreach (char c in value) if (!(c >= '0' && c <= '9') && !(c >= 'a' && c <= 'f')) return false;
+            return true;
+        }
+
+        private static string ConnectionKey(List<QuantityConnectionPassport> passports)
+        {
+            if (passports == null) return "legacy:null";
+            var b = new StringBuilder();
+            foreach (var p in passports)
+            {
+                if (p == null) { b.Append("nullpassport"); continue; }
+                b.Append(Tokens(p.schema, p.passport_id, p.source_run_id, Tokens(Sorted(Set(p.zone_ids)).ToArray()), p.status, p.reason,
+                    p.scheme, p.catalog_revision, p.catalog_scope));
+                b.Append(p.coverage == null ? "nullcoverage" : Tokens(p.coverage.fixed_sliding, p.coverage.splice_continuity,
+                    p.coverage.gravity_load_distribution, p.coverage.strength));
+                b.Append(p.summary == null ? "nullsummary" : Tokens(p.summary.members.ToString(CultureInfo.InvariantCulture),
+                    p.summary.support_positions.ToString(CultureInfo.InvariantCulture), p.summary.support_links.ToString(CultureInfo.InvariantCulture),
+                    p.summary.geometric_joints.ToString(CultureInfo.InvariantCulture), p.summary.matched_profile_references.ToString(CultureInfo.InvariantCulture),
+                    p.summary.unresolved_profile_references.ToString(CultureInfo.InvariantCulture)));
+                b.Append(Tokens("sources", p.sources == null ? null : p.sources.Count.ToString(CultureInfo.InvariantCulture)));
+                if (p.sources == null) b.Append("nullsources"); else foreach (var s in p.sources)
+                    b.Append(s == null ? "nullsource" : Tokens(s.source_id, s.sha256, s.kind, s.edition, s.locator));
+                b.Append(Tokens("references", p.references == null ? null : p.references.Count.ToString(CultureInfo.InvariantCulture)));
+                if (p.references == null) b.Append("nullreferences"); else foreach (var r in p.references)
+                    b.Append(r == null ? "nullreference" : Tokens(r.reference_id, r.kind, r.designation, r.role, r.source_id,
+                        ObjectKey(r.pdf_pages), r.properties_status));
+                b.Append(Tokens("members", p.members == null ? null : p.members.Count.ToString(CultureInfo.InvariantCulture)));
+                if (p.members == null) b.Append("nullmembers"); else foreach (var m in p.members)
+                {
+                    if (m == null) { b.Append("nullmember"); continue; }
+                    b.Append(Tokens(m.rail_element_id, m.zone_id, m.support_count.ToString(CultureInfo.InvariantCulture),
+                        m.span_count.ToString(CultureInfo.InvariantCulture), ObjectKey(m.intervals_mm), F(m.bottom_free_mm), F(m.top_free_mm)));
+                    b.Append(m.profile_match == null ? "nullmatch" : Tokens(m.profile_match.status, ObjectKey(m.profile_match.reference_ids)));
+                    b.Append(Tokens("supports", m.supports == null ? null : m.supports.Count.ToString(CultureInfo.InvariantCulture)));
+                    if (m.supports == null) b.Append("nullsupports"); else foreach (var s in m.supports)
+                        b.Append(s == null ? "nullsupport" : Tokens(F(s.offset_mm), ObjectKey(s.bracket_element_ids)));
+                }
+                b.Append(Tokens("joints", p.joints == null ? null : p.joints.Count.ToString(CultureInfo.InvariantCulture)));
+                if (p.joints == null) b.Append("nulljoints"); else foreach (var j in p.joints)
+                    b.Append(j == null ? "nulljoint" : Tokens(j.first_rail_element_id, j.second_rail_element_id, F(j.gap_mm), j.status));
+                b.Append(Tokens("issues", p.issues == null ? null : p.issues.Count.ToString(CultureInfo.InvariantCulture)));
+                if (p.issues == null) b.Append("nullissues"); else foreach (var i in p.issues)
+                    b.Append(i == null ? "nullissue" : Tokens(i.code, i.message, i.count.ToString(CultureInfo.InvariantCulture)));
+            }
+            return Hash(b.ToString());
+        }
+
         private static void ValidateCutting(QuantityResult result, QuantityReport report, HashSet<string> scope)
         {
             var groups = new HashSet<string>(StringComparer.Ordinal);
@@ -591,7 +902,7 @@ namespace FacadeSafety
                 r.completeness, r.engineering_coverage, Tokens(Sorted(Set(r.zone_ids)).ToArray())));
             if (r.source_revisions != null)
                 foreach (string key in Sorted(r.source_revisions.Keys)) sb.Append(Tokens(key, r.source_revisions[key]));
-            sb.Append(Tokens(ObjectKey(r.parameters), ObjectKey(r.engine_summary)));
+            sb.Append(Tokens(ObjectKey(r.parameters), ObjectKey(r.engine_summary), ConnectionKey(r.connection_passports)));
             if (r.elements != null) foreach (var e in r.elements) sb.Append(e == null ? "nullelement" : ElementKey(e, diagnostics));
             if (r.cutting != null) foreach (var group in r.cutting)
             {
@@ -660,6 +971,8 @@ namespace FacadeSafety
             diagnostics.reports_seen = diagnostics.reports_compared = diagnostics.elements_seen = diagnostics.elements_validated =
                 diagnostics.elements_compared = diagnostics.cad_links_checked = diagnostics.shapes_validated =
                 diagnostics.canonical_report_keys = diagnostics.canonical_element_keys = diagnostics.aggregate_keys_built = 0;
+            diagnostics.connection_elements_indexed = diagnostics.connection_members_validated =
+                diagnostics.connection_supports_validated = diagnostics.connection_links_validated = 0;
         }
         private static string JoinNote(string a, string b) { return Empty(a) ? b : a + "; " + b; }
         private static bool Finite(double value) { return !double.IsNaN(value) && !double.IsInfinity(value); }

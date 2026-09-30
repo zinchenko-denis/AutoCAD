@@ -1,0 +1,18 @@
+PASS empty
+PASS short_cyrillic
+PASS ascii_1
+PASS ascii_4095
+PASS ascii_4096
+PASS ascii_4097
+PASS ascii_8191
+PASS ascii_8192
+PASS ascii_8193
+PASS ascii_65535
+PASS surrogate_pair_cross_4096
+PASS surrogate_pair_cross_8192
+PASS lonely_high_boundary
+PASS lonely_low_boundary
+PASS lonely_high_final
+PASS repeated_non_bmp
+Quantity store UTF-8: 16/16 PASS
+Quantity store UTF-8: PASS report: /workspace/scratch/ba306982747c/catalog_connections_validation_final/gates/quantities_store_encoding/manifest.json

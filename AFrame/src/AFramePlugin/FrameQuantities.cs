@@ -59,6 +59,15 @@ namespace AFramePlugin
                         var selected = new HashSet<string>(previous.SelectedZoneIds, StringComparer.Ordinal);
                         foreach (var old in previous.Reports)
                         {
+                            // Manual registrations remain in their independent zone index.
+                            // Copying them here would stamp them as generated ATFRAME parts.
+                            if (IsManualContribution(old)) continue;
+                            if (!IsGeneratedFrameReport(old))
+                            {
+                                Unavailable("Прежний паспорт подсистемы содержит неподтверждённое или смешанное происхождение деталей. " +
+                                    "Ручные регистрации должны оставаться отдельными. Перестройте подсистему целиком.");
+                                continue;
+                            }
                             foreach (string zone in old.zone_ids)
                                 if (!selected.Contains(zone))
                                     Unavailable("Режим «только кляммеры»: выбрана часть группы прежнего паспорта. " +
@@ -136,6 +145,7 @@ namespace AFramePlugin
                 var seen = new HashSet<string>(StringComparer.Ordinal);
                 var retainedZones = new HashSet<string>(report.zone_ids, StringComparer.Ordinal);
                 foreach (var piece in report.elements) seen.Add(piece.element_id);
+                if (retained.Count > 0) report.connection_passports = new List<QuantityConnectionPassport>();
                 foreach (var old in retained)
                 {
                     var keptIds = new HashSet<string>(StringComparer.Ordinal);
@@ -156,6 +166,7 @@ namespace AFramePlugin
                         }
                     }
                     AppendRetainedProvenance(old, keptIds, provenance);
+                    AppendRetainedConnections(old, keptIds, report.connection_passports);
                 }
                 if (provenance.Count > 0)
                 {
@@ -326,7 +337,7 @@ namespace AFramePlugin
                     string orientation = category == "rails" ? "vertical" : category == "hrails" ? "horizontal" :
                         category == "clamps" && type == "боковой" && Text(Get(item, "orient")) != "h" ? "vertical" : "horizontal";
                     result.elements.Add(new QuantityElement {
-                        element_id = run + ":" + category + ":" + i.ToString(CultureInfo.InvariantCulture),
+                        element_id = ElementId(run, category, i),
                         zone_id = zone, zone_ids = new List<string> { zone }, system = system,
                         role = role, type = type, mark = string.IsNullOrEmpty(profile) ? null : profile,
                         product_id = null, material = null, coating = null, color = null,
@@ -335,6 +346,9 @@ namespace AFramePlugin
                     });
                 }
             }
+            if (response.ContainsKey("connection_passport"))
+                result.connection_passports = new List<QuantityConnectionPassport> {
+                    BuildConnectionPassport(Object(response["connection_passport"]), result, response, partToRoot) };
             result.issues.Add(new QuantityIssue { code = "Q_FRAME_ENGINEERING_LIMIT", report_id = result.report_id,
                 message = "Ведомость учитывает построенные элементы. Полная статическая модель, неподвижные/подвижные соединения, стыки и комплектность узлов не подтверждены." });
             if (Array(Get(response, "fittings")).Length > 0)
@@ -364,6 +378,170 @@ namespace AFramePlugin
                 result.issues.Add(new QuantityIssue { code = "Q_FRAME_ESTIMATE_NOT_RECALCULATED", report_id = result.report_id,
                     message = "При обновлении только кляммеров оценка числа хлыстов сохранённого каркаса не пересчитывалась и не выводится." });
             return result;
+        }
+
+        private static bool IsManualContribution(QuantityReport value)
+        {
+            if (value == null || value.kind != "frame" || value.scope != "manual_zone_contribution" ||
+                value.algorithm != "manual-import/1" || value.elements == null) return false;
+            foreach (var element in value.elements)
+                if (element == null || element.origin == null || !element.origin.StartsWith("manual:", StringComparison.Ordinal)) return false;
+            return true;
+        }
+        private static bool IsGeneratedFrameReport(QuantityReport value)
+        {
+            if (value == null || value.kind != "frame" || value.scope != "whole_frame_run" ||
+                value.algorithm != "ATFRAME/facade_quantities/1" || value.elements == null) return false;
+            foreach (var element in value.elements)
+                if (element == null || element.origin == null || !element.origin.StartsWith("generated:ATFRAME:", StringComparison.Ordinal)) return false;
+            return true;
+        }
+
+        private static QuantityConnectionPassport BuildConnectionPassport(Dictionary<string, object> source,
+            QuantityReport report, Dictionary<string, object> response, Dictionary<string, string> partToRoot)
+        {
+            var p = new QuantityConnectionPassport {
+                schema = Text(Get(source, "schema")), passport_id = report.run_id + ":connections", source_run_id = report.run_id,
+                zone_ids = new List<string>(report.zone_ids), status = Text(Get(source, "status")),
+                reason = Get(source, "reason") == null ? null : Text(Get(source, "reason")),
+                scheme = Text(Get(source, "scheme")), catalog_revision = Text(Get(source, "catalog_revision")),
+                catalog_scope = Text(Get(source, "catalog_scope")) };
+            foreach (object value in Array(Get(source, "sources")))
+            {
+                var item = Object(value);
+                p.sources.Add(new QuantityConnectionSource { source_id = Text(Get(item, "source_id")),
+                    sha256 = Text(Get(item, "sha256")), kind = Text(Get(item, "kind")),
+                    edition = Text(Get(item, "edition")), locator = Text(Get(item, "locator")) });
+            }
+            foreach (object value in Array(Get(source, "references")))
+            {
+                var item = Object(value);
+                var reference = new QuantityConnectionReference { reference_id = Text(Get(item, "reference_id")),
+                    kind = Text(Get(item, "kind")), designation = Text(Get(item, "designation")), role = Text(Get(item, "role")),
+                    source_id = Text(Get(item, "source_id")), properties_status = Text(Get(item, "properties_status")) };
+                foreach (object page in Array(Get(item, "pdf_pages"))) reference.pdf_pages.Add(Integer(page));
+                p.references.Add(reference);
+            }
+            object[] rails = Array(Get(response, "rails")), brackets = Array(Get(response, "brackets"));
+            foreach (object value in Array(Get(source, "members")))
+            {
+                var item = Object(value);
+                int index = Index(Get(item, "rail_index"), rails.Length);
+                var rail = Object(rails[index]);
+                string zone = Text(Get(item, "zone_id"));
+                if (zone != Text(Get(rail, "zone"))) throw new InvalidOperationException("Паспорт соединений ссылается на направляющую другой зоны.");
+                var member = new QuantityConnectionMember {
+                    rail_element_id = ElementId(report.run_id, "rails", index), zone_id = Root(zone, partToRoot),
+                    support_count = Integer(Get(item, "support_count")), span_count = Integer(Get(item, "span_count")),
+                    bottom_free_mm = Number(Get(item, "bottom_free_mm")), top_free_mm = Number(Get(item, "top_free_mm")) };
+                foreach (object interval in Array(Get(item, "intervals_mm"))) member.intervals_mm.Add(Number(interval));
+                foreach (object supportValue in Array(Get(item, "supports")))
+                {
+                    var supportItem = Object(supportValue);
+                    var support = new QuantityConnectionSupport { offset_mm = Number(Get(supportItem, "offset_mm")) };
+                    foreach (object bracketValue in Array(Get(supportItem, "bracket_indices")))
+                    {
+                        int bracketIndex = Index(bracketValue, brackets.Length);
+                        if (zone != Text(Get(Object(brackets[bracketIndex]), "zone")))
+                            throw new InvalidOperationException("Кандидат опоры принадлежит другой исходной зоне.");
+                        support.bracket_element_ids.Add(ElementId(report.run_id, "brackets", bracketIndex));
+                    }
+                    member.supports.Add(support);
+                }
+                var match = Object(Get(item, "profile_match"));
+                member.profile_match.status = Text(Get(match, "status"));
+                foreach (object id in Array(Get(match, "reference_ids"))) member.profile_match.reference_ids.Add(Text(id));
+                p.members.Add(member);
+            }
+            foreach (object value in Array(Get(source, "joints")))
+            {
+                var item = Object(value);
+                int first = Index(Get(item, "first_rail_index"), rails.Length), second = Index(Get(item, "second_rail_index"), rails.Length);
+                if (Text(Get(Object(rails[first]), "zone")) != Text(Get(Object(rails[second]), "zone")))
+                    throw new InvalidOperationException("Геометрическая смежность направляющих пересекает исходные зоны.");
+                p.joints.Add(new QuantityConnectionJoint {
+                    first_rail_element_id = ElementId(report.run_id, "rails", first),
+                    second_rail_element_id = ElementId(report.run_id, "rails", second),
+                    gap_mm = Number(Get(item, "gap_mm")), status = Text(Get(item, "status")) });
+            }
+            var coverage = Object(Get(source, "coverage"));
+            p.coverage = new QuantityConnectionCoverage { fixed_sliding = Text(Get(coverage, "fixed_sliding")),
+                splice_continuity = Text(Get(coverage, "splice_continuity")), gravity_load_distribution = Text(Get(coverage, "gravity_load_distribution")),
+                strength = Text(Get(coverage, "strength")) };
+            var summary = Object(Get(source, "summary"));
+            p.summary = new QuantityConnectionSummary { members = Integer(Get(summary, "members")),
+                support_positions = Integer(Get(summary, "support_positions")), support_links = Integer(Get(summary, "support_links")),
+                geometric_joints = Integer(Get(summary, "geometric_joints")), matched_profile_references = Integer(Get(summary, "matched_profile_references")),
+                unresolved_profile_references = Integer(Get(summary, "unresolved_profile_references")) };
+            foreach (object value in Array(Get(source, "issues")))
+            {
+                var item = Object(value);
+                p.issues.Add(new QuantityConnectionIssue { code = Text(Get(item, "code")), message = Text(Get(item, "message")), count = Integer(Get(item, "count")) });
+            }
+            return p;
+        }
+
+        // Retain the original inventory and IDs as a single typed object. Updating
+        // clamps does not recalculate support candidates or grow a provenance chain.
+        internal static void AppendRetainedConnections(QuantityReport old, ISet<string> keptIds,
+            List<QuantityConnectionPassport> into)
+        {
+            if (keptIds.Count == 0) return;
+            var scope = new HashSet<string>(StringComparer.Ordinal);
+            foreach (var element in old.elements)
+                if (keptIds.Contains(element.element_id))
+                    foreach (string zone in element.zone_ids) scope.Add(zone);
+            if (scope.Count == 0) return;
+            if (old.connection_passports == null || old.connection_passports.Count == 0)
+            {
+                into.Add(UnavailableConnections(old.run_id + ":connections:legacy", old.run_id, scope,
+                    "У сохранённого каркаса отсутствует паспорт соединений. Для его получения перестройте подсистему целиком."));
+                return;
+            }
+            foreach (var passport in old.connection_passports)
+            {
+                bool complete = true;
+                foreach (string zone in passport.zone_ids) if (!scope.Contains(zone)) complete = false;
+                foreach (var member in passport.members)
+                {
+                    if (!keptIds.Contains(member.rail_element_id)) complete = false;
+                    foreach (var support in member.supports)
+                        foreach (string id in support.bracket_element_ids) if (!keptIds.Contains(id)) complete = false;
+                }
+                if (complete) into.Add(passport);
+                else into.Add(UnavailableConnections(passport.passport_id, passport.source_run_id, scope,
+                    "Сохранена только часть каркаса прежнего паспорта соединений. Для нового паспорта перестройте подсистему целиком."));
+            }
+        }
+
+        private static QuantityConnectionPassport UnavailableConnections(string id, string sourceRun, IEnumerable<string> zones, string reason)
+        {
+            var p = new QuantityConnectionPassport { passport_id = id, source_run_id = sourceRun, status = "unavailable", reason = reason,
+                scheme = "vertical", zone_ids = new List<string>(zones) };
+            p.zone_ids.Sort(StringComparer.Ordinal);
+            return p;
+        }
+        private static string ElementId(string run, string category, int index)
+        { return run + ":" + category + ":" + index.ToString(CultureInfo.InvariantCulture); }
+        private static Dictionary<string, object> Object(object value)
+        {
+            var result = value as Dictionary<string, object>;
+            if (result == null) throw new InvalidOperationException("Некорректный объект паспорта соединений.");
+            return result;
+        }
+        private static int Integer(object value)
+        {
+            if (value is bool || value is string) throw new InvalidOperationException("Индекс паспорта соединений должен быть числом.");
+            double number = Number(value);
+            if (number < int.MinValue || number > int.MaxValue || number != Math.Floor(number))
+                throw new InvalidOperationException("Некорректный целочисленный индекс или счётчик паспорта соединений.");
+            return (int)number;
+        }
+        private static int Index(object value, int count)
+        {
+            int index = Integer(value);
+            if (index < 0 || index >= count) throw new InvalidOperationException("Ссылка паспорта соединений выходит за состав каркаса.");
+            return index;
         }
 
         internal static void AppendRetainedProvenance(QuantityReport old, ISet<string> keptIds, List<object> into)

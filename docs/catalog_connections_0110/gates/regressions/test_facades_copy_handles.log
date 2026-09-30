@@ -1,0 +1,18 @@
+OK legacy copied opening cannot delete originals
+OK legacy opening requires explicit migration
+OK legacy copied parapet cannot delete original
+OK legacy parapet requires explicit migration
+OK COPY contour alone preserves 2 original lines
+OK COPY complete set replaces only its 2 cloned lines
+OK ordinary regeneration replaces its 2 owned lines
+OK parapet root and visible line resolve same 5 m owner (deduplication)
+OK COPY visible line alone cannot borrow original parapet quantity
+OK COPY parapet contour alone preserves original top
+OK COPY complete parapet replaces only clone
+OK ordinary parapet regeneration deletes its own line
+OK unrelated layer is never erased
+OK RESET accepts explicitly selected old scheme line
+OK RESET never erases selected source contour
+OK RESET never erases another source parapet on scheme layer
+OK RESET never erases object on unrelated layer
+Scope: real product methods + CAD doubles; live AutoCAD COPY not executed.

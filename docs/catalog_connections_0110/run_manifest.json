@@ -1,0 +1,117 @@
+{
+  "results": [
+    {
+      "name": "mandatory",
+      "command": [
+        "/workspace/scratch/ba306982747c/verification_deps/venv/bin/python3",
+        "tools/atr_review_3009/run_checks.py",
+        "--out",
+        "/workspace/scratch/ba306982747c/catalog_connections_validation_final/gates"
+      ],
+      "returncode": 0,
+      "seconds": 171.236
+    },
+    {
+      "name": "compile",
+      "command": [
+        "/workspace/scratch/ba306982747c/verification_deps/venv/bin/python3",
+        "tools/fixes_3009/compile_facades.py",
+        "--references",
+        "/workspace/scratch/ba306982747c/verification_deps/compile_refs",
+        "--out",
+        "/workspace/scratch/ba306982747c/catalog_connections_validation_final/compile"
+      ],
+      "returncode": 0,
+      "seconds": 5.561
+    },
+    {
+      "name": "zones_full",
+      "command": [
+        "/workspace/scratch/ba306982747c/verification_deps/venv/bin/python3",
+        "Facades/tools/zones_synth.py"
+      ],
+      "returncode": 0,
+      "seconds": 101.284
+    },
+    {
+      "name": "tile_full",
+      "command": [
+        "/workspace/scratch/ba306982747c/verification_deps/venv/bin/python3",
+        "AClad/tools/attile_synth.py"
+      ],
+      "returncode": 0,
+      "seconds": 75.901
+    },
+    {
+      "name": "frame_full_2909",
+      "command": [
+        "/workspace/scratch/ba306982747c/verification_deps/venv/bin/python3",
+        "AFrame/tools/frame_synth.py",
+        "--seed",
+        "2909"
+      ],
+      "returncode": 0,
+      "seconds": 40.704
+    },
+    {
+      "name": "frame_full_77",
+      "command": [
+        "/workspace/scratch/ba306982747c/verification_deps/venv/bin/python3",
+        "AFrame/tools/frame_synth.py",
+        "--seed",
+        "77"
+      ],
+      "returncode": 0,
+      "seconds": 41.253
+    },
+    {
+      "name": "frame_full_5",
+      "command": [
+        "/workspace/scratch/ba306982747c/verification_deps/venv/bin/python3",
+        "AFrame/tools/frame_synth.py",
+        "--seed",
+        "5"
+      ],
+      "returncode": 0,
+      "seconds": 39.662
+    },
+    {
+      "name": "roles_full_2909",
+      "command": [
+        "/workspace/scratch/ba306982747c/verification_deps/venv/bin/python3",
+        "tools/roles_synth.py",
+        "--seed",
+        "2909"
+      ],
+      "returncode": 0,
+      "seconds": 12.064
+    },
+    {
+      "name": "roles_full_77",
+      "command": [
+        "/workspace/scratch/ba306982747c/verification_deps/venv/bin/python3",
+        "tools/roles_synth.py",
+        "--seed",
+        "77"
+      ],
+      "returncode": 0,
+      "seconds": 10.92
+    },
+    {
+      "name": "roles_full_5",
+      "command": [
+        "/workspace/scratch/ba306982747c/verification_deps/venv/bin/python3",
+        "tools/roles_synth.py",
+        "--seed",
+        "5"
+      ],
+      "returncode": 0,
+      "seconds": 11.071
+    }
+  ],
+  "input_files_count": 197,
+  "inputs_unchanged": true,
+  "changed_inputs": [],
+  "live_autocad_checked": false,
+  "release_published": false
+}

@@ -5,8 +5,8 @@
 проверить, потом писать. Честность важнее лести.
 
 ## Что где
-- Актуальный план единого комплекса НВФ/СФТК — `docs/FACADE_COMPLEX_ROADMAP_30.09.md`. Q-01…Q-06 реализованы: `ATFTABLE → Облицовка / Подсистема`, паспорта физических деталей AClad/AFrame, явная регистрация ручных образцов, проверка актуальности и общий вывод DWG/XLSX. Поведение/границы — `docs/CLADDING_QUANTITIES_30.09.md` и `docs/FRAME_QUANTITIES_30.09.md`, `docs/MANUAL_QUANTITIES_01.10.md`; далее каталог/соединения, узлы и материалы.
-- Последняя передача контекста — `docs/HANDOFF_NEXT_SESSION_30.09.md`; актуальные проверки — `docs/manual_quantities_0110/verification_manifest.json`, подтверждение отправки и CI — `docs/manual_quantities_0110/github_publication.json` (предыдущие — `docs/frame_quantities_3009/`, `docs/quantities_3009/`, `docs/static_review_3009/` и `docs/atr_review_3009/`).
+- Актуальный план единого комплекса НВФ/СФТК — `docs/FACADE_COMPLEX_ROADMAP_30.09.md`. Q-01…Q-06 реализованы: `ATFTABLE → Облицовка / Подсистема`, паспорта физических деталей AClad/AFrame, явная регистрация ручных образцов, проверка актуальности и общий вывод DWG/XLSX. Поведение/границы — `docs/CLADDING_QUANTITIES_30.09.md` и `docs/FRAME_QUANTITIES_30.09.md`, `docs/MANUAL_QUANTITIES_01.10.md`; этап 2А добавляет справочные идентичности и геометрический паспорт соединений через `ATFTABLE → Подсистема → Соединения` ([границы](docs/CATALOG_CONNECTIONS_01.10.md)). Далее подтверждённые изделия/монтажный контракт, расчёт, узлы и материалы.
+- Последняя передача контекста — `docs/HANDOFF_NEXT_SESSION_30.09.md`; актуальные проверки — `docs/catalog_connections_0110/verification_manifest.json`, подтверждение отправки и CI — `docs/catalog_connections_0110/github_publication.json` (предыдущие — `docs/manual_quantities_0110/`, `docs/frame_quantities_3009/`, `docs/quantities_3009/`, `docs/static_review_3009/` и `docs/atr_review_3009/`).
 - Продолжение статической ревизии после `ad2a0a2` — `docs/STATIC_MODEL_REVIEW_30.09.md`, актуальные проверки — `docs/static_review_3009/verification_manifest.json`. Межэтажная расчётная выдача заблокирована до модели опор/стыков; manual сохранён. Полная статическая модель vertical/ortho также не подтверждена, даже если ограниченная цепочка и screening прошли.
 - Рабочая ветка — `feat/auto-reactor` (`main` сильно отстаёт; слияние в `main`
   — ТОЛЬКО по слову Дениса «Пушим»).
@@ -37,6 +37,7 @@
 - Чистое ядро работает с DTO. Не обращаться к CAD API из циклов расчётных вариантов и фоновых потоков. Не запускать полный пересчёт/обход DWG из реактора.
 - Общие источники проверять один раз в пределах read-only операции; кеш не переносить через диалог или изменение DWG. COPY и повреждённые ссылки не пропускать ради скорости.
 - Паспорт каркаса хранит уникальные источники один раз, новые Entry v2 обоих видов содержат типизированный report; опубликованные cladding Entry v1 остаются читаемыми. Не возвращать вложенную строковую сериализацию больших отчётов и повторную BuildRows в UI.
+- Геометрический паспорт соединений использует координатные индексы и ID того же снимка элементов; не копировать полную геометрию и не искать все кронштейны для каждой направляющей. Совпадения остаются кандидатами, fixed/sliding и непрерывность не угадываются.
 - Ручной импорт: явное соответствие образца, один снимок CAD → чистый mapper → свежая проверка → пакетная запись индекса зоны. Не угадывать длину по наибольшему dynamic double или общему bbox; COPY не включать без явного импорта. Один общий ModelSpace scan, словари дублей, кеш подготовленных правил на операцию.
 - Масштаб проверять по зонам, деталям и разным типоразмерам; считать CAD-обращения, память, размер записи и число обходов. Времена этапов выводить одной сводкой, без сообщений на каждую деталь. Фиксировать оставшийся технический долг, подробнее `docs/FRAME_QUANTITIES_30.09.md`.
 
@@ -45,7 +46,7 @@
 export PYTHONUTF8=1
 (cd Facades/engine && python3 test_facade_zones.py && python3 test_facades_engine.py)
 (cd AClad/engine && python3 test_cladding_plan.py && python3 test_clad_engine.py && python3 test_tile_pattern.py && python3 audit_clad.py)
-(cd AFrame/engine && python3 test_frame_plan.py && python3 test_frame_calc.py && python3 test_frame_engine.py && python3 test_frame_topology.py && python3 audit_frame.py)
+(cd AFrame/engine && python3 test_frame_plan.py && python3 test_frame_calc.py && python3 test_frame_engine.py && python3 test_frame_topology.py && python3 test_frame_topology_index.py && python3 test_frame_connections.py && python3 audit_frame.py)
 python3 tools/xmod_check.py --no-fixture      # стыки модулей (ATSPEC X6 — не фасады, известен)
 python3 AFrame/tools/frame_synth.py --quick   # F16 исправлен 30.09; исключение больше не требуется
 python3 Facades/tools/zones_synth.py --quick

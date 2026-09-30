@@ -121,6 +121,8 @@ jobs:
           python test_frame_engine.py
           python test_frame_rules.py
           python test_frame_topology.py
+          python test_frame_topology_index.py
+          python test_frame_connections.py
 
       - name: Native zone geometry regressions (no AutoCAD host)
         shell: pwsh
@@ -201,6 +203,23 @@ jobs:
           python tools/manual_quantities_0110/test_manual_cad.py --exe build_manual_cad/ManualCadCheck.exe --performance --out manual_cad_perf_results
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           python tools/manual_quantities_0110/test_manual_output.py --out manual_output_results
+          exit $LASTEXITCODE
+
+      - name: Facade connection passports (source identities, typed data, XLSX and indexed joins)
+        shell: pwsh
+        env:
+          PYTHONUTF8: "1"
+          PYTHONIOENCODING: "utf-8"
+        run: |
+          python tools/catalog_connections_0110/test_connection_store.py --out connection_store_results
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          python tools/catalog_connections_0110/test_clamps_manual_boundary.py --out connection_clamps_boundary_results
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          python tools/catalog_connections_0110/test_connection_table.py --out connection_table_results --report connection_store_results/independent_zones_report.json
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          python tools/catalog_connections_0110/reproduce_topology_performance.py --out connection_performance_results
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          python docs/facades_beginner_3009/replay_examples.py --out connection_tutorial_results.json
           exit $LASTEXITCODE
 
       - name: Facades quick gates (audits, contracts, synth)

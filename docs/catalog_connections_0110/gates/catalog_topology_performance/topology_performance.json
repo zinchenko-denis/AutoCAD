@@ -1,0 +1,130 @@
+{
+  "schema": "facade_topology_performance/1",
+  "environment": {
+    "python": "3.12.14",
+    "platform": "Linux-6.18.44-x86_64-with-glibc2.39"
+  },
+  "scope": "Pure Python synthetic geometry; no native AutoCAD measurements.",
+  "timing_policy": "One measured run per fixture; observational, not a pass/fail threshold.",
+  "baseline": "Frozen 0a397c2 brute-force oracle from test_frame_topology_index.py",
+  "source_sha256": {
+    "AFrame/engine/frame_topology.py": "2455ab874309d1382591800acce35dd3bde04ea3be6519f8b1de89dd5514f5d5",
+    "AFrame/engine/frame_spatial.py": "003efc0e73b344d50d4465d2bc1bfc87f8ca149c7d443a1e7d9061e6dbfd6cec",
+    "AFrame/engine/test_frame_topology_index.py": "d8e139847c458cdf87fddf24b7c790e15e479ff4c2bbbd3a4848757e6560a1a7",
+    "tools/catalog_connections_0110/reproduce_topology_performance.py": "ada426a674eeea6968d5a3d213dd1fb49c50137181c373675c6cd7cf431f5145"
+  },
+  "counting_dictionaries": [
+    {
+      "rails": 100,
+      "brackets": 300,
+      "baseline_bracket_x_reads": 30000,
+      "indexed_bracket_x_reads": 900,
+      "full_output_equal": true,
+      "output_sha256": "aacf88bd54102e626037bfbc59d96ed7a945db52eea3b79ae47dd1e3d4d0c0b9",
+      "diagnostics": {
+        "point_queries": 100,
+        "segment_queries": 0,
+        "index_nodes_visited": 1508,
+        "candidates_tested": 300,
+        "matches_emitted": 300
+      }
+    },
+    {
+      "rails": 500,
+      "brackets": 1500,
+      "baseline_bracket_x_reads": 750000,
+      "indexed_bracket_x_reads": 4500,
+      "full_output_equal": true,
+      "output_sha256": "f37a95dbf69337a5533bf414326474cb1985bdb4ae9139c966286c6cf139c0f9",
+      "diagnostics": {
+        "point_queries": 500,
+        "segment_queries": 0,
+        "index_nodes_visited": 8604,
+        "candidates_tested": 1500,
+        "matches_emitted": 1500
+      }
+    },
+    {
+      "rails": 1000,
+      "brackets": 3000,
+      "baseline_bracket_x_reads": 3000000,
+      "indexed_bracket_x_reads": 9000,
+      "full_output_equal": true,
+      "output_sha256": "51a6db59b8a28307f66899355467de4ef0854b552dcf61074fa3ae76e7d179e6",
+      "diagnostics": {
+        "point_queries": 1000,
+        "segment_queries": 0,
+        "index_nodes_visited": 19208,
+        "candidates_tested": 3000,
+        "matches_emitted": 3000
+      }
+    }
+  ],
+  "normal_dictionaries": [
+    {
+      "fixture": "separate_axes",
+      "rails": 1000,
+      "brackets": 3000,
+      "baseline_seconds": 0.19812907799860113,
+      "indexed_seconds": 0.022571477999008493,
+      "full_output_equal": true,
+      "output_sha256": "51a6db59b8a28307f66899355467de4ef0854b552dcf61074fa3ae76e7d179e6",
+      "diagnostics": {
+        "point_queries": 1000,
+        "segment_queries": 0,
+        "index_nodes_visited": 19208,
+        "candidates_tested": 3000,
+        "matches_emitted": 3000
+      }
+    },
+    {
+      "fixture": "separate_axes",
+      "rails": 10000,
+      "brackets": 30000,
+      "baseline_seconds": 20.17907719199866,
+      "indexed_seconds": 0.4327536919990962,
+      "full_output_equal": true,
+      "output_sha256": "b38bf866f971c04e40a695af72672a8cc66f4d20e5bf500b652b4d69a5f1490a",
+      "diagnostics": {
+        "point_queries": 10000,
+        "segment_queries": 0,
+        "index_nodes_visited": 293552,
+        "candidates_tested": 30000,
+        "matches_emitted": 30000
+      }
+    },
+    {
+      "fixture": "tall_same_axis_stack",
+      "rails": 1000,
+      "brackets": 3000,
+      "baseline_seconds": 0.3596157319989288,
+      "indexed_seconds": 0.026673452997783897,
+      "full_output_equal": true,
+      "output_sha256": "b6f6062a6f68b9969b85375e1f10f7d5a5f72003bc090fd59c1fd5fb8fa654fb",
+      "diagnostics": {
+        "point_queries": 1000,
+        "segment_queries": 0,
+        "index_nodes_visited": 17288,
+        "candidates_tested": 3000,
+        "matches_emitted": 3000
+      }
+    },
+    {
+      "fixture": "tall_same_axis_stack",
+      "rails": 10000,
+      "brackets": 30000,
+      "baseline_seconds": 34.92283455500001,
+      "indexed_seconds": 0.4189747409982374,
+      "full_output_equal": true,
+      "output_sha256": "33ff82c5e06c2c85cfb75302342d328c7487e87bc775436d16ca5e015469e5a2",
+      "diagnostics": {
+        "point_queries": 10000,
+        "segment_queries": 0,
+        "index_nodes_visited": 254960,
+        "candidates_tested": 30000,
+        "matches_emitted": 30000
+      }
+    }
+  ],
+  "status": "passed"
+}

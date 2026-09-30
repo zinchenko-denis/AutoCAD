@@ -1,0 +1,2 @@
+CladLabelCleanupCheck: checks=50, failures=0; actual RemoveData with CAD doubles, not AutoCAD
+Clad label cleanup: PASS manifest: /workspace/scratch/ba306982747c/catalog_connections_validation_final/gates/regressions/clad_label_cleanup/manifest.json

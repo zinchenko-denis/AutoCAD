@@ -5,7 +5,7 @@ namespace AFacadesPlugin
 {
     // Presentation contract shared by the table command, preview and exports.
     // The existing cladding row builder remains the authoritative cladding API.
-    internal sealed class QuantityTableView
+    internal sealed partial class QuantityTableView
     {
         internal string Title, Scope, Coverage;
         internal bool Complete;

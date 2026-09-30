@@ -8,6 +8,8 @@ connections, moment transfer, gravity-load distribution or cantilever capacity.
 """
 import math
 
+from frame_spatial import BoundsIndex
+
 MATCH_TOL = 0.5  # Coordinate rounding only; not a structural allowance.
 
 
@@ -41,6 +43,85 @@ def _member_geometry(index, rail, supports, tolerance):
                 coordinate_match_tolerance=tolerance)
 
 
+def geometric_members(sub, rails, hrails, brackets, member_zones=None,
+                      rail_gap=0.0, diagnostics=None):
+    """Read candidate support intersections without applying calculation rules.
+
+    Indexes live for this call only. Exact legacy coordinate comparisons and
+    source order are retained; no quantization or structural tolerance is added.
+    Optional counters measure work and never become engineering output.
+    """
+    zones = list(member_zones or ["row"] * len(rails))
+    if len(zones) != len(rails) or any(z not in ("row", "corner") for z in zones):
+        raise ValueError("member_zones must contain one row/corner entry per rail")
+    if diagnostics is not None:
+        for name in ("point_queries", "segment_queries", "index_nodes_visited",
+                     "candidates_tested", "matches_emitted"):
+            diagnostics[name] = 0
+    bracket_index = BoundsIndex(((bi, b["x"], b["x"], b["y"], b["y"])
+                                 for bi, b in enumerate(brackets)), diagnostics) \
+        if (sub == "vertical" and rails) or hrails else None
+    kinds = ("НГП", "СП-60-40") if sub == "interfloor" else ("ГП-40-40",)
+    horizontal_index = BoundsIndex(
+        ((hi, h["x0"] - MATCH_TOL, h["x1"] + MATCH_TOL, h["y"], h["y"])
+         for hi, h in enumerate(hrails) if h.get("kind") in kinds), diagnostics) \
+        if sub != "vertical" and rails else None
+    members = []
+    for index, rail in enumerate(rails):
+        matches = []
+        tolerance = MATCH_TOL
+        if sub == "vertical":
+            candidates = bracket_index.query(near_x=(rail["x"], MATCH_TOL),
+                y=(rail["y0"] - MATCH_TOL, rail["y1"] + MATCH_TOL))
+            if diagnostics is not None:
+                diagnostics["point_queries"] += 1
+                diagnostics["candidates_tested"] += len(candidates)
+            for bi in candidates:
+                bracket = brackets[bi]
+                if abs(bracket["x"] - rail["x"]) <= MATCH_TOL and \
+                        rail["y0"] - MATCH_TOL <= bracket["y"] <= rail["y1"] + MATCH_TOL:
+                    matches.append((bracket["y"], "brackets", bi, bracket.get("kind")))
+        else:
+            # Interfloor uses the pre-existing endpoint/splice matching rule.
+            # This only records candidate intersections across that small gap.
+            tolerance = float(rail_gap) / 2.0 + 1.0 if sub == "interfloor" else MATCH_TOL
+            candidates = horizontal_index.query(x=(rail["x"], rail["x"]),
+                y=(rail["y0"] - tolerance, rail["y1"] + tolerance))
+            if diagnostics is not None:
+                diagnostics["segment_queries"] += 1
+                diagnostics["candidates_tested"] += len(candidates)
+            for hi in candidates:
+                horizontal = hrails[hi]
+                if horizontal.get("kind") in kinds and \
+                        horizontal["x0"] - MATCH_TOL <= rail["x"] <= horizontal["x1"] + MATCH_TOL and \
+                        rail["y0"] - tolerance <= horizontal["y"] <= rail["y1"] + tolerance:
+                    matches.append((horizontal["y"], "hrails", hi, horizontal.get("kind")))
+        if diagnostics is not None:
+            diagnostics["matches_emitted"] += len(matches)
+        member = _member_geometry(index, rail, _unique_supports(matches), tolerance)
+        member["zone"] = zones[index]
+        members.append(member)
+
+    horizontal_members = []
+    for hi, horizontal in enumerate(hrails):
+        candidates = bracket_index.query(
+            x=(horizontal["x0"] - MATCH_TOL, horizontal["x1"] + MATCH_TOL),
+            near_y=(horizontal["y"], MATCH_TOL))
+        if diagnostics is not None:
+            diagnostics["point_queries"] += 1
+            diagnostics["candidates_tested"] += len(candidates)
+        matches = [(b["x"], "brackets", bi, b.get("kind"))
+                   for bi in candidates for b in (brackets[bi],)
+                   if abs(b["y"] - horizontal["y"]) <= MATCH_TOL
+                   and horizontal["x0"] - MATCH_TOL <= b["x"] <= horizontal["x1"] + MATCH_TOL]
+        if diagnostics is not None:
+            diagnostics["matches_emitted"] += len(matches)
+        horizontal_members.append(dict(index=hi, kind=horizontal.get("kind"),
+            geometry={key: horizontal[key] for key in ("y", "x0", "x1")},
+            bracket_intersections=_unique_supports(matches), strength="not_verified"))
+    return members, horizontal_members
+
+
 def screen_layout(sub, rails, hrails, brackets, calc_inputs, member_zones=None,
                   rail_gap=0.0):
     """Return a serializable inventory and *limited* geometric screening result.
@@ -53,41 +134,8 @@ Interfloor has no confirmed model of the emitted joints/constraints, regardless
 of the number of intersections. Its existing free-end refusal has precedence
 in the caller.
     """
-    zones = list(member_zones or ["row"] * len(rails))
-    if len(zones) != len(rails) or any(z not in ("row", "corner") for z in zones):
-        raise ValueError("member_zones must contain one row/corner entry per rail")
-    members = []
-    for index, rail in enumerate(rails):
-        matches = []
-        tolerance = MATCH_TOL
-        if sub == "vertical":
-            for bi, bracket in enumerate(brackets):
-                if abs(bracket["x"] - rail["x"]) <= MATCH_TOL and \
-                        rail["y0"] - MATCH_TOL <= bracket["y"] <= rail["y1"] + MATCH_TOL:
-                    matches.append((bracket["y"], "brackets", bi, bracket.get("kind")))
-        else:
-            # Interfloor uses the pre-existing endpoint/splice matching rule.
-            # This only records candidate intersections across that small gap.
-            tolerance = float(rail_gap) / 2.0 + 1.0 if sub == "interfloor" else MATCH_TOL
-            kinds = ("НГП", "СП-60-40") if sub == "interfloor" else ("ГП-40-40",)
-            for hi, horizontal in enumerate(hrails):
-                if horizontal.get("kind") in kinds and \
-                        horizontal["x0"] - MATCH_TOL <= rail["x"] <= horizontal["x1"] + MATCH_TOL and \
-                        rail["y0"] - tolerance <= horizontal["y"] <= rail["y1"] + tolerance:
-                    matches.append((horizontal["y"], "hrails", hi, horizontal.get("kind")))
-        member = _member_geometry(index, rail, _unique_supports(matches), tolerance)
-        member["zone"] = zones[index]
-        members.append(member)
-
-    horizontal_members = []
-    for hi, horizontal in enumerate(hrails):
-        matches = [(b["x"], "brackets", bi, b.get("kind"))
-                   for bi, b in enumerate(brackets)
-                   if abs(b["y"] - horizontal["y"]) <= MATCH_TOL
-                   and horizontal["x0"] - MATCH_TOL <= b["x"] <= horizontal["x1"] + MATCH_TOL]
-        horizontal_members.append(dict(index=hi, kind=horizontal.get("kind"),
-            geometry={key: horizontal[key] for key in ("y", "x0", "x1")},
-            bracket_intersections=_unique_supports(matches), strength="not_verified"))
+    members, horizontal_members = geometric_members(
+        sub, rails, hrails, brackets, member_zones, rail_gap)
 
     reasons = []
     if not members:

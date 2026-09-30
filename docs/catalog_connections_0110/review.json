@@ -1,0 +1,30 @@
+{
+  "status": "review_completed_no_remaining_blocking_findings",
+  "review_scope": "Source provenance, geometry semantics, indexed support matching, typed contract, retention and table integration; not structural design approval.",
+  "reviewers": [
+    "catalog_sources: primary-source and engineering-semantics review",
+    "catalog_architecture: independent index/C#/integration review and mixed-manual defect reproduction",
+    "root: integration, scope, contract completeness and final validation review"
+  ],
+  "closed_findings": [
+    "Neighbouring axis pieces are not represented as confirmed joints or lap splices.",
+    "Unknown source has no invented type-1 fallback.",
+    "Zero-support display cannot imply summing two full-length free ends.",
+    "Source identity and revision are visible in the table; no SKU is assigned.",
+    "Full original-run rail membership and cross-report passport conflicts are checked.",
+    "Manual contributions are not adopted into generated frame metadata during clamps-only regeneration."
+  ],
+  "source_sha256": {
+    "Common/FacadeQuantities.cs": "b092bf95f154d6aa8041936bffa79a82c613d7ac8f27fee9d1e6d7c0cde09f90",
+    "AFrame/src/AFramePlugin/FrameQuantities.cs": "2644b53a4de6f4dd7740e22c62675e066c72b487eb37afdc319eafb606a90120",
+    "AFrame/engine/frame_catalog.py": "947a0277f3a6202dff365c1de6e86c5832dbc2c97e2a810b99d500a5d6f6b163",
+    "AFrame/engine/frame_connections.py": "d4febc1ce6e147f1cbce29cb64690f2c3b592efe4e40b9c88da5c8a2dcc74985",
+    "AFrame/engine/frame_spatial.py": "003efc0e73b344d50d4465d2bc1bfc87f8ca149c7d443a1e7d9061e6dbfd6cec",
+    "AFrame/engine/frame_topology.py": "2455ab874309d1382591800acce35dd3bde04ea3be6519f8b1de89dd5514f5d5",
+    "Facades/src/AFacadesPlugin/ConnectionTableData.cs": "e42c21610f51dfb1d233d6e15397c4094fdb0efa2464cb566150f08ccc65d573",
+    "Facades/src/AFacadesPlugin/FacadeQuantityTableCommand.cs": "198cb83d4fb7c99cc24da4fba81c6cf4c6c14d20d34b320b2da57b72f4fde922",
+    "Facades/src/AFacadesPlugin/QuantityTableIdentity.cs": "82044b27845ff586b475040e4a968398c0325bdf8c6205cd6f5b226597810454"
+  },
+  "live_autocad_checked": false,
+  "structural_design_approval": false
+}

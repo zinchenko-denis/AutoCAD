@@ -1,0 +1,142 @@
+{
+  "status": "PASS",
+  "scope": "Check actual store UTF-8 hashing/compression against legacy whole-buffer operations.\n\nTests empty text, Cyrillic, chunk boundaries, split surrogate pairs and standard\nfallback for isolated surrogates. CAD doubles satisfy compilation only; no DWG,\nAutoCAD host, UI, transaction or installer is exercised. Exit 2 means blocked.\n",
+  "source_sha256": {
+    "Common/GeometryFingerprint.cs": "24114ef7a18a56415313b009d7819c94190efa5ea517df2081d1f51951819332",
+    "Common/ZoneGeometryGuard.cs": "daf06e2822a4d9ef2be818df1bf904779fa202adb1e5bce7fc0ba49c084970b8",
+    "Common/LayoutGeometryGuard.cs": "b582662e3557d023b8a318cf3fc59175616b0ac4f8bdbba0eccf4c2c960338da",
+    "Common/FacadeQuantities.cs": "b092bf95f154d6aa8041936bffa79a82c613d7ac8f27fee9d1e6d7c0cde09f90",
+    "Common/FacadeQuantityStore.cs": "72e8b053ff8f5f87dd0a57ab9a80340f54a845093387e1ffa82348b3d52d5a0a",
+    "Common/FacadeQuantityStore.Frame.cs": "e7abeee9029ebdb074bdd0fe5de08d7ebe9fa3a7b2378c6289a2a222c83ce3e5",
+    "Common/ManualQuantities.cs": "f73ec0d29da2dfe4a61aa496cda5e9ff25632a5dd26bf4d1e2ff85ed6dc3dcb8",
+    "Common/ManualQuantityGeometry.cs": "07b975b09199d87405fce4757c959d00293e4fdf4b003572f80a30f240812693",
+    "Common/FacadeQuantityStore.Manual.cs": "d86511944ec3ee71b44b6539452332ea37a3e4d48823e67ad2275403fb9ce793",
+    "tools/quantities_3009/QuantityCadDoubles.cs": "64f3d9ca1dd988fd95bbd1e135025111800c142b6ea85e5b9663561ab4813cca",
+    "tools/frame_quantities_3009/StoreEncodingProbe.cs": "98cbe82eec7d4acde52c655e6eb294a841497432d3f11ef2d656c07ef07ed1c9",
+    "tools/frame_quantities_3009/test_store_encoding.py": "04880a6860e639ad99695701d9d32f81595444fdfcfad254c1377ec1a2d2823d",
+    "tools/quantities_3009/probe_runtime.py": "2d37fb13990a1b24129dfe79a81ce138875e3c86ef3211d1a3a4f9ec40d150e5"
+  },
+  "compile_returncode": 0,
+  "run_returncode": 0,
+  "result": {
+    "scope": "Production Hash/Compress/Decompress only; no AutoCAD host, database, UI or transaction behavior.",
+    "total": 16,
+    "passed": 16,
+    "failed": 0,
+    "cases": [
+      {
+        "name": "empty",
+        "chars": 0,
+        "utf8_bytes": 0,
+        "status": "PASS",
+        "error": null
+      },
+      {
+        "name": "short_cyrillic",
+        "chars": 40,
+        "utf8_bytes": 74,
+        "status": "PASS",
+        "error": null
+      },
+      {
+        "name": "ascii_1",
+        "chars": 1,
+        "utf8_bytes": 1,
+        "status": "PASS",
+        "error": null
+      },
+      {
+        "name": "ascii_4095",
+        "chars": 4095,
+        "utf8_bytes": 4095,
+        "status": "PASS",
+        "error": null
+      },
+      {
+        "name": "ascii_4096",
+        "chars": 4096,
+        "utf8_bytes": 4096,
+        "status": "PASS",
+        "error": null
+      },
+      {
+        "name": "ascii_4097",
+        "chars": 4097,
+        "utf8_bytes": 4097,
+        "status": "PASS",
+        "error": null
+      },
+      {
+        "name": "ascii_8191",
+        "chars": 8191,
+        "utf8_bytes": 8191,
+        "status": "PASS",
+        "error": null
+      },
+      {
+        "name": "ascii_8192",
+        "chars": 8192,
+        "utf8_bytes": 8192,
+        "status": "PASS",
+        "error": null
+      },
+      {
+        "name": "ascii_8193",
+        "chars": 8193,
+        "utf8_bytes": 8193,
+        "status": "PASS",
+        "error": null
+      },
+      {
+        "name": "ascii_65535",
+        "chars": 65535,
+        "utf8_bytes": 65535,
+        "status": "PASS",
+        "error": null
+      },
+      {
+        "name": "surrogate_pair_cross_4096",
+        "chars": 12597,
+        "utf8_bytes": 21099,
+        "status": "PASS",
+        "error": null
+      },
+      {
+        "name": "surrogate_pair_cross_8192",
+        "chars": 8196,
+        "utf8_bytes": 16389,
+        "status": "PASS",
+        "error": null
+      },
+      {
+        "name": "lonely_high_boundary",
+        "chars": 8194,
+        "utf8_bytes": 12293,
+        "status": "PASS",
+        "error": null
+      },
+      {
+        "name": "lonely_low_boundary",
+        "chars": 8193,
+        "utf8_bytes": 12291,
+        "status": "PASS",
+        "error": null
+      },
+      {
+        "name": "lonely_high_final",
+        "chars": 8192,
+        "utf8_bytes": 8194,
+        "status": "PASS",
+        "error": null
+      },
+      {
+        "name": "repeated_non_bmp",
+        "chars": 16386,
+        "utf8_bytes": 32772,
+        "status": "PASS",
+        "error": null
+      }
+    ]
+  },
+  "sources_unchanged_during_run": true
+}
