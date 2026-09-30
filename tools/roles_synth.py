@@ -21,6 +21,9 @@ AFrame/tools/roles/RolesDump.cs): «поле окна не дошло до дв�
  R8  «только кляммеры» по направляющим полного прогона — те же кляммеры;
  R9  повторный ATFRAME со сменой облицовки: у каждой плитки своя марка шины, возврат к
      клинкеру возвращает его марку; каждый шаг проходит движок;
+ R11 плитка, межэтажная: кусков шины без направляющей под ними нет (30.09, Герман: «в простенках
+     между окон не может не быть вертикальных направляющих… идут вдоль боковых откосов») — кроме
+     простенков уже самого узкого профиля, о которых движок предупредил;
  X1  раскладка и подсистема не теряют зону ATFZONE.
 
 Запуск (из корня репо): PYTHONUTF8=1 python3 tools/roles_synth.py [--n N] [--seed S] [--quick]
@@ -69,6 +72,9 @@ ROLES = [
          actions=[("Cladding", "clinker"), ("RailBrand", "ШК-1"), ("TileStepHCorner", 400)]),
     dict(name="бетон: межэтажная по отметкам", layout="attile240", has_layout=True, floors=True,
          actions=[("Cladding", "concrete"), ("SetSubType", "interfloor"), ("RailBrand", "Б-2")]),
+    dict(name="клинкер: межэтажная, окна с узкими простенками (уже шага)", layout="attile290", has_layout=True,
+         floors=True, piers=True,
+         actions=[("Cladding", "clinker"), ("SetSubType", "interfloor"), ("RailBrand", "ШК-3")]),
     dict(name="бетон: межэтажная без отметок (шаг этажа 3000)", layout="attile240", has_layout=True,
          actions=[("Cladding", "concrete"), ("SetSubType", "interfloor"), ("AskFloors", False),
                   ("FloorStep", 3000)]),
@@ -122,13 +128,41 @@ def dump_roles():
             return dict((o["name"], o) for o in json.load(f))
 
 
+def _unsupported_runs(res):
+    """Прогоны шин, под которыми нет ни одной вертикали (±20 мм по высоте): (y, x0, x1)."""
+    runs = defaultdict(list)
+    for h in res.get("hrails") or []:
+        if h["kind"].startswith("шина"):
+            runs[(h["kind"], h["run"])].append(h)
+    out = []
+    for ps in runs.values():
+        yy, xa, xb = ps[0]["y"], min(p["x0"] for p in ps), max(p["x1"] for p in ps)
+        if not any(r["y0"] - 20.0 <= yy <= r["y1"] + 20.0 and xa - 1e-6 <= r["x"] <= xb + 1e-6
+                   for r in res["rails"]):
+            out.append((yy, xa, xb))
+    return out
+
+
 # ── фасад роли ──
 def facade(rng, role):
     fam = rng.choice(["rect", "rect", "L", "step", "U", "gable"])
     outer = fsy.make_outer(rng, fam)
     wall = Polygon(outer)
-    holes = fsy._windows(rng, wall, rng.randrange(1, 6))
     x0, y0, x1, y1 = wall.bounds
+    if role.get("piers"):
+        # 30.09: ряд окон с простенками уже шага направляющих (80…550 мм) на двух этажах — так было
+        # на эталоне 290×82 (277 кусков шины без опоры в межэтажной до НСП вдоль откосов)
+        holes, xx = [], x0 + rng.randrange(300, 900, 10)
+        w, h = rng.randrange(900, 1600, 10), rng.randrange(1200, 1700, 10)
+        for fy in (y0 + 900, y0 + 900 + 3000):
+            xx2 = xx
+            while xx2 + w < x1 - 300:
+                cand = fsy.rect(xx2, fy, xx2 + w, fy + h)
+                if wall.buffer(1e-6).contains(Polygon(cand)):
+                    holes.append(cand)
+                xx2 += w + rng.randrange(80, 550, 10)
+    else:
+        holes = fsy._windows(rng, wall, rng.randrange(1, 6))
     kinds = {}
     for i, h in enumerate(holes):
         hx0, hy0, hx1, hy1 = Polygon(h).bounds
@@ -374,6 +408,19 @@ def run_role(rng, role, dump, n, stats, first, times):
                         m = re.search(r"кусков шины без направляющей под ними (\d+)", n)
                         if m:
                             INFO["шины без направляющей под ними (кусков), %s" % psub] += int(m.group(1))
+                    if psub == "interfloor":
+                        # 30.09 (Герман): в межэтажной у каждого откоса своя НСП — кусок шины без опоры у
+                        # грани проёма (простенок, откос) — нарушение; у конька фронтона и в простенке уже
+                        # самого узкого профиля (движок предупредил) — справка выше
+                        for yy, xa, xb in _unsupported_runs(res):
+                            wb = [Polygon(h).bounds for h in holes]
+                            at_win = [b for b in wb if b[1] - 20 <= yy <= b[3] + 20 and
+                                      (abs(xa - b[2]) <= 1.0 or abs(xb - b[0]) <= 1.0)]
+                            if at_win and xb - xa >= 60.0 - T:     # уже 60 — профиль не помещается
+                                bad.append(("R11", "%s: межэтажная — шина y=%.0f [%.0f..%.0f] у грани проёма без "
+                                            "направляющей" % (tag, yy, xa, xb)))
+                                DUMP.setdefault((name, "R11"), req)
+                                break
                 if res["clamps"]:
                     bad.append(("R4", "%s: у плитки %d кляммеров" % (tag, len(res["clamps"]))))
             # R3: керамогранит, вертикальная, с раскладкой — у оси руста вдали от проёмов направляющая

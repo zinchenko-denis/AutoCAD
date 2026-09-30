@@ -30,7 +30,11 @@
      5 кронштейнов на 3 м — не откатывать) + доп. ряд над окнами;
  F15 числа конечные, длины > 0;
  F16 «только кляммеры» по направляющим полной расстановки (parts=clamps,
-     rails_fixed) дают те же кляммеры, что полная (23.09b).
+     rails_fixed) дают те же кляммеры, что полная (23.09b);
+ F17 межэтажная (Герман 30.09, ответ на (а) PDF №29; АТР «Вектор-1», тип 4): у каждой боковой
+     грани проёма, за которой стена, — вертикаль вдоль откоса: в полосе до 150 мм от грани (простенок
+     уже 200 — в любом месте простенка), по высоте от перекрытия под проёмом до перекрытия над ним
+     (нет перекрытия — до низа/верха стены), стыки — не шире 12 мм.
 Плитка (Герман 29.09, ответ по №27) — отдельный проход со своим генератором
 случайных чисел (прежние сценарии не сдвигаются), те же F1–F15 плюс:
  T1  вертикальные направляющие в [край+100, край−100] (кроме оконных у граней),
@@ -251,6 +255,10 @@ def check_tile(sc, res):
         win_x |= {round(bx0 - 100.0, 1), round(bx1 + 100.0, 1)}
     axes = sorted({round(r["x"], 1) for r in rails})
     grid = [a for a in axes if a not in win_x]
+    if sc["sub"] == "interfloor":
+        # 30.09b: НСП вдоль откоса в узком простенке — посередине простенка (может быть ближе 100 к краю)
+        grid = [a for a in grid if not any(bx0 - 200.0 - T <= a < bx0 or bx1 < a <= bx1 + 200.0 + T
+                                           for bx0, _by0, bx1, _by1 in boxes)]
     for a in grid:
         if a < x0 + 100.0 - T or a > x1 - 100.0 + T:
             bad.append(("T1", "ось x=%.0f ближе 100 мм к краю зоны" % a))
@@ -445,6 +453,87 @@ def check_place(sc, res, step_max):
             s["brackets_main"] + s["brackets_row"] != len(br) or \
             s["clamps_start"] + s["clamps_row"] + s["clamps_side"] + s["clamps_combo"] != len(cl):
         bad.append(("F13", "сводка не сходится со списками"))
+    if sc["sub"] == "interfloor":
+        bad += _check_flanks(sc, res, wall)
+    return bad
+
+
+def _check_flanks(sc, res, wall):
+    """F17: вертикали межэтажной вдоль боковых откосов (оракул — shapely, отметки из запроса)."""
+    bad = []
+    req = sc["req"]
+    x0, y0, x1, y1 = wall.bounds
+    floors = sorted(float(f) for f in (req.get("floors_y") or []))
+    if not floors and float(req.get("floor_step") or 0) > 0:
+        fs, f = float(req["floor_step"]), y0 + float(req["floor_step"])
+        while f < y1 - 1e-6:
+            floors.append(f)
+            f += fs
+    if not floors:
+        return bad                               # межэтажная без отметок — контур пропущен
+    boxes = [Polygon(h).bounds for h in sc["holes"]]
+    by_x = defaultdict(list)
+    for r in res["rails"]:
+        by_x[round(r["x"], 3)].append((r["y0"], r["y1"]))
+    for bi, (bx0, by0, bx1, by1) in enumerate(boxes):
+        ym = (by0 + by1) / 2.0
+        others = [Polygon([(b[0], b[1]), (b[2], b[1]), (b[2], b[3]), (b[0], b[3])])
+                  for k, b in enumerate(boxes) if k != bi]
+        for sd, edge in ((-1.0, bx0), (1.0, bx1)):
+            pr = Point(edge + 2.0 * sd, ym)
+            if not wall.contains(pr) or any(o.contains(pr) for o in others):
+                continue                         # за гранью не стена
+            ray = LineString([(edge, ym), (edge + sd * 1e7, ym)]).intersection(wall)
+            for o in others:
+                ray = ray.difference(o)
+            far = None
+            for g in getattr(ray, "geoms", [ray]):
+                if g.is_empty:
+                    continue
+                gx = [c[0] for c in g.coords]
+                if min(gx) - T <= edge <= max(gx) + T:
+                    far = max(gx) if sd > 0 else min(gx)
+            if far is None:
+                continue
+            wp = abs(far - edge)
+            if wp < 60.0 - T:
+                continue                         # уже самого узкого С-профиля (60) — не помещается
+            lo_b, hi_b = sorted((edge, far) if wp <= 200.0 + T else (edge, edge + sd * 150.0))
+            lo_n = max([f for f in floors if f <= by0 + T], default=None)
+            hi_n = min([f for f in floors if f >= by1 - T], default=None)
+            good = False
+            for x, iv in by_x.items():
+                if not (lo_b - T <= x <= hi_b + T):
+                    continue
+                col = LineString([(x, y0 - 1.0), (x, y1 + 1.0)]).intersection(wall)
+                seg = None
+                for g in getattr(col, "geoms", [col]):
+                    gy = [c[1] for c in g.coords] if not g.is_empty else []
+                    if gy and min(gy) - T <= ym <= max(gy) + T:
+                        seg = (min(gy), max(gy))
+                if seg is None:
+                    continue
+                need_lo = seg[0] if lo_n is None else max(lo_n, seg[0])
+                need_hi = seg[1] if hi_n is None else min(hi_n, seg[1])
+                need = [(need_lo, need_hi)]
+                for ob in boxes:                   # чужие проёмы на этой оси (и ось на их грани) — не нужно
+                    if ob[0] - T < x < ob[2] + T:
+                        need = [(a, b) for a0, b0 in need for a, b in ((a0, min(b0, ob[1])), (max(a0, ob[3]), b0))
+                                if b - a > T]
+                have = sorted(iv)
+                cov = []
+                for a, b in have:
+                    if cov and a <= cov[-1][1] + 12.0:
+                        cov[-1][1] = max(cov[-1][1], b)
+                    else:
+                        cov.append([a, b])
+                if all(any(c0 - 12.0 <= a and b <= c1 + 12.0 for c0, c1 in cov) for a, b in need):
+                    good = True
+                    break
+            if not good:
+                bad.append(("F17", "межэтажная: у %s грани проёма x=%.0f [%.0f..%.0f] нет вертикали вдоль "
+                            "откоса от перекрытия до перекрытия" % ("левой" if sd < 0 else "правой",
+                                                                    edge, by0, by1)))
     return bad
 
 

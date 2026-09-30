@@ -70,6 +70,8 @@ EPS = 1e-6
 CLAMP_MERGE = 100.0  # мм: ближе — один кляммер (кромка откоса
                      # и шов раскладки почти совпали, 30.07 п.5)
 WIN_NEAR = 200.0     # мм: стойка «принадлежит» грани проёма
+NSP_MIN_PIER = 60.0  # мм: простенок уже самого узкого С-профиля (АТР: a = 60) — НСП вдоль откоса
+                     # там не помещается (окна практически вплотную), 30.09b
 
 
 def _closed(pts):
@@ -614,8 +616,8 @@ def _win_edges(holes, axes, edge_off=0.0):
     """Оконные стойки — где разрешён БОКОВОЙ кляммер (Герман 30.07 п.4:
     только в пределах высоты окна). Берём ось у самой грани (ближе
     WIN_NEAR) и смещённые позиции грань∓edge_off вертикальной.
-    В межэтажной смещения нет (ТЗ §2) и ось может стоять далеко от
-    откоса — тогда боковых не будет: ОТКРЫТЫЙ ВОПРОС В-ц Герману."""
+    В межэтажной ось руста не смещается (ТЗ §2); с 30.09b у каждой грани
+    проёма там своя НСП вдоль откоса (грань∓edge_off) — она в cand."""
     out = []
     for bx0, by0, bx1, by1 in holes:
         cand = []
@@ -1031,8 +1033,14 @@ def _clamps_on_rails(req, sub, system, joints, rows, floors, seam_tol=2.0):
             fl_in = seams + [f for f in (floors_c if sub != "ortho" else [])
                              if a + EPS < f < b - EPS and
                              not any(abs(f - q) <= 50.0 for q in seams)]
+            n0c = len(clamps)
             _piece_clamps(clamps, rows, a, b, x, side, sorted(fl_in), wedges,
                           on_seam=any(abs(x - j) <= seam_tol for j in joints))
+            # 30.09b: у межэтажной НСП вдоль откоса низ — отметка перекрытия (облицовка идёт ниже):
+            # стартовый — только у настоящего низа (под куском нет стены или там проём)
+            if sub == "interfloor" and len(clamps) > n0c and clamps[n0c]["kind"] == "стартовый" and \
+                    _inside_pt(outer, x, a - 30.0, tol=0.0) and not _in_boxes(hole_boxes, x, a - 30.0):
+                del clamps[n0c]
             if not side or sub == "interfloor":
                 _edge_top_clamps(clamps, rows, a, b, x, _ytop(outer, x, b, y1), hole_boxes)
     clamps = _merge_clamps(clamps)
@@ -1437,15 +1445,30 @@ def frame_plan(req):
             # вертикальные профили по рустам (центр руста, БЕЗ
             # смещения у окон): между перекрытиями НСП; куски над/под
             # окнами — ШП-60-20
-            for jx in joints:
-                if jx < x0 - EPS or jx > x1 + EPS:
-                    continue
+            def _if_line(jx, lim=None, flank=False):
+                """Вертикаль межэтажной по оси jx: между перекрытиями НСП, куски над/под окнами —
+                ШП-60-20, вставки (ВС-300/В-70) на узлах НСП×НГП, кляммеры. lim=(низ, верх) — только
+                в этих пределах; flank — НСП вдоль бокового откоса или кромки выреза (30.09b): узел
+                с НГП и на концах, упёртых в перекрытие; стартовый кляммер — только у настоящего
+                низа облицовки (под низом куска нет стены или там проём)."""
                 spans = list(_vspans(outer, jx))
+                if lim is not None:
+                    # до конца стены осталось не больше зазора стыка (перекрытие у самого верха
+                    # фронтона) — НСП до конца стены, как стойка «только кляммеров» (_clamps_on_rails)
+                    tl = gap + 1.0
+                    sp9 = []
+                    for a9, b9 in spans:
+                        lo9, hi9 = max(a9, lim[0]), min(b9, lim[1])
+                        if hi9 - lo9 <= EPS:
+                            continue
+                        sp9.append((a9 if lo9 - a9 <= tl else lo9, b9 if b9 - hi9 <= tl else hi9))
+                    spans = sp9
                 touch = []
                 for bx0, by0, bx1, by1 in hole_boxes:
                     if bx0 - EPS < jx < bx1 + EPS:
                         spans = _sub_y(spans, by0, by1)
                         touch += [by0, by1]
+                made = 0
                 for s_lo, s_hi in spans:
                     if s_hi - s_lo <= EPS:
                         continue
@@ -1468,17 +1491,141 @@ def frame_plan(req):
                                       "len": round(b2 - a2, 4),
                                       "kind": "ШП-60-20" if is_shp
                                       else "НСП"})
+                        made += 1
                     if not is_shp:
-                        # вставки (ВС-300/В-70) на стыках НСП с НГП
-                        for f in fl_in:
+                        # вставки (ВС-300/В-70) на стыках НСП с НГП; у НСП вдоль откоса —
+                        # и на концах, упёртых в перекрытие
+                        nodes = list(fl_in)
+                        if flank:
+                            nodes += [f for f in floors_c
+                                      if (abs(f - s_lo) <= 1.0 or abs(f - s_hi) <= 1.0)
+                                      and not _in_boxes(hole_boxes, jx, f)]
+                        for f in nodes:
                             fittings.append({"x": round(jx, 4),
                                              "y": round(f, 4),
                                              "kind": "вставка"})
+                    n0c = len(clamps)
                     _piece_clamps(clamps, rows, s_lo, s_hi, jx,
                                   False, fl_in, wedges,
                                   on_seam=_on_seam(jx))
+                    if flank and len(clamps) > n0c and clamps[n0c]["kind"] == "стартовый" and \
+                            _inside_pt(outer, jx, s_lo - 30.0, tol=0.0) and \
+                            not _in_boxes(hole_boxes, jx, s_lo - 30.0):
+                        del clamps[n0c]       # низ на перекрытии — облицовка идёт и ниже
                     _edge_top_clamps(clamps, rows, s_lo, s_hi, jx,
                                      _ytop(outer, jx, s_hi, y1), hole_boxes)
+                return made
+
+            for jx in joints:
+                if jx < x0 - EPS or jx > x1 + EPS:
+                    continue
+                _if_line(jx)
+            # 30.09b (Герман, ответ на (а) PDF №29): «в простенках между окон не может не быть
+            # вертикальных направляющих – они там обязательно идут. Идут вдоль боковых откосов». Так и
+            # в АТР «Вектор-1», тип 4 (лист 7, узел 9.19): НСП по обоим бокам проёма от пояса до пояса;
+            # СП-60-40 под окном крепится к ним («к крайним межэтажным профилям», ТЗ 26.07). У каждой
+            # боковой грани проёма, где за ней стена, — НСП вдоль откоса: в edge_offset от грани (как у
+            # окна в остальных подсистемах), в простенке уже 2×edge_offset — посередине простенка; по
+            # высоте — от перекрытия под низом проёма до перекрытия над верхом (нет перекрытия — до
+            # низа/верха стены), стыки и вставки на перекрытиях, как у НСП по осям. Ось руста/сетки уже
+            # у грани (от грани до edge_offset+50 от неё) — она и есть направляющая у откоса (ТЗ: «у окон
+            # по центру руста, без смещения»). Плитка — так же у краёв вырезов и уступов зоны (29.09t
+            # ставил там кусок «кромка +50/50»: в межэтажной он висел, не доходя до НГП; общий блок
+            # 29.09t межэтажную теперь пропускает).
+            off_w = edge_off if edge_off > EPS else edge_rail
+            base_ax = [j for j in joints if x0 - EPS <= j <= x1 + EPS]
+            reqs = []                   # (x, (полоса «своей» оси), низ, верх нужного)
+            narrow = []                 # простенки уже NSP_MIN_PIER у граней проёмов
+
+            def _need(lo_e, hi_e):
+                return (max([f for f in floors_c if f <= lo_e + EPS], default=-1e18),
+                        min([f for f in floors_c if f >= hi_e - EPS], default=1e18))
+            for bi, (bx0, by0, bx1, by1) in enumerate(hole_boxes):
+                oth = [ob for k9, ob in enumerate(hole_boxes)
+                       if k9 != bi and ob[1] < by1 - EPS and ob[3] > by0 + EPS]
+                # простенок у грани меняется по высоте (соседний проём только на части высоты, уступ
+                # стены): делим высоту проёма отметками соседей и вершин контура и на каждом участке
+                # берём ширину стены за гранью; ставим по самому узкому (от NSP_MIN_PIER) — НСП в нём
+                # попадает и во все более широкие
+                cuts9 = sorted({by0, by1} |
+                               {v for ob in oth for v in (ob[1], ob[3]) if by0 + EPS < v < by1 - EPS} |
+                               {q[1] for q in outer if by0 + EPS < q[1] < by1 - EPS})
+                nlo, nhi = _need(by0, by1)
+                for sd, edge in ((-1.0, bx0), (1.0, bx1)):
+                    widths = []
+                    for ya9, yb9 in zip(cuts9, cuts9[1:]):
+                        if yb9 - ya9 <= EPS:
+                            continue
+                        ym9 = (ya9 + yb9) / 2.0
+                        wiv = [(a9, b9) for a9, b9 in _hspans(outer, ym9) if a9 - EPS <= edge <= b9 + EPS]
+                        if not wiv:
+                            continue
+                        on9 = [ob for ob in oth if ob[1] < ym9 < ob[3]]
+                        if sd < 0:
+                            far = max([wiv[0][0]] + [ob[2] for ob in on9 if ob[2] <= edge + EPS])
+                        else:
+                            far = min([wiv[-1][1]] + [ob[0] for ob in on9 if ob[0] >= edge - EPS])
+                        wp = sd * (far - edge)            # ширина простенка на этом участке
+                        if wp > EPS:                      # иначе за гранью не стена (край, вплотную)
+                            widths.append((wp, far))
+                    narrow += [w9 for w9, _f9 in widths if TILE_MIN_RUN <= w9 < NSP_MIN_PIER - EPS]
+                    fit = [(w9, f9) for w9, f9 in widths if w9 >= NSP_MIN_PIER - EPS]
+                    if not fit:
+                        continue                          # стены нет или профиль не помещается
+                    wp, far = min(fit)
+                    # ось на самой грани проёма режется этим проёмом (по высоте окна её нет) —
+                    # «своей» не считается: полоса не доходит до грани на 1e-3
+                    if wp <= 2.0 * off_w + EPS:
+                        zx = (edge + far) / 2.0
+                        band = (min(edge, far) + 1e-3, max(edge, far) - 1e-3)
+                    else:
+                        zx = edge + sd * off_w
+                        bl = edge + sd * (off_w + 50.0)
+                        band = (bl, edge - 1e-3) if sd < 0 else (edge + 1e-3, bl)
+                    reqs.append((zx, band, nlo, nhi))
+            if tile:
+                nv = len(outer)
+                for i in range(nv):
+                    (xa, ya), (xb, yb) = outer[i], outer[(i + 1) % nv]
+                    if abs(xb - xa) > 0.5 or abs(yb - ya) < 100.0:
+                        continue                      # только вертикальные кромки от 100 мм
+                    lo_e, hi_e = min(ya, yb), max(ya, yb)
+                    ym = (lo_e + hi_e) / 2.0
+                    if _pip_strict(outer, xa + 2.0, ym) and not _pip_strict(outer, xa - 2.0, ym):
+                        zx = xa + edge_rail
+                    elif _pip_strict(outer, xa - 2.0, ym) and not _pip_strict(outer, xa + 2.0, ym):
+                        zx = xa - edge_rail
+                    else:
+                        continue
+                    reqs.append((zx, (zx - 50.0, zx + 50.0)) + _need(lo_e, hi_e))
+            flanks = []                 # [x, [(низ, верх), …]] — одна ось на полосу
+            for zx, (b0, b1), nlo, nhi in reqs:
+                if any(b0 - EPS <= j <= b1 + EPS for j in base_ax):
+                    continue
+                hit = [fk for fk in flanks if b0 - EPS <= fk[0] <= b1 + EPS]
+                if hit:
+                    hit[0][1].append((nlo, nhi))
+                else:
+                    flanks.append([zx, [(nlo, nhi)]])
+            flank_iv, n_fl = [], 0
+            for zx, ivs in flanks:
+                mg = []
+                for lo, hi in sorted(ivs):
+                    if mg and lo <= mg[-1][1] + 1.0:
+                        mg[-1][1] = max(mg[-1][1], hi)
+                    else:
+                        mg.append([lo, hi])
+                for lo, hi in mg:
+                    n_fl += _if_line(zx, (lo, hi), flank=True)
+                flank_iv.append((zx, mg))
+            if n_fl:
+                notes.append("контур %d: межэтажная — вдоль боковых откосов%s добавлено НСП %d "
+                             "(от перекрытия до перекрытия)"
+                             % (ci + 1, " и у краёв вырезов" if tile else "", n_fl))
+            if narrow:
+                notes.append("контур %d: у граней проёмов простенков уже %.0f мм — %d (самый узкий "
+                             "%.0f мм): НСП вдоль откоса не помещается — проверьте"
+                             % (ci + 1, NSP_MIN_PIER, len(narrow), min(narrow)))
             # СП-60-40 в подоконной зоне на скобах С1 к крайним
             # межэтажным профилям
             jset = [j for j in joints if x0 - EPS <= j <= x1 + EPS]
@@ -1487,8 +1634,12 @@ def frame_plan(req):
                 # профилям около окна». Ось, СОВПАВШАЯ с гранью проёма,
                 # раньше отбрасывалась (строгое <) и СП тянулся до
                 # следующей — «соединяет СП со следующими направляющими»
-                left = [j for j in jset if j <= bx0 + EPS]
-                right = [j for j in jset if j >= bx1 - EPS]
+                # 30.09b: крайние профили у окна — и НСП вдоль откосов (где они есть на высоте
+                # низа окна)
+                ax_here = jset + [fx for fx, mg in flank_iv
+                                  if any(lo - 1.0 <= by0 <= hi + 1.0 for lo, hi in mg)]
+                left = [j for j in ax_here if j <= bx0 + EPS]
+                right = [j for j in ax_here if j >= bx1 - EPS]
                 if not left or not right:
                     continue
                 la2, ra2 = max(left), min(right)
@@ -1984,7 +2135,7 @@ def frame_plan(req):
         # справа на 100 от края, длина = сторона окна + 100»), даже
         # если рядом нет оси руста — раньше окно, стоящее между
         # осями, оставалось без стоек и без боковых кляммеров.
-        # Межэтажную НЕ трогаем (В-ц: у окна по центру руста).
+        # Межэтажная — своя ветка (30.09b: НСП вдоль откосов, от перекрытия до перекрытия).
         if sub == "vertical" and edge_off > EPS:
             for bx0, by0, bx1, by1 in hole_boxes:
                 for zx in (bx0 - edge_off, bx1 + edge_off):
@@ -2051,7 +2202,8 @@ def frame_plan(req):
         n_notch = 0
         kind_v = {"interfloor": "НСП", "ortho": "Z-профиль"}.get(sub, "направляющая")
         gap_v = float(system.get("rail_gap") or 0.0)
-        for c0, (outer_c, boxes_c) in sorted(tile_geo.items()):
+        # 30.09b: межэтажная ставит НСП у краёв вырезов в своей ветке — от перекрытия до перекрытия
+        for c0, (outer_c, boxes_c) in (sorted(tile_geo.items()) if sub != "interfloor" else []):
             cx0, _cy0, cx1, _cy1 = _bbox(outer_c)
             own = list(sup_c.get(c0, []))
             nv = len(outer_c)
