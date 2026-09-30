@@ -26,6 +26,8 @@ AFrame/tools/roles/RolesDump.cs): «поле окна не дошло до дв�
  R11 плитка, межэтажная: кусков шины без направляющей под ними нет (30.09, Герман: «в простенках
      между окон не может не быть вертикальных направляющих… идут вдоль боковых откосов») — кроме
      простенков уже самого узкого профиля, о которых движок предупредил;
+ R12 расчётный успех явно сохраняет static_model.status=not_verified; межэтажный расчёт
+     останавливается в окне с точной причиной, ручные сценарии выполняются отдельно;
  X1  раскладка и подсистема не теряют зону ATFZONE.
 
 Запуск (из корня репо): PYTHONUTF8=1 python3 tools/roles_synth.py [--n N] [--seed S] [--quick]
@@ -58,6 +60,10 @@ INFO = Counter()
 OUTCOMES = Counter()
 DUMP = {}
 TILES = {"attile290": ((290.0, 82.0), (7.0, 7.0)), "attile240": ((240.0, 71.0), (10.0, 10.0))}
+INTERFLOOR_MODEL_REFUSAL = (
+    "Автоматический расчёт межэтажной подсистемы недоступен: не подтверждены непрерывность направляющих "
+    "через стыки и неподвижные/подвижные соединения. Пересечения НСП с НГП не подтверждают расчётную схему. "
+    "Ручная расстановка доступна по отдельному проектному расчёту.")
 
 # ── роли: действия в окне ATFRAME по порядку, как их сделал бы человек ──
 ROLES = [
@@ -74,11 +80,13 @@ ROLES = [
          has_layout=True, corners="edges",
          actions=[("Cladding", "clinker"), ("RailBrand", "ШК-1"), ("TileStepHCorner", 400)]),
     dict(name="бетон: межэтажная по отметкам", layout="attile240", has_layout=True, floors=True,
+         expected_model_refusal=True,
          actions=[("Cladding", "concrete"), ("SetSubType", "interfloor"), ("RailBrand", "Б-2")]),
     dict(name="клинкер: межэтажная, окна с узкими простенками (уже шага)", layout="attile290", has_layout=True,
-         floors=True, piers=True,
+         floors=True, piers=True, expected_model_refusal=True,
          actions=[("Cladding", "clinker"), ("SetSubType", "interfloor"), ("RailBrand", "ШК-3")]),
     dict(name="бетон: межэтажная без отметок (шаг этажа 3000)", layout="attile240", has_layout=True,
+         expected_model_refusal=True,
          actions=[("Cladding", "concrete"), ("SetSubType", "interfloor"), ("AskFloors", False),
                   ("FloorStep", 3000)]),
     dict(name="клинкер: ортогональная вручную 600/400, хлыст 3 м", layout="attile290", has_layout=True,
@@ -104,6 +112,15 @@ ROLES = [
     dict(name="невнимательный: расчёт с высотой здания 0", invalid=True, layout=None, has_layout=True,
          actions=[("Height", 0)]),
 ]
+
+# Keep the complete geometric lifecycle (including narrow piers and automatic
+# floor levels) in manual mode, separate from the expected UI calculation stop.
+for _role in list(ROLES):
+    if _role.get("expected_model_refusal"):
+        _manual = dict(_role, name=_role["name"] + " — ручной проектный режим",
+                       actions=_role["actions"] + [("Steps", "manual")])
+        _manual.pop("expected_model_refusal")
+        ROLES.append(_manual)
 
 
 def dump_roles():
@@ -307,19 +324,6 @@ def steps_of(res, params):
     return (float(m) if m else None), (float(c) if c else None)
 
 
-def safe_refusal(res):
-    """Only explicit geometry-dependent refusal with no drawing payload is safe.
-
-    Invalid inputs and unsupported settings are not silently permitted here:
-    FrameSettings must reject those before the role reaches the engine.
-    """
-    return (res.get("ok") is False
-            and res.get("error_code") in ("E_UNSUPPORTED_SHINA", "E_CALC_NOT_PASSED",
-                                          "E_CALC_TOPOLOGY_UNSUPPORTED")
-            and bool(res.get("error"))
-            and not any(res.get(k) for k in ("rails", "brackets", "clamps", "hrails", "fittings")))
-
-
 def run_role(rng, role, dump, n, stats, first, times):
     name = role["name"]
     d = dump[name]
@@ -337,6 +341,14 @@ def run_role(rng, role, dump, n, stats, first, times):
     if role.get("invalid"):
         if d["valid"] is None:
             add("R10", "окно пропустило неверный ввод (%s)" % role["actions"])
+        return 0
+    if role.get("expected_model_refusal"):
+        params = d["params"]
+        if d["valid"] != INTERFLOOR_MODEL_REFUSAL or d["describe"] != INTERFLOOR_MODEL_REFUSAL or \
+                params.get("sub_type") != "interfloor" or params.get("calc") is None or params.get("parts") == "clamps":
+            add("R12", "межэтажный расчёт: ожидается точный отказ окна и описания по неподтверждённой модели")
+        else:
+            OUTCOMES["expected_ui_refusal/interfloor_model_unconfirmed"] += 1
         return 0
     if d["valid"] is not None:
         add("R1", "окно отвергло нормальную роль: %s" % d["valid"])
@@ -397,7 +409,7 @@ def run_role(rng, role, dump, n, stats, first, times):
                 req = frame_req(prm, zid, zfull, jx, ry, floors, corners, per_zone)
             res = fre.run(req)
             if not res.get("ok"):
-                if safe_refusal(res):
+                if fsy.safe_refusal(req, res):
                     OUTCOMES["safe_refusal/" + res["error_code"]] += 1
                     INFO["безопасный отказ: " + name + " / " + res["error_code"]] += 1
                 else:
@@ -405,6 +417,12 @@ def run_role(rng, role, dump, n, stats, first, times):
                     DUMP.setdefault((name, "R1"), req)
                 continue
             OUTCOMES["successful_frame_results"] += 1
+            if prm.get("calc") is not None and prm.get("parts") != "clamps":
+                model = res.get("calc_report", {}).get("static_model") or {}
+                if model.get("status") != "not_verified" or \
+                        model.get("geometric_screening", {}).get("status") != "passed" or \
+                        model.get("pieces_merged") is not False or model.get("fixed_sliding") != "not_modeled":
+                    bad.append(("R12", "%s: успешный расчёт не отделяет геометрическую проверку от неподтверждённой статики" % tag))
             psub = prm["sub_type"]
             ptile = prm["cladding"] in ("concrete", "clinker")
             sc = {"outer": outer, "holes": holes, "sub": psub, "req": req}
@@ -495,9 +513,10 @@ def run_role(rng, role, dump, n, stats, first, times):
                 bad.append(("R7", "%s: «только подсистема», а кляммеров %d" % (tag, len(res["clamps"]))))
             # R8: только кляммеры по направляющим полного прогона
             if role.get("clamps_after_full"):
-                full = fre.run(frame_req(d["snapshots"][0]["params"], zid, zfull, jx, ry, floors, corners))
+                full_req = frame_req(d["snapshots"][0]["params"], zid, zfull, jx, ry, floors, corners)
+                full = fre.run(full_req)
                 if not full.get("ok"):
-                    if safe_refusal(full):
+                    if fsy.safe_refusal(full_req, full):
                         OUTCOMES["safe_refusal/full_for_clamps/" + full["error_code"]] += 1
                     else:
                         bad.append(("R8", "%s: полный прогон перед повтором отказал без безопасного статуса" % tag))
@@ -524,6 +543,9 @@ def run_role(rng, role, dump, n, stats, first, times):
 
 
 def main(argv):
+    INFO.clear()
+    OUTCOMES.clear()
+    DUMP.clear()
     ap = argparse.ArgumentParser()
     ap.add_argument("--seed", type=int, default=2909)
     ap.add_argument("--n", type=int, default=12, help="фасадов на роль")
@@ -538,6 +560,12 @@ def main(argv):
     total = 0
     for role in ROLES:
         total += run_role(rng, role, dump, n, stats, first, times)
+    controls, control_outcomes = fsy.check_static_contract()
+    for code, msg in controls:
+        stats["положительные и адресные контроли"][code] += 1
+        first.setdefault(("положительные и адресные контроли", code), msg)
+    for outcome, count in control_outcomes.items():
+        OUTCOMES["control/" + outcome] += count
     print("РОЛИ: ролей %d, фасадов %d, время %.1f с" % (len(ROLES), total, time.time() - t_all))
     for outcome, count in sorted(OUTCOMES.items()):
         print("  [RESULT] %s: %d" % (outcome, count))

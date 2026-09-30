@@ -83,6 +83,8 @@ def main():
         roles.append(role('composite_' + mode, [['Cladding', 'composite'], ['Mode', mode]]))
     roles += [role('nsp2_calc', [['SetSubType', 'interfloor'], ['Profile', 'НСП-2']]),
               role('nsp2_manual', [['SetSubType', 'interfloor'], ['Profile', 'НСП-2'], ['Steps', 'manual']]),
+              role('interfloor_clamps', [['SetSubType', 'interfloor'], ['Mode', 'clamps']]),
+              role('interfloor_invalid_height', [['SetSubType', 'interfloor'], ['Height', 0]]),
               role('gp60_manual', [['Profile','ГП-60-40'],['Steps','manual'],['Mode','frame']]),
               role('gp60_clamps', [['Profile','ГП-60-40'],['Mode','clamps']]),
               role('weight_preserved', [['QClad', 42], ['SetSubType', 'interfloor'], ['SetSubType', 'ortho'], ['SetSubType', 'vertical']])]
@@ -104,21 +106,72 @@ def main():
         result = fe.op_frame(copy.deepcopy(request))
         evidence[name] = dict(request=request, result=result)
         return result
+    def empty_geometry(result):
+        return all(not result.get(key) for key in ('rails', 'hrails', 'brackets', 'clamps', 'fittings'))
+    def static_screen(result, status):
+        model = (result.get('calc_report', {}).get('static_model', {}) if result['ok']
+                 else result.get('static_model', {}))
+        return (model.get('status') == 'not_verified'
+                and model.get('geometric_screening', {}).get('status') == status
+                and model.get('pieces_merged') is False
+                and model.get('fixed_sliding') == 'not_modeled'
+                and model.get('splice_continuity') == 'not_modeled'
+                and (result['ok'] or 'calc_report' not in result))
+    def refused_for(result, code, reason):
+        reasons = result.get('static_model', {}).get('geometric_screening', {}).get('reasons', [])
+        return (not result['ok'] and result.get('error_code') == code and empty_geometry(result)
+                and static_screen(result, 'refused') and bool(reasons)
+                and all(item.get('reason') == reason for item in reasons))
     check('native_roundtrip_all', all(r['roundtrip'] and not r['apply_error'] for r in native.values()))
     check('previous_fix_weight_is_42', native['weight_preserved']['params']['calc']['q_clad'] == 42)
     check('previous_fix_composite_all_clamps_refused', all(native['composite_' + mode]['valid'] for mode in ('all', 'clamps')))
     check('previous_fix_nsp2_calc_refused_manual_allowed', native['nsp2_calc']['valid'] and native['nsp2_manual']['valid'] is None)
     check('material_gamma_native', all(native[f'{c}_vertical_calc']['params']['calc']['gamma_clad'] == (1.2 if c == 'composite' else 1.1) for c in ('porcelain','composite','concrete','clinker')))
+    check('interfloor_native_early_model_refusal', all(
+        'не подтверждены' in (native[f'{c}_interfloor_calc']['valid'] or '')
+        and 'неподвижные/подвижные' in native[f'{c}_interfloor_calc']['describe']
+        for c in ('porcelain', 'composite', 'concrete', 'clinker')))
+    check('interfloor_invalid_numeric_precedes_model_refusal',
+          native['interfloor_invalid_height']['valid'] == 'Высота здания — от 1 до 500 м.')
     # Existing supported path. No source-code copies or hand-built substitute settings.
     base = inputs(native['porcelain_vertical_calc']['params'])
     baseline = run('supported_vertical', base)
     check('supported_vertical_positive', baseline['ok'] and baseline['calc_report']['layout_verification']['passed'])
+    check('vertical_static_model_not_verified', static_screen(baseline, 'passed'))
     req = inputs(native['porcelain_interfloor_calc']['params']); req.pop('corners_x')
-    normal_inter = run('supported_interfloor', req)
-    check('supported_interfloor_positive', normal_inter['ok'] and normal_inter['calc_report']['scheme'] == 'interfloor')
+    normal_inter = run('interfloor_model_unconfirmed', req)
+    check('interfloor_model_typed_empty_refusal', refused_for(normal_inter, 'E_CALC_MODEL_UNCONFIRMED',
+                                                          'interfloor_model_unconfirmed'), normal_inter.get('error'))
     req = inputs(native['porcelain_ortho_calc']['params'])
     normal_ortho = run('supported_ortho', req)
     check('supported_ortho_positive', normal_ortho['ok'] and normal_ortho['calc_report']['scheme'] == 'ortho')
+    check('ortho_static_model_not_verified', static_screen(normal_ortho, 'passed'))
+    # Separate emitted pieces must satisfy the existing coefficient span class.
+    # These native requests retain the 3000 mm calculation length and shorten
+    # only the actual facade, exposing support-count errors without new norms.
+    for sub in ('vertical', 'ortho'):
+        for height, reason in ((600, 'insufficient_supports'), (1000, 'single_span_unsupported'),
+                               (1800, 'span_class_mismatch')):
+            req = inputs(native[f'porcelain_{sub}_calc']['params'])
+            req['contours'][0]['pts'] = [[0, 0], [6000, 0], [6000, height], [0, height]]
+            # One row zone makes the expected refusal independent of corner spacing.
+            req['corners_x'] = []
+            result = run(f'{sub}_{height}_topology', req)
+            check(f'{sub}_{height}_{reason}', refused_for(result, 'E_CALC_TOPOLOGY_UNSUPPORTED', reason),
+                  result.get('unsupported'))
+        req = inputs(native[f'porcelain_{sub}_manual']['params'])
+        manual = run(sub + '_manual', req)
+        check(sub + '_manual_kept', native[f'porcelain_{sub}_manual']['valid'] is None
+              and manual['ok'] and manual['rails'] and 'calc_report' not in manual)
+    manual_inter = run('interfloor_manual', inputs(native['porcelain_interfloor_manual']['params']))
+    check('interfloor_manual_kept', native['porcelain_interfloor_manual']['valid'] is None
+          and manual_inter['ok'] and manual_inter['rails'] and manual_inter['hrails']
+          and 'calc_report' not in manual_inter)
+    clamps_inter = inputs(native['interfloor_clamps']['params'])
+    clamps_inter['rails_fixed'] = manual_inter.get('rails', [])
+    inter_clamps = run('interfloor_clamps', clamps_inter)
+    check('interfloor_clamps_kept', native['interfloor_clamps']['valid'] is None
+          and inter_clamps['ok'] and 'calc_report' not in inter_clamps)
     # Mismatch through the existing public system+sub_type protocol, without a forged profile.
     mixed = copy.deepcopy(base); mixed['sub_type'] = 'interfloor'
     mixed_result = run('mixed_system_scheme', mixed)
@@ -172,8 +225,11 @@ def main():
         known_mass = fc.PROFILES['ШП-60-20-1,2']['q'] + fc.PROFILES['ГП-40-40-1,2']['q']
         check('ortho_real_shp_and_horizontal_gp_mass', normal_ortho['calc_report']['inputs']['q_rails'] >= known_mass,
               {'actual':normal_ortho['calc_report']['inputs']['q_rails'],'required_catalog_sum':known_mass})
-    if normal_inter['ok']:
-        check('interfloor_horizontal_mass_not_reduced', normal_inter['calc_report']['inputs']['q_rails'] >= 3.71)
+    # A rejected geometry may expose arithmetic inputs for diagnostics; this
+    # mass check must never claim that the interfloor static model passed.
+    inter_inputs = normal_inter.get('calc_inputs', {})
+    check('interfloor_refused_input_mass_not_reduced', inter_inputs.get('q_rails', 0) >= 3.71
+          and inter_inputs.get('q_rails_extra', 0) >= 1.4)
     # Source-contract observations; handled by the independent source-contract agent.
     for name, changes in [('unknown_system_string',dict(system='NordFOX')),('unknown_system_dict',dict(system={'name':'NordFOX'})),('unknown_sub_type',dict(sub_type='nordfox'))]:
         req = copy.deepcopy(base); req.update(changes)
@@ -203,6 +259,9 @@ def main():
         result = run('known_exact_' + profile,request)
         check('known_exact_' + profile, result['ok'] and result['rails'] and all(r['profile'] == profile for r in result['rails']))
     all_sources = sources + [source_root/'AFrame/engine/frame_plan.py', source_root/'AFrame/engine/frame_calc.py', source_root/'AFrame/engine/frame_engine.py', source_root/'AFrame/engine/systems.json']
+    topology_source = source_root/'AFrame/engine/frame_topology.py'
+    if topology_source.exists():
+        all_sources.append(topology_source)
     summary = {'mode':'observation' if args.observe else 'regression', 'scope':'Actual native FrameSettings and Python engines; no AutoCAD host or engineering certification.',
                'source_revision':revision, 'source_kind':'git_archive' if args.revision else 'working_tree',
                'source_sha256':{str(p.relative_to(source_root)):digest(p) for p in all_sources},

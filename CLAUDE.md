@@ -6,6 +6,7 @@
 
 ## Что где
 - Последняя передача контекста — `docs/HANDOFF_NEXT_SESSION_30.09.md`; подтверждение отправки и CI — `docs/atr_review_3009/github_publication.json`.
+- Продолжение статической ревизии после `ad2a0a2` — `docs/STATIC_MODEL_REVIEW_30.09.md`, актуальные проверки — `docs/static_review_3009/verification_manifest.json`. Межэтажная расчётная выдача заблокирована до модели опор/стыков; manual сохранён. Полная статическая модель vertical/ortho также не подтверждена, даже если ограниченная цепочка и screening прошли.
 - Рабочая ветка — `feat/auto-reactor` (`main` сильно отстаёт; слияние в `main`
   — ТОЛЬКО по слову Дениса «Пушим»).
 - Фасадные модули (в работе): `Facades/` (ATFZONE — зоны), `AClad/` (ATTILE —
@@ -33,7 +34,7 @@
 export PYTHONUTF8=1
 (cd Facades/engine && python3 test_facade_zones.py && python3 test_facades_engine.py)
 (cd AClad/engine && python3 test_cladding_plan.py && python3 test_clad_engine.py && python3 test_tile_pattern.py && python3 audit_clad.py)
-(cd AFrame/engine && python3 test_frame_plan.py && python3 test_frame_calc.py && python3 test_frame_engine.py && python3 audit_frame.py)
+(cd AFrame/engine && python3 test_frame_plan.py && python3 test_frame_calc.py && python3 test_frame_engine.py && python3 test_frame_topology.py && python3 audit_frame.py)
 python3 tools/xmod_check.py --no-fixture      # стыки модулей (ATSPEC X6 — не фасады, известен)
 python3 AFrame/tools/frame_synth.py --quick   # F16 исправлен 30.09; исключение больше не требуется
 python3 Facades/tools/zones_synth.py --quick

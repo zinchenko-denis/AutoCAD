@@ -259,6 +259,7 @@ namespace AFramePlugin
                 if (QClad <= 0 || QClad > 500) return "Вес облицовки — больше 0 и не больше 500 кг/м².";
                 if (Offset < 20 || Offset > 1000) return "Вынос облицовки — от 20 до 1000 мм.";
                 if (NaMax < 100) return "Усилие вырыва анкера — не меньше 100 Н.";
+                if (InterFloor) return InterfloorCalculationLimit;
             }
             if (!ClampsOnly && Manual)
             {
@@ -276,11 +277,16 @@ namespace AFramePlugin
             return null;
         }
 
+        private const string InterfloorCalculationLimit =
+            "Автоматический расчёт межэтажной подсистемы недоступен: не подтверждены непрерывность направляющих через стыки и неподвижные/подвижные соединения. Пересечения НСП с НГП не подтверждают расчётную схему. Ручная расстановка доступна по отдельному проектному расчёту.";
+
         /// <summary>Что произойдёт по «Разложить» — текст для окна.</summary>
         public string Describe(bool hasLayout)
         {
             if (!ClampsOnly && !Manual && EffSubType == "vertical" && Profile == "ГП-60-40")
                 return "Расчёт ГП-60-40 недоступен: нужны подтверждённые характеристики сечения и масса профиля. Расчёт по ГП-40-40 не подтверждает выбранный ГП-60-40. Выберите другой профиль либо ручной режим по отдельному инженерному расчёту.";
+            if (!ClampsOnly && !Manual && InterFloor)
+                return InterfloorCalculationLimit;
             var sb = new StringBuilder();
             if (IsTile)
             {

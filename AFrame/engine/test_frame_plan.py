@@ -380,10 +380,20 @@ p = frame_plan({"system": "Ортогональная", "sub_type": "ortho",
                          "height": 10, "q_clad": 25, "offset": 260,
                          "na_max": 1280, "e3": 12, "e4": 25,
                          "v_step": 400, "max_step": 600}})
-ok(p["ok"], "FR-C6: ok (%s)" % p.get("error"))
-ok(p["summary"]["calc_steps"] == {"main": 600, "corner": 600},
-   "FR-C6: ортогональная — 600/600 (конструктивный max 600, как "
-   "выводы Новгород-260) (%s)" % p["summary"].get("calc_steps"))
+ok(not p["ok"] and p.get("error_code") == "E_CALC_TOPOLOGY_UNSUPPORTED",
+   "FR-C6: 2400 mm fragment cannot inherit the source multispan coefficients")
+_c6_reasons = p["static_model"]["geometric_screening"]["reasons"]
+ok(_c6_reasons and all(r["reason"] == "span_class_mismatch" and
+                       r["actual_span_class"] == "3" and
+                       r["coefficient_span_class"] == "multi" for r in _c6_reasons),
+   "FR-C6: actual three spans conflict with the applied multispan coefficients")
+ok(not any(p.get(k) for k in ("rails", "hrails", "brackets", "clamps", "fittings")),
+   "FR-C6: topology refusal emits no construction")
+from frame_calc import report as _arithmetic_report
+_c6_arithmetic = _arithmetic_report(p["calc_inputs"])
+ok({"main": _c6_arithmetic["row"]["step"], "corner": _c6_arithmetic["corner"]["step"]}
+   == {"main": 600, "corner": 600} and "calc_report" not in p,
+   "FR-C6: historical arithmetic remains 600/600, without approving this geometry")
 
 
 # ── FR-G (фидбэк Германа 27.07): угловые зоны от УКАЗАННЫХ углов ──
@@ -1246,13 +1256,33 @@ pn = frame_plan(dict(treq, joints_x=[], contours=[{"outer": rect(0, 0, 150, 2400
 ok(pn["ok"] and sorted(set(r["x"] for r in pn["rails"])) == [75],
    "FR-T7: зона уже 200 мм — одна стойка посередине")
 # 29.09c (Герман): у плитки кронштейны ПО РАСЧЁТУ; грузовая ширина = заданный шаг
+# The window fixture contains a one-support and a single-span fragment. Keep
+# it as an exact refusal, and exercise the load-width success on a rectangle.
+for _tile_corner in (600, 400):
+    _tile_refusal = frame_plan(dict(treq, system="Вектор-1", exact_step=False,
+        tile_step_x_corner=_tile_corner,
+        calc={"wind_region": "II", "terrain": "B", "height": 30,
+              "q_clad": 40, "offset": 200, "na_max": 3000}))
+    ok(not _tile_refusal["ok"] and _tile_refusal.get("error_code") == "E_CALC_TOPOLOGY_UNSUPPORTED",
+       "FR-T7: window fragments have an exact topology refusal")
+    _tile_reasons = _tile_refusal["static_model"]["geometric_screening"]["reasons"]
+    ok({r["reason"] for r in _tile_reasons} ==
+       {"insufficient_supports", "single_span_unsupported", "span_class_mismatch"} and
+       all((r["reason"] == "insufficient_supports" and r["support_count"] == 1) or
+           (r["reason"] == "single_span_unsupported" and r["support_count"] == 2) or
+           (r["reason"] == "span_class_mismatch" and r["actual_span_class"] != r["coefficient_span_class"])
+           for r in _tile_reasons), "FR-T7: refusal reasons match actual support counts")
+    ok(not any(_tile_refusal.get(k) for k in ("rails", "hrails", "brackets", "clamps", "fittings"))
+       and "calc_report" not in _tile_refusal, "FR-T7: no geometry or success report on refusal")
 pk = frame_plan(dict(treq, system="Вектор-1", exact_step=False,
+                     contours=[{"outer": rect(0, 0, 3000, 6000)}],
                      calc={"wind_region": "II", "terrain": "B", "height": 30,
                            "q_clad": 40, "offset": 200, "na_max": 3000}))
 ok(pk["ok"] and any("ПО РАСЧЁТУ" in n for n in pk["notes"]) and
    pk["calc_report"]["inputs"]["b_row"] == 600 and pk["calc_report"]["inputs"]["b_corner"] == 600,
    "FR-T7: у плитки расчёт применяется, грузовая ширина = шаг 600 (%s)" % pk.get("error"))
 pk2 = frame_plan(dict(treq, system="Вектор-1", exact_step=False, tile_step_x_corner=400,
+                      contours=[{"outer": rect(0, 0, 3000, 6000)}],
                       calc={"wind_region": "II", "terrain": "B", "height": 30,
                             "q_clad": 40, "offset": 200, "na_max": 3000}))
 ok(pk2["ok"] and pk2["calc_report"]["inputs"]["b_corner"] == 400,

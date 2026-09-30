@@ -10,7 +10,7 @@ from frame_plan import frame_plan
 
 class SupportedFrames(unittest.TestCase):
     def test_calculated_schemes_produce_real_frames(self):
-        for scheme in ("vertical", "interfloor", "ortho"):
+        for scheme in ("vertical", "ortho"):
             with self.subTest(scheme=scheme):
                 result = frame_plan({
                     "system": {"vertical": "Вектор-1", "interfloor": "Межэтажная",
@@ -29,6 +29,19 @@ class SupportedFrames(unittest.TestCase):
                 self.assertTrue(result["calc_report"])
                 self.assertEqual(result["calc_report"]["inputs"]["scheme"], scheme)
                 self.assertGreater(result["calc_report"]["steps"]["main"], 0)
+                model = result["calc_report"]["static_model"]
+                self.assertEqual(model["status"], "not_verified")
+                self.assertEqual(model["geometric_screening"]["status"], "passed")
+
+    def test_manual_interfloor_produces_frame_without_calculation_claim(self):
+        result = frame_plan({
+            "system": "Межэтажная", "sub_type": "interfloor", "parts": "frame",
+            "contours": [{"outer": [[0, 0], [6000, 0], [6000, 6000], [0, 6000]]}],
+            "joints_x": list(range(0, 6001, 600)), "floors_y": [0, 3000, 6000],
+        })
+        self.assertTrue(result.get("ok"), result.get("error"))
+        self.assertTrue(result["rails"] and result["hrails"] and result["brackets"])
+        self.assertNotIn("calc_report", result)
 
 
 if __name__ == "__main__":

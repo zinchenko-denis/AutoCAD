@@ -87,6 +87,90 @@ T_CLAMP = 60.0  # мм, кляммеры у торцов кусков (как R3
 SHIFT = (47621.3, 24070.3)
 SYSTEMS = {"vertical": "Standart", "interfloor": "Межэтажная", "ortho": "Ортогональная"}
 REFUSED = Counter()  # explicit structural refusals, never counted as built facades
+DRAWING_ARRAYS = ("rails", "hrails", "brackets", "clamps", "fittings", "per_zone")
+
+
+def safe_refusal(req, res):
+    """Recognise addressed, evidence-bearing refusals; arbitrary errors fail.
+
+    This checks the public contract, independently of frame_topology's helpers.
+    Deterministic positive controls below additionally prevent deny-all from
+    passing a random suite dominated by short/window-cut members.
+    """
+    if res.get("ok") is not False or not res.get("error") or res.get("calc_report") or \
+            any(res.get(k) for k in DRAWING_ARRAYS):
+        return False
+    code = res.get("error_code")
+    counts = res.get("unsupported_counts") or {}
+    if code == "E_UNSUPPORTED_SHINA":
+        return (req.get("cladding") in ("concrete", "clinker")
+                and set(counts) == {"pieces", "joints"}
+                and all(isinstance(n, int) and n >= 0 for n in counts.values())
+                and sum(counts.values()) > 0)
+    if req.get("calc") is None or req.get("parts") == "clamps":
+        return False
+    if code == "E_CALC_NOT_PASSED":
+        # A missing preset, invalid input or arbitrary exception is not a
+        # structural refusal of a valid role.
+        return ("ни один шаг до " in res["error"]
+                or "нет единого профиля, проходящего в рядовой и угловой зонах" in res["error"])
+    sub = req.get("sub_type", "vertical")
+    unsupported = res.get("unsupported") or []
+    model = res.get("static_model") or {}
+    if code == "E_CALC_TOPOLOGY_UNSUPPORTED" and sub == "interfloor":
+        # Existing NSP free-end refusal takes precedence over the model guard.
+        if counts != {"nsp_pieces": len(unsupported)} or not unsupported:
+            return False
+        for member in unsupported:
+            supports = member.get("support_y") or []
+            reason = member.get("reason")
+            if reason == "fewer_than_two_supports" and len(supports) < 2:
+                continue
+            if reason == "unsupported_free_end" and len(supports) >= 2 and \
+                    max(member.get("bottom_free", 0), member.get("top_free", 0)) > member.get("match_tolerance", math.inf):
+                continue
+            return False
+        return True
+    if model.get("status") != "not_verified" or model.get("scheme") != sub or \
+            model.get("pieces_merged") is not False or model.get("fixed_sliding") != "not_modeled" or \
+            model.get("splice_continuity") != "not_modeled":
+        return False
+    screening = model.get("geometric_screening") or {}
+    if screening.get("status") != "refused" or screening.get("reasons") != unsupported or not unsupported:
+        return False
+    if code == "E_CALC_MODEL_UNCONFIRMED":
+        return (sub == "interfloor" and unsupported == [{"reason": "interfloor_model_unconfirmed"}]
+                and counts == {"vertical_members": 0} and bool(model.get("members")))
+    if code != "E_CALC_TOPOLOGY_UNSUPPORTED" or sub not in ("vertical", "ortho"):
+        return False
+    members = {m.get("index"): m for m in model.get("members") or []}
+    if counts != {"vertical_members": len({r.get("member_index") for r in unsupported})}:
+        return False
+    for issue in unsupported:
+        member = members.get(issue.get("member_index"))
+        if member is None:
+            return False
+        supports = member.get("support_y") or []
+        spans = len(supports) - 1 if supports else 0
+        actual = "multi" if spans >= 4 else str(spans)
+        if supports != sorted(set(supports)) or member.get("support_count") != len(supports) or \
+                issue.get("support_count") != len(supports) or issue.get("span_count") != spans or \
+                issue.get("actual_span_class") != actual:
+            return False
+        reason = issue.get("reason")
+        if reason == "insufficient_supports" and len(supports) < 2:
+            continue
+        if reason == "single_span_unsupported" and len(supports) == 2:
+            continue
+        if reason == "span_class_mismatch" and spans >= 2 and \
+                issue.get("coefficient_span_class") in ("2", "3", "multi") and \
+                actual != issue["coefficient_span_class"]:
+            continue
+        if reason == "support_interval_exceeds_calculated_span" and sub == "ortho" and spans >= 2 and \
+                max(b - a for a, b in zip(supports, supports[1:])) > issue.get("coefficient_span", math.inf) + 0.5:
+            continue
+        return False
+    return True
 
 
 # ── сценарии ─────────────────────────────────────────────────────────
@@ -663,6 +747,78 @@ def run_scenario(sc, rng):
     return viol, dt, n
 
 
+def check_static_contract():
+    """Fixed geometry with known supports, separate from random refusals.
+
+    Test dimensions are synthetic examples, not engineering design limits.
+    All accepted calculation results must still declare an unverified model.
+    """
+    bad, outcomes = [], Counter()
+    base = dict(op="frame", zones=[], joints_x=[300, 900, 1500, 2100],
+                rows_y=[600, 1200, 1800, 2400], floors_y=[], floor_step=0,
+                calc=dict(wind_region="II", terrain="B", height=30,
+                          q_clad=20, offset=200, na_max=3000))
+    for sub in ("vertical", "ortho"):
+        for height, reason in ((3000, None), (6000, None), (140, "insufficient_supports"),
+                               (600, "insufficient_supports"), (1000, "single_span_unsupported"),
+                               (1800, "span_class_mismatch")):
+            req = dict(base, sub_type=sub, system="Вектор-1" if sub == "vertical" else "Ортогональная",
+                       contours=[dict(id="O", pts=rect(0, 0, 2400, height))])
+            res = fre.run(json.loads(json.dumps(req)))
+            tag = "%s/%s" % (sub, height)
+            if reason is None:
+                model = res.get("calc_report", {}).get("static_model") or {}
+                if not res.get("ok") or not res.get("rails") or not res.get("brackets") or \
+                        model.get("status") != "not_verified" or model.get("pieces_merged") is not False or \
+                        model.get("geometric_screening", {}).get("status") != "passed":
+                    bad.append(("S1", "%s: обязательный положительный контроль не построен: %s" % (tag, res.get("error"))))
+                    continue
+                # Count actual supports on the emitted pieces independently
+                # of the screening inventory; joints must not merge pieces.
+                for member, rail in zip(model.get("members") or [], res["rails"]):
+                    if sub == "vertical":
+                        ys = {b["y"] for b in res["brackets"] if abs(b["x"] - rail["x"]) <= 0.5
+                              and rail["y0"] - 0.5 <= b["y"] <= rail["y1"] + 0.5}
+                    else:
+                        ys = {h["y"] for h in res["hrails"] if h["kind"] == "ГП-40-40"
+                              and h["x0"] - 0.5 <= rail["x"] <= h["x1"] + 0.5
+                              and rail["y0"] - 0.5 <= h["y"] <= rail["y1"] + 0.5}
+                    if member.get("support_y") != sorted(ys) or len(ys) < 3:
+                        bad.append(("S1", "%s: опоры отчёта не совпадают с выданными элементами" % tag))
+                if len(model.get("members") or []) != len(res["rails"]):
+                    bad.append(("S1", "%s: стыки объединили отдельные расчётные куски" % tag))
+                outcomes["successful_calc/" + sub] += 1
+            else:
+                actual = {u.get("reason") for u in res.get("unsupported") or []}
+                if not safe_refusal(req, res) or res.get("error_code") != "E_CALC_TOPOLOGY_UNSUPPORTED" or actual != {reason}:
+                    bad.append(("S2", "%s: ожидался точный отказ %s, получен %s/%s" %
+                                (tag, reason, res.get("error_code"), sorted(str(r) for r in actual))))
+                else:
+                    outcomes["safe_refusal/" + sub + "/" + reason] += 1
+    req = dict(base, sub_type="interfloor", system="Межэтажная", floors_y=[0, 1500, 3000],
+               contours=[dict(id="O", pts=rect(0, 0, 2400, 3000))])
+    res = fre.run(req)
+    if not safe_refusal(req, res) or res.get("error_code") != "E_CALC_MODEL_UNCONFIRMED":
+        bad.append(("S2", "межэтажная с геометрическими опорами: нет адресного отказа неподтверждённой модели"))
+    else:
+        outcomes["safe_refusal/interfloor/model_unconfirmed"] += 1
+    manual = dict(req)
+    manual.pop("calc")
+    result = fre.run(manual)
+    if not result.get("ok") or not result.get("rails") or not result.get("hrails") or result.get("calc_report"):
+        bad.append(("S1", "межэтажная вручную: обязательный положительный контроль не построен"))
+    else:
+        outcomes["successful_manual/interfloor"] += 1
+        clamps = fre.run(dict(req, parts="clamps", rails_fixed=result["rails"]))
+        key = lambda c: (c["x"], c["y"], c["kind"], c.get("orient"))
+        if not clamps.get("ok") or Counter(map(key, clamps.get("clamps") or [])) != Counter(map(key, result["clamps"])) or \
+                any(clamps.get(k) for k in ("rails", "hrails", "brackets", "fittings")):
+            bad.append(("S1", "межэтажная: повтор только кляммеров изменил результат ручной расстановки"))
+        else:
+            outcomes["successful_clamps/interfloor"] += 1
+    return bad, outcomes
+
+
 # ── расчёт ───────────────────────────────────────────────────────────
 def calc_presets():
     """Шесть боевых входов из test_frame_calc.py (NAME = dict(...))."""
@@ -826,8 +982,14 @@ def main(argv):
         print("  · %s %s" % (c, m))
     for c, m in ci:
         print("  [INFO] %s %s" % (c, m))
+    sv, so = check_static_contract()
+    print("СТАТИЧЕСКИЙ КОНТРАКТ: нарушений %d" % len(sv))
+    for outcome, count in sorted(so.items()):
+        print("  [RESULT] %s: %d" % (outcome, count))
+    for c, m in sv:
+        print("  · %s %s" % (c, m))
     allow = {c.strip() for c in a.allow.split(",") if c.strip()}
-    hard = sum(n for v in stats.values() for c, n in v.items() if c not in allow) + len(cv)
+    hard = sum(n for v in stats.values() for c, n in v.items() if c not in allow) + len(cv) + len(sv)
     known = sum(n for v in stats.values() for c, n in v.items() if c in allow)
     if known:
         print("ИЗВЕСТНЫЕ открытые вопросы (--allow %s): %d сценариев — см. выше" % (",".join(sorted(allow)), known))

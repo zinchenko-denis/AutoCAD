@@ -1,0 +1,131 @@
+{
+  "mandatory_groups": {
+    "passed": 24,
+    "total": 24
+  },
+  "compiler": {
+    "passed": 3,
+    "total": 3,
+    "method": "Roslyn 4.8 with net48/AutoCAD 24.0.0 reference assemblies"
+  },
+  "unit_frame_plan_checks": 239,
+  "unit_frame_calc_checks": 95,
+  "frame_engine_tests": 9,
+  "full_zones": {
+    "scenarios": 840,
+    "openings": 2419,
+    "violations": 0
+  },
+  "full_tile": {
+    "scenarios": 741,
+    "pieces": 376086,
+    "violations": 0
+  },
+  "full_frame": [
+    {
+      "seed": 2909,
+      "scenarios": 960,
+      "successful_geometry": 886,
+      "typed_refusals": 74,
+      "violations": 0,
+      "independent_controls": {
+        "successful": 6,
+        "typed_refusals": 9
+      }
+    },
+    {
+      "seed": 77,
+      "scenarios": 960,
+      "successful_geometry": 883,
+      "typed_refusals": 77,
+      "violations": 0,
+      "independent_controls": {
+        "successful": 6,
+        "typed_refusals": 9
+      }
+    },
+    {
+      "seed": 5,
+      "scenarios": 960,
+      "successful_geometry": 884,
+      "typed_refusals": 76,
+      "violations": 0,
+      "independent_controls": {
+        "successful": 6,
+        "typed_refusals": 9
+      }
+    }
+  ],
+  "full_roles": [
+    {
+      "seed": 2909,
+      "roles": 21,
+      "base_facades": 168,
+      "successful_frame_results": 62,
+      "typed_topology_refusals": 121,
+      "typed_shina_refusals": 21,
+      "auxiliary_full_for_clamps_refusals": 12,
+      "expected_interfloor_ui_refusals": 3,
+      "independent_controls": {
+        "successful": 6,
+        "typed_refusals": 9
+      },
+      "unexpected_violations": 0
+    },
+    {
+      "seed": 77,
+      "roles": 21,
+      "base_facades": 168,
+      "successful_frame_results": 62,
+      "typed_topology_refusals": 122,
+      "typed_shina_refusals": 20,
+      "auxiliary_full_for_clamps_refusals": 12,
+      "expected_interfloor_ui_refusals": 3,
+      "independent_controls": {
+        "successful": 6,
+        "typed_refusals": 9
+      },
+      "unexpected_violations": 0
+    },
+    {
+      "seed": 5,
+      "roles": 21,
+      "base_facades": 168,
+      "successful_frame_results": 67,
+      "typed_topology_refusals": 118,
+      "typed_shina_refusals": 19,
+      "auxiliary_full_for_clamps_refusals": 12,
+      "expected_interfloor_ui_refusals": 3,
+      "independent_controls": {
+        "successful": 6,
+        "typed_refusals": 9
+      },
+      "unexpected_violations": 0
+    }
+  ],
+  "random_frame_totals": {
+    "scenarios": 2880,
+    "successful_geometry": 2653,
+    "typed_refusals": 227
+  },
+  "role_totals": {
+    "base_facades": 504,
+    "successful_frame_results": 191,
+    "typed_topology_refusals": 361,
+    "typed_shina_refusals": 60,
+    "auxiliary_full_for_clamps_refusals": 36,
+    "expected_interfloor_ui_refusals": 9
+  },
+  "sources_unchanged_during_full_run": true,
+  "frozen_hashes_match_current": true,
+  "compiled_hashes_match_current": true,
+  "known_exclusion": "Only unchanged ATSPEC X6 in xmod; no F16 or new allow exceptions",
+  "ui_window": {
+    "status": "NOT_RUN",
+    "reason": "Xvfb cannot establish local/UNIX listening sockets",
+    "log": "xvfb_final_error.log",
+    "settings_logic": "PASS via actual C# FrameSettingsProbe and synthetic roles"
+  },
+  "live_autocad_checked": false,
+  "release_published": false
+}

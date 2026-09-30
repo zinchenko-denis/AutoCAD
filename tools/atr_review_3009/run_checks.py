@@ -30,7 +30,8 @@ def main():
         ('AClad', ['test_cladding_plan.py', 'test_clad_engine.py',
                    'test_tile_pattern.py', 'audit_clad.py']),
         ('AFrame', ['test_frame_plan.py', 'test_frame_calc.py',
-                    'test_frame_engine.py', 'test_frame_rules.py', 'audit_frame.py']),
+                    'test_frame_engine.py', 'test_frame_rules.py',
+                    'test_frame_topology.py', 'audit_frame.py']),
     ):
         jobs.extend((module + '_' + Path(s).stem, module + '/engine', [s])
                     for s in scripts)
@@ -51,6 +52,8 @@ def main():
         ('atr_mass', '.', ['tools/atr_review_3009/vector5_mass_review.py',
                           '--evidence', str(out / 'architecture/evidence.json'),
                           '--out', str(out / 'mass_review.json')]),
+        ('static_model_gap', '.', ['tools/static_review_3009/reproduce_model_gap.py',
+                                 '--out', str(out / 'static_model_gap.json')]),
     ])
     results = []
     for name, cwd, arguments in jobs:

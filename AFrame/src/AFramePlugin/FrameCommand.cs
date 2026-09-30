@@ -973,13 +973,17 @@ namespace AFramePlugin
             if (rep == null) return;
             var steps = Get(rep, "steps") as Dictionary<string, object>;
             if (steps != null)
-                ed.WriteMessage("\nРАСЧЁТ ШАГОВ (несущая способность): " +
+                ed.WriteMessage("\nОГРАНИЧЕННАЯ РАСЧЁТНАЯ ПРОВЕРКА ШАГОВ: " +
                     "рядовая зона " + SafeStr(Get(steps, "main")) +
                     " / угловая " + SafeStr(Get(steps, "corner")) +
                     " мм.");
             var method = Get(rep, "method") as Dictionary<string, object>;
             if (method != null)
                 ed.WriteMessage("\n  " + SafeStr(Get(method, "coverage")));
+            var model = Get(rep, "static_model") as Dictionary<string, object>;
+            if (model == null || SafeStr(Get(model, "status")) != "verified")
+                ed.WriteMessage("\n  Применимость полной статической модели не подтверждена. " +
+                    "Соединения, стыки, консоли и распределение веса требуют отдельного проектного расчёта.");
             // п.2 (Герман 30.07): подобранный профиль и ЧТО режет шаг.
             // На боевых числах узкое место — анкер, а не сечение:
             // конструктору важно видеть это, иначе он думает, что
@@ -1030,7 +1034,7 @@ namespace AFramePlugin
                     sb.Append("/");
                     sb.Append(SafeStr(Get(c, "limit")));
                 }
-                sb.Append(" — условия выполнены.");
+                sb.Append(" — условия данной арифметической цепочки выполнены.");
                 ed.WriteMessage(sb.ToString());
             }
         }

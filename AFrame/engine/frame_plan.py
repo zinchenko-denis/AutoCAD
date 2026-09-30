@@ -67,6 +67,7 @@ import os
 import sys
 
 from frame_rules import resolve_layout_contract, declared_scope
+from frame_topology import screen_layout, refusal as topology_refusal
 
 EPS = 1e-6
 CLAMP_MERGE = 100.0  # мм: ближе — один кляммер (кромка откоса
@@ -2566,6 +2567,23 @@ def _frame_plan(req):
                     "unsupported": unsupported, "unsupported_counts": {"pieces": n_bare, "joints": n_air},
                     "notes": notes}
 
+    if calc_rep is not None:
+        # A passed arithmetic chain does not establish the static model.
+        # Record every emitted piece, including zero-gap abutting pieces,
+        # before any addressed refusal discards the drawable output.
+        boxes = [_bbox(_closed(c.get("outer") or []))
+                 for c in req.get("contours") or [] if len(c.get("outer") or []) >= 3]
+        member_zones = []
+        for rail in rails:
+            x, y = rail["x"], (rail["y0"] + rail["y1"]) / 2.0
+            own_boxes = [box for box in boxes if box[0] - 0.5 <= x <= box[2] + 0.5 and
+                         box[1] - 0.5 <= y <= box[3] + 0.5]
+            member_zones.append("corner" if any(
+                _in_corner(x, box[0], box[2], corner_zone, corners) for box in own_boxes) else "row")
+        static_model = screen_layout(sub, rails, hrails, brackets, calc_rep["inputs"],
+                                     member_zones, rail_gap=gap)
+        calc_rep["static_model"] = static_model
+
     if calc_rep is not None and sub == "interfloor":
         # A supported-span chain cannot approve an unmodelled free end.
         # Existing support_tol only matches endpoints across the splice gap;
@@ -2596,18 +2614,29 @@ def _frame_plan(req):
                              "Уточните отметки/опоры либо используйте ручной режим по проектному расчёту; "
                              "прежняя подсистема сохранена." % len(missing),
                     "unsupported": missing, "unsupported_counts": {"nsp_pieces": len(missing)},
-                    "calc_inputs": calc_rep["inputs"]}
+                    "calc_inputs": calc_rep["inputs"], "static_model": static_model}
     if calc_rep is not None:
+        topology_error = topology_refusal(static_model)
+        if topology_error:
+            topology_error.update(calc_inputs=calc_rep["inputs"],
+                                  notes=notes + [static_model["scope"]])
+            return topology_error
         verification, error = _verify_calc_spacing(calc_rep, req, sub, rails, hrails, brackets,
                                                    corners, corner_zone)
         if error:
-            return {"ok": False, "error_code": "E_CALC_LAYOUT", "error": error}
+            return {"ok": False, "error_code": "E_CALC_LAYOUT", "error": error,
+                    "static_model": static_model, "calc_inputs": calc_rep["inputs"]}
         calc_rep["layout_verification"] = verification
+        notes.append("Статическая модель не подтверждена: проверка числа геометрических опор "
+                     "и арифметической цепочки не проверяет неподвижные/подвижные соединения, "
+                     "непрерывность через стыки, консоли и распределение веса.")
         calc_rep["method"] = {
             "name": "Вектор — цепочка по переданным статическим расчётам",
             "version": "review-3009",
-            "coverage": "Проверены расчётные цепочки и выданные шаги. Монтажные узлы, "
-                        "консоли, горизонтальные НГП/СП и проект в целом требуют отдельной проверки конструктора."}
+            "coverage": "Проверены арифметические цепочки, выданные шаги и ограниченные геометрические "
+                        "условия числа опор/пролётов. Применимость статической модели не подтверждена: "
+                        "закрепления, стыки, распределение веса, консоли, неравные пролёты, "
+                        "горизонтальные НГП/СП и проект в целом требуют отдельной проверки конструктора."}
     clamps = _merge_clamps(clamps)
     # 01.08 (письмо Германа, п.2): марка профиля для СОСТОЯНИЯ
     # ВИДИМОСТИ динблока (C# ставит видимость по этому полю).

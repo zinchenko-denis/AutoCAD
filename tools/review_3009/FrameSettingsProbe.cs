@@ -20,8 +20,13 @@ static class FrameSettingsProbe
                     settings.SetSubType(sub);
                     double sentMass = (double)settings.CalcDict()["q_clad"];
                     double gamma = (double)settings.CalcDict()["gamma_clad"];
+                    string validation = settings.Validate(true);
+                    bool expectedValidation = sub == "interfloor"
+                        ? validation != null && validation.Contains("Автоматический расчёт межэтажной")
+                          && validation.Contains("неподвижные/подвижные")
+                        : validation == null;
                     if (sentMass != mass || gamma != (material == "composite" ? 1.2 : 1.1)
-                        || settings.Validate(true) != null) failures++;
+                        || !expectedValidation) failures++;
                 }
             }
             Console.WriteLine("{0}: mass and material factor checked across 3 masses x 3 frame types", material);
@@ -38,6 +43,17 @@ static class FrameSettingsProbe
         nsp2.Steps = "manual";
         if (nsp2.Validate(true) != null || !nsp2.Describe(true).Contains("не проверяется")) failures++;
         if (new FrameSettings { QClad = double.NaN }.Validate(true) == null) failures++;
+        var inter = new FrameSettings { Mode = "frame" };
+        inter.SetSubType("interfloor");
+        if (inter.Validate(true) == null || !inter.Describe(true).Contains("не подтверждены")) failures++;
+        inter.Height = 0;
+        if (inter.Validate(true) == null || !inter.Validate(true).Contains("Высота")) failures++;
+        inter.Height = 30;
+        inter.Steps = "manual";
+        if (inter.Validate(true) != null || inter.EngineParams(1).ContainsKey("calc")) failures++;
+        inter.Steps = "calc";
+        inter.Mode = "clamps";
+        if (inter.Validate(true) != null || inter.EngineParams(1).ContainsKey("calc")) failures++;
         var gp60 = new FrameSettings { Profile = "ГП-60-40", Mode = "frame" };
         if (gp60.Validate(true) == null || !gp60.Describe(true).Contains("масса")) failures++;
         gp60.Steps = "manual";

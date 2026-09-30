@@ -81,10 +81,14 @@ def native_short_rails():
                "rows_y": [600, 1200, 1800, 2400, 3020],
                "calc": {"terrain": "B", "height": 30, "q_clad": 25,
                         "offset": 230, "na_max": 3000, "wind_region": "II"}}
-    full = fp.frame_plan(copy.deepcopy(request))
+    # This fixture exercises metadata/readback, not a calculation. The last
+    # 150 mm stock piece has only one support and must not be calc-approved.
+    manual = copy.deepcopy(request)
+    manual.pop("calc")
+    full = fp.frame_plan(manual)
     # ATFRAME_RAIL metadata supplies direction and role without aspect filtering.
     fixed = [{k: r[k] for k in ("x", "y0", "y1", "clamp_role")} for r in full["rails"]]
-    again = fp.frame_plan(dict(copy.deepcopy(request), parts="clamps", rails_fixed=fixed))
+    again = fp.frame_plan(dict(manual, parts="clamps", rails_fixed=fixed))
     return request, full, fixed, again
 
 
@@ -134,10 +138,20 @@ class FrameContractRegressions(unittest.TestCase):
                         json.dumps(recheck, ensure_ascii=False))
 
     def test_generated_short_rails_survive_native_clamp_readback(self):
-        _, full, fixed, again = native_short_rails()
+        request, full, fixed, again = native_short_rails()
+        self.assertTrue(full["ok"] and again["ok"])
+        self.assertTrue(fixed)
         self.assertEqual(clamp_set(full), clamp_set(again),
                          "Native RailGeom kept %d of %d generated rails" %
                          (len(fixed), len(full["rails"])))
+        rejected = fp.frame_plan(request)
+        self.assertFalse(rejected["ok"])
+        self.assertEqual(rejected["error_code"], "E_CALC_TOPOLOGY_UNSUPPORTED")
+        reasons = rejected["static_model"]["geometric_screening"]["reasons"]
+        self.assertTrue(reasons)
+        self.assertTrue(all(r["reason"] == "insufficient_supports" and r["support_count"] == 1
+                            for r in reasons))
+        self.assertFalse(any(rejected.get(k) for k in ("rails", "hrails", "brackets", "clamps", "fittings")))
 
     def test_vertical_only_clamps_repeats_full_layout(self):
         _, full, again = vertical_only_clamps()
@@ -179,9 +193,12 @@ class FrameContractRegressions(unittest.TestCase):
         self.assertTrue(all(len(r["support_y"]) == 1 for r in single["unsupported"]))
         self.assertFalse(any(single.get(k) for k in ("rails", "hrails", "brackets", "clamps")))
         normal = fp.frame_plan(dict(copy.deepcopy(request), floors_y=[0, 3000, 6000]))
-        self.assertTrue(normal["ok"], normal.get("error"))
-        self.assertTrue(normal["calc_report"]["layout_verification"]["passed"])
-        self.assertEqual(normal["calc_report"]["layout_verification"]["rail_len"], 3000)
+        self.assertFalse(normal["ok"])
+        self.assertEqual(normal["error_code"], "E_CALC_MODEL_UNCONFIRMED")
+        self.assertEqual(normal["static_model"]["geometric_screening"]["reasons"],
+                         [{"reason": "interfloor_model_unconfirmed"}])
+        self.assertEqual(normal["static_model"]["status"], "not_verified")
+        self.assertFalse(any(normal.get(k) for k in ("rails", "hrails", "brackets", "clamps", "fittings")))
         manual = copy.deepcopy(request)
         manual.pop("calc")
         self.assertTrue(fp.frame_plan(manual)["ok"])
@@ -195,18 +212,40 @@ class FrameContractRegressions(unittest.TestCase):
                    "calc": {"terrain": "B", "height": 30, "q_clad": 25,
                             "offset": 230, "na_max": 3000, "wind_region": "II"}}
         result = fp.frame_plan(request)
-        self.assertTrue(result["ok"], result.get("error"))
-        points = sorted(b["y"] for b in result["brackets"] if b["x"] == 1490)
+        self.assertFalse(result["ok"])
+        self.assertEqual(result["error_code"], "E_CALC_TOPOLOGY_UNSUPPORTED")
+        reasons = result["static_model"]["geometric_screening"]["reasons"]
+        self.assertTrue(reasons)
+        self.assertTrue(all(r["reason"] == "span_class_mismatch" and
+                            r["actual_span_class"] != r["coefficient_span_class"] for r in reasons))
+        self.assertFalse(any(result.get(k) for k in ("rails", "hrails", "brackets", "clamps", "fittings")))
+        # Preserve the original shifted-corner placement regression in manual
+        # mode using the same arithmetic steps; no structural claim is made.
+        manual = copy.deepcopy(request)
+        manual.pop("calc")
+        self.assertNotIn("calc_report", result)
+        arithmetic = fc.report(result["calc_inputs"])
+        steps = {"main": arithmetic["row"]["step"], "corner": arithmetic["corner"]["step"]}
+        manual["system"] = {"name": "Вектор-1", "bracket_step": steps["main"],
+                            "bracket_step_corner": steps["corner"]}
+        manual_result = fp.frame_plan(manual)
+        self.assertTrue(manual_result["ok"], manual_result.get("error"))
+        points = sorted(b["y"] for b in manual_result["brackets"] if b["x"] == 1490)
         self.assertGreaterEqual(len(points), 3)
         maximum = max(b - a for a, b in zip(points, points[1:]))
-        self.assertLessEqual(maximum, result["calc_report"]["steps"]["corner"] + .001)
-        self.assertTrue(result["calc_report"]["layout_verification"]["passed"])
+        self.assertLessEqual(maximum, steps["corner"] + .001)
+        self.assertNotIn("calc_report", manual_result)
 
     def test_actual_generated_spacing_is_checked_before_output(self):
         request, _, _, _ = native_short_rails()
+        request["contours"] = [{"outer": rect(0, 0, 1800, 6000)}]
+        self.assertTrue(fp.frame_plan(request)["ok"])
         # Simulate an over-wide generated interval to exercise the final gate.
         # The initial calculator remains real and approves the normal steps.
-        with patch.object(fp, "_rail_brackets", side_effect=lambda a, b, *args: [a + 100, b - 100]):
+        # Four supports match the three-span coefficient class, but intervals
+        # exceed the accepted step: this must reach the spacing gate.
+        with patch.object(fp, "_rail_brackets", side_effect=lambda a, b, *args:
+                          [a + 100, a + 1000, a + 2000, b - 100]):
             result = fp.frame_plan(request)
         self.assertFalse(result["ok"])
         self.assertEqual(result["error_code"], "E_CALC_LAYOUT")

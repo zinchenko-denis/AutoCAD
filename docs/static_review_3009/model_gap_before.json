@@ -1,0 +1,1958 @@
+{
+  "revision": "ad2a0a281a1b0cfa18a35aa4f10ce54557a58436",
+  "expected_outcome": "baseline_model_gap_reproduced",
+  "source_sha256": {
+    "frame_plan.py": "a02c8d765d7ba2787bdf7906a92785d4d51040530034ed5763c044cf6db91fef",
+    "frame_calc.py": "81c854e1213b175724a53f9a94d11c5b0774ef695df0a59d7cf5e5579e68aa06",
+    "systems.json": "e9ee0a4cf0c535473dd9931f9b2a3d86dd1d932fe18f84682ef3fd221fbc03c3"
+  },
+  "not_replacement_design": true,
+  "synthetic_public_geometry": true,
+  "cases": [
+    {
+      "name": "two_spans_on_one_3000_member",
+      "request": {
+        "system": {
+          "name": "Межэтажная"
+        },
+        "sub_type": "interfloor",
+        "parts": "frame",
+        "cladding": "porcelain",
+        "contours": [
+          {
+            "outer": [
+              [
+                0,
+                0
+              ],
+              [
+                3000,
+                0
+              ],
+              [
+                3000,
+                3000
+              ],
+              [
+                0,
+                3000
+              ]
+            ]
+          }
+        ],
+        "joints_x": [
+          300,
+          900,
+          1500,
+          2100,
+          2700
+        ],
+        "floors_y": [
+          0,
+          1500,
+          3000
+        ],
+        "corners_x": [
+          0
+        ],
+        "calc": {
+          "wind_region": "II",
+          "terrain": "B",
+          "height": 8,
+          "q_clad": 25,
+          "offset": 170,
+          "na_max": 3000
+        }
+      },
+      "ok": true,
+      "status": "baseline_model_gap_reproduced",
+      "topology": {
+        "center_x": 1500,
+        "members": [
+          {
+            "rail": {
+              "x": 1500.0,
+              "y0": 0.0,
+              "y1": 3000.0,
+              "len": 3000.0,
+              "clamp_role": "regular",
+              "kind": "НСП",
+              "profile": "НСП-1"
+            },
+            "intersection_y": [
+              0.0,
+              1500.0,
+              3000.0
+            ],
+            "geometric_span_count": 2,
+            "intervals_mm": [
+              1500.0,
+              1500.0
+            ],
+            "free_ends_mm": [
+              0,
+              0
+            ],
+            "endpoint_match_tolerance_mm": 6.0
+          }
+        ],
+        "fittings": [
+          {
+            "x": 1500.0,
+            "y": 1500.0,
+            "kind": "вставка"
+          }
+        ],
+        "bracket_fields": [
+          "kind",
+          "x",
+          "y"
+        ],
+        "bracket_kinds": [
+          "несущий"
+        ],
+        "interpretation": "Intersections and kind names do not establish fixed/sliding or moment transfer."
+      },
+      "resolved_inputs": {
+        "scheme": "interfloor",
+        "terrain": "B",
+        "height": 8.0,
+        "q_clad": 25.0,
+        "gamma_clad": 1.1,
+        "q_rails": 3.71,
+        "offset": 170.0,
+        "na_max": 3000.0,
+        "bracket": "КР1-85",
+        "extender": "УК-85-1,2",
+        "profile": "НСП-69-60-1,2",
+        "b_row": 600.0,
+        "b_corner": 600.0,
+        "rail_len": 1500.0,
+        "max_step": 800.0,
+        "n_rivets": 2,
+        "auto_profile": false,
+        "profile_candidates": [
+          "НСП-69-60-1,2"
+        ],
+        "q_rails_extra": 1.4,
+        "q_rails_profile_min": 0.0,
+        "wind_region": "II",
+        "w0": 30.0,
+        "ry": 2250.0,
+        "ice_region": "II",
+        "e1": 157.5,
+        "e2": 73.0,
+        "e3": 11.0,
+        "e4": 21.0
+      },
+      "calc_report": {
+        "row": {
+          "zone": "row",
+          "step": 800.0,
+          "w_p": 63.2,
+          "n_p": 38.8,
+          "n_w": 85.8,
+          "checks": [
+            {
+              "name": "анкер, кг",
+              "value": 214.6,
+              "limit": 306.1,
+              "ok": true
+            },
+            {
+              "name": "кронштейн 1-1, кг/см²",
+              "value": 984.9,
+              "limit": 2250.0,
+              "ok": true
+            },
+            {
+              "name": "кронштейн 2-2, кг/см²",
+              "value": 161.9,
+              "limit": 2250.0,
+              "ok": true
+            },
+            {
+              "name": "удлинитель, кг/см²",
+              "value": 1413.0,
+              "limit": 2250.0,
+              "ok": true
+            },
+            {
+              "name": "профиль σ, кг/см²",
+              "value": 279.0,
+              "limit": 2250.0,
+              "ok": true
+            },
+            {
+              "name": "профиль f, мм",
+              "value": 0.3,
+              "limit": 10.0,
+              "ok": true
+            },
+            {
+              "name": "заклёпки срез, кг",
+              "value": 47.1,
+              "limit": 253.1,
+              "ok": true
+            },
+            {
+              "name": "заклёпки смятие, кг/см²",
+              "value": 934.5,
+              "limit": 2650.0,
+              "ok": true
+            }
+          ],
+          "passed": true
+        },
+        "corner": {
+          "zone": "corner",
+          "step": 700.0,
+          "w_p": 115.8,
+          "n_p": 34.7,
+          "n_w": 137.7,
+          "checks": [
+            {
+              "name": "анкер, кг",
+              "value": 284.7,
+              "limit": 306.1,
+              "ok": true
+            },
+            {
+              "name": "кронштейн 1-1, кг/см²",
+              "value": 1415.9,
+              "limit": 2250.0,
+              "ok": true
+            },
+            {
+              "name": "кронштейн 2-2, кг/см²",
+              "value": 259.7,
+              "limit": 2250.0,
+              "ok": true
+            },
+            {
+              "name": "удлинитель, кг/см²",
+              "value": 2181.4,
+              "limit": 2250.0,
+              "ok": true
+            },
+            {
+              "name": "профиль σ, кг/см²",
+              "value": 496.7,
+              "limit": 2250.0,
+              "ok": true
+            },
+            {
+              "name": "профиль f, мм",
+              "value": 0.6,
+              "limit": 10.0,
+              "ok": true
+            },
+            {
+              "name": "заклёпки срез, кг",
+              "value": 71.0,
+              "limit": 253.1,
+              "ok": true
+            },
+            {
+              "name": "заклёпки смятие, кг/см²",
+              "value": 1408.4,
+              "limit": 2650.0,
+              "ok": true
+            }
+          ],
+          "passed": true
+        },
+        "steps": {
+          "main": 800,
+          "corner": 700
+        },
+        "scheme": "interfloor",
+        "inputs": {
+          "scheme": "interfloor",
+          "terrain": "B",
+          "height": 8.0,
+          "q_clad": 25.0,
+          "gamma_clad": 1.1,
+          "q_rails": 3.71,
+          "offset": 170.0,
+          "na_max": 3000.0,
+          "bracket": "КР1-85",
+          "extender": "УК-85-1,2",
+          "profile": "НСП-69-60-1,2",
+          "b_row": 600.0,
+          "b_corner": 600.0,
+          "rail_len": 1500.0,
+          "max_step": 800.0,
+          "n_rivets": 2,
+          "auto_profile": false,
+          "profile_candidates": [
+            "НСП-69-60-1,2"
+          ],
+          "q_rails_extra": 1.4,
+          "q_rails_profile_min": 0.0,
+          "wind_region": "II",
+          "w0": 30.0,
+          "ry": 2250.0,
+          "ice_region": "II",
+          "e1": 157.5,
+          "e2": 73.0,
+          "e3": 11.0,
+          "e4": 21.0
+        },
+        "profile": {
+          "row": "НСП-69-60-1,2",
+          "corner": "НСП-69-60-1,2"
+        },
+        "binding": {
+          "row": null,
+          "corner": [
+            "удлинитель, кг/см²",
+            2335.9,
+            2250.0
+          ]
+        },
+        "variants": null,
+        "bc_note": "шаг направляющих в угловой зоне взят из осей раскладки: 600",
+        "layout_verification": {
+          "passed": true,
+          "scope": "Интервалы между соседними кронштейнами на непрерывных элементах; для межэтажной цепочки — максимальный фактический интервал отметок/границ стены.",
+          "rail_len": 1500.0,
+          "zones": {
+            "row": {
+              "intervals": 6,
+              "max_step": 675.0,
+              "chain": {
+                "zone": "row",
+                "step": 675.0,
+                "w_p": 63.2,
+                "n_p": 33.7,
+                "n_w": 72.4,
+                "checks": [
+                  {
+                    "name": "анкер, кг",
+                    "value": 183.0,
+                    "limit": 306.1,
+                    "ok": true
+                  },
+                  {
+                    "name": "кронштейн 1-1, кг/см²",
+                    "value": 836.5,
+                    "limit": 2250.0,
+                    "ok": true
+                  },
+                  {
+                    "name": "кронштейн 2-2, кг/см²",
+                    "value": 136.6,
+                    "limit": 2250.0,
+                    "ok": true
+                  },
+                  {
+                    "name": "удлинитель, кг/см²",
+                    "value": 1195.0,
+                    "limit": 2250.0,
+                    "ok": true
+                  },
+                  {
+                    "name": "профиль σ, кг/см²",
+                    "value": 276.9,
+                    "limit": 2250.0,
+                    "ok": true
+                  },
+                  {
+                    "name": "профиль f, мм",
+                    "value": 0.3,
+                    "limit": 10.0,
+                    "ok": true
+                  },
+                  {
+                    "name": "заклёпки срез, кг",
+                    "value": 39.9,
+                    "limit": 253.1,
+                    "ok": true
+                  },
+                  {
+                    "name": "заклёпки смятие, кг/см²",
+                    "value": 792.2,
+                    "limit": 2650.0,
+                    "ok": true
+                  }
+                ],
+                "passed": true
+              }
+            },
+            "corner": {
+              "intervals": 6,
+              "max_step": 675.0,
+              "chain": {
+                "zone": "corner",
+                "step": 675.0,
+                "w_p": 115.8,
+                "n_p": 33.7,
+                "n_w": 132.7,
+                "checks": [
+                  {
+                    "name": "анкер, кг",
+                    "value": 275.0,
+                    "limit": 306.1,
+                    "ok": true
+                  },
+                  {
+                    "name": "кронштейн 1-1, кг/см²",
+                    "value": 1366.6,
+                    "limit": 2250.0,
+                    "ok": true
+                  },
+                  {
+                    "name": "кронштейн 2-2, кг/см²",
+                    "value": 250.5,
+                    "limit": 2250.0,
+                    "ok": true
+                  },
+                  {
+                    "name": "удлинитель, кг/см²",
+                    "value": 2104.1,
+                    "limit": 2250.0,
+                    "ok": true
+                  },
+                  {
+                    "name": "профиль σ, кг/см²",
+                    "value": 496.3,
+                    "limit": 2250.0,
+                    "ok": true
+                  },
+                  {
+                    "name": "профиль f, мм",
+                    "value": 0.6,
+                    "limit": 10.0,
+                    "ok": true
+                  },
+                  {
+                    "name": "заклёпки срез, кг",
+                    "value": 68.5,
+                    "limit": 253.1,
+                    "ok": true
+                  },
+                  {
+                    "name": "заклёпки смятие, кг/см²",
+                    "value": 1358.6,
+                    "limit": 2650.0,
+                    "ok": true
+                  }
+                ],
+                "passed": true
+              }
+            }
+          }
+        },
+        "method": {
+          "name": "Вектор — цепочка по переданным статическим расчётам",
+          "version": "review-3009",
+          "coverage": "Проверены расчётные цепочки и выданные шаги. Монтажные узлы, консоли, горизонтальные НГП/СП и проект в целом требуют отдельной проверки конструктора."
+        }
+      },
+      "used_coefficients": [
+        0.106,
+        1.132,
+        0.0063
+      ],
+      "coefficient_comparison": {
+        "not_replacement_design": true,
+        "scope": "Sensitivity of the same chain at an ACTUALLY EMITTED corner interval; no support model is approved.",
+        "actual_interval_mm": 675.0,
+        "original_coefficients": [
+          0.106,
+          1.132,
+          0.0063
+        ],
+        "comparison_existing_coefficients": [
+          0.125,
+          1.25,
+          0.0052
+        ],
+        "original": {
+          "zone": "corner",
+          "step": 675.0,
+          "w_p": 115.8,
+          "n_p": 33.7,
+          "n_w": 132.7,
+          "checks": [
+            {
+              "name": "анкер, кг",
+              "value": 275.0,
+              "limit": 306.1,
+              "ok": true
+            },
+            {
+              "name": "кронштейн 1-1, кг/см²",
+              "value": 1366.6,
+              "limit": 2250.0,
+              "ok": true
+            },
+            {
+              "name": "кронштейн 2-2, кг/см²",
+              "value": 250.5,
+              "limit": 2250.0,
+              "ok": true
+            },
+            {
+              "name": "удлинитель, кг/см²",
+              "value": 2104.1,
+              "limit": 2250.0,
+              "ok": true
+            },
+            {
+              "name": "профиль σ, кг/см²",
+              "value": 496.3,
+              "limit": 2250.0,
+              "ok": true
+            },
+            {
+              "name": "профиль f, мм",
+              "value": 0.6,
+              "limit": 10.0,
+              "ok": true
+            },
+            {
+              "name": "заклёпки срез, кг",
+              "value": 68.5,
+              "limit": 253.1,
+              "ok": true
+            },
+            {
+              "name": "заклёпки смятие, кг/см²",
+              "value": 1358.6,
+              "limit": 2650.0,
+              "ok": true
+            }
+          ],
+          "passed": true
+        },
+        "comparison": {
+          "zone": "corner",
+          "step": 675.0,
+          "w_p": 115.8,
+          "n_p": 33.7,
+          "n_w": 146.6,
+          "checks": [
+            {
+              "name": "анкер, кг",
+              "value": 296.0,
+              "limit": 306.1,
+              "ok": true
+            },
+            {
+              "name": "кронштейн 1-1, кг/см²",
+              "value": 1488.2,
+              "limit": 2250.0,
+              "ok": true
+            },
+            {
+              "name": "кронштейн 2-2, кг/см²",
+              "value": 276.6,
+              "limit": 2250.0,
+              "ok": true
+            },
+            {
+              "name": "удлинитель, кг/см²",
+              "value": 2312.6,
+              "limit": 2250.0,
+              "ok": false
+            },
+            {
+              "name": "профиль σ, кг/см²",
+              "value": 582.8,
+              "limit": 2250.0,
+              "ok": true
+            },
+            {
+              "name": "профиль f, мм",
+              "value": 0.5,
+              "limit": 10.0,
+              "ok": true
+            },
+            {
+              "name": "заклёпки срез, кг",
+              "value": 75.2,
+              "limit": 253.1,
+              "ok": true
+            },
+            {
+              "name": "заклёпки смятие, кг/см²",
+              "value": 1492.1,
+              "limit": 2650.0,
+              "ok": true
+            }
+          ],
+          "passed": false
+        }
+      }
+    },
+    {
+      "name": "single_span_with_terminal_intersections",
+      "request": {
+        "system": {
+          "name": "Межэтажная"
+        },
+        "sub_type": "interfloor",
+        "parts": "frame",
+        "cladding": "porcelain",
+        "contours": [
+          {
+            "outer": [
+              [
+                0,
+                0
+              ],
+              [
+                3000,
+                0
+              ],
+              [
+                3000,
+                3000
+              ],
+              [
+                0,
+                3000
+              ]
+            ]
+          }
+        ],
+        "joints_x": [
+          300,
+          900,
+          1500,
+          2100,
+          2700
+        ],
+        "floors_y": [
+          0,
+          3000
+        ],
+        "corners_x": [
+          0
+        ],
+        "calc": {
+          "wind_region": "II",
+          "terrain": "B",
+          "height": 6,
+          "q_clad": 25,
+          "offset": 170,
+          "na_max": 3000
+        }
+      },
+      "ok": true,
+      "status": "baseline_model_gap_reproduced",
+      "topology": {
+        "center_x": 1500,
+        "members": [
+          {
+            "rail": {
+              "x": 1500.0,
+              "y0": 0.0,
+              "y1": 3000.0,
+              "len": 3000.0,
+              "clamp_role": "regular",
+              "kind": "НСП",
+              "profile": "НСП-1"
+            },
+            "intersection_y": [
+              0.0,
+              3000.0
+            ],
+            "geometric_span_count": 1,
+            "intervals_mm": [
+              3000.0
+            ],
+            "free_ends_mm": [
+              0,
+              0
+            ],
+            "endpoint_match_tolerance_mm": 6.0
+          }
+        ],
+        "fittings": [],
+        "bracket_fields": [
+          "kind",
+          "x",
+          "y"
+        ],
+        "bracket_kinds": [
+          "несущий"
+        ],
+        "interpretation": "Intersections and kind names do not establish fixed/sliding or moment transfer."
+      },
+      "resolved_inputs": {
+        "scheme": "interfloor",
+        "terrain": "B",
+        "height": 6.0,
+        "q_clad": 25.0,
+        "gamma_clad": 1.1,
+        "q_rails": 3.71,
+        "offset": 170.0,
+        "na_max": 3000.0,
+        "bracket": "КР1-85",
+        "extender": "УК-85-1,2",
+        "profile": "НСП-69-60-1,2",
+        "b_row": 600.0,
+        "b_corner": 600.0,
+        "rail_len": 3000.0,
+        "max_step": 800.0,
+        "n_rivets": 2,
+        "auto_profile": false,
+        "profile_candidates": [
+          "НСП-69-60-1,2"
+        ],
+        "q_rails_extra": 1.4,
+        "q_rails_profile_min": 0.0,
+        "wind_region": "II",
+        "w0": 30.0,
+        "ry": 2250.0,
+        "ice_region": "II",
+        "e1": 157.5,
+        "e2": 73.0,
+        "e3": 11.0,
+        "e4": 21.0
+      },
+      "calc_report": {
+        "row": {
+          "zone": "row",
+          "step": 550.0,
+          "w_p": 58.1,
+          "n_p": 57.1,
+          "n_w": 108.4,
+          "checks": [
+            {
+              "name": "анкер, кг",
+              "value": 288.4,
+              "limit": 306.1,
+              "ok": true
+            },
+            {
+              "name": "кронштейн 1-1, кг/см²",
+              "value": 1292.1,
+              "limit": 2250.0,
+              "ok": true
+            },
+            {
+              "name": "кронштейн 2-2, кг/см²",
+              "value": 204.6,
+              "limit": 2250.0,
+              "ok": true
+            },
+            {
+              "name": "удлинитель, кг/см²",
+              "value": 1810.2,
+              "limit": 2250.0,
+              "ok": true
+            },
+            {
+              "name": "профиль σ, кг/см²",
+              "value": 990.9,
+              "limit": 2250.0,
+              "ok": true
+            },
+            {
+              "name": "профиль f, мм",
+              "value": 4.9,
+              "limit": 20.0,
+              "ok": true
+            },
+            {
+              "name": "заклёпки срез, кг",
+              "value": 61.3,
+              "limit": 253.1,
+              "ok": true
+            },
+            {
+              "name": "заклёпки смятие, кг/см²",
+              "value": 1215.7,
+              "limit": 2650.0,
+              "ok": true
+            }
+          ],
+          "passed": true
+        },
+        "corner": {
+          "zone": "corner",
+          "step": 350.0,
+          "w_p": 106.4,
+          "n_p": 40.6,
+          "n_w": 126.5,
+          "checks": [
+            {
+              "name": "анкер, кг",
+              "value": 280.3,
+              "limit": 306.1,
+              "ok": true
+            },
+            {
+              "name": "кронштейн 1-1, кг/см²",
+              "value": 1352.8,
+              "limit": 2250.0,
+              "ok": true
+            },
+            {
+              "name": "кронштейн 2-2, кг/см²",
+              "value": 238.7,
+              "limit": 2250.0,
+              "ok": true
+            },
+            {
+              "name": "удлинитель, кг/см²",
+              "value": 2031.5,
+              "limit": 2250.0,
+              "ok": true
+            },
+            {
+              "name": "профиль σ, кг/см²",
+              "value": 1790.6,
+              "limit": 2250.0,
+              "ok": true
+            },
+            {
+              "name": "профиль f, мм",
+              "value": 9.0,
+              "limit": 20.0,
+              "ok": true
+            },
+            {
+              "name": "заклёпки срез, кг",
+              "value": 66.4,
+              "limit": 253.1,
+              "ok": true
+            },
+            {
+              "name": "заклёпки смятие, кг/см²",
+              "value": 1318.0,
+              "limit": 2650.0,
+              "ok": true
+            }
+          ],
+          "passed": true
+        },
+        "steps": {
+          "main": 550,
+          "corner": 350
+        },
+        "scheme": "interfloor",
+        "inputs": {
+          "scheme": "interfloor",
+          "terrain": "B",
+          "height": 6.0,
+          "q_clad": 25.0,
+          "gamma_clad": 1.1,
+          "q_rails": 3.71,
+          "offset": 170.0,
+          "na_max": 3000.0,
+          "bracket": "КР1-85",
+          "extender": "УК-85-1,2",
+          "profile": "НСП-69-60-1,2",
+          "b_row": 600.0,
+          "b_corner": 600.0,
+          "rail_len": 3000.0,
+          "max_step": 800.0,
+          "n_rivets": 2,
+          "auto_profile": false,
+          "profile_candidates": [
+            "НСП-69-60-1,2"
+          ],
+          "q_rails_extra": 1.4,
+          "q_rails_profile_min": 0.0,
+          "wind_region": "II",
+          "w0": 30.0,
+          "ry": 2250.0,
+          "ice_region": "II",
+          "e1": 157.5,
+          "e2": 73.0,
+          "e3": 11.0,
+          "e4": 21.0
+        },
+        "profile": {
+          "row": "НСП-69-60-1,2",
+          "corner": "НСП-69-60-1,2"
+        },
+        "binding": {
+          "row": [
+            "анкер, кг",
+            312.3,
+            306.1
+          ],
+          "corner": [
+            "анкер, кг",
+            316.7,
+            306.1
+          ]
+        },
+        "variants": null,
+        "bc_note": "шаг направляющих в угловой зоне взят из осей раскладки: 600",
+        "layout_verification": {
+          "passed": true,
+          "scope": "Интервалы между соседними кронштейнами на непрерывных элементах; для межэтажной цепочки — максимальный фактический интервал отметок/границ стены.",
+          "rail_len": 3000.0,
+          "zones": {
+            "row": {
+              "intervals": 6,
+              "max_step": 450.0,
+              "chain": {
+                "zone": "row",
+                "step": 450.0,
+                "w_p": 58.1,
+                "n_p": 48.8,
+                "n_w": 88.7,
+                "checks": [
+                  {
+                    "name": "анкер, кг",
+                    "value": 240.5,
+                    "limit": 306.1,
+                    "ok": true
+                  },
+                  {
+                    "name": "кронштейн 1-1, кг/см²",
+                    "value": 1069.8,
+                    "limit": 2250.0,
+                    "ok": true
+                  },
+                  {
+                    "name": "кронштейн 2-2, кг/см²",
+                    "value": 167.4,
+                    "limit": 2250.0,
+                    "ok": true
+                  },
+                  {
+                    "name": "удлинитель, кг/см²",
+                    "value": 1487.7,
+                    "limit": 2250.0,
+                    "ok": true
+                  },
+                  {
+                    "name": "профиль σ, кг/см²",
+                    "value": 987.5,
+                    "limit": 2250.0,
+                    "ok": true
+                  },
+                  {
+                    "name": "профиль f, мм",
+                    "value": 4.9,
+                    "limit": 20.0,
+                    "ok": true
+                  },
+                  {
+                    "name": "заклёпки срез, кг",
+                    "value": 50.6,
+                    "limit": 253.1,
+                    "ok": true
+                  },
+                  {
+                    "name": "заклёпки смятие, кг/см²",
+                    "value": 1004.6,
+                    "limit": 2650.0,
+                    "ok": true
+                  }
+                ],
+                "passed": true
+              }
+            },
+            "corner": {
+              "intervals": 8,
+              "max_step": 337.5,
+              "chain": {
+                "zone": "corner",
+                "step": 337.5,
+                "w_p": 106.4,
+                "n_p": 39.5,
+                "n_w": 122.0,
+                "checks": [
+                  {
+                    "name": "анкер, кг",
+                    "value": 271.2,
+                    "limit": 306.1,
+                    "ok": true
+                  },
+                  {
+                    "name": "кронштейн 1-1, кг/см²",
+                    "value": 1306.9,
+                    "limit": 2250.0,
+                    "ok": true
+                  },
+                  {
+                    "name": "кронштейн 2-2, кг/см²",
+                    "value": 230.2,
+                    "limit": 2250.0,
+                    "ok": true
+                  },
+                  {
+                    "name": "удлинитель, кг/см²",
+                    "value": 1960.3,
+                    "limit": 2250.0,
+                    "ok": true
+                  },
+                  {
+                    "name": "профиль σ, кг/см²",
+                    "value": 1790.2,
+                    "limit": 2250.0,
+                    "ok": true
+                  },
+                  {
+                    "name": "профиль f, мм",
+                    "value": 9.0,
+                    "limit": 20.0,
+                    "ok": true
+                  },
+                  {
+                    "name": "заклёпки срез, кг",
+                    "value": 64.1,
+                    "limit": 253.1,
+                    "ok": true
+                  },
+                  {
+                    "name": "заклёпки смятие, кг/см²",
+                    "value": 1272.2,
+                    "limit": 2650.0,
+                    "ok": true
+                  }
+                ],
+                "passed": true
+              }
+            }
+          }
+        },
+        "method": {
+          "name": "Вектор — цепочка по переданным статическим расчётам",
+          "version": "review-3009",
+          "coverage": "Проверены расчётные цепочки и выданные шаги. Монтажные узлы, консоли, горизонтальные НГП/СП и проект в целом требуют отдельной проверки конструктора."
+        }
+      },
+      "used_coefficients": [
+        0.106,
+        1.132,
+        0.0063
+      ]
+    },
+    {
+      "name": "6000_with_10mm_splice",
+      "request": {
+        "system": {
+          "name": "Межэтажная"
+        },
+        "sub_type": "interfloor",
+        "parts": "frame",
+        "cladding": "porcelain",
+        "contours": [
+          {
+            "outer": [
+              [
+                0,
+                0
+              ],
+              [
+                3000,
+                0
+              ],
+              [
+                3000,
+                6000
+              ],
+              [
+                0,
+                6000
+              ]
+            ]
+          }
+        ],
+        "joints_x": [
+          300,
+          900,
+          1500,
+          2100,
+          2700
+        ],
+        "floors_y": [
+          0,
+          3000,
+          6000
+        ],
+        "corners_x": [
+          0
+        ],
+        "calc": {
+          "wind_region": "II",
+          "terrain": "B",
+          "height": 6,
+          "q_clad": 25,
+          "offset": 170,
+          "na_max": 3000
+        }
+      },
+      "ok": true,
+      "status": "baseline_model_gap_reproduced",
+      "topology": {
+        "center_x": 1500,
+        "members": [
+          {
+            "rail": {
+              "x": 1500.0,
+              "y0": 0.0,
+              "y1": 2995.0,
+              "len": 2995.0,
+              "clamp_role": "regular",
+              "kind": "НСП",
+              "profile": "НСП-1"
+            },
+            "intersection_y": [
+              0.0,
+              3000.0
+            ],
+            "geometric_span_count": 1,
+            "intervals_mm": [
+              3000.0
+            ],
+            "free_ends_mm": [
+              0,
+              0
+            ],
+            "endpoint_match_tolerance_mm": 6.0
+          },
+          {
+            "rail": {
+              "x": 1500.0,
+              "y0": 3005.0,
+              "y1": 6000.0,
+              "len": 2995.0,
+              "clamp_role": "regular",
+              "kind": "НСП",
+              "profile": "НСП-1"
+            },
+            "intersection_y": [
+              3000.0,
+              6000.0
+            ],
+            "geometric_span_count": 1,
+            "intervals_mm": [
+              3000.0
+            ],
+            "free_ends_mm": [
+              0,
+              0
+            ],
+            "endpoint_match_tolerance_mm": 6.0
+          }
+        ],
+        "fittings": [
+          {
+            "x": 1500.0,
+            "y": 3000.0,
+            "kind": "вставка"
+          }
+        ],
+        "bracket_fields": [
+          "kind",
+          "x",
+          "y"
+        ],
+        "bracket_kinds": [
+          "несущий"
+        ],
+        "interpretation": "Intersections and kind names do not establish fixed/sliding or moment transfer."
+      },
+      "resolved_inputs": {
+        "scheme": "interfloor",
+        "terrain": "B",
+        "height": 6.0,
+        "q_clad": 25.0,
+        "gamma_clad": 1.1,
+        "q_rails": 3.71,
+        "offset": 170.0,
+        "na_max": 3000.0,
+        "bracket": "КР1-85",
+        "extender": "УК-85-1,2",
+        "profile": "НСП-69-60-1,2",
+        "b_row": 600.0,
+        "b_corner": 600.0,
+        "rail_len": 3000.0,
+        "max_step": 800.0,
+        "n_rivets": 2,
+        "auto_profile": false,
+        "profile_candidates": [
+          "НСП-69-60-1,2"
+        ],
+        "q_rails_extra": 1.4,
+        "q_rails_profile_min": 0.0,
+        "wind_region": "II",
+        "w0": 30.0,
+        "ry": 2250.0,
+        "ice_region": "II",
+        "e1": 157.5,
+        "e2": 73.0,
+        "e3": 11.0,
+        "e4": 21.0
+      },
+      "calc_report": {
+        "row": {
+          "zone": "row",
+          "step": 550.0,
+          "w_p": 58.1,
+          "n_p": 57.1,
+          "n_w": 108.4,
+          "checks": [
+            {
+              "name": "анкер, кг",
+              "value": 288.4,
+              "limit": 306.1,
+              "ok": true
+            },
+            {
+              "name": "кронштейн 1-1, кг/см²",
+              "value": 1292.1,
+              "limit": 2250.0,
+              "ok": true
+            },
+            {
+              "name": "кронштейн 2-2, кг/см²",
+              "value": 204.6,
+              "limit": 2250.0,
+              "ok": true
+            },
+            {
+              "name": "удлинитель, кг/см²",
+              "value": 1810.2,
+              "limit": 2250.0,
+              "ok": true
+            },
+            {
+              "name": "профиль σ, кг/см²",
+              "value": 990.9,
+              "limit": 2250.0,
+              "ok": true
+            },
+            {
+              "name": "профиль f, мм",
+              "value": 4.9,
+              "limit": 20.0,
+              "ok": true
+            },
+            {
+              "name": "заклёпки срез, кг",
+              "value": 61.3,
+              "limit": 253.1,
+              "ok": true
+            },
+            {
+              "name": "заклёпки смятие, кг/см²",
+              "value": 1215.7,
+              "limit": 2650.0,
+              "ok": true
+            }
+          ],
+          "passed": true
+        },
+        "corner": {
+          "zone": "corner",
+          "step": 350.0,
+          "w_p": 106.4,
+          "n_p": 40.6,
+          "n_w": 126.5,
+          "checks": [
+            {
+              "name": "анкер, кг",
+              "value": 280.3,
+              "limit": 306.1,
+              "ok": true
+            },
+            {
+              "name": "кронштейн 1-1, кг/см²",
+              "value": 1352.8,
+              "limit": 2250.0,
+              "ok": true
+            },
+            {
+              "name": "кронштейн 2-2, кг/см²",
+              "value": 238.7,
+              "limit": 2250.0,
+              "ok": true
+            },
+            {
+              "name": "удлинитель, кг/см²",
+              "value": 2031.5,
+              "limit": 2250.0,
+              "ok": true
+            },
+            {
+              "name": "профиль σ, кг/см²",
+              "value": 1790.6,
+              "limit": 2250.0,
+              "ok": true
+            },
+            {
+              "name": "профиль f, мм",
+              "value": 9.0,
+              "limit": 20.0,
+              "ok": true
+            },
+            {
+              "name": "заклёпки срез, кг",
+              "value": 66.4,
+              "limit": 253.1,
+              "ok": true
+            },
+            {
+              "name": "заклёпки смятие, кг/см²",
+              "value": 1318.0,
+              "limit": 2650.0,
+              "ok": true
+            }
+          ],
+          "passed": true
+        },
+        "steps": {
+          "main": 550,
+          "corner": 350
+        },
+        "scheme": "interfloor",
+        "inputs": {
+          "scheme": "interfloor",
+          "terrain": "B",
+          "height": 6.0,
+          "q_clad": 25.0,
+          "gamma_clad": 1.1,
+          "q_rails": 3.71,
+          "offset": 170.0,
+          "na_max": 3000.0,
+          "bracket": "КР1-85",
+          "extender": "УК-85-1,2",
+          "profile": "НСП-69-60-1,2",
+          "b_row": 600.0,
+          "b_corner": 600.0,
+          "rail_len": 3000.0,
+          "max_step": 800.0,
+          "n_rivets": 2,
+          "auto_profile": false,
+          "profile_candidates": [
+            "НСП-69-60-1,2"
+          ],
+          "q_rails_extra": 1.4,
+          "q_rails_profile_min": 0.0,
+          "wind_region": "II",
+          "w0": 30.0,
+          "ry": 2250.0,
+          "ice_region": "II",
+          "e1": 157.5,
+          "e2": 73.0,
+          "e3": 11.0,
+          "e4": 21.0
+        },
+        "profile": {
+          "row": "НСП-69-60-1,2",
+          "corner": "НСП-69-60-1,2"
+        },
+        "binding": {
+          "row": [
+            "анкер, кг",
+            312.3,
+            306.1
+          ],
+          "corner": [
+            "анкер, кг",
+            316.7,
+            306.1
+          ]
+        },
+        "variants": null,
+        "bc_note": "шаг направляющих в угловой зоне взят из осей раскладки: 600",
+        "layout_verification": {
+          "passed": true,
+          "scope": "Интервалы между соседними кронштейнами на непрерывных элементах; для межэтажной цепочки — максимальный фактический интервал отметок/границ стены.",
+          "rail_len": 3000.0,
+          "zones": {
+            "row": {
+              "intervals": 9,
+              "max_step": 450.0,
+              "chain": {
+                "zone": "row",
+                "step": 450.0,
+                "w_p": 58.1,
+                "n_p": 48.8,
+                "n_w": 88.7,
+                "checks": [
+                  {
+                    "name": "анкер, кг",
+                    "value": 240.5,
+                    "limit": 306.1,
+                    "ok": true
+                  },
+                  {
+                    "name": "кронштейн 1-1, кг/см²",
+                    "value": 1069.8,
+                    "limit": 2250.0,
+                    "ok": true
+                  },
+                  {
+                    "name": "кронштейн 2-2, кг/см²",
+                    "value": 167.4,
+                    "limit": 2250.0,
+                    "ok": true
+                  },
+                  {
+                    "name": "удлинитель, кг/см²",
+                    "value": 1487.7,
+                    "limit": 2250.0,
+                    "ok": true
+                  },
+                  {
+                    "name": "профиль σ, кг/см²",
+                    "value": 987.5,
+                    "limit": 2250.0,
+                    "ok": true
+                  },
+                  {
+                    "name": "профиль f, мм",
+                    "value": 4.9,
+                    "limit": 20.0,
+                    "ok": true
+                  },
+                  {
+                    "name": "заклёпки срез, кг",
+                    "value": 50.6,
+                    "limit": 253.1,
+                    "ok": true
+                  },
+                  {
+                    "name": "заклёпки смятие, кг/см²",
+                    "value": 1004.6,
+                    "limit": 2650.0,
+                    "ok": true
+                  }
+                ],
+                "passed": true
+              }
+            },
+            "corner": {
+              "intervals": 12,
+              "max_step": 337.5,
+              "chain": {
+                "zone": "corner",
+                "step": 337.5,
+                "w_p": 106.4,
+                "n_p": 39.5,
+                "n_w": 122.0,
+                "checks": [
+                  {
+                    "name": "анкер, кг",
+                    "value": 271.2,
+                    "limit": 306.1,
+                    "ok": true
+                  },
+                  {
+                    "name": "кронштейн 1-1, кг/см²",
+                    "value": 1306.9,
+                    "limit": 2250.0,
+                    "ok": true
+                  },
+                  {
+                    "name": "кронштейн 2-2, кг/см²",
+                    "value": 230.2,
+                    "limit": 2250.0,
+                    "ok": true
+                  },
+                  {
+                    "name": "удлинитель, кг/см²",
+                    "value": 1960.3,
+                    "limit": 2250.0,
+                    "ok": true
+                  },
+                  {
+                    "name": "профиль σ, кг/см²",
+                    "value": 1790.2,
+                    "limit": 2250.0,
+                    "ok": true
+                  },
+                  {
+                    "name": "профиль f, мм",
+                    "value": 9.0,
+                    "limit": 20.0,
+                    "ok": true
+                  },
+                  {
+                    "name": "заклёпки срез, кг",
+                    "value": 64.1,
+                    "limit": 253.1,
+                    "ok": true
+                  },
+                  {
+                    "name": "заклёпки смятие, кг/см²",
+                    "value": 1272.2,
+                    "limit": 2650.0,
+                    "ok": true
+                  }
+                ],
+                "passed": true
+              }
+            }
+          }
+        },
+        "method": {
+          "name": "Вектор — цепочка по переданным статическим расчётам",
+          "version": "review-3009",
+          "coverage": "Проверены расчётные цепочки и выданные шаги. Монтажные узлы, консоли, горизонтальные НГП/СП и проект в целом требуют отдельной проверки конструктора."
+        }
+      },
+      "used_coefficients": [
+        0.106,
+        1.132,
+        0.0063
+      ]
+    },
+    {
+      "name": "6000_unsplit_custom_member",
+      "request": {
+        "system": {
+          "name": "Межэтажная",
+          "rail_std": 6000
+        },
+        "sub_type": "interfloor",
+        "parts": "frame",
+        "cladding": "porcelain",
+        "contours": [
+          {
+            "outer": [
+              [
+                0,
+                0
+              ],
+              [
+                3000,
+                0
+              ],
+              [
+                3000,
+                6000
+              ],
+              [
+                0,
+                6000
+              ]
+            ]
+          }
+        ],
+        "joints_x": [
+          300,
+          900,
+          1500,
+          2100,
+          2700
+        ],
+        "floors_y": [
+          0,
+          3000,
+          6000
+        ],
+        "corners_x": [
+          0
+        ],
+        "calc": {
+          "wind_region": "II",
+          "terrain": "B",
+          "height": 6,
+          "q_clad": 25,
+          "offset": 170,
+          "na_max": 3000
+        }
+      },
+      "ok": true,
+      "status": "baseline_model_gap_reproduced",
+      "topology": {
+        "center_x": 1500,
+        "members": [
+          {
+            "rail": {
+              "x": 1500.0,
+              "y0": 0.0,
+              "y1": 6000.0,
+              "len": 6000.0,
+              "clamp_role": "regular",
+              "kind": "НСП",
+              "profile": "НСП-1"
+            },
+            "intersection_y": [
+              0.0,
+              3000.0,
+              6000.0
+            ],
+            "geometric_span_count": 2,
+            "intervals_mm": [
+              3000.0,
+              3000.0
+            ],
+            "free_ends_mm": [
+              0,
+              0
+            ],
+            "endpoint_match_tolerance_mm": 6.0
+          }
+        ],
+        "fittings": [
+          {
+            "x": 1500.0,
+            "y": 3000.0,
+            "kind": "вставка"
+          }
+        ],
+        "bracket_fields": [
+          "kind",
+          "x",
+          "y"
+        ],
+        "bracket_kinds": [
+          "несущий"
+        ],
+        "interpretation": "Intersections and kind names do not establish fixed/sliding or moment transfer."
+      },
+      "resolved_inputs": {
+        "scheme": "interfloor",
+        "terrain": "B",
+        "height": 6.0,
+        "q_clad": 25.0,
+        "gamma_clad": 1.1,
+        "q_rails": 3.71,
+        "offset": 170.0,
+        "na_max": 3000.0,
+        "bracket": "КР1-85",
+        "extender": "УК-85-1,2",
+        "profile": "НСП-69-60-1,2",
+        "b_row": 600.0,
+        "b_corner": 600.0,
+        "rail_len": 3000.0,
+        "max_step": 800.0,
+        "n_rivets": 2,
+        "auto_profile": false,
+        "profile_candidates": [
+          "НСП-69-60-1,2"
+        ],
+        "q_rails_extra": 1.4,
+        "q_rails_profile_min": 0.0,
+        "wind_region": "II",
+        "w0": 30.0,
+        "ry": 2250.0,
+        "ice_region": "II",
+        "e1": 157.5,
+        "e2": 73.0,
+        "e3": 11.0,
+        "e4": 21.0
+      },
+      "calc_report": {
+        "row": {
+          "zone": "row",
+          "step": 550.0,
+          "w_p": 58.1,
+          "n_p": 57.1,
+          "n_w": 108.4,
+          "checks": [
+            {
+              "name": "анкер, кг",
+              "value": 288.4,
+              "limit": 306.1,
+              "ok": true
+            },
+            {
+              "name": "кронштейн 1-1, кг/см²",
+              "value": 1292.1,
+              "limit": 2250.0,
+              "ok": true
+            },
+            {
+              "name": "кронштейн 2-2, кг/см²",
+              "value": 204.6,
+              "limit": 2250.0,
+              "ok": true
+            },
+            {
+              "name": "удлинитель, кг/см²",
+              "value": 1810.2,
+              "limit": 2250.0,
+              "ok": true
+            },
+            {
+              "name": "профиль σ, кг/см²",
+              "value": 990.9,
+              "limit": 2250.0,
+              "ok": true
+            },
+            {
+              "name": "профиль f, мм",
+              "value": 4.9,
+              "limit": 20.0,
+              "ok": true
+            },
+            {
+              "name": "заклёпки срез, кг",
+              "value": 61.3,
+              "limit": 253.1,
+              "ok": true
+            },
+            {
+              "name": "заклёпки смятие, кг/см²",
+              "value": 1215.7,
+              "limit": 2650.0,
+              "ok": true
+            }
+          ],
+          "passed": true
+        },
+        "corner": {
+          "zone": "corner",
+          "step": 350.0,
+          "w_p": 106.4,
+          "n_p": 40.6,
+          "n_w": 126.5,
+          "checks": [
+            {
+              "name": "анкер, кг",
+              "value": 280.3,
+              "limit": 306.1,
+              "ok": true
+            },
+            {
+              "name": "кронштейн 1-1, кг/см²",
+              "value": 1352.8,
+              "limit": 2250.0,
+              "ok": true
+            },
+            {
+              "name": "кронштейн 2-2, кг/см²",
+              "value": 238.7,
+              "limit": 2250.0,
+              "ok": true
+            },
+            {
+              "name": "удлинитель, кг/см²",
+              "value": 2031.5,
+              "limit": 2250.0,
+              "ok": true
+            },
+            {
+              "name": "профиль σ, кг/см²",
+              "value": 1790.6,
+              "limit": 2250.0,
+              "ok": true
+            },
+            {
+              "name": "профиль f, мм",
+              "value": 9.0,
+              "limit": 20.0,
+              "ok": true
+            },
+            {
+              "name": "заклёпки срез, кг",
+              "value": 66.4,
+              "limit": 253.1,
+              "ok": true
+            },
+            {
+              "name": "заклёпки смятие, кг/см²",
+              "value": 1318.0,
+              "limit": 2650.0,
+              "ok": true
+            }
+          ],
+          "passed": true
+        },
+        "steps": {
+          "main": 550,
+          "corner": 350
+        },
+        "scheme": "interfloor",
+        "inputs": {
+          "scheme": "interfloor",
+          "terrain": "B",
+          "height": 6.0,
+          "q_clad": 25.0,
+          "gamma_clad": 1.1,
+          "q_rails": 3.71,
+          "offset": 170.0,
+          "na_max": 3000.0,
+          "bracket": "КР1-85",
+          "extender": "УК-85-1,2",
+          "profile": "НСП-69-60-1,2",
+          "b_row": 600.0,
+          "b_corner": 600.0,
+          "rail_len": 3000.0,
+          "max_step": 800.0,
+          "n_rivets": 2,
+          "auto_profile": false,
+          "profile_candidates": [
+            "НСП-69-60-1,2"
+          ],
+          "q_rails_extra": 1.4,
+          "q_rails_profile_min": 0.0,
+          "wind_region": "II",
+          "w0": 30.0,
+          "ry": 2250.0,
+          "ice_region": "II",
+          "e1": 157.5,
+          "e2": 73.0,
+          "e3": 11.0,
+          "e4": 21.0
+        },
+        "profile": {
+          "row": "НСП-69-60-1,2",
+          "corner": "НСП-69-60-1,2"
+        },
+        "binding": {
+          "row": [
+            "анкер, кг",
+            312.3,
+            306.1
+          ],
+          "corner": [
+            "анкер, кг",
+            316.7,
+            306.1
+          ]
+        },
+        "variants": null,
+        "bc_note": "шаг направляющих в угловой зоне взят из осей раскладки: 600",
+        "layout_verification": {
+          "passed": true,
+          "scope": "Интервалы между соседними кронштейнами на непрерывных элементах; для межэтажной цепочки — максимальный фактический интервал отметок/границ стены.",
+          "rail_len": 3000.0,
+          "zones": {
+            "row": {
+              "intervals": 9,
+              "max_step": 450.0,
+              "chain": {
+                "zone": "row",
+                "step": 450.0,
+                "w_p": 58.1,
+                "n_p": 48.8,
+                "n_w": 88.7,
+                "checks": [
+                  {
+                    "name": "анкер, кг",
+                    "value": 240.5,
+                    "limit": 306.1,
+                    "ok": true
+                  },
+                  {
+                    "name": "кронштейн 1-1, кг/см²",
+                    "value": 1069.8,
+                    "limit": 2250.0,
+                    "ok": true
+                  },
+                  {
+                    "name": "кронштейн 2-2, кг/см²",
+                    "value": 167.4,
+                    "limit": 2250.0,
+                    "ok": true
+                  },
+                  {
+                    "name": "удлинитель, кг/см²",
+                    "value": 1487.7,
+                    "limit": 2250.0,
+                    "ok": true
+                  },
+                  {
+                    "name": "профиль σ, кг/см²",
+                    "value": 987.5,
+                    "limit": 2250.0,
+                    "ok": true
+                  },
+                  {
+                    "name": "профиль f, мм",
+                    "value": 4.9,
+                    "limit": 20.0,
+                    "ok": true
+                  },
+                  {
+                    "name": "заклёпки срез, кг",
+                    "value": 50.6,
+                    "limit": 253.1,
+                    "ok": true
+                  },
+                  {
+                    "name": "заклёпки смятие, кг/см²",
+                    "value": 1004.6,
+                    "limit": 2650.0,
+                    "ok": true
+                  }
+                ],
+                "passed": true
+              }
+            },
+            "corner": {
+              "intervals": 12,
+              "max_step": 337.5,
+              "chain": {
+                "zone": "corner",
+                "step": 337.5,
+                "w_p": 106.4,
+                "n_p": 39.5,
+                "n_w": 122.0,
+                "checks": [
+                  {
+                    "name": "анкер, кг",
+                    "value": 271.2,
+                    "limit": 306.1,
+                    "ok": true
+                  },
+                  {
+                    "name": "кронштейн 1-1, кг/см²",
+                    "value": 1306.9,
+                    "limit": 2250.0,
+                    "ok": true
+                  },
+                  {
+                    "name": "кронштейн 2-2, кг/см²",
+                    "value": 230.2,
+                    "limit": 2250.0,
+                    "ok": true
+                  },
+                  {
+                    "name": "удлинитель, кг/см²",
+                    "value": 1960.3,
+                    "limit": 2250.0,
+                    "ok": true
+                  },
+                  {
+                    "name": "профиль σ, кг/см²",
+                    "value": 1790.2,
+                    "limit": 2250.0,
+                    "ok": true
+                  },
+                  {
+                    "name": "профиль f, мм",
+                    "value": 9.0,
+                    "limit": 20.0,
+                    "ok": true
+                  },
+                  {
+                    "name": "заклёпки срез, кг",
+                    "value": 64.1,
+                    "limit": 253.1,
+                    "ok": true
+                  },
+                  {
+                    "name": "заклёпки смятие, кг/см²",
+                    "value": 1272.2,
+                    "limit": 2650.0,
+                    "ok": true
+                  }
+                ],
+                "passed": true
+              }
+            }
+          }
+        },
+        "method": {
+          "name": "Вектор — цепочка по переданным статическим расчётам",
+          "version": "review-3009",
+          "coverage": "Проверены расчётные цепочки и выданные шаги. Монтажные узлы, консоли, горизонтальные НГП/СП и проект в целом требуют отдельной проверки конструктора."
+        }
+      },
+      "used_coefficients": [
+        0.106,
+        1.132,
+        0.0063
+      ]
+    }
+  ]
+}

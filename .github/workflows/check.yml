@@ -120,6 +120,7 @@ jobs:
           python test_frame_calc.py
           python test_frame_engine.py
           python test_frame_rules.py
+          python test_frame_topology.py
 
       - name: Native zone geometry regressions (no AutoCAD host)
         shell: pwsh
@@ -157,6 +158,7 @@ jobs:
           python AClad/tools/attile_synth.py --quick
           python AFrame/tools/frame_synth.py --quick
           python tools/fixes_3009/run_facade_regressions.py --python-only
+          python tools/static_review_3009/reproduce_model_gap.py
           # 29.09: синтетика «в ролях конструктора» — ATFZONE → раскладка → ATFRAME с настройками
           # окна через настоящий FrameSettings (консольный дампер под .NET Framework)
           dotnet build AFrame/tools/roles/RolesDump.csproj -c Release -o build_roles

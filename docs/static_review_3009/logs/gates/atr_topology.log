@@ -1,0 +1,1548 @@
+Vector1 topology regression: 8/8 PASS (3 free-end refusals, 1 model refusal, 4 manual controls)
+{
+  "interpretation": "Three preserved free-end refusals; one unconfirmed-model refusal despite five intersections; four manual project-layout controls.",
+  "passed_cases": 8,
+  "cases": [
+    {
+      "name": "default_two_inner_supports",
+      "request": {
+        "system": {
+          "name": "Межэтажная"
+        },
+        "sub_type": "interfloor",
+        "parts": "frame",
+        "cladding": "porcelain",
+        "contours": [
+          {
+            "outer": [
+              [
+                0,
+                0
+              ],
+              [
+                3000,
+                0
+              ],
+              [
+                3000,
+                3000
+              ],
+              [
+                0,
+                3000
+              ]
+            ]
+          }
+        ],
+        "joints_x": [
+          300,
+          900,
+          1500,
+          2100,
+          2700
+        ],
+        "floors_y": [
+          1000,
+          2000
+        ],
+        "corners_x": [],
+        "calc": {
+          "wind_region": "II",
+          "terrain": "B",
+          "height": 6,
+          "q_clad": 25,
+          "offset": 170,
+          "na_max": 3000
+        }
+      },
+      "ok": false,
+      "error_code": "E_CALC_TOPOLOGY_UNSUPPORTED",
+      "empty_geometry": true,
+      "unsupported_center": [
+        {
+          "x": 1500.0,
+          "y0": 0.0,
+          "y1": 3000.0,
+          "support_y": [
+            1000.0,
+            2000.0
+          ],
+          "bottom_free": 1000.0,
+          "top_free": 1000.0,
+          "match_tolerance": 6.0,
+          "reason": "unsupported_free_end"
+        }
+      ],
+      "error": "Расчёт не применён: 7 кусков НСП имеют менее двух пересечений с НГП либо свободный конец за крайней опорой. Консольная/одноопорная схема этой расчётной цепочкой не проверяется. Уточните отметки/опоры либо используйте ручной режим по проектному расчёту; прежняя подсистема сохранена."
+    },
+    {
+      "name": "default_clustered_supports",
+      "request": {
+        "system": {
+          "name": "Межэтажная"
+        },
+        "sub_type": "interfloor",
+        "parts": "frame",
+        "cladding": "porcelain",
+        "contours": [
+          {
+            "outer": [
+              [
+                0,
+                0
+              ],
+              [
+                3000,
+                0
+              ],
+              [
+                3000,
+                3000
+              ],
+              [
+                0,
+                3000
+              ]
+            ]
+          }
+        ],
+        "joints_x": [
+          300,
+          900,
+          1500,
+          2100,
+          2700
+        ],
+        "floors_y": [
+          1400,
+          1600
+        ],
+        "corners_x": [],
+        "calc": {
+          "wind_region": "II",
+          "terrain": "B",
+          "height": 6,
+          "q_clad": 25,
+          "offset": 170,
+          "na_max": 3000
+        }
+      },
+      "ok": false,
+      "error_code": "E_CALC_TOPOLOGY_UNSUPPORTED",
+      "empty_geometry": true,
+      "unsupported_center": [
+        {
+          "x": 1500.0,
+          "y0": 0.0,
+          "y1": 3000.0,
+          "support_y": [
+            1400.0,
+            1600.0
+          ],
+          "bottom_free": 1400.0,
+          "top_free": 1400.0,
+          "match_tolerance": 6.0,
+          "reason": "unsupported_free_end"
+        }
+      ],
+      "error": "Расчёт не применён: 7 кусков НСП имеют менее двух пересечений с НГП либо свободный конец за крайней опорой. Консольная/одноопорная схема этой расчётной цепочкой не проверяется. Уточните отметки/опоры либо используйте ручной режим по проектному расчёту; прежняя подсистема сохранена."
+    },
+    {
+      "name": "custom_long_member",
+      "request": {
+        "system": {
+          "name": "Межэтажная",
+          "rail_std": 9000
+        },
+        "sub_type": "interfloor",
+        "parts": "frame",
+        "cladding": "porcelain",
+        "contours": [
+          {
+            "outer": [
+              [
+                0,
+                0
+              ],
+              [
+                3000,
+                0
+              ],
+              [
+                3000,
+                9000
+              ],
+              [
+                0,
+                9000
+              ]
+            ]
+          }
+        ],
+        "joints_x": [
+          300,
+          900,
+          1500,
+          2100,
+          2700
+        ],
+        "floors_y": [
+          3000,
+          6000
+        ],
+        "corners_x": [],
+        "calc": {
+          "wind_region": "II",
+          "terrain": "B",
+          "height": 6,
+          "q_clad": 25,
+          "offset": 170,
+          "na_max": 3000
+        }
+      },
+      "ok": false,
+      "error_code": "E_CALC_TOPOLOGY_UNSUPPORTED",
+      "empty_geometry": true,
+      "unsupported_center": [
+        {
+          "x": 1500.0,
+          "y0": 0.0,
+          "y1": 9000.0,
+          "support_y": [
+            3000.0,
+            6000.0
+          ],
+          "bottom_free": 3000.0,
+          "top_free": 3000.0,
+          "match_tolerance": 6.0,
+          "reason": "unsupported_free_end"
+        }
+      ],
+      "error": "Расчёт не применён: 7 кусков НСП имеют менее двух пересечений с НГП либо свободный конец за крайней опорой. Консольная/одноопорная схема этой расчётной цепочкой не проверяется. Уточните отметки/опоры либо используйте ручной режим по проектному расчёту; прежняя подсистема сохранена."
+    },
+    {
+      "name": "end_supported_model_unconfirmed",
+      "request": {
+        "system": {
+          "name": "Межэтажная"
+        },
+        "sub_type": "interfloor",
+        "parts": "frame",
+        "cladding": "porcelain",
+        "contours": [
+          {
+            "outer": [
+              [
+                0,
+                0
+              ],
+              [
+                3000,
+                0
+              ],
+              [
+                3000,
+                3000
+              ],
+              [
+                0,
+                3000
+              ]
+            ]
+          }
+        ],
+        "joints_x": [
+          300,
+          900,
+          1500,
+          2100,
+          2700
+        ],
+        "floors_y": [
+          0,
+          750,
+          1500,
+          2250,
+          3000
+        ],
+        "corners_x": [],
+        "calc": {
+          "wind_region": "II",
+          "terrain": "B",
+          "height": 6,
+          "q_clad": 25,
+          "offset": 170,
+          "na_max": 3000
+        }
+      },
+      "ok": false,
+      "error_code": "E_CALC_MODEL_UNCONFIRMED",
+      "empty_geometry": true,
+      "static_model": {
+        "status": "not_verified",
+        "scheme": "interfloor",
+        "geometric_screening": {
+          "status": "refused",
+          "reasons": [
+            {
+              "reason": "interfloor_model_unconfirmed"
+            }
+          ]
+        },
+        "members": [
+          {
+            "index": 0,
+            "kind": "НСП",
+            "geometry": {
+              "x": 100.0,
+              "y0": 0.0,
+              "y1": 3000.0
+            },
+            "supports": [
+              {
+                "position": 0.0,
+                "sources": [
+                  {
+                    "source": "hrails",
+                    "index": 0,
+                    "kind": "НГП"
+                  }
+                ],
+                "connection": "not_modeled"
+              },
+              {
+                "position": 750.0,
+                "sources": [
+                  {
+                    "source": "hrails",
+                    "index": 1,
+                    "kind": "НГП"
+                  }
+                ],
+                "connection": "not_modeled"
+              },
+              {
+                "position": 1500.0,
+                "sources": [
+                  {
+                    "source": "hrails",
+                    "index": 2,
+                    "kind": "НГП"
+                  }
+                ],
+                "connection": "not_modeled"
+              },
+              {
+                "position": 2250.0,
+                "sources": [
+                  {
+                    "source": "hrails",
+                    "index": 3,
+                    "kind": "НГП"
+                  }
+                ],
+                "connection": "not_modeled"
+              },
+              {
+                "position": 3000.0,
+                "sources": [
+                  {
+                    "source": "hrails",
+                    "index": 4,
+                    "kind": "НГП"
+                  }
+                ],
+                "connection": "not_modeled"
+              }
+            ],
+            "support_y": [
+              0.0,
+              750.0,
+              1500.0,
+              2250.0,
+              3000.0
+            ],
+            "support_count": 5,
+            "intervals": [
+              750.0,
+              750.0,
+              750.0,
+              750.0
+            ],
+            "span_count": 4,
+            "actual_span_class": "multi",
+            "bottom_free": 0.0,
+            "top_free": 0.0,
+            "coordinate_match_tolerance": 6.0,
+            "zone": "row"
+          },
+          {
+            "index": 1,
+            "kind": "НСП",
+            "geometry": {
+              "x": 300.0,
+              "y0": 0.0,
+              "y1": 3000.0
+            },
+            "supports": [
+              {
+                "position": 0.0,
+                "sources": [
+                  {
+                    "source": "hrails",
+                    "index": 0,
+                    "kind": "НГП"
+                  }
+                ],
+                "connection": "not_modeled"
+              },
+              {
+                "position": 750.0,
+                "sources": [
+                  {
+                    "source": "hrails",
+                    "index": 1,
+                    "kind": "НГП"
+                  }
+                ],
+                "connection": "not_modeled"
+              },
+              {
+                "position": 1500.0,
+                "sources": [
+                  {
+                    "source": "hrails",
+                    "index": 2,
+                    "kind": "НГП"
+                  }
+                ],
+                "connection": "not_modeled"
+              },
+              {
+                "position": 2250.0,
+                "sources": [
+                  {
+                    "source": "hrails",
+                    "index": 3,
+                    "kind": "НГП"
+                  }
+                ],
+                "connection": "not_modeled"
+              },
+              {
+                "position": 3000.0,
+                "sources": [
+                  {
+                    "source": "hrails",
+                    "index": 4,
+                    "kind": "НГП"
+                  }
+                ],
+                "connection": "not_modeled"
+              }
+            ],
+            "support_y": [
+              0.0,
+              750.0,
+              1500.0,
+              2250.0,
+              3000.0
+            ],
+            "support_count": 5,
+            "intervals": [
+              750.0,
+              750.0,
+              750.0,
+              750.0
+            ],
+            "span_count": 4,
+            "actual_span_class": "multi",
+            "bottom_free": 0.0,
+            "top_free": 0.0,
+            "coordinate_match_tolerance": 6.0,
+            "zone": "row"
+          },
+          {
+            "index": 2,
+            "kind": "НСП",
+            "geometry": {
+              "x": 900.0,
+              "y0": 0.0,
+              "y1": 3000.0
+            },
+            "supports": [
+              {
+                "position": 0.0,
+                "sources": [
+                  {
+                    "source": "hrails",
+                    "index": 0,
+                    "kind": "НГП"
+                  }
+                ],
+                "connection": "not_modeled"
+              },
+              {
+                "position": 750.0,
+                "sources": [
+                  {
+                    "source": "hrails",
+                    "index": 1,
+                    "kind": "НГП"
+                  }
+                ],
+                "connection": "not_modeled"
+              },
+              {
+                "position": 1500.0,
+                "sources": [
+                  {
+                    "source": "hrails",
+                    "index": 2,
+                    "kind": "НГП"
+                  }
+                ],
+                "connection": "not_modeled"
+              },
+              {
+                "position": 2250.0,
+                "sources": [
+                  {
+                    "source": "hrails",
+                    "index": 3,
+                    "kind": "НГП"
+                  }
+                ],
+                "connection": "not_modeled"
+              },
+              {
+                "position": 3000.0,
+                "sources": [
+                  {
+                    "source": "hrails",
+                    "index": 4,
+                    "kind": "НГП"
+                  }
+                ],
+                "connection": "not_modeled"
+              }
+            ],
+            "support_y": [
+              0.0,
+              750.0,
+              1500.0,
+              2250.0,
+              3000.0
+            ],
+            "support_count": 5,
+            "intervals": [
+              750.0,
+              750.0,
+              750.0,
+              750.0
+            ],
+            "span_count": 4,
+            "actual_span_class": "multi",
+            "bottom_free": 0.0,
+            "top_free": 0.0,
+            "coordinate_match_tolerance": 6.0,
+            "zone": "row"
+          },
+          {
+            "index": 3,
+            "kind": "НСП",
+            "geometry": {
+              "x": 1500.0,
+              "y0": 0.0,
+              "y1": 3000.0
+            },
+            "supports": [
+              {
+                "position": 0.0,
+                "sources": [
+                  {
+                    "source": "hrails",
+                    "index": 0,
+                    "kind": "НГП"
+                  }
+                ],
+                "connection": "not_modeled"
+              },
+              {
+                "position": 750.0,
+                "sources": [
+                  {
+                    "source": "hrails",
+                    "index": 1,
+                    "kind": "НГП"
+                  }
+                ],
+                "connection": "not_modeled"
+              },
+              {
+                "position": 1500.0,
+                "sources": [
+                  {
+                    "source": "hrails",
+                    "index": 2,
+                    "kind": "НГП"
+                  }
+                ],
+                "connection": "not_modeled"
+              },
+              {
+                "position": 2250.0,
+                "sources": [
+                  {
+                    "source": "hrails",
+                    "index": 3,
+                    "kind": "НГП"
+                  }
+                ],
+                "connection": "not_modeled"
+              },
+              {
+                "position": 3000.0,
+                "sources": [
+                  {
+                    "source": "hrails",
+                    "index": 4,
+                    "kind": "НГП"
+                  }
+                ],
+                "connection": "not_modeled"
+              }
+            ],
+            "support_y": [
+              0.0,
+              750.0,
+              1500.0,
+              2250.0,
+              3000.0
+            ],
+            "support_count": 5,
+            "intervals": [
+              750.0,
+              750.0,
+              750.0,
+              750.0
+            ],
+            "span_count": 4,
+            "actual_span_class": "multi",
+            "bottom_free": 0.0,
+            "top_free": 0.0,
+            "coordinate_match_tolerance": 6.0,
+            "zone": "row"
+          },
+          {
+            "index": 4,
+            "kind": "НСП",
+            "geometry": {
+              "x": 2100.0,
+              "y0": 0.0,
+              "y1": 3000.0
+            },
+            "supports": [
+              {
+                "position": 0.0,
+                "sources": [
+                  {
+                    "source": "hrails",
+                    "index": 0,
+                    "kind": "НГП"
+                  }
+                ],
+                "connection": "not_modeled"
+              },
+              {
+                "position": 750.0,
+                "sources": [
+                  {
+                    "source": "hrails",
+                    "index": 1,
+                    "kind": "НГП"
+                  }
+                ],
+                "connection": "not_modeled"
+              },
+              {
+                "position": 1500.0,
+                "sources": [
+                  {
+                    "source": "hrails",
+                    "index": 2,
+                    "kind": "НГП"
+                  }
+                ],
+                "connection": "not_modeled"
+              },
+              {
+                "position": 2250.0,
+                "sources": [
+                  {
+                    "source": "hrails",
+                    "index": 3,
+                    "kind": "НГП"
+                  }
+                ],
+                "connection": "not_modeled"
+              },
+              {
+                "position": 3000.0,
+                "sources": [
+                  {
+                    "source": "hrails",
+                    "index": 4,
+                    "kind": "НГП"
+                  }
+                ],
+                "connection": "not_modeled"
+              }
+            ],
+            "support_y": [
+              0.0,
+              750.0,
+              1500.0,
+              2250.0,
+              3000.0
+            ],
+            "support_count": 5,
+            "intervals": [
+              750.0,
+              750.0,
+              750.0,
+              750.0
+            ],
+            "span_count": 4,
+            "actual_span_class": "multi",
+            "bottom_free": 0.0,
+            "top_free": 0.0,
+            "coordinate_match_tolerance": 6.0,
+            "zone": "row"
+          },
+          {
+            "index": 5,
+            "kind": "НСП",
+            "geometry": {
+              "x": 2700.0,
+              "y0": 0.0,
+              "y1": 3000.0
+            },
+            "supports": [
+              {
+                "position": 0.0,
+                "sources": [
+                  {
+                    "source": "hrails",
+                    "index": 0,
+                    "kind": "НГП"
+                  }
+                ],
+                "connection": "not_modeled"
+              },
+              {
+                "position": 750.0,
+                "sources": [
+                  {
+                    "source": "hrails",
+                    "index": 1,
+                    "kind": "НГП"
+                  }
+                ],
+                "connection": "not_modeled"
+              },
+              {
+                "position": 1500.0,
+                "sources": [
+                  {
+                    "source": "hrails",
+                    "index": 2,
+                    "kind": "НГП"
+                  }
+                ],
+                "connection": "not_modeled"
+              },
+              {
+                "position": 2250.0,
+                "sources": [
+                  {
+                    "source": "hrails",
+                    "index": 3,
+                    "kind": "НГП"
+                  }
+                ],
+                "connection": "not_modeled"
+              },
+              {
+                "position": 3000.0,
+                "sources": [
+                  {
+                    "source": "hrails",
+                    "index": 4,
+                    "kind": "НГП"
+                  }
+                ],
+                "connection": "not_modeled"
+              }
+            ],
+            "support_y": [
+              0.0,
+              750.0,
+              1500.0,
+              2250.0,
+              3000.0
+            ],
+            "support_count": 5,
+            "intervals": [
+              750.0,
+              750.0,
+              750.0,
+              750.0
+            ],
+            "span_count": 4,
+            "actual_span_class": "multi",
+            "bottom_free": 0.0,
+            "top_free": 0.0,
+            "coordinate_match_tolerance": 6.0,
+            "zone": "row"
+          },
+          {
+            "index": 6,
+            "kind": "НСП",
+            "geometry": {
+              "x": 2900.0,
+              "y0": 0.0,
+              "y1": 3000.0
+            },
+            "supports": [
+              {
+                "position": 0.0,
+                "sources": [
+                  {
+                    "source": "hrails",
+                    "index": 0,
+                    "kind": "НГП"
+                  }
+                ],
+                "connection": "not_modeled"
+              },
+              {
+                "position": 750.0,
+                "sources": [
+                  {
+                    "source": "hrails",
+                    "index": 1,
+                    "kind": "НГП"
+                  }
+                ],
+                "connection": "not_modeled"
+              },
+              {
+                "position": 1500.0,
+                "sources": [
+                  {
+                    "source": "hrails",
+                    "index": 2,
+                    "kind": "НГП"
+                  }
+                ],
+                "connection": "not_modeled"
+              },
+              {
+                "position": 2250.0,
+                "sources": [
+                  {
+                    "source": "hrails",
+                    "index": 3,
+                    "kind": "НГП"
+                  }
+                ],
+                "connection": "not_modeled"
+              },
+              {
+                "position": 3000.0,
+                "sources": [
+                  {
+                    "source": "hrails",
+                    "index": 4,
+                    "kind": "НГП"
+                  }
+                ],
+                "connection": "not_modeled"
+              }
+            ],
+            "support_y": [
+              0.0,
+              750.0,
+              1500.0,
+              2250.0,
+              3000.0
+            ],
+            "support_count": 5,
+            "intervals": [
+              750.0,
+              750.0,
+              750.0,
+              750.0
+            ],
+            "span_count": 4,
+            "actual_span_class": "multi",
+            "bottom_free": 0.0,
+            "top_free": 0.0,
+            "coordinate_match_tolerance": 6.0,
+            "zone": "row"
+          }
+        ],
+        "horizontal_members": [
+          {
+            "index": 0,
+            "kind": "НГП",
+            "geometry": {
+              "y": 0.0,
+              "x0": 0.0,
+              "x1": 3000.0
+            },
+            "bracket_intersections": [
+              {
+                "position": 150.0,
+                "sources": [
+                  {
+                    "source": "brackets",
+                    "index": 0,
+                    "kind": "несущий"
+                  }
+                ],
+                "connection": "not_modeled"
+              },
+              {
+                "position": 825.0,
+                "sources": [
+                  {
+                    "source": "brackets",
+                    "index": 1,
+                    "kind": "несущий"
+                  }
+                ],
+                "connection": "not_modeled"
+              },
+              {
+                "position": 1500.0,
+                "sources": [
+                  {
+                    "source": "brackets",
+                    "index": 2,
+                    "kind": "несущий"
+                  }
+                ],
+                "connection": "not_modeled"
+              },
+              {
+                "position": 2175.0,
+                "sources": [
+                  {
+                    "source": "brackets",
+                    "index": 3,
+                    "kind": "несущий"
+                  }
+                ],
+                "connection": "not_modeled"
+              },
+              {
+                "position": 2850.0,
+                "sources": [
+                  {
+                    "source": "brackets",
+                    "index": 4,
+                    "kind": "несущий"
+                  }
+                ],
+                "connection": "not_modeled"
+              }
+            ],
+            "strength": "not_verified"
+          },
+          {
+            "index": 1,
+            "kind": "НГП",
+            "geometry": {
+              "y": 750.0,
+              "x0": 0.0,
+              "x1": 3000.0
+            },
+            "bracket_intersections": [
+              {
+                "position": 150.0,
+                "sources": [
+                  {
+                    "source": "brackets",
+                    "index": 5,
+                    "kind": "несущий"
+                  }
+                ],
+                "connection": "not_modeled"
+              },
+              {
+                "position": 825.0,
+                "sources": [
+                  {
+                    "source": "brackets",
+                    "index": 6,
+                    "kind": "несущий"
+                  }
+                ],
+                "connection": "not_modeled"
+              },
+              {
+                "position": 1500.0,
+                "sources": [
+                  {
+                    "source": "brackets",
+                    "index": 7,
+                    "kind": "несущий"
+                  }
+                ],
+                "connection": "not_modeled"
+              },
+              {
+                "position": 2175.0,
+                "sources": [
+                  {
+                    "source": "brackets",
+                    "index": 8,
+                    "kind": "несущий"
+                  }
+                ],
+                "connection": "not_modeled"
+              },
+              {
+                "position": 2850.0,
+                "sources": [
+                  {
+                    "source": "brackets",
+                    "index": 9,
+                    "kind": "несущий"
+                  }
+                ],
+                "connection": "not_modeled"
+              }
+            ],
+            "strength": "not_verified"
+          },
+          {
+            "index": 2,
+            "kind": "НГП",
+            "geometry": {
+              "y": 1500.0,
+              "x0": 0.0,
+              "x1": 3000.0
+            },
+            "bracket_intersections": [
+              {
+                "position": 150.0,
+                "sources": [
+                  {
+                    "source": "brackets",
+                    "index": 10,
+                    "kind": "несущий"
+                  }
+                ],
+                "connection": "not_modeled"
+              },
+              {
+                "position": 825.0,
+                "sources": [
+                  {
+                    "source": "brackets",
+                    "index": 11,
+                    "kind": "несущий"
+                  }
+                ],
+                "connection": "not_modeled"
+              },
+              {
+                "position": 1500.0,
+                "sources": [
+                  {
+                    "source": "brackets",
+                    "index": 12,
+                    "kind": "несущий"
+                  }
+                ],
+                "connection": "not_modeled"
+              },
+              {
+                "position": 2175.0,
+                "sources": [
+                  {
+                    "source": "brackets",
+                    "index": 13,
+                    "kind": "несущий"
+                  }
+                ],
+                "connection": "not_modeled"
+              },
+              {
+                "position": 2850.0,
+                "sources": [
+                  {
+                    "source": "brackets",
+                    "index": 14,
+                    "kind": "несущий"
+                  }
+                ],
+                "connection": "not_modeled"
+              }
+            ],
+            "strength": "not_verified"
+          },
+          {
+            "index": 3,
+            "kind": "НГП",
+            "geometry": {
+              "y": 2250.0,
+              "x0": 0.0,
+              "x1": 3000.0
+            },
+            "bracket_intersections": [
+              {
+                "position": 150.0,
+                "sources": [
+                  {
+                    "source": "brackets",
+                    "index": 15,
+                    "kind": "несущий"
+                  }
+                ],
+                "connection": "not_modeled"
+              },
+              {
+                "position": 825.0,
+                "sources": [
+                  {
+                    "source": "brackets",
+                    "index": 16,
+                    "kind": "несущий"
+                  }
+                ],
+                "connection": "not_modeled"
+              },
+              {
+                "position": 1500.0,
+                "sources": [
+                  {
+                    "source": "brackets",
+                    "index": 17,
+                    "kind": "несущий"
+                  }
+                ],
+                "connection": "not_modeled"
+              },
+              {
+                "position": 2175.0,
+                "sources": [
+                  {
+                    "source": "brackets",
+                    "index": 18,
+                    "kind": "несущий"
+                  }
+                ],
+                "connection": "not_modeled"
+              },
+              {
+                "position": 2850.0,
+                "sources": [
+                  {
+                    "source": "brackets",
+                    "index": 19,
+                    "kind": "несущий"
+                  }
+                ],
+                "connection": "not_modeled"
+              }
+            ],
+            "strength": "not_verified"
+          },
+          {
+            "index": 4,
+            "kind": "НГП",
+            "geometry": {
+              "y": 3000.0,
+              "x0": 0.0,
+              "x1": 3000.0
+            },
+            "bracket_intersections": [
+              {
+                "position": 150.0,
+                "sources": [
+                  {
+                    "source": "brackets",
+                    "index": 20,
+                    "kind": "несущий"
+                  }
+                ],
+                "connection": "not_modeled"
+              },
+              {
+                "position": 825.0,
+                "sources": [
+                  {
+                    "source": "brackets",
+                    "index": 21,
+                    "kind": "несущий"
+                  }
+                ],
+                "connection": "not_modeled"
+              },
+              {
+                "position": 1500.0,
+                "sources": [
+                  {
+                    "source": "brackets",
+                    "index": 22,
+                    "kind": "несущий"
+                  }
+                ],
+                "connection": "not_modeled"
+              },
+              {
+                "position": 2175.0,
+                "sources": [
+                  {
+                    "source": "brackets",
+                    "index": 23,
+                    "kind": "несущий"
+                  }
+                ],
+                "connection": "not_modeled"
+              },
+              {
+                "position": 2850.0,
+                "sources": [
+                  {
+                    "source": "brackets",
+                    "index": 24,
+                    "kind": "несущий"
+                  }
+                ],
+                "connection": "not_modeled"
+              }
+            ],
+            "strength": "not_verified"
+          }
+        ],
+        "member_count": 7,
+        "pieces_merged": false,
+        "fixed_sliding": "not_modeled",
+        "splice_continuity": "not_modeled",
+        "gravity_load_distribution": "not_verified",
+        "cantilevers": "not_verified",
+        "unequal_spans": "not_verified",
+        "horizontal_member_strength": "not_verified",
+        "scope": "Проверены только геометрические пересечения и совместимость числа пролётов с уже применяемыми коэффициентами. Это не проверка статической модели: неподвижные/подвижные соединения, передача момента через стыки, распределение веса, консоли и неравные пролёты не подтверждены."
+      },
+      "error": "Расчёт не применён: для межэтажного каркаса не подтверждена модель соединений и непрерывности НСП через стыки. Используйте ручной режим по отдельному проектному расчёту; прежняя подсистема сохранена."
+    },
+    {
+      "name": "manual_two_inner_supports",
+      "request": {
+        "system": {
+          "name": "Межэтажная"
+        },
+        "sub_type": "interfloor",
+        "parts": "frame",
+        "cladding": "porcelain",
+        "contours": [
+          {
+            "outer": [
+              [
+                0,
+                0
+              ],
+              [
+                3000,
+                0
+              ],
+              [
+                3000,
+                3000
+              ],
+              [
+                0,
+                3000
+              ]
+            ]
+          }
+        ],
+        "joints_x": [
+          300,
+          900,
+          1500,
+          2100,
+          2700
+        ],
+        "floors_y": [
+          1000,
+          2000
+        ],
+        "corners_x": []
+      },
+      "ok": true,
+      "members": [
+        {
+          "rail": {
+            "x": 1500.0,
+            "y0": 0.0,
+            "y1": 3000.0,
+            "len": 3000.0,
+            "clamp_role": "regular",
+            "kind": "НСП",
+            "profile": "НСП-1"
+          },
+          "supports_y": [
+            1000.0,
+            2000.0
+          ],
+          "support_count": 2,
+          "supported_span_count": 1,
+          "supported_spans": [
+            1000.0
+          ],
+          "free_end_lengths": [
+            1000.0,
+            1000.0
+          ]
+        }
+      ],
+      "calculation_requested": false
+    },
+    {
+      "name": "manual_clustered_supports",
+      "request": {
+        "system": {
+          "name": "Межэтажная"
+        },
+        "sub_type": "interfloor",
+        "parts": "frame",
+        "cladding": "porcelain",
+        "contours": [
+          {
+            "outer": [
+              [
+                0,
+                0
+              ],
+              [
+                3000,
+                0
+              ],
+              [
+                3000,
+                3000
+              ],
+              [
+                0,
+                3000
+              ]
+            ]
+          }
+        ],
+        "joints_x": [
+          300,
+          900,
+          1500,
+          2100,
+          2700
+        ],
+        "floors_y": [
+          1400,
+          1600
+        ],
+        "corners_x": []
+      },
+      "ok": true,
+      "members": [
+        {
+          "rail": {
+            "x": 1500.0,
+            "y0": 0.0,
+            "y1": 3000.0,
+            "len": 3000.0,
+            "clamp_role": "regular",
+            "kind": "НСП",
+            "profile": "НСП-1"
+          },
+          "supports_y": [
+            1400.0,
+            1600.0
+          ],
+          "support_count": 2,
+          "supported_span_count": 1,
+          "supported_spans": [
+            200.0
+          ],
+          "free_end_lengths": [
+            1400.0,
+            1400.0
+          ]
+        }
+      ],
+      "calculation_requested": false
+    },
+    {
+      "name": "manual_long_member",
+      "request": {
+        "system": {
+          "name": "Межэтажная",
+          "rail_std": 9000
+        },
+        "sub_type": "interfloor",
+        "parts": "frame",
+        "cladding": "porcelain",
+        "contours": [
+          {
+            "outer": [
+              [
+                0,
+                0
+              ],
+              [
+                3000,
+                0
+              ],
+              [
+                3000,
+                9000
+              ],
+              [
+                0,
+                9000
+              ]
+            ]
+          }
+        ],
+        "joints_x": [
+          300,
+          900,
+          1500,
+          2100,
+          2700
+        ],
+        "floors_y": [
+          3000,
+          6000
+        ],
+        "corners_x": []
+      },
+      "ok": true,
+      "members": [
+        {
+          "rail": {
+            "x": 1500.0,
+            "y0": 0.0,
+            "y1": 9000.0,
+            "len": 9000.0,
+            "clamp_role": "regular",
+            "kind": "НСП",
+            "profile": "НСП-1"
+          },
+          "supports_y": [
+            3000.0,
+            6000.0
+          ],
+          "support_count": 2,
+          "supported_span_count": 1,
+          "supported_spans": [
+            3000.0
+          ],
+          "free_end_lengths": [
+            3000.0,
+            3000.0
+          ]
+        }
+      ],
+      "calculation_requested": false
+    },
+    {
+      "name": "manual_end_supported_control",
+      "request": {
+        "system": {
+          "name": "Межэтажная"
+        },
+        "sub_type": "interfloor",
+        "parts": "frame",
+        "cladding": "porcelain",
+        "contours": [
+          {
+            "outer": [
+              [
+                0,
+                0
+              ],
+              [
+                3000,
+                0
+              ],
+              [
+                3000,
+                3000
+              ],
+              [
+                0,
+                3000
+              ]
+            ]
+          }
+        ],
+        "joints_x": [
+          300,
+          900,
+          1500,
+          2100,
+          2700
+        ],
+        "floors_y": [
+          0,
+          750,
+          1500,
+          2250,
+          3000
+        ],
+        "corners_x": []
+      },
+      "ok": true,
+      "members": [
+        {
+          "rail": {
+            "x": 1500.0,
+            "y0": 0.0,
+            "y1": 3000.0,
+            "len": 3000.0,
+            "clamp_role": "regular",
+            "kind": "НСП",
+            "profile": "НСП-1"
+          },
+          "supports_y": [
+            0.0,
+            750.0,
+            1500.0,
+            2250.0,
+            3000.0
+          ],
+          "support_count": 5,
+          "supported_span_count": 4,
+          "supported_spans": [
+            750.0,
+            750.0,
+            750.0,
+            750.0
+          ],
+          "free_end_lengths": [
+            0.0,
+            0.0
+          ]
+        }
+      ],
+      "calculation_requested": false
+    }
+  ]
+}

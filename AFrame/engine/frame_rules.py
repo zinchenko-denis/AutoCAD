@@ -7,7 +7,7 @@ identity is not approval of an assembly, a calculation or a manufacturer node.
 import copy
 import json
 
-REGISTRY_REVISION = "2026-09-30.atr-1"
+REGISTRY_REVISION = "2026-09-30.static-1"
 SUPPORTED_SCHEMES = ("vertical", "ortho", "interfloor")
 SUPPORTED_CLADDINGS = ("porcelain", "composite", "concrete", "clinker")
 
@@ -19,6 +19,13 @@ REGISTRY = {
     "manufacturer_compliance": "not_asserted",
     "accepted_code_schemes": list(SUPPORTED_SCHEMES),
     "accepted_cladding_codes": list(SUPPORTED_CLADDINGS),
+    "calculation_application": {
+        "interfloor": "blocked_until_connection_and_continuity_model",
+        "vertical": "limited_chain_with_geometric_screening",
+        "ortho": "limited_chain_with_geometric_screening",
+        "static_model_verification": "not_verified",
+        "review": "docs/STATIC_MODEL_REVIEW_30.09.md",
+    },
     "sources": {
         "vector1_2015": {
             "kind": "historical_manufacturer_album", "manufacturer_id": "vector",
@@ -292,6 +299,8 @@ def resolve_layout_contract(req, system, sub):
         "cladding": cladding, "requested_parts": parts,
         "attachment_scope": attachment.get("attachment_scope", "unknown"),
         "calculation_requested": req.get("calc") is not None,
+        "calculation_application": REGISTRY["calculation_application"][sub],
+        "static_model_verification": "not_verified",
         "manufacturer_compliance": "not_asserted", "design_limits_from_preset": False,
         "source_ids": list(dict.fromkeys(sources)), "known_missing": list(dict.fromkeys(missing)),
     }
@@ -320,6 +329,9 @@ def declared_scope(contract, has_openings=False):
         notes.append("КГ с проёмами: условное пожарное усиление и дополнительные кляммеры по утверждённому проектному узлу не сформированы. Условие одного листа АТР не применяется ко всем изделиям.")
     if contract["code_scheme"] == "interfloor":
         notes.append("Схема НГП→НСП лишь частично соответствует типу 4 старого альбома; самостоятельный тип 5 КПК→НСП не реализован.")
+        notes.append("Автоматическое расчётное подтверждение межэтажной схемы заблокировано до модели опор, соединений и непрерывности. Ручная геометрия требует отдельного проектного расчёта.")
+    elif contract["calculation_requested"]:
+        notes.append("Арифметическая расчётная цепочка и геометрический контроль не подтверждают применимость полной статической модели: неподвижные/подвижные соединения, консоли и передача усилий через стыки не проверены.")
     return {"metadata": metadata, "notes": notes}
 
 

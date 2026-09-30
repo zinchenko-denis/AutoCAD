@@ -337,6 +337,7 @@ def op_frame(req):
                     "error_code": res.get("error_code", "E_FRAME_PLAN"),
                     "failed_zone": zone_id, "unsupported": res.get("unsupported") or [],
                     "calc_inputs": res.get("calc_inputs"),
+                    "static_model": res.get("static_model"),
                     "unsupported_counts": res.get("unsupported_counts") or {},
                     "notes": notes + list(res.get("notes") or [])}
         system_used = res.get("system_used") or system_used

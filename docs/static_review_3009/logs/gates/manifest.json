@@ -1,0 +1,305 @@
+{
+  "base_commit": "ad2a0a281a1b0cfa18a35aa4f10ce54557a58436",
+  "results": [
+    {
+      "name": "Facades_test_facade_zones",
+      "cwd": "Facades/engine",
+      "arguments": [
+        "test_facade_zones.py"
+      ],
+      "returncode": 0,
+      "seconds": 0.096
+    },
+    {
+      "name": "Facades_test_facades_engine",
+      "cwd": "Facades/engine",
+      "arguments": [
+        "test_facades_engine.py"
+      ],
+      "returncode": 0,
+      "seconds": 0.134
+    },
+    {
+      "name": "AClad_test_cladding_plan",
+      "cwd": "AClad/engine",
+      "arguments": [
+        "test_cladding_plan.py"
+      ],
+      "returncode": 0,
+      "seconds": 0.031
+    },
+    {
+      "name": "AClad_test_clad_engine",
+      "cwd": "AClad/engine",
+      "arguments": [
+        "test_clad_engine.py"
+      ],
+      "returncode": 0,
+      "seconds": 0.075
+    },
+    {
+      "name": "AClad_test_tile_pattern",
+      "cwd": "AClad/engine",
+      "arguments": [
+        "test_tile_pattern.py"
+      ],
+      "returncode": 0,
+      "seconds": 0.626
+    },
+    {
+      "name": "AClad_audit_clad",
+      "cwd": "AClad/engine",
+      "arguments": [
+        "audit_clad.py"
+      ],
+      "returncode": 0,
+      "seconds": 0.165
+    },
+    {
+      "name": "AFrame_test_frame_plan",
+      "cwd": "AFrame/engine",
+      "arguments": [
+        "test_frame_plan.py"
+      ],
+      "returncode": 0,
+      "seconds": 0.203
+    },
+    {
+      "name": "AFrame_test_frame_calc",
+      "cwd": "AFrame/engine",
+      "arguments": [
+        "test_frame_calc.py"
+      ],
+      "returncode": 0,
+      "seconds": 0.031
+    },
+    {
+      "name": "AFrame_test_frame_engine",
+      "cwd": "AFrame/engine",
+      "arguments": [
+        "test_frame_engine.py"
+      ],
+      "returncode": 0,
+      "seconds": 0.139
+    },
+    {
+      "name": "AFrame_test_frame_rules",
+      "cwd": "AFrame/engine",
+      "arguments": [
+        "test_frame_rules.py"
+      ],
+      "returncode": 0,
+      "seconds": 0.09
+    },
+    {
+      "name": "AFrame_test_frame_topology",
+      "cwd": "AFrame/engine",
+      "arguments": [
+        "test_frame_topology.py"
+      ],
+      "returncode": 0,
+      "seconds": 0.066
+    },
+    {
+      "name": "AFrame_audit_frame",
+      "cwd": "AFrame/engine",
+      "arguments": [
+        "audit_frame.py"
+      ],
+      "returncode": 0,
+      "seconds": 0.386
+    },
+    {
+      "name": "xmod",
+      "cwd": ".",
+      "arguments": [
+        "tools/xmod_check.py",
+        "--no-fixture",
+        "--allow=X6"
+      ],
+      "returncode": 0,
+      "seconds": 0.056
+    },
+    {
+      "name": "frame_quick",
+      "cwd": ".",
+      "arguments": [
+        "AFrame/tools/frame_synth.py",
+        "--quick"
+      ],
+      "returncode": 0,
+      "seconds": 8.103
+    },
+    {
+      "name": "zones_quick",
+      "cwd": ".",
+      "arguments": [
+        "Facades/tools/zones_synth.py",
+        "--quick"
+      ],
+      "returncode": 0,
+      "seconds": 12.3
+    },
+    {
+      "name": "tile_quick",
+      "cwd": ".",
+      "arguments": [
+        "AClad/tools/attile_synth.py",
+        "--quick"
+      ],
+      "returncode": 0,
+      "seconds": 24.371
+    },
+    {
+      "name": "roles_quick",
+      "cwd": ".",
+      "arguments": [
+        "tools/roles_synth.py",
+        "--quick"
+      ],
+      "returncode": 0,
+      "seconds": 4.249
+    },
+    {
+      "name": "engine_contract",
+      "cwd": ".",
+      "arguments": [
+        "tools/engine_contract.py"
+      ],
+      "returncode": 0,
+      "seconds": 3.47
+    },
+    {
+      "name": "facade_regressions",
+      "cwd": ".",
+      "arguments": [
+        "tools/fixes_3009/run_facade_regressions.py",
+        "--out",
+        "/workspace/scratch/ba306982747c/verification/final_frozen/regressions"
+      ],
+      "returncode": 0,
+      "seconds": 8.911
+    },
+    {
+      "name": "atr_topology",
+      "cwd": ".",
+      "arguments": [
+        "tools/atr_review_3009/vector1_topology.py"
+      ],
+      "returncode": 0,
+      "seconds": 0.034
+    },
+    {
+      "name": "atr_vector5",
+      "cwd": ".",
+      "arguments": [
+        "tools/atr_review_3009/vector5_contract_probe.py",
+        "--out",
+        "/workspace/scratch/ba306982747c/verification/final_frozen/vector5"
+      ],
+      "returncode": 0,
+      "seconds": 0.666
+    },
+    {
+      "name": "atr_architecture",
+      "cwd": ".",
+      "arguments": [
+        "tools/atr_review_3009/architecture_probe.py",
+        "--out",
+        "/workspace/scratch/ba306982747c/verification/final_frozen/architecture"
+      ],
+      "returncode": 0,
+      "seconds": 0.96
+    },
+    {
+      "name": "atr_mass",
+      "cwd": ".",
+      "arguments": [
+        "tools/atr_review_3009/vector5_mass_review.py",
+        "--evidence",
+        "/workspace/scratch/ba306982747c/verification/final_frozen/architecture/evidence.json",
+        "--out",
+        "/workspace/scratch/ba306982747c/verification/final_frozen/mass_review.json"
+      ],
+      "returncode": 0,
+      "seconds": 0.048
+    },
+    {
+      "name": "static_model_gap",
+      "cwd": ".",
+      "arguments": [
+        "tools/static_review_3009/reproduce_model_gap.py",
+        "--out",
+        "/workspace/scratch/ba306982747c/verification/final_frozen/static_model_gap.json"
+      ],
+      "returncode": 0,
+      "seconds": 0.052
+    }
+  ],
+  "source_sha256": {
+    "AClad/engine/audit_clad.py": "881ae022233fbc6ff178d2ea2f4842eb4cf7547a8cb33a8a29e69c435aad8a92",
+    "AClad/engine/clad_engine.py": "cf7e3739c74517a6d4483572d19330901b11d6ef8f3eb4e95c42104645257e1e",
+    "AClad/engine/cladding_plan.py": "0eb923685b4a1319a31f8eb17bfe25059aaee22b8c7b85d40982b812af5e2e8e",
+    "AClad/engine/polygon_clip.py": "06bf6d81181d8f0732827a53169cbc5c8aa4f5615e7cc5ed5306b2ac4ae4c60f",
+    "AClad/engine/test_clad_engine.py": "7f4133e8cb1c5e139752ad16c8a26777ee691940169c8eb2c13f5b5f1972569b",
+    "AClad/engine/test_cladding_plan.py": "4461dea9f1f00e926d52f3d0b64562a281f036b8baed4dba8656c3d89314f97a",
+    "AClad/engine/test_tile_pattern.py": "d489eae004c47dde8fc3f32108e5721c6e050387dd8e8539b3e01f37f9e640c3",
+    "AClad/engine/tile_pattern.py": "3af9df2b123585ce33d0b8a616956c0c0ef5ba7a822acb6fa06555ace81eafce",
+    "AClad/src/ACladPlugin/ACladPlugin.csproj": "11061df272fb61c4f9977677c58b8189c25b2ef0005f0404ddffbbc66f90ff41",
+    "AClad/src/ACladPlugin/BondForm.cs": "48f9d6918f97d2206f849b686683c1d862e538e8a2cf27e12df51bb576611466",
+    "AClad/src/ACladPlugin/BondSettings.cs": "c30e687bfee933011fb98b1587bb4a1603d2425055a0046c61a33a28713aa914",
+    "AClad/src/ACladPlugin/CladCommand.cs": "e030b86812bf6295b19e8847252cdd4489981efe9161b60629fd503ebe18fbeb",
+    "AClad/src/ACladPlugin/DimForm.cs": "6e1a13c33151308b678b3070c4e6b04dff93f0ca2834b675e1bea6e51f077031",
+    "AClad/src/ACladPlugin/FacadesClassic.cs": "ccb7bffde646144f90b0db1f89ec89c7f252e44f2a523378e6b631e61fe9ec14",
+    "AClad/src/ACladPlugin/FacadesRibbon.cs": "89d60014a94534f720bf09f7a32bfab2ad61428414258ff183bd48ccf7671854",
+    "AClad/src/ACladPlugin/LayerPickForm.cs": "bd16924dbf9bf9ea8133b5c721fff2f020c86510af972b13411039fd7b5eb848",
+    "AClad/src/ACladPlugin/LayoutSafety.cs": "dfe26a34bd41119e5e611c930f45a237bac7332c3797c4ffa77c29340078a3cb",
+    "AClad/src/ACladPlugin/Plugin.cs": "b34ef3887f249b0b6c4fb84fffda9ac70a14bdb76ee6e8d20a45669b863149f6",
+    "AClad/src/ACladPlugin/TilePatternCommand.cs": "f1b1ea01468bd6d946963053ea38e9c9cb9f4bc407bd00b741a9ac00fdeeb634",
+    "AClad/src/ACladPlugin/TileProgress.cs": "e2745014a01f444ce3be158d1e56d93acea50759943178417218c50e41916711",
+    "AFrame/engine/analiz_klu_poligon.py": "903a3080c4b01dea51e936560adba060f12f172fe13887bd2785456881f5fa27",
+    "AFrame/engine/assembly_catalog.json": "a202410e6c9872b73cf9f06183c6fc22b22280fb0dcbfb68e71561117d65456e",
+    "AFrame/engine/audit_frame.py": "7ce9adac3adddcb7619b88d789b78f4b811f9c890e9fd9b08f884b32ee4e2d48",
+    "AFrame/engine/dsverka_poligon.py": "a971bd36882c6663c0fcbc466de5e288d9aa1f4d1f6d55e5eb462ae5d635a1ec",
+    "AFrame/engine/frame_calc.py": "abe20fd3c0de0937ba0636914f083f7c48a7a65b3b4c85f05673278a95e1da88",
+    "AFrame/engine/frame_engine.py": "59cc9afbb80e948c368b41e980627da3031ac37fedede27242424fc8c6a4557a",
+    "AFrame/engine/frame_plan.py": "33e686df9f388ab82c9c0da8282584d2150e482da610ea8ad2cccdfc60db6c5e",
+    "AFrame/engine/frame_rules.py": "511ec4ec48331034257859ccac70ef028a8c4b398acd7d5b238d778e3c63ea6f",
+    "AFrame/engine/frame_topology.py": "498d18f252d6160856a3cd4a90a7ada47f80c6ff463994ab801f2de0e3f72ebb",
+    "AFrame/engine/systems.json": "e9ee0a4cf0c535473dd9931f9b2a3d86dd1d932fe18f84682ef3fd221fbc03c3",
+    "AFrame/engine/test_frame_calc.py": "f72160fe7a3483c35a6c0d7ef669a612e6e44defb95c33916a850c2a605d5239",
+    "AFrame/engine/test_frame_engine.py": "3d32ffb69a6e9bc5d229ed11201e7e09500b5f193859b6a2cbab190c73679270",
+    "AFrame/engine/test_frame_plan.py": "990d3a933eab94f1b967ea17606be1db462936cc1cb0cb0e74c5da198d4b5ded",
+    "AFrame/engine/test_frame_rules.py": "0f629daa13207e436eb5e425e1f4e3d7189d205ffc6956bceca0427eb237b26e",
+    "AFrame/engine/test_frame_topology.py": "88f59edd4e8543ec3c444eb3557dbe7a10b922318362ca82360675da1c11586c",
+    "AFrame/src/AFramePlugin/AFramePlugin.csproj": "05bf948e7393d46af7411e1eb529bf5f36a77550dc4150d539bedcc03b621baf",
+    "AFrame/src/AFramePlugin/DimForm.cs": "86ec69c3200f8f4232c7b855a13147367d199cd42a14928c31f8678b28230717",
+    "AFrame/src/AFramePlugin/FacadesClassic.cs": "ec03c5c3f08289c92e97cd6b17de8e9852fbfee5a0ddd3d953dafa2a70657673",
+    "AFrame/src/AFramePlugin/FacadesRibbon.cs": "af48c14c864659f95f58669fa631a3b3fbb24f64e686769e8e288e32d71c0119",
+    "AFrame/src/AFramePlugin/FrameCommand.cs": "fb1dd291ef102efd49ad72d21eb8decac33011373e7a06e46a39a92cda2c1a02",
+    "AFrame/src/AFramePlugin/FrameForm.cs": "d7ae2edcaaec82065061ca58addf08c51123f7fb4d3b7d68c95d8784034cfc51",
+    "AFrame/src/AFramePlugin/FrameSettings.cs": "726318cfb93822262855d5f6e7f1e3f6b274a4770cf7e66ef8700642d12006fa",
+    "AFrame/src/AFramePlugin/Plugin.cs": "e679e02c78b770152163b0cd4a691d39ea44bddb422da49aa128e5d13ec631c4",
+    "Common/GeometryFingerprint.cs": "24114ef7a18a56415313b009d7819c94190efa5ea517df2081d1f51951819332",
+    "Common/LayoutGeometryGuard.cs": "289d6d51ede5861c7b27ff106c150aa7b5fa456ddce86ef5e0b5ee727c0eae9d",
+    "Common/ZoneGeometryGuard.cs": "daf06e2822a4d9ef2be818df1bf904779fa202adb1e5bce7fc0ba49c084970b8",
+    "Facades/engine/facade_zones.py": "a6d93dfc7b9e399be3dab4bb2a624c714b12fe79236503fe54c105122bfeea01",
+    "Facades/engine/facades_engine.py": "f0046539d586d75f0d3042b83b7e155f06762f84869721544cd6542fa27ad306",
+    "Facades/engine/test_facade_zones.py": "8465ae98a8b412db6e6f7b23242a34dada7475450b47294fb22785a02b47caf4",
+    "Facades/engine/test_facades_engine.py": "ce0f692df8747f5666aea690c6e346b79a7a4a65d54f8a48161c6af6a353d509",
+    "Facades/src/AFacadesPlugin/AFacadesPlugin.csproj": "e7ebcc765975ab12da71ac8c5b76083f36d93154c10ad3d4a86fe0c33ab52590",
+    "Facades/src/AFacadesPlugin/FacadesClassic.cs": "ccc1f1d9d0462ee4cea1b68d9a4383d30c112360b0cf198e852e81b2ba039327",
+    "Facades/src/AFacadesPlugin/FacadesRibbon.cs": "3a1f467a5691c6f3f5654dad38e94e1c94bfcdfe4ac261f6ccd3f55c7705dd75",
+    "Facades/src/AFacadesPlugin/LayerPickForm.cs": "5bfb57dd124279296ad2c9af6000eb51e5754d5d44eb5557e804223494e822e3",
+    "Facades/src/AFacadesPlugin/Plugin.cs": "d486cb0746e6edef83c41a68f85f1e60b19a3c764c317a170de1e92b9db38476",
+    "Facades/src/AFacadesPlugin/TableCommand.cs": "37068d55c958267e07ddfebc652e2b3c315424b0986662031f726f35405690ac",
+    "Facades/src/AFacadesPlugin/WorkStatement.cs": "428f45e464ca264df513e31ca0f17f70a46422509e37d4a3ca1902d2e2a68858",
+    "Facades/src/AFacadesPlugin/XlsxWriter.cs": "a3bf6921ffcb229c6f664f0570fb5f2c71ef14b82e1b48cd64497f02a0b358ef",
+    "Facades/src/AFacadesPlugin/ZoneCommand.cs": "f4eee2cf9e1b3b4fcca7b34ac9d7d8c4a0d48ea2d6c543a5c7eee176f96bbdbb",
+    "Facades/src/AFacadesPlugin/ZoneForm.cs": "30cc49edd277ffcdfe03261bdb82e4ff92dbaccca51284b543509ab86c40f178",
+    "Facades/src/AFacadesPlugin/ZoneTable.cs": "9aad9aa85ebf1d41c40e6d3577a5df4e05ae207923f9658d790b39ad030c2c4b"
+  },
+  "live_autocad_checked": false,
+  "release_published": false,
+  "known_exclusion": "X6 belongs to unchanged ATSPEC"
+}

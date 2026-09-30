@@ -1,24 +1,28 @@
 {
-  "docx_sha256": "117a21c552f1045cc157d1372a810400dbb5565800d178c727ac9a5f0005fbe8",
-  "pages": 34,
+  "docx_sha256": "ad5a34e13e3a62c770b8a7cc7cd1b69f29f48a50caf08d462df2e23c80f96438",
+  "pages": 35,
+  "chapters": 20,
+  "figures": 10,
+  "dxf_files": 4,
   "visual_review": "PASS",
   "reviewed_ranges": [
     {
-      "pages": "1-27",
-      "method": "byte-identical PNGs to prior individually reviewed pages",
-      "prior_docx_sha256": "3636d861b2b86ab825fee63c5a83bd010a1197466bb5887098b73a27f69cbb50"
+      "pages": "1-27,29-35",
+      "reviewer": "manual_update",
+      "method": "individual full-page inspection in this task; final PNGs byte-identical to that inspected render",
+      "result": "PASS"
     },
     {
-      "pages": "28-34",
-      "reviewer": "root",
-      "method": "individual full-page image inspection after ATR changes",
+      "pages": "28",
+      "reviewer": "manual_update",
+      "method": "individual full-page inspection of final render after last wording correction",
       "result": "PASS"
     }
   ],
   "page_png_sha256": {
-    "page-1.png": "d14c76850836d6c8f8903cab96dfed6ceb2881b966a924a69f55461fadbc10d6",
+    "page-1.png": "7cb2dec6e703555e5e5956770f6b3d7075bd09735f8d556acbca96881d1f448e",
     "page-2.png": "d9ea2ffa7fc98a59aedffbf9db17052f9f599e619117c29cca0d145f68caed9f",
-    "page-3.png": "c83ee65ca593b3e12104d6acd93d9e6395a87f4dd4b497be1cfac0f8df9aaf0c",
+    "page-3.png": "3baed0b0c006da06292a223c73fff33fea27c488794a83c351e05d076ebf3756",
     "page-4.png": "9a8e9341328e5f458dbc0a10f9014bde74191273454f2e7d0622e10d0ed60fd3",
     "page-5.png": "3beb5ebe5556f02d16e4cf862d9010b8f69275aac2d3d7f7c439d14be51c1d8f",
     "page-6.png": "497d81392ecf63fbfd49c1a6ac4288fd6276c8a491e91a5aea9bcf37ad8725e6",
@@ -43,13 +47,20 @@
     "page-25.png": "7c7abf01b79c865caf06bd581da41aef52f2cbe4112ac528044930a0b5d8acef",
     "page-26.png": "fea846130fb9c504768ed92b4f3a38774cbc9004bce0852fcaeb8b7b79ba8670",
     "page-27.png": "a8bf0e2d4836e2a6e0475e8dd706a28003b33e6a6ae15b3186e7f3d0bd4fbef8",
-    "page-28.png": "8d904eec534e39d8d5870339fa39f6087b1463ffb5ae532713bfe05673a51719",
-    "page-29.png": "af243fbbf865cb3c0224bcd8a8b15e9baa2778add7c18bd0743784953ff9f35a",
-    "page-30.png": "4b50e9b4d804ef8bf8c4b96e45556e8e636e78e3c731ad3fc42bc5cea6331d79",
-    "page-31.png": "a41cde14344166ae14ad0c11c5a382e21ca8e65064370c95778e0502c9e136f0",
-    "page-32.png": "2399d99f0c5627015922d20906de3a453b40a45f52e438d94af536c7efdf6e0b",
-    "page-33.png": "1ede21bc770baf27e64768f42aa777790fec20528970fae6188b4e62bdec062b",
-    "page-34.png": "4c68e2b61c48c114021f4403389780db0ce6a96ea60e3e37b1d6877f293e561d"
+    "page-28.png": "36b77dfc3fb80970f5298ba4abc6967003a9d0f40a6b8b1c2a8675e0aab53e30",
+    "page-29.png": "f5ec864fd9fdff46c2b7b0100c4b6909d6f0f51c60c516c95c0de3b637792ec4",
+    "page-30.png": "cc951312e4a0b5aaaba2001b5609963e5e79ac74d6e985a8a9e110488421ed3d",
+    "page-31.png": "df8f5933c930e0b5d1b9e41110bd6981b21d59cae32df479845e2891eb320c96",
+    "page-32.png": "de3a3970438ed500461b3b1bbb73345e8864b9a8f089e894c0a9bb127d1b6cef",
+    "page-33.png": "0ea74c2f4e3b3e415995910ec788e5a0832b774de4970c86615a3e069ec56a7b",
+    "page-34.png": "bdb367b173f5897724a7e5fd5abb7e5b0724ce43df147494349ba8f6ba844203",
+    "page-35.png": "d9acbeed7ee2e8a39dc044174ac13577d67bbc0733b8904c0fc08c585dd25b6c"
   },
-  "live_autocad": false
+  "accessibility_audit": {
+    "high": 0,
+    "medium": 0,
+    "low": 0
+  },
+  "live_autocad": false,
+  "release_published": false
 }
