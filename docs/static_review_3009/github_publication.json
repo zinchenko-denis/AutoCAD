@@ -1,0 +1,27 @@
+{
+  "repository": "zinchenko-denis/AutoCAD",
+  "branch": "feat/auto-reactor",
+  "base_commit": "ad2a0a281a1b0cfa18a35aa4f10ce54557a58436",
+  "published_snapshot_commit": "8f580aa0867d5db9e2f96a37047e880dc043d162",
+  "product_commit": "8f580aa0867d5db9e2f96a37047e880dc043d162",
+  "local_verified_commit": "e441918f5e969527e21f95522ddf2f325f676f33",
+  "verified_tree_sha": "d4f193451600fc689596bb603db409e5770a6a6e",
+  "remote_ref_verified": true,
+  "verification_method": "GitHub Git Data API created the exact locally verified tree and fast-forwarded feat/auto-reactor with force=false; independent GitHub ref read and git fetch confirmed the published commit.",
+  "ci": {
+    "name": "check",
+    "run_id": 36730495385,
+    "head_sha": "8f580aa0867d5db9e2f96a37047e880dc043d162",
+    "status": "completed",
+    "conclusion": "success",
+    "url": "https://github.com/zinchenko-denis/AutoCAD/actions/runs/36730495385"
+  },
+  "local_verification": "verification_manifest.json",
+  "handoff_note": "This receipt and exact product provenance are in the following documentation-only commit. Read the current remote branch for that commit SHA. CI verifies the product commit; the following documentation changes do not alter its source or test files.",
+  "private_testdata": "Existing authorized private repository used read-only; originals and credentials not published.",
+  "live_autocad_checked": false,
+  "winforms_visual_checked": false,
+  "release_published": false,
+  "main_changed": false,
+  "protected_modules_changed": false
+}

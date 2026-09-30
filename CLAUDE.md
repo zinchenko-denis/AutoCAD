@@ -5,7 +5,7 @@
 проверить, потом писать. Честность важнее лести.
 
 ## Что где
-- Последняя передача контекста — `docs/HANDOFF_NEXT_SESSION_30.09.md`; подтверждение отправки и CI — `docs/atr_review_3009/github_publication.json`.
+- Последняя передача контекста — `docs/HANDOFF_NEXT_SESSION_30.09.md`; подтверждение отправки и CI — `docs/static_review_3009/github_publication.json` (предыдущая ревизия — `docs/atr_review_3009/github_publication.json`).
 - Продолжение статической ревизии после `ad2a0a2` — `docs/STATIC_MODEL_REVIEW_30.09.md`, актуальные проверки — `docs/static_review_3009/verification_manifest.json`. Межэтажная расчётная выдача заблокирована до модели опор/стыков; manual сохранён. Полная статическая модель vertical/ortho также не подтверждена, даже если ограниченная цепочка и screening прошли.
 - Рабочая ветка — `feat/auto-reactor` (`main` сильно отстаёт; слияние в `main`
   — ТОЛЬКО по слову Дениса «Пушим»).
