@@ -1,5 +1,5 @@
 {
-  "product_commit": null,
+  "product_commit": "e28aeb7484423099f0e7308d712d13befe8c0fc7",
   "illustration_product_commit": "8360c238f342d82c1dd83c63789729506c34df18",
   "illustration_source_manifest": "assets/source_manifest.json",
   "illustration_engine_hashes_match_current": false,
@@ -26,9 +26,9 @@
   "release_published": false,
   "illustration_replay_manifest": "../static_review_3009/manual_examples.json",
   "illustration_geometry_matches_current": true,
-  "provenance_note": "Illustrations and four DXF files remain unchanged. Their original provenance and the five-request static-review replay are retained. Cladding quantities chapter reflects Q-01 through Q-04; current product source hashes are recorded separately from the historical illustration source. No live AutoCAD run or installer release is claimed.",
+  "provenance_note": "The cladding quantity workflow and restrictions are updated against the published source. All 68 product source hashes match the verification manifest. The 10 illustrations and 4 DXF files are unchanged; this iteration did not change the engines that produce their geometry. Live AutoCAD and a new installer release remain pending.",
   "product_base_commit": "1c7864411e76c16b8c0ae773c12ba422e0c5a122",
-  "product_source_state": "verified_working_tree",
+  "product_source_state": "committed",
   "product_source_sha256": {
     "AClad/engine/audit_clad.py": "881ae022233fbc6ff178d2ea2f4842eb4cf7547a8cb33a8a29e69c435aad8a92",
     "AClad/engine/clad_engine.py": "cf7e3739c74517a6d4483572d19330901b11d6ef8f3eb4e95c42104645257e1e",

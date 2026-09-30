@@ -3,12 +3,33 @@
   "repository": "zinchenko-denis/AutoCAD",
   "branch": "feat/auto-reactor",
   "base_commit": "1c7864411e76c16b8c0ae773c12ba422e0c5a122",
-  "product_commit": null,
-  "status": "prepared_for_source_publication",
+  "product_commit": "e28aeb7484423099f0e7308d712d13befe8c0fc7",
+  "product_tree": "71c08b97cb8fb9b2aa61f7c93bd2102461b97061",
+  "status": "source_published_and_check_success",
+  "remote_ref_independently_confirmed": true,
+  "local_tree_matches_published_tree": true,
   "local_verification": "verification_manifest.json",
   "check_workflow": {
-    "status": "not_started"
+    "name": "check",
+    "id": 36760758558,
+    "run_number": 196,
+    "head_sha": "e28aeb7484423099f0e7308d712d13befe8c0fc7",
+    "status": "completed",
+    "conclusion": "success",
+    "url": "https://github.com/zinchenko-denis/AutoCAD/actions/runs/36760758558",
+    "created_at": "2026-09-30T18:44:39Z",
+    "updated_at": "2026-09-30T18:48:55Z"
   },
+  "manual": {
+    "path": "../facades_beginner_3009/Facades_Beginner_Manual_30.09.docx",
+    "sha256": "99cf3a052bef19567bce968c417d6455a3c594395892992a8c4a79ae13259745",
+    "pages": 37,
+    "chapters": 20,
+    "figures": 10,
+    "dxf_files": 4,
+    "source_commit_record": "../facades_beginner_3009/SOURCE_COMMIT.json"
+  },
+  "receipt_note": "This record and final source provenance are committed after the verified product commit. The follow-up changes documentation only; check remains tied to the exact product commit above.",
   "live_autocad_checked": false,
   "release_published": false,
   "main_changed": false

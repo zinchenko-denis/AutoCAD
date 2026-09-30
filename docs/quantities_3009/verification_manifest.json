@@ -479,5 +479,7 @@
       "path": "checks/core/CorePerformanceProbe.cs",
       "sha256": "1ce043a847b132d0f0d24dc29a92315125b6a63f2b1dd7df33dc3e3d172ff04c"
     }
-  }
+  },
+  "product_commit": "e28aeb7484423099f0e7308d712d13befe8c0fc7",
+  "published_product_source_hashes_match": true
 }
