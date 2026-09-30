@@ -129,11 +129,15 @@ ok(len(lo) == 4 and len(hi) == 2,
    "y=900): %d/%d" % (len(lo), len(hi)))
 
 # ── C8: неортогональный контур — пропуск с note ──
+# УТОЧНЕНО 30.09c (Герман, ответ на (б) PDF №29): наклонные рёбра круче 2° — скат, контур
+# раскладывается по обёртке с резкой плит по наклону (фронтон); отказ — только почти
+# ортогональное ребро сверх допуска (C36)
 p = plan(contours=[{"outer": [[0, 0], [1000, 0], [1000, 800], [100, 900]]},
                    {"outer": rect(0, 0, 610, 600)}])
-ok(p["summary"]["tiles"] == 1 and
-   any("неортогональ" in n for n in p["notes"]),
-   "C8: кривой контур пропущен, второй обработан")
+ok(p["summary"]["tiles"] > 1 and any("фронтон" in n for n in p["notes"]) and
+   not any("неортогональ" in n for n in p["notes"]) and
+   any(t.get("pts") for t in p["inserts"]),
+   "C8: контур со скатами раскладывается (фигурные куски), второй обработан (%s)" % p["notes"][:2])
 
 # ── C9: два контура — ОБЩИЙ ГОРИЗОНТ (сетка рядов одна) ──
 p = plan(contours=[{"outer": rect(0, 0, 610, 1210)},
@@ -441,5 +445,62 @@ ok(len(_p["inserts"]) > 0 and
    not any("неортогональ" in n for n in _p["notes"]),
    "C38: ступенчатый контур с шумом раскладывается (%d камней)"
    % len(_p["inserts"]))
+
+
+# ── C39 (30.09c, Герман, ответ на (б) PDF №29: «раскладка нужна не только на плитку, но и на
+#    керамогранит — он также может идти вдоль фронтонов»): ФРОНТОН — раскладка по ортогональной
+#    обёртке, плиты у ската режутся по наклону, фигурные куски — pts; окно в треугольнике обходится ──
+def _pip(poly, x, y, tol=1e-3):
+    """Точка внутри многоугольника или на границе (±tol)."""
+    n, inside = len(poly), False
+    for i in range(n):
+        (xa, ya), (xb, yb) = poly[i], poly[(i + 1) % n]
+        dx, dy = xb - xa, yb - ya
+        L2 = dx * dx + dy * dy
+        t_ = max(0.0, min(1.0, ((x - xa) * dx + (y - ya) * dy) / L2)) if L2 > 0 else 0.0
+        if (xa + t_ * dx - x) ** 2 + (ya + t_ * dy - y) ** 2 <= tol * tol:
+            return True
+        if (ya > y) != (yb > y) and x < xa + (y - ya) * dx / dy:
+            inside = not inside
+    return inside
+
+
+def _area(pts):
+    return abs(sum(pts[i][0] * pts[(i + 1) % len(pts)][1] - pts[(i + 1) % len(pts)][0] * pts[i][1]
+                   for i in range(len(pts)))) / 2.0
+
+
+_gab = [[0, 0], [6000, 0], [6000, 3000], [3000, 4500], [0, 3000]]
+_win = rect(2500, 3300, 3500, 3900)
+_g = plan(contours=[{"outer": _gab, "holes": [_win]}])
+_pc = [t["pts"] if t.get("pts") else [[t["x"], t["y"]], [t["x"] + t["w"], t["y"]],
+                                        [t["x"] + t["w"], t["y"] + t["h"]], [t["x"], t["y"] + t["h"]]]
+       for t in _g["inserts"]]
+_sl = [t for t in _g["inserts"] if t.get("pts")]
+ok(_g["ok"] and any("фронтон" in n for n in _g["notes"]) and len(_sl) > 0 and
+   _g["summary"]["slope_pieces"] == len(_sl) and all(t.get("slope") for t in _sl),
+   "C39: фронтон раскладывается, фигурные куски у ската с pts (%d; %s)" % (len(_sl), _g["notes"][:2]))
+ok(all(_pip(_gab, v[0], v[1]) for q in _pc for v in q),
+   "C39: все куски внутри настоящего контура фронтона")
+_bb = [(min(v[0] for v in q), min(v[1] for v in q), max(v[0] for v in q), max(v[1] for v in q)) for q in _pc]
+_ovl = [(a, b) for i, a in enumerate(_bb) for b in _bb[i + 1:]
+        if min(a[2], b[2]) - max(a[0], b[0]) > 1e-6 and min(a[3], b[3]) - max(a[1], b[1]) > 1e-6]
+ok(not _ovl, "C39: куски не накладываются (%s)" % _ovl[:2])
+ok(not any(min(b[2], 3500) - max(b[0], 2500) > 1e-6 and min(b[3], 3900) - max(b[1], 3300) > 1e-6 for b in _bb),
+   "C39: окно в треугольнике фронтона обойдено")
+_ar = sum(_area(q) for q in _pc) / (_area(_gab) - 1000 * 600)
+ok(0.93 < _ar < 0.99 and max(v[1] for q in _pc for v in q) > 4400 and
+   any(t["y"] >= 3000 for t in _g["inserts"]),
+   "C39: облицовано всё поле фронтона до конька (доля площади %.3f — минус русты)" % _ar)
+# фигурный кусок с габаритом целой плиты (скат срезал угол) — всё равно не целая
+ok(_g["summary"]["full"] == sum(1 for t in _g["inserts"] if not t.get("pts") and
+                                abs(t["w"] - 600) < 1e-6 and abs(t["h"] - 600) < 1e-6),
+   "C39: фигурные куски не считаются целыми")
+ok(any(3000 < j < 3100 for j in _g["joints_x"]) and any(3600 < r < 4300 for r in _g["rows_y"]),
+   "C39: оси швов для ATFRAME есть и в треугольнике (%s / %s)" % (_g["joints_x"][-3:], _g["rows_y"][-3:]))
+# почти ортогональный «скат» (1,5°) — по-прежнему отказ, не фронтон
+_g2 = plan(contours=[{"outer": [[0, 0], [3000, 0], [3000, 3000 + 3000 * 0.02619], [0, 3000]]}])
+ok(not _g2["inserts"] and any("неортогональ" in n for n in _g2["notes"]),
+   "C39: ребро с перекосом 1,5° — отказ, как раньше (%s)" % _g2["notes"][:1])
 
 print("cladding_plan: %d проверок OK" % _n)

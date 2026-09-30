@@ -220,6 +220,19 @@ def layout(kind, zfull, zid):
     res = ce.run(req)
     if not res.get("ok"):
         return None, None, res.get("error")
+    if kind == "atclad":
+        # 30.09c: куски ATCLAD (в т.ч. фигурные у ската фронтона) — внутри зоны и мимо проёмов
+        wall = Polygon(zfull["outer"]["pts"])
+        ops = [Polygon(o["poly"]["pts"]) for o in zfull.get("openings") or [] if o.get("poly")]
+        wall_t = wall.buffer(1.0, join_style=2)
+        for t in res.get("inserts") or []:
+            pp = Polygon(t["pts"] if t.get("pts") else
+                         [(t["x"], t["y"]), (t["x"] + t["w"], t["y"]), (t["x"] + t["w"], t["y"] + t["h"]),
+                          (t["x"], t["y"] + t["h"])])
+            if not wall_t.contains(pp):
+                return None, None, "ATCLAD: кусок (%.0f, %.0f) выходит за зону" % (t["x"], t["y"])
+            if any(o.buffer(-1.0, join_style=2).intersects(pp) for o in ops):
+                return None, None, "ATCLAD: кусок (%.0f, %.0f) в проёме" % (t["x"], t["y"])
     pz = [p for p in res.get("per_zone") or [] if p.get("zone_id") == zid]
     if not pz:
         return None, None, "раскладка потеряла зону %s" % zid
@@ -336,15 +349,10 @@ def run_role(rng, role, dump, n, stats, first, times):
         if lay:
             jx, ry, err = layout(lay, zfull, zid)
             if err or not (jx or ry):
-                if fam == "gable" and lay != "attile290":
-                    # ATCLAD (керамогранит) неортогональный контур не раскладывает (зона пропускается с
-                    # нотой) — конструктор идёт в ATFRAME без раскладки. ATTILE фронтон раскладывает
-                    # с 29.09v (Герман, ответ на 6з PDF №28) — у него отказ здесь уже нарушение
-                    INFO["фронтон: ATCLAD не раскладывает неортогональную зону — ATFRAME без раскладки"] += 1
-                    lay = None
-                else:
-                    add("X1", "%s: раскладка: %s" % (tag, err or "пустая"))
-                    continue
+                # фронтон раскладывают обе: ATTILE с 29.09v, ATCLAD с 30.09c (Герман, ответ на (б) PDF
+                # №29) — отказ здесь нарушение
+                add("X1", "%s: раскладка: %s" % (tag, err or "пустая"))
+                continue
         if lay:
             per_zone = True
         else:
@@ -360,8 +368,8 @@ def run_role(rng, role, dump, n, stats, first, times):
             runs = [s["params"] for s in d["snapshots"]] + [params]
         for pi, prm in enumerate(runs):
             if role.get("rerun") and pi == 0:
-                # керамогранит до смены облицовки — на своей раскладке ATCLAD; фронтон ATCLAD
-                # не раскладывает — как в C#, оси шагом из окна (снимок до смены облицовки)
+                # керамогранит до смены облицовки — на своей раскладке ATCLAD; не разложилось — как
+                # в C#, оси шагом из окна (снимок до смены облицовки)
                 jx0, ry0, err0 = layout("atclad", zfull, zid)
                 if err0 or not (jx0 or ry0):
                     s0 = d["snapshots"][0]["settings"]

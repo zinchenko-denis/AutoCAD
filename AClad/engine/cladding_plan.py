@@ -51,6 +51,7 @@ PyInstaller).
 """
 
 EPS = 1e-6
+SLOPE_SLIVER = 10.0   # 30.09c: кусок у ската тоньше 10 мм — уходит в шов (как у ATTILE min_piece)
 
 
 def _closed(pts):
@@ -453,6 +454,7 @@ def cladding_plan(req):
     if w < EPS or h < EPS:
         return {"ok": False, "error": "нулевой размер камня"}
     n_rows = 0
+    n_slope = n_sliver = 0
     joint_axes = set()   # оси вертикальных швов у граней проёмов/юзер-
                          # рустов — мост к этапу 3 (AFrame, 24.07)
     for ci, c in enumerate(req.get("contours") or []):
@@ -477,6 +479,21 @@ def cladding_plan(req):
         holes = fixed_holes
         polys = [outer] + holes
         bad = [p for p in polys if not _is_ortho(p)]
+        slopes = []
+        if bad and not _is_ortho(outer) and all(_is_ortho(hh) for hh in holes):
+            # 30.09c (Герман, ответ на (б) PDF №29: «раскладка нужна не только на плитку, но и на
+            # керамогранит — он также может идти вдоль фронтонов»): контур с наклонными рёбрами
+            # (скат круче 2°) — раскладка по ортогональной обёртке, как в ATTILE (29.09v), плиты у
+            # ската режутся по наклону. Почти ортогональное ребро сверх допуска — отказ, как раньше
+            import tile_pattern as _tp          # здесь: tile_pattern сам импортирует cladding_plan
+            cover, sl = _tp._slope_cover(outer)
+            if cover is not None:
+                notes.append("контур %d: фронтон (наклонных рёбер %d) — раскладка по обёртке, "
+                             "плиты у ската режутся по наклону" % (ci + 1, len(sl)))
+                outer = [tuple(q) for q in cover]
+                slopes = sl
+                polys = [outer] + holes
+                bad = []
         if bad:
             notes.append(
                 "контур %d: неортогональные рёбра (максимальное "
@@ -518,6 +535,7 @@ def cladding_plan(req):
                 belts.append((start, py))
                 start = py + gh
         belts.append((start, y_hi))
+        n0_ins = len(inserts)
         for b_lo, b_hi in belts:
             i = 0
             while True:
@@ -590,23 +608,78 @@ def cladding_plan(req):
                                     "w": round(wc, 4),
                                     "h": round(hc2, 4)})
                 n_rows += 1
+        if slopes:
+            # 30.09c: плиты фронтона у ската — прямоугольник плиты ∩ полуплоскости наклонных рёбер,
+            # чей габарит он задевает (у конька — обоих); целиком за скатом — выбрасывается; тоньше
+            # SLOPE_SLIVER — уходит в шов; обрезанная — фигурный кусок: pts многоугольника (в чертеже —
+            # полилиния), x/y/w/h — его габарит; исходный прямоугольник (_r*) — для осей швов
+            import tile_pattern as _tp
+            sb = [(min(a[0], b[0]), min(a[1], b[1]), max(a[0], b[0]), max(a[1], b[1]), a, b)
+                  for a, b in slopes]
+            kept = []
+            for t in inserts[n0_ins:]:
+                x, y, wc, hc = t["x"], t["y"], t["w"], t["h"]
+                hit = [(a, b) for sx0, sy0, sx1, sy1, a, b in sb
+                       if x < sx1 - EPS and x + wc > sx0 + EPS and y < sy1 - EPS and y + hc > sy0 + EPS]
+                if not hit:
+                    kept.append(t)
+                    continue
+                poly = [(x, y), (x + wc, y), (x + wc, y + hc), (x, y + hc)]
+                for a, b in hit:
+                    poly = _tp._clip_half(poly, a, b)
+                    if len(poly) < 3:
+                        break
+                area = abs(_tp.signed_area(poly)) if len(poly) >= 3 else 0.0
+                if area < 1.0:
+                    continue                          # плита целиком за скатом
+                if abs(area - wc * hc) < 1.0:
+                    kept.append(t)                    # скат её не задел
+                    continue
+                clean = []
+                for v in poly:
+                    if not clean or abs(clean[-1][0] - v[0]) > 1e-6 or abs(clean[-1][1] - v[1]) > 1e-6:
+                        clean.append(v)
+                if len(clean) > 1 and abs(clean[0][0] - clean[-1][0]) <= 1e-6 and \
+                        abs(clean[0][1] - clean[-1][1]) <= 1e-6:
+                    clean.pop()
+                xs = [v[0] for v in clean]
+                ys = [v[1] for v in clean]
+                bw, bh = max(xs) - min(xs), max(ys) - min(ys)
+                if min(bw, bh) < SLOPE_SLIVER:
+                    n_sliver += 1
+                    continue
+                q = dict(t)
+                q.update({"x": round(min(xs), 4), "y": round(min(ys), 4), "w": round(bw, 4),
+                          "h": round(bh, 4), "pts": [[round(v[0], 4), round(v[1], 4)] for v in clean],
+                          "slope": True, "_rx": x, "_ry": y, "_rw": wc, "_rh": hc})
+                kept.append(q)
+                n_slope += 1
+            inserts[n0_ins:] = kept
+    if n_slope or n_sliver:
+        notes.append("у скатов фронтона фигурных кусков %d (в чертеже — полилинии)%s"
+                     % (n_slope, ("; тоньше %.0f мм — %d, уходят в шов" % (SLOPE_SLIVER, n_sliver))
+                        if n_sliver else ""))
     full = sum(1 for t in inserts
-               if abs(t["w"] - w) < EPS and abs(t["h"] - h) < EPS)
+               if abs(t["w"] - w) < EPS and abs(t["h"] - h) < EPS and not t.get("pts"))
     # мост к этапу 3 (AFrame): оси вертикальных швов (стойки
     # подсистемы) и центры горизонтальных (кляммеры) — из фактических
     # стыков камней + граней проёмов/юзер-рустов
     jx = set(joint_axes)
-    lefts = set(round(t["x"], 2) for t in inserts)
-    lows = set(round(t["y"], 2) for t in inserts)
+    # у фигурного куска фронтона — по исходному прямоугольнику плиты (30.09c)
+    lefts = set(round(t.get("_rx", t["x"]), 2) for t in inserts)
+    lows = set(round(t.get("_ry", t["y"]), 2) for t in inserts)
     ry = set()
     for t in inserts:
-        xr = round(t["x"] + t["w"], 2)
+        xr = round(t.get("_rx", t["x"]) + t.get("_rw", t["w"]), 2)
         if round(xr + gv, 2) in lefts:
             jx.add(round(xr + gv / 2.0, 2))
-        yt = round(t["y"] + t["h"], 2)
+        yt = round(t.get("_ry", t["y"]) + t.get("_rh", t["h"]), 2)
         if round(yt + gh, 2) in lows:
             ry.add(round(yt + gh / 2.0, 2))
+    for t in inserts:
+        for k in ("_rx", "_ry", "_rw", "_rh"):
+            t.pop(k, None)
     return {"ok": True, "inserts": inserts, "notes": _dedup_notes(notes),
             "joints_x": sorted(jx), "rows_y": sorted(ry),
             "summary": {"tiles": len(inserts), "full": full,
-                        "cut": len(inserts) - full, "rows": n_rows}}
+                        "cut": len(inserts) - full, "rows": n_rows, "slope_pieces": n_slope}}

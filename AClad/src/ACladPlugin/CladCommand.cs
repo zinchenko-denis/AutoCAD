@@ -421,7 +421,7 @@ namespace ACladPlugin
 
             // ── 6. чертёж: удалить прежние камни, вставить новые, метки ──
             var handlesByRoot = new Dictionary<string, List<string>>();
-            int erased = 0, made = 0, dynFail = 0;
+            int erased = 0, made = 0, dynFail = 0, slopeMade = 0;
             using (doc.LockDocument())
             using (var tr = db.TransactionManager.StartTransaction())
             {
@@ -506,6 +506,38 @@ namespace ACladPlugin
                            y = ToD(Get(it, "y")),
                            w = ToD(Get(it, "w")),
                            h = ToD(Get(it, "h"));
+
+                    // 30.09c (Герман, ответ на (б) PDF №29): плита у ската фронтона — фигурный кусок;
+                    // в чертеже — замкнутая полилиния в слое облицовки (как у ATTILE), в метке зоны —
+                    // вместе с камнями (перегенерация её стирает)
+                    var sPts = Get(it, "pts") as object[];
+                    if (sPts != null && sPts.Length >= 3)
+                    {
+                        var spl = new Polyline();
+                        int sv = 0;
+                        foreach (var spo in sPts)
+                        {
+                            var spa = spo as object[];
+                            if (spa == null || spa.Length < 2) continue;
+                            spl.AddVertexAt(sv++, new Point2d(ToD(spa[0]), ToD(spa[1])), 0, 0, 0);
+                        }
+                        if (sv >= 3)
+                        {
+                            spl.Closed = true;
+                            spl.Layer = cladLayer;
+                            ms.AppendEntity(spl);
+                            tr.AddNewlyCreatedDBObject(spl, true);
+                            string sZone = SafeStr(Get(it, "zone")), sRoot;
+                            if (!partToRoot.TryGetValue(sZone, out sRoot)) sRoot = sZone;
+                            if (!handlesByRoot.ContainsKey(sRoot))
+                                handlesByRoot[sRoot] = new List<string>();
+                            handlesByRoot[sRoot].Add(spl.Handle.ToString());
+                            made++;
+                            slopeMade++;
+                        }
+                        else spl.Dispose();
+                        continue;
+                    }
 
                     var br = new BlockReference(new Point3d(x, y, 0),
                                                 bt[blockName]);
@@ -651,6 +683,9 @@ namespace ACladPlugin
                 ", подрезных " + SafeStr(Get(sum, "cut")) +
                 ")" + (erased > 0 ? "; прежних удалено " + erased : "") +
                 "; блок «" + blockName + "», слой «" + cladLayer + "».");
+            if (slopeMade > 0)
+                ed.WriteMessage("\n  у скатов фронтона фигурных кусков " + slopeMade +
+                    " — полилинии в слое облицовки (плита на кусок; в спецификацию блоков не входят).");
             var perZone = Get(res, "per_zone") as object[];
             if (perZone != null && perZone.Length > 1)
                 foreach (var pz in AggregateByRoot(perZone, partToRoot))

@@ -132,7 +132,12 @@ def responses():
                                   [("run", {"op": "cladding", "tile": {"w": 600, "h": 600}, "gap": {"v": 10, "h": 10},
                                             "origin": {"y": 0}, "vjoints": [], "hjoints": [],
                                             "contours": [{"id": "A", "pts": rect(0, 0, 6000, 3000)},
-                                                         {"id": "B", "pts": rect(1000, 900, 2400, 2400)}]})])
+                                                         {"id": "B", "pts": rect(1000, 900, 2400, 2400)}]}),
+                                   # 30.09c: фронтон — фигурные куски у ската (it.pts)
+                                   ("run", {"op": "cladding", "tile": {"w": 600, "h": 600}, "gap": {"v": 10, "h": 10},
+                                            "origin": {"y": 0}, "vjoints": [], "hjoints": [],
+                                            "contours": [{"id": "G", "pts": [[0, 0], [6000, 0], [6000, 3000],
+                                                                             [3000, 4500], [0, 3000]]}]})])
     res["AFrame"] = capture("AFrame/engine", "frame_engine", ["run", "op_frame"],
                             ["test_frame_engine.py"],
                             [("run", {"op": "frame", "sub_type": st, "system": sysn,
