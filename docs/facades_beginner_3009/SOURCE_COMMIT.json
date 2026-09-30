@@ -1,5 +1,5 @@
 {
-  "product_commit": null,
+  "product_commit": "9d405ff5191e66e1fd8983ad2e8eb2399c54988f",
   "illustration_product_commit": "8360c238f342d82c1dd83c63789729506c34df18",
   "illustration_source_manifest": "assets/source_manifest.json",
   "illustration_engine_hashes_match_current": false,
@@ -26,9 +26,9 @@
   "release_published": false,
   "illustration_replay_manifest": "../catalog_connections_0110/manual_examples.json",
   "illustration_geometry_matches_current": true,
-  "provenance_note": "Stage 2A guide describes ATFTABLE subsystem Elements/Connections, geometric support candidates and intervals, unknown engineering connections, separate table update modes and explicit unavailability outside the Vector-1 vertical porcelain pilot. All 42 pages were visually inspected. Ten illustrations and four DXF files remain unchanged; five original tutorial requests matched saved independent geometry/quantity references, and the original Standart/concrete frame explicitly has no connection passport. Exact tested source hashes are recorded; the product commit and CI receipt are filled after publication.",
+  "provenance_note": "Stage 2A guide describes ATFTABLE subsystem Elements/Connections, geometric support candidates and intervals, unknown engineering connections, separate table update modes and explicit unavailability outside the Vector-1 vertical porcelain pilot. All 42 pages were visually inspected. Ten illustrations and four DXF files remain unchanged; five original tutorial requests matched saved independent geometry/quantity references, and the original Standart/concrete frame explicitly has no connection passport. Exact tested source hashes are recorded; the product commit and successful CI run are recorded below.",
   "product_base_commit": "0a397c24d49474f4408fcda7e30da71e163202b0",
-  "product_source_state": "verified_working_tree_pending_publication",
+  "product_source_state": "committed_and_ci_verified",
   "product_source_sha256": {
     "AClad/engine/audit_clad.py": "881ae022233fbc6ff178d2ea2f4842eb4cf7547a8cb33a8a29e69c435aad8a92",
     "AClad/engine/clad_engine.py": "cf7e3739c74517a6d4483572d19330901b11d6ef8f3eb4e95c42104645257e1e",
@@ -119,6 +119,6 @@
     "Facades/src/AFacadesPlugin/ZoneForm.cs": "30cc49edd277ffcdfe03261bdb82e4ff92dbaccca51284b543509ab86c40f178",
     "Facades/src/AFacadesPlugin/ZoneTable.cs": "9aad9aa85ebf1d41c40e6d3577a5df4e05ae207923f9658d790b39ad030c2c4b"
   },
-  "github_actions_run": null,
-  "github_actions_conclusion": null
+  "github_actions_run": 36789415027,
+  "github_actions_conclusion": "success"
 }

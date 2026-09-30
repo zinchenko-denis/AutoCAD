@@ -1,12 +1,177 @@
 {
-  "status": "READY_FOR_SOURCE_PUBLICATION",
+  "status": "PUBLISHED_AND_VERIFIED",
+  "observed_at_utc": "2026-09-30T23:13:33.962957+00:00",
   "repository": "zinchenko-denis/AutoCAD",
   "branch": "feat/auto-reactor",
   "base_commit": "0a397c24d49474f4408fcda7e30da71e163202b0",
-  "product_commit": null,
-  "check": null,
+  "product_commit": "9d405ff5191e66e1fd8983ad2e8eb2399c54988f",
+  "product_tree": "1083bbe49c38d6e84fbb0461c4cb3d68fbcab5d8",
+  "branch_head_observed": "9d405ff5191e66e1fd8983ad2e8eb2399c54988f",
+  "branch_verified_with_github_api_and_git_fetch": true,
+  "local_index_tree_matches_remote_product_tree": true,
+  "check": {
+    "run_id": 36789415027,
+    "job_id": 110138507091,
+    "status": "completed",
+    "conclusion": "success",
+    "url": "https://github.com/zinchenko-denis/AutoCAD/actions/runs/36789415027",
+    "head_sha": "9d405ff5191e66e1fd8983ad2e8eb2399c54988f",
+    "steps": [
+      {
+        "name": "Set up job",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 1
+      },
+      {
+        "name": "Checkout",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 2
+      },
+      {
+        "name": "Setup .NET SDK",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 3
+      },
+      {
+        "name": "Build plugin DLL (compile check)",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 4
+      },
+      {
+        "name": "Build ABlockGen DLL (compile check)",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 5
+      },
+      {
+        "name": "Build AFacades DLL (compile check)",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 6
+      },
+      {
+        "name": "Build AClad DLL (compile check)",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 7
+      },
+      {
+        "name": "Build AFrame DLL (compile check)",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 8
+      },
+      {
+        "name": "Setup Python",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 9
+      },
+      {
+        "name": "Engine unit test",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 10
+      },
+      {
+        "name": "ABlockGen engine unit test",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 11
+      },
+      {
+        "name": "AFacades engine unit test",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 12
+      },
+      {
+        "name": "AClad engine unit test",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 13
+      },
+      {
+        "name": "AFrame engine unit test",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 14
+      },
+      {
+        "name": "Native zone geometry regressions (no AutoCAD host)",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 15
+      },
+      {
+        "name": "Native zone and layout adapters (CAD API doubles)",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 16
+      },
+      {
+        "name": "Cladding quantities (native core, real producers, XLSX, CAD API doubles)",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 17
+      },
+      {
+        "name": "Frame quantities (core, real producers, XLSX and bounded operation counts)",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 18
+      },
+      {
+        "name": "Manual facade quantities (actual mapper, CAD adapters and bounded work)",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 19
+      },
+      {
+        "name": "Facade connection passports (source identities, typed data, XLSX and indexed joins)",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 20
+      },
+      {
+        "name": "Facades quick gates (audits, contracts, synth)",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 21
+      },
+      {
+        "name": "Post Setup Python",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 40
+      },
+      {
+        "name": "Post Setup .NET SDK",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 41
+      },
+      {
+        "name": "Post Checkout",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 42
+      },
+      {
+        "name": "Complete job",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 43
+      }
+    ]
+  },
+  "documentation_note": "This receipt and source-commit provenance are published in a subsequent documentation-only commit; product code and tested hashes remain unchanged.",
   "main_modified": false,
-  "live_autocad_checked": false,
   "release_published": false,
+  "live_autocad_checked": false,
   "private_originals_or_tokens_published": false
 }
