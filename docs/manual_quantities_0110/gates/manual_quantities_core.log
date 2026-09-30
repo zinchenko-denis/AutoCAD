@@ -1,0 +1,49 @@
+PASS actual line endpoints give independent 3-4-5 length and one physical CAD link
+PASS boundary uses world polygon area and dimensions
+PASS nonrectangular boundary uses exact area not bounding rectangle
+PASS literal attribute and dynamic strings preserve exact mark text
+PASS missing optional string property stays null with a visible issue
+PASS present but empty source properties stay unknown and visibly incomplete
+PASS many missing fields aggregate by pattern while retaining each physical source
+PASS all configured string mappings reach physical element
+PASS linear roles all derive actual length independently
+PASS symbol requires explicit one physical part and yields no fabricated measures
+PASS different explicit sample is unrecognized without guessed classification
+PASS generated ownership conflict cannot become accepted manual geometry
+PASS explicit zone is retained and absent zone is never fabricated
+PASS millimetres are explicit and unsupported units rejected
+PASS line numeric verification preserves precision and rejects mismatched declared length
+PASS declared dimensions verify boundary geometry instead of replacing it
+PASS missing required numeric mapping rejects linear block
+PASS linear block X and Y endpoints have independent numeric oracles
+PASS linear block length checks absolute scale but keeps actual world length
+PASS invalid numeric mappings and physical geometry reject explicitly
+PASS block scales must be finite nonzero and supplied
+PASS capture adapter rejection reasons cannot be bypassed
+PASS explicit unsupported extraction reason survives missing fingerprints
+PASS missing physical identity or freshness fingerprint rejects
+PASS invalid rule schema source and role do not produce elements
+PASS different sample or mapping content cannot merge unknown catalog rows
+PASS recreated identical mapping has same grouping but distinct registry fingerprint
+PASS same rule combines distinct physical instances but never deduplicates geometry
+PASS same CAD object repeated in selection is evaluated and counted once
+PASS changed fingerprint for same handle invalidates the previously accepted candidate
+PASS same absolute geometry with distinct handles warns but counts both
+PASS actual LINE and reversed block axis share duplicate geometry but equal centers alone do not
+PASS linear warning buckets absorb transform noise but preserve a real displacement
+PASS boundary warning snapping never rounds stored shape dimensions or quantity area
+PASS same bounds with a 0.0001 mm corner difference use distinct boundary warning buckets
+PASS boundary warning identity ignores vertex start winding closure and redundant collinear points
+PASS translated equal shapes are not possible absolute-geometry duplicates
+PASS symbol position separates actual instances
+PASS different evaluated dynamic symbol geometry is not conflated by base block family
+PASS dynamic numeric mapping requires explicit distance unit metadata
+PASS preview includes rejected and unrecognized observations explicitly
+PASS rule fingerprint is stable across dictionary insertion order and changes with revision
+PASS preview fingerprint covers zone geometry source and rule
+PASS manual evaluation and preview never mutate mapping or captured observations
+PASS prepared evaluation matches direct evaluation for accepted unknown rejected and conflict observations
+PASS prepared context owns a deep rule snapshot and new preparation sees changed mapping
+PASS empty reviewed selection is explicit zero without fabricated items
+Manual core: 47/47 passed
+Manual quantities core: PASS report: /workspace/scratch/ba306982747c/manual_quantities_verification/final_gates/manual_quantities_core/manifest.json

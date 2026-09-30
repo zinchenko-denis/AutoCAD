@@ -1,0 +1,212 @@
+{
+  "scope": "Production pure C# manual quantities; no live AutoCAD validation.",
+  "status": "PASS",
+  "sizes": [
+    10000,
+    50000,
+    150000
+  ],
+  "clock_is_observation_only": true,
+  "source_sha256": {
+    "Common/FacadeQuantities.cs": "fae495c094497fc6ffa35178d0599925d52c42d74ac272a48613511de66bfa0c",
+    "Common/ManualQuantities.cs": "f73ec0d29da2dfe4a61aa496cda5e9ff25632a5dd26bf4d1e2ff85ed6dc3dcb8",
+    "tools/manual_quantities_0110/ManualCorePerf.cs": "0780d52c38cab6c3fc0718d674172b6f2447efea76c3b720b807de9a30b47fef",
+    "tools/manual_quantities_0110/test_manual_core_perf.py": "439736655a45425d866884cca741170bb727aec926928b4a0d245d67a6e4e4db",
+    "tools/quantities_3009/probe_runtime.py": "2d37fb13990a1b24129dfe79a81ce138875e3c86ef3211d1a3a4f9ec40d150e5"
+  },
+  "results": [
+    {
+      "count": 10000,
+      "status": "PASS",
+      "clock_is_observation_only": true,
+      "generated_s": 0.0107548,
+      "managed_bytes": 30362912,
+      "peak_working_set": null,
+      "scope": "Pure manual mapping and preview; no AutoCAD host, live DWG or transaction.",
+      "workloads": [
+        {
+          "selection": "unique",
+          "status": "PASS",
+          "count": 10000,
+          "repeated_count": 0,
+          "accepted_count": 10000,
+          "core_s": 0.283323,
+          "diagnostics": {
+            "observations_seen": 10000,
+            "observations_evaluated": 10000,
+            "fields_read": 80000,
+            "shapes_validated": 0,
+            "duplicate_keys_built": 10000,
+            "duplicate_buckets": 10000
+          }
+        },
+        {
+          "selection": "repeated_handles",
+          "status": "PASS",
+          "count": 10000,
+          "repeated_count": 100,
+          "accepted_count": 10000,
+          "core_s": 0.2306536,
+          "diagnostics": {
+            "observations_seen": 10100,
+            "observations_evaluated": 10000,
+            "fields_read": 80000,
+            "shapes_validated": 0,
+            "duplicate_keys_built": 10000,
+            "duplicate_buckets": 10000
+          }
+        },
+        {
+          "selection": "prepared_store_read",
+          "status": "PASS",
+          "count": 10000,
+          "accepted_count": 10000,
+          "core_s": 0.1422967,
+          "diagnostics": {
+            "observations_seen": 0,
+            "observations_evaluated": 10000,
+            "fields_read": 80000,
+            "shapes_validated": 0,
+            "duplicate_keys_built": 10000,
+            "duplicate_buckets": 0
+          }
+        }
+      ]
+    },
+    {
+      "count": 50000,
+      "status": "PASS",
+      "clock_is_observation_only": true,
+      "generated_s": 0.0445924,
+      "managed_bytes": 129644184,
+      "peak_working_set": null,
+      "scope": "Pure manual mapping and preview; no AutoCAD host, live DWG or transaction.",
+      "workloads": [
+        {
+          "selection": "unique",
+          "status": "PASS",
+          "count": 50000,
+          "repeated_count": 0,
+          "accepted_count": 50000,
+          "core_s": 1.2622073,
+          "diagnostics": {
+            "observations_seen": 50000,
+            "observations_evaluated": 50000,
+            "fields_read": 400000,
+            "shapes_validated": 0,
+            "duplicate_keys_built": 50000,
+            "duplicate_buckets": 50000
+          }
+        },
+        {
+          "selection": "repeated_handles",
+          "status": "PASS",
+          "count": 50000,
+          "repeated_count": 100,
+          "accepted_count": 50000,
+          "core_s": 1.262889,
+          "diagnostics": {
+            "observations_seen": 50100,
+            "observations_evaluated": 50000,
+            "fields_read": 400000,
+            "shapes_validated": 0,
+            "duplicate_keys_built": 50000,
+            "duplicate_buckets": 50000
+          }
+        },
+        {
+          "selection": "prepared_store_read",
+          "status": "PASS",
+          "count": 50000,
+          "accepted_count": 50000,
+          "core_s": 0.9234399999999999,
+          "diagnostics": {
+            "observations_seen": 0,
+            "observations_evaluated": 50000,
+            "fields_read": 400000,
+            "shapes_validated": 0,
+            "duplicate_keys_built": 50000,
+            "duplicate_buckets": 0
+          }
+        }
+      ]
+    },
+    {
+      "count": 150000,
+      "status": "PASS",
+      "clock_is_observation_only": true,
+      "generated_s": 0.14654419999999999,
+      "managed_bytes": 410442096,
+      "peak_working_set": null,
+      "scope": "Pure manual mapping and preview; no AutoCAD host, live DWG or transaction.",
+      "workloads": [
+        {
+          "selection": "unique",
+          "status": "PASS",
+          "count": 150000,
+          "repeated_count": 0,
+          "accepted_count": 150000,
+          "core_s": 4.3292817,
+          "diagnostics": {
+            "observations_seen": 150000,
+            "observations_evaluated": 150000,
+            "fields_read": 1200000,
+            "shapes_validated": 0,
+            "duplicate_keys_built": 150000,
+            "duplicate_buckets": 150000
+          }
+        },
+        {
+          "selection": "repeated_handles",
+          "status": "PASS",
+          "count": 150000,
+          "repeated_count": 100,
+          "accepted_count": 150000,
+          "core_s": 4.8499712,
+          "diagnostics": {
+            "observations_seen": 150100,
+            "observations_evaluated": 150000,
+            "fields_read": 1200000,
+            "shapes_validated": 0,
+            "duplicate_keys_built": 150000,
+            "duplicate_buckets": 150000
+          }
+        },
+        {
+          "selection": "prepared_store_read",
+          "status": "PASS",
+          "count": 150000,
+          "accepted_count": 150000,
+          "core_s": 2.9697318,
+          "diagnostics": {
+            "observations_seen": 0,
+            "observations_evaluated": 150000,
+            "fields_read": 1200000,
+            "shapes_validated": 0,
+            "duplicate_keys_built": 150000,
+            "duplicate_buckets": 0
+          }
+        },
+        {
+          "selection": "missing_attributes",
+          "status": "PASS",
+          "count": 150000,
+          "accepted_count": 150000,
+          "warning_count": 1,
+          "warning_element_ids": 150000,
+          "core_s": 5.9371803,
+          "diagnostics": {
+            "observations_seen": 150000,
+            "observations_evaluated": 150000,
+            "fields_read": 1200000,
+            "shapes_validated": 0,
+            "duplicate_keys_built": 150000,
+            "duplicate_buckets": 150000
+          }
+        }
+      ]
+    }
+  ],
+  "compile_returncode": 0,
+  "sources_unchanged_during_run": true
+}

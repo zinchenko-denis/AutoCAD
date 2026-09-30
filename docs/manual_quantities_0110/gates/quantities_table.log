@@ -1,0 +1,17 @@
+
+Unhandled Exception:
+System.Exception: Cancellation left temporary files or damaged old workbook
+  at CladdingTableProbe.Check (System.Boolean value, System.String message) [0x00012] in <49bccb2584aa491d9a35e791a8389a05>:0
+  at CladdingTableProbe.Main (System.String[] args) [0x00d1f] in <49bccb2584aa491d9a35e791a8389a05>:0
+[ERROR] FATAL UNHANDLED EXCEPTION: System.Exception: Cancellation left temporary files or damaged old workbook
+  at CladdingTableProbe.Check (System.Boolean value, System.String message) [0x00012] in <49bccb2584aa491d9a35e791a8389a05>:0
+  at CladdingTableProbe.Main (System.String[] args) [0x00d1f] in <49bccb2584aa491d9a35e791a8389a05>:0
+Traceback (most recent call last):
+  File "/workspace/scratch/ba306982747c/AutoCAD-complex/tools/quantities_3009/test_cladding_table.py", line 76, in <module>
+    raise SystemExit(main())
+                     ^^^^^^
+  File "/workspace/scratch/ba306982747c/AutoCAD-complex/tools/quantities_3009/test_cladding_table.py", line 36, in main
+    subprocess.run(command(executable) + [str(out)], check=True)
+  File "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/subprocess.py", line 571, in run
+    raise CalledProcessError(retcode, process.args,
+subprocess.CalledProcessError: Command '['mono', '/workspace/scratch/ba306982747c/manual_quantities_verification/final_gates/quantities_table/CladdingTableProbe.exe', '/workspace/scratch/ba306982747c/manual_quantities_verification/final_gates/quantities_table']' returned non-zero exit status 1.

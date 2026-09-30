@@ -1,0 +1,88 @@
+{
+  "status": "PASS",
+  "scope": "Execute production manual inventory/table models and independently read their XLSX.\n\nThis checks the shared typed row source used for DWG/XLSX, not an AutoCAD Table\nentity, native command interaction, transaction, or live UI. Exit 2 is blocked.\n",
+  "live_autocad_checked": false,
+  "source_sha256": {
+    "tools/manual_quantities_0110/ManualOutputProbe.cs": "7d41f8a927e8817fb8f1589d34915f071dc8d26964b6a829ac52b378ebbd2f43",
+    "Common/FacadeQuantities.cs": "fae495c094497fc6ffa35178d0599925d52c42d74ac272a48613511de66bfa0c",
+    "Common/ManualQuantities.cs": "f73ec0d29da2dfe4a61aa496cda5e9ff25632a5dd26bf4d1e2ff85ed6dc3dcb8",
+    "Facades/src/AFacadesPlugin/ManualQuantityView.cs": "fda37a2e20b7a4666dd61682da4db58b672ff27843dae21f13da4f04906ce3cc",
+    "Facades/src/AFacadesPlugin/CladdingTableData.cs": "8dec6b35b881f29b9da51d9e2c3769be360f53c6fac06670c2005a60e94405fa",
+    "Facades/src/AFacadesPlugin/FrameTableData.cs": "58de42f818cf70d470bb438b025cb6cb4c70391700d43eeeaee23042281f1ffc",
+    "Facades/src/AFacadesPlugin/QuantityTableView.cs": "b3ea24bb270e92dc395aa81d526933dc8c641b717c793fe994a4c397f1b630ff",
+    "Facades/src/AFacadesPlugin/QuantityXlsxFile.cs": "3c79e7a701ad6ba50bc81ce41cc88ba5d9c0c76c52e601115ccd3df460c3f75e",
+    "Facades/src/AFacadesPlugin/XlsxWriter.cs": "6c4ef614b5fde416fa91ce29adc0ebf99599bb21b285bd7d885bf00469c428fc",
+    "tools/manual_quantities_0110/test_manual_output.py": "846b1b1eeed729d6257c2e63553e2926b62aec1ba635693a75e7ecd1e1e059b8",
+    "tools/quantities_3009/probe_runtime.py": "2d37fb13990a1b24129dfe79a81ce138875e3c86ef3211d1a3a4f9ec40d150e5"
+  },
+  "compile_returncode": 0,
+  "run_returncode": 0,
+  "result": {
+    "total": 11,
+    "passed": 11,
+    "cases": [
+      {
+        "name": "initial inventory preserves every selected object without claiming quantities",
+        "status": "PASS"
+      },
+      {
+        "name": "evaluated inventory retains accepted unknown unsupported and generated conflict reasons",
+        "status": "PASS"
+      },
+      {
+        "name": "manual mark punctuation and source layer survive presentation",
+        "status": "PASS"
+      },
+      {
+        "name": "repeated selected handle remains visible while physical preview counts once",
+        "status": "PASS"
+      },
+      {
+        "name": "block label and piece-only dimensions do not invent profile length",
+        "status": "PASS"
+      },
+      {
+        "name": "mixed generated and manual quantities include three physical pieces without excluded objects",
+        "status": "PASS"
+      },
+      {
+        "name": "unaccounted appendix is structured and repeat rendering cannot append it twice",
+        "status": "PASS"
+      },
+      {
+        "name": "cladding export contains the same typed quantities and unaccounted appendix",
+        "status": "PASS"
+      },
+      {
+        "name": "unknown-only refusal has no invented subtotal or accepted zero",
+        "status": "PASS"
+      },
+      {
+        "name": "known empty valid scope remains distinct from unknown-only refusal",
+        "status": "PASS"
+      },
+      {
+        "name": "frame appendix preserves exact metres and keeps unknown symbols out of length totals",
+        "status": "PASS"
+      }
+    ]
+  },
+  "xlsx_checks": [
+    "manual_cladding: all typed row values survive export",
+    "manual_cladding: text never becomes spreadsheet formula",
+    "manual_cladding: one explicit unaccounted appendix",
+    "manual_frame: all typed row values survive export",
+    "manual_frame: text never becomes spreadsheet formula",
+    "manual_frame: one explicit unaccounted appendix",
+    "mixed physical total excludes unaccounted objects",
+    "exact user mark survives XLSX",
+    "unaccounted reason remains literal text",
+    "user note survives before appendix",
+    "outline dimensions named explicitly",
+    "physical rail metres and exact member length remain numbers",
+    "piece-only bracket has no invented metres",
+    "unknown rail object retains reason in export",
+    "unknown-only model has inventory but no zero subtotal"
+  ],
+  "sources_unchanged_during_run": true
+}

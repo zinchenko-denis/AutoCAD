@@ -1,0 +1,3 @@
+PASS 10000 physical observations; core seconds per workload: 0.268073, 0.211405, 0.137602
+PASS 50000 physical observations; core seconds per workload: 1.230610, 1.448680, 0.820897
+Manual quantities operation counts: PASS report: /workspace/scratch/ba306982747c/manual_quantities_verification/final_gates/manual_quantities_core_perf/manifest.json

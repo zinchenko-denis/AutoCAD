@@ -13,6 +13,14 @@ using Autodesk.AutoCAD.Geometry;
 
 namespace FacadeSafety
 {
+    internal sealed class QuantityUnaccountedItem
+    {
+        public string handle { get; set; }
+        public string type { get; set; }
+        public string layer { get; set; }
+        public string reason { get; set; }
+    }
+
     internal sealed class QuantitySelection
     {
         internal bool Ok;
@@ -21,6 +29,7 @@ namespace FacadeSafety
         internal string Fingerprint;
         internal double VerificationMilliseconds;
         internal double AggregationMilliseconds;
+        internal readonly List<QuantityUnaccountedItem> Unaccounted = new List<QuantityUnaccountedItem>();
         internal readonly List<QuantityReport> Reports = new List<QuantityReport>();
         internal readonly List<string> SelectedZoneIds = new List<string>();
         internal readonly List<string> Warnings = new List<string>();
@@ -59,6 +68,13 @@ namespace FacadeSafety
             public List<Owner> owners { get; set; }
             public List<string> entity_handles { get; set; }
             public FrameSources frame_sources { get; set; }
+        }
+        private sealed class PendingQuantityRead
+        {
+            internal Entry Entry;
+            internal QuantityReport Report;
+            internal string Digest;
+            internal List<ObjectId> Refs;
         }
         public sealed class Stamp
         {
@@ -212,8 +228,12 @@ namespace FacadeSafety
             bool frame, bool byZone, bool includeCutting)
         {
             var result = new QuantitySelection();
+            string kind = frame ? "frame" : "cladding";
             string ownerKey = frame ? FrameOwnerKey : OwnerKey, elementKey = frame ? FrameElementKey : ElementKey;
             var validationContext = new LayoutGeometryGuard.VerificationContext();
+            var manualContext = new ManualReadContext(validationContext);
+            var manualZones = new Dictionary<ObjectId, ManualZoneResult>();
+            var manualNames = new Dictionary<string, ObjectId>(StringComparer.Ordinal);
             var digestParts = new List<string>();
             var frameObserved = new Dictionary<string, FrameSource>();
             var timer = Stopwatch.StartNew();
@@ -224,9 +244,11 @@ namespace FacadeSafety
                 var requested = new Dictionary<string, Stamp>();
                 var chosen = new HashSet<ObjectId>();
                 var selectedZones = new HashSet<string>(StringComparer.Ordinal);
-                int unknown = 0;
-                foreach (ObjectId id in selectedIds ?? new ObjectId[0])
+                var pending = new Queue<ObjectId>(selectedIds ?? new ObjectId[0]);
+                bool manualIndexes = HasAnyManualIndexes(tr, db);
+                while (pending.Count > 0)
                 {
+                    ObjectId id = pending.Dequeue();
                     if (!chosen.Add(id)) continue;
                     var e = Live(tr, id);
                     if (e == null) throw new InvalidOperationException("Один из выбранных объектов отсутствует.");
@@ -234,10 +256,34 @@ namespace FacadeSafety
                     if (stamp == null) stamp = ReadStamp(tr, e, elementKey);
                     if (stamp == null)
                     {
+                        if (HasManual(tr, e))
+                        {
+                            ObjectId canonical = ResolveManualSelection(tr, db, e, kind, manualContext);
+                            if (!canonical.IsNull) { pending.Enqueue(canonical); continue; }
+                            AddUnaccounted(result, e, "Ручная позиция относится к другому виду ведомости.");
+                            continue;
+                        }
                         if (frame) CheckFrameUnavailable(tr, e);
+                        if (Has(tr, e, "ATFZONE"))
+                        {
+                            var zone = GetCanonicalZone(tr, db, e, manualContext);
+                            if (!zone.Ok) throw new InvalidOperationException(zone.Reason);
+                            var hatch = Live(tr, zone.HatchId) as Hatch;
+                            bool imported = HasManualIndex(tr, db, hatch, kind);
+                            // Manual quantities cannot conceal missing/corrupt generated data.
+                            if (HasGeneratedSource(tr, e, frame) || HasGeneratedSource(tr, hatch, frame))
+                                throw new InvalidOperationException("У выбранной зоны есть результат построения без действующего паспорта. Повторите ATTILE или ATCLAD; ручной импорт не заменяет этот результат.");
+                            if (imported)
+                            {
+                                CollectManualZone(tr, db, hatch, kind, manualContext, manualZones, manualNames, selectedZones);
+                                manualIndexes = true;
+                                continue;
+                            }
+                        }
                         if (frame ? IsFrameCandidate(tr, e) : IsCandidate(tr, e))
-                            throw new InvalidOperationException("У выбранной зоны или раскладки нет паспорта деталей. Повторите построение этой раскладки новой версией, затем сформируйте ведомость.");
-                        unknown++; continue;
+                            throw new InvalidOperationException("У выбранной зоны или раскладки нет паспорта деталей. Повторите построение этой раскладки либо зарегистрируйте ручные элементы через ATFTABLE → Ручные.");
+                        AddUnaccounted(result, e, "Объект не зарегистрирован для ведомости. Используйте ATFTABLE → Ручные.");
+                        continue;
                     }
                     if (stamp.schema != 1 || stamp.owner != e.Handle.ToString() || stamp.document_id != document ||
                         !SafeId(stamp.run_id) || stamp.zone_ids == null || stamp.zone_ids.Count == 0)
@@ -249,14 +295,13 @@ namespace FacadeSafety
                             throw new InvalidOperationException("Выбранные метки одного построения имеют разный состав.");
                     }
                     else requested[stamp.run_id] = stamp;
-                    foreach (string z in stamp.zone_ids) if (selectedZones.Add(z)) result.SelectedZoneIds.Add(z);
+                    foreach (string z in stamp.zone_ids) selectedZones.Add(z);
                 }
-                if (requested.Count == 0)
-                    throw new InvalidOperationException("В выборке нет облицовки с проверяемым паспортом. Выберите её зоны, марки или созданные детали.");
                 var known = new Dictionary<string, HashSet<string>>();
                 var verifiedEntities = new HashSet<ObjectId>();
                 var zones = new Dictionary<string, string>();
                 DefinitionCaches.Remove(tr);
+                var pendingReads = new List<PendingQuantityRead>();
                 foreach (var request in requested)
                 {
                     var refs = new List<ObjectId>();
@@ -271,12 +316,56 @@ namespace FacadeSafety
                     if (request.Value.entry_digest != digest || request.Value.layout_key != entry.layout_key)
                         throw new InvalidOperationException("Состав раскладки не соответствует выбранной метке.");
                     var report = entry.schema == 2 ? entry.quantity_report : Serializer().Deserialize<QuantityReport>(entry.report_json);
-                    if (report == null || report.document_id != document || report.run_id != entry.run_id || report.kind != (frame ? "frame" : "cladding"))
+                    if (report == null || report.document_id != document || report.run_id != entry.run_id || report.kind != kind)
                         throw new InvalidOperationException("Паспорт деталей повреждён.");
-                    VerifyEntry(tr, db, entry, report, digest, refs, validationContext, frameObserved);
+                    pendingReads.Add(new PendingQuantityRead { Entry = entry, Report = report, Digest = digest, Refs = refs });
+                    // Load selected manual indexes before comparing physical elements.
+                    // Every generation and its owners must still pass VerifyEntry below.
+                    foreach (Owner owner in entry.owners)
+                    {
+                        bool included = false;
+                        foreach (string z in owner.zone_ids) if (selectedZones.Contains(z)) { included = true; break; }
+                        if (!included) continue;
+                        var carrier = Live(tr, Resolve(db, owner.handle));
+                        if (carrier == null || !Has(tr, carrier, "ATFZONE")) continue;
+                        // A mark may have only a soft link to the anchored hatch. Resolve
+                        // it even if the NOD index container was deleted.
+                        if (!manualIndexes && carrier is Hatch && !HasManualAnchor(tr, carrier, kind))
+                        {
+                            // The generated owner already names the selected canonical
+                            // hatch. Keep its scope even when both manual index markers
+                            // were removed: surviving bindings must be found below.
+                            manualContext.UsedZones.Add(carrier.ObjectId);
+                            continue;
+                        }
+                        CollectManualZone(tr, db, carrier, kind, manualContext, manualZones, manualNames, selectedZones);
+                    }
+                }
+                var manualRoles = new HashSet<string>(StringComparer.Ordinal);
+                foreach (var manual in manualZones.Values)
+                    if (manual.HasIndex) foreach (var element in manual.Report.elements) manualRoles.Add(element.role);
+                var generatedCoincidences = new Dictionary<string, List<string>>(StringComparer.Ordinal);
+                var seenCoincidences = new HashSet<string>(StringComparer.Ordinal);
+                Action<Entity, QuantityElement> checkCoincidence = null;
+                if (manualContext.DuplicateKeys.Count > 0)
+                    checkCoincidence = (entity, element) => {
+                        if (!manualRoles.Contains(element.role) || !SelectedManualScope(element.zone_ids, selectedZones)) return;
+                        string key = ManualQuantityGeometry.GeneratedDuplicateKey(tr, entity, element, kind, manualContext.Geometry);
+                        if (key == null || !manualContext.DuplicateKeys.ContainsKey(key) ||
+                            !seenCoincidences.Add(key + ":" + element.element_id)) return;
+                        List<string> handles;
+                        if (!generatedCoincidences.TryGetValue(key, out handles)) {
+                            handles = new List<string>(); generatedCoincidences.Add(key, handles);
+                        }
+                        handles.Add(entity.Handle.ToString());
+                    };
+                foreach (var pendingRead in pendingReads)
+                {
+                    var entry = pendingRead.Entry; var report = pendingRead.Report;
+                    VerifyEntry(tr, db, entry, report, pendingRead.Digest, pendingRead.Refs, validationContext, frameObserved, checkCoincidence);
                     for (int i = entry.owners.Count; i < entry.owners.Count + entry.entity_handles.Count; i++)
-                        verifiedEntities.Add(refs[i]);
-                    digestParts.Add(entry.run_id + ":" + digest);
+                        verifiedEntities.Add(pendingRead.Refs[i]);
+                    digestParts.Add(entry.run_id + ":" + pendingRead.Digest);
                     foreach (string z in report.zone_ids)
                     {
                         string prior;
@@ -287,34 +376,89 @@ namespace FacadeSafety
                     result.Reports.Add(report);
                     known[entry.run_id] = new HashSet<string>(entry.entity_handles);
                 }
-                // Copies retain their stamp but are not in the physical ledger.
-                // Scan once, after grouping runs, instead of once per piece.
+                foreach (var pair in manualContext.DuplicateKeys)
+                {
+                    List<string> generated;
+                    generatedCoincidences.TryGetValue(pair.Key, out generated);
+                    if (pair.Value.Count < 2 && generated == null) continue;
+                    pair.Value.Sort(StringComparer.Ordinal);
+                    string samples = string.Join(", ", pair.Value.GetRange(0, Math.Min(4, pair.Value.Count)));
+                    result.Warnings.Add("Возможное совпадение отдельных деталей: ручных — " + pair.Value.Count +
+                        (generated == null ? "" : ", созданных плагином — " + generated.Count) +
+                        ". Ручные объекты: " + samples + (pair.Value.Count > 4 ? "…" : "") +
+                        ". Все отдельные детали учтены; проверьте наложение. Это не полная проверка коллизий.");
+                }
+                bool hasManualReports = false;
+                foreach (var pair in manualZones)
+                {
+                    var manual = pair.Value;
+                    if (!manual.HasIndex) continue;
+                    hasManualReports = true;
+                    result.Reports.Add(manual.Report);
+                    digestParts.Add("manual:" + pair.Key.Handle.ToString() + ":" + manual.Digest);
+                    foreach (ObjectId id in manual.VerifiedIds) verifiedEntities.Add(id);
+                    foreach (string warning in manual.Warnings) result.Warnings.Add(warning);
+                }
+                if (result.Reports.Count == 0)
+                    throw new InvalidOperationException("В выборке нет подтверждённого состава. Создайте раскладку или зарегистрируйте ручные элементы через ATFTABLE → Ручные; неучтённые объекты не означают нулевой состав.");
+                // One scan for generated copies and manual orphan/copy diagnostics.
                 var bt = (BlockTable)tr.GetObject(db.BlockTableId, OpenMode.ForRead);
                 var ms = (BlockTableRecord)tr.GetObject(bt[BlockTableRecord.ModelSpace], OpenMode.ForRead);
                 foreach (ObjectId id in ms)
                 {
-                    // VerifyEntry already checked these exact objects, including their stamps.
-                    // Copies have new ObjectIds and must still be inspected during this scan.
                     if (verifiedEntities.Contains(id)) continue;
                     var e = Live(tr, id);
-                    if (e == null || !Has(tr, e, elementKey)) continue;
-                    var stamp = ReadStamp(tr, e, elementKey);
+                    if (e == null || e.ExtensionDictionary.IsNull) continue;
+                    var extension = (DBDictionary)tr.GetObject(e.ExtensionDictionary, OpenMode.ForRead);
+                    // A binding is evidence even when its NOD directory AND its
+                    // zone anchor are absent. Inspect the existing single scan;
+                    // do not add another ModelSpace or extension-dictionary pass.
+                    if (extension.Contains(ManualKey)) VerifyManualOrphanAtScan(tr, db, e, kind, manualContext, extension);
+                    if (hasManualReports && extension.Contains(ownerKey))
+                    {
+                        var ownerStamp = ParseStamp(ReadRecord(tr, extension, ownerKey, null));
+                        if ((ownerStamp == null || !known.ContainsKey(ownerStamp.run_id ?? "")) && extension.Contains("ATFZONE"))
+                        {
+                            var zoneRefs = new List<ObjectId>();
+                            ReadRecord(tr, extension, ZoneGeometryGuard.Key, zoneRefs);
+                            // Filter by the existing soft link before validation.
+                            // An unrelated owner's zone must not enter UsedZones
+                            // and accidentally widen orphan checks to the whole DWG.
+                            if ((zoneRefs.Count > 0 && manualZones.ContainsKey(zoneRefs[0])) ||
+                                (ownerStamp != null && SelectedManualScope(ownerStamp.zone_ids, selectedZones)))
+                            {
+                                if (ownerStamp == null)
+                                    throw new InvalidOperationException("Повреждён паспорт результата построения выбранной зоны. Повторите построение; ручной импорт не заменяет этот результат.");
+                                var ownerZone = GetCanonicalZone(tr, db, e, manualContext);
+                                if (manualZones.ContainsKey(ownerZone.HatchId))
+                                    throw new InvalidOperationException("У выбранной зоны есть результат построения на другой исходной марке. " +
+                                        "Выберите исходную марку зоны вместе с ручными деталями либо повторите " +
+                                        (frame ? "ATFRAME" : "ATTILE или ATCLAD") + "; неполный состав не используется.");
+                            }
+                        }
+                    }
+                    if (!extension.Contains(elementKey)) continue;
+                    var stamp = ParseStamp(ReadRecord(tr, extension, elementKey, null));
                     HashSet<string> expected;
                     if (stamp == null) throw new InvalidOperationException("Повреждён паспорт одной из деталей облицовки.");
                     if (known.TryGetValue(stamp.run_id ?? "", out expected) &&
                         (stamp.owner != e.Handle.ToString() || !expected.Contains(e.Handle.ToString())))
                         throw new InvalidOperationException("Обнаружена копия или лишняя деталь выбранной раскладки. Ведомость не создана; приведите состав в соответствие и повторите построение.");
                 }
+                foreach (string warning in manualContext.Warnings) result.Warnings.Add(warning);
+                result.SelectedZoneIds.AddRange(selectedZones); result.SelectedZoneIds.Sort(StringComparer.Ordinal);
                 result.VerificationMilliseconds = timer.Elapsed.TotalMilliseconds;
                 timer.Restart();
                 var validation = FacadeQuantitiesCore.BuildRows(result.Reports, result.SelectedZoneIds, byZone, includeCutting);
                 result.AggregationMilliseconds = timer.Elapsed.TotalMilliseconds;
                 if (!validation.ok) throw new InvalidOperationException(FirstIssue(validation));
-                if (unknown > 0) result.Warnings.Add("Не учтены выбранные объекты без паспорта: " + unknown + ". Импорт ручных деталей в этой версии не поддерживается.");
+                if (result.Unaccounted.Count > 0)
+                    result.Warnings.Add("Не учтены выбранные объекты: " + result.Unaccounted.Count + ". Причины приведены в проверке объектов; зарегистрируйте подходящие позиции через ATFTABLE → Ручные.");
                 result.Rows = validation;
                 digestParts.Sort(StringComparer.Ordinal);
-                var scope = new List<string>(result.SelectedZoneIds); scope.Sort(StringComparer.Ordinal);
-                result.Fingerprint = Hash(Serializer().Serialize(new object[] { digestParts, scope, result.Warnings, byZone, includeCutting }));
+                result.Warnings.Sort(StringComparer.Ordinal);
+                result.Unaccounted.Sort((a, b) => StringComparer.Ordinal.Compare(a.handle, b.handle));
+                result.Fingerprint = Hash(Serializer().Serialize(new object[] { digestParts, result.SelectedZoneIds, result.Warnings, result.Unaccounted, byZone, includeCutting }));
                 result.Ok = true;
             }
             catch (Exception ex)
@@ -328,9 +472,39 @@ namespace FacadeSafety
             return result;
         }
 
+        private static bool SelectedManualScope(List<string> zones, HashSet<string> selected)
+        { if (zones != null) foreach (string zone in zones) if (selected.Contains(zone)) return true; return false; }
+
+        private static bool HasGeneratedSource(Transaction tr, Entity entity, bool frame)
+        { return frame ? Has(tr, entity, "ATFRAME") || Has(tr, entity, FrameUnavailableKey) :
+            Has(tr, entity, "ATCLAD") || Has(tr, entity, "ATTILE") || Has(tr, entity, "ATLAYOUT_CURRENT"); }
+
+        private static void AddUnaccounted(QuantitySelection result, Entity entity, string reason)
+        { result.Unaccounted.Add(new QuantityUnaccountedItem { handle = entity.Handle.ToString(),
+            type = entity.GetType().Name, layer = entity.Layer, reason = reason }); }
+
+        private static void CollectManualZone(Transaction tr, Database db, Entity carrier, string kind,
+            ManualReadContext context, Dictionary<ObjectId, ManualZoneResult> collected,
+            Dictionary<string, ObjectId> names, HashSet<string> selectedZones)
+        {
+            var zone = GetCanonicalZone(tr, db, carrier, context);
+            if (!zone.Ok) throw new InvalidOperationException(zone.Reason);
+            ObjectId existing;
+            if (names.TryGetValue(zone.ZoneId, out existing) && existing != zone.HatchId)
+                throw new InvalidOperationException("Марка ручной зоны неоднозначна: «" + zone.ZoneId + "». Уточните марки зон.");
+            names[zone.ZoneId] = zone.HatchId;
+            ManualZoneResult manual;
+            if (!collected.TryGetValue(zone.HatchId, out manual))
+            {
+                manual = ReadManualZone(tr, db, (Hatch)Live(tr, zone.HatchId), kind, context);
+                collected.Add(zone.HatchId, manual);
+            }
+            if (manual.HasIndex) selectedZones.Add(zone.ZoneId);
+        }
+
         private static void VerifyEntry(Transaction tr, Database db, Entry entry, QuantityReport report,
             string digest, List<ObjectId> refs, LayoutGeometryGuard.VerificationContext validationContext,
-            Dictionary<string, FrameSource> frameObserved)
+            Dictionary<string, FrameSource> frameObserved, Action<Entity, QuantityElement> verifiedElement)
         {
             bool frame = entry.layout_key == "ATFRAME";
             string ownerKey = frame ? FrameOwnerKey : OwnerKey, elementKey = frame ? FrameElementKey : ElementKey;
@@ -377,6 +551,7 @@ namespace FacadeSafety
                     throw new InvalidOperationException("Метка физической детали изменена или скопирована.");
                 if (Fingerprint(tr, e, cache, new HashSet<ObjectId>()) != link.fingerprint)
                     throw new InvalidOperationException("Геометрия, свойства или марка детали изменены после раскладки. Повторите ATTILE/ATCLAD; старые количества не используются.");
+                if (verifiedElement != null) verifiedElement(e, element);
             }
             if (frame)
             {
@@ -571,8 +746,9 @@ namespace FacadeSafety
         private static bool Has(Transaction tr, Entity e, string key)
         { return e != null && !e.ExtensionDictionary.IsNull && ((DBDictionary)tr.GetObject(e.ExtensionDictionary, OpenMode.ForRead)).Contains(key); }
         private static Stamp ReadStamp(Transaction tr, Entity e, string key)
+        { return ParseStamp(Read(tr, e, key)); }
+        private static Stamp ParseStamp(string json)
         {
-            string json = Read(tr, e, key);
             if (string.IsNullOrEmpty(json)) return null;
             try { return Serializer().Deserialize<Stamp>(json); }
             catch (ArgumentException)

@@ -366,7 +366,20 @@ namespace AFramePlugin
                             "\nПовторите ATFZONE, затем ATCLAD/ATTILE и ATFRAME. Прежняя подсистема сохранена.");
                         return;
                     }
-                    foreach (var hatchId in zoneHatches) verifiedZoneHatches.Add(hatchId);
+                    foreach (var hatchId in zoneHatches)
+                    {
+                        verifiedZoneHatches.Add(hatchId);
+                        // A selection through a zone mark must publish the same
+                        // frame owner on its verified canonical hatch. Otherwise
+                        // later whole-zone/manual selection cannot discover it.
+                        if (!kv.Value.Contains(hatchId))
+                        {
+                            kv.Value.Add(hatchId);
+                            var canonical = geometryTr.GetObject(hatchId, OpenMode.ForRead) as Entity;
+                            CollectOldHandles(geometryTr, ser, canonical, oldHandles);
+                            CollectOldByRoot(geometryTr, ser, canonical, oldByRoot);
+                        }
+                    }
                     List<Extents3d> hexts;
                     if (hatchExt.TryGetValue(kv.Key, out hexts) &&
                         hexts.Exists(he => ZoneShifted(parts, he)))

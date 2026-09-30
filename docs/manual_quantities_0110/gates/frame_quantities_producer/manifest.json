@@ -1,0 +1,179 @@
+{
+  "status": "PASS",
+  "checks": 2596,
+  "cases": [
+    {
+      "case": "vertical_stock",
+      "counts": {
+        "rail": 3,
+        "bracket": 9,
+        "clamp": 11
+      },
+      "length_m": {
+        "rail": 6.08,
+        "hrail": 0.0,
+        "shina": 0.0
+      },
+      "physical_count": 23
+    },
+    {
+      "case": "precision_lengths",
+      "counts": {
+        "rail": 3,
+        "bracket": 9,
+        "clamp": 11
+      },
+      "length_m": {
+        "rail": 6.0801234,
+        "hrail": 0.0,
+        "shina": 0.0
+      },
+      "physical_count": 23
+    },
+    {
+      "case": "vertical_opening",
+      "counts": {
+        "rail": 12,
+        "bracket": 43,
+        "clamp": 61
+      },
+      "length_m": {
+        "rail": 28.68,
+        "hrail": 0.0,
+        "shina": 0.0
+      },
+      "physical_count": 116
+    },
+    {
+      "case": "interfloor_opening",
+      "counts": {
+        "rail": 14,
+        "hrail": 3,
+        "bracket": 4,
+        "clamp": 73,
+        "fitting": 8
+      },
+      "length_m": {
+        "rail": 40.44,
+        "hrail": 3.2,
+        "shina": 0.0
+      },
+      "physical_count": 102
+    },
+    {
+      "case": "ortho_opening",
+      "counts": {
+        "rail": 12,
+        "hrail": 14,
+        "bracket": 48,
+        "clamp": 61
+      },
+      "length_m": {
+        "rail": 28.68,
+        "hrail": 28.2,
+        "shina": 0.0
+      },
+      "physical_count": 135
+    },
+    {
+      "case": "composite_frame_only",
+      "counts": {
+        "rail": 3,
+        "bracket": 9
+      },
+      "length_m": {
+        "rail": 6.08,
+        "hrail": 0.0,
+        "shina": 0.0
+      },
+      "physical_count": 12
+    },
+    {
+      "case": "only_clamps",
+      "counts": {
+        "clamp": 5
+      },
+      "length_m": {
+        "rail": 0.0,
+        "hrail": 0.0,
+        "shina": 0.0
+      },
+      "physical_count": 5
+    },
+    {
+      "case": "empty",
+      "counts": {},
+      "length_m": {
+        "rail": 0.0,
+        "hrail": 0.0,
+        "shina": 0.0
+      },
+      "physical_count": 0
+    },
+    {
+      "case": "independent_zones",
+      "counts": {
+        "rail": 4,
+        "bracket": 13,
+        "clamp": 17
+      },
+      "length_m": {
+        "rail": 9.08,
+        "hrail": 0.0,
+        "shina": 0.0
+      },
+      "physical_count": 34
+    },
+    {
+      "case": "clinker_shina",
+      "counts": {
+        "rail": 7,
+        "shina": 42,
+        "bracket": 21
+      },
+      "length_m": {
+        "rail": 10.5,
+        "hrail": 0.0,
+        "shina": 42.0
+      },
+      "physical_count": 70
+    },
+    {
+      "case": "concrete_shina",
+      "counts": {
+        "rail": 7,
+        "shina": 42,
+        "bracket": 21
+      },
+      "length_m": {
+        "rail": 10.5,
+        "hrail": 0.0,
+        "shina": 42.0
+      },
+      "physical_count": 70
+    }
+  ],
+  "scope": "Real frame engine, actual C# producer/core and read-only profile guard; CAD links/properties are doubles",
+  "live_autocad_checked": false,
+  "source_sha256": {
+    "AFrame/src/AFramePlugin/FrameQuantities.cs": "fd444e0461e47dc752323c88aef7c2494f6e50ebedff569f1a089b82957ad962",
+    "Common/FacadeQuantities.cs": "fae495c094497fc6ffa35178d0599925d52c42d74ac272a48613511de66bfa0c",
+    "tools/frame_quantities_3009/FrameProducerProbe.cs": "5780567e6f41ae2e7c0eed99189c099e8e756117ebfe8ca59a7d43609e140c6c",
+    "tools/frame_quantities_3009/test_frame_producer.py": "d95f28c618f2683488051d45890e94417622996e1b25f15696b9edb8f3a1fdb5",
+    "tools/frame_quantities_3009/engine_oracles.py": "85cf377f1e1076fbeea96160d4bec2070e72fe1eb160d51b710c5f925027a50b",
+    "AFrame/engine/dsverka_poligon.py": "a971bd36882c6663c0fcbc466de5e288d9aa1f4d1f6d55e5eb462ae5d635a1ec",
+    "AFrame/engine/test_frame_engine.py": "3d32ffb69a6e9bc5d229ed11201e7e09500b5f193859b6a2cbab190c73679270",
+    "AFrame/engine/audit_frame.py": "7ce9adac3adddcb7619b88d789b78f4b811f9c890e9fd9b08f884b32ee4e2d48",
+    "AFrame/engine/test_frame_rules.py": "0f629daa13207e436eb5e425e1f4e3d7189d205ffc6956bceca0427eb237b26e",
+    "AFrame/engine/frame_topology.py": "498d18f252d6160856a3cd4a90a7ada47f80c6ff463994ab801f2de0e3f72ebb",
+    "AFrame/engine/test_frame_plan.py": "990d3a933eab94f1b967ea17606be1db462936cc1cb0cb0e74c5da198d4b5ded",
+    "AFrame/engine/frame_calc.py": "abe20fd3c0de0937ba0636914f083f7c48a7a65b3b4c85f05673278a95e1da88",
+    "AFrame/engine/analiz_klu_poligon.py": "903a3080c4b01dea51e936560adba060f12f172fe13887bd2785456881f5fa27",
+    "AFrame/engine/frame_engine.py": "59cc9afbb80e948c368b41e980627da3031ac37fedede27242424fc8c6a4557a",
+    "AFrame/engine/test_frame_topology.py": "88f59edd4e8543ec3c444eb3557dbe7a10b922318362ca82360675da1c11586c",
+    "AFrame/engine/test_frame_calc.py": "f72160fe7a3483c35a6c0d7ef669a612e6e44defb95c33916a850c2a605d5239",
+    "AFrame/engine/frame_plan.py": "33e686df9f388ab82c9c0da8282584d2150e482da610ea8ad2cccdfc60db6c5e",
+    "AFrame/engine/frame_rules.py": "511ec4ec48331034257859ccac70ef028a8c4b398acd7d5b238d778e3c63ea6f",
+    "AFrame/engine/systems.json": "e9ee0a4cf0c535473dd9931f9b2a3d86dd1d932fe18f84682ef3fd221fbc03c3"
+  }
+}

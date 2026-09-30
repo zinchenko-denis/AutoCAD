@@ -1,0 +1,170 @@
+{
+  "scope": "Production pure C# frame quantities; no live AutoCAD validation.",
+  "status": "PASS",
+  "source_sha256": {
+    "Common/FacadeQuantities.cs": "fae495c094497fc6ffa35178d0599925d52c42d74ac272a48613511de66bfa0c",
+    "tools/frame_quantities_3009/FrameCoreProbe.cs": "27df5ceae72c2d2d7445c3f5abf97da1fd8bd852c26b10d787d4a119e84a41f1"
+  },
+  "compile_returncode": 0,
+  "run_returncode": 0,
+  "result": {
+    "total": 38,
+    "passed": 38,
+    "failed": 0,
+    "scope": "Production pure frame quantity contract; not live CAD freshness, DWG integration, UI or installer.",
+    "cases": [
+      {
+        "name": "six physical roles: independent endpoint lengths, counts and no invented cladding geometry",
+        "status": "PASS"
+      },
+      {
+        "name": "helpers belong to one physical part and every link is checked",
+        "status": "PASS"
+      },
+      {
+        "name": "all catalog and geometric grouping dimensions remain distinct",
+        "status": "PASS"
+      },
+      {
+        "name": "length is actual installed length without rounding or stock substitution",
+        "status": "PASS"
+      },
+      {
+        "name": "missing linear length stays null and partial",
+        "status": "PASS"
+      },
+      {
+        "name": "known and unknown lengths cannot silently produce a complete total",
+        "status": "PASS"
+      },
+      {
+        "name": "missing catalog properties remain explicit and partial",
+        "status": "PASS"
+      },
+      {
+        "name": "unknown warnings aggregate with all physical source identities",
+        "status": "PASS"
+      },
+      {
+        "name": "nonpositive and nonfinite physical lengths refuse",
+        "status": "PASS"
+      },
+      {
+        "name": "unsupported role refuses instead of becoming a generic piece",
+        "status": "PASS"
+      },
+      {
+        "name": "frame passports reject invented cladding shape and area",
+        "status": "PASS"
+      },
+      {
+        "name": "same position or equal dimensions with different physical identities count twice",
+        "status": "PASS"
+      },
+      {
+        "name": "identical physical and report duplicates count once",
+        "status": "PASS"
+      },
+      {
+        "name": "reused physical identity with changed length coating or system refuses",
+        "status": "PASS"
+      },
+      {
+        "name": "reused report identity detects changed fingerprint and source revision",
+        "status": "PASS"
+      },
+      {
+        "name": "same CAD handle is rejected case insensitively",
+        "status": "PASS"
+      },
+      {
+        "name": "missing and malformed CAD links refuse",
+        "status": "PASS"
+      },
+      {
+        "name": "unselected physical members and their CAD links are still validated",
+        "status": "PASS"
+      },
+      {
+        "name": "zone selection and whole-selection grouping preserve exact provenance",
+        "status": "PASS"
+      },
+      {
+        "name": "shared physical part needs its whole scope",
+        "status": "PASS"
+      },
+      {
+        "name": "zone display separators cannot collide",
+        "status": "PASS"
+      },
+      {
+        "name": "estimates remain separate from installed counts and stock lengths",
+        "status": "PASS"
+      },
+      {
+        "name": "partial estimate group is omitted without blocking installed subset",
+        "status": "PASS"
+      },
+      {
+        "name": "frame estimate inclusion is independent of cladding cutting toggle",
+        "status": "PASS"
+      },
+      {
+        "name": "unselected estimate groups are omitted and separate complete groups survive",
+        "status": "PASS"
+      },
+      {
+        "name": "estimate numeric JSON roundtrip preserves duplicate identity",
+        "status": "PASS"
+      },
+      {
+        "name": "invalid estimate rows and invalid group scopes refuse",
+        "status": "PASS"
+      },
+      {
+        "name": "stock estimate contract rejects unsupported fitting procurement",
+        "status": "PASS"
+      },
+      {
+        "name": "unselected estimate data is validated before selection",
+        "status": "PASS"
+      },
+      {
+        "name": "source engineering limitations are retained without granting engineering approval",
+        "status": "PASS"
+      },
+      {
+        "name": "source partial status and explicit source issues are never promoted",
+        "status": "PASS"
+      },
+      {
+        "name": "verified zero is an empty installed result with explicit information",
+        "status": "PASS"
+      },
+      {
+        "name": "bad schema document scope and selection refuse",
+        "status": "PASS"
+      },
+      {
+        "name": "frame and cladding reports cannot be silently mixed",
+        "status": "PASS"
+      },
+      {
+        "name": "rows are deterministic and aggregation does not mutate passports",
+        "status": "PASS"
+      },
+      {
+        "name": "estimate row order remains deterministic when only total length differs",
+        "status": "PASS"
+      },
+      {
+        "name": "unique identities require no canonical duplicate keys",
+        "status": "PASS"
+      },
+      {
+        "name": "canonical identity work is triggered by a repeated identity only",
+        "status": "PASS"
+      }
+    ]
+  }
+}

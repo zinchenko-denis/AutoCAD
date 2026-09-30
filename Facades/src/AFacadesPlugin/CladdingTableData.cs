@@ -10,7 +10,7 @@ namespace AFacadesPlugin
     internal sealed class CladdingTableData
     {
         internal static readonly string[] Headers = { "Зона", "Материал", "Тип / марка", "Цвет",
-            "Размер, мм / форма", "Вид", "Ед.", "Количество", "Площадь деталей по раскладке, м²", "Примечание" };
+            "Габариты контура X/Y, мм / форма", "Вид", "Ед.", "Количество", "Площадь деталей по раскладке, м²", "Примечание" };
         internal const string Title = "Ведомость облицовки — фактические элементы";
         internal readonly List<object[]> Installed = new List<object[]>();
         internal readonly List<object[]> Cutting = new List<object[]>();

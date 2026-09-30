@@ -13,10 +13,31 @@ namespace AFacadesPlugin
         internal double[] Widths;
         internal readonly List<object[]> PreviewRows = new List<object[]>();
         internal readonly List<string> Messages = new List<string>();
+        internal static readonly string[] UnaccountedHeaders = { "№", "Handle", "Тип объекта", "Слой", "Почему не учтён" };
+        internal readonly List<object[]> UnaccountedRows = new List<object[]>();
         internal IDictionary<string, string> FormShapes;
         private Func<string, List<object[]>> _rows;
 
-        internal List<object[]> Rows(string note) { return _rows(note); }
+        internal List<object[]> Rows(string note)
+        {
+            var rows = _rows(note);
+            if (UnaccountedRows.Count > 0)
+            {
+                rows.Add(new object[] { "НЕУЧТЁННЫЕ ОБЪЕКТЫ — в количества выше не включены" });
+                rows.Add(UnaccountedHeaders);
+                rows.AddRange(UnaccountedRows);
+            }
+            return rows;
+        }
+
+        internal static QuantityTableView Refusal(string title, string reason)
+        {
+            var view = new QuantityTableView { Title = title, Scope = "Ведомость не создана.", Coverage = reason,
+                Complete = false, Headers = UnaccountedHeaders, Widths = new double[] { 5, 10, 20, 20, 65 },
+                FormShapes = new Dictionary<string, string>(), _rows = note => new List<object[]>() };
+            view.Messages.Add("Числа не рассчитаны. Это не подтверждённый нулевой результат.");
+            return view;
+        }
 
         internal static QuantityTableView FromCladding(CladdingTableData data)
         {

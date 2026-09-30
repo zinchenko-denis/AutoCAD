@@ -23,7 +23,7 @@ namespace AFacadesPlugin
             : this(layers, checkedByDefault, purpose, null, "зон") { }
 
         internal LayerPickForm(IDictionary<string, int> layers, ICollection<string> checkedByDefault,
-            string purpose, string instruction, string countLabel)
+            string purpose, string instruction, string countLabel, IDictionary<string, int> otherLayers = null)
         {
             Text = instruction == null ? "ATFTABLE — слои штриховок" : "ATFTABLE — слои " + purpose;
             FormBorderStyle = FormBorderStyle.FixedDialog;
@@ -50,7 +50,7 @@ namespace AFacadesPlugin
                 if (checkedByDefault != null && checkedByDefault.Contains(k)) _list.SetItemChecked(i, true);
             }
             if (_list.CheckedIndices.Count == 0 && _list.Items.Count == 1) _list.SetItemChecked(0, true);
-            _list.ItemCheck += (s, e) => BeginInvoke((Action)Sync);
+            _list.ItemCheck += (s, e) => { if (IsHandleCreated) BeginInvoke((Action)Sync); };
 
             _ok.Text = "OK";
             _ok.Location = new Point(244, 290);
@@ -59,6 +59,28 @@ namespace AFacadesPlugin
             var cancel = new Button { Text = "Отмена", Location = new Point(330, 290), Size = new Size(80, 28),
                                       DialogResult = DialogResult.Cancel };
             Controls.AddRange(new Control[] { lbl, _list, _ok, cancel });
+            if (otherLayers != null && otherLayers.Count > 0)
+            {
+                ClientSize = new Size(420, 366);
+                _ok.Top += 36; cancel.Top += 36;
+                var more = new CheckBox { Text = "Показать остальные непустые слои", AutoSize = true, Location = new Point(10, 285) };
+                more.CheckedChanged += (s, e) =>
+                {
+                    var selected = Selected;
+                    _list.Items.Clear(); _names.Clear();
+                    var available = new Dictionary<string, int>(layers);
+                    if (more.Checked) foreach (var layer in otherLayers) available[layer.Key] = layer.Value;
+                    var names = new List<string>(available.Keys); names.Sort(StringComparer.CurrentCultureIgnoreCase);
+                    foreach (string name in names)
+                    {
+                        _names.Add(name); int i = _list.Items.Add(name + "   (" + countLabel + ": " + available[name] + ")");
+                        if (selected.Contains(name)) _list.SetItemChecked(i, true);
+                    }
+                    Sync();
+                };
+                Controls.Add(more);
+                if (layers.Count == 0) more.Checked = true;
+            }
             AcceptButton = _ok;
             CancelButton = cancel;
             Sync();

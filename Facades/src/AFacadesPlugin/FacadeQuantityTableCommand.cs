@@ -208,7 +208,16 @@ namespace AFacadesPlugin
             timings.Verification += selection.VerificationMilliseconds;
             timings.Aggregation += selection.AggregationMilliseconds;
             if (!selection.Ok)
-            { ed.WriteMessage("\nВедомость не создана: " + selection.Reason); return false; }
+            {
+                ed.WriteMessage("\nВедомость не создана: " + selection.Reason);
+                if (buildView && selection.Unaccounted.Count > 0)
+                {
+                    var refused = QuantityTableView.Refusal(kind == "frame" ? FrameTableData.Title : CladdingTableData.Title, selection.Reason);
+                    AddUnaccounted(refused, selection);
+                    using (var form = new QuantityTablePreview(refused, "", false)) AcApp.ShowModalDialog(form);
+                }
+                return false;
+            }
             var result = selection.Rows;
             if (result == null || string.IsNullOrEmpty(selection.Fingerprint))
             { ed.WriteMessage("\nВедомость не создана: не подтверждены строки или актуальность источников."); return false; }
@@ -224,7 +233,16 @@ namespace AFacadesPlugin
                 selection.SelectedZoneIds, selection.Warnings, byZone)) :
                 QuantityTableView.FromCladding(CladdingTableData.Build(result, selection.Reports,
                 selection.SelectedZoneIds, selection.Warnings, byZone, cutting));
+            AddUnaccounted(data, selection);
             return true;
+        }
+
+        private static void AddUnaccounted(QuantityTableView view, QuantitySelection selection)
+        {
+            int index = 0;
+            foreach (var item in selection.Unaccounted)
+                view.UnaccountedRows.Add(new object[] { ++index, item.handle, item.type, item.layer, item.reason });
+            if (view.UnaccountedRows.Count > 0) view.Complete = false;
         }
 
         private static bool PickLayers(Editor ed, Database db, string kind, out List<ObjectId> ids)
@@ -241,18 +259,21 @@ namespace AFacadesPlugin
                     if (entity == null) continue;
                     if (!byLayer.ContainsKey(entity.Layer)) byLayer[entity.Layer] = new List<ObjectId>();
                     byLayer[entity.Layer].Add(id);
-                    if (!(kind == "frame" ? FacadeQuantityStore.IsFrameCandidate(tr, entity) :
-                        FacadeQuantityStore.IsCandidate(tr, entity))) continue;
+                    if (!(FacadeQuantityStore.HasManual(tr, entity) ||
+                        (kind == "frame" ? FacadeQuantityStore.IsFrameCandidate(tr, entity) :
+                        FacadeQuantityStore.IsCandidate(tr, entity)))) continue;
                     if (!counts.ContainsKey(entity.Layer)) counts[entity.Layer] = 0;
                     counts[entity.Layer]++;
                 }
                 tr.Commit();
             }
-            if (counts.Count == 0)
-            { ed.WriteMessage(kind == "frame" ? "\nНет зон или элементов подсистемы. Сначала выполните ATFRAME." :
-                "\nНет зон или раскладок облицовки. Сначала выполните ATFZONE и ATTILE либо ATCLAD."); return false; }
+            var otherLayers = new Dictionary<string, int>();
+            foreach (var layer in byLayer)
+                if (counts.ContainsKey(layer.Key)) counts[layer.Key] = layer.Value.Count;
+                else otherLayers[layer.Key] = layer.Value.Count;
+            if (byLayer.Count == 0) { ed.WriteMessage("\nВ пространстве модели нет объектов."); return false; }
             using (var form = new LayerPickForm(counts, null, kind == "frame" ? "подсистемы" : "облицовки",
-                "Выберите слои зон или элементов. Все объекты выбранных слоёв проверяются; детали включают свои зоны целиком.", "объектов"))
+                "Все объекты выбранных слоёв проверяются. Зарегистрированные детали включают свою зону целиком; неучтённые видны в проверке.", "объектов", otherLayers))
             {
                 if (AcApp.ShowModalDialog(form) != System.Windows.Forms.DialogResult.OK) { Cancel(ed); return false; }
                 foreach (var layer in form.Selected) ids.AddRange(byLayer[layer]);

@@ -1,0 +1,428 @@
+{
+  "status": "PASS",
+  "passed": 40,
+  "total": 40,
+  "results": [
+    {
+      "name": "Facades_test_facade_zones",
+      "cwd": "Facades/engine",
+      "arguments": [
+        "test_facade_zones.py"
+      ],
+      "returncode": 0,
+      "seconds": 0.106
+    },
+    {
+      "name": "Facades_test_facades_engine",
+      "cwd": "Facades/engine",
+      "arguments": [
+        "test_facades_engine.py"
+      ],
+      "returncode": 0,
+      "seconds": 0.141
+    },
+    {
+      "name": "AClad_test_cladding_plan",
+      "cwd": "AClad/engine",
+      "arguments": [
+        "test_cladding_plan.py"
+      ],
+      "returncode": 0,
+      "seconds": 0.03
+    },
+    {
+      "name": "AClad_test_clad_engine",
+      "cwd": "AClad/engine",
+      "arguments": [
+        "test_clad_engine.py"
+      ],
+      "returncode": 0,
+      "seconds": 0.076
+    },
+    {
+      "name": "AClad_test_tile_pattern",
+      "cwd": "AClad/engine",
+      "arguments": [
+        "test_tile_pattern.py"
+      ],
+      "returncode": 0,
+      "seconds": 0.676
+    },
+    {
+      "name": "AClad_audit_clad",
+      "cwd": "AClad/engine",
+      "arguments": [
+        "audit_clad.py"
+      ],
+      "returncode": 0,
+      "seconds": 0.233
+    },
+    {
+      "name": "AFrame_test_frame_plan",
+      "cwd": "AFrame/engine",
+      "arguments": [
+        "test_frame_plan.py"
+      ],
+      "returncode": 0,
+      "seconds": 0.254
+    },
+    {
+      "name": "AFrame_test_frame_calc",
+      "cwd": "AFrame/engine",
+      "arguments": [
+        "test_frame_calc.py"
+      ],
+      "returncode": 0,
+      "seconds": 0.027
+    },
+    {
+      "name": "AFrame_test_frame_engine",
+      "cwd": "AFrame/engine",
+      "arguments": [
+        "test_frame_engine.py"
+      ],
+      "returncode": 0,
+      "seconds": 0.049
+    },
+    {
+      "name": "AFrame_test_frame_rules",
+      "cwd": "AFrame/engine",
+      "arguments": [
+        "test_frame_rules.py"
+      ],
+      "returncode": 0,
+      "seconds": 0.091
+    },
+    {
+      "name": "AFrame_test_frame_topology",
+      "cwd": "AFrame/engine",
+      "arguments": [
+        "test_frame_topology.py"
+      ],
+      "returncode": 0,
+      "seconds": 0.065
+    },
+    {
+      "name": "AFrame_audit_frame",
+      "cwd": "AFrame/engine",
+      "arguments": [
+        "audit_frame.py"
+      ],
+      "returncode": 0,
+      "seconds": 0.404
+    },
+    {
+      "name": "xmod",
+      "cwd": ".",
+      "arguments": [
+        "tools/xmod_check.py",
+        "--no-fixture",
+        "--allow=X6"
+      ],
+      "returncode": 0,
+      "seconds": 0.046
+    },
+    {
+      "name": "frame_quick",
+      "cwd": ".",
+      "arguments": [
+        "AFrame/tools/frame_synth.py",
+        "--quick"
+      ],
+      "returncode": 0,
+      "seconds": 7.65
+    },
+    {
+      "name": "zones_quick",
+      "cwd": ".",
+      "arguments": [
+        "Facades/tools/zones_synth.py",
+        "--quick"
+      ],
+      "returncode": 0,
+      "seconds": 10.927
+    },
+    {
+      "name": "tile_quick",
+      "cwd": ".",
+      "arguments": [
+        "AClad/tools/attile_synth.py",
+        "--quick"
+      ],
+      "returncode": 0,
+      "seconds": 21.931
+    },
+    {
+      "name": "roles_quick",
+      "cwd": ".",
+      "arguments": [
+        "tools/roles_synth.py",
+        "--quick"
+      ],
+      "returncode": 0,
+      "seconds": 3.929
+    },
+    {
+      "name": "engine_contract",
+      "cwd": ".",
+      "arguments": [
+        "tools/engine_contract.py"
+      ],
+      "returncode": 0,
+      "seconds": 0.584
+    },
+    {
+      "name": "facade_regressions",
+      "cwd": ".",
+      "arguments": [
+        "tools/fixes_3009/run_facade_regressions.py",
+        "--out",
+        "/workspace/scratch/ba306982747c/manual_quantities_verification/final_gates/regressions"
+      ],
+      "returncode": 0,
+      "seconds": 8.208
+    },
+    {
+      "name": "atr_topology",
+      "cwd": ".",
+      "arguments": [
+        "tools/atr_review_3009/vector1_topology.py"
+      ],
+      "returncode": 0,
+      "seconds": 0.042
+    },
+    {
+      "name": "atr_vector5",
+      "cwd": ".",
+      "arguments": [
+        "tools/atr_review_3009/vector5_contract_probe.py",
+        "--out",
+        "/workspace/scratch/ba306982747c/manual_quantities_verification/final_gates/vector5"
+      ],
+      "returncode": 0,
+      "seconds": 0.63
+    },
+    {
+      "name": "atr_architecture",
+      "cwd": ".",
+      "arguments": [
+        "tools/atr_review_3009/architecture_probe.py",
+        "--out",
+        "/workspace/scratch/ba306982747c/manual_quantities_verification/final_gates/architecture"
+      ],
+      "returncode": 0,
+      "seconds": 0.744
+    },
+    {
+      "name": "atr_mass",
+      "cwd": ".",
+      "arguments": [
+        "tools/atr_review_3009/vector5_mass_review.py",
+        "--evidence",
+        "/workspace/scratch/ba306982747c/manual_quantities_verification/final_gates/architecture/evidence.json",
+        "--out",
+        "/workspace/scratch/ba306982747c/manual_quantities_verification/final_gates/mass_review.json"
+      ],
+      "returncode": 0,
+      "seconds": 0.051
+    },
+    {
+      "name": "static_model_gap",
+      "cwd": ".",
+      "arguments": [
+        "tools/static_review_3009/reproduce_model_gap.py",
+        "--out",
+        "/workspace/scratch/ba306982747c/manual_quantities_verification/final_gates/static_model_gap.json"
+      ],
+      "returncode": 0,
+      "seconds": 0.05
+    },
+    {
+      "name": "quantities_core",
+      "cwd": ".",
+      "arguments": [
+        "tools/quantities_3009/test_quantities_core.py",
+        "--out",
+        "/workspace/scratch/ba306982747c/manual_quantities_verification/final_gates/quantities_core"
+      ],
+      "returncode": 0,
+      "seconds": 0.831
+    },
+    {
+      "name": "quantities_producer",
+      "cwd": ".",
+      "arguments": [
+        "tools/quantities_3009/test_cladding_producer.py",
+        "--out",
+        "/workspace/scratch/ba306982747c/manual_quantities_verification/final_gates/quantities_producer"
+      ],
+      "returncode": 0,
+      "seconds": 2.36
+    },
+    {
+      "name": "quantities_table",
+      "cwd": ".",
+      "arguments": [
+        "tools/quantities_3009/test_cladding_table.py",
+        "--out",
+        "/workspace/scratch/ba306982747c/manual_quantities_verification/final_gates/quantities_table"
+      ],
+      "returncode": 0,
+      "seconds": 0.693,
+      "initial_returncode": 1,
+      "resolution": "quantities_table_clean/manifest.json",
+      "reason": "The reused test output directory retained staged/fresh.xlsx from the previous successful probe. Its initial file-count oracle expects a fresh directory. The same unchanged production and probe sources pass in a new isolated output directory (44 C# + 14 XLSX checks). Original failed log retained."
+    },
+    {
+      "name": "quantities_store",
+      "cwd": ".",
+      "arguments": [
+        "tools/quantities_3009/test_quantity_store.py",
+        "--out",
+        "/workspace/scratch/ba306982747c/manual_quantities_verification/final_gates/quantities_store"
+      ],
+      "returncode": 0,
+      "seconds": 2.708
+    },
+    {
+      "name": "frame_quantities_core",
+      "cwd": ".",
+      "arguments": [
+        "tools/frame_quantities_3009/test_frame_core.py",
+        "--out",
+        "/workspace/scratch/ba306982747c/manual_quantities_verification/final_gates/frame_quantities_core"
+      ],
+      "returncode": 0,
+      "seconds": 0.83
+    },
+    {
+      "name": "frame_quantities_core_perf",
+      "cwd": ".",
+      "arguments": [
+        "tools/frame_quantities_3009/test_frame_core_perf.py",
+        "--quick",
+        "--out",
+        "/workspace/scratch/ba306982747c/manual_quantities_verification/final_gates/frame_quantities_core_perf"
+      ],
+      "returncode": 0,
+      "seconds": 1.593
+    },
+    {
+      "name": "frame_quantities_producer",
+      "cwd": ".",
+      "arguments": [
+        "tools/frame_quantities_3009/test_frame_producer.py",
+        "--out",
+        "/workspace/scratch/ba306982747c/manual_quantities_verification/final_gates/frame_quantities_producer"
+      ],
+      "returncode": 0,
+      "seconds": 3.546
+    },
+    {
+      "name": "frame_quantities_table",
+      "cwd": ".",
+      "arguments": [
+        "tools/frame_quantities_3009/test_frame_table.py",
+        "--out",
+        "/workspace/scratch/ba306982747c/manual_quantities_verification/final_gates/frame_quantities_table"
+      ],
+      "returncode": 0,
+      "seconds": 0.862
+    },
+    {
+      "name": "frame_engine_perf",
+      "cwd": ".",
+      "arguments": [
+        "tools/frame_quantities_3009/test_frame_engine_perf.py",
+        "--targets",
+        "1000,3000",
+        "--out",
+        "/workspace/scratch/ba306982747c/manual_quantities_verification/final_gates/frame_engine_perf"
+      ],
+      "returncode": 0,
+      "seconds": 0.338
+    },
+    {
+      "name": "quantities_store_perf",
+      "cwd": ".",
+      "arguments": [
+        "tools/quantities_3009/test_quantity_store_perf.py",
+        "--quick",
+        "--out",
+        "/workspace/scratch/ba306982747c/manual_quantities_verification/final_gates/quantities_store_perf"
+      ],
+      "returncode": 0,
+      "seconds": 13.487
+    },
+    {
+      "name": "quantities_store_encoding",
+      "cwd": ".",
+      "arguments": [
+        "tools/frame_quantities_3009/test_store_encoding.py",
+        "--out",
+        "/workspace/scratch/ba306982747c/manual_quantities_verification/final_gates/quantities_store_encoding"
+      ],
+      "returncode": 0,
+      "seconds": 0.884
+    },
+    {
+      "name": "manual_quantities_core",
+      "cwd": ".",
+      "arguments": [
+        "tools/manual_quantities_0110/test_manual_core.py",
+        "--out",
+        "/workspace/scratch/ba306982747c/manual_quantities_verification/final_gates/manual_quantities_core"
+      ],
+      "returncode": 0,
+      "seconds": 0.802
+    },
+    {
+      "name": "manual_quantities_core_perf",
+      "cwd": ".",
+      "arguments": [
+        "tools/manual_quantities_0110/test_manual_core_perf.py",
+        "--quick",
+        "--out",
+        "/workspace/scratch/ba306982747c/manual_quantities_verification/final_gates/manual_quantities_core_perf"
+      ],
+      "returncode": 0,
+      "seconds": 5.029
+    },
+    {
+      "name": "manual_quantities_cad",
+      "cwd": ".",
+      "arguments": [
+        "tools/manual_quantities_0110/test_manual_cad.py",
+        "--out",
+        "/workspace/scratch/ba306982747c/manual_quantities_verification/final_gates/manual_quantities_cad"
+      ],
+      "returncode": 0,
+      "seconds": 2.334
+    },
+    {
+      "name": "manual_quantities_cad_perf",
+      "cwd": ".",
+      "arguments": [
+        "tools/manual_quantities_0110/test_manual_cad.py",
+        "--performance",
+        "--out",
+        "/workspace/scratch/ba306982747c/manual_quantities_verification/final_gates/manual_quantities_cad_perf"
+      ],
+      "returncode": 0,
+      "seconds": 11.421
+    },
+    {
+      "name": "manual_quantities_output",
+      "cwd": ".",
+      "arguments": [
+        "tools/manual_quantities_0110/test_manual_output.py",
+        "--out",
+        "/workspace/scratch/ba306982747c/manual_quantities_verification/final_gates/manual_quantities_output"
+      ],
+      "returncode": 0,
+      "seconds": 0.977
+    }
+  ],
+  "original_manifest": "manifest.json",
+  "production_sources_changed_for_resolution": false
+}

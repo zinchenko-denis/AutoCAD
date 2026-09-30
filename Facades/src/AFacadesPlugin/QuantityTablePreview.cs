@@ -9,7 +9,7 @@ namespace AFacadesPlugin
         private readonly TextBox _note = new TextBox();
         internal string UserNote { get { return _note.Text; } }
 
-        internal QuantityTablePreview(QuantityTableView data, string note)
+        internal QuantityTablePreview(QuantityTableView data, string note, bool allowContinue = true)
         {
             Text = "ATFTABLE — " + data.Title;
             StartPosition = FormStartPosition.CenterParent;
@@ -41,20 +41,44 @@ namespace AFacadesPlugin
             grid.CellValueNeeded += (sender, args) => args.Value = CellText(data, args.RowIndex, args.ColumnIndex);
             grid.CellToolTipTextNeeded += (sender, args) => args.ToolTipText = CellText(data, args.RowIndex, args.ColumnIndex);
             grid.RowCount = data.PreviewRows.Count;
+            Control resultControl = grid;
+            if (data.UnaccountedRows.Count > 0)
+            {
+                var tabs = new TabControl { Dock = DockStyle.Fill };
+                if (allowContinue)
+                {
+                    var quantities = new TabPage("Учтённые позиции"); quantities.Controls.Add(grid); tabs.TabPages.Add(quantities);
+                }
+                var unknown = new TabPage("Не учтено объектов: " + data.UnaccountedRows.Count);
+                var inventory = new DataGridView { Dock = DockStyle.Fill, ReadOnly = true, VirtualMode = true,
+                    AllowUserToAddRows = false, AllowUserToDeleteRows = false, RowHeadersVisible = false,
+                    AutoSizeRowsMode = DataGridViewAutoSizeRowsMode.None, SelectionMode = DataGridViewSelectionMode.FullRowSelect,
+                    ShowCellToolTips = true };
+                inventory.RowTemplate.Height = 24;
+                int[] widths = { 50, 95, 190, 190, 550 };
+                for (int col = 0; col < QuantityTableView.UnaccountedHeaders.Length; col++)
+                    inventory.Columns.Add(new DataGridViewTextBoxColumn { HeaderText = QuantityTableView.UnaccountedHeaders[col],
+                        Width = widths[col], SortMode = DataGridViewColumnSortMode.NotSortable });
+                inventory.CellValueNeeded += (sender, args) => args.Value = InventoryCell(data, args.RowIndex, args.ColumnIndex);
+                inventory.CellToolTipTextNeeded += (sender, args) => args.ToolTipText = InventoryCell(data, args.RowIndex, args.ColumnIndex);
+                inventory.RowCount = data.UnaccountedRows.Count;
+                unknown.Controls.Add(inventory); tabs.TabPages.Add(unknown); resultControl = tabs;
+            }
             var messages = new TextBox { Dock = DockStyle.Fill, ReadOnly = true, Multiline = true,
                 ScrollBars = ScrollBars.Vertical, BackColor = SystemColors.Control,
                 Text = (data.Complete ? "Состав учтён." : "Ведомость неполная. Неопределённости:") + Environment.NewLine +
                     string.Join(Environment.NewLine, data.Messages.ToArray()) };
             _note.Dock = DockStyle.Fill; _note.Multiline = true; _note.ScrollBars = ScrollBars.Vertical;
             _note.MaxLength = 2000; _note.Text = note ?? "";
+            _note.Enabled = allowContinue;
             var buttons = new FlowLayoutPanel { Dock = DockStyle.Fill, FlowDirection = FlowDirection.RightToLeft };
-            var cancel = new Button { Text = "Отмена", DialogResult = DialogResult.Cancel, AutoSize = true };
+            var cancel = new Button { Text = allowContinue ? "Отмена" : "Закрыть", DialogResult = DialogResult.Cancel, AutoSize = true };
             var accept = new Button { Text = "Продолжить", DialogResult = DialogResult.OK, AutoSize = true };
-            buttons.Controls.Add(cancel); buttons.Controls.Add(accept);
-            layout.Controls.Add(intro); layout.Controls.Add(grid); layout.Controls.Add(messages);
+            buttons.Controls.Add(cancel); if (allowContinue) buttons.Controls.Add(accept);
+            layout.Controls.Add(intro); layout.Controls.Add(resultControl); layout.Controls.Add(messages);
             layout.Controls.Add(new Label { Text = "Редактируйте примечание здесь. Ручные правки чисел в DWG/Excel не меняют исходные данные:", Dock = DockStyle.Fill });
             layout.Controls.Add(_note); layout.Controls.Add(buttons);
-            Controls.Add(layout); AcceptButton = accept; CancelButton = cancel;
+            Controls.Add(layout); AcceptButton = allowContinue ? accept : cancel; CancelButton = cancel;
         }
 
         private static string CellText(QuantityTableView data, int rowIndex, int columnIndex)
@@ -63,5 +87,8 @@ namespace AFacadesPlugin
             var row = data.PreviewRows[rowIndex];
             return columnIndex < row.Length ? CladdingTableData.Display(row[columnIndex]) : "";
         }
+        private static string InventoryCell(QuantityTableView data, int row, int col)
+        { return row >= 0 && row < data.UnaccountedRows.Count && col >= 0 && col < data.UnaccountedRows[row].Length ?
+            CladdingTableData.Display(data.UnaccountedRows[row][col]) : ""; }
     }
 }

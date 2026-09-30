@@ -41,6 +41,23 @@ namespace Autodesk.AutoCAD.Geometry
         public double X, Y, Z;
         public Point3d(double x, double y, double z) { X=x; Y=y; Z=z; }
         public double DistanceTo(Point3d p) { return Math.Sqrt((X-p.X)*(X-p.X)+(Y-p.Y)*(Y-p.Y)+(Z-p.Z)*(Z-p.Z)); }
+        public Point3d TransformBy(Matrix3d matrix) { return matrix.Transform(this); }
+    }
+    // Explicit planar affine transform for the manual-import fixture geometry.
+    // No dynamic-block evaluation or AutoCAD regeneration is simulated.
+    public struct Matrix3d
+    {
+        private readonly Point3d position, origin;
+        private readonly Scale3d scale;
+        private readonly double rotation;
+        public Matrix3d(Point3d position, Scale3d scale, double rotation, Point3d origin)
+        { this.position=position; this.scale=scale; this.rotation=rotation; this.origin=origin; }
+        internal Point3d Transform(Point3d p)
+        {
+            double x=(p.X-origin.X)*scale.X, y=(p.Y-origin.Y)*scale.Y;
+            return new Point3d(position.X+x*Math.Cos(rotation)-y*Math.Sin(rotation),
+                position.Y+x*Math.Sin(rotation)+y*Math.Cos(rotation),position.Z+(p.Z-origin.Z)*scale.Z);
+        }
     }
     public struct Vector3d
     {
@@ -78,6 +95,7 @@ namespace Autodesk.AutoCAD.Colors
         public ColorMethod ColorMethod = ColorMethod.ByAci;
         public bool IsByLayer;
         public bool IsByAci = true;
+        public bool IsByColor { get { return ColorMethod == ColorMethod.ByColor; } }
         public short ColorIndex = 7;
         public byte Red, Green, Blue;
     }
@@ -128,6 +146,7 @@ namespace Autodesk.AutoCAD.DatabaseServices
     }
     public class Entity : DBObject
     {
+        public bool Visible = true;
         public ObjectId ExtensionDictionary;
         public string Layer = "0";
         public ObjectId LayerId;
@@ -226,9 +245,9 @@ namespace Autodesk.AutoCAD.DatabaseServices
         public bool XlateReferences; }
     public class LayerTableRecord : DBObject { public Autodesk.AutoCAD.Colors.Color Color = new Autodesk.AutoCAD.Colors.Color(); }
     public class Table : Entity { }
-    public class Line : Entity { public Point3d StartPoint, EndPoint; public Vector3d Normal = Vector3d.ZAxis; }
-    public class Circle : Entity { public Point3d Center; public double Radius; public Vector3d Normal = Vector3d.ZAxis; }
-    public class Arc : Entity { public Point3d Center; public double Radius, StartAngle, EndAngle; public Vector3d Normal = Vector3d.ZAxis; }
+    public class Line : Entity { public Point3d StartPoint, EndPoint; public double Thickness; public Vector3d Normal = Vector3d.ZAxis; }
+    public class Circle : Entity { public Point3d Center; public double Radius, Thickness; public Vector3d Normal = Vector3d.ZAxis; }
+    public class Arc : Entity { public Point3d Center; public double Radius, StartAngle, EndAngle, Thickness; public Vector3d Normal = Vector3d.ZAxis; }
     public class Ellipse : Entity { public Point3d Center; public Vector3d MajorAxis, MinorAxis; public double StartAngle, EndAngle; }
     public class DBText : Entity {
         public Point3d Position, AlignmentPoint; public Vector3d Normal = Vector3d.ZAxis;
@@ -265,14 +284,26 @@ namespace Autodesk.AutoCAD.DatabaseServices
         public bool IsDynamicBlock;
         public readonly List<DynamicBlockReferenceProperty> DynamicBlockReferencePropertyCollection = new List<DynamicBlockReferenceProperty>();
         public readonly List<ObjectId> AttributeCollection = new List<ObjectId>();
+        public Matrix3d BlockTransform { get {
+            var definition = BlockTableRecord.Item as BlockTableRecord;
+            return new Matrix3d(Position,ScaleFactors,Rotation,definition == null ? new Point3d() : definition.Origin);
+        } }
     }
-    public class DynamicBlockReferenceProperty { public string PropertyName; public object Value; }
+    public enum DynamicBlockReferencePropertyUnitsType { NoUnits, Angular, Distance, Area }
+    public class DynamicBlockReferenceProperty {
+        public string PropertyName;
+        public DynamicBlockReferencePropertyUnitsType UnitsType;
+        private object value;
+        public int ValueReads, ValueWrites;
+        public object Value { get { ValueReads++; return value; } set { ValueWrites++; this.value=value; } }
+    }
     public class Polyline : Entity
     {
         public readonly List<Point2d> Points = new List<Point2d>();
         public readonly List<double> Bulges = new List<double>();
         public bool Closed = true;
         public double Elevation;
+        public double Thickness;
         public double ConstantWidth;
         public readonly List<double> StartWidths = new List<double>();
         public readonly List<double> EndWidths = new List<double>();

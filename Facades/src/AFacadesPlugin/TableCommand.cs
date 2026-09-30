@@ -49,7 +49,7 @@ namespace AFacadesPlugin
             // (штукатурный / вентилируемый фасад: «после выбора программа понимает, по какой форме
             // ей создавать таблицу»)
             var k0 = ed.GetKeywords(new PromptKeywordOptions(
-                "\nВедомость [Зон/Штукатурка/Вентфасад/Облицовка/Подсистема] <Зон>: ", "Зон Штукатурка Вентфасад Облицовка Подсистема"));
+                "\nВедомость [Зон/Штукатурка/Вентфасад/Облицовка/Подсистема/Ручные] <Зон>: ", "Зон Штукатурка Вентфасад Облицовка Подсистема Ручные"));
             if (k0.Status == PromptStatus.Cancel)
             { ed.WriteMessage("\nОтменено."); return; }
             string kind = (k0.Status == PromptStatus.OK && !string.IsNullOrEmpty(k0.StringResult))
@@ -58,6 +58,8 @@ namespace AFacadesPlugin
             { CladdingTableCommand.Run(doc); return; }
             if (kind == "Подсистема")
             { FacadeQuantityTableCommand.Run(doc, "frame"); return; }
+            if (kind == "Ручные")
+            { ManualQuantityCommand.Run(doc); return; }
             bool works = kind != "Зон";
             // 29.09n (Герман): «штриховки находятся в отдельном слое — выбор слоя из уже
             // существующих слоёв»; прежний выбор объектами — вторым вариантом

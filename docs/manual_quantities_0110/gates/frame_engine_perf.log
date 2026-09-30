@@ -1,0 +1,4 @@
+manual 1000 actual 1120 seconds 0.004
+manual 3000 actual 3040 seconds 0.011
+limited_calc 1000 actual 1152 seconds 0.023
+limited_calc 3000 actual 3072 seconds 0.055

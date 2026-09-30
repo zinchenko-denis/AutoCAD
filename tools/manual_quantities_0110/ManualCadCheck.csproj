@@ -1,0 +1,29 @@
+<?xml version='1.0' encoding='utf-8'?>
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net48</TargetFramework>
+    <LangVersion>latest</LangVersion>
+    <AssemblyName>ManualCadCheck</AssemblyName>
+    <StartupObject>ManualCadCheck</StartupObject>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+    <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="ManualCadCheck.cs" />
+    <Compile Include="../quantities_3009/QuantityStoreCheck.cs" />
+    <Compile Include="../quantities_3009/QuantityCadDoubles.cs" />
+    <Compile Include="../../Common/GeometryFingerprint.cs" />
+    <Compile Include="../../Common/ZoneGeometryGuard.cs" />
+    <Compile Include="../../Common/LayoutGeometryGuard.cs" />
+    <Compile Include="../../Common/FacadeQuantities.cs" />
+    <Compile Include="../../Common/FacadeQuantityStore.cs" />
+    <Compile Include="../../Common/FacadeQuantityStore.Frame.cs" />
+    <Compile Include="../../Common/ManualQuantities.cs" />
+    <Compile Include="../../Common/ManualQuantityGeometry.cs" />
+    <Compile Include="../../Common/FacadeQuantityStore.Manual.cs" />
+    <Reference Include="System.Web.Extensions" />
+    <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.3" PrivateAssets="all" />
+  </ItemGroup>
+</Project>

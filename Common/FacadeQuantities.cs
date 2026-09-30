@@ -35,6 +35,7 @@ namespace FacadeSafety
         public List<string> zone_ids { get; set; } = new List<string>();
         public string role { get; set; } = "cladding";
         public string product_id { get; set; }
+        public string identity_group { get; set; }
         public string mark { get; set; }
         public string type { get; set; }
         public string material { get; set; }
@@ -89,6 +90,7 @@ namespace FacadeSafety
         public List<string> zone_ids { get; set; } = new List<string>();
         public string role { get; set; }
         public string product_id { get; set; }
+        public string identity_group { get; set; }
         public string mark { get; set; }
         public string type { get; set; }
         public string material { get; set; }
@@ -541,7 +543,7 @@ namespace FacadeSafety
         {
             var sorted = Sorted(zones);
             return new QuantityRow { basis = "installed", zone_id = byZone ? string.Join(" + ", sorted.ToArray()) : "Все выбранные",
-                zone_ids = sorted, role = e.role, product_id = e.product_id, mark = e.mark, type = e.type,
+                zone_ids = sorted, role = e.role, product_id = e.product_id, identity_group = e.identity_group, mark = e.mark, type = e.type,
                 material = e.material, coating = e.coating, system = e.system, color = e.color, orientation = e.orientation, piece_kind = e.piece_kind,
                 width_mm = e.width_mm, height_mm = e.height_mm, shape_id = e.shape_id, quantity = 1,
                 area_m2 = e.area_mm2.HasValue ? e.area_mm2.Value / 1000000.0 : (double?)null,
@@ -552,7 +554,7 @@ namespace FacadeSafety
         private static QuantityRow CopyRow(QuantityRow r)
         {
             return new QuantityRow { basis = r.basis, zone_id = r.zone_id, zone_ids = r.zone_ids == null ? new List<string>() : new List<string>(r.zone_ids),
-                role = r.role, product_id = r.product_id, mark = r.mark, type = r.type, material = r.material, color = r.color,
+                role = r.role, product_id = r.product_id, identity_group = r.identity_group, mark = r.mark, type = r.type, material = r.material, color = r.color,
                 coating = r.coating, system = r.system, length_mm = r.length_mm, total_length_m = r.total_length_m,
                 orientation = r.orientation, piece_kind = r.piece_kind, width_mm = r.width_mm, height_mm = r.height_mm,
                 shape_id = r.shape_id, unit = r.unit, quantity = r.quantity, area_m2 = r.area_m2,
@@ -561,7 +563,7 @@ namespace FacadeSafety
 
         private static string RowKey(QuantityRow row, bool byZone)
         {
-            return Tokens(byZone ? Tokens(Sorted(Set(row.zone_ids)).ToArray()) : null, row.basis, row.role, row.product_id, row.mark,
+            return Tokens(byZone ? Tokens(Sorted(Set(row.zone_ids)).ToArray()) : null, row.basis, row.role, row.product_id, row.identity_group, row.mark,
                 row.type, row.material, row.coating, row.system, row.color, row.orientation, row.piece_kind,
                 N(row.width_mm), N(row.height_mm), N(row.length_mm), row.shape_id, row.unit);
         }
@@ -569,7 +571,7 @@ namespace FacadeSafety
         {
             diagnostics.canonical_element_keys++;
             var sb = new StringBuilder(Tokens(e.element_id, e.zone_id, Tokens(Sorted(ElementZones(e)).ToArray()),
-                e.role, e.product_id, e.mark, e.type, e.material, e.coating, e.system, e.color, e.orientation, e.piece_kind,
+                e.role, e.product_id, e.identity_group, e.mark, e.type, e.material, e.coating, e.system, e.color, e.orientation, e.piece_kind,
                 N(e.width_mm), N(e.height_mm), N(e.area_mm2), N(e.length_mm), e.shape_id, e.origin));
             if (e.rings != null) foreach (var ring in e.rings)
             {

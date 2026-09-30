@@ -1,0 +1,132 @@
+{
+  "status": "PASS",
+  "results": [
+    {
+      "name": "zones",
+      "command": [
+        "python3",
+        "Facades/tools/zones_synth.py"
+      ],
+      "exit_code": 0,
+      "seconds": 102.686,
+      "status": "PASS"
+    },
+    {
+      "name": "tile",
+      "command": [
+        "python3",
+        "AClad/tools/attile_synth.py"
+      ],
+      "exit_code": 0,
+      "seconds": 81.056,
+      "status": "PASS"
+    },
+    {
+      "name": "frame_2909",
+      "command": [
+        "python3",
+        "AFrame/tools/frame_synth.py",
+        "--seed",
+        "2909"
+      ],
+      "exit_code": 0,
+      "seconds": 41.429,
+      "status": "PASS"
+    },
+    {
+      "name": "roles_2909",
+      "command": [
+        "python3",
+        "tools/roles_synth.py",
+        "--seed",
+        "2909"
+      ],
+      "exit_code": 0,
+      "seconds": 11.919,
+      "status": "PASS"
+    },
+    {
+      "name": "frame_77",
+      "command": [
+        "python3",
+        "AFrame/tools/frame_synth.py",
+        "--seed",
+        "77"
+      ],
+      "exit_code": 0,
+      "seconds": 41.649,
+      "status": "PASS"
+    },
+    {
+      "name": "roles_77",
+      "command": [
+        "python3",
+        "tools/roles_synth.py",
+        "--seed",
+        "77"
+      ],
+      "exit_code": 0,
+      "seconds": 11.255,
+      "status": "PASS"
+    },
+    {
+      "name": "frame_5",
+      "command": [
+        "python3",
+        "AFrame/tools/frame_synth.py",
+        "--seed",
+        "5"
+      ],
+      "exit_code": 0,
+      "seconds": 42.915,
+      "status": "PASS"
+    },
+    {
+      "name": "roles_5",
+      "command": [
+        "python3",
+        "tools/roles_synth.py",
+        "--seed",
+        "5"
+      ],
+      "exit_code": 0,
+      "seconds": 13.219,
+      "status": "PASS"
+    }
+  ],
+  "source_sha256": {
+    "Facades/engine/test_facade_zones.py": "8465ae98a8b412db6e6f7b23242a34dada7475450b47294fb22785a02b47caf4",
+    "Facades/engine/facades_engine.py": "f0046539d586d75f0d3042b83b7e155f06762f84869721544cd6542fa27ad306",
+    "Facades/engine/facade_zones.py": "a6d93dfc7b9e399be3dab4bb2a624c714b12fe79236503fe54c105122bfeea01",
+    "Facades/engine/test_facades_engine.py": "ce0f692df8747f5666aea690c6e346b79a7a4a65d54f8a48161c6af6a353d509",
+    "AClad/engine/polygon_clip.py": "06bf6d81181d8f0732827a53169cbc5c8aa4f5615e7cc5ed5306b2ac4ae4c60f",
+    "AClad/engine/test_cladding_plan.py": "4461dea9f1f00e926d52f3d0b64562a281f036b8baed4dba8656c3d89314f97a",
+    "AClad/engine/test_tile_pattern.py": "d489eae004c47dde8fc3f32108e5721c6e050387dd8e8539b3e01f37f9e640c3",
+    "AClad/engine/audit_clad.py": "881ae022233fbc6ff178d2ea2f4842eb4cf7547a8cb33a8a29e69c435aad8a92",
+    "AClad/engine/tile_pattern.py": "3af9df2b123585ce33d0b8a616956c0c0ef5ba7a822acb6fa06555ace81eafce",
+    "AClad/engine/test_clad_engine.py": "7f4133e8cb1c5e139752ad16c8a26777ee691940169c8eb2c13f5b5f1972569b",
+    "AClad/engine/cladding_plan.py": "0eb923685b4a1319a31f8eb17bfe25059aaee22b8c7b85d40982b812af5e2e8e",
+    "AClad/engine/clad_engine.py": "cf7e3739c74517a6d4483572d19330901b11d6ef8f3eb4e95c42104645257e1e",
+    "AFrame/engine/dsverka_poligon.py": "a971bd36882c6663c0fcbc466de5e288d9aa1f4d1f6d55e5eb462ae5d635a1ec",
+    "AFrame/engine/test_frame_engine.py": "3d32ffb69a6e9bc5d229ed11201e7e09500b5f193859b6a2cbab190c73679270",
+    "AFrame/engine/audit_frame.py": "7ce9adac3adddcb7619b88d789b78f4b811f9c890e9fd9b08f884b32ee4e2d48",
+    "AFrame/engine/test_frame_rules.py": "0f629daa13207e436eb5e425e1f4e3d7189d205ffc6956bceca0427eb237b26e",
+    "AFrame/engine/frame_topology.py": "498d18f252d6160856a3cd4a90a7ada47f80c6ff463994ab801f2de0e3f72ebb",
+    "AFrame/engine/test_frame_plan.py": "990d3a933eab94f1b967ea17606be1db462936cc1cb0cb0e74c5da198d4b5ded",
+    "AFrame/engine/frame_calc.py": "abe20fd3c0de0937ba0636914f083f7c48a7a65b3b4c85f05673278a95e1da88",
+    "AFrame/engine/analiz_klu_poligon.py": "903a3080c4b01dea51e936560adba060f12f172fe13887bd2785456881f5fa27",
+    "AFrame/engine/frame_engine.py": "59cc9afbb80e948c368b41e980627da3031ac37fedede27242424fc8c6a4557a",
+    "AFrame/engine/test_frame_topology.py": "88f59edd4e8543ec3c444eb3557dbe7a10b922318362ca82360675da1c11586c",
+    "AFrame/engine/test_frame_calc.py": "f72160fe7a3483c35a6c0d7ef669a612e6e44defb95c33916a850c2a605d5239",
+    "AFrame/engine/frame_plan.py": "33e686df9f388ab82c9c0da8282584d2150e482da610ea8ad2cccdfc60db6c5e",
+    "AFrame/engine/frame_rules.py": "511ec4ec48331034257859ccac70ef028a8c4b398acd7d5b238d778e3c63ea6f",
+    "Facades/tools/zones_synth.py": "f8374fd437b8929af49b1d7cee6f68f2e0586d86579a7ec8539fe6961ba35131",
+    "AClad/tools/attile_synth.py": "85d734564895b88cbeb53f892e87b360db1063a36d01fdd624a923034c3b09a0",
+    "AFrame/tools/frame_synth.py": "fb0507eefce7efdd8293bb895b6159eeca3c28643709e679a2d7f9f4c767c013",
+    "tools/roles_synth.py": "61dc9ea3c48fae82de4597ced67138055cb2da1e810d1ced758f8f28124c5436",
+    "AFrame/tools/roles/RolesDump.cs": "e9c9ab08adcc6e98969b8b23306cb56815a29921efe838cdc1ca9f461a63a280",
+    "AFrame/src/AFramePlugin/FrameSettings.cs": "726318cfb93822262855d5f6e7f1e3f6b274a4770cf7e66ef8700642d12006fa"
+  },
+  "sources_unchanged": true,
+  "live_autocad": false
+}

@@ -1,0 +1,401 @@
+{
+  "status": "PASS",
+  "scope": "Execute actual manual geometry/mapper/Store with instrumented CAD doubles.\n\nSynthetic library structures contain no private geometry. Facade-zone fixtures\ncome from the actual zone engine. No native transaction/COPY/Undo/Save guarantee\nis simulated. Missing compiler/runtime or source files return BLOCKED.\n",
+  "source_sha256": {
+    "Common/GeometryFingerprint.cs": "24114ef7a18a56415313b009d7819c94190efa5ea517df2081d1f51951819332",
+    "Common/ZoneGeometryGuard.cs": "daf06e2822a4d9ef2be818df1bf904779fa202adb1e5bce7fc0ba49c084970b8",
+    "Common/LayoutGeometryGuard.cs": "b582662e3557d023b8a318cf3fc59175616b0ac4f8bdbba0eccf4c2c960338da",
+    "Common/FacadeQuantities.cs": "fae495c094497fc6ffa35178d0599925d52c42d74ac272a48613511de66bfa0c",
+    "Common/FacadeQuantityStore.cs": "72e8b053ff8f5f87dd0a57ab9a80340f54a845093387e1ffa82348b3d52d5a0a",
+    "Common/FacadeQuantityStore.Frame.cs": "e7abeee9029ebdb074bdd0fe5de08d7ebe9fa3a7b2378c6289a2a222c83ce3e5",
+    "Common/ManualQuantities.cs": "f73ec0d29da2dfe4a61aa496cda5e9ff25632a5dd26bf4d1e2ff85ed6dc3dcb8",
+    "Common/ManualQuantityGeometry.cs": "07b975b09199d87405fce4757c959d00293e4fdf4b003572f80a30f240812693",
+    "Common/FacadeQuantityStore.Manual.cs": "d86511944ec3ee71b44b6539452332ea37a3e4d48823e67ad2275403fb9ce793",
+    "tools/quantities_3009/QuantityStoreCheck.cs": "364d04b761b5ef625638c18e6062884e5b06884d94e7bf1465d84ad71b3f4c11",
+    "tools/quantities_3009/QuantityCadDoubles.cs": "64f3d9ca1dd988fd95bbd1e135025111800c142b6ea85e5b9663561ab4813cca",
+    "tools/manual_quantities_0110/ManualCadCheck.cs": "308c52707ed0c5e14dae8c6f74373b41fea30c0f1fabc56aa6aa260e3823b214",
+    "tools/manual_quantities_0110/test_manual_cad.py": "fbff02d9b960654b5a076ec338cc89b95a188739305e26560ca934f0247a4982",
+    "tools/manual_quantities_0110/ManualCadCheck.csproj": "cd92ae2c9037758841eb383fa7c562307ed444daa8bab6fb158828295cd43e1c",
+    "tools/fixes_3009/test_zone_geometry_adapter.py": "95bc79a705323e1ca7a33e0ada636d6c3b52ff9261bb65dbc4c66ab66b304630",
+    "Facades/engine/facades_engine.py": "f0046539d586d75f0d3042b83b7e155f06762f84869721544cd6542fa27ad306",
+    "Facades/engine/facade_zones.py": "a6d93dfc7b9e399be3dab4bb2a624c714b12fe79236503fe54c105122bfeea01"
+  },
+  "fixtures_sha256": "70145fa6e8911476b9346c36510bb1d42ac51eaa20ce89f860091fceecd2c172",
+  "compile_returncode": 0,
+  "run_returncode": 0,
+  "result": {
+    "total": 92,
+    "failed": 0,
+    "cases": [
+      {
+        "name": "cassette_one_outline_twelve_hatches_two_attributes_is_one_physical_piece",
+        "status": "PASS"
+      },
+      {
+        "name": "rotated_cassette_keeps_true_area_1.5707963267949",
+        "status": "PASS"
+      },
+      {
+        "name": "rotated_cassette_keeps_true_area_0.448798950512828",
+        "status": "PASS"
+      },
+      {
+        "name": "mirrored_nonuniform_cassette_uses_actual_transformed_face",
+        "status": "PASS"
+      },
+      {
+        "name": "block_origin_is_applied_before_scale_rotation",
+        "status": "PASS"
+      },
+      {
+        "name": "reading_dynamic_properties_performs_no_setter",
+        "status": "PASS"
+      },
+      {
+        "name": "two_visible_boundaries_do_not_become_one_bbox_piece",
+        "status": "PASS"
+      },
+      {
+        "name": "hidden_auxiliary_outline_does_not_replace_active_boundary",
+        "status": "PASS"
+      },
+      {
+        "name": "nested_assembly_refused_boundary",
+        "status": "PASS"
+      },
+      {
+        "name": "nested_assembly_refused_linear",
+        "status": "PASS"
+      },
+      {
+        "name": "nested_assembly_refused_symbol",
+        "status": "PASS"
+      },
+      {
+        "name": "explicit_dynamic_width_height_match_rotated_scaled_geometry",
+        "status": "PASS"
+      },
+      {
+        "name": "wrong_dynamic_unit_cannot_confirm_linear_dimension",
+        "status": "PASS"
+      },
+      {
+        "name": "nominal_dynamic_value_does_not_override_actual_shape",
+        "status": "PASS"
+      },
+      {
+        "name": "missing_dimension_binding_is_not_guessed_by_largest_double",
+        "status": "PASS"
+      },
+      {
+        "name": "unknown_attribute_remains_unknown_with_explicit_issue",
+        "status": "PASS"
+      },
+      {
+        "name": "duplicate_attribute_tags_are_ambiguous",
+        "status": "PASS"
+      },
+      {
+        "name": "duplicate_dynamic_property_names_are_ambiguous",
+        "status": "PASS"
+      },
+      {
+        "name": "invalid_scale_refused_0",
+        "status": "PASS"
+      },
+      {
+        "name": "invalid_scale_refused_NaN",
+        "status": "PASS"
+      },
+      {
+        "name": "invalid_scale_refused_Infinity",
+        "status": "PASS"
+      },
+      {
+        "name": "nonplanar_insert_refused",
+        "status": "PASS"
+      },
+      {
+        "name": "thick_boundary_refused",
+        "status": "PASS"
+      },
+      {
+        "name": "straight_world_line_exact_length",
+        "status": "PASS"
+      },
+      {
+        "name": "zero_length_line_refused",
+        "status": "PASS"
+      },
+      {
+        "name": "symbol_counts_one_without_invented_length_or_area",
+        "status": "PASS"
+      },
+      {
+        "name": "raw_polygon_with_arc_refused",
+        "status": "PASS"
+      },
+      {
+        "name": "raw_open_boundary_refused",
+        "status": "PASS"
+      },
+      {
+        "name": "manual_cladding_roundtrip_owner_mark_piece_selection_equivalent",
+        "status": "PASS"
+      },
+      {
+        "name": "manual_frame_line_and_symbol_are_independent_physical_roles",
+        "status": "PASS"
+      },
+      {
+        "name": "reimport_preserves_identity_and_deduplicates_selected_handles",
+        "status": "PASS"
+      },
+      {
+        "name": "same_geometry_two_objects_are_both_counted_with_duplicate_warning",
+        "status": "PASS"
+      },
+      {
+        "name": "generated_and_manual_same_zone_add_counts_without_overriding",
+        "status": "PASS"
+      },
+      {
+        "name": "manual_generated_same_geometry_warns_and_counts_both",
+        "status": "PASS"
+      },
+      {
+        "name": "legacy_generated_layout_missing_passport_is_not_bypassed_by_import",
+        "status": "PASS"
+      },
+      {
+        "name": "missing_generated_owner_passport_cannot_be_hidden_by_manual",
+        "status": "PASS"
+      },
+      {
+        "name": "unregistered_selected_object_is_visible_and_not_silently_counted",
+        "status": "PASS"
+      },
+      {
+        "name": "unknown_only_selection_has_no_fabricated_zero_bill",
+        "status": "PASS"
+      },
+      {
+        "name": "copied_manual_stamp_is_not_counted_until_explicit_adoption",
+        "status": "PASS"
+      },
+      {
+        "name": "detach_copied_binding_does_not_remove_original",
+        "status": "PASS"
+      },
+      {
+        "name": "explicit_remove_selected_keeps_geometry_and_other_members",
+        "status": "PASS"
+      },
+      {
+        "name": "remove_last_registered_piece_preserves_known_empty_zone",
+        "status": "PASS"
+      },
+      {
+        "name": "preview_rule_is_frozen_from_original_form_instance",
+        "status": "PASS"
+      },
+      {
+        "name": "altered_approved_rule_refuses_before_any_binding_write",
+        "status": "PASS"
+      },
+      {
+        "name": "mutation_after_preview_refuses_shape",
+        "status": "PASS"
+      },
+      {
+        "name": "mutation_after_preview_refuses_attribute",
+        "status": "PASS"
+      },
+      {
+        "name": "mutation_after_preview_refuses_dynamic",
+        "status": "PASS"
+      },
+      {
+        "name": "mutation_after_preview_refuses_units",
+        "status": "PASS"
+      },
+      {
+        "name": "mutation_after_preview_refuses_visible",
+        "status": "PASS"
+      },
+      {
+        "name": "mutation_after_preview_refuses_rotation",
+        "status": "PASS"
+      },
+      {
+        "name": "mutation_after_preview_refuses_scale",
+        "status": "PASS"
+      },
+      {
+        "name": "changing_rejected_selected_object_invalidates_whole_preview",
+        "status": "PASS"
+      },
+      {
+        "name": "mixed_preview_only_persists_accepted_objects",
+        "status": "PASS"
+      },
+      {
+        "name": "zero_accepted_import_refuses_without_writing_index",
+        "status": "PASS"
+      },
+      {
+        "name": "changed_rule_id_content_requires_new_version",
+        "status": "PASS"
+      },
+      {
+        "name": "stale_unselected_member_remains_refused_after_partial_reimport",
+        "status": "PASS"
+      },
+      {
+        "name": "zone_geometry_change_invalidates_preview_and_saved_manual_scope",
+        "status": "PASS"
+      },
+      {
+        "name": "registered_deleted_member_refuses_and_clear_repairs_remaining_bindings",
+        "status": "PASS"
+      },
+      {
+        "name": "persisted_corruption_refused_binding_removed",
+        "status": "PASS"
+      },
+      {
+        "name": "persisted_corruption_refused_binding_json",
+        "status": "PASS"
+      },
+      {
+        "name": "persisted_corruption_refused_binding_ref",
+        "status": "PASS"
+      },
+      {
+        "name": "persisted_corruption_refused_index_removed",
+        "status": "PASS"
+      },
+      {
+        "name": "persisted_corruption_refused_anchor_removed",
+        "status": "PASS"
+      },
+      {
+        "name": "persisted_corruption_refused_index_refs",
+        "status": "PASS"
+      },
+      {
+        "name": "persisted_corruption_refused_rule_removed",
+        "status": "PASS"
+      },
+      {
+        "name": "persisted_corruption_refused_rule_changed",
+        "status": "PASS"
+      },
+      {
+        "name": "losing_index_and_anchor_does_not_hide_manual_orphans",
+        "status": "PASS"
+      },
+      {
+        "name": "generated_marker_cannot_be_reclassified_manual_AFACADE_QUANTITY_OWNER",
+        "status": "PASS"
+      },
+      {
+        "name": "generated_marker_cannot_be_reclassified_manual_AFACADE_QUANTITY_ELEMENT",
+        "status": "PASS"
+      },
+      {
+        "name": "generated_marker_cannot_be_reclassified_manual_AFACADE_FRAME_QUANTITY_OWNER",
+        "status": "PASS"
+      },
+      {
+        "name": "generated_marker_cannot_be_reclassified_manual_AFACADE_FRAME_QUANTITY_ELEMENT",
+        "status": "PASS"
+      },
+      {
+        "name": "generated_marker_cannot_be_reclassified_manual_ATFZONE",
+        "status": "PASS"
+      },
+      {
+        "name": "generated_marker_cannot_be_reclassified_manual_ATFZONE_GEOMETRY",
+        "status": "PASS"
+      },
+      {
+        "name": "generated_marker_cannot_be_reclassified_manual_ATTILE",
+        "status": "PASS"
+      },
+      {
+        "name": "generated_marker_cannot_be_reclassified_manual_ATCLAD",
+        "status": "PASS"
+      },
+      {
+        "name": "generated_marker_cannot_be_reclassified_manual_ATFRAME",
+        "status": "PASS"
+      },
+      {
+        "name": "generated_marker_cannot_be_reclassified_manual_ATFRAME_RAIL",
+        "status": "PASS"
+      },
+      {
+        "name": "generated_marker_cannot_be_reclassified_manual_ATLAYOUT_CURRENT",
+        "status": "PASS"
+      },
+      {
+        "name": "generated_marker_cannot_be_reclassified_manual_ATTILE_GEOMETRY",
+        "status": "PASS"
+      },
+      {
+        "name": "generated_marker_cannot_be_reclassified_manual_ATCLAD_GEOMETRY",
+        "status": "PASS"
+      },
+      {
+        "name": "loss_of_whole_manual_directory_and_anchor_cannot_hide_registered_items",
+        "status": "PASS"
+      },
+      {
+        "name": "legacy_mark_only_generated_owner_manual_selection_refuses_precisely",
+        "status": "PASS"
+      },
+      {
+        "name": "same_transaction_visible_definition_edit_invalidates_stored_snapshot",
+        "status": "PASS"
+      },
+      {
+        "name": "erased_zone_selected_detach_repairs_only_requested_members",
+        "status": "PASS"
+      },
+      {
+        "name": "erased_zone_and_missing_index_detach_is_selected_only",
+        "status": "PASS"
+      },
+      {
+        "name": "current_generated_frame_and_manual_rail_share_canonical_hatch_scope",
+        "status": "PASS"
+      },
+      {
+        "name": "manual_duplicates_across_batches_are_detected_without_erasure",
+        "status": "PASS"
+      },
+      {
+        "name": "manual_duplicates_across_selected_zones_are_visible",
+        "status": "PASS"
+      },
+      {
+        "name": "preview_cancellation_leaves_no_manual_state",
+        "status": "PASS"
+      },
+      {
+        "name": "apply_cancellation_during_revalidation_preserves_existing_index",
+        "status": "PASS"
+      },
+      {
+        "name": "unrelated_stale_generated_owner_does_not_expand_selected_manual_scope",
+        "status": "PASS"
+      },
+      {
+        "name": "moving_assignment_to_another_zone_requires_explicit_detach",
+        "status": "PASS"
+      }
+    ]
+  },
+  "sources_unchanged_during_run": true
+}

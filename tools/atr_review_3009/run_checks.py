@@ -76,6 +76,16 @@ def main():
                                        '--out', str(out / 'quantities_store_perf')]),
         ('quantities_store_encoding', '.', ['tools/frame_quantities_3009/test_store_encoding.py',
                                            '--out', str(out / 'quantities_store_encoding')]),
+        ('manual_quantities_core', '.', ['tools/manual_quantities_0110/test_manual_core.py',
+                                        '--out', str(out / 'manual_quantities_core')]),
+        ('manual_quantities_core_perf', '.', ['tools/manual_quantities_0110/test_manual_core_perf.py', '--quick',
+                                             '--out', str(out / 'manual_quantities_core_perf')]),
+        ('manual_quantities_cad', '.', ['tools/manual_quantities_0110/test_manual_cad.py',
+                                       '--out', str(out / 'manual_quantities_cad')]),
+        ('manual_quantities_cad_perf', '.', ['tools/manual_quantities_0110/test_manual_cad.py', '--performance',
+                                            '--out', str(out / 'manual_quantities_cad_perf')]),
+        ('manual_quantities_output', '.', ['tools/manual_quantities_0110/test_manual_output.py',
+                                          '--out', str(out / 'manual_quantities_output')]),
     ])
     results = []
     for name, cwd, arguments in jobs:

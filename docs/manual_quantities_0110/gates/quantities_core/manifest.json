@@ -1,0 +1,197 @@
+{
+  "scope": "Production pure C# quantities aggregation; no AutoCAD runtime.",
+  "status": "PASS",
+  "source_sha256": {
+    "Common/FacadeQuantities.cs": "fae495c094497fc6ffa35178d0599925d52c42d74ac272a48613511de66bfa0c",
+    "tools/quantities_3009/test_quantities_core.cs": "f9afd7b4c567a73aeeaf89aba41de1a10984ba068914b964466532016c7da5a3"
+  },
+  "compile_returncode": 0,
+  "run_returncode": 0,
+  "result": {
+    "total": 36,
+    "passed": 36,
+    "failed": 0,
+    "cases": [
+      {
+        "name": "golden installed count and exact area",
+        "passed": true,
+        "error": null
+      },
+      {
+        "name": "one holed physical piece despite outer inner fill warning",
+        "passed": true,
+        "error": null
+      },
+      {
+        "name": "shape invariant to translation winding start and closure",
+        "passed": true,
+        "error": null
+      },
+      {
+        "name": "holes sorted without losing relative positions",
+        "passed": true,
+        "error": null
+      },
+      {
+        "name": "same bounding box different contour distinct",
+        "passed": true,
+        "error": null
+      },
+      {
+        "name": "rotation and significant surface orientation distinct",
+        "passed": true,
+        "error": null
+      },
+      {
+        "name": "material type color and mark never merge",
+        "passed": true,
+        "error": null
+      },
+      {
+        "name": "unknown properties and area remain explicit nullable",
+        "passed": true,
+        "error": null
+      },
+      {
+        "name": "unknown warnings aggregate while preserving every source element",
+        "passed": true,
+        "error": null
+      },
+      {
+        "name": "duplicate selection and identical passport count once",
+        "passed": true,
+        "error": null
+      },
+      {
+        "name": "JSON numeric parameter roundtrip preserves passport identity",
+        "passed": true,
+        "error": null
+      },
+      {
+        "name": "identical repeated physical element count once",
+        "passed": true,
+        "error": null
+      },
+      {
+        "name": "conflicting element identity refuses",
+        "passed": true,
+        "error": null
+      },
+      {
+        "name": "conflicting repeated passport refuses",
+        "passed": true,
+        "error": null
+      },
+      {
+        "name": "shared CAD object refuses",
+        "passed": true,
+        "error": null
+      },
+      {
+        "name": "same coordinates separate real details still count twice",
+        "passed": true,
+        "error": null
+      },
+      {
+        "name": "by-zone and whole-selection grouping",
+        "passed": true,
+        "error": null
+      },
+      {
+        "name": "zone display separators cannot collide in group identity",
+        "passed": true,
+        "error": null
+      },
+      {
+        "name": "installed zone subset excludes other pieces",
+        "passed": true,
+        "error": null
+      },
+      {
+        "name": "shared merged-zone piece partial selection refuses",
+        "passed": true,
+        "error": null
+      },
+      {
+        "name": "cutting isolated and full-scope selection required",
+        "passed": true,
+        "error": null
+      },
+      {
+        "name": "cutting unknown or invalid count never becomes zero",
+        "passed": true,
+        "error": null
+      },
+      {
+        "name": "cutting unknown type visible without internal group UUID",
+        "passed": true,
+        "error": null
+      },
+      {
+        "name": "invalid unselected member cannot hide in subset",
+        "passed": true,
+        "error": null
+      },
+      {
+        "name": "geometry and scalar tamper refuse",
+        "passed": true,
+        "error": null
+      },
+      {
+        "name": "nan dimensions and unknown schema refuse",
+        "passed": true,
+        "error": null
+      },
+      {
+        "name": "different documents and unknown selection refuse",
+        "passed": true,
+        "error": null
+      },
+      {
+        "name": "source partial completeness is never promoted",
+        "passed": true,
+        "error": null
+      },
+      {
+        "name": "geometry report never becomes engineering approval",
+        "passed": true,
+        "error": null
+      },
+      {
+        "name": "rows deterministic after permutation and inputs immutable",
+        "passed": true,
+        "error": null
+      },
+      {
+        "name": "typed JSON roundtrip preserves exact numeric values",
+        "passed": true,
+        "error": null
+      },
+      {
+        "name": "bowtie outside hole touching hole and nested holes refuse",
+        "passed": true,
+        "error": null
+      },
+      {
+        "name": "redundant collinear vertices preserve identity",
+        "passed": true,
+        "error": null
+      },
+      {
+        "name": "compact passport retained only with verified shape identity",
+        "passed": true,
+        "error": null
+      },
+      {
+        "name": "known zero run is complete data whereas null composition refuses",
+        "passed": true,
+        "error": null
+      },
+      {
+        "name": "known empty zone selected from mixed successful run",
+        "passed": true,
+        "error": null
+      }
+    ]
+  }
+}
