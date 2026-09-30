@@ -2,9 +2,29 @@
   "repository": "zinchenko-denis/AutoCAD",
   "branch": "feat/auto-reactor",
   "base_commit": "6222041b38cf63b19373c6c155319b850264652f",
-  "status": "pending_source_publication_and_ci",
+  "product_commit": "9225841222810da6a65edf6ac79e32bf451909b0",
+  "product_tree": "e646fb8522c1ee9b1e317432340c388db070a530",
+  "status": "published_and_github_actions_success",
+  "remote_ref_independently_verified": true,
+  "remote_tree_matches_tested_local_index": true,
+  "push_method": "GitHub Git Data API, force=false; git fetch independently confirms commit/tree",
   "verification_manifest": "verification_manifest.json",
+  "github_actions": {
+    "workflow": "check",
+    "run_id": 36777757557,
+    "job_id": 110099870505,
+    "head_sha": "9225841222810da6a65edf6ac79e32bf451909b0",
+    "status": "completed",
+    "conclusion": "success",
+    "url": "https://github.com/zinchenko-denis/AutoCAD/actions/runs/36777757557",
+    "created_at": "2026-09-30T21:11:06Z",
+    "updated_at": "2026-09-30T21:15:04Z"
+  },
+  "manual_docx_sha256": "6c7e1009148938a1cacaa1631b125af9ed104ae63f49652949a129adddbc65b7",
+  "manual_pages": 38,
+  "receipt_note": "This subsequent documentation-only receipt records CI and manual source identity. It does not change product or tested probe sources.",
   "live_autocad_checked": false,
   "release_published": false,
-  "main_changed": false
+  "main_changed": false,
+  "protected_modules_changed": false
 }
