@@ -1,0 +1,147 @@
+{
+  "op": "tile_pattern",
+  "tile": {
+    "w": 290,
+    "h": 82
+  },
+  "gap": {
+    "v": 7,
+    "h": 7
+  },
+  "axis": "rows",
+  "bond": {
+    "kind": "alternate",
+    "dir": "+",
+    "units": "frac",
+    "value": 0.5
+  },
+  "anchor": {
+    "h": "R",
+    "v": "B",
+    "center": "tile",
+    "ref": "bbox"
+  },
+  "gap_around": true,
+  "shaped": "split_joint",
+  "min_piece": 10,
+  "warn_cut": 30,
+  "kerf": 3,
+  "merge_touching": false,
+  "types": [
+    "УЧЕБНАЯ бетонная плитка 290×82"
+  ],
+  "zones": [
+    {
+      "zone_id": "У-1",
+      "zone": {
+        "schema": "facade_zone/1",
+        "id": "У-1",
+        "name": "УЧЕБНАЯ бетонная плитка 290×82",
+        "cladding": "УЧЕБНАЯ бетонная плитка 290×82",
+        "system": null,
+        "units": "mm",
+        "outer": {
+          "pts": [
+            [
+              0.0,
+              0.0
+            ],
+            [
+              6000.0,
+              0.0
+            ],
+            [
+              6000.0,
+              6000.0
+            ],
+            [
+              0.0,
+              6000.0
+            ]
+          ],
+          "bulges": [
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ]
+        },
+        "openings": [
+          {
+            "id": "W1",
+            "kind": "window",
+            "poly": {
+              "pts": [
+                [
+                  1000.0,
+                  1500.0
+                ],
+                [
+                  2200.0,
+                  1500.0
+                ],
+                [
+                  2200.0,
+                  3000.0
+                ],
+                [
+                  1000.0,
+                  3000.0
+                ]
+              ],
+              "bulges": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ]
+            }
+          },
+          {
+            "id": "W2",
+            "kind": "window",
+            "poly": {
+              "pts": [
+                [
+                  3600.0,
+                  1500.0
+                ],
+                [
+                  4800.0,
+                  1500.0
+                ],
+                [
+                  4800.0,
+                  3000.0
+                ],
+                [
+                  3600.0,
+                  3000.0
+                ]
+              ],
+              "bulges": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ]
+            }
+          }
+        ],
+        "source": {
+          "method": "manual",
+          "tool": "ATFZONE"
+        },
+        "meta": {
+          "outer_contour_id": "outer",
+          "bbox": [
+            0.0,
+            0.0,
+            6000.0,
+            6000.0
+          ]
+        }
+      }
+    }
+  ]
+}

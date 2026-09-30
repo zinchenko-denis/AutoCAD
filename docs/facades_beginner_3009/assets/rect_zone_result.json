@@ -1,0 +1,310 @@
+{
+  "ok": true,
+  "zones": [
+    {
+      "zone_id": "У-1",
+      "cladding": "УЧЕБНАЯ бетонная плитка 290×82",
+      "outer_id": "outer",
+      "outer_ids": [
+        "outer"
+      ],
+      "opening_ids": [
+        "W1",
+        "W2"
+      ],
+      "opening_kinds": {
+        "W1": "window",
+        "W2": "window"
+      },
+      "lines": [
+        {
+          "cat": "window_sill",
+          "pts": [
+            [
+              1000.0,
+              1500.0
+            ],
+            [
+              2200.0,
+              1500.0
+            ]
+          ],
+          "len_m": 1.2,
+          "opening_id": "W1"
+        },
+        {
+          "cat": "window_slope",
+          "pts": [
+            [
+              2200.0,
+              1500.0
+            ],
+            [
+              2200.0,
+              3000.0
+            ],
+            [
+              1000.0,
+              3000.0
+            ],
+            [
+              1000.0,
+              1500.0
+            ]
+          ],
+          "len_m": 4.2,
+          "opening_id": "W1"
+        },
+        {
+          "cat": "window_sill",
+          "pts": [
+            [
+              3600.0,
+              1500.0
+            ],
+            [
+              4800.0,
+              1500.0
+            ]
+          ],
+          "len_m": 1.2,
+          "opening_id": "W2"
+        },
+        {
+          "cat": "window_slope",
+          "pts": [
+            [
+              4800.0,
+              1500.0
+            ],
+            [
+              4800.0,
+              3000.0
+            ],
+            [
+              3600.0,
+              3000.0
+            ],
+            [
+              3600.0,
+              1500.0
+            ]
+          ],
+          "len_m": 4.2,
+          "opening_id": "W2"
+        }
+      ],
+      "label_pt": [
+        6000.0,
+        6000.0
+      ],
+      "bbox": [
+        0.0,
+        0.0,
+        6000.0,
+        6000.0
+      ],
+      "report": {
+        "schema": "facade_zone_report/1",
+        "zone_id": "У-1",
+        "name": "УЧЕБНАЯ бетонная плитка 290×82",
+        "facade": "",
+        "floors": "",
+        "system": null,
+        "area_outer_m2": 36.0,
+        "openings_total_m2": 3.6,
+        "area_net_m2": 32.4,
+        "perimeter_outer_m": 24.0,
+        "openings_count": 2,
+        "openings": [
+          {
+            "id": "W1",
+            "kind": "window",
+            "area_m2": 1.8,
+            "perimeter_m": 5.4,
+            "edges": {
+              "bottom_m": 1.2,
+              "top_m": 1.2,
+              "sides_m": 3.0,
+              "on_boundary_m": 0.0
+            }
+          },
+          {
+            "id": "W2",
+            "kind": "window",
+            "area_m2": 1.8,
+            "perimeter_m": 5.4,
+            "edges": {
+              "bottom_m": 1.2,
+              "top_m": 1.2,
+              "sides_m": 3.0,
+              "on_boundary_m": 0.0
+            }
+          }
+        ],
+        "openings_perimeter_total_m": 10.8,
+        "sills_total_m": 2.4,
+        "jambs_total_m": 8.4,
+        "on_boundary_total_m": 0.0,
+        "window_count": 2,
+        "window_area_m2": 3.6,
+        "vitrage_count": 0,
+        "vitrage_area_m2": 0.0,
+        "door_count": 0,
+        "door_area_m2": 0.0,
+        "window_sills_m": 2.4,
+        "window_slopes_m": 8.4,
+        "door_slopes_m": 0.0,
+        "vitrage_side_m": 0.0,
+        "vitrage_top_m": 0.0,
+        "vitrage_bottom_m": 0.0,
+        "warnings": []
+      },
+      "dims": [
+        {
+          "height": {
+            "x": 0.0,
+            "y0": 0.0,
+            "y1": 6000.0
+          },
+          "bottom": null
+        }
+      ]
+    }
+  ],
+  "zones_full": [
+    {
+      "schema": "facade_zone/1",
+      "id": "У-1",
+      "name": "УЧЕБНАЯ бетонная плитка 290×82",
+      "cladding": "УЧЕБНАЯ бетонная плитка 290×82",
+      "system": null,
+      "units": "mm",
+      "outer": {
+        "pts": [
+          [
+            0.0,
+            0.0
+          ],
+          [
+            6000.0,
+            0.0
+          ],
+          [
+            6000.0,
+            6000.0
+          ],
+          [
+            0.0,
+            6000.0
+          ]
+        ],
+        "bulges": [
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      "openings": [
+        {
+          "id": "W1",
+          "kind": "window",
+          "poly": {
+            "pts": [
+              [
+                1000.0,
+                1500.0
+              ],
+              [
+                2200.0,
+                1500.0
+              ],
+              [
+                2200.0,
+                3000.0
+              ],
+              [
+                1000.0,
+                3000.0
+              ]
+            ],
+            "bulges": [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ]
+          }
+        },
+        {
+          "id": "W2",
+          "kind": "window",
+          "poly": {
+            "pts": [
+              [
+                3600.0,
+                1500.0
+              ],
+              [
+                4800.0,
+                1500.0
+              ],
+              [
+                4800.0,
+                3000.0
+              ],
+              [
+                3600.0,
+                3000.0
+              ]
+            ],
+            "bulges": [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ]
+          }
+        }
+      ],
+      "source": {
+        "method": "manual",
+        "tool": "ATFZONE"
+      },
+      "meta": {
+        "outer_contour_id": "outer",
+        "bbox": [
+          0.0,
+          0.0,
+          6000.0,
+          6000.0
+        ]
+      }
+    }
+  ],
+  "parapets": [],
+  "failed": [],
+  "issues": [],
+  "summary": {
+    "count": 1,
+    "area_net_total_m2": 32.4,
+    "sills_total_m": 2.4,
+    "jambs_total_m": 8.4,
+    "openings_total": 2,
+    "parapets_count": 0,
+    "parapets_top_m": 0,
+    "window_count": 2,
+    "window_area_m2": 3.6,
+    "vitrage_count": 0,
+    "vitrage_area_m2": 0,
+    "door_count": 0,
+    "door_area_m2": 0,
+    "window_sills_m": 2.4,
+    "window_slopes_m": 8.4,
+    "door_slopes_m": 0,
+    "vitrage_side_m": 0,
+    "vitrage_top_m": 0,
+    "vitrage_bottom_m": 0
+  }
+}

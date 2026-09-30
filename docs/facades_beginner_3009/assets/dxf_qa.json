@@ -1,0 +1,30 @@
+{
+  "01_source_rect.dxf": {
+    "audit_errors": 0,
+    "units": "mm",
+    "entities": 3,
+    "plugin_xdata": false,
+    "source_polylines": 3
+  },
+  "02_source_gable.dxf": {
+    "audit_errors": 0,
+    "units": "mm",
+    "entities": 3,
+    "plugin_xdata": false,
+    "source_polylines": 3
+  },
+  "03_reference_rect.dxf": {
+    "audit_errors": 0,
+    "units": "mm",
+    "entities": 1681,
+    "plugin_xdata": false,
+    "source_polylines": 3
+  },
+  "04_reference_gable.dxf": {
+    "audit_errors": 0,
+    "units": "mm",
+    "entities": 1162,
+    "plugin_xdata": false,
+    "source_polylines": 3
+  }
+}

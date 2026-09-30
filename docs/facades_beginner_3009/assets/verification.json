@@ -1,0 +1,341 @@
+{
+  "rect": {
+    "zone": {
+      "count": 1,
+      "area_net_total_m2": 32.4,
+      "sills_total_m": 2.4,
+      "jambs_total_m": 8.4,
+      "openings_total": 2,
+      "parapets_count": 0,
+      "parapets_top_m": 0,
+      "window_count": 2,
+      "window_area_m2": 3.6,
+      "vitrage_count": 0,
+      "vitrage_area_m2": 0,
+      "door_count": 0,
+      "door_area_m2": 0,
+      "window_sills_m": 2.4,
+      "window_slopes_m": 8.4,
+      "door_slopes_m": 0,
+      "vitrage_side_m": 0,
+      "vitrage_top_m": 0,
+      "vitrage_bottom_m": 0
+    },
+    "tile": {
+      "zones": 1,
+      "full": 1127,
+      "cut": 204,
+      "tiny": 0,
+      "small": 11,
+      "absorbed": {
+        "count": 9,
+        "area": 3690.0
+      },
+      "trimmed": {
+        "count": 8,
+        "area": 2268.0
+      },
+      "blanks_cut": 108,
+      "tiles_total": 1235,
+      "tiles_by_area": 1224,
+      "waste_area": 271538.0,
+      "area_zones": 32324008.0,
+      "area_tiles": 29096762.0,
+      "by_type": {
+        "УЧЕБНАЯ бетонная плитка 290×82": {
+          "full": 1127,
+          "cut": 204,
+          "tiny": 0,
+          "half": 33,
+          "area": 29096762.0,
+          "area_cut": 2296702.0,
+          "kinds": {
+            "рез по ширине": 130,
+            "половинка": 33,
+            "рез по ширине и высоте": 10,
+            "рез по высоте": 31
+          },
+          "blanks_cut": 108,
+          "blanks_by_kind": {
+            "по ширине": 91,
+            "по высоте": 17,
+            "фигурные": 0
+          },
+          "small": 11,
+          "tiles_total": 1235,
+          "area_blanks": 29368300.0,
+          "waste_area": 271538.0,
+          "waste_pct": 0.9245955673293994,
+          "tiles_by_area": 1224,
+          "blanks": 1235
+        }
+      },
+      "tile": {
+        "w": 290.0,
+        "h": 82.0
+      },
+      "gap": {
+        "v": 7.0,
+        "h": 7.0
+      },
+      "module": {
+        "x": 297.0,
+        "y": 89.0
+      },
+      "half_w": 141.5,
+      "kerf": 3.0,
+      "min_piece": 10.0,
+      "tiny_mode": "absorb",
+      "datum_mode": "bbox",
+      "pattern": {
+        "rows": [
+          [
+            "УЧЕБНАЯ бетонная плитка 290×82"
+          ],
+          [
+            "УЧЕБНАЯ бетонная плитка 290×82"
+          ]
+        ],
+        "row_shifts": [
+          0.0,
+          0.5
+        ]
+      },
+      "axis": "rows",
+      "bond": {
+        "kind": "alternate",
+        "dir": "+",
+        "units": "frac",
+        "f": 0.5,
+        "period": 2,
+        "shifts": [
+          0.0,
+          0.5
+        ],
+        "phases": [
+          0.0,
+          0.5
+        ],
+        "module": 297.0,
+        "text": "через ряд: каждый второй ряд сдвинут вправо на 1/2 модуля (148 мм); период 2 ряда"
+      },
+      "anchor": {
+        "h": "R",
+        "v": "B",
+        "center": "tile",
+        "ref": "bbox"
+      },
+      "gap_around": true,
+      "shaped": "split_joint",
+      "warn_cut": 30.0,
+      "joint_axes_per_module": 2,
+      "blanks": 1235,
+      "area_blanks": 29368300.0,
+      "waste_pct": 0.9245955673293994
+    },
+    "frame": {
+      "rails": 25,
+      "rails_lm": 64.73,
+      "hrails": 211,
+      "hrails_lm": 378.0,
+      "fittings": 0,
+      "rail_stock_est": 11,
+      "brackets_main": 0,
+      "brackets_row": 111,
+      "clamps_start": 0,
+      "clamps_row": 0,
+      "clamps_side": 0,
+      "clamps_combo": 0,
+      "zones": 1,
+      "parts": "frame",
+      "cladding": "concrete",
+      "shina_start": 5,
+      "shina_start_lm": 8.4,
+      "shina_row": 201,
+      "shina_row_lm": 361.2,
+      "shina_end": 5,
+      "shina_end_lm": 8.4,
+      "shina_pieces": 211,
+      "shina_lm": 378.0,
+      "hguides": 0,
+      "hguides_lm": 0.0,
+      "tile_whip": 2500.0,
+      "tile_rail_brand": "УЧЕБНАЯ"
+    },
+    "frame_ok": true,
+    "notes_frame": [
+      "У-1: контур 1: плитка — вертикальных направляющих 11 шагом 600 мм от края зоны (не по швам); шины: стартовых прогонов 3 (8.4 м), рядовых 101 (361.2 м), концевых 3 (8.4 м)",
+      "У-1: плитка: хлыстов шины 211 — не длиннее 2500 мм, стык на направляющей (после окна — заново от грани проёма)"
+    ]
+  },
+  "gable": {
+    "zone": {
+      "count": 1,
+      "area_net_total_m2": 27.9,
+      "sills_total_m": 2.4,
+      "jambs_total_m": 8.4,
+      "openings_total": 2,
+      "parapets_count": 0,
+      "parapets_top_m": 0,
+      "window_count": 2,
+      "window_area_m2": 3.6,
+      "vitrage_count": 0,
+      "vitrage_area_m2": 0,
+      "door_count": 0,
+      "door_area_m2": 0,
+      "window_sills_m": 2.4,
+      "window_slopes_m": 8.4,
+      "door_slopes_m": 0,
+      "vitrage_side_m": 0,
+      "vitrage_top_m": 0,
+      "vitrage_bottom_m": 0
+    },
+    "tile": {
+      "zones": 1,
+      "full": 951,
+      "cut": 208,
+      "tiny": 0,
+      "small": 15,
+      "absorbed": {
+        "count": 13,
+        "area": 3797.25
+      },
+      "trimmed": {
+        "count": 8,
+        "area": 2268.0
+      },
+      "blanks_cut": 136,
+      "tiles_total": 1087,
+      "tiles_by_area": 1054,
+      "waste_area": 800164.75,
+      "area_zones": 27824008.0,
+      "area_tiles": 25048695.25,
+      "by_type": {
+        "УЧЕБНАЯ бетонная плитка 290×82": {
+          "full": 951,
+          "cut": 208,
+          "tiny": 0,
+          "half": 25,
+          "area": 25048695.25,
+          "area_cut": 2433915.25,
+          "kinds": {
+            "рез по ширине": 113,
+            "половинка": 25,
+            "рез по ширине и высоте": 8,
+            "рез по высоте": 12,
+            "фигурная": 50
+          },
+          "blanks_cut": 136,
+          "blanks_by_kind": {
+            "по ширине": 78,
+            "по высоте": 8,
+            "фигурные": 50
+          },
+          "small": 15,
+          "tiles_total": 1087,
+          "area_blanks": 25848860.0,
+          "waste_area": 800164.75,
+          "waste_pct": 3.0955514092304264,
+          "tiles_by_area": 1054,
+          "blanks": 1087
+        }
+      },
+      "tile": {
+        "w": 290.0,
+        "h": 82.0
+      },
+      "gap": {
+        "v": 7.0,
+        "h": 7.0
+      },
+      "module": {
+        "x": 297.0,
+        "y": 89.0
+      },
+      "half_w": 141.5,
+      "kerf": 3.0,
+      "min_piece": 10.0,
+      "tiny_mode": "absorb",
+      "datum_mode": "bbox",
+      "pattern": {
+        "rows": [
+          [
+            "УЧЕБНАЯ бетонная плитка 290×82"
+          ],
+          [
+            "УЧЕБНАЯ бетонная плитка 290×82"
+          ]
+        ],
+        "row_shifts": [
+          0.0,
+          0.5
+        ]
+      },
+      "axis": "rows",
+      "bond": {
+        "kind": "alternate",
+        "dir": "+",
+        "units": "frac",
+        "f": 0.5,
+        "period": 2,
+        "shifts": [
+          0.0,
+          0.5
+        ],
+        "phases": [
+          0.0,
+          0.5
+        ],
+        "module": 297.0,
+        "text": "через ряд: каждый второй ряд сдвинут вправо на 1/2 модуля (148 мм); период 2 ряда"
+      },
+      "anchor": {
+        "h": "R",
+        "v": "B",
+        "center": "tile",
+        "ref": "bbox"
+      },
+      "gap_around": true,
+      "shaped": "split_joint",
+      "warn_cut": 30.0,
+      "joint_axes_per_module": 2,
+      "blanks": 1087,
+      "area_blanks": 25848860.0,
+      "waste_pct": 3.0955514092304264
+    },
+    "frame": null,
+    "frame_ok": false,
+    "notes_frame": [
+      "контур 1: плитка — вертикальных направляющих 11 шагом 600 мм от края зоны (не по швам); шины: стартовых прогонов 3 (8.4 м), рядовых 101 (310.4 м), концевых 2 (2.4 м)",
+      "плитка: хлыстов шины 187 — не длиннее 2500 мм, стык на направляющей (после окна — заново от грани проёма)",
+      "плитка: кусков шины без направляющей под ними 1 — удлинить не до чего (в простенке или у края нет направляющих) — проверьте"
+    ]
+  },
+  "base_commit": "6d53e3042ce02102094f87943c54bf3115b0eb88",
+  "working_tree_modified": true,
+  "engine_sha256": {
+    "AClad/engine/audit_clad.py": "881ae022233fbc6ff178d2ea2f4842eb4cf7547a8cb33a8a29e69c435aad8a92",
+    "AClad/engine/clad_engine.py": "cf7e3739c74517a6d4483572d19330901b11d6ef8f3eb4e95c42104645257e1e",
+    "AClad/engine/cladding_plan.py": "0eb923685b4a1319a31f8eb17bfe25059aaee22b8c7b85d40982b812af5e2e8e",
+    "AClad/engine/polygon_clip.py": "06bf6d81181d8f0732827a53169cbc5c8aa4f5615e7cc5ed5306b2ac4ae4c60f",
+    "AClad/engine/test_clad_engine.py": "7f4133e8cb1c5e139752ad16c8a26777ee691940169c8eb2c13f5b5f1972569b",
+    "AClad/engine/test_cladding_plan.py": "4461dea9f1f00e926d52f3d0b64562a281f036b8baed4dba8656c3d89314f97a",
+    "AClad/engine/test_tile_pattern.py": "d489eae004c47dde8fc3f32108e5721c6e050387dd8e8539b3e01f37f9e640c3",
+    "AClad/engine/tile_pattern.py": "3af9df2b123585ce33d0b8a616956c0c0ef5ba7a822acb6fa06555ace81eafce",
+    "AFrame/engine/analiz_klu_poligon.py": "903a3080c4b01dea51e936560adba060f12f172fe13887bd2785456881f5fa27",
+    "AFrame/engine/audit_frame.py": "7ce9adac3adddcb7619b88d789b78f4b811f9c890e9fd9b08f884b32ee4e2d48",
+    "AFrame/engine/dsverka_poligon.py": "a971bd36882c6663c0fcbc466de5e288d9aa1f4d1f6d55e5eb462ae5d635a1ec",
+    "AFrame/engine/frame_calc.py": "ff127415cf3f982e9bf8f5ad5eb8951d404ee3d3775637fcb459862cb2b2210b",
+    "AFrame/engine/frame_engine.py": "dbb211e779cf39bac81fbe146469ae3a75812e61d223977a680ad38f64869556",
+    "AFrame/engine/frame_plan.py": "901362344ebca1069cf3fe3946c9e9b82e9671611311aa8b51b653aff656c8f3",
+    "AFrame/engine/systems.json": "e9ee0a4cf0c535473dd9931f9b2a3d86dd1d932fe18f84682ef3fd221fbc03c3",
+    "AFrame/engine/test_frame_calc.py": "f72160fe7a3483c35a6c0d7ef669a612e6e44defb95c33916a850c2a605d5239",
+    "AFrame/engine/test_frame_engine.py": "3d32ffb69a6e9bc5d229ed11201e7e09500b5f193859b6a2cbab190c73679270",
+    "AFrame/engine/test_frame_plan.py": "fa913fede3d98132afa4a985b0d3ea42e41a27a72fb5217eb8d069cbb6d18024",
+    "Facades/engine/facade_zones.py": "a6d93dfc7b9e399be3dab4bb2a624c714b12fe79236503fe54c105122bfeea01",
+    "Facades/engine/facades_engine.py": "f0046539d586d75f0d3042b83b7e155f06762f84869721544cd6542fa27ad306",
+    "Facades/engine/test_facade_zones.py": "8465ae98a8b412db6e6f7b23242a34dada7475450b47294fb22785a02b47caf4",
+    "Facades/engine/test_facades_engine.py": "ce0f692df8747f5666aea690c6e346b79a7a4a65d54f8a48161c6af6a353d509"
+  },
+  "note": "Generated from the current working tree; base_commit alone does not identify the inputs. File SHA-256 values identify the code. Python engine diagrams, not AutoCAD screenshots or live AutoCAD acceptance."
+}

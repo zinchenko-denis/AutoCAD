@@ -1,0 +1,14 @@
+{
+  "rect": {
+    "checked_pieces": 1331,
+    "max_outside_zone_or_in_window_mm2": 0.0,
+    "max_area_delta_mm2": 0.0,
+    "nonrect_pieces": 0
+  },
+  "gable": {
+    "checked_pieces": 1159,
+    "max_outside_zone_or_in_window_mm2": 0.0,
+    "max_area_delta_mm2": 0.0,
+    "nonrect_pieces": 50
+  }
+}
