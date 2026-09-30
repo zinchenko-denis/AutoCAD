@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.Text;
 using System.Web.Script.Serialization;
+using FacadeSafety;
 using Autodesk.AutoCAD.Colors;
 using Autodesk.AutoCAD.DatabaseServices;
 using Autodesk.AutoCAD.EditorInput;
@@ -98,9 +99,6 @@ namespace ACladPlugin
             // вместе с объектом (COPY), чужие плитки не трогает.
             var own = new OwnedLabels();
             var cladOwn = new OwnedLabels();
-            var zoneStale = new List<string>();
-            var zoneMoved = new List<string>();                       // 23.09n
-            var hatchExt = new Dictionary<string, List<Extents3d>>();  // габариты штриховок зон
             Dictionary<string, object> prevSettings = null;
             // 23.09b: прежние точки принудительных рустов — из метки ATTILE,
             // иначе из метки ATCLAD (переход с ATCLAD на ATTILE без повторных кликов)
@@ -137,7 +135,15 @@ namespace ACladPlugin
                     else
                     {
                         string json = CladCommand.ReadData(tr, ent, CladCommand.XKeyZone);
-                        if (json == null) continue;
+                        if (json == null)
+                        {
+                            if (CladCommand.ReadData(tr, ent, ZoneGeometryGuard.Key) != null)
+                            {
+                                ed.WriteMessage("\nДанные выбранной зоны повреждены. Повторите ATFZONE по исходным контурам и проёмам. Прежняя раскладка сохранена.");
+                                return;
+                            }
+                            continue;
+                        }
                         var z = ser.DeserializeObject(json) as Dictionary<string, object>;
                         if (z == null) continue;
                         string zid = CladCommand.SafeStr(CladCommand.Get(z, "zone_id"));
@@ -151,35 +157,6 @@ namespace ACladPlugin
                     if (!isZone) continue;
                     own.Collect(tr, ser, ent, XKeyTile);
                     cladOwn.Collect(tr, ser, ent, CladCommand.XKeyClad);
-                    // зону двигали/меняли после ATFZONE — геометрия в _fzones.json
-                    // устарела (как у ATCLAD): такую зону не раскладываем
-                    var hat = ent as Hatch;
-                    if (hat != null)
-                    {
-                        string hj = CladCommand.ReadData(tr, ent, CladCommand.XKeyZone);
-                        var hz = hj == null ? null : ser.DeserializeObject(hj) as Dictionary<string, object>;
-                        var hrep = CladCommand.Get(hz, "report") as Dictionary<string, object>;
-                        string hzid = CladCommand.SafeStr(CladCommand.Get(hz, "zone_id"));
-                        try
-                        {
-                            if (hzid.Length > 0)
-                            {
-                                List<Extents3d> hel;
-                                if (!hatchExt.TryGetValue(hzid, out hel)) hatchExt[hzid] = hel = new List<Extents3d>();
-                                hel.Add(hat.GeometricExtents);
-                            }
-                        }
-                        catch { }
-                        try
-                        {
-                            double fact = hat.Area / 1e6;
-                            double stored = Convert.ToDouble(CladCommand.Get(hrep, "area_net_m2"),
-                                                             CultureInfo.InvariantCulture);
-                            if (hzid.Length > 0 && Math.Abs(fact - stored) > 0.001 && !zoneStale.Contains(hzid))
-                                zoneStale.Add(hzid);
-                        }
-                        catch { }
-                    }
                     if (prevSettings == null)
                     {
                         var m = ReadMeta(tr, ser, ent, XKeyTile);
@@ -203,7 +180,26 @@ namespace ACladPlugin
             // смежные «A+B»), а выбрана часть — добираем остальных участников:
             // иначе плитки соседа удалились бы вместе с меткой, а заново
             // разложилась бы только выбранная часть
-            int added = ExpandMembers(db, ser, own, zoneObjs, polyByHandle, contoursPayload);
+            int added = 0, round;
+            do
+            {
+                round = ExpandMembers(db, ser, own, zoneObjs, polyByHandle, contoursPayload);
+                added += round;
+            } while (round > 0);
+            // Newly discovered participants can also carry the other layout type.
+            // Collect its owners before deciding which complete group is replaced.
+            if (added > 0)
+                using (var tr = db.TransactionManager.StartTransaction())
+                {
+                    foreach (var ids in zoneObjs.Values)
+                        foreach (ObjectId id in ids)
+                            cladOwn.Collect(tr, ser, (Entity)tr.GetObject(id, OpenMode.ForRead), CladCommand.XKeyClad);
+                    foreach (ObjectId id in polyByHandle.Values)
+                        cladOwn.Collect(tr, ser, (Entity)tr.GetObject(id, OpenMode.ForRead), CladCommand.XKeyClad);
+                    tr.Commit();
+                }
+            if (own.CopiedShared > 0 || cladOwn.CopiedShared > 0)
+            { ed.WriteMessage("\n" + CopiedSharedMessage); return; }
             if (added > 0)
                 ed.WriteMessage("\nПрежняя раскладка была общей для нескольких контуров — " +
                     "перекладываю их вместе (добавлено " + added + ").");
@@ -229,20 +225,33 @@ namespace ACladPlugin
             // идут, но их прежняя раскладка (прошлый запуск по полилиниям)
             // заменяется вместе с зоной — хэндл полилинии → корень зоны
             var dropRoot = new Dictionary<string, string>();
+            var fz = CladCommand.LoadFzones(ed, db, ser);
+            Dictionary<string, ZoneGeometryResult> verifiedZones;
+            string freshnessReason;
+            do
+            {
+                if (!CladCommand.VerifyZones(db, zoneObjs, fz, out verifiedZones, out freshnessReason))
+                { ed.WriteMessage("\nATTILE: " + freshnessReason + " Прежняя раскладка сохранена."); return; }
+                CladCommand.CollectZoneOwners(db, ser, zoneObjs, cladOwn, own);
+                if (own.CopiedShared > 0 || cladOwn.CopiedShared > 0)
+                { ed.WriteMessage("\n" + CopiedSharedMessage); return; }
+                // The canonical hatch can have a newer shared group than a selected mark.
+                round = ExpandMembers(db, ser, own, zoneObjs, polyByHandle, contoursPayload);
+            } while (round > 0);
+            using (var tr = db.TransactionManager.StartTransaction())
+            {
+                foreach (ObjectId id in polyByHandle.Values)
+                    cladOwn.Collect(tr, ser, (Entity)tr.GetObject(id, OpenMode.ForRead), CladCommand.XKeyClad);
+                tr.Commit();
+            }
+            if (own.CopiedShared > 0 || cladOwn.CopiedShared > 0)
+            { ed.WriteMessage("\n" + CopiedSharedMessage); return; }
             if (zoneObjs.Count > 0)
             {
-                var fz = CladCommand.LoadFzones(ed, db, ser);
                 var dropIds = new HashSet<string>();
-                var missing = new List<string>();
                 foreach (var kv in zoneObjs)
                 {
-                    if (zoneStale.Contains(kv.Key)) continue;
-                    var parts = CladCommand.FindZoneParts(fz, kv.Key);
-                    if (parts.Count == 0) { missing.Add(kv.Key); continue; }
-                    List<Extents3d> hexts;
-                    if (hatchExt.TryGetValue(kv.Key, out hexts) &&
-                        hexts.Exists(he => CladCommand.ZoneShifted(parts, he)))
-                    { zoneMoved.Add(kv.Key); continue; }
+                    var parts = verifiedZones[kv.Key].Parts;
                     foreach (var part in parts)
                     {
                         string pid = CladCommand.SafeStr(CladCommand.Get(part, "id"));
@@ -269,19 +278,31 @@ namespace ACladPlugin
                         var cd = c as Dictionary<string, object>;
                         return cd != null && dropIds.Contains(CladCommand.SafeStr(CladCommand.Get(cd, "id")));
                     });
-                if (missing.Count > 0)
-                    ed.WriteMessage("\nНет геометрии в _fzones.json для " + string.Join(", ", missing.ToArray()) +
-                        " — зона пропущена (повторите ATFZONE или выберите её контуры).");
-                if (zoneMoved.Count > 0)
-                    ed.WriteMessage("\nЗону скопировали или перенесли после ATFZONE (штриховка не там, где её " +
-                        "геометрия в _fzones.json): " + string.Join(", ", zoneMoved.ToArray()) +
-                        " — пропущена. Выполните ATFZONE на ней (копия получит свой номер), затем ATTILE.");
-                if (zoneStale.Count > 0)
-                    ed.WriteMessage("\nЗона изменена после ATFZONE (площадь штриховки не совпала): " +
-                        string.Join(", ", zoneStale.ToArray()) + " — пропущена, повторите ATFZONE.");
             }
             if (zonesPayload.Count == 0 && contoursPayload.Count == 0)
             { ed.WriteMessage("\nНе выбрано ни зон, ни контуров."); return; }
+
+            LayoutGeometryGuard.Snapshot geometrySnapshot;
+            try
+            {
+                using (var tr = db.TransactionManager.StartTransaction())
+                {
+                    var rawSources = new List<ObjectId>();
+                    foreach (var item in contoursPayload)
+                    {
+                        var contour = item as Dictionary<string, object>;
+                        rawSources.Add(polyByHandle[CladCommand.SafeStr(CladCommand.Get(contour, "id"))]);
+                    }
+                    geometrySnapshot = LayoutGeometryGuard.Capture(tr, db, rawSources, verifiedZones.Values);
+                    tr.Commit();
+                }
+            }
+            catch (System.Exception ex)
+            {
+                ed.WriteMessage("\nНе удалось проверить исходные контуры: " + ex.Message +
+                    " Прежняя раскладка сохранена.");
+                return;
+            }
 
             // ── 2. параметры — окно ──
             BondSettings st = prevSettings != null ? BondSettings.FromDict(prevSettings)
@@ -467,6 +488,16 @@ namespace ACladPlugin
                 ed.WriteMessage("\nНе все части зоны рассчитаны: " + string.Join(", ", incomplete.ToArray()) +
                     ". Исправьте контуры и повторите команду. Прежняя раскладка сохранена.");
                 PrintNotes(ed, CladCommand.Get(res, "notes") as object[]);
+                return;
+            }
+            var oldGroups = new List<IEnumerable<string>>();
+            oldGroups.AddRange(own.Members.Values);
+            oldGroups.AddRange(cladOwn.Members.Values);
+            var missingMembers = LayoutSafety.IncompleteSharedGroups(oldGroups, CladCommand.Get(res, "per_zone") as object[], partToRoot);
+            if (missingMembers.Count > 0)
+            {
+                ed.WriteMessage("\nПрежняя раскладка была общей. Не рассчитаны участники: " +
+                    string.Join(", ", missingMembers.ToArray()) + ". Выберите всю группу. Прежняя раскладка сохранена.");
                 return;
             }
             if (pieces == null || pieces.Length == 0)
@@ -941,6 +972,7 @@ namespace ACladPlugin
                             { "refs", true },      // 23.09n: в метке — мягкие ссылки на плитки
                         };
                         CladCommand.StoreData(tr, ent, ser.Serialize(meta), XKeyTile, la.Handles);
+                        LayoutGeometryGuard.Store(tr, db, ent, XKeyTile, geometrySnapshot);
                     }
                     tr.Commit();
                 }
@@ -1517,7 +1549,7 @@ namespace ACladPlugin
             // 23.09n (Герман, №24): метка скопирована вместе с объектом — плитки
             // оригинала не трогаем, а КЛОНЫ, приехавшие вместе с копией, заменяем
             public readonly Dictionary<ObjectId, List<string>> Clones = new Dictionary<ObjectId, List<string>>();
-            public int Copied, CopiedOld, CloneCount;
+            public int Copied, CopiedOld, CloneCount, CopiedShared;
 
             public IEnumerable<ObjectId> Owners
             {
@@ -1545,6 +1577,14 @@ namespace ACladPlugin
                     var cl = CladCommand.CloneHandles(tr, ent, key, m, l);
                     if (cl == null) CopiedOld++;          // метка до сборки №25 — клонов не узнать
                     else { Clones[ent.ObjectId] = cl; CloneCount += cl.Count; }
+                    var copiedMembers = CladCommand.Get(m, "members") as object[];
+                    var group = new HashSet<string>();
+                    if (copiedMembers != null)
+                        foreach (var member in copiedMembers) group.Add(CladCommand.SafeStr(member));
+                    group.Remove("");
+                    // Original string member IDs cannot identify copied participants.
+                    // Never expand those IDs into the original drawing objects.
+                    if (group.Count > 1 && (cl == null || cl.Count > 0)) CopiedShared++;
                     return;
                 }
                 (owner.Length > 0 ? Trusted : Legacy)[ent.ObjectId] = l;
@@ -1585,6 +1625,13 @@ namespace ACladPlugin
                 return n;
             }
         }
+
+        internal const string CopiedSharedMessage =
+            "Скопированную общую раскладку нельзя безопасно разделить на участников. Автоматическая замена остановлена; " +
+            "прежние объекты сохранены. На рабочей копии чертежа сначала вручную удалите только скопированные плитки " +
+            "этой общей раскладки, затем выберите полный набор исходных контуров копии и выполните раскладку заново. " +
+            "Один выбор всех контуров без удаления скопированных плиток этот отказ не снимает. " +
+            "Для старых меток без ссылок на плитки после ручной очистки нужны новые самостоятельные контуры без прежних меток.";
 
         internal class LabelAgg
         {

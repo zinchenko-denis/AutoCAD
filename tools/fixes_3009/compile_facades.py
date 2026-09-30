@@ -6,6 +6,7 @@ With dotnet available the existing project files are authoritative. The
 Roslyn/Mono route is useful in Linux environments without the dotnet SDK.
 """
 import argparse
+import glob
 import hashlib
 import json
 import os
@@ -14,9 +15,27 @@ import shutil
 import subprocess
 import sys
 import tempfile
+import xml.etree.ElementTree as ET
 
 ROOT = Path(__file__).resolve().parents[2]
 PROJECTS = {"AFacadesPlugin": "Facades", "ACladPlugin": "AClad", "AFramePlugin": "AFrame"}
+
+
+def project_sources(project):
+    """SDK local sources plus the explicit linked sources used by our projects."""
+    sources = {p.resolve() for p in project.parent.rglob("*.cs")
+               if not {"obj", "bin"}.intersection(p.parts)}
+    for item in ET.parse(project).getroot().iter("Compile"):
+        include = item.get("Include")
+        if not include:
+            continue
+        if "$" in include or ";" in include:
+            raise ValueError("Unsupported computed Compile Include: " + include)
+        matches = glob.glob(str(project.parent / include.replace("\\", "/")), recursive=True)
+        if not matches:
+            raise ValueError("Missing linked C# sources: " + include)
+        sources.update(Path(p).resolve() for p in matches)
+    return sorted(sources)
 
 
 def main():
@@ -26,11 +45,13 @@ def main():
                     help="Extracted NuGet package directory for Roslyn/Mono compilation")
     ap.add_argument("--out", type=Path)
     args = ap.parse_args()
+    args.source = args.source.resolve()
     out = (args.out or Path(tempfile.mkdtemp(prefix="facades_compile_"))).resolve()
     out.mkdir(parents=True, exist_ok=True)
     results = []
     for name, module in PROJECTS.items():
         source = args.source / module / "src" / name
+        sources = project_sources(source / (name + ".csproj"))
         target = out / name
         target.mkdir(exist_ok=True)
         if args.references:
@@ -46,7 +67,6 @@ def main():
                 libraries.extend(sorted((refs / package / "lib/net47").glob("*.dll")))
             if not compiler.exists() or not all(f.exists() for f in libraries) or not shutil.which("mono"):
                 raise SystemExit("Missing Roslyn/Mono/reference assemblies; no compilation claimed")
-            sources = sorted(p for p in source.rglob("*.cs") if not {"obj", "bin"}.intersection(p.parts))
             command = ["mono", str(compiler), "-nologo", "-noconfig", "-nostdlib+",
                        "-langversion:latest", "-target:library", "-platform:x64",
                        "-out:" + str(target / (name + ".dll"))]
@@ -57,7 +77,6 @@ def main():
                 raise SystemExit("dotnet is unavailable; use --references with Roslyn/Mono")
             command = ["dotnet", "build", str(source / (name + ".csproj")),
                        "-c", "Release", "-o", str(target)]
-            sources = sorted(p for p in source.rglob("*.cs") if not {"obj", "bin"}.intersection(p.parts))
             method = "dotnet build of existing project"
         p = subprocess.run(command, capture_output=True, text=True, cwd=args.source)
         (out / (name + ".log")).write_text(p.stdout + p.stderr, encoding="utf-8")

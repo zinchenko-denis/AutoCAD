@@ -12,6 +12,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Include="../../../Common/*.cs" Link="Common/%(Filename)%(Extension)" />
     <!-- Reference-сборки AutoCAD 2021 (24.0) из NuGet — сборка без AutoCAD,
          в бандл попадает только AFacadesPlugin.dll (паттерн ATableSpec/ABlockGen). -->
     <PackageReference Include="AutoCAD.NET" Version="24.0.0" />

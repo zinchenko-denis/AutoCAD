@@ -1,0 +1,21 @@
+cladding/raw-arc-hole: ok=True, covered_hole_core_mm2=250000.0, owners=['контур A']
+tile_pattern/raw-arc-hole: ok=True, covered_hole_core_mm2=250000.0, owners=['контур A']
+cladding/independent-raw-arc: area_mm2=5760000.0, difference_mm2=0.0
+tile_pattern/independent-raw-arc: area_mm2=5760000.0, difference_mm2=0.0
+cladding/arc-zone-plus-raw-facade: area_mm2=5760000.0, difference_mm2=0.0
+tile_pattern/arc-zone-plus-raw-facade: area_mm2=5760000.0, difference_mm2=0.0
+cladding/arc-zone-plus-valid-zone: area_mm2=5760000.0, difference_mm2=0.0
+tile_pattern/arc-zone-plus-valid-zone: area_mm2=5760000.0, difference_mm2=0.0
+cladding/arc-zone-only: area_mm2=0.0, difference_mm2=0.0
+tile_pattern/arc-zone-only: area_mm2=0.0, difference_mm2=0.0
+test_atclad_raw_arc_hole_known_cli_limitation (__main__.CladSourceCompleteness.test_atclad_raw_arc_hole_known_cli_limitation) ... expected failure
+test_attile_raw_arc_hole_known_cli_limitation (__main__.CladSourceCompleteness.test_attile_raw_arc_hole_known_cli_limitation) ... expected failure
+test_independent_raw_arc_does_not_reject_valid_facade (__main__.CladSourceCompleteness.test_independent_raw_arc_does_not_reject_valid_facade) ... ok
+test_zone_arc_opening_preserves_independent_raw_facade (__main__.CladSourceCompleteness.test_zone_arc_opening_preserves_independent_raw_facade) ... ok
+test_zone_arc_opening_preserves_independent_valid_zone (__main__.CladSourceCompleteness.test_zone_arc_opening_preserves_independent_valid_zone) ... ok
+test_zone_arc_opening_rejects_entire_zone (__main__.CladSourceCompleteness.test_zone_arc_opening_rejects_entire_zone) ... ok
+
+----------------------------------------------------------------------
+Ran 6 tests in 0.009s
+
+OK (expected failures=2)

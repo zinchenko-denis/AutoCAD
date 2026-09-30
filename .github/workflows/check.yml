@@ -18,6 +18,7 @@ on:
       - "AClad/engine/**"
       - "AFrame/src/**"
       - "AFrame/engine/**"
+      - "Common/**"
       # 24.09 (рецензия): правки проверочных инструментов и бандлов тоже
       # запускают проверку
       - "tools/**"
@@ -118,6 +119,22 @@ jobs:
           # 23.09 (ревью): расчёт несущей способности и CLI в CI не гонялись
           python test_frame_calc.py
           python test_frame_engine.py
+
+      - name: Native zone geometry regressions (no AutoCAD host)
+        shell: pwsh
+        run: |
+          dotnet build tools/fixes_3009/GeometrySafetyCheck.csproj -c Release -o build_geometry_check
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          & ./build_geometry_check/GeometrySafetyCheck.exe --report build_geometry_check/cases.json
+          exit $LASTEXITCODE
+
+      - name: Native zone and layout adapters (CAD API doubles)
+        shell: pwsh
+        run: |
+          dotnet build tools/fixes_3009/test_zone_geometry_adapter.csproj -c Release -o build_geometry_adapter
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          python tools/fixes_3009/test_zone_geometry_adapter.py --exe build_geometry_adapter/ZoneGeometryAdapterCheck.exe --out geometry_adapter_results
+          exit $LASTEXITCODE
 
       # 24.09 (рецензия): краш-аудиты, стыки модулей, контракт ключей и
       # короткая синтетика фасадов — обязательны. Известные открытые вопросы

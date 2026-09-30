@@ -24,6 +24,7 @@ on:
       - "AFrame/src/**"
       - "AFrame/engine/**"
       - "AFrame/bundle/**"
+      - "Common/**"
       - ".github/workflows/build.yml"
   workflow_dispatch: {}        # можно запускать вручную кнопкой в разделе Actions
 

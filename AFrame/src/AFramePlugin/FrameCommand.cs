@@ -117,6 +117,7 @@ namespace AFramePlugin
             // раскладки), а не общим списком всех меток выбора
             var jxByZone = new Dictionary<string, object[]>();
             var ryByZone = new Dictionary<string, object[]>();
+            var layoutSources = new List<FacadeSafety.LayoutGeometryGuard.Result>();
             int noClad = 0;
             int oldMeta = 0;
             using (var tr = db.TransactionManager.StartTransaction())
@@ -129,13 +130,19 @@ namespace AFramePlugin
                     if (ent == null) continue;
                     // 23.09: разбежка ATTILE пишет те же оси швов (joints_x/
                     // rows_y) под своим ключом — подсистема и по ней
-                    string mjson = ReadData(tr, ent, XKeyClad) ??
-                                   ReadData(tr, ent, "ATTILE");
-                    var m = mjson == null ? null
-                        : ser.DeserializeObject(mjson)
-                          as Dictionary<string, object>;
+                    Dictionary<string, object> m;
+                    FacadeSafety.LayoutGeometryGuard.Result source;
+                    string layoutReason;
+                    if (!TryReadVerifiedLayout(tr, db, ent, ser, out m, out source, out layoutReason))
+                    {
+                        ed.WriteMessage("\nATFRAME: нельзя использовать оси прежней раскладки: " + layoutReason +
+                            "\nОбновите ATFZONE (если это зона), затем ATCLAD/ATTILE и повторите ATFRAME. " +
+                            "Прежняя подсистема сохранена.");
+                        return;
+                    }
                     if (m != null)
                     {
+                        layoutSources.Add(source);
                         var jx = Get(m, "joints_x") as object[];
                         var ry = Get(m, "rows_y") as object[];
                         if (jx == null)
@@ -174,25 +181,32 @@ namespace AFramePlugin
                     if (pl != null)
                     {
                         int n = pl.NumberOfVertices;
-                        if (n < 3) continue;
-                        bool closed = pl.Closed ||
-                            pl.GetPoint2dAt(0).GetDistanceTo(
-                                pl.GetPoint2dAt(n - 1)) <= CloseTol;
-                        if (!closed) continue;
-                        var pts = new List<object>();
-                        var bulges = new List<object>();
+                        var pts = new List<double[]>();
+                        var bulges = new List<double>();
                         for (int i = 0; i < n; i++)
                         {
                             Point2d p = pl.GetPoint2dAt(i);
                             pts.Add(new[] { p.X, p.Y });
                             bulges.Add(pl.GetBulgeAt(i));
                         }
+                        string rawReason;
+                        if (!IsSupportedRawContour(pts, bulges, out rawReason))
+                        {
+                            ed.WriteMessage("\nATFRAME: контур " + pl.Handle + ": " + rawReason +
+                                "\nПодсистема не построена. Используйте контуры из прямых отрезков с конечными координатами. Прежняя подсистема сохранена.");
+                            return;
+                        }
+                        if (n < 3) continue;
+                        bool closed = pl.Closed ||
+                            pl.GetPoint2dAt(0).GetDistanceTo(
+                                pl.GetPoint2dAt(n - 1)) <= CloseTol;
+                        if (!closed) continue;
                         string h = pl.Handle.ToString();
                         polyByHandle[h] = pl.ObjectId;
-                        // 24.09 (рецензия): дуги передаём — движок отклонит их
-                        // с замечанием, а не превратит молча в хорду
+                        // Unsupported contours stop the whole command above:
+                        // dropping an arc-shaped opening would fill that hole.
                         polyData[h] = new Dictionary<string, object>
-                        { { "id", h }, { "pts", pts }, { "bulges", bulges } };
+                        { { "id", h }, { "pts", new List<object>(pts) }, { "bulges", bulges } };
                         continue;
                     }
                     if (m == null) continue;
@@ -330,55 +344,67 @@ namespace AFramePlugin
             // 24.09: полилинии зон в выборке — их прежняя подсистема (прошлый
             // запуск по полилиниям) заменяется вместе с зоной: «контур H» → корень
             var dropRoot = new Dictionary<string, string>();
-            foreach (var kv in zoneObjs)
+            var verifiedZoneHatches = new HashSet<ObjectId>();
+            using (var geometryTr = db.TransactionManager.StartTransaction())
             {
-                var parts = FindZoneParts(fz, kv.Key);
-                if (parts.Count == 0)
+                foreach (var kv in zoneObjs)
                 {
-                    ed.WriteMessage("\nНет геометрии в _fzones.json для " +
-                        kv.Key + " — зона пропущена.");
-                    continue;
-                }
-                List<Extents3d> hexts;
-                if (hatchExt.TryGetValue(kv.Key, out hexts) &&
-                    hexts.Exists(he => ZoneShifted(parts, he)))
-                {
-                    ed.WriteMessage("\nЗону " + kv.Key + " скопировали или перенесли после ATFZONE " +
-                        "(штриховка не там, где её геометрия в _fzones.json) — пропущена. Выполните " +
-                        "ATFZONE на ней (копия получит свой номер), затем ATFRAME.");
-                    continue;
-                }
-                foreach (var part in parts)
-                {
-                    string pid = SafeStr(Get(part, "id"));
-                    partToRoot[pid] = kv.Key;
-                    var zrec = new Dictionary<string, object>
-                    { { "zone_id", pid }, { "zone", part } };
-                    object[] zj, zr;
-                    string zkey = jxByZone.ContainsKey(pid) ? pid : kv.Key;
-                    if (jxByZone.TryGetValue(zkey, out zj))
+                    List<Dictionary<string, object>> parts;
+                    List<ObjectId> zoneHatches;
+                    string zoneReason;
+                    // A merged layout name is not a physical ATFZONE root. Resolve
+                    // each selected carrier, then union only its verified parts.
+                    if (!TryGetVerifiedZoneParts(geometryTr, db, kv.Value, fz, out parts, out zoneHatches, out zoneReason))
                     {
-                        zrec["joints_x"] = zj;
-                        if (ryByZone.TryGetValue(zkey, out zr)) zrec["rows_y"] = zr;
+                        ed.WriteMessage("\nATFRAME: зона " + kv.Key + " не подтверждена: " + zoneReason +
+                            "\nПовторите ATFZONE, затем ATCLAD/ATTILE и ATFRAME. Прежняя подсистема сохранена.");
+                        return;
                     }
-                    zonesPayload.Add(zrec);
-                    // 23.09 (ревью): контуры самой зоны из выборки в «голые» не
-                    // пускаем — иначе та же зона строилась бы дважды (как в ATCLAD)
-                    string oid = MetaStr(part, "outer_contour_id");
-                    if (oid != null) { polyData.Remove(oid); dropRoot["контур " + oid] = kv.Key; }
-                    var ops = Get(part, "openings") as object[];
-                    if (ops != null)
-                        foreach (var o in ops)
+                    foreach (var hatchId in zoneHatches) verifiedZoneHatches.Add(hatchId);
+                    List<Extents3d> hexts;
+                    if (hatchExt.TryGetValue(kv.Key, out hexts) &&
+                        hexts.Exists(he => ZoneShifted(parts, he)))
+                    {
+                        ed.WriteMessage("\nЗону " + kv.Key + " скопировали или перенесли после ATFZONE " +
+                            "(штриховка не там, где её геометрия в _fzones.json). Выполните " +
+                            "ATFZONE на ней (копия получит свой номер), затем ATCLAD/ATTILE и ATFRAME. " +
+                            "Прежняя подсистема сохранена.");
+                        return;
+                    }
+                    foreach (var part in parts)
+                    {
+                        string pid = SafeStr(Get(part, "id"));
+                        partToRoot[pid] = kv.Key;
+                        var zrec = new Dictionary<string, object>
+                        { { "zone_id", pid }, { "zone", part } };
+                        object[] zj, zr;
+                        string zkey = jxByZone.ContainsKey(pid) ? pid : kv.Key;
+                        if (jxByZone.TryGetValue(zkey, out zj))
                         {
-                            var od = o as Dictionary<string, object>;
-                            if (od == null) continue;
-                            string opid = SafeStr(Get(od, "id"));
-                            polyData.Remove(opid);
-                            dropRoot["контур " + opid] = kv.Key;
+                            zrec["joints_x"] = zj;
+                            if (ryByZone.TryGetValue(zkey, out zr)) zrec["rows_y"] = zr;
                         }
+                        zonesPayload.Add(zrec);
+                        // 23.09 (ревью): контуры самой зоны из выборки в «голые» не
+                        // пускаем — иначе та же зона строилась бы дважды (как в ATCLAD)
+                        string oid = MetaStr(part, "outer_contour_id");
+                        if (oid != null) { polyData.Remove(oid); dropRoot["контур " + oid] = kv.Key; }
+                        var ops = Get(part, "openings") as object[];
+                        if (ops != null)
+                            foreach (var o in ops)
+                            {
+                                var od = o as Dictionary<string, object>;
+                                if (od == null) continue;
+                                string opid = SafeStr(Get(od, "id"));
+                                polyData.Remove(opid);
+                                dropRoot["контур " + opid] = kv.Key;
+                            }
+                    }
                 }
+                geometryTr.Commit();
             }
             var contoursPayload = new List<Dictionary<string, object>>();
+            var rawPayloadIds = new HashSet<ObjectId>();
             foreach (var kv in polyData)
             {
                 // голый контур: своя метка раскладки — на самой полилинии
@@ -390,6 +416,15 @@ namespace AFramePlugin
                     if (ryByZone.TryGetValue("контур " + kv.Key, out cr)) kv.Value["rows_y"] = cr;
                 }
                 contoursPayload.Add(kv.Value);
+                rawPayloadIds.Add(polyByHandle[kv.Key]);
+            }
+            string selectionReason;
+            if (!IsLayoutSelectionComplete(layoutSources, rawPayloadIds, verifiedZoneHatches, out selectionReason))
+            {
+                ed.WriteMessage("\nATFRAME: " + selectionReason +
+                    "\nВыберите весь набор исходных контуров с проёмами и зон общей раскладки " +
+                    "либо повторите ATCLAD/ATTILE для нужного участка. Прежняя подсистема сохранена.");
+                return;
             }
             if (zonesPayload.Count == 0 && contoursPayload.Count == 0)
             { ed.WriteMessage("\nНет геометрии зон."); return; }
@@ -1878,6 +1913,154 @@ namespace AFramePlugin
             catch { }
         }
 
+        internal static bool IsSupportedRawContour(IList<double[]> points, IList<double> bulges,
+            out string reason)
+        {
+            reason = null;
+            if (points == null || bulges == null || points.Count != bulges.Count)
+            { reason = "неполные данные вершин контура"; return false; }
+            for (int i = 0; i < points.Count; i++)
+            {
+                var p = points[i];
+                double b = bulges[i];
+                if (p == null || p.Length != 2 || double.IsNaN(p[0]) || double.IsInfinity(p[0]) ||
+                    double.IsNaN(p[1]) || double.IsInfinity(p[1]) || double.IsNaN(b) || double.IsInfinity(b))
+                { reason = "нечисловые или бесконечные координаты/кривизна"; return false; }
+                if (Math.Abs(b) > 1e-9)
+                { reason = "дуговые контуры и проёмы не поддерживаются"; return false; }
+            }
+            return true;
+        }
+
+        // These read-only gates are called before any layout axes are
+        // consumed and before sidecar parts enter the engine request. Keep
+        // them separate from UI/deletion so the consumer contract is testable.
+        internal static bool TryReadVerifiedLayout(Transaction tr, Database db, Entity carrier,
+            JavaScriptSerializer ser, out Dictionary<string, object> metadata,
+            out FacadeSafety.LayoutGeometryGuard.Result source, out string reason)
+        {
+            metadata = null;
+            source = null;
+            reason = null;
+            try
+            {
+                foreach (string recordKey in new[] { XKeyClad, "ATTILE", "ATFZONE" })
+                    if (ReadData(tr, carrier, recordKey) == null &&
+                        ReadData(tr, carrier, recordKey + "_GEOMETRY") != null)
+                    {
+                        reason = "сохранён снимок " + recordKey + ", но данные метки отсутствуют";
+                        return false;
+                    }
+                string key = XKeyClad;
+                string json = ReadData(tr, carrier, key);
+                if (json == null)
+                {
+                    key = "ATTILE";
+                    json = ReadData(tr, carrier, key);
+                }
+                // No derived axes: the existing manual/raw-contour path stays
+                // available and uses live points read from the selected polylines.
+                if (json == null) return true;
+                source = FacadeSafety.LayoutGeometryGuard.Verify(tr, db, carrier, key);
+                if (!source.Ok)
+                {
+                    reason = source.Reason;
+                    return false;
+                }
+                metadata = ser.DeserializeObject(json) as Dictionary<string, object>;
+                if (metadata == null)
+                {
+                    reason = "метка раскладки не содержит корректных данных";
+                    return false;
+                }
+                return true;
+            }
+            catch (System.Exception ex)
+            {
+                metadata = null;
+                reason = "метка раскладки не прочитана: " + ex.Message;
+                return false;
+            }
+        }
+
+        internal static bool TryGetVerifiedZoneParts(Transaction tr, Database db,
+            IEnumerable<ObjectId> carriers, IDictionary<string, Dictionary<string, object>> sidecar,
+            out List<Dictionary<string, object>> parts, out List<ObjectId> hatchIds, out string reason)
+        {
+            parts = new List<Dictionary<string, object>>();
+            hatchIds = new List<ObjectId>();
+            reason = null;
+            var versions = new Dictionary<string, string>(StringComparer.Ordinal);
+            try
+            {
+                foreach (var id in carriers)
+                {
+                    if (id.IsNull || id.IsErased)
+                    { reason = "носитель зоны удалён"; parts.Clear(); hatchIds.Clear(); return false; }
+                    var carrier = tr.GetObject(id, OpenMode.ForRead) as Entity;
+                    if (carrier == null)
+                    { reason = "носитель зоны не найден"; parts.Clear(); hatchIds.Clear(); return false; }
+                    var verified = FacadeSafety.ZoneGeometryGuard.Verify(tr, db, carrier, sidecar);
+                    if (!verified.Ok || verified.Parts == null || verified.Parts.Count == 0)
+                    {
+                        reason = verified.Ok ? "нет подтверждённых частей зоны в _fzones.json" : verified.Reason;
+                        parts.Clear(); hatchIds.Clear();
+                        return false;
+                    }
+                    if (!hatchIds.Contains(verified.HatchId)) hatchIds.Add(verified.HatchId);
+                    foreach (var part in verified.Parts)
+                    {
+                        string partId = SafeStr(Get(part, "id"));
+                        if (partId.Length == 0)
+                        { reason = "у части зоны нет идентификатора"; parts.Clear(); hatchIds.Clear(); return false; }
+                        string fingerprint;
+                        if (versions.TryGetValue(partId, out fingerprint))
+                        {
+                            if (!string.Equals(fingerprint, verified.Fingerprint, StringComparison.Ordinal))
+                            {
+                                reason = "выбраны разные версии одной зоны «" + partId + "»";
+                                parts.Clear(); hatchIds.Clear();
+                                return false;
+                            }
+                            continue;
+                        }
+                        versions[partId] = verified.Fingerprint;
+                        parts.Add(part);
+                    }
+                }
+            }
+            catch (System.Exception ex)
+            {
+                reason = "геометрия зоны не проверена: " + ex.Message;
+                parts.Clear(); hatchIds.Clear();
+                return false;
+            }
+            if (parts.Count == 0)
+            { reason = "нет подтверждённых частей выбранной зоны"; return false; }
+            return true;
+        }
+
+        internal static bool IsLayoutSelectionComplete(
+            IEnumerable<FacadeSafety.LayoutGeometryGuard.Result> layouts,
+            IEnumerable<ObjectId> rawPayloadIds, IEnumerable<ObjectId> zoneHatchIds, out string reason)
+        {
+            reason = null;
+            var raw = new HashSet<ObjectId>(rawPayloadIds);
+            var zones = new HashSet<ObjectId>(zoneHatchIds);
+            foreach (var layout in layouts)
+            {
+                if (layout == null || !layout.Ok || layout.RawSourceIds == null || layout.ZoneHatchIds == null)
+                { reason = "не подтверждён полный набор источников раскладки"; return false; }
+                foreach (var id in layout.RawSourceIds)
+                    if (!raw.Contains(id))
+                    { reason = "в выборке отсутствует исходный контур или проём общей раскладки"; return false; }
+                foreach (var id in layout.ZoneHatchIds)
+                    if (!zones.Contains(id))
+                    { reason = "выбрана только часть зон общей раскладки"; return false; }
+            }
+            return true;
+        }
+
         // ── <dwg>_fzones.json (копия паттерна AClad — сознательно) ──
         private static Dictionary<string, Dictionary<string, object>>
             LoadFzones(Editor ed, Database db, JavaScriptSerializer ser)
@@ -1908,21 +2091,6 @@ namespace AFramePlugin
                 ed.WriteMessage("\n_fzones.json не прочитан: " + ex.Message);
             }
             return map;
-        }
-
-        private static List<Dictionary<string, object>> FindZoneParts(
-            Dictionary<string, Dictionary<string, object>> fz, string zid)
-        {
-            var parts = new List<Dictionary<string, object>>();
-            Dictionary<string, object> exact;
-            if (fz.TryGetValue(zid, out exact)) parts.Add(exact);
-            else
-                foreach (var kv in fz)
-                    if (kv.Key.StartsWith(zid + ".") ||
-                        string.Equals(MetaStr(kv.Value, "group"), zid,
-                                      StringComparison.Ordinal))
-                        parts.Add(kv.Value);
-            return parts;
         }
 
         private static string MetaStr(Dictionary<string, object> zd,

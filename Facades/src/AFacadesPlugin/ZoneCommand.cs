@@ -579,14 +579,33 @@ namespace AFacadesPlugin
                     // данные зоны — в Xrecord штриховки И марки (фидбэк
                     // Германа 19.07: отчёт должен собираться ПОТОМ командой
                     // ATFTABLE по выбору штриховок/марок)
-                    string zdata = ser.Serialize(new Dictionary<string, object>
+                    var zoneData = new Dictionary<string, object>
                     {
                         { "zone_id", zoneId },
                         { "cladding", form.Cladding },
                         { "report", rep },
-                    });
+                    };
+                    string zdata = ser.Serialize(zoneData);
                     StoreZoneData(tr, hat, zdata);
                     StoreZoneData(tr, mt, zdata);
+                    var exactParts = new List<Dictionary<string, object>>();
+                    var fullParts = Get(res, "zones_full") as object[];
+                    if (fullParts != null)
+                        foreach (var value in fullParts)
+                        {
+                            var part = value as Dictionary<string, object>;
+                            string partId = SafeStr(Get(part, "id"));
+                            string group = SafeStr(Get(Get(part, "meta") as Dictionary<string, object>, "group"));
+                            if (partId == zoneId || group == zoneId || partId.StartsWith(zoneId + ".", StringComparison.Ordinal))
+                                exactParts.Add(part);
+                        }
+                    var geometry = FacadeSafety.ZoneGeometryGuard.Capture(tr, db, hat, mt, zoneData,
+                        exactParts, outIds, holeIds);
+                    if (!geometry.Ok)
+                    {
+                        ed.WriteMessage("\nЗоны не созданы: " + geometry.Reason);
+                        return; // Transaction rollback includes source layers, hatch, mark and old scheme lines.
+                    }
 
                     // 29.09 (Герман): исполнительная схема — откосы и отливы окон, откосы
                     // дверей, примыкания витражей — полилиниями по кромкам проёмов на своих

@@ -1,0 +1,25 @@
+{
+  "status": "PASS",
+  "scope": "Actual unmodified RemoveData; native Mono, CAD API doubles, not AutoCAD.",
+  "source_sha256": {
+    "AClad/src/ACladPlugin/CladCommand.cs": "e030b86812bf6295b19e8847252cdd4489981efe9161b60629fd503ebe18fbeb",
+    "AClad/src/ACladPlugin/TilePatternCommand.cs": "f1b1ea01468bd6d946963053ea38e9c9cb9f4bc407bd00b741a9ac00fdeeb634",
+    "tools/fixes_3009/test_clad_label_cleanup.cs": "44f458421083b08efa0828ddb33563c9a45521f3b4ea5adb1622efe501a3f8be",
+    "tools/fixes_3009/test_zone_geometry_cad_doubles.cs": "8bef49b849eeace665ecf2f9dcdcc30798963d4a66b717118074f5f9c4450317",
+    "tools/fixes_3009/test_clad_label_cleanup.py": "e0674f693aa4309453eef19b86bd531156f987db2c17e54339dc8fc99a3d61ec"
+  },
+  "extracted_method": {
+    "name": "CladCommand.RemoveData",
+    "line": 1373,
+    "sha256": "e2f7eafb86fecc68dc28fedbbd02e70fc3e150f63859a62c71852cf69e57d61e"
+  },
+  "constant_sha256": {
+    "XKeyClad": "7e9813211a4b780d8e61bcc62166504b966f4d033ed4c2171917c9cf5b200fb4",
+    "XKeyTile": "61524867b7cbddd0dfd7230102e5f350721433365b444a06fa6848fd61fe5df1"
+  },
+  "wrapper_sha256": "bf1128544f800e11e808824b77e9a674a1bf08de49ecd4bcd252be3e3c012353",
+  "compile_returncode": 0,
+  "run_returncode": 0,
+  "checks": 41,
+  "failures": 0
+}

@@ -136,6 +136,55 @@ internal static class CladSafetyCheck
         Check(prefix + "zero_tolerance_exact_write", LayoutSafety.SetNumberChecked(read, write, 12.5000005, 0) && writes == 1);
     }
 
+    private static bool Shared(IEnumerable<IEnumerable<string>> groups, object[] zones,
+        Dictionary<string, string> parts, params string[] missing)
+    {
+        return string.Join("|", LayoutSafety.IncompleteSharedGroups(groups, zones, parts).ToArray()) ==
+               string.Join("|", missing);
+    }
+
+    private static void CheckSharedGroups()
+    {
+        var ab = new[] { new[] { "A", "B" } };
+        var chain = new[] { new[] { "B", "C" }, new[] { "A", "B" } };
+        var parts = new Dictionary<string, string>
+        { { "a1", "A" }, { "a2", "A" }, { "b1", "B" } };
+        Check("shared_a_only_blocks_b", Shared(ab, new object[] { Zone("A") }, null, "B"));
+        Check("shared_both_ready", Shared(ab, new object[] { Zone("A"), Zone("B") }, null));
+        Check("shared_all_rejected_preserved", Shared(ab, new object[0], null));
+        Check("shared_unrelated_success", Shared(ab, new object[] { Zone("C") }, null));
+        Check("shared_missing_participant_retained", Shared(ab, new object[] { Zone("A"), null }, null, "B"));
+        Check("shared_null_response", Shared(ab, null, null));
+        Check("shared_null_groups", Shared(null, new object[] { Zone("A") }, null));
+        Check("shared_duplicate_members", Shared(new[] { new[] { "A", "B", "B" } },
+              new object[] { Zone("A") }, null, "B"));
+        Check("shared_transitive_a_only", Shared(chain, new object[] { Zone("A") }, null, "B", "C"));
+        Check("shared_transitive_c_only", Shared(chain, new object[] { Zone("C") }, null, "A", "B"));
+        Check("shared_transitive_b_only", Shared(chain, new object[] { Zone("B") }, null, "A", "C"));
+        Check("shared_transitive_endpoints", Shared(chain, new object[] { Zone("A"), Zone("C") }, null, "B"));
+        Check("shared_transitive_all_ready", Shared(chain,
+              new object[] { Zone("A"), Zone("B"), Zone("C") }, null));
+        Check("shared_disjoint_group_untouched", Shared(new[] { new[] { "A", "B" }, new[] { "C", "D" } },
+              new object[] { Zone("A") }, null, "B"));
+        Check("shared_mapped_root_complete", Shared(ab, new object[] { Zone("a1"), Zone("a2") }, parts, "B"));
+        Check("shared_partial_root_not_ready", Shared(ab, new object[] { Zone("a1"), Zone("b1") }, parts, "A"));
+        Check("shared_only_partial_root_changes_nothing", Shared(ab, new object[] { Zone("a1") }, parts));
+        Check("shared_old_parts_normalized", Shared(new[] { new[] { "a1", "a2", "b1" } },
+              new object[] { Zone("a1"), Zone("a2") }, parts, "B"));
+        Check("shared_merged_result_members", Shared(ab, new object[] { Zone("merged", "a1", "a2", "b1") }, parts));
+        Check("shared_root_id_does_not_complete_parts", Shared(ab,
+              new object[] { Zone("A"), Zone("b1") }, parts, "A"));
+        Check("shared_unknown_part_not_guessed", Shared(new[] { new[] { "A", "A.99" } },
+              new object[] { Zone("a1"), Zone("a2") }, parts, "A.99"));
+        Check("shared_raw_contour_ids", Shared(new[] { new[] { "контур AA", "контур BB" } },
+              new object[] { Zone("контур AA") }, parts, "контур BB"));
+        Check("shared_mixed_root_and_contour", Shared(new[] { new[] { "a1", "контур BB" } },
+              new object[] { Zone("a1"), Zone("a2") }, parts, "контур BB"));
+        Check("shared_ids_are_case_sensitive", Shared(ab, new object[] { Zone("a"), Zone("B") }, null, "A"));
+        Check("shared_nullable_groups_and_members", Shared(new[] { null, new[] { "A", "B", null, "" } },
+              new object[] { Zone("A") }, null, "B"));
+    }
+
     public static int Main()
     {
         CultureInfo originalCulture = Thread.CurrentThread.CurrentCulture;
@@ -143,6 +192,7 @@ internal static class CladSafetyCheck
         try
         {
             CheckRoots();
+            CheckSharedGroups();
             CheckNumbers("ru-RU");
             CheckNumbers("en-US");
         }

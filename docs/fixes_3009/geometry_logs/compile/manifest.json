@@ -1,0 +1,60 @@
+[
+  {
+    "plugin": "AFacadesPlugin",
+    "returncode": 0,
+    "method": "Roslyn 4.8 with net48/AutoCAD 24.0.0 reference assemblies",
+    "source_sha256": {
+      "Common/GeometryFingerprint.cs": "24114ef7a18a56415313b009d7819c94190efa5ea517df2081d1f51951819332",
+      "Common/LayoutGeometryGuard.cs": "289d6d51ede5861c7b27ff106c150aa7b5fa456ddce86ef5e0b5ee727c0eae9d",
+      "Common/ZoneGeometryGuard.cs": "daf06e2822a4d9ef2be818df1bf904779fa202adb1e5bce7fc0ba49c084970b8",
+      "Facades/src/AFacadesPlugin/FacadesClassic.cs": "ccc1f1d9d0462ee4cea1b68d9a4383d30c112360b0cf198e852e81b2ba039327",
+      "Facades/src/AFacadesPlugin/FacadesRibbon.cs": "3a1f467a5691c6f3f5654dad38e94e1c94bfcdfe4ac261f6ccd3f55c7705dd75",
+      "Facades/src/AFacadesPlugin/LayerPickForm.cs": "5bfb57dd124279296ad2c9af6000eb51e5754d5d44eb5557e804223494e822e3",
+      "Facades/src/AFacadesPlugin/Plugin.cs": "d486cb0746e6edef83c41a68f85f1e60b19a3c764c317a170de1e92b9db38476",
+      "Facades/src/AFacadesPlugin/TableCommand.cs": "37068d55c958267e07ddfebc652e2b3c315424b0986662031f726f35405690ac",
+      "Facades/src/AFacadesPlugin/WorkStatement.cs": "428f45e464ca264df513e31ca0f17f70a46422509e37d4a3ca1902d2e2a68858",
+      "Facades/src/AFacadesPlugin/XlsxWriter.cs": "a3bf6921ffcb229c6f664f0570fb5f2c71ef14b82e1b48cd64497f02a0b358ef",
+      "Facades/src/AFacadesPlugin/ZoneCommand.cs": "f4eee2cf9e1b3b4fcca7b34ac9d7d8c4a0d48ea2d6c543a5c7eee176f96bbdbb",
+      "Facades/src/AFacadesPlugin/ZoneForm.cs": "30cc49edd277ffcdfe03261bdb82e4ff92dbaccca51284b543509ab86c40f178",
+      "Facades/src/AFacadesPlugin/ZoneTable.cs": "9aad9aa85ebf1d41c40e6d3577a5df4e05ae207923f9658d790b39ad030c2c4b"
+    }
+  },
+  {
+    "plugin": "ACladPlugin",
+    "returncode": 0,
+    "method": "Roslyn 4.8 with net48/AutoCAD 24.0.0 reference assemblies",
+    "source_sha256": {
+      "AClad/src/ACladPlugin/BondForm.cs": "48f9d6918f97d2206f849b686683c1d862e538e8a2cf27e12df51bb576611466",
+      "AClad/src/ACladPlugin/BondSettings.cs": "c30e687bfee933011fb98b1587bb4a1603d2425055a0046c61a33a28713aa914",
+      "AClad/src/ACladPlugin/CladCommand.cs": "e030b86812bf6295b19e8847252cdd4489981efe9161b60629fd503ebe18fbeb",
+      "AClad/src/ACladPlugin/DimForm.cs": "6e1a13c33151308b678b3070c4e6b04dff93f0ca2834b675e1bea6e51f077031",
+      "AClad/src/ACladPlugin/FacadesClassic.cs": "ccb7bffde646144f90b0db1f89ec89c7f252e44f2a523378e6b631e61fe9ec14",
+      "AClad/src/ACladPlugin/FacadesRibbon.cs": "89d60014a94534f720bf09f7a32bfab2ad61428414258ff183bd48ccf7671854",
+      "AClad/src/ACladPlugin/LayerPickForm.cs": "bd16924dbf9bf9ea8133b5c721fff2f020c86510af972b13411039fd7b5eb848",
+      "AClad/src/ACladPlugin/LayoutSafety.cs": "dfe26a34bd41119e5e611c930f45a237bac7332c3797c4ffa77c29340078a3cb",
+      "AClad/src/ACladPlugin/Plugin.cs": "b34ef3887f249b0b6c4fb84fffda9ac70a14bdb76ee6e8d20a45669b863149f6",
+      "AClad/src/ACladPlugin/TilePatternCommand.cs": "f1b1ea01468bd6d946963053ea38e9c9cb9f4bc407bd00b741a9ac00fdeeb634",
+      "AClad/src/ACladPlugin/TileProgress.cs": "e2745014a01f444ce3be158d1e56d93acea50759943178417218c50e41916711",
+      "Common/GeometryFingerprint.cs": "24114ef7a18a56415313b009d7819c94190efa5ea517df2081d1f51951819332",
+      "Common/LayoutGeometryGuard.cs": "289d6d51ede5861c7b27ff106c150aa7b5fa456ddce86ef5e0b5ee727c0eae9d",
+      "Common/ZoneGeometryGuard.cs": "daf06e2822a4d9ef2be818df1bf904779fa202adb1e5bce7fc0ba49c084970b8"
+    }
+  },
+  {
+    "plugin": "AFramePlugin",
+    "returncode": 0,
+    "method": "Roslyn 4.8 with net48/AutoCAD 24.0.0 reference assemblies",
+    "source_sha256": {
+      "AFrame/src/AFramePlugin/DimForm.cs": "86ec69c3200f8f4232c7b855a13147367d199cd42a14928c31f8678b28230717",
+      "AFrame/src/AFramePlugin/FacadesClassic.cs": "ec03c5c3f08289c92e97cd6b17de8e9852fbfee5a0ddd3d953dafa2a70657673",
+      "AFrame/src/AFramePlugin/FacadesRibbon.cs": "af48c14c864659f95f58669fa631a3b3fbb24f64e686769e8e288e32d71c0119",
+      "AFrame/src/AFramePlugin/FrameCommand.cs": "d09ecc8e06965d14ad033a1550ee0b364a88ac9df4fc1b3eed4b3532963a455f",
+      "AFrame/src/AFramePlugin/FrameForm.cs": "d7ae2edcaaec82065061ca58addf08c51123f7fb4d3b7d68c95d8784034cfc51",
+      "AFrame/src/AFramePlugin/FrameSettings.cs": "22258fd5c9712bbf1365673e702219559e9cd4cd6e2eec7f88a254fb71367979",
+      "AFrame/src/AFramePlugin/Plugin.cs": "e679e02c78b770152163b0cd4a691d39ea44bddb422da49aa128e5d13ec631c4",
+      "Common/GeometryFingerprint.cs": "24114ef7a18a56415313b009d7819c94190efa5ea517df2081d1f51951819332",
+      "Common/LayoutGeometryGuard.cs": "289d6d51ede5861c7b27ff106c150aa7b5fa456ddce86ef5e0b5ee727c0eae9d",
+      "Common/ZoneGeometryGuard.cs": "daf06e2822a4d9ef2be818df1bf904779fa202adb1e5bce7fc0ba49c084970b8"
+    }
+  }
+]

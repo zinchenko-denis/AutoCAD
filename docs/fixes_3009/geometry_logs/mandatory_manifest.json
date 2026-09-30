@@ -1,0 +1,152 @@
+[
+  {
+    "name": "Facades_test_facade_zones",
+    "command": [
+      "python3",
+      "test_facade_zones.py"
+    ],
+    "returncode": 0,
+    "seconds": 0.12
+  },
+  {
+    "name": "Facades_test_facades_engine",
+    "command": [
+      "python3",
+      "test_facades_engine.py"
+    ],
+    "returncode": 0,
+    "seconds": 0.16
+  },
+  {
+    "name": "AClad_test_cladding_plan",
+    "command": [
+      "python3",
+      "test_cladding_plan.py"
+    ],
+    "returncode": 0,
+    "seconds": 0.04
+  },
+  {
+    "name": "AClad_test_clad_engine",
+    "command": [
+      "python3",
+      "test_clad_engine.py"
+    ],
+    "returncode": 0,
+    "seconds": 0.1
+  },
+  {
+    "name": "AClad_test_tile_pattern",
+    "command": [
+      "python3",
+      "test_tile_pattern.py"
+    ],
+    "returncode": 0,
+    "seconds": 0.69
+  },
+  {
+    "name": "AClad_audit_clad",
+    "command": [
+      "python3",
+      "audit_clad.py"
+    ],
+    "returncode": 0,
+    "seconds": 0.2
+  },
+  {
+    "name": "AFrame_test_frame_plan",
+    "command": [
+      "python3",
+      "test_frame_plan.py"
+    ],
+    "returncode": 0,
+    "seconds": 0.21
+  },
+  {
+    "name": "AFrame_test_frame_calc",
+    "command": [
+      "python3",
+      "test_frame_calc.py"
+    ],
+    "returncode": 0,
+    "seconds": 0.03
+  },
+  {
+    "name": "AFrame_test_frame_engine",
+    "command": [
+      "python3",
+      "test_frame_engine.py"
+    ],
+    "returncode": 0,
+    "seconds": 0.05
+  },
+  {
+    "name": "AFrame_audit_frame",
+    "command": [
+      "python3",
+      "audit_frame.py"
+    ],
+    "returncode": 0,
+    "seconds": 0.35
+  },
+  {
+    "name": "xmod",
+    "command": [
+      "python3",
+      "tools/xmod_check.py",
+      "--no-fixture",
+      "--allow=X6"
+    ],
+    "returncode": 0,
+    "seconds": 0.06
+  },
+  {
+    "name": "frame_quick",
+    "command": [
+      "python3",
+      "AFrame/tools/frame_synth.py",
+      "--quick"
+    ],
+    "returncode": 0,
+    "seconds": 8.07
+  },
+  {
+    "name": "zones_quick",
+    "command": [
+      "python3",
+      "Facades/tools/zones_synth.py",
+      "--quick"
+    ],
+    "returncode": 0,
+    "seconds": 12.09
+  },
+  {
+    "name": "tile_quick",
+    "command": [
+      "python3",
+      "AClad/tools/attile_synth.py",
+      "--quick"
+    ],
+    "returncode": 0,
+    "seconds": 23.34
+  },
+  {
+    "name": "roles_quick",
+    "command": [
+      "python3",
+      "tools/roles_synth.py",
+      "--quick"
+    ],
+    "returncode": 0,
+    "seconds": 4.9
+  },
+  {
+    "name": "engine_contract",
+    "command": [
+      "python3",
+      "tools/engine_contract.py"
+    ],
+    "returncode": 0,
+    "seconds": 0.51
+  }
+]

@@ -4,6 +4,7 @@ using System.Globalization;
 using System.IO;
 using System.Text;
 using System.Web.Script.Serialization;
+using FacadeSafety;
 using Autodesk.AutoCAD.DatabaseServices;
 using Autodesk.AutoCAD.EditorInput;
 using Autodesk.AutoCAD.Geometry;
@@ -79,7 +80,6 @@ namespace ACladPlugin
             { ed.WriteMessage("\nОтменено."); return; }
 
             var zoneObjs = new Dictionary<string, List<ObjectId>>();
-            var zoneStale = new List<string>();
             var polyByHandle = new Dictionary<string, ObjectId>();
             var polyData = new Dictionary<string, Dictionary<string, object>>();
             // 24.09 (независимая рецензия): прежние раскладки — по владельцам:
@@ -125,7 +125,15 @@ namespace ACladPlugin
 
                     // штриховка/марка зоны ATFZONE (пишет AFacades)
                     string json = ReadData(tr, ent, XKeyZone);
-                    if (json == null) continue;
+                    if (json == null)
+                    {
+                        if (ReadData(tr, ent, ZoneGeometryGuard.Key) != null)
+                        {
+                            ed.WriteMessage("\nДанные выбранной зоны повреждены. Повторите ATFZONE по исходным контурам и проёмам. Прежняя раскладка сохранена.");
+                            return;
+                        }
+                        continue;
+                    }
                     var z = ser.DeserializeObject(json)
                             as Dictionary<string, object>;
                     if (z == null) continue;
@@ -140,43 +148,30 @@ namespace ACladPlugin
                     ownC.Collect(tr, ser, ent, XKeyClad);
                     ownT.Collect(tr, ser, ent, TilePatternCommand.XKeyTile);
 
-                    // сверка с фактом: контур двигали после ATFZONE →
-                    // раскладка легла бы мимо
-                    var hat = ent as Hatch;
-                    if (hat != null)
-                    {
-                        var rep = Get(z, "report")
-                                  as Dictionary<string, object>;
-                        try
-                        {
-                            double fact = hat.Area / 1e6;
-                            double stored = Convert.ToDouble(
-                                Get(rep, "area_net_m2"),
-                                CultureInfo.InvariantCulture);
-                            if (Math.Abs(fact - stored) > 0.001 &&
-                                !zoneStale.Contains(zid))
-                                zoneStale.Add(zid);
-                        }
-                        catch { }
-                    }
                 }
                 tr.Commit();
             }
 
             // ── 2. геометрия зон из <dwg>_fzones.json ──
+            if (ownC.CopiedShared > 0 || ownT.CopiedShared > 0)
+            { ed.WriteMessage("\n" + TilePatternCommand.CopiedSharedMessage); return; }
             var fz = LoadFzones(ed, db, ser);
+            Dictionary<string, ZoneGeometryResult> verifiedZones;
+            string freshnessReason;
+            if (!VerifyZones(db, zoneObjs, fz, out verifiedZones, out freshnessReason))
+            { ed.WriteMessage("\nATCLAD: " + freshnessReason + " Прежняя раскладка сохранена."); return; }
+            CollectZoneOwners(db, ser, zoneObjs, ownC, ownT);
+            if (ownC.CopiedShared > 0 || ownT.CopiedShared > 0)
+            { ed.WriteMessage("\n" + TilePatternCommand.CopiedSharedMessage); return; }
             var zonesPayload = new List<Dictionary<string, object>>();
             var partToRoot = new Dictionary<string, string>();
             // полилинии зон в выборке: их прежняя раскладка (прошлый запуск по
             // полилиниям) заменяется вместе с зоной — хэндл → корень зоны
             var dropRoot = new Dictionary<string, string>();
-            var zoneMissing = new List<string>();
             foreach (var kv in zoneObjs)
             {
                 string zid = kv.Key;
-                if (zoneStale.Contains(zid)) continue;
-                var parts = FindZoneParts(fz, zid);
-                if (parts.Count == 0) { zoneMissing.Add(zid); continue; }
+                var parts = verifiedZones[zid].Parts;
                 foreach (var part in parts)
                 {
                     string pid = SafeStr(Get(part, "id"));
@@ -202,20 +197,28 @@ namespace ACladPlugin
             var contoursPayload = new List<Dictionary<string, object>>();
             foreach (var kv in polyData) contoursPayload.Add(kv.Value);
 
-            if (zoneStale.Count > 0)
-                ed.WriteMessage("\nЗоны изменены после обсчёта (площадь " +
-                    "штриховки разошлась с сохранённой): " +
-                    string.Join(", ", zoneStale.ToArray()) +
-                    " — ПРОПУЩЕНЫ. Перезапустите по ним ATFZONE.");
-            if (zoneMissing.Count > 0)
-                ed.WriteMessage("\nНет геометрии в _fzones.json для: " +
-                    string.Join(", ", zoneMissing.ToArray()) +
-                    " — выберите контуры этих зон полилиниями (или " +
-                    "перезапустите ATFZONE с записью JSON).");
             if (zonesPayload.Count == 0 && contoursPayload.Count == 0)
             {
                 ed.WriteMessage("\nНет пригодных зон или контуров — " +
                     "нечего раскладывать.");
+                return;
+            }
+
+            LayoutGeometryGuard.Snapshot geometrySnapshot;
+            try
+            {
+                using (var tr = db.TransactionManager.StartTransaction())
+                {
+                    var rawSources = new List<ObjectId>();
+                    foreach (string handle in polyData.Keys) rawSources.Add(polyByHandle[handle]);
+                    geometrySnapshot = LayoutGeometryGuard.Capture(tr, db, rawSources, verifiedZones.Values);
+                    tr.Commit();
+                }
+            }
+            catch (System.Exception ex)
+            {
+                ed.WriteMessage("\nНе удалось проверить исходные контуры: " + ex.Message +
+                    " Прежняя раскладка сохранена.");
                 return;
             }
 
@@ -421,6 +424,16 @@ namespace ACladPlugin
                 ed.WriteMessage("\nНе все части зоны рассчитаны: " + string.Join(", ", incomplete.ToArray()) +
                     ". Исправьте контуры и повторите команду. Прежняя раскладка сохранена.");
                 PrintNotes(ed, Get(res, "notes") as object[]);
+                return;
+            }
+            var oldGroups = new List<IEnumerable<string>>();
+            oldGroups.AddRange(ownC.Members.Values);
+            oldGroups.AddRange(ownT.Members.Values);
+            var missingMembers = LayoutSafety.IncompleteSharedGroups(oldGroups, Get(res, "per_zone") as object[], partToRoot);
+            if (missingMembers.Count > 0)
+            {
+                ed.WriteMessage("\nПрежняя раскладка была общей. Не рассчитаны участники: " +
+                    string.Join(", ", missingMembers.ToArray()) + ". Выберите всю группу. Прежняя раскладка сохранена.");
                 return;
             }
             if (inserts == null || inserts.Length == 0)
@@ -671,6 +684,7 @@ namespace ACladPlugin
                                 OpenMode.ForWrite);
                             meta["owner"] = te.Handle.ToString();
                             StoreData(tr, te, ser.Serialize(meta), XKeyClad, kv.Value);
+                            LayoutGeometryGuard.Store(tr, db, te, XKeyClad, geometrySnapshot);
                         }
                     else
                     {
@@ -684,6 +698,7 @@ namespace ACladPlugin
                                 OpenMode.ForWrite);
                             meta["owner"] = te.Handle.ToString();
                             StoreData(tr, te, ser.Serialize(meta), XKeyClad, kv.Value);
+                            LayoutGeometryGuard.Store(tr, db, te, XKeyClad, geometrySnapshot);
                         }
                     }
                 }
@@ -1054,6 +1069,56 @@ namespace ACladPlugin
             return map;
         }
 
+        internal static void CollectZoneOwners(Database db, JavaScriptSerializer ser,
+            Dictionary<string, List<ObjectId>> zoneObjs, TilePatternCommand.OwnedLabels ownC,
+            TilePatternCommand.OwnedLabels ownT)
+        {
+            using (var tr = db.TransactionManager.StartTransaction())
+            {
+                foreach (var ids in zoneObjs.Values)
+                    foreach (ObjectId id in ids)
+                    {
+                        var entity = (Entity)tr.GetObject(id, OpenMode.ForRead);
+                        ownC.Collect(tr, ser, entity, XKeyClad);
+                        ownT.Collect(tr, ser, entity, TilePatternCommand.XKeyTile);
+                    }
+                tr.Commit();
+            }
+        }
+
+        // Validate every carrier only after selection expansion. A single failure
+        // aborts the whole operation: one old label can own several zones' tiles.
+        internal static bool VerifyZones(Database db, Dictionary<string, List<ObjectId>> zoneObjs,
+            IDictionary<string, Dictionary<string, object>> sidecar,
+            out Dictionary<string, ZoneGeometryResult> verified, out string reason)
+        {
+            verified = new Dictionary<string, ZoneGeometryResult>();
+            reason = "";
+            using (var tr = db.TransactionManager.StartTransaction())
+            {
+                foreach (var kv in zoneObjs)
+                {
+                    foreach (ObjectId id in kv.Value)
+                    {
+                        var entity = tr.GetObject(id, OpenMode.ForRead) as Entity;
+                        var check = ZoneGeometryGuard.Verify(tr, db, entity, sidecar);
+                        if (!check.Ok) { reason = kv.Key + ": " + check.Reason; return false; }
+                        ZoneGeometryResult previous;
+                        if (check.ZoneId != kv.Key || (verified.TryGetValue(kv.Key, out previous) &&
+                            (previous.HatchId != check.HatchId || previous.Fingerprint != check.Fingerprint)))
+                        { reason = "Неоднозначная зона " + kv.Key + ". Повторите ATFZONE."; return false; }
+                        verified[kv.Key] = check;
+                    }
+                    if (!verified.ContainsKey(kv.Key))
+                    { reason = "Не найдены источники зоны " + kv.Key + ". Повторите ATFZONE."; return false; }
+                    ObjectId canonical = verified[kv.Key].HatchId;
+                    if (!kv.Value.Contains(canonical)) kv.Value.Add(canonical);
+                }
+                tr.Commit();
+            }
+            return true;
+        }
+
         // зона по марке: сама либо её части «Ф-N.1», «Ф-N.2» (merge) ──
         internal static List<Dictionary<string, object>> FindZoneParts(
             Dictionary<string, Dictionary<string, object>> fz, string zid)
@@ -1310,11 +1375,20 @@ namespace ACladPlugin
             if (ent.ExtensionDictionary.IsNull) return;
             var ext = (DBDictionary)tr.GetObject(ent.ExtensionDictionary,
                                                  OpenMode.ForWrite);
-            if (!ext.Contains(key)) return;
-            ObjectId id = ext.GetAt(key);
-            ext.Remove(key);
-            var o = tr.GetObject(id, OpenMode.ForWrite);
-            if (o != null && !o.IsErased) o.Erase();
+            // A layout and its source proof are one record pair. Leaving the
+            // proof behind makes the next consumer correctly report corruption.
+            // Also clean an orphan proof when the layout key is already absent.
+            var keys = key == XKeyClad || key == TilePatternCommand.XKeyTile
+                ? new[] { key, key + "_GEOMETRY" } : new[] { key };
+            foreach (string item in keys)
+            {
+                if (!ext.Contains(item)) continue;
+                ObjectId id = ext.GetAt(item);
+                ext.Remove(item);
+                if (id.IsNull || id.IsErased) continue;
+                var o = tr.GetObject(id, OpenMode.ForWrite);
+                if (o != null && !o.IsErased) o.Erase();
+            }
         }
 
         internal static string ReadData(Transaction tr, Entity ent,

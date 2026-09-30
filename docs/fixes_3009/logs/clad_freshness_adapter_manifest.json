@@ -1,0 +1,144 @@
+{
+  "status": "PASS",
+  "scope": "Native production guards with CAD API doubles; no AutoCAD runtime.",
+  "source_sha256": {
+    "Common/GeometryFingerprint.cs": "24114ef7a18a56415313b009d7819c94190efa5ea517df2081d1f51951819332",
+    "Common/ZoneGeometryGuard.cs": "daf06e2822a4d9ef2be818df1bf904779fa202adb1e5bce7fc0ba49c084970b8",
+    "Common/LayoutGeometryGuard.cs": "289d6d51ede5861c7b27ff106c150aa7b5fa456ddce86ef5e0b5ee727c0eae9d",
+    "tools/fixes_3009/test_zone_geometry_adapter.cs": "d02df2cee8433f7bec14406fdef62352feeafbefdf98c4464e5510f830ef6240",
+    "tools/fixes_3009/test_zone_geometry_cad_doubles.cs": "8bef49b849eeace665ecf2f9dcdcc30798963d4a66b717118074f5f9c4450317",
+    "Facades/engine/facade_zones.py": "a6d93dfc7b9e399be3dab4bb2a624c714b12fe79236503fe54c105122bfeea01",
+    "Facades/engine/facades_engine.py": "f0046539d586d75f0d3042b83b7e155f06762f84869721544cd6542fa27ad306"
+  },
+  "fixtures_sha256": "70145fa6e8911476b9346c36510bb1d42ac51eaa20ce89f860091fceecd2c172",
+  "compile_returncode": 0,
+  "run_returncode": 0,
+  "result": {
+    "scope": "Actual ZoneGeometryGuard.cs, LayoutGeometryGuard.cs and GeometryFingerprint.cs with in-memory CAD API doubles; engine-generated reports/parts. AutoCAD runtime NOT RUN.",
+    "total": 30,
+    "passed": 30,
+    "failed": 0,
+    "cases": [
+      {
+        "name": "fresh_single_hatch_mark_engine_sidecar",
+        "status": "PASS"
+      },
+      {
+        "name": "fresh_merged_hatch_mark_engine_sidecar",
+        "status": "PASS"
+      },
+      {
+        "name": "hatch_lines_curve_representation_equivalent",
+        "status": "PASS"
+      },
+      {
+        "name": "hatch_reordered_loops_and_vertices_equivalent",
+        "status": "PASS"
+      },
+      {
+        "name": "hatch_semicircular_window_curve_supported",
+        "status": "PASS"
+      },
+      {
+        "name": "source_window_moved_before_hatch_regeneration",
+        "status": "PASS"
+      },
+      {
+        "name": "source_and_hatch_window_moved_same_area",
+        "status": "PASS"
+      },
+      {
+        "name": "hatch_boundary_only_changed",
+        "status": "PASS"
+      },
+      {
+        "name": "merged_second_source_move_detected",
+        "status": "PASS"
+      },
+      {
+        "name": "copied_mark_metadata_cannot_borrow_original",
+        "status": "PASS"
+      },
+      {
+        "name": "copied_hatch_metadata_cannot_borrow_original",
+        "status": "PASS"
+      },
+      {
+        "name": "missing_sidecar_part_rejected",
+        "status": "PASS"
+      },
+      {
+        "name": "damaged_sidecar_window_rejected",
+        "status": "PASS"
+      },
+      {
+        "name": "sidecar_part_order_irrelevant",
+        "status": "PASS"
+      },
+      {
+        "name": "missing_source_pointer_rejected",
+        "status": "PASS"
+      },
+      {
+        "name": "erased_source_rejected",
+        "status": "PASS"
+      },
+      {
+        "name": "unsupported_hatch_curve_rejected",
+        "status": "PASS"
+      },
+      {
+        "name": "hatch_island_style_change_rejected",
+        "status": "PASS"
+      },
+      {
+        "name": "hatch_loop_type_change_rejected",
+        "status": "PASS"
+      },
+      {
+        "name": "nonplanar_source_rejected",
+        "status": "PASS"
+      },
+      {
+        "name": "malformed_geometry_record_rejected",
+        "status": "PASS"
+      },
+      {
+        "name": "report_changed_after_capture_rejected",
+        "status": "PASS"
+      },
+      {
+        "name": "layout_raw_outer_and_hole_positive",
+        "status": "PASS"
+      },
+      {
+        "name": "layout_raw_hole_move_rejected",
+        "status": "PASS"
+      },
+      {
+        "name": "layout_zone_hatch_and_mark_positive",
+        "status": "PASS"
+      },
+      {
+        "name": "layout_new_hatch_revision_invalidates_old_mark",
+        "status": "PASS"
+      },
+      {
+        "name": "layout_new_command_key_invalidates_old_mark",
+        "status": "PASS"
+      },
+      {
+        "name": "layout_old_mark_missing_atfzone_cannot_skip_revision",
+        "status": "PASS"
+      },
+      {
+        "name": "layout_missing_canonical_metadata_rejected",
+        "status": "PASS"
+      },
+      {
+        "name": "layout_tampered_canonical_metadata_rejected",
+        "status": "PASS"
+      }
+    ]
+  }
+}

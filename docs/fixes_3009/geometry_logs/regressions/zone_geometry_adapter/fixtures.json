@@ -1,0 +1,1188 @@
+{
+  "single": {
+    "request": {
+      "op": "zones",
+      "contours": [
+        {
+          "id": "1",
+          "pts": [
+            [
+              0,
+              0
+            ],
+            [
+              6000,
+              0
+            ],
+            [
+              6000,
+              6000
+            ],
+            [
+              0,
+              6000
+            ]
+          ]
+        },
+        {
+          "id": "2",
+          "pts": [
+            [
+              1000,
+              1500
+            ],
+            [
+              2200,
+              1500
+            ],
+            [
+              2200,
+              3000
+            ],
+            [
+              1000,
+              3000
+            ]
+          ]
+        }
+      ],
+      "merge": false,
+      "cladding": "porcelain",
+      "zone_prefix": "F-",
+      "units": "mm"
+    },
+    "result": {
+      "ok": true,
+      "zones": [
+        {
+          "zone_id": "F-1",
+          "cladding": "porcelain",
+          "outer_id": "1",
+          "outer_ids": [
+            "1"
+          ],
+          "opening_ids": [
+            "2"
+          ],
+          "opening_kinds": {
+            "2": "window"
+          },
+          "lines": [
+            {
+              "cat": "window_sill",
+              "pts": [
+                [
+                  1000.0,
+                  1500.0
+                ],
+                [
+                  2200.0,
+                  1500.0
+                ]
+              ],
+              "len_m": 1.2,
+              "opening_id": "2"
+            },
+            {
+              "cat": "window_slope",
+              "pts": [
+                [
+                  2200.0,
+                  1500.0
+                ],
+                [
+                  2200.0,
+                  3000.0
+                ],
+                [
+                  1000.0,
+                  3000.0
+                ],
+                [
+                  1000.0,
+                  1500.0
+                ]
+              ],
+              "len_m": 4.2,
+              "opening_id": "2"
+            }
+          ],
+          "label_pt": [
+            6000.0,
+            6000.0
+          ],
+          "bbox": [
+            0.0,
+            0.0,
+            6000.0,
+            6000.0
+          ],
+          "report": {
+            "schema": "facade_zone_report/1",
+            "zone_id": "F-1",
+            "name": "porcelain",
+            "facade": "",
+            "floors": "",
+            "system": null,
+            "area_outer_m2": 36.0,
+            "openings_total_m2": 1.8,
+            "area_net_m2": 34.2,
+            "perimeter_outer_m": 24.0,
+            "openings_count": 1,
+            "openings": [
+              {
+                "id": "2",
+                "kind": "window",
+                "area_m2": 1.8,
+                "perimeter_m": 5.4,
+                "edges": {
+                  "bottom_m": 1.2,
+                  "top_m": 1.2,
+                  "sides_m": 3.0,
+                  "on_boundary_m": 0.0
+                }
+              }
+            ],
+            "openings_perimeter_total_m": 5.4,
+            "sills_total_m": 1.2,
+            "jambs_total_m": 4.2,
+            "on_boundary_total_m": 0.0,
+            "window_count": 1,
+            "window_area_m2": 1.8,
+            "vitrage_count": 0,
+            "vitrage_area_m2": 0.0,
+            "door_count": 0,
+            "door_area_m2": 0.0,
+            "window_sills_m": 1.2,
+            "window_slopes_m": 4.2,
+            "door_slopes_m": 0.0,
+            "vitrage_side_m": 0.0,
+            "vitrage_top_m": 0.0,
+            "vitrage_bottom_m": 0.0,
+            "warnings": []
+          },
+          "dims": [
+            {
+              "height": {
+                "x": 0.0,
+                "y0": 0.0,
+                "y1": 6000.0
+              },
+              "bottom": null
+            }
+          ]
+        }
+      ],
+      "zones_full": [
+        {
+          "schema": "facade_zone/1",
+          "id": "F-1",
+          "name": "porcelain",
+          "cladding": "porcelain",
+          "system": null,
+          "units": "mm",
+          "outer": {
+            "pts": [
+              [
+                0.0,
+                0.0
+              ],
+              [
+                6000.0,
+                0.0
+              ],
+              [
+                6000.0,
+                6000.0
+              ],
+              [
+                0.0,
+                6000.0
+              ]
+            ],
+            "bulges": [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ]
+          },
+          "openings": [
+            {
+              "id": "2",
+              "kind": "window",
+              "poly": {
+                "pts": [
+                  [
+                    1000.0,
+                    1500.0
+                  ],
+                  [
+                    2200.0,
+                    1500.0
+                  ],
+                  [
+                    2200.0,
+                    3000.0
+                  ],
+                  [
+                    1000.0,
+                    3000.0
+                  ]
+                ],
+                "bulges": [
+                  0.0,
+                  0.0,
+                  0.0,
+                  0.0
+                ]
+              }
+            }
+          ],
+          "source": {
+            "method": "manual",
+            "tool": "ATFZONE"
+          },
+          "meta": {
+            "outer_contour_id": "1",
+            "bbox": [
+              0.0,
+              0.0,
+              6000.0,
+              6000.0
+            ]
+          }
+        }
+      ],
+      "parapets": [],
+      "failed": [],
+      "issues": [],
+      "summary": {
+        "count": 1,
+        "area_net_total_m2": 34.2,
+        "sills_total_m": 1.2,
+        "jambs_total_m": 4.2,
+        "openings_total": 1,
+        "parapets_count": 0,
+        "parapets_top_m": 0,
+        "window_count": 1,
+        "window_area_m2": 1.8,
+        "vitrage_count": 0,
+        "vitrage_area_m2": 0,
+        "door_count": 0,
+        "door_area_m2": 0,
+        "window_sills_m": 1.2,
+        "window_slopes_m": 4.2,
+        "door_slopes_m": 0,
+        "vitrage_side_m": 0,
+        "vitrage_top_m": 0,
+        "vitrage_bottom_m": 0
+      }
+    }
+  },
+  "merged": {
+    "request": {
+      "op": "zones",
+      "contours": [
+        {
+          "id": "1",
+          "pts": [
+            [
+              0,
+              0
+            ],
+            [
+              6000,
+              0
+            ],
+            [
+              6000,
+              6000
+            ],
+            [
+              0,
+              6000
+            ]
+          ]
+        },
+        {
+          "id": "2",
+          "pts": [
+            [
+              1000,
+              1500
+            ],
+            [
+              2200,
+              1500
+            ],
+            [
+              2200,
+              3000
+            ],
+            [
+              1000,
+              3000
+            ]
+          ]
+        },
+        {
+          "id": "3",
+          "pts": [
+            [
+              8000,
+              0
+            ],
+            [
+              12000,
+              0
+            ],
+            [
+              12000,
+              4000
+            ],
+            [
+              8000,
+              4000
+            ]
+          ]
+        },
+        {
+          "id": "4",
+          "pts": [
+            [
+              8500,
+              1000
+            ],
+            [
+              9100,
+              1000
+            ],
+            [
+              9100,
+              1800
+            ],
+            [
+              8500,
+              1800
+            ]
+          ]
+        }
+      ],
+      "merge": true,
+      "cladding": "porcelain",
+      "zone_prefix": "F-",
+      "units": "mm"
+    },
+    "result": {
+      "ok": true,
+      "zones": [
+        {
+          "zone_id": "F-1",
+          "cladding": "porcelain",
+          "merged": true,
+          "part_count": 2,
+          "outer_ids": [
+            "3",
+            "1"
+          ],
+          "opening_ids": [
+            "4",
+            "2"
+          ],
+          "opening_kinds": {
+            "4": "window",
+            "2": "window"
+          },
+          "lines": [
+            {
+              "cat": "window_sill",
+              "pts": [
+                [
+                  8500.0,
+                  1000.0
+                ],
+                [
+                  9100.0,
+                  1000.0
+                ]
+              ],
+              "len_m": 0.6,
+              "opening_id": "4"
+            },
+            {
+              "cat": "window_slope",
+              "pts": [
+                [
+                  9100.0,
+                  1000.0
+                ],
+                [
+                  9100.0,
+                  1800.0
+                ],
+                [
+                  8500.0,
+                  1800.0
+                ],
+                [
+                  8500.0,
+                  1000.0
+                ]
+              ],
+              "len_m": 2.2,
+              "opening_id": "4"
+            },
+            {
+              "cat": "window_sill",
+              "pts": [
+                [
+                  1000.0,
+                  1500.0
+                ],
+                [
+                  2200.0,
+                  1500.0
+                ]
+              ],
+              "len_m": 1.2,
+              "opening_id": "2"
+            },
+            {
+              "cat": "window_slope",
+              "pts": [
+                [
+                  2200.0,
+                  1500.0
+                ],
+                [
+                  2200.0,
+                  3000.0
+                ],
+                [
+                  1000.0,
+                  3000.0
+                ],
+                [
+                  1000.0,
+                  1500.0
+                ]
+              ],
+              "len_m": 4.2,
+              "opening_id": "2"
+            }
+          ],
+          "label_pt": [
+            6000.0,
+            6000.0
+          ],
+          "bbox": [
+            0.0,
+            0.0,
+            12000.0,
+            6000.0
+          ],
+          "report": {
+            "schema": "facade_zone_report/1",
+            "zone_id": "F-1",
+            "name": "porcelain",
+            "facade": "",
+            "floors": "",
+            "system": null,
+            "area_outer_m2": 52.0,
+            "openings_total_m2": 2.2800000000000002,
+            "area_net_m2": 49.72,
+            "perimeter_outer_m": 40.0,
+            "openings_count": 2,
+            "openings": [
+              {
+                "id": "4",
+                "kind": "window",
+                "area_m2": 0.48,
+                "perimeter_m": 2.8,
+                "edges": {
+                  "bottom_m": 0.6,
+                  "top_m": 0.6,
+                  "sides_m": 1.6,
+                  "on_boundary_m": 0.0
+                }
+              },
+              {
+                "id": "2",
+                "kind": "window",
+                "area_m2": 1.8,
+                "perimeter_m": 5.4,
+                "edges": {
+                  "bottom_m": 1.2,
+                  "top_m": 1.2,
+                  "sides_m": 3.0,
+                  "on_boundary_m": 0.0
+                }
+              }
+            ],
+            "openings_perimeter_total_m": 8.2,
+            "sills_total_m": 1.7999999999999998,
+            "jambs_total_m": 6.4,
+            "on_boundary_total_m": 0.0,
+            "window_count": 2,
+            "window_area_m2": 2.2800000000000002,
+            "vitrage_count": 0,
+            "vitrage_area_m2": 0.0,
+            "door_count": 0,
+            "door_area_m2": 0.0,
+            "window_sills_m": 1.7999999999999998,
+            "window_slopes_m": 6.4,
+            "door_slopes_m": 0.0,
+            "vitrage_side_m": 0.0,
+            "vitrage_top_m": 0.0,
+            "vitrage_bottom_m": 0.0,
+            "warnings": []
+          },
+          "dims": [
+            {
+              "height": {
+                "x": 8000.0,
+                "y0": 0.0,
+                "y1": 4000.0
+              },
+              "bottom": null
+            },
+            {
+              "height": {
+                "x": 0.0,
+                "y0": 0.0,
+                "y1": 6000.0
+              },
+              "bottom": null
+            }
+          ]
+        }
+      ],
+      "zones_full": [
+        {
+          "schema": "facade_zone/1",
+          "id": "F-1.1",
+          "name": "porcelain",
+          "cladding": "porcelain",
+          "system": null,
+          "units": "mm",
+          "outer": {
+            "pts": [
+              [
+                8000.0,
+                0.0
+              ],
+              [
+                12000.0,
+                0.0
+              ],
+              [
+                12000.0,
+                4000.0
+              ],
+              [
+                8000.0,
+                4000.0
+              ]
+            ],
+            "bulges": [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ]
+          },
+          "openings": [
+            {
+              "id": "4",
+              "kind": "window",
+              "poly": {
+                "pts": [
+                  [
+                    8500.0,
+                    1000.0
+                  ],
+                  [
+                    9100.0,
+                    1000.0
+                  ],
+                  [
+                    9100.0,
+                    1800.0
+                  ],
+                  [
+                    8500.0,
+                    1800.0
+                  ]
+                ],
+                "bulges": [
+                  0.0,
+                  0.0,
+                  0.0,
+                  0.0
+                ]
+              }
+            }
+          ],
+          "source": {
+            "method": "manual",
+            "tool": "ATFZONE"
+          },
+          "meta": {
+            "outer_contour_id": "3",
+            "bbox": [
+              8000.0,
+              0.0,
+              12000.0,
+              4000.0
+            ],
+            "group": "F-1"
+          }
+        },
+        {
+          "schema": "facade_zone/1",
+          "id": "F-1.2",
+          "name": "porcelain",
+          "cladding": "porcelain",
+          "system": null,
+          "units": "mm",
+          "outer": {
+            "pts": [
+              [
+                0.0,
+                0.0
+              ],
+              [
+                6000.0,
+                0.0
+              ],
+              [
+                6000.0,
+                6000.0
+              ],
+              [
+                0.0,
+                6000.0
+              ]
+            ],
+            "bulges": [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ]
+          },
+          "openings": [
+            {
+              "id": "2",
+              "kind": "window",
+              "poly": {
+                "pts": [
+                  [
+                    1000.0,
+                    1500.0
+                  ],
+                  [
+                    2200.0,
+                    1500.0
+                  ],
+                  [
+                    2200.0,
+                    3000.0
+                  ],
+                  [
+                    1000.0,
+                    3000.0
+                  ]
+                ],
+                "bulges": [
+                  0.0,
+                  0.0,
+                  0.0,
+                  0.0
+                ]
+              }
+            }
+          ],
+          "source": {
+            "method": "manual",
+            "tool": "ATFZONE"
+          },
+          "meta": {
+            "outer_contour_id": "1",
+            "bbox": [
+              0.0,
+              0.0,
+              6000.0,
+              6000.0
+            ],
+            "group": "F-1"
+          }
+        }
+      ],
+      "parapets": [],
+      "failed": [],
+      "issues": [],
+      "summary": {
+        "count": 1,
+        "area_net_total_m2": 49.72,
+        "sills_total_m": 1.7999999999999998,
+        "jambs_total_m": 6.4,
+        "openings_total": 2,
+        "parapets_count": 0,
+        "parapets_top_m": 0,
+        "window_count": 2,
+        "window_area_m2": 2.2800000000000002,
+        "vitrage_count": 0,
+        "vitrage_area_m2": 0,
+        "door_count": 0,
+        "door_area_m2": 0,
+        "window_sills_m": 1.7999999999999998,
+        "window_slopes_m": 6.4,
+        "door_slopes_m": 0,
+        "vitrage_side_m": 0,
+        "vitrage_top_m": 0,
+        "vitrage_bottom_m": 0
+      }
+    }
+  },
+  "curved": {
+    "request": {
+      "op": "zones",
+      "contours": [
+        {
+          "id": "1",
+          "pts": [
+            [
+              0,
+              0
+            ],
+            [
+              6000,
+              0
+            ],
+            [
+              6000,
+              6000
+            ],
+            [
+              0,
+              6000
+            ]
+          ]
+        },
+        {
+          "id": "2",
+          "pts": [
+            [
+              1000,
+              1500
+            ],
+            [
+              2200,
+              1500
+            ],
+            [
+              2200,
+              3000
+            ],
+            [
+              1000,
+              3000
+            ]
+          ],
+          "bulges": [
+            0,
+            0,
+            1,
+            0
+          ]
+        }
+      ],
+      "merge": false,
+      "cladding": "porcelain",
+      "zone_prefix": "F-",
+      "units": "mm"
+    },
+    "result": {
+      "ok": true,
+      "zones": [
+        {
+          "zone_id": "F-1",
+          "cladding": "porcelain",
+          "outer_id": "1",
+          "outer_ids": [
+            "1"
+          ],
+          "opening_ids": [
+            "2"
+          ],
+          "opening_kinds": {
+            "2": "window"
+          },
+          "lines": [
+            {
+              "cat": "window_sill",
+              "pts": [
+                [
+                  1000.0,
+                  1500.0
+                ],
+                [
+                  2200.0,
+                  1500.0
+                ]
+              ],
+              "len_m": 1.2,
+              "opening_id": "2"
+            },
+            {
+              "cat": "window_slope",
+              "pts": [
+                [
+                  2200.0,
+                  1500.0
+                ],
+                [
+                  2200.0,
+                  3000.0
+                ],
+                [
+                  2198.054384880526,
+                  3048.2799412300355
+                ],
+                [
+                  2192.230157582748,
+                  3096.246768514656
+                ],
+                [
+                  2182.5650904556314,
+                  3143.5893985725347
+                ],
+                [
+                  2169.1218651682875,
+                  3190.0007962808836
+                ],
+                [
+                  2151.9876661952944,
+                  3235.179965916045
+                ],
+                [
+                  2131.273615391926,
+                  3278.833903226261
+                ],
+                [
+                  2107.1140513262767,
+                  3320.6794956766807
+                ],
+                [
+                  2079.665658042101,
+                  3360.4453585427873
+                ],
+                [
+                  2049.1064489026608,
+                  3397.873594944477
+                ],
+                [
+                  2015.6346121057597,
+                  3432.7214684062887
+                ],
+                [
+                  1979.4672253572264,
+                  3464.7629770965927
+                ],
+                [
+                  1940.8388480386934,
+                  3493.7903195361937
+                ],
+                [
+                  1900.0,
+                  3519.615242270663
+                ],
+                [
+                  1857.2155368418325,
+                  3542.0702607662292
+                ],
+                [
+                  1812.7629322255214,
+                  3561.009745611249
+                ],
+                [
+                  1766.9304783498717,
+                  3576.3108669788235
+                ],
+                [
+                  1720.0154162656268,
+                  3587.8743912253603
+                ],
+                [
+                  1672.3220081531938,
+                  3595.6253244588324
+                ],
+                [
+                  1624.1595640656492,
+                  3599.513398902942
+                ],
+                [
+                  1575.840435934351,
+                  3599.513398902942
+                ],
+                [
+                  1527.6779918468062,
+                  3595.6253244588324
+                ],
+                [
+                  1479.9845837343735,
+                  3587.8743912253603
+                ],
+                [
+                  1433.0695216501285,
+                  3576.3108669788235
+                ],
+                [
+                  1387.2370677744786,
+                  3561.009745611249
+                ],
+                [
+                  1342.7844631581675,
+                  3542.0702607662292
+                ],
+                [
+                  1300.0,
+                  3519.615242270663
+                ],
+                [
+                  1259.1611519613066,
+                  3493.7903195361937
+                ],
+                [
+                  1220.5327746427738,
+                  3464.7629770965927
+                ],
+                [
+                  1184.3653878942405,
+                  3432.7214684062887
+                ],
+                [
+                  1150.8935510973392,
+                  3397.873594944477
+                ],
+                [
+                  1120.3343419578994,
+                  3360.4453585427873
+                ],
+                [
+                  1092.8859486737233,
+                  3320.6794956766807
+                ],
+                [
+                  1068.726384608074,
+                  3278.833903226261
+                ],
+                [
+                  1048.0123338047056,
+                  3235.179965916045
+                ],
+                [
+                  1030.8781348317127,
+                  3190.0007962808836
+                ],
+                [
+                  1017.4349095443688,
+                  3143.5893985725347
+                ],
+                [
+                  1007.7698424172523,
+                  3096.246768514656
+                ],
+                [
+                  1001.945615119474,
+                  3048.2799412300355
+                ],
+                [
+                  1000.0,
+                  3000.0
+                ],
+                [
+                  1000.0,
+                  1500.0
+                ]
+              ],
+              "len_m": 4.88444599712063,
+              "opening_id": "2"
+            }
+          ],
+          "label_pt": [
+            6000.0,
+            6000.0
+          ],
+          "bbox": [
+            0.0,
+            0.0,
+            6000.0,
+            6000.0
+          ],
+          "report": {
+            "schema": "facade_zone_report/1",
+            "zone_id": "F-1",
+            "name": "porcelain",
+            "facade": "",
+            "floors": "",
+            "system": null,
+            "area_outer_m2": 36.0,
+            "openings_total_m2": 2.365486677646163,
+            "area_net_m2": 33.63451332235384,
+            "perimeter_outer_m": 24.0,
+            "openings_count": 1,
+            "openings": [
+              {
+                "id": "2",
+                "kind": "window",
+                "area_m2": 2.365486677646163,
+                "perimeter_m": 6.084955592153876,
+                "edges": {
+                  "bottom_m": 1.2,
+                  "top_m": 0.9180634344946651,
+                  "sides_m": 3.9663825626259643,
+                  "on_boundary_m": 0.0
+                }
+              }
+            ],
+            "openings_perimeter_total_m": 6.084955592153876,
+            "sills_total_m": 1.2,
+            "jambs_total_m": 4.884445997120629,
+            "on_boundary_total_m": 0.0,
+            "window_count": 1,
+            "window_area_m2": 2.365486677646163,
+            "vitrage_count": 0,
+            "vitrage_area_m2": 0.0,
+            "door_count": 0,
+            "door_area_m2": 0.0,
+            "window_sills_m": 1.2,
+            "window_slopes_m": 4.884445997120629,
+            "door_slopes_m": 0.0,
+            "vitrage_side_m": 0.0,
+            "vitrage_top_m": 0.0,
+            "vitrage_bottom_m": 0.0,
+            "warnings": []
+          },
+          "dims": [
+            {
+              "height": {
+                "x": 0.0,
+                "y0": 0.0,
+                "y1": 6000.0
+              },
+              "bottom": null
+            }
+          ]
+        }
+      ],
+      "zones_full": [
+        {
+          "schema": "facade_zone/1",
+          "id": "F-1",
+          "name": "porcelain",
+          "cladding": "porcelain",
+          "system": null,
+          "units": "mm",
+          "outer": {
+            "pts": [
+              [
+                0.0,
+                0.0
+              ],
+              [
+                6000.0,
+                0.0
+              ],
+              [
+                6000.0,
+                6000.0
+              ],
+              [
+                0.0,
+                6000.0
+              ]
+            ],
+            "bulges": [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ]
+          },
+          "openings": [
+            {
+              "id": "2",
+              "kind": "window",
+              "poly": {
+                "pts": [
+                  [
+                    1000.0,
+                    1500.0
+                  ],
+                  [
+                    2200.0,
+                    1500.0
+                  ],
+                  [
+                    2200.0,
+                    3000.0
+                  ],
+                  [
+                    1000.0,
+                    3000.0
+                  ]
+                ],
+                "bulges": [
+                  0.0,
+                  0.0,
+                  1.0,
+                  0.0
+                ]
+              }
+            }
+          ],
+          "source": {
+            "method": "manual",
+            "tool": "ATFZONE"
+          },
+          "meta": {
+            "outer_contour_id": "1",
+            "bbox": [
+              0.0,
+              0.0,
+              6000.0,
+              6000.0
+            ]
+          }
+        }
+      ],
+      "parapets": [],
+      "failed": [],
+      "issues": [],
+      "summary": {
+        "count": 1,
+        "area_net_total_m2": 33.63451332235384,
+        "sills_total_m": 1.2,
+        "jambs_total_m": 4.884445997120629,
+        "openings_total": 1,
+        "parapets_count": 0,
+        "parapets_top_m": 0,
+        "window_count": 1,
+        "window_area_m2": 2.365486677646163,
+        "vitrage_count": 0,
+        "vitrage_area_m2": 0,
+        "door_count": 0,
+        "door_area_m2": 0,
+        "window_sills_m": 1.2,
+        "window_slopes_m": 4.884445997120629,
+        "door_slopes_m": 0,
+        "vitrage_side_m": 0,
+        "vitrage_top_m": 0,
+        "vitrage_bottom_m": 0
+      }
+    }
+  }
+}

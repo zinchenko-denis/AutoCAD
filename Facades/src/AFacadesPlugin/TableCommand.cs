@@ -16,10 +16,9 @@ namespace AFacadesPlugin
     /// <summary>
     /// ATFTABLE — сформировать ведомость зон облицовки ПОТОМ (фидбэк
     /// Германа 19.07): выбрать штриховки и/или марки зон (данные зоны живут
-    /// в их Xrecord «ATFZONE») → таблица площадей и погонажей. Если
-    /// ассоциативная штриховка изменилась после обсчёта (контур двигали),
-    /// её фактическая площадь разойдётся с сохранённой — команда
-    /// предупредит и пометит строку звёздочкой.
+    /// в их Xrecord «ATFZONE») → таблица площадей и погонажей. Каждый
+    /// носитель проверяется по снимку исходных контуров и штриховки;
+    /// устаревшие или неоднозначные зоны останавливают всю ведомость.
     /// </summary>
     public class TableCommand
     {
@@ -97,9 +96,7 @@ namespace AFacadesPlugin
             // 29.09 (Герман): парапеты ATFZONE — данные в метке их марки
             var parapets = new List<Dictionary<string, object>>();
             var seenP = new HashSet<string>();
-            var seen = new HashSet<string>();
-            var byId = new Dictionary<string, Dictionary<string, object>>();
-            var stale = new List<string>();
+            var verifiedById = new Dictionary<string, FacadeSafety.ZoneGeometryResult>();
             int noData = 0;
             using (var tr = db.TransactionManager.StartTransaction())
             {
@@ -117,43 +114,42 @@ namespace AFacadesPlugin
                         continue;
                     }
                     string json = ZoneCommand.ReadZoneData(tr, ent);
-                    if (json == null) { noData++; continue; }
+                    if (json == null && ZoneCommand.ReadZoneData(tr, ent, FacadeSafety.ZoneGeometryGuard.Key) == null)
+                    { noData++; continue; }
+                    // Check every carrier before deduplication: a fresh mark
+                    // must not hide a changed hatch or another capture with
+                    // the same displayed zone name.
+                    var verified = FacadeSafety.ZoneGeometryGuard.Verify(tr, db, ent, null);
+                    if (!verified.Ok)
+                    {
+                        ed.WriteMessage("\nATFTABLE: ведомость не создана. " + verified.Reason);
+                        return;
+                    }
                     var z = ser.DeserializeObject(json)
                             as Dictionary<string, object>;
-                    if (z == null) { noData++; continue; }
-                    string id = ZoneCommand.SafeStr(
-                        ZoneCommand.Get(z, "zone_id"));
-                    if (id.Length == 0) continue;
-
-                    // сверка с фактом: изменилась ли штриховка после обсчёта.
-                    // 24.09 (рецензия): сверка — ДО отсева повторов зоны:
-                    // раньше, если первой в выборке шла марка, штриховка той
-                    // же зоны отсеивалась и изменение не замечалось
-                    var hat = ent as Hatch;
-                    if (hat != null)
+                    string id = verified.ZoneId;
+                    var hat = tr.GetObject(verified.HatchId, OpenMode.ForRead) as Hatch;
+                    if (z == null || string.IsNullOrEmpty(id) || hat == null)
                     {
-                        var rep = ZoneCommand.Get(z, "report")
-                                  as Dictionary<string, object>;
-                        try
-                        {
-                            double fact = hat.Area / 1e6;
-                            double stored = Convert.ToDouble(
-                                ZoneCommand.Get(rep, "area_net_m2"),
-                                CultureInfo.InvariantCulture);
-                            if (Math.Abs(fact - stored) > 0.001 && !stale.Contains(id))
-                                stale.Add(id);
-                        }
-                        catch { }
+                        ed.WriteMessage("\nATFTABLE: ведомость не создана — данные зоны нельзя прочитать. Повторите ATFZONE.");
+                        return;
                     }
-                    // 29.09n: слой зоны — слой её штриховки (по нему — группы ведомости работ)
-                    if (seen.Contains(id))
+                    FacadeSafety.ZoneGeometryResult previous;
+                    if (verifiedById.TryGetValue(id, out previous))
                     {
-                        if (hat != null) byId[id]["_layer"] = ent.Layer;
+                        if (previous.HatchId != verified.HatchId ||
+                            !string.Equals(previous.Fingerprint, verified.Fingerprint, StringComparison.Ordinal))
+                        {
+                            ed.WriteMessage("\nATFTABLE: ведомость не создана — марка «" + id +
+                                "» относится к разным зонам или расчётам. Выберите один актуальный набор зон либо повторите ATFZONE с однозначными марками.");
+                            return;
+                        }
                         continue;
                     }
-                    seen.Add(id);
-                    z["_layer"] = ent.Layer;
-                    byId[id] = z;
+                    verifiedById[id] = verified;
+                    // Group works by the canonical hatch layer even for a
+                    // mark-only selection.
+                    z["_layer"] = hat.Layer;
                     zones.Add(z);
                 }
                 tr.Commit();
@@ -161,9 +157,6 @@ namespace AFacadesPlugin
             // 29.09n: при выборе слоем парапеты берутся отдельно (они на своём слое)
             if (byLayer && !AskParapets(ed, db, ser, parapets, seenP))
                 return;
-            foreach (var z in zones)
-                if (stale.Contains(ZoneCommand.SafeStr(ZoneCommand.Get(z, "zone_id"))))
-                    z["stale"] = true;
             if (zones.Count == 0 && parapets.Count == 0)
             {
                 ed.WriteMessage("\nВ выборке нет объектов с данными зон " +
@@ -186,12 +179,6 @@ namespace AFacadesPlugin
 
             if (works)
             {
-                if (stale.Count > 0)
-                {
-                    ed.WriteMessage("\nВедомость работ не создана: зоны изменены после обсчёта: " +
-                        string.Join(", ", stale.ToArray()) + " — сначала повторите ATFZONE по этим зонам.");
-                    return;
-                }
                 MakeWorks(ed, db, kind, zones, parapets);
                 return;
             }
@@ -213,12 +200,6 @@ namespace AFacadesPlugin
                           ? kres.StringResult : "Чертеж";
             bool toDwg = mode != "Ексель";
             bool toXls = mode == "Ексель" || mode == "Оба";
-
-            // пометить изменённые зоны звёздочкой у марки
-            foreach (var z in zones)
-                if (z.ContainsKey("stale"))
-                    z["zone_id"] = ZoneCommand.SafeStr(
-                        ZoneCommand.Get(z, "zone_id")) + " *";
 
             if (toDwg)
             {
@@ -252,11 +233,6 @@ namespace AFacadesPlugin
                 (parapets.Count > 0 ? ", парапет " + ZoneTable.ParapetRows(parapets)[0][1] + " м.п." : "") + "." +
                 (noData > 0 ? " Пропущено объектов без данных: " + noData + "."
                             : ""));
-            if (stale.Count > 0)
-                ed.WriteMessage("\nВНИМАНИЕ: зоны изменены после обсчёта " +
-                    "(площадь штриховки разошлась с сохранённой): " +
-                    string.Join(", ", stale.ToArray()) +
-                    " — помечены «*», перезапустите ATFZONE по этим зонам.");
         }
 
         // ── 29.09n: выбор слоёв со штриховками зон ──
@@ -275,8 +251,13 @@ namespace AFacadesPlugin
                     var ent = tr.GetObject(oid, OpenMode.ForRead) as Entity;
                     if (!(ent is Hatch) && !(ent is MText)) continue;
                     string json = ZoneCommand.ReadZoneData(tr, ent);
-                    if (json == null) continue;
-                    var z = ser.DeserializeObject(json) as Dictionary<string, object>;
+                    if (json == null && ZoneCommand.ReadZoneData(tr, ent, FacadeSafety.ZoneGeometryGuard.Key) == null)
+                        continue;
+                    // Keep broken known carriers selectable: the main read
+                    // pass must reject them instead of omitting a table row.
+                    Dictionary<string, object> z = null;
+                    try { if (json != null) z = ser.DeserializeObject(json) as Dictionary<string, object>; }
+                    catch { }
                     string zid = ZoneCommand.SafeStr(ZoneCommand.Get(z, "zone_id"));
                     List<ObjectId> lst;
                     if (!perLayer.TryGetValue(ent.Layer, out lst))
@@ -286,7 +267,7 @@ namespace AFacadesPlugin
                         count[ent.Layer] = 0;
                     }
                     lst.Add(oid);
-                    if (zid.Length > 0 && seenZone[ent.Layer].Add(zid)) count[ent.Layer]++;
+                    if (zid.Length == 0 || seenZone[ent.Layer].Add(zid)) count[ent.Layer]++;
                 }
                 tr.Commit();
             }

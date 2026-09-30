@@ -51,6 +51,13 @@ def main():
             for name in ("test_facades_copy_handles", "test_facades_workstatement"):
                 run(name, [sys.executable, str(PROBES / (name + ".py"))])
             run("test_frame_rail_metadata", [sys.executable, str(Path(__file__).with_name("test_frame_rail_metadata.py"))])
+            run("test_frame_geometry_consumer", [sys.executable, str(Path(__file__).with_name("test_frame_geometry_consumer.py"))])
+            run("test_zone_geometry", [sys.executable, str(Path(__file__).with_name("test_zone_geometry.py")),
+                                      "--out", str(out / "zone_geometry")])
+            run("test_zone_geometry_adapter", [sys.executable, str(Path(__file__).with_name("test_zone_geometry_adapter.py")),
+                                              "--out", str(out / "zone_geometry_adapter")])
+            run("test_clad_label_cleanup", [sys.executable, str(Path(__file__).with_name("test_clad_label_cleanup.py")),
+                                           "--out", str(out / "clad_label_cleanup")])
             clad_exe = out / "CladSafetyCheck.exe"
             if run("CladSafetyCheck_compile", ["mcs", "-out:" + str(clad_exe),
                     str(Path(__file__).with_name("CladSafetyCheck.cs")),
