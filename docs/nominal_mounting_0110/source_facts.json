@@ -1,0 +1,508 @@
+{
+  "schema": "facade_nominal_mounting_source_facts/1",
+  "date": "2026-10-01",
+  "status": "SOURCE_REVIEW_COMPLETE_PARTIAL_NOMINAL_CHAIN_IDENTIFIED",
+  "baseline_commit": "7db1a937ac2da47f949bcca08e03dffd6090c0f0",
+  "instruction_scope": {
+    "use_existing_sources_only": true,
+    "new_sources_used": false,
+    "new_files_requested_from_user": false,
+    "external_web_search_used": false,
+    "pixel_or_scale_measurements_used": false,
+    "pilot": {
+      "system": "Vector-1",
+      "edition": 2015,
+      "type": 1,
+      "node": "4.2.1",
+      "parts": [
+        "KR2",
+        "PP",
+        "UK",
+        "GP"
+      ]
+    }
+  },
+  "primary_sources": [
+    {
+      "private_repository": "zinchenko-denis/atspec-testdata",
+      "path": "docs/facades_atr/ATR_Vector1_3.15_KG_KP_2015.pdf",
+      "sha256": "7386f4152de455a5e2622704d51a98d8f05afd20050807f634eea4572de37142",
+      "pages": 109,
+      "text_review_pages": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15,
+        16,
+        17,
+        18,
+        19,
+        20,
+        21,
+        22,
+        23,
+        24,
+        25,
+        26,
+        27,
+        28,
+        29,
+        30,
+        31,
+        32,
+        33,
+        34,
+        35,
+        36,
+        37,
+        38,
+        39,
+        40,
+        41,
+        42,
+        43,
+        44,
+        45,
+        46,
+        47,
+        48,
+        49,
+        50,
+        51,
+        52,
+        53,
+        54,
+        55,
+        56,
+        57,
+        58,
+        59,
+        60,
+        61,
+        62,
+        63,
+        64,
+        65,
+        66,
+        67,
+        68,
+        69,
+        70,
+        71,
+        72,
+        73,
+        74,
+        75,
+        76,
+        77,
+        78,
+        79,
+        80,
+        81,
+        82,
+        83,
+        84,
+        85,
+        86,
+        87,
+        88,
+        89,
+        90,
+        91,
+        92,
+        93,
+        94,
+        95,
+        96,
+        97,
+        98,
+        99,
+        100,
+        101,
+        102,
+        103,
+        104,
+        105,
+        106,
+        107,
+        108,
+        109
+      ],
+      "visual_review_pages": [
+        3,
+        6,
+        7,
+        8,
+        9,
+        18,
+        19,
+        20,
+        34,
+        35,
+        36,
+        37,
+        38,
+        44,
+        45,
+        46,
+        47,
+        72
+      ]
+    },
+    {
+      "repository": "zinchenko-denis/atspec-testdata",
+      "path": "docs/facades_calc/Static_VEKTOR1_tip1_monolit_KG_2026.pdf",
+      "sha256": "495f8fadf882dc6f6c3f2c023a08611035c5e916a3cc92ee4da675cb2a0f16d2",
+      "visually_reviewed_pdf_pages": [
+        3,
+        6,
+        7,
+        8,
+        9,
+        12
+      ],
+      "text_reviewed_pdf_pages": [
+        3,
+        6,
+        7,
+        8,
+        9,
+        12,
+        13
+      ],
+      "pages_for_derived_line": [
+        6,
+        9
+      ],
+      "pages_for_nonidentifiability_of_overlap": [
+        12,
+        13
+      ]
+    }
+  ],
+  "secondary_digest": {
+    "path": "docs/facades_calc/METHOD_CALC.md",
+    "git_blob": "8b1bc9863e16989e1f017b0dd2564b4501f41f85",
+    "normative_authority": false,
+    "repository": "zinchenko-denis/atspec-testdata"
+  },
+  "baseline_diagnostic_gap": {
+    "source_commit": "7db1a937ac2da47f949bcca08e03dffd6090c0f0",
+    "wall_to_kr2_datum": "not_confirmed",
+    "kr2_length_datums": "not_confirmed",
+    "nominal_chain_present": false,
+    "interpretation": "The old report did not distinguish derivable nominal contact datums from missing full installation datums; full mounting/auto-selection refusal itself remains justified."
+  },
+  "direct_album_facts": [
+    {
+      "id": "pp_thickness",
+      "value_mm": "2",
+      "classification": "explicit_catalogue_dimension",
+      "locators": [
+        {
+          "pdf_page": 7,
+          "sheet": "3.2.2",
+          "position": "2.6"
+        }
+      ]
+    },
+    {
+      "id": "kr_length_base",
+      "description": "L from KR2 free end to external back plane of bent support flange",
+      "classification": "dimension_line_endpoints",
+      "locators": [
+        {
+          "pdf_page": 6,
+          "sheet": "3.2.1",
+          "position": "2.2"
+        }
+      ]
+    },
+    {
+      "id": "uk_length_base",
+      "description": "L from UK free end to external plane of bent heel",
+      "classification": "dimension_line_endpoints",
+      "locators": [
+        {
+          "pdf_page": 8,
+          "sheet": "3.3",
+          "position": "3.2"
+        }
+      ]
+    },
+    {
+      "id": "nominal_contact_order",
+      "description": "wall -> PP -> KR2 external back plane",
+      "classification": "explicit_topology",
+      "locators": [
+        {
+          "pdf_page": 3,
+          "sheet": "2",
+          "position": "explanatory note"
+        },
+        {
+          "pdf_page": 20,
+          "sheet": "4.2.1",
+          "position": "2.2;2.6"
+        }
+      ]
+    }
+  ],
+  "nominal_derivation_conditions": [
+    "Nominal ideal planar geometry of the illustrated node",
+    "X points outward from wall plane X=0",
+    "Nominal PP thickness; no deformation or added shims/gap",
+    "Surface contact follows the primary drawing",
+    "UK direction is the illustrated outward orientation"
+  ],
+  "nominal_derivations": [
+    {
+      "id": "wall",
+      "equation": "x_wall = 0",
+      "basis": "coordinate definition"
+    },
+    {
+      "id": "pp_outer_and_kr_back",
+      "equation": "x_PP_outer = x_KR_back = 2 mm",
+      "basis": "PP2 plus illustrated contact, under nominal conditions"
+    },
+    {
+      "id": "kr_free",
+      "equation": "x_KR_free = 2 mm + L_KR",
+      "basis": "KR2 dimension line endpoints plus nominal contact"
+    },
+    {
+      "id": "signed_endpoint_difference",
+      "equation": "h = x_KR_free - x_UK_free",
+      "basis": "definition only, not approved engagement"
+    },
+    {
+      "id": "uk_outer_heel",
+      "equation": "x_UK_outer_heel = 2 mm + L_KR + L_UK - h",
+      "basis": "identity; h is unresolved"
+    }
+  ],
+  "product_result_contract": {
+    "container": "FrameMountingAssessmentResult.NominalChain",
+    "scope": "historical_nominal_undeformed_geometry",
+    "wall_to_kr2_datum": "partially_confirmed",
+    "kr2_length_datums": "partially_confirmed",
+    "other_dependency_states": "not_confirmed",
+    "uk_placement_status": "underdetermined",
+    "mounting_status": "not_confirmed",
+    "automatic_bracket_selection_allowed": false,
+    "inserts_new_body_geometry": false,
+    "persists_assessment": false,
+    "changes_planes_algorithm": false,
+    "planes_algorithm": "vector1_2015_4_2_1_planes/2"
+  },
+  "chain_nonuniqueness": {
+    "unknowns": [
+      "x_UK_free",
+      "x_UK_outer_heel",
+      "h"
+    ],
+    "equations": [
+      "x_UK_outer_heel-x_UK_free=L_UK",
+      "x_UK_free+h=2+L_KR"
+    ],
+    "rank": 2,
+    "unknown_count": 3,
+    "remaining_degrees_of_freedom_at_least": 1,
+    "invariance": "h += delta; x_UK_free -= delta; x_UK_outer_heel -= delta",
+    "gp_near_input_closes_chain": false,
+    "reason": "No confirmed equation links selected GP near-plane to UK outer heel"
+  },
+  "cross_node_minimum_overlap": {
+    "value_mm": "30",
+    "meaning": "minimum projected overlap between KR2 and UK free edges",
+    "direct_scope": [
+      {
+        "pdf_page": 34,
+        "sheet": "5.5",
+        "position": "2.2+3.2"
+      },
+      {
+        "pdf_page": 37,
+        "sheet": "5.7",
+        "position": "2.2+3.2"
+      },
+      {
+        "pdf_page": 44,
+        "sheet": "6.5",
+        "position": "2.2+3.2"
+      },
+      {
+        "pdf_page": 46,
+        "sheet": "6.7",
+        "position": "2.2+3.2"
+      }
+    ],
+    "pilot_rule_confirmed": false,
+    "reason": "Other assembly types; no source cross-reference or universal applicability statement for 4.2.1; no max overlap/travel even if min30 were transferred"
+  },
+  "cross_node_transfer_decision": {
+    "classification": "scoped_direct_fact_and_pilot_analogy_only",
+    "pilot_minimum_overlap_mm": null,
+    "allowed_travel_mm": null,
+    "why_no_direct_transfer": [
+      "No cross-reference from node4.2.1 to the four dimensioned other-type assemblies",
+      "Explanatory note makes fastening schemes project-specific; no general applicability statement for min30 across all assemblies",
+      "Even a hypothetically granted lower bound leaves maximum engagement, holes and interface datums unknown"
+    ],
+    "even_if_h_ge_30": "One lower bound does not determine a unique placement or permitted regulation range; L_UK-30 is not an approved travel formula."
+  },
+  "project_calculation_partial_result": {
+    "id": "project_calculation_kr2_uk_weakened_section_line",
+    "state": "derived_with_aligned_calculation_bases",
+    "unit": "mm",
+    "value": "85",
+    "formula": "e1_anchor - e4_extender",
+    "operands": {
+      "e1_anchor": "165",
+      "e4_extender": "80"
+    },
+    "source_pages": [
+      6,
+      9
+    ],
+    "origin": "support_dimension_line_of_e1",
+    "positive_direction": "towards_cladding",
+    "assumption": "same_Np_line_in_both_calculation_sketches",
+    "target": "line_through_KR2_UK_connection_rivets_shown_as_extender_weakened_section",
+    "is_manufacturing_datum": false,
+    "is_catalogue_rule": false,
+    "is_profile_surface": false,
+    "may_enable_bracket_auto_selection": false
+  },
+  "project_calculation_formula": {
+    "expression": "165 - 80 = 85 mm",
+    "classification": "project_scoped_derived_calculation_line",
+    "product_coordinate": false,
+    "catalogue_rule": false,
+    "manufacturing_end_face": false,
+    "overlap_or_travel": false,
+    "source_pages": [
+      6,
+      9
+    ],
+    "assumption": "same Np load line and aligned calculation bases"
+  },
+  "project_calculation_not_reported": [
+    "selected_bracket_length",
+    "selected_extender_length",
+    "extender_edge_to_connection_line_distance",
+    "bracket_edge_to_connection_line_distance",
+    "KR2_UK_overlap_minimum",
+    "KR2_UK_overlap_maximum",
+    "allowed_adjustment_interval",
+    "GP_nearest_surface_coordinate",
+    "UK_GP_full_mating_dimensions"
+  ],
+  "project_calculation_nonuniqueness": {
+    "meaning": "abstract_1d_completions_of_missing_data_not_engineering_solutions",
+    "engineering_suitability_asserted": false,
+    "all_lengths_mm": true,
+    "common": {
+      "calculation_origin": "0",
+      "load_line": "165",
+      "connection_line": "85",
+      "conditional_KR2_interval": [
+        "0",
+        "100"
+      ],
+      "conditional_KR2_length": "100",
+      "conditional_UK_length": "100"
+    },
+    "cases": [
+      {
+        "id": "A",
+        "conditional_UK_interval": [
+          "45",
+          "145"
+        ],
+        "intersection_length": "55",
+        "UK_edge_to_connection_line": "40"
+      },
+      {
+        "id": "B",
+        "conditional_UK_interval": [
+          "55",
+          "155"
+        ],
+        "intersection_length": "45",
+        "UK_edge_to_connection_line": "30"
+      }
+    ],
+    "invariants": [
+      "load_line_minus_origin_equals_165",
+      "load_line_minus_connection_line_equals_80",
+      "UK_length_equals_100",
+      "connection_line_inside_both_intervals"
+    ],
+    "conclusion": "overlap_not_unique_even_after_granting_fixed_catalogue_lengths_and_calculation_line"
+  },
+  "remaining_unknowns": [
+    "KR2-UK permitted overlap min/max for node4.2.1",
+    "Hole coordinates, counts, arrangement and fastening packet",
+    "Relation UK heel to GP near-plane",
+    "Maximum interference-free insertion with ribs/bend radii/tolerances",
+    "Fixed/sliding function and operating movements",
+    "Compatibility/structural capacity of complete mounting"
+  ],
+  "prohibited_inferences": [
+    "No approved h value or range from component lengths alone",
+    "No GP near-plane or cladding offset from UK heel identity",
+    "No universal min30 rule transferred to node4.2.1",
+    "No physical fit inferred from equal widths or +4 mm catalogue width difference",
+    "No universal installation coordinate from project calculation 85 mm",
+    "No assumed compressed PP thickness, gasket shape or selected anchor",
+    "No fixed/sliding or structural approval from successful local clearance"
+  ],
+  "source_extraction_quality": {
+    "poppler_page_count": 109,
+    "pypdf_page_count": 109,
+    "pypdf_dimension_loss_observed": true,
+    "min30_pages_poppler": [
+      19,
+      23,
+      25,
+      27,
+      34,
+      37,
+      40,
+      42,
+      44,
+      46,
+      53,
+      55,
+      85,
+      86,
+      87
+    ]
+  },
+  "public_provenance_policy": {
+    "only_locators_hashes_short_findings_and_derivations": true,
+    "private_originals_published": false,
+    "private_renders_published": false,
+    "full_method_digest_published": false
+  },
+  "validation_status": "SOURCE_REASONING_COMPLETE_PRODUCT_GATES_RECORDED_SEPARATELY",
+  "review_reports_sha256": {
+    "album_analysis.md": "0968531c52683baf967c35fa323068cb098d5d6cc28e184a1b226c691b2a0968",
+    "album_analysis.json": "28664af1f33200a58b12af41d1aee5f941c19195e4056ace2143b66531253c31",
+    "calc_analysis.md": "5d7c74b04baa386c8eb1ea3acab7829dbf758ae03ef4c756c809af3c9172b1f0",
+    "calc_analysis.json": "91fa9536989f104e7bec3a0e67e6be07c4cc30f2c371259ec1ce08551d4d93d1"
+  }
+}

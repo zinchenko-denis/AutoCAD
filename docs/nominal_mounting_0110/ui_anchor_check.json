@@ -1,0 +1,32 @@
+{
+  "status": "PASS",
+  "checks": [
+    {
+      "anchor": "Заявленные изделия (не назначение установленных деталей):",
+      "present_in_actual_review": true
+    },
+    {
+      "anchor": "Номинальные базы по размерным линиям альбома",
+      "present_in_actual_review": true
+    },
+    {
+      "anchor": "1. Основание — монтажная база КР2",
+      "present_in_actual_review": true
+    },
+    {
+      "anchor": "Номинальные базы по размерным линиям альбома",
+      "present_in_actual_review": true
+    },
+    {
+      "anchor": "7. Допустимые сочетания изделий",
+      "present_in_actual_review": true
+    }
+  ],
+  "source_sha256": {
+    "AFrame/src/AFramePlugin/FrameNodeGeometry.cs": "50f1f3d869ae141c9cb38f0efd867b28dfa24afc746002faa70740579fc24d37",
+    "AFrame/src/AFramePlugin/FrameProjectParameters.cs": "612c46eabcb1c7c80c86e5a3e0fed2153a809b8f2b1734b1e9b596e2e26ec7f1",
+    "AFrame/src/AFramePlugin/FrameSolutionSelection.cs": "cb25b6e890ce2f1e5ee458f1e378510d21f7205e529ee1894520ed686a3abd66",
+    "AFrame/src/AFramePlugin/FrameMountingAssessment.cs": "647be5999387b05fed54a0394164e40cb0eaef30d2d058164a61824ecf028b20",
+    "tools/node_ui_0110/NodeUiProbe.cs": "e98348f08f8b7df05467725c97a79fba0f95b3a536aab6c4a2bce8bc4e2690ca"
+  }
+}

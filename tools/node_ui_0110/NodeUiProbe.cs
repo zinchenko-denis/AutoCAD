@@ -60,6 +60,12 @@ internal static class NodeUiProbe
         Check(box.Lines.Any(line => line.StartsWith("Монтажная пригодность: не подтверждена.")), "Native review merges or hides separate mounting status line");
         Check(expected.Dependencies.Count == 7 && expected.DeclaredMembers.Count == 3 && !expected.AutomaticBracketSelectionAllowed,
             "Mounting review lost its seven data requests/three declared members or allowed automatic selection");
+        Check(expected.Dependencies.Take(2).All(row => row.State == "partially_confirmed") &&
+            expected.Dependencies.Skip(2).All(row => row.State == "not_confirmed"),
+            "Nominal bases erased their installation conditions or confirmed the unresolved interfaces");
+        Check(expected.NominalChain.UkPlacementStatus == "underdetermined" &&
+            box.Lines.Any(line => line.StartsWith("Число h, положение УК и допустимый ход не определены.")),
+            "Nominal review assigned overlap, an extender position or allowed adjustment");
         Check(box.Lines.Any(line => line.StartsWith("КР2: ") && line.Contains("лист 3.2.1, PDF 6")) &&
             box.Lines.Any(line => line.StartsWith("УК: ") && line.Contains("лист 3.3, PDF 8")) &&
             box.Lines.Any(line => line.StartsWith("ГП: ") && line.Contains("лист 3.4, PDF 9")), "Declared members lost their individual source locators");
@@ -172,8 +178,9 @@ internal static class NodeUiProbe
             Check(reviewLines.Any(line => line == "Слой утеплителя 1: 100 мм."), "Native review lacks a separate first layer line");
             MountingReview(form, standard.Selection);
             Layout(form, "node_valid");
-            ScrollReviewTo(form, "Монтажная проверка выбранного решения"); Layout(form, "node_mounting_members");
-            ScrollReviewTo(form, "1. Основание — монтажная база КР2."); Layout(form, "node_mounting_requirements");
+            ScrollReviewTo(form, "Заявленные изделия (не назначение установленных деталей):"); Layout(form, "node_mounting_members");
+            ScrollReviewTo(form, "Номинальные базы по размерным линиям альбома"); Layout(form, "node_mounting_nominal");
+            ScrollReviewTo(form, "1. Основание — монтажная база КР2"); Layout(form, "node_mounting_requirements");
             Profile(form, "169,999"); // A real field edit must invalidate even while preview is displayed.
             Check(form.Geometry == null && !Find<Button>(form, "insert_node").Enabled && !Find<TextBox>(form, "node_review").Visible, "Input edit reused a previously valid preview");
             Check(Review(form) == "", "Input edit retained a stale hidden mounting report");
@@ -212,11 +219,11 @@ internal static class NodeUiProbe
             Profile(form, "170"); Surface(form, 2); Click(form, "check_node");
             Check(form.Geometry == null && Find<TextBox>(form, "node_status").Text.Contains("мембраны"), "Selected membrane accepts missing coordinate");
             Surface(form, 1); form.ClientSize = new Size(620, 420); Layout(form, "node_small");
-            Click(form, "check_node"); ScrollReviewTo(form, "1. Основание — монтажная база КР2.");
+            Click(form, "check_node"); ScrollReviewTo(form, "Номинальные базы по размерным линиям альбома");
             Layout(form, "node_mounting_small"); Click(form, "back_node");
             form.Font = new Font("Segoe UI", 12f); form.ClientSize = new Size(1100, 800); Layout(form, "node_large_font");
             Click(form, "check_node"); Layout(form, "node_large_font_review");
-            ScrollReviewTo(form, "7. Допустимые сочетания изделий."); Layout(form, "node_mounting_tail_large_font");
+            ScrollReviewTo(form, "7. Допустимые сочетания изделий"); Layout(form, "node_mounting_tail_large_font");
             Click(form, "cancel_node"); Check(form.Result == null, "Mounting review cancellation retained accepted input");
         }
         using (var form = Form(Fixture(new[] { 150.0, 50.0 }, 180)))
@@ -248,6 +255,19 @@ internal static class NodeUiProbe
                     Review(form).Contains("Монтажная пригодность: не подтверждена."), "Declared catalogue length changed local clearance or became mounting approval");
                 Check(Review(form).Contains("Длина L: " + bracketLength + " мм") && Review(form).Contains("Длина L: " + extenderLength + " мм"),
                     "Mounting review displayed a different selection's lengths");
+                // Independent numbers for these two explicit synthetic choices;
+                // neither constant is a permitted assembly offset or GP position.
+                string tip = bracketLength == 50 ? "52" : "352";
+                string heelConstant = bracketLength == 50 ? "152" : "502";
+                var nativeLines = Find<TextBox>(form, "node_review").Lines;
+                Check(nativeLines.Any(line => line.StartsWith("  Опорная поверхность КР2: x = 2 мм;")) &&
+                    nativeLines.Any(line => line.StartsWith("  Свободный торец КР2: x = " + tip + " мм;")),
+                    "Native review lost the source-derived nominal contact/tip for this selected bracket");
+                Check(nativeLines.Any(line => line.StartsWith("Размерное тождество:") && line.Contains("= " + heelConstant + " мм − h")) &&
+                    nativeLines.Any(line => line.Contains("постоянная часть тождества не является выносом сборки")),
+                    "Native nominal identity became a numeric assembly offset or belongs to another selection");
+                Check(form.Geometry.ProfileNearFaceXMm == 170 && form.Geometry.GapText == "20",
+                    "Nominal catalogue chain replaced the independently declared GP coordinate or local gap");
                 Profile(form, "invalid"); Click(form, "check_node");
                 Check(form.Geometry == null && form.Result == null && Review(form) == "" && !Find<Button>(form, "insert_node").Enabled,
                     "Invalid input retained the former catalogue selection report");

@@ -12,7 +12,7 @@ using AFramePlugin;
 internal static class MountingCoreProbe
 {
     private static readonly JavaScriptSerializer Json = new JavaScriptSerializer { MaxJsonLength = int.MaxValue };
-    private static readonly List<object> Cases = new List<object>(), Baseline = new List<object>(), Numeric = new List<object>(), Performance = new List<object>();
+    private static readonly List<object> Cases = new List<object>(), Baseline = new List<object>(), Numeric = new List<object>(), Performance = new List<object>(), Nominal = new List<object>();
     private static FrameSolutionSelection Sample;
     private static int Checks, Failed;
     private static void Need(bool condition, string message) { Checks++; if (!condition) throw new Exception(message); }
@@ -30,7 +30,9 @@ internal static class MountingCoreProbe
     private static void MustStayUnconfirmed(FrameMountingAssessmentResult r)
     {
         Need(r.MountingStatus == "not_confirmed" && !r.AutomaticBracketSelectionAllowed, "local geometry unlocked assembly/selection");
-        Need(r.Dependencies.Count == 7 && r.Dependencies.All(d => d.State == "not_confirmed"), "mounting blockers lost");
+        Need(r.Dependencies.Count == 7 && r.Dependencies.Take(2).All(d => d.State == "partially_confirmed") &&
+            r.Dependencies.Skip(2).All(d => d.State == "not_confirmed"), "nominal evidence erased or mounting blockers unlocked");
+        Need(r.NominalChain.UkPlacementStatus == "underdetermined", "symbolic identity assigned UK placement");
         Need(r.DeclaredMembers.Count == 3, "declared members lost");
     }
     private static void ReadOnly(IList list)
@@ -39,6 +41,70 @@ internal static class MountingCoreProbe
     public static int Main(string[] args)
     {
         Sample = FrameSolutionSelection.FromDict(Json.DeserializeObject(File.ReadAllText(args[0])));
+        Case("engineer: same local planes distinguish source-derived KR2 datums without assigning UK overlap", () => {
+            var expected = new[] {
+                new { length = 50.0, tip = 52.0, uk100 = 152.0, uk150 = 202.0 },
+                new { length = 200.0, tip = 202.0, uk100 = 302.0, uk150 = 352.0 },
+                new { length = 350.0, tip = 352.0, uk100 = 452.0, uk150 = 502.0 } };
+            foreach (var row in expected) foreach (double uk in new[] {100.0,150.0})
+            {
+                var s = Selected(); s.bracket.L_mm = row.length; s.extender.L_mm = uk;
+                var g = FrameNodeGeometry.Evaluate(s, Local()); string before = GeometryText(g);
+                var r = FrameMountingAssessment.Evaluate(s, g); var n = r.NominalChain; MustStayUnconfirmed(r);
+                Need(n.Datums.Select(d => d.Id).SequenceEqual(new[] {"wall","pad_outer","kr2_contact","kr2_free_tip"}), "nominal base identity/order changed");
+                Need(n.Datums.Select(d => d.ValueMm).SequenceEqual(new[] {0.0,2.0,2.0,row.tip}), "wrong mounting side of L or duplicate sheet thickness");
+                Need(n.UkLengthMm == uk && n.UkHeelConstantMm == (uk == 100 ? row.uk100 : row.uk150), "symbolic chain lost actual selected catalogue lengths");
+                Need(n.UkHeelIdentity.EndsWith(n.UkHeelConstantText + " мм − h", StringComparison.Ordinal), "unknown overlap silently removed");
+                Need(n.OverlapDefinition.Contains("знаковая разность") && n.OverlapDefinition.Contains("частичном") && n.OverlapDefinition.Contains("не допустимая"), "projected overlap advertised as approved engagement");
+                Need(before == GeometryText(g) && r.LocalGapText == "20" && r.CanInsertDimensionalScheme, "nominal chain altered old plane geometry");
+                Need(r.ReviewText().Contains("Свободный торец КР2: x = " + n.Datums.Last().ValueText + " мм") &&
+                    r.ReviewText().Contains("Число h, положение УК и допустимый ход не определены"), "review hides actual nominal result or missing limits");
+                Nominal.Add(new {kr_length=row.length,uk_length=uk,kr_contact=2.0,kr_free_tip=n.Datums.Last().ValueMm,
+                    uk_heel_constant=n.UkHeelConstantMm,uk_placement=n.UkPlacementStatus,local_gap=r.LocalGapText,
+                    mounting_status=r.MountingStatus,automatic_selection=r.AutomaticBracketSelectionAllowed});
+            }
+            for (int length=50; length<=350; length+=10)
+            {
+                var s=Selected(); s.bracket.L_mm=length; var n=Report(s).NominalChain;
+                Need(n.Datums.Last().ValueMm==length+2 && n.Datums.Last().ValueText==(length+2).ToString(CultureInfo.InvariantCulture), "catalogue length lost exact nominal edge");
+            }
+        });
+        Case("reviewer: local GP plane, profile size and cladding offset do not solve symbolic UK placement", () => {
+            var s=Selected(); var reference=Report(s).NominalChain;
+            foreach (double gp in new[] {170.0,180.0,200.0})
+            {
+                var r=Report(s,Local(gp)); MustStayUnconfirmed(r);
+                Need(r.NominalChain.UkHeelIdentity==reference.UkHeelIdentity && r.NominalChain.Datums.Last().ValueMm==202, "declared GP plane substituted for unknown UK heel");
+            }
+            foreach (double width in new[] {50.0,60.0,70.0,85.0})
+            {
+                s.bracket.nominal_width_mm=width; s.extender.nominal_width_mm=85; s.extender.execution="corrosion_resistant";
+                var r=Report(s); MustStayUnconfirmed(r);
+                Need(r.NominalChain.UkHeelIdentity==reference.UkHeelIdentity, "nominal label or material guessed a mounting offset");
+            }
+            s=Selected(250); s.profile.b_mm=70; s.profile.thickness_mm=1.5;
+            var alternate=Report(s); MustStayUnconfirmed(alternate);
+            Need(alternate.NominalChain.UkHeelIdentity==reference.UkHeelIdentity, "project GP section substituted for unknown contact datums");
+        });
+        Case("reviewer: nominal inference has exact sources and explicit installation conditions", () => {
+            var r=Report(Selected()); var n=r.NominalChain;
+            Need(n.Scope=="historical_nominal_undeformed_geometry", "nominal inference promoted to physical installation");
+            Need(n.Datums[0].Sources.Select(p=>p.PdfPage).SequenceEqual(new[] {20}), "wrong structural origin source");
+            Need(n.Datums[1].Sources.Select(p=>p.PdfPage).SequenceEqual(new[] {7,20}), "pad dimension missing assembly context");
+            Need(n.Datums.Skip(2).All(d=>d.Sources.Select(p=>p.PdfPage).SequenceEqual(new[] {6,7,20})), "bracket datums lack dimension, pad or orientation evidence");
+            Need(n.UkLengthSources.Select(p=>p.PdfPage).SequenceEqual(new[] {8,20}), "UK relative length lacks dimensional/orientation evidence");
+            Need(n.Datums.All(d=>d.Sources.All(p=>p.SourceSha256==r.SourceSha256)) && n.UkLengthSources.All(p=>p.SourceSha256==r.SourceSha256), "mixed source revision in chain");
+            Need(n.Conditions.Count==4 && n.Conditions.Any(t=>t.Contains("одной показанной ПП") && t.Contains("сжатие")) &&
+                n.Conditions.Any(t=>t.Contains("85") && t.Contains("не назначает")) && n.Conditions.Any(t=>t.Contains("допуски")), "ideal contact, tolerances or pad selection boundary hidden");
+            Need(r.Dependencies[0].ConfirmedPart.Contains("x = 2 мм") && r.Dependencies[0].Consequence.Contains("Номинальная база определена"), "old broad base refusal retained");
+            Need(r.Dependencies[1].ConfirmedPart.Contains("повторно не прибавляется") && r.Dependencies[1].Consequence.Contains("не является выносом"), "length endpoints mixed with assembly offset");
+            var engagement=r.Dependencies.Single(d=>d.Id=="kr2_uk_engagement");
+            Need(engagement.Sources.Select(p=>p.PdfPage).SequenceEqual(new[] {6,8,20,34,37,44,46}), "same-pair overlap evidence lost or attributed to wrong nodes");
+            Need(engagement.Sources.Skip(3).Select(p=>p.Sheet).SequenceEqual(new[] {"5.5","5.7","6.5","6.7"}), "analog sheet/page mapping incorrect");
+            Need(engagement.ConfirmedPart.Contains("min30 мм") && engagement.ConfirmedPart.Contains("других типов 2/3") &&
+                engagement.State=="not_confirmed" && engagement.NeededEvidence.Contains("Общего разрешения переноса min30"), "analog overlap rule promoted to pilot approval");
+            Need(r.ReviewText().Contains("к пластинам У2/У") && r.ReviewText().Contains("Его перенос на 4.2.1 не подтверждён"), "distinct min30 scopes collapsed");
+        });
         Case("reviewer: five valid catalogue selections never imply mounting compatibility", () => {
             foreach (string id in new[] { "declared_reference", "short_bracket", "long_bracket", "different_nominal_widths", "mixed_executions" })
             {
@@ -111,7 +177,9 @@ internal static class MountingCoreProbe
             Need(before == r.ReviewText(), "original selection mutation leaks into report");
             ReadOnly((IList)r.DeclaredMembers); ReadOnly((IList)r.Dependencies); ReadOnly((IList)r.OutsideCurrentAssessment);
             ReadOnly((IList)r.DeclaredMembers[0].Dimensions); ReadOnly((IList)r.Dependencies[0].Sources);
-            foreach (Type type in new[] { typeof(FrameMountingAssessmentResult), typeof(FrameMountingMember), typeof(FrameMountingDimension), typeof(FrameMountingDependency), typeof(FrameMountingSource) })
+            ReadOnly((IList)r.NominalChain.Conditions); ReadOnly((IList)r.NominalChain.Datums);
+            ReadOnly((IList)r.NominalChain.Datums[1].Sources); ReadOnly((IList)r.NominalChain.UkLengthSources);
+            foreach (Type type in new[] { typeof(FrameMountingAssessmentResult), typeof(FrameMountingMember), typeof(FrameMountingDimension), typeof(FrameMountingDependency), typeof(FrameMountingSource), typeof(FrameMountingNominalChain), typeof(FrameMountingNominalDatum) })
             {
                 Need(type.GetFields(BindingFlags.Instance | BindingFlags.Public).Length == 0, "public mutable field in " + type.Name);
                 Need(type.GetProperties().All(p => p.GetSetMethod() == null), "public setter in " + type.Name);
@@ -130,6 +198,8 @@ internal static class MountingCoreProbe
             {
                 s.profile.b_mm = value; s.profile.thickness_mm = value; var geometry = FrameNodeGeometry.Evaluate(s, Local()); string original = GeometryText(geometry);
                 r = FrameMountingAssessment.Evaluate(s, geometry); gp = r.DeclaredMembers.Single(m => m.FamilyId == "gp");
+                Need(r.NominalChain.Datums.Last().ValueMm==202 && r.NominalChain.UkHeelConstantMm==302 &&
+                    r.NominalChain.UkPlacementStatus=="underdetermined", "extreme project dimension entered nominal chain arithmetic");
                 foreach (var d in gp.Dimensions.Where(d => d.Basis == "project_declared"))
                 {
                     Need(d.ValueText == value.ToString("R", CultureInfo.InvariantCulture), "profile decimal text rounded");
@@ -173,7 +243,7 @@ internal static class MountingCoreProbe
             }
         });
         var sampleReport=Report(Selected());
-        File.WriteAllText(args[1],Json.Serialize(new {status=Failed==0?"PASS":"FAIL",checks=Checks,failed=Failed,cases=Cases,baseline=Baseline,numeric=Numeric,performance=Performance,
+        File.WriteAllText(args[1],Json.Serialize(new {status=Failed==0?"PASS":"FAIL",checks=Checks,failed=Failed,cases=Cases,baseline=Baseline,nominal_datums=Nominal,numeric=Numeric,performance=Performance,
             sample_report=sampleReport,review_text=sampleReport.ReviewText(),live_autocad_checked=false}));
         Console.WriteLine("Mounting assessment core: " + Checks + " checks; " + Failed + " failures.");
         return Failed==0?0:1;

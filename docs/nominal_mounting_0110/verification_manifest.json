@@ -1,0 +1,66 @@
+{
+  "status": "LOCAL_PASS_WINDOWS_CI_UI_PENDING",
+  "date_utc": "2026-10-01",
+  "branch": "feat/auto-reactor",
+  "base_commit": "7db1a937ac2da47f949bcca08e03dffd6090c0f0",
+  "product_commit": null,
+  "scope": "2Б5: nominal mounting datums from the same existing Vector-1 2015 album; signed UK chain remains unresolved; no new sources or adjustment approval",
+  "input_sha256_file": "input_sha256.json",
+  "input_files_count": 251,
+  "final_report_hashes_match_worktree": true,
+  "checks": {
+    "local_groups": 55,
+    "local_failed": 0,
+    "compiled_plugins": 3,
+    "mounting_core": 353,
+    "node_core": 1270,
+    "cad_groups": 36,
+    "rollback_failure_points": 54,
+    "independent_review": "PASS_AFTER_TEST_ANCHOR_CORRECTION",
+    "tutorial_replays": 5,
+    "windows_ci": "PENDING",
+    "windows_ui": "PENDING"
+  },
+  "performance": {
+    "new_cad_reads": 0,
+    "modelspace_scans": 0,
+    "cad_report": "cad.json",
+    "assessment": "O(1) new nominal calculations, 4 immutable datums; existing clone/validation/hash linear in selected fields/layers; no runtime files/network/Python",
+    "live_autocad_timing_verified": false
+  },
+  "guide": {
+    "manual": "docs/facades_beginner_3009/Facades_Beginner_Manual_30.09.docx",
+    "docx_sha256": "2c34cce452863fc9fdea067e4b01dade590a0c1be2b156d974cba4fa74a884ea",
+    "pages": 52,
+    "chapters": 20,
+    "figures": 10,
+    "dxf_files": 4
+  },
+  "reports": [
+    "source_facts.json",
+    "core.json",
+    "node_core.json",
+    "cad.json",
+    "local_gates.json",
+    "compile.json",
+    "independent_review.md",
+    "manual_review.json",
+    "test_fix_receipt.json",
+    "ui_anchor_check.json"
+  ],
+  "boundaries": {
+    "geometry_algorithm": "vector1_2015_4_2_1_planes/2",
+    "geometry_schema_changed": false,
+    "persisted_mounting_report": false,
+    "automatic_bracket_selection": false,
+    "assembly_compatibility": "not_confirmed",
+    "full_statics": "not_confirmed",
+    "other_systems_expanded": false,
+    "new_sources_used": false,
+    "numeric_overlap_or_travel_assigned": false
+  },
+  "live_autocad_checked": false,
+  "release_published": false,
+  "prior_release": "build-104",
+  "main_changed": false
+}

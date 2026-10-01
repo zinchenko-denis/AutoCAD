@@ -97,6 +97,31 @@ internal static class NodeCadProbe {
     MountingReports.Add(new{scenario=partial?"partial_local_geometry":"local_clearance_pass",text});
    }
   });
+  Check("actual nominal mounting report uses saved lengths without assigning overlap changing GP or adding CAD work",()=>{
+   string referencePlanes=null;long referenceReads=-1;int referenceVisits=-1;
+   foreach(var dimensions in new[]{new[]{50,100,52,152},new[]{350,150,352,502}}){
+    var f=Fresh();
+    using(var tr=new Transaction(f.Db)){
+     var previous=ProjectStore.ReadProject(tr,f.Db);var choice=FrameNodeGeometry.CloneSelection(f.Project.defaults);
+     choice.bracket.L_mm=dimensions[0];choice.extender.L_mm=dimensions[1];
+     f.Project=FrameProjectParameters.CreateNext(f.Project,choice);ProjectStore.WriteProject(tr,f.Db,previous,f.Project.ToDict());tr.Commit();
+    }
+    var n=DirectCreate(f);var stored=Read(f,n);var snapshot=stored.Snapshot;
+    string planes=Json.Serialize(snapshot.Result.Planes.Select(p=>new{id=p.Id,x=p.XMm}));
+    if(referencePlanes==null)referencePlanes=planes;else Need(planes==referencePlanes,"catalogue lengths changed the separately declared planes");
+    SetCheck(f,n);string before=Dump(f);ProjectCadCounters.Reset();new FrameNodeCommand().Node();string text=f.Doc.Editor.Messages;
+    Need(text.Contains("Опорная поверхность КР2: x = 2 мм;")&&text.Contains("Свободный торец КР2: x = "+dimensions[2]+" мм;"),"check did not use saved selected length for nominal KR2 tip");
+    Need(text.Contains("= "+dimensions[3]+" мм − h")&&text.Contains("Число h, положение УК и допустимый ход не определены."),"check assigned a numeric assembly offset or concealed unknown overlap");
+    Need(text.Contains("постоянная часть тождества не является выносом сборки")&&text.Contains("Монтажная пригодность: не подтверждена."),"nominal arithmetic became assembly approval");
+    Need(snapshot.Result.ProfileNearFaceXMm==170&&snapshot.Result.GapText=="20"&&snapshot.Result.CanInsert,"nominal report replaced the user GP coordinate or clearance decision");
+    Need(Dump(f)==before&&ProjectCadCounters.DataWrites==0,"read-only nominal report changed DWG or snapshot");
+    Need(ProjectCadCounters.ProjectRecordReads==1&&ProjectCadCounters.ZoneRecordReads==1&&ProjectCadCounters.ModelSpaceEnumerations==0,"nominal report introduced source rereads or drawing search");
+    if(referenceReads<0){referenceReads=ProjectCadCounters.ObjectReads;referenceVisits=ProjectCadCounters.PrimitiveVisits;}
+    else Need(ProjectCadCounters.ObjectReads==referenceReads&&ProjectCadCounters.PrimitiveVisits==referenceVisits,"length variants added CAD work beyond the existing node");
+    var verified=Read(f,n);Need(verified.RecordDigest==stored.RecordDigest&&verified.DrawingDigest==stored.DrawingDigest&&verified.CadContentDigest==stored.CadContentDigest,"nominal diagnostic changed the stored planes/2 or CAD body digests");
+    MountingReports.Add(new{scenario="nominal_kr2_"+dimensions[0]+"_uk_"+dimensions[1],object_reads=referenceReads,primitive_visits=referenceVisits,text});
+   }
+  });
   Check("actual mounting report is withheld for stale copied changed body unit mismatch and cancelled node checks",()=>{
    for(int mode=0;mode<5;mode++){
     var f=Fresh();var n=DirectCreate(f);

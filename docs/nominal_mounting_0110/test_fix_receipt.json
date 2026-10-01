@@ -1,0 +1,11 @@
+{
+  "status": "CORRECTED_BEFORE_PUBLICATION",
+  "scope": "UI test scroll anchors only",
+  "found_by": "independent code review; old strings absent in actual executed C# ReviewText",
+  "cause": "Dependency rows now contain an explicit state before the final period; old exact anchors 1 and 7 included that period.",
+  "correction": "Use stable title prefixes, assert all five anchors occur in the actual report.",
+  "anchor_report": "ui_anchor_check.json",
+  "product_code_changed_for_fix": false,
+  "windows_ui": "PENDING",
+  "local_gate_note": "Only NodeUiProbe.cs changed during local full gates; it is not consumed by those groups or plugin compilation. All consumed source hashes are verified; current UI probe separately compiled and awaits Windows execution."
+}

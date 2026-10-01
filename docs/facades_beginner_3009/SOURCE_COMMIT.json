@@ -1,5 +1,5 @@
 {
-  "product_commit": "2bc0e7da05fa287c758a5359646593ad3d0ca05e",
+  "product_commit": null,
   "illustration_product_commit": "8360c238f342d82c1dd83c63789729506c34df18",
   "illustration_source_manifest": "assets/source_manifest.json",
   "illustration_engine_hashes_match_current": false,
@@ -19,9 +19,9 @@
     "Facades/src/AFacadesPlugin/XlsxWriter.cs",
     "Facades/src/AFacadesPlugin/ZoneCommand.cs"
   ],
-  "current_product_source_manifest": "../mounting_assessment_0110/input_sha256.json",
-  "docx_sha256": "ea2099b475a52713a71d93565ff5e0784ee32904676e40fb27e35f7ffcecf5ee",
-  "pages": 51,
+  "current_product_source_manifest": "../nominal_mounting_0110/input_sha256.json",
+  "docx_sha256": "2c34cce452863fc9fdea067e4b01dade590a0c1be2b156d974cba4fa74a884ea",
+  "pages": 52,
   "chapters": 20,
   "figures": 10,
   "dxf_files": 4,
@@ -29,9 +29,9 @@
   "release_published": false,
   "illustration_replay_manifest": "../node_geometry_0110/manual_examples.json",
   "illustration_geometry_matches_current": true,
-  "provenance_note": "Guide 2Б4 reviewed against published mounting assessment sources; 51 pages, 10 existing illustrations and 4 DXF unchanged, 5 example replays PASS. Live AutoCAD remains pending.",
-  "product_base_commit": "29dd38627ebb756dc3ef42f8db8a76a0e52a7d59",
-  "product_source_state": "Published and Windows check211/UI verified",
+  "provenance_note": "Guide 2Б5 reviewed against final C# sources: nominal bases and scoped min30 analogues. 10 existing illustrations and 4 DXF unchanged; 5 example replays PASS. Product commit will be bound after publication.",
+  "product_base_commit": "7db1a937ac2da47f949bcca08e03dffd6090c0f0",
+  "product_source_state": "Final tested working tree for nominal mounting datums; publication pending",
   "product_source_sha256": {
     ".github/workflows/check.yml": "6cb20a97f9c2d0b7918b9e93ae7911c53d66260b620720440dc931e73a530f81",
     "AClad/bundle/AClad.bundle/PackageContents.xml": "c6c5853eb59e213c1633b1b0750980c4728f00d2d86d6998f37d0677099c6fdc",
@@ -92,7 +92,7 @@
     "AFrame/src/AFramePlugin/FrameBoundedForm.cs": "6992b2f5978aa33ba0b74676fbbaf970dfce44ca769a9339b0f3b5e02adf61c4",
     "AFrame/src/AFramePlugin/FrameCommand.cs": "944d50dc7db753b931437691ca116a5cb6b07f6e84a7507265936b535274ad80",
     "AFrame/src/AFramePlugin/FrameForm.cs": "e81d2d073b595d8812208483b02a505a698b5173f7b1f8d728fd3ebbbfbd4e23",
-    "AFrame/src/AFramePlugin/FrameMountingAssessment.cs": "a3500fa56d0cbe80d09f8784ea347d28ece7b9a2d91bf6a2882ff12f1059e018",
+    "AFrame/src/AFramePlugin/FrameMountingAssessment.cs": "647be5999387b05fed54a0394164e40cb0eaef30d2d058164a61824ecf028b20",
     "AFrame/src/AFramePlugin/FrameNodeCommand.cs": "d36b97c1ff93fe1d749ab0c140f198441b48b5e82305c1254d5cadafac390a22",
     "AFrame/src/AFramePlugin/FrameNodeDrawing.cs": "42d24cf17582e84da1293a26ff059a0c49ec37f9c1063f3eaa72835bf5e62b88",
     "AFrame/src/AFramePlugin/FrameNodeForm.cs": "0d72badf1fac4189e75150cdbdd97dfd3114ff2bf2dab4f70590084107052c08",
@@ -220,11 +220,11 @@
     "tools/manual_quantities_0110/test_manual_core_perf.py": "439736655a45425d866884cca741170bb727aec926928b4a0d245d67a6e4e4db",
     "tools/manual_quantities_0110/test_manual_output.py": "846b1b1eeed729d6257c2e63553e2926b62aec1ba635693a75e7ecd1e1e059b8",
     "tools/mounting_assessment_0110/MountingBaselineProbe.cs": "d2d527d5dabb2b238c13800475a5c8a87e8fabee68fdb3485a0aaa59760a6411",
-    "tools/mounting_assessment_0110/MountingCoreProbe.cs": "df5fa4f7718ee932e0dd7f0944ad822ae740a9408643f7903c2416b7bc4789ca",
+    "tools/mounting_assessment_0110/MountingCoreProbe.cs": "4c5ee3ae69a52896af72529e8a0e5b197108b83fc40223b05ed464bad222bb74",
     "tools/mounting_assessment_0110/reproduce_baseline.py": "ee6f561d34c6d86ba9b3a6630365d0a573d8c045a4ed005561c10d151016b337",
     "tools/mounting_assessment_0110/test_core.py": "757248a4ec88d5a25890798d9944ededc8f7c537453f0f633f9758406b5b2d7b",
     "tools/node_geometry_0110/NodeCadDoubles.cs": "cf532061c902d851ff51ed24860ebcbe07a65654856f301fd8cd814206d93882",
-    "tools/node_geometry_0110/NodeCadProbe.cs": "f8f816ee653ced3033e5009a3dfdaa6c34d53adb9535f37e63222966049513de",
+    "tools/node_geometry_0110/NodeCadProbe.cs": "b995be4e97f36ccaf114a06240edc5d8474d9165d42a10570b519fabcf4e5029",
     "tools/node_geometry_0110/NodeCommandDoubles.cs": "25389153e65be4e70b75a61a4204b1a9a622152663c72fcced4fb585c8943f59",
     "tools/node_geometry_0110/NodeCoreProbe.cs": "745dc882c3b62ab5793227a96307a404aad72136ed28e84e925804e0bdd1f468",
     "tools/node_geometry_0110/expected_digests.json": "91ac8ee6536b84a7ac454847415c82b654c1ac77a34fdd46f3d7ee917a53c4fa",
@@ -232,7 +232,7 @@
     "tools/node_geometry_0110/render_drawings.py": "a7f68d57ff56454e1497efa646a90424cf866a3448aeaaf889f19eb41832fe40",
     "tools/node_geometry_0110/test_core.py": "189b81037ad30025bad1e4d32eb6c1d46853ffe2eb35e57b6d88a42190b23f33",
     "tools/node_geometry_0110/test_node_cad.py": "d3c0668daca6fd6fa2d74b020f5be02ec82a246007e4c1f672f48fcb7bac164a",
-    "tools/node_ui_0110/NodeUiProbe.cs": "32e21794f3274e93e61a0ae46eb28ddf4ba86709f22c06f829146baf9f5ad09a",
+    "tools/node_ui_0110/NodeUiProbe.cs": "e98348f08f8b7df05467725c97a79fba0f95b3a536aab6c4a2bce8bc4e2690ca",
     "tools/node_ui_0110/test_ui.py": "f4fc3f945815b685933f23352576f9415182852cf5d359dffa238ecd5153042c",
     "tools/project_params_0110/CommandIntegrationProbe.cs": "9d716ab8fde46b62edb02b029ae1ebdc4c1ed99ef0892880c91af6cff6e8ef7c",
     "tools/project_params_0110/CoreProbe.cs": "e513e9eab0e94e2f90523e82c2a5d782084c73cbcbac13ef98c6bc580c88b304",
@@ -285,5 +285,5 @@
     "tools/static_review_3009/reproduce_model_gap.py": "490a2efa068cf85adae09156f8bbe56d826458e530ece7604fcd4f1394f2a362",
     "tools/xmod_check.py": "fb8a1e62e30584df66261913b85978531a7cf1e65ec8e4ce7c643ae3fd0acf79"
   },
-  "validated_commit": "2bc0e7da05fa287c758a5359646593ad3d0ca05e"
+  "validated_commit": null
 }

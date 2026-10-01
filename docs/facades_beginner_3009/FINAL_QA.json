@@ -1,31 +1,31 @@
 {
-  "docx_sha256": "ea2099b475a52713a71d93565ff5e0784ee32904676e40fb27e35f7ffcecf5ee",
-  "manual_source_sha256": "7f396ed4b6e52359e20d48aae46d1d2afc34ce11cbfd9af4995dde2f28564599",
-  "builder_sha256": "00333cf6ceadd01df88c18b154e12e3a3dc4e21911f6b8c0b31227a73a20c9df",
-  "pages": 51,
+  "docx_sha256": "2c34cce452863fc9fdea067e4b01dade590a0c1be2b156d974cba4fa74a884ea",
+  "manual_source_sha256": "c7fff8f9c3e75a059cf4ac1e37a30dca7f9360f10a543398bac6f552bae839d6",
+  "builder_sha256": "aa38a617cd9ee3a23e4d86bc0f5d2ad404871ff5177e1504a3f6293228ed4252",
+  "pages": 52,
   "chapters": 20,
   "figures": 10,
   "dxf_files": 4,
-  "edition": "2Б4 separate mounting report in source after build-104; no installer release for stages 2Б1–2Б4",
+  "edition": "2Б5 partial nominal mounting chain in source after build-104; no installer release for stages 2Б1–2Б5",
   "visual_review": "PASS",
   "reviewed_ranges": [
     {
-      "pages": "1-51",
+      "pages": "1-52",
       "reviewer": "catalog_manual",
-      "method": "All 51 pages rendered. Pages 2 and 4-40 byte-identical to the previously reviewed edition. Every changed or new page 1, 3 and 41-51 opened individually at original resolution. No clipping, overlap, broken glyphs or unusable table splits found.",
+      "method": "All 52 pages rendered. Pages 2 and 4-40 byte-identical to the previously reviewed edition. Every changed or new page 1, 3 and 41-52 opened individually at original resolution. Page 47 top margin additionally inspected from the actual PNG crop and PDF text bounding boxes to distinguish display cropping from document clipping. No clipping, overlap, broken glyphs or unusable table splits found.",
       "result": "PASS"
     },
     {
-      "pages": "41,42,48",
+      "pages": "41,42,49",
       "reviewer": "root",
-      "method": "Independent original-resolution view of the mounting report, successful snapshot check behavior and handoff. Readability, list/table flow and source limits accepted; no overflow found.",
+      "method": "Independent view of nominal mounting bases, the formula with unknown overlap and handoff. Text readable, split table repeats its header, no new layout findings.",
       "result": "PASS"
     }
   ],
   "page_png_sha256": {
-    "page-1.png": "41dfb26e9c3ce289108abe0d96b14a453e5ce465aa8202b271183aff2e5d68ef",
+    "page-1.png": "b02b83ff13585ca0825e52fdee500db0eadf7a828dabfe476d978c3b3eef67cc",
     "page-2.png": "d9ea2ffa7fc98a59aedffbf9db17052f9f599e619117c29cca0d145f68caed9f",
-    "page-3.png": "f88b27516b649c97f6d7e9522c565041513444cc44c1b01db033d00d393d734d",
+    "page-3.png": "48904e40eaba1eaf0998cef9b4f3f9e358b35a6e25484479c94bbbb0277a7177",
     "page-4.png": "96be51246b75a40acc40e8479533265b53a7d77a67469d0a942a3ea01dd2d6b1",
     "page-5.png": "5c8a759f09f8334b19ad9d13c491689059fc5b0b36f786ab90c3bf75b2104eea",
     "page-6.png": "497d81392ecf63fbfd49c1a6ac4288fd6276c8a491e91a5aea9bcf37ad8725e6",
@@ -63,17 +63,18 @@
     "page-38.png": "ba226931ecf221e1d140be57c64b975c56f71ad48778f753f3bc4749d05fb791",
     "page-39.png": "51b3a016920d2882d37ea9e8cc00138782e48ff1e640f353d4214ec8be430ef3",
     "page-40.png": "d5110df2d4b4c90b1ce1afae9a53ebfc15993009143a15a98f21f9c68cd3a1a3",
-    "page-41.png": "69e9f8b5b470d0d5cbaf0589765ae3d387024712456d4f3cb4fbd02762060118",
-    "page-42.png": "69482fda864a0c45c2a1e2da64334dfb77c1e1fe8335d50204479ece086bfea0",
-    "page-43.png": "b6c169c2b74e88cdf069104a0721da588023e76cc73a15b5d84170d5dc2db754",
-    "page-44.png": "9e4d40ee7c9b57840c7e76135dfe02fcd19c4af96ae042a84c6b8220773020d8",
-    "page-45.png": "23d25f1ff6e3cb32ceecafb165cfcb196601756bf53454eb16ab8907e7ecb088",
-    "page-46.png": "d5294d9d494f63b564b4e43daa15d71fb5ee72398338a8fe5b3a79aff9a83880",
-    "page-47.png": "9a513218596d6e99f19bc69a2814d198effdcb3c6f96aa849dd8cfb58c3d0382",
-    "page-48.png": "91f0a1f6e116dbd605874250ab672b275dc0b2bd6ec84fe89a600f493580ba9c",
-    "page-49.png": "17d5113e9d13294c93d24044a4dc08e2b8b854b67014d82fd595efd9309cd89f",
-    "page-50.png": "a33e298757d1fc6f436575a29b8a9843764814e907d2ba96a7926e4d83c569ad",
-    "page-51.png": "b53b13c7da258635dbaa09e3d2b69a1c7b8d1c130feaaf27afca10e59fc4f20b"
+    "page-41.png": "bb25f57a461536862d4f7d4dd62a584673dcfcda684fd64d0415a4ac664dbd09",
+    "page-42.png": "14aa4eab405cce4258ae6f14c6d9af2cfe2ec4cc332be7f0c8f37bf0e8a88b44",
+    "page-43.png": "8aca596915d32bd737456d9aeb2695167303b75b271bbd1b4ae8c954f5e79e3a",
+    "page-44.png": "51dc33d58a6d784c48dd686f9561174c763151311ed94e6e9fdeaac298d4b765",
+    "page-45.png": "b6ab182180b9b2b485678cbb2ec7b963bb65ec39d1da30844e7d5e1fd73cf515",
+    "page-46.png": "0f4c4606c966905a102f8bdfb5f46b8cf07f0b08caa1fdba0115b1418f42cae6",
+    "page-47.png": "925b8daa1d84e440d4b64a966f119417135d88d1cc5e71af05d3f59c560d6197",
+    "page-48.png": "47b254cf5ba7ec93b72785e6fc9ac82c94ee87683d10497d2681d06e055b9c4f",
+    "page-49.png": "baebb5e9bb3dd982df34267f2885a83f81863b5850650c31b3cf18ece53d20cc",
+    "page-50.png": "cf962327ed6dc00bccc745285a175fca0f1a6385dfa0e586121d1d477b984af6",
+    "page-51.png": "b03fc4fb3090f4be6d381b19c461cf769b7bb4cf31df4f174d04d8772a765205",
+    "page-52.png": "e72dad45255ad157dd20a98cd8fe4501bfa814f9cb1e90e2e4f34517f440d655"
   },
   "accessibility_audit": {
     "high": 0,
@@ -97,14 +98,14 @@
     "assets/03_reference_rect.dxf": "ba23618841da27508cea2df96a02fe04a80e1af866853c7231f502e8b504d12e",
     "assets/04_reference_gable.dxf": "ee6f21c676e59868c735e64bda4c0e6402c0e759a68e704e54f8b4c278a524fa"
   },
-  "tutorial_replay_expected_receipt": "../mounting_assessment_0110/manual_examples.json",
+  "tutorial_replay_expected_receipt": "../nominal_mounting_0110/manual_examples.json",
   "tutorial_replay": {
     "checks": 5,
     "passed": true,
-    "receipt_sha256": "eb9239e1630d78eb50ca8de4a822a355cc14a3c0e9d845fb6807d608ff1761b2",
+    "receipt_sha256": "4631189d7df31bf0277fa608bc9ef2322a14522da132b274ba1d89629f3075a4",
     "engine_source_files": 35,
     "engine_sources_unchanged_after_replay": true,
-    "scope": "Saved tutorial requests and independent saved geometry/quantity references only; not a test of the new mounting report."
+    "scope": "Saved tutorial requests and independent saved geometry/quantity references only; not a test of the new nominal mounting chain."
   },
   "live_autocad": false,
   "release_published": false,
@@ -114,19 +115,25 @@
     "pages": 42
   },
   "prior_visual_review": {
-    "docx_sha256": "c9254368cbe045af4e7371b51e8faae23d8d70bae7f258f8c3d54327918a76a4",
-    "pages": 50,
+    "docx_sha256": "ea2099b475a52713a71d93565ff5e0784ee32904676e40fb27e35f7ffcecf5ee",
+    "pages": 51,
     "result": "PASS",
     "reviewed_ranges": [
       {
-        "pages": "1-50",
+        "pages": "1-51",
         "reviewer": "catalog_manual",
-        "method": "After adding the algorithm-version refusal paragraph, all 50 pages rendered again. Pages 1-40 byte-identical to the previously reviewed edition. Every changed page 41-50 opened individually at original resolution; paragraph continuation, repeated table headers, page margins and final chapter checked. No clipping, overlap, broken glyphs or unusable table splits found.",
+        "method": "All 51 pages rendered. Pages 2 and 4-40 byte-identical to the previously reviewed edition. Every changed or new page 1, 3 and 41-51 opened individually at original resolution. No clipping, overlap, broken glyphs or unusable table splits found.",
+        "result": "PASS"
+      },
+      {
+        "pages": "41,42,48",
+        "reviewer": "root",
+        "method": "Independent original-resolution view of the mounting report, successful snapshot check behavior and handoff. Readability, list/table flow and source limits accepted; no overflow found.",
         "result": "PASS"
       }
     ]
   },
-  "last_content_change": "Added the separate read-only ATFNODE mounting report: three declared members, source locators, seven unconfirmed mounting dependencies, no automatic bracket selection, and no DWG mutation during a successful current-snapshot check.",
+  "last_content_change": "Added the qualified nominal mounting chain for PP/KR2 and the UK identity with unknown signed overlap; two dependencies partially confirmed, actual installation and whole assembly not confirmed, min30 on other type nodes not transferred to the pilot.",
   "content_review_sources": [
     "AFrame/src/AFramePlugin/FrameMountingAssessment.cs",
     "AFrame/src/AFramePlugin/FrameNodeForm.cs",
@@ -134,10 +141,9 @@
   ],
   "scope_limit": "Document visual QA and tutorial replay do not establish mounting suitability, complete mounting contract, product CI success or live AutoCAD acceptance.",
   "content_review": {
-    "reviewer": "mount_architecture",
+    "reviewer": "datum_model",
     "result": "PASS",
-    "scope": "Manual subsection checked against the actual core ReviewText: all seven dependencies, declared L, project b/c, local-status separation and read-only Check. No promise of automatic selection, mounting suitability or new engineering rules.",
-    "reviewed_core_sha256": "a3500fa56d0cbe80d09f8784ea347d28ece7b9a2d91bf6a2882ff12f1059e018",
-    "ui_labels_confirmed_by": "mount_integration"
+    "scope": "Manual subsection 657–693 compared with the actual core ReviewText: nominal bases 0/2/2+L, 52/352 examples, no repeated metal thickness, signed h with unknown value and range, no GP substitution, two partially confirmed dependencies, and min30 analogues outside the pilot. No new inputs, automatic bracket selection or confirmation of overall mounting suitability.",
+    "reviewed_core_sha256": "647be5999387b05fed54a0394164e40cb0eaef30d2d058164a61824ecf028b20"
   }
 }
