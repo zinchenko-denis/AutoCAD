@@ -1,0 +1,64 @@
+{
+  "schema": "node_geometry_gap_baseline/1",
+  "source_commit": "6bd91ead2c03e0f7220cc2db02ce2d6c88148774",
+  "source_files_sha256": {
+    "AFrame/engine/frame_plan.py": "5c4b4bbbc8258d62e965c24604906cd819b6a06a04643425ed1770b07c5d7105",
+    "AFrame/engine/frame_solution_selection.py": "6490da6ced48715c4dce5ca357e0f54be9c035dd7bb6fc8d86b684f1d15f6aee",
+    "AFrame/engine/test_frame_solution_selection.py": "79b853ab20b95d491fc3e76f667fc7fb7106afa6ace7b5ae9d1ede191f99aceb"
+  },
+  "status": "REPRODUCED_NEW_FEATURE_GAP_NOT_LEGACY_REGRESSION",
+  "cases": [
+    {
+      "synthetic_user_input": {
+        "cladding_front_offset_mm": 180,
+        "cladding_offset_basis": "wall_structural_face_to_cladding_exterior",
+        "insulation_layers_mm": [
+          150,
+          50
+        ]
+      },
+      "outer_front_minus_insulation_mm": -20,
+      "engine_ok": true,
+      "error_code": null,
+      "geometry_effect": "existing_preset_only",
+      "rails_count": 2,
+      "brackets_count": 8,
+      "has_node_geometry": false
+    },
+    {
+      "synthetic_user_input": {
+        "cladding_front_offset_mm": 230,
+        "cladding_offset_basis": "wall_structural_face_to_cladding_exterior",
+        "insulation_layers_mm": [
+          100,
+          50
+        ]
+      },
+      "outer_front_minus_insulation_mm": 80,
+      "engine_ok": true,
+      "error_code": null,
+      "geometry_effect": "existing_preset_only",
+      "rails_count": 2,
+      "brackets_count": 8,
+      "has_node_geometry": false
+    },
+    {
+      "synthetic_user_input": {
+        "cladding_front_offset_mm": 230,
+        "cladding_offset_basis": "wall_structural_face_to_cladding_exterior",
+        "insulation_layers_mm": [
+          150,
+          50
+        ]
+      },
+      "outer_front_minus_insulation_mm": 30,
+      "engine_ok": true,
+      "error_code": null,
+      "geometry_effect": "existing_preset_only",
+      "rails_count": 2,
+      "brackets_count": 8,
+      "has_node_geometry": false
+    }
+  ],
+  "interpretation": "Current contract intentionally stores declarations; it does not check or draw node section. Even insulation exceeding exterior cladding offset gives engine ok, with geometry explicitly existing_preset_only. This baseline must not be advertised as a formerly promised engineering check."
+}

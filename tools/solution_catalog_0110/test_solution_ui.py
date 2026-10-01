@@ -19,7 +19,7 @@ sys.path.insert(0, str(ROOT / 'tools/quantities_3009'))
 from probe_runtime import available, command, compile_probe
 
 
-def main(probe=None, runner_path=None):
+def main(probe=None, runner_path=None, source_names=None):
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--out', type=Path)
     args = parser.parse_args()
@@ -27,9 +27,10 @@ def main(probe=None, runner_path=None):
     out.mkdir(parents=True, exist_ok=True)
     probe = Path(probe) if probe is not None else Path(__file__).with_name('SolutionUiProbe.cs')
     files = [probe]
-    files += [ROOT / 'AFrame/src/AFramePlugin' / name for name in (
+    names = source_names if source_names is not None else (
         'FrameForm.cs', 'FrameSettings.cs', 'FrameSolutionSelection.cs', 'FrameSolutionForm.cs',
-        'FrameProjectParameters.cs', 'FrameProjectForms.cs')]
+        'FrameProjectParameters.cs', 'FrameProjectForms.cs', 'FrameBoundedForm.cs')
+    files += [ROOT / 'AFrame/src/AFramePlugin' / name for name in names]
     tracked = files + [Path(__file__).resolve()] + ([Path(runner_path)] if runner_path is not None else [])
     manifest = {'status': 'BLOCKED', 'live_autocad_checked': False,
                 'source_sha256': {str(p.relative_to(ROOT)): hashlib.sha256(p.read_bytes()).hexdigest() for p in tracked}}

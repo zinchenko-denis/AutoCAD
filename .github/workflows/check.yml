@@ -281,6 +281,30 @@ jobs:
             project_parameters_ui_results/
           if-no-files-found: warn
 
+      - name: Pilot node geometry (exact core, actual CAD adapters and WinForms)
+        shell: pwsh
+        env:
+          PYTHONUTF8: "1"
+          PYTHONIOENCODING: "utf-8"
+        run: |
+          python tools/node_geometry_0110/test_core.py --out node_geometry_core_results
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          python tools/node_geometry_0110/test_node_cad.py --out node_geometry_cad_results
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          python tools/node_ui_0110/test_ui.py --out node_geometry_ui_results
+          exit $LASTEXITCODE
+
+      - name: Upload pilot node geometry evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: node-geometry
+          path: |
+            node_geometry_core_results/
+            node_geometry_cad_results/
+            node_geometry_ui_results/
+          if-no-files-found: warn
+
       - name: Facades quick gates (audits, contracts, synth)
         shell: bash
         env:

@@ -1,0 +1,28 @@
+{
+  "schema": "node_numeric_json_roundtrip_review/1",
+  "phase": "before",
+  "status": "REPRODUCED_IN_UNFINISHED_NEW_INCREMENT",
+  "source_sha256": {
+    "AFrame/src/AFramePlugin/FrameNodeGeometry.cs": "1ed2ec46b089f4417de4966399c8e9ae41ca42796e9f24510cd7e432ba016feb",
+    "AFrame/src/AFramePlugin/FrameProjectParameters.cs": "612c46eabcb1c7c80c86e5a3e0fed2153a809b8f2b1734b1e9b596e2e26ec7f1",
+    "AFrame/src/AFramePlugin/FrameSolutionSelection.cs": "cb25b6e890ce2f1e5ee458f1e378510d21f7205e529ee1894520ed686a3abd66"
+  },
+  "probe_sha256": "fc5adaffbfe8c3bfb415c5219002d29cf0ba5e22a915bd4114b27b90d01f9ab5",
+  "assembly_sha256": "f9de86a62f4636880b44607c7696f48a3cc251e0cbc2ece27b57ec906a430be1",
+  "probe_source": "using System;using System.Collections.Generic;using System.IO;using System.Web.Script.Serialization;using System.Globalization;using AFramePlugin;\nclass SnapshotProbe{static void Main(string[] args){var j=new JavaScriptSerializer();var s=FrameSolutionSelection.FromDict(j.DeserializeObject(File.ReadAllText(args[0])));s.geometry.insulation_layers_mm=new List<double>{76.53,58.41,186.72,120.77,17.39};s.geometry.cladding_front_offset_mm=null;\nvar project=FrameProjectParameters.CreateNext(null,s,\"0123456789abcdef0123456789abcdef\");var zone=FrameZoneParameters.CreateNext(null,project,new Dictionary<string,FrameParameterOverride>());var resolved=FrameParameterResolver.Resolve(project,new string('a',64),zone,new string('b',64),\"A1\",\"Z1\");\nvar input=FrameNodeGeometryInput.CreateDefault();input.clearance_surface.kind=FrameNodeClearanceSurface.Layers;input.profile_near_face_x_mm=BitConverter.Int64BitsToDouble(BitConverter.DoubleToInt64Bits(479.82)+1);\nvar snap=FrameNodeSnapshot.Create(s,resolved.Context,input,\"2026-10-01T00:00:00.0000000Z\");var dict=snap.ToDict();string serialized=j.Serialize(dict);var raw=(Dictionary<string,object>)j.DeserializeObject(serialized);var rawInput=(Dictionary<string,object>)raw[\"input\"];var n=rawInput[\"profile_near_face_x_mm\"];\ntry{var back=FrameNodeSnapshot.FromDict(raw);Console.WriteLine(j.Serialize(new{status=\"roundtrip_success\",profile_before=input.profile_near_face_x_mm,profile_after=back.Input.profile_near_face_x_mm,gap_before=snap.Result.GapText,gap_after=back.Result.GapText}));}\ncatch(FrameNodeGeometryException e){Console.WriteLine(j.Serialize(new{status=\"roundtrip_refusal\",code=e.Code,message=e.Message,profile_before=input.profile_near_face_x_mm.Value.ToString(\"R\",CultureInfo.InvariantCulture),parsed_type=n.GetType().Name,parsed_text=Convert.ToString(n,CultureInfo.InvariantCulture),converted_double=Convert.ToDouble(n).ToString(\"R\",CultureInfo.InvariantCulture),via_double_parse=double.Parse(Convert.ToString(n,CultureInfo.InvariantCulture),CultureInfo.InvariantCulture).ToString(\"R\",CultureInfo.InvariantCulture),gap_before=snap.Result.GapText}));}\n}}\n",
+  "observed": {
+    "status": "roundtrip_refusal",
+    "code": "E_NODE_DIGEST",
+    "message": "Снимок узла изменён или не соответствует пересчитанному результату.",
+    "profile_before": "479.82000000000005",
+    "parsed_type": "Decimal",
+    "parsed_text": "479.82000000000005",
+    "converted_double": "479.82000000000011",
+    "via_double_parse": "479.82000000000005",
+    "gap_before": "20.00000000000005"
+  },
+  "expected_after": "Serialization and actual JSON deserialization preserve typed input, exact gap text and snapshot digest. The original readonly snapshot must remain unchanged.",
+  "finding": "Mono decimal-to-double conversion changes one low bit for this valid input. A newly created snapshot cannot read its own JSON. Digest correctly refuses the altered number; parsing must preserve the input, not weaken the digest.",
+  "scope": "New unfinished ATFNODE increment; not a reopened legacy issue or live AutoCAD result.",
+  "live_autocad_checked": false
+}

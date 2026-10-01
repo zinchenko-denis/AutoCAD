@@ -1,0 +1,323 @@
+{
+  "schema": "node_geometry_independent_review/1",
+  "date": "2026-10-01",
+  "status": "PASS",
+  "base_commit": "a4cd2908213552437da93b4888145b3c6aeadd5b",
+  "scope": "Независимая read-only ревизия принятого source/numeric/interface контракта, конечного pure/CAD/UI кода и повторные синтетические проверки. Продуктовые файлы рецензент не менял.",
+  "reviewed_source_sha256": {
+    "AFrame/src/AFramePlugin/FrameNodeGeometry.cs": "cc73d9c0418f7d99718b1bcccdf6a624830ed984d9da276125043d7a0294f9df",
+    "AFrame/src/AFramePlugin/FrameNodeDrawing.cs": "42d24cf17582e84da1293a26ff059a0c49ec37f9c1063f3eaa72835bf5e62b88",
+    "AFrame/src/AFramePlugin/FrameNodeRenderer.cs": "80c0a621f592463b933c26414eb6a0db3985a9bd272cae72589568b0e1d19034",
+    "AFrame/src/AFramePlugin/FrameNodeStore.cs": "3a6bfdef84f62d1c97d5fb4dc51667671db1053635e6c4cb45a370073ad87ae5",
+    "AFrame/src/AFramePlugin/FrameNodeCommand.cs": "cc88ba17db4608ba99967330f24967a0f0cc278eaeef8f6cb29c97ff34909558",
+    "AFrame/src/AFramePlugin/FrameNodeForm.cs": "73cdfe7bc54bc713401239762e3e13b78e8409603dffb6035136b19992497b77",
+    "AFrame/src/AFramePlugin/FrameBoundedForm.cs": "6992b2f5978aa33ba0b74676fbbaf970dfce44ca769a9339b0f3b5e02adf61c4",
+    "Common/FacadeQuantityStore.Manual.cs": "3ce4bafdc88bf783237ced8f39a435a264f265d32977c01df8b828a16a1442bb"
+  },
+  "blocking_findings": [],
+  "closed_findings": [
+    {
+      "id": "known_plane_order",
+      "status": "CLOSED",
+      "meaning": "Известное пересечение или совпадение ГП с утеплителем теперь отказывается независимо от Unknown; min20 автоматически не вычисляется.",
+      "before": {
+        "path": "docs/node_geometry_0110/known_plane_order_before.json",
+        "sha256": "61ef5114980c493031d88301a2877c55c64932f808433e75e7cdc7d2b761152d"
+      },
+      "after": {
+        "path": "docs/node_geometry_0110/known_plane_order_after.json",
+        "sha256": "c7694862b56b830ab91954e440974bda27e161527e6c1c128437e75f854b39ef"
+      }
+    },
+    {
+      "id": "numeric_json_roundtrip",
+      "status": "CLOSED",
+      "meaning": "Собственный JSON-снимок сохраняет nextUp479.82 и точный gap20.00000000000005; digest остаётся строгим.",
+      "before": {
+        "path": "docs/node_geometry_0110/numeric_json_roundtrip_before.json",
+        "sha256": "59f7f62aaa1ea71e824fcffae973b344e9bf29bdc1298a4a69b44cf1ed14d0af"
+      },
+      "after": {
+        "path": "docs/node_geometry_0110/numeric_json_roundtrip_after.json",
+        "sha256": "5a6ecf155b532e9fe9e8927686dbe9a3b53855fd252b84ad0febfdcc3690530e"
+      }
+    },
+    {
+      "id": "cad_style_hash_coverage",
+      "status": "CLOSED",
+      "meaning": "Hash фактического тела учитывает рамку/фон/колонки MText, режим прозрачности объектов и прозрачность слоя; настоящий lifecycle negative-case проходит."
+    }
+  ],
+  "engineering": {
+    "scope": "Вектор-1, исторический альбом2015, тип1, узел4.2.1/PDF20, КР2+УК+ГП, керамогранит.",
+    "source_sha256": "7386f4152de455a5e2622704d51a98d8f05afd20050807f634eea4572de37142",
+    "source_review_boundary": "Прочитаны принятый source plan и канонический registry; новых численных утверждений по первоисточнику эта ревизия не добавляет.",
+    "preserved_boundaries": [
+      "min20 относится к локальному просвету до ближайшей поверхности ГП от явно выбранной наружной поверхности утеплителя/мембраны. Вынос наружной облицовки и расчётное плечо остаются разными величинами.",
+      "Unknown не выбирает Layers автоматически. Layers с пустым списком отказывается. Частичная схема сохраняет Missing; clearance_pass означает только локальный просвет и может сохранять неполноту.",
+      "Номенклатурные длины КР2/УК не вычисляют положения плоскостей. min30 другого узла не переносится.",
+      "Нет новых SKU, сечений, прочности, автоподбора длины, анкеровки, регулировки, fixed/sliding, непрерывности стыков или полного BOM крепежа."
+    ]
+  },
+  "numeric": {
+    "status": "PASS",
+    "numeric_oracle_cases": 1200,
+    "seed": 207208,
+    "construction": "400 deterministic positive centesimal layer sets (1..8 layers), base coordinate exact sum+20; each evaluated at C# IEEE754 predecessor / base / successor. Oracle uses exact decimal arithmetic over original C# R representations.",
+    "source_sha256": {
+      "AFrame/src/AFramePlugin/FrameNodeGeometry.cs": "cc73d9c0418f7d99718b1bcccdf6a624830ed984d9da276125043d7a0294f9df",
+      "AFrame/src/AFramePlugin/FrameProjectParameters.cs": "612c46eabcb1c7c80c86e5a3e0fed2153a809b8f2b1734b1e9b596e2e26ec7f1",
+      "AFrame/src/AFramePlugin/FrameSolutionSelection.cs": "cb25b6e890ce2f1e5ee458f1e378510d21f7205e529ee1894520ed686a3abd66"
+    },
+    "probe_sha256": {
+      "ReviewProbe": "6451ba4418054ed7fc84f0dd4ea2961101cf91f040232e122416c690e5419ef8",
+      "SnapshotProbe": "fc5adaffbfe8c3bfb415c5219002d29cf0ba5e22a915bd4114b27b90d01f9ab5",
+      "NumericProbe": "794cd68533650ea9b3d74bc6506cca16cc5472b1c71cdde4fb1e265283e25ae6"
+    },
+    "numeric_fixture_sha256": "5044cdd11d6e8f204269dc8389b68a765d89708990f2c5dcb351667aca1f2ee5",
+    "numeric_results_sha256": "9d8dd188916e92138c2bdb9232658a7bf321327ad93ef8d1d6d2b9a4607fc465",
+    "cases_current": true,
+    "live_autocad_checked": false,
+    "bound_source_guard": "ValidateBoundSelection сверяет точные исходные defaults/overrides с resolved selection; численный дрейф даёт отказ, а не исправление старой проектной модели."
+  },
+  "immutable_provenance": [
+    "Результаты и примитивы имеют private-set значения и read-only коллекции; ToDict создаёт отделённые коллекции.",
+    "Snapshot отдаёт копии selection/context/input; FromDict заново вызывает Evaluate и сверяет digests, не принимает сохранённый флаг pass.",
+    "Снимок сохраняет полное решение и происхождение проекта/зоны; изменение ревизии или происхождения остаётся изменением источника даже при равных плоскостях."
+  ],
+  "cad": {
+    "status": "PASS",
+    "checks": 30,
+    "manifest_sha256": "7b158a6757b6cfff6d6d8901cace1c489ff590ff39027378a02ee50c3b67f659",
+    "source_sha256": {
+      "tools/node_geometry_0110/NodeCadDoubles.cs": "cf532061c902d851ff51ed24860ebcbe07a65654856f301fd8cd814206d93882",
+      "tools/node_geometry_0110/NodeCommandDoubles.cs": "25389153e65be4e70b75a61a4204b1a9a622152663c72fcced4fb585c8943f59",
+      "tools/node_geometry_0110/NodeCadProbe.cs": "e7d24f4e0f6fdca662a09fd0946faa8673ad2d83d0ff26462665b43efff73197",
+      "Common/FacadeProjectParameterStore.cs": "71c1c2283e260514ee633c525fb8174b0e155b8e595c6433c021dcec847b948e",
+      "AFrame/src/AFramePlugin/FrameSolutionSelection.cs": "cb25b6e890ce2f1e5ee458f1e378510d21f7205e529ee1894520ed686a3abd66",
+      "AFrame/src/AFramePlugin/FrameProjectParameters.cs": "612c46eabcb1c7c80c86e5a3e0fed2153a809b8f2b1734b1e9b596e2e26ec7f1",
+      "AFrame/src/AFramePlugin/FrameNodeGeometry.cs": "cc73d9c0418f7d99718b1bcccdf6a624830ed984d9da276125043d7a0294f9df",
+      "AFrame/src/AFramePlugin/FrameNodeDrawing.cs": "42d24cf17582e84da1293a26ff059a0c49ec37f9c1063f3eaa72835bf5e62b88",
+      "AFrame/src/AFramePlugin/FrameNodeRenderer.cs": "80c0a621f592463b933c26414eb6a0db3985a9bd272cae72589568b0e1d19034",
+      "AFrame/src/AFramePlugin/FrameNodeStore.cs": "3a6bfdef84f62d1c97d5fb4dc51667671db1053635e6c4cb45a370073ad87ae5",
+      "AFrame/src/AFramePlugin/FrameNodeCommand.cs": "cc88ba17db4608ba99967330f24967a0f0cc278eaeef8f6cb29c97ff34909558",
+      "tools/node_geometry_0110/test_node_cad.py": "9f85d25212bd5a5fef21d5c667a0c58c2b65522bf98968b9be19b27f3b8f3c99",
+      "tools/quantities_3009/probe_runtime.py": "2d37fb13990a1b24129dfe79a81ce138875e3c86ef3211d1a3a4f9ec40d150e5"
+    },
+    "sources_unchanged_during_run": true,
+    "cases": [
+      {
+        "name": "actual node command cancellation at action selection entity form and point leaves drawing untouched",
+        "status": "PASS"
+      },
+      {
+        "name": "actual node command refuses unbound and unverified source without creating project defaults",
+        "status": "PASS"
+      },
+      {
+        "name": "actual node command creates one honest snapshot without changing project or binding",
+        "status": "PASS"
+      },
+      {
+        "name": "actual node command recomputes rejected input even if form returns OK",
+        "status": "PASS"
+      },
+      {
+        "name": "actual renderer/store partial snapshot preserves permanent missing-check explanation",
+        "status": "PASS"
+      },
+      {
+        "name": "actual create fresh phase refuses project zone and geometry changes after point preview",
+        "status": "PASS"
+      },
+      {
+        "name": "actual create raw CAS refuses semantically equal project and zone rewrites",
+        "status": "PASS"
+      },
+      {
+        "name": "actual create rolls back every persistent mutation boundary",
+        "status": "PASS"
+      },
+      {
+        "name": "actual node renderer store roundtrip validates actual CAD body and snapshot",
+        "status": "PASS"
+      },
+      {
+        "name": "actual node store refuses copied owner and damaged record without scanning drawing",
+        "status": "PASS"
+      },
+      {
+        "name": "actual node body digest detects line text and primitive-set tampering",
+        "status": "PASS"
+      },
+      {
+        "name": "actual node transform keeps translation planar rotation but refuses physical scale mirror or tilt",
+        "status": "PASS"
+      },
+      {
+        "name": "actual node renderer refuses dynamic references attributes and foreign definition",
+        "status": "PASS"
+      },
+      {
+        "name": "actual node record distinguishes absent copied stale and damaged ownership",
+        "status": "PASS"
+      },
+      {
+        "name": "actual node record refuses reference substitution and invalid schema fields",
+        "status": "PASS"
+      },
+      {
+        "name": "actual body verification detects text style borders and transparency changes",
+        "status": "PASS"
+      },
+      {
+        "name": "actual own-body verification rejects clipping or unsupported extension dictionaries",
+        "status": "PASS"
+      },
+      {
+        "name": "actual node command unit contract refuses non-mm and cancellation of unitless confirmation",
+        "status": "PASS"
+      },
+      {
+        "name": "actual unitless affirmative contract persists and later unit changes are not silent",
+        "status": "PASS"
+      },
+      {
+        "name": "actual node command converts UCS pick once and rejects UCS change during pick",
+        "status": "PASS"
+      },
+      {
+        "name": "actual node check is read-only both current and stale project",
+        "status": "PASS"
+      },
+      {
+        "name": "actual create reads each source once per phase and verifies canonical geometry twice",
+        "status": "PASS"
+      },
+      {
+        "name": "actual check detects equal effective parameters with changed origin and removed binding",
+        "status": "PASS"
+      },
+      {
+        "name": "actual body reader capacity and source record limits reject without truncation",
+        "status": "PASS"
+      },
+      {
+        "name": "actual creation rejects late UCS units and deleted canonical owner before first write",
+        "status": "PASS"
+      },
+      {
+        "name": "actual node store requires explicit soft-reference translation contract",
+        "status": "PASS"
+      },
+      {
+        "name": "actual node definition units origin and drawing capacity stay explicit",
+        "status": "PASS"
+      },
+      {
+        "name": "actual create isolates current text style and preserves blocked destination layer",
+        "status": "PASS"
+      },
+      {
+        "name": "actual read-only check distinguishes deleted zone and explicit new generation",
+        "status": "PASS"
+      },
+      {
+        "name": "actual node CAD work stays bounded with unrelated ModelSpace and repeated checks",
+        "status": "PASS"
+      }
+    ],
+    "reviewed_invariants": [
+      "Create читает одну выбранную каноническую зону и проект. Check читает только собственное тело и прямые ссылки источников; ModelSpace не перечисляется.",
+      "До первой записи повторно проверяются raw CAS, fingerprint, единицы и UCS. Отмена/ошибки в actual-command doubles не оставляют изменений.",
+      "Xrecord сохраняет self/definition/zone soft pointers, XlateReferences=true и literal handles. COPY, подмена определения, повреждённые ссылки и неизвестные данные отказываются.",
+      "Hash наблюдает фактические примитивы и значимое оформление. Дополнительные extension/filter данные, чужие типы, динамические блоки и атрибуты отвергаются.",
+      "Перенос и поворот XY разрешены. Масштаб, зеркало, наклон, смена единиц и устаревшие источники отказываются.",
+      "Слой/имя блока отделены от каркаса; exact marker запрещает регистрацию схемы как одной ручной детали. Check не регенерирует и не меняет проект или зону."
+    ]
+  },
+  "performance": {
+    "complexity": "Pure: несколько линейных проходов по L слоям. CAD: собственные P примитивов и один context источника; расчёт не вызывается на каждую направляющую или весь DWG.",
+    "capacity": "4096 примитивов — технический предел программы с отказом, без усечения; не инженерная норма.",
+    "core_observations": [
+      {
+        "kind": "layers",
+        "count": 1,
+        "elapsed_ms": 0.4354,
+        "bytes": 2628,
+        "planes": 4,
+        "dimensions": 4
+      },
+      {
+        "kind": "layers",
+        "count": 100,
+        "elapsed_ms": 3.8614,
+        "bytes": 35434,
+        "planes": 103,
+        "dimensions": 103
+      },
+      {
+        "kind": "layers",
+        "count": 1000,
+        "elapsed_ms": 32.5704,
+        "bytes": 343256,
+        "planes": 1003,
+        "dimensions": 1003
+      },
+      {
+        "kind": "independent_operations",
+        "count": 1,
+        "elapsed_ms": 0.5648000000000001
+      },
+      {
+        "kind": "independent_operations",
+        "count": 100,
+        "elapsed_ms": 44.2962
+      },
+      {
+        "kind": "independent_operations",
+        "count": 1000,
+        "elapsed_ms": 449.4599
+      }
+    ],
+    "cad_observations": [
+      {
+        "operations": 1,
+        "object_reads": 62,
+        "primitive_visits": 47,
+        "project_reads": 1,
+        "zone_reads": 1,
+        "elapsed_ms": 7.9065,
+        "claim": "synthetic only; no native host time"
+      },
+      {
+        "operations": 100,
+        "object_reads": 6200,
+        "primitive_visits": 4700,
+        "project_reads": 100,
+        "zone_reads": 100,
+        "elapsed_ms": 633.4085,
+        "claim": "synthetic only; no native host time"
+      },
+      {
+        "operations": 1000,
+        "object_reads": 62000,
+        "primitive_visits": 47000,
+        "project_reads": 1000,
+        "zone_reads": 1000,
+        "elapsed_ms": 6937.768300000001,
+        "claim": "synthetic only; no native host time"
+      }
+    ],
+    "unrelated_modelspace_fixture_count": 10000,
+    "modelspace_enumerations": 0,
+    "timing_boundary": "Синтетические наблюдения; не обещание скорости живого AutoCAD."
+  },
+  "remaining_validation": [
+    "Полные repository gates и окончательная компиляция остаются под ответственностью root.",
+    "Windows numeric golden и native WinForms visual review — отдельные gates.",
+    "Живой AutoCAD должен проверить вставку, GetPoint/UCS/DUCS, COPY, Save/reopen, Undo, шрифт и фактическое сохранение тела."
+  ],
+  "live_autocad_checked": false,
+  "release_approved_by_this_review": false
+}

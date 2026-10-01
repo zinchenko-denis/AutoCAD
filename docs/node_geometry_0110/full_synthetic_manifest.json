@@ -1,0 +1,130 @@
+{
+  "status": "PASS",
+  "results": [
+    {
+      "name": "zones",
+      "arguments": [
+        "Facades/tools/zones_synth.py"
+      ],
+      "returncode": 0,
+      "seconds": 109.111
+    },
+    {
+      "name": "tile",
+      "arguments": [
+        "AClad/tools/attile_synth.py"
+      ],
+      "returncode": 0,
+      "seconds": 79.35
+    },
+    {
+      "name": "frame_2909",
+      "arguments": [
+        "AFrame/tools/frame_synth.py",
+        "--seed",
+        "2909"
+      ],
+      "returncode": 0,
+      "seconds": 44.357
+    },
+    {
+      "name": "roles_2909",
+      "arguments": [
+        "tools/roles_synth.py",
+        "--seed",
+        "2909"
+      ],
+      "returncode": 0,
+      "seconds": 13.026
+    },
+    {
+      "name": "frame_77",
+      "arguments": [
+        "AFrame/tools/frame_synth.py",
+        "--seed",
+        "77"
+      ],
+      "returncode": 0,
+      "seconds": 44.886
+    },
+    {
+      "name": "roles_77",
+      "arguments": [
+        "tools/roles_synth.py",
+        "--seed",
+        "77"
+      ],
+      "returncode": 0,
+      "seconds": 11.863
+    },
+    {
+      "name": "frame_5",
+      "arguments": [
+        "AFrame/tools/frame_synth.py",
+        "--seed",
+        "5"
+      ],
+      "returncode": 0,
+      "seconds": 41.468
+    },
+    {
+      "name": "roles_5",
+      "arguments": [
+        "tools/roles_synth.py",
+        "--seed",
+        "5"
+      ],
+      "returncode": 0,
+      "seconds": 11.415
+    }
+  ],
+  "source_sha256": {
+    "AClad/engine/audit_clad.py": "881ae022233fbc6ff178d2ea2f4842eb4cf7547a8cb33a8a29e69c435aad8a92",
+    "AClad/engine/clad_engine.py": "cf7e3739c74517a6d4483572d19330901b11d6ef8f3eb4e95c42104645257e1e",
+    "AClad/engine/cladding_plan.py": "0eb923685b4a1319a31f8eb17bfe25059aaee22b8c7b85d40982b812af5e2e8e",
+    "AClad/engine/polygon_clip.py": "06bf6d81181d8f0732827a53169cbc5c8aa4f5615e7cc5ed5306b2ac4ae4c60f",
+    "AClad/engine/test_clad_engine.py": "7f4133e8cb1c5e139752ad16c8a26777ee691940169c8eb2c13f5b5f1972569b",
+    "AClad/engine/test_cladding_plan.py": "4461dea9f1f00e926d52f3d0b64562a281f036b8baed4dba8656c3d89314f97a",
+    "AClad/engine/test_tile_pattern.py": "d489eae004c47dde8fc3f32108e5721c6e050387dd8e8539b3e01f37f9e640c3",
+    "AClad/engine/tile_pattern.py": "3af9df2b123585ce33d0b8a616956c0c0ef5ba7a822acb6fa06555ace81eafce",
+    "AClad/tools/attile_synth.py": "85d734564895b88cbeb53f892e87b360db1063a36d01fdd624a923034c3b09a0",
+    "AFrame/engine/analiz_klu_poligon.py": "903a3080c4b01dea51e936560adba060f12f172fe13887bd2785456881f5fa27",
+    "AFrame/engine/assembly_catalog.json": "a202410e6c9872b73cf9f06183c6fc22b22280fb0dcbfb68e71561117d65456e",
+    "AFrame/engine/audit_frame.py": "7ce9adac3adddcb7619b88d789b78f4b811f9c890e9fd9b08f884b32ee4e2d48",
+    "AFrame/engine/dsverka_poligon.py": "a971bd36882c6663c0fcbc466de5e288d9aa1f4d1f6d55e5eb462ae5d635a1ec",
+    "AFrame/engine/frame_calc.py": "abe20fd3c0de0937ba0636914f083f7c48a7a65b3b4c85f05673278a95e1da88",
+    "AFrame/engine/frame_catalog.py": "947a0277f3a6202dff365c1de6e86c5832dbc2c97e2a810b99d500a5d6f6b163",
+    "AFrame/engine/frame_connections.py": "d4febc1ce6e147f1cbce29cb64690f2c3b592efe4e40b9c88da5c8a2dcc74985",
+    "AFrame/engine/frame_engine.py": "b4acaaa98f48f91e0019b04231bb2ca361059e8d6a4e587cdbb64eb432790529",
+    "AFrame/engine/frame_plan.py": "5c4b4bbbc8258d62e965c24604906cd819b6a06a04643425ed1770b07c5d7105",
+    "AFrame/engine/frame_rules.py": "511ec4ec48331034257859ccac70ef028a8c4b398acd7d5b238d778e3c63ea6f",
+    "AFrame/engine/frame_solution_catalog.py": "56e674855cc01e19bf2a0723dff1f3454497a99aef56f3de1b5bbf75c0d44764",
+    "AFrame/engine/frame_solution_selection.py": "6490da6ced48715c4dce5ca357e0f54be9c035dd7bb6fc8d86b684f1d15f6aee",
+    "AFrame/engine/frame_spatial.py": "003efc0e73b344d50d4465d2bc1bfc87f8ca149c7d443a1e7d9061e6dbfd6cec",
+    "AFrame/engine/frame_topology.py": "2455ab874309d1382591800acce35dd3bde04ea3be6519f8b1de89dd5514f5d5",
+    "AFrame/engine/systems.json": "e9ee0a4cf0c535473dd9931f9b2a3d86dd1d932fe18f84682ef3fd221fbc03c3",
+    "AFrame/engine/test_frame_calc.py": "f72160fe7a3483c35a6c0d7ef669a612e6e44defb95c33916a850c2a605d5239",
+    "AFrame/engine/test_frame_connections.py": "21f2c64b59b1a1f052eadcf1c69d1aa8f0e0e60ad42182f793ac914a16971353",
+    "AFrame/engine/test_frame_engine.py": "3d32ffb69a6e9bc5d229ed11201e7e09500b5f193859b6a2cbab190c73679270",
+    "AFrame/engine/test_frame_plan.py": "fa35454f0a80362fc17441d078feaaf18bcb271a84e599de82517329005708a6",
+    "AFrame/engine/test_frame_rules.py": "0f629daa13207e436eb5e425e1f4e3d7189d205ffc6956bceca0427eb237b26e",
+    "AFrame/engine/test_frame_solution_selection.py": "79b853ab20b95d491fc3e76f667fc7fb7106afa6ace7b5ae9d1ede191f99aceb",
+    "AFrame/engine/test_frame_topology.py": "88f59edd4e8543ec3c444eb3557dbe7a10b922318362ca82360675da1c11586c",
+    "AFrame/engine/test_frame_topology_index.py": "d8e139847c458cdf87fddf24b7c790e15e479ff4c2bbbd3a4848757e6560a1a7",
+    "AFrame/src/AFramePlugin/FrameProjectParameters.cs": "612c46eabcb1c7c80c86e5a3e0fed2153a809b8f2b1734b1e9b596e2e26ec7f1",
+    "AFrame/src/AFramePlugin/FrameSettings.cs": "a44273b52d3ee92407d5dfc98315d6750d3aa57b7259cc2b98e4432757198cda",
+    "AFrame/src/AFramePlugin/FrameSolutionSelection.cs": "cb25b6e890ce2f1e5ee458f1e378510d21f7205e529ee1894520ed686a3abd66",
+    "AFrame/tools/frame_synth.py": "fb0507eefce7efdd8293bb895b6159eeca3c28643709e679a2d7f9f4c767c013",
+    "AFrame/tools/roles/RolesDump.cs": "e9c9ab08adcc6e98969b8b23306cb56815a29921efe838cdc1ca9f461a63a280",
+    "Common/catalogs/vector1_2015_type1_historical.json": "4df8a3d9925595aa2d3d90af63d73be6bf1f68169685e3dc77ee19632023ca26",
+    "Facades/engine/facade_zones.py": "a6d93dfc7b9e399be3dab4bb2a624c714b12fe79236503fe54c105122bfeea01",
+    "Facades/engine/facades_engine.py": "f0046539d586d75f0d3042b83b7e155f06762f84869721544cd6542fa27ad306",
+    "Facades/engine/test_facade_zones.py": "8465ae98a8b412db6e6f7b23242a34dada7475450b47294fb22785a02b47caf4",
+    "Facades/engine/test_facades_engine.py": "ce0f692df8747f5666aea690c6e346b79a7a4a65d54f8a48161c6af6a353d509",
+    "Facades/tools/zones_synth.py": "f8374fd437b8929af49b1d7cee6f68f2e0586d86579a7ec8539fe6961ba35131",
+    "tools/roles_synth.py": "ec12f51b944c51102baff9b211de8213a849ac9d87d873aab25866dd2dcbc4aa"
+  },
+  "sources_unchanged": true,
+  "live_autocad_checked": false,
+  "scope": "Existing real facade engine scenarios and native FrameSettings roles; new ATFNODE has separate actual core/CAD role cases."
+}

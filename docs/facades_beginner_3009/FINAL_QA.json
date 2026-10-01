@@ -1,33 +1,33 @@
 {
-  "docx_sha256": "d905ebcd18da9cb4dd36ea638bca9a2ed1e07bf4b8b1fc44c9185fb2fe5df1c9",
-  "manual_source_sha256": "9d9f7c77b6f205e9455710b68e3f28130f9611ad00d1699bafd80cbdadc28bb3",
-  "builder_sha256": "20d473f7bcd081e571e99982d95a750becc0b32ac4cbdb4ead4e3479118aeaaa",
-  "pages": 47,
+  "docx_sha256": "d79daaa1094203672512f8a7fdc7512e711178d75049059d4c8efd58407742fb",
+  "manual_source_sha256": "6182c60fc4e148cab6d7ddfe215a4d265803ec1fbaa0fe5901fa13711a22a050",
+  "builder_sha256": "4f038ecfc7f3b893f61ca4aea2b4811701a4efe65ae5c686b6777e9b8a471ced",
+  "pages": 50,
   "chapters": 20,
   "figures": 10,
   "dxf_files": 4,
-  "edition": "2Б2 source after build-104; no installer release for this edition",
+  "edition": "2Б3 source after build-104; no installer release for stages 2Б1–2Б3",
   "visual_review": "PASS",
   "reviewed_ranges": [
     {
-      "pages": "1-24",
-      "reviewer": "release_2a_audit",
-      "method": "Each page opened individually at original resolution. Final pages 3-5 rerendered and inspected again after moving long command names out of the first table. Remaining final pages byte-identical to the reviewed first render.",
+      "pages": "1-50",
+      "reviewer": "catalog_manual",
+      "method": "All first-render pages opened individually at original resolution. Final pages 1-39 byte-identical to that reviewed render; every changed final page 40-50 opened again individually at original resolution. No clipping, overlap, broken glyphs or unusable table splits found.",
       "result": "PASS"
     },
     {
-      "pages": "25-47",
-      "reviewer": "catalog_manual",
-      "method": "Each page opened individually at original resolution. Final page 38 rerendered and inspected again after clarifying independent zone revisions; other final pages byte-identical to the reviewed first render.",
+      "pages": "39-41,45-47 (first render); 40,41,46,47 (final render)",
+      "reviewer": "root",
+      "method": "Independent review of changed ATFNODE instructions, failures and handoff. Final page 39 byte-identical to reviewed first render. Apparent header clipping in the tool display checked against PDF bounding boxes and PNG pixels; the full header and table text are present. Final changed pages reopened and accepted.",
       "result": "PASS"
     }
   ],
   "page_png_sha256": {
-    "page-1.png": "4ece068826aa674c7423c85e634cd1dd54d3bff35428691477ab3b1ace91c97c",
+    "page-1.png": "eefbd04b9785cf6491d35e2c8156665e0ae2951966a572ef56c70cf991b503b1",
     "page-2.png": "d9ea2ffa7fc98a59aedffbf9db17052f9f599e619117c29cca0d145f68caed9f",
-    "page-3.png": "cfc93c88b05aed4f40714247ebb2114a393c93e49a48abf1cc8f247f78191ee7",
-    "page-4.png": "4317e62f04ee813196a46db8e5bac22afc27f64bdbb78631663122e03ecffb5c",
-    "page-5.png": "6917f2a3e6b5d0a83256c07b238e3adad79f1eb586ad3d4d85844c180cadf989",
+    "page-3.png": "ee8a0b0ba712136f8255e770158cc7f2f00316e00b1dd99cfdbdc73376a32d06",
+    "page-4.png": "96be51246b75a40acc40e8479533265b53a7d77a67469d0a942a3ea01dd2d6b1",
+    "page-5.png": "5c8a759f09f8334b19ad9d13c491689059fc5b0b36f786ab90c3bf75b2104eea",
     "page-6.png": "497d81392ecf63fbfd49c1a6ac4288fd6276c8a491e91a5aea9bcf37ad8725e6",
     "page-7.png": "7da728c1f860f040906297326ec30acb4bba063d182f7a6ecce58c64379c08aa",
     "page-8.png": "49d4c906c3560be7b019525e0b02515da2a77a22e02f52a291601aa426f66a61",
@@ -61,15 +61,18 @@
     "page-36.png": "37ebf678e7048fc29834ee71f7d2cc3707adddb7522f2e9afec1b2b9d9e2d644",
     "page-37.png": "15e14ec65a623c40da1719ed5d54a3b497477ade67eb3dc2d84ad6f1fabfc43a",
     "page-38.png": "ba226931ecf221e1d140be57c64b975c56f71ad48778f753f3bc4749d05fb791",
-    "page-39.png": "0acfa5c9258465e02a755f1a78c1984775c6d77c1e8fa987793f4e75331c46db",
-    "page-40.png": "620c452d0b50d280a9f9012369aadffff611adf1861322b51da1a683795c7f68",
-    "page-41.png": "45e2a63da5f6a89ede988819ce77e3b524e651c3b00f3fb7a9b4529ad891072c",
-    "page-42.png": "8449085039bc23477d5aff61db4d84bdf1648218e68403cd2a853a72f749e8a2",
-    "page-43.png": "1c063b4ace520ce0e41c7bc7d370298a4fabb595b477527d6db2bbf42a62c611",
-    "page-44.png": "7a8ab5aa1aa67e5ebd927b37007538d6b1e33ed9bceb4e0d1f7829787b1b9a7d",
-    "page-45.png": "84c6c61b084254cd67c25bdfe2505eba79cf27ab5f748756ab77da21c2b14907",
-    "page-46.png": "55ef2911aad990a145d027933b41bff8fafa9407369ae979a190f6c7dc873b80",
-    "page-47.png": "5f09d4630068e9d3f16692fb22db136c13ca34784ba69020de6a8ffd65a93714"
+    "page-39.png": "51b3a016920d2882d37ea9e8cc00138782e48ff1e640f353d4214ec8be430ef3",
+    "page-40.png": "d5110df2d4b4c90b1ce1afae9a53ebfc15993009143a15a98f21f9c68cd3a1a3",
+    "page-41.png": "270828f48fca76da9157d02c520a5f739fd52c3ac2bcea5b5ef80cb8489dfb0c",
+    "page-42.png": "80062faacc1615ded4e0c750e338755eca6d0fc4874f9344fb954131d7010a54",
+    "page-43.png": "75c0f353222ed6ffe6884395904d2365ef1bd20f866e2c14a7f45285d26b9e33",
+    "page-44.png": "a742501e6ad3d4560171f190dbc94bd94ab7b3d84d93d9c67a65acd642c084de",
+    "page-45.png": "a970fbdd8fdd64b69a1accf7df72a2f8f9f194a7c901689c3d13bdb86cb524b5",
+    "page-46.png": "13d1faaef6296d3277235955bc79d447cb8a369ed59c30a4af62a757476fa360",
+    "page-47.png": "b94d7eea89d1b6aee10192f8ffb5ae22a97672f39f5b19c7ecee5035adb9dd2b",
+    "page-48.png": "fe43573bc9d2bb439e233975cf9b6440d87bd92b825c94b933f3bd9f4835a7d4",
+    "page-49.png": "4ade8c1b9fe0a14e00a5f498a9e316ab937354b4e95e23511a8de5d90663ce8a",
+    "page-50.png": "0a5438f3dc4ba4b2b47a89dbc36b93ec4697d0506f40caab2af2a3045613ab17"
   },
   "accessibility_audit": {
     "high": 0,
@@ -93,7 +96,15 @@
     "assets/03_reference_rect.dxf": "ba23618841da27508cea2df96a02fe04a80e1af866853c7231f502e8b504d12e",
     "assets/04_reference_gable.dxf": "ee6f21c676e59868c735e64bda4c0e6402c0e759a68e704e54f8b4c278a524fa"
   },
-  "tutorial_replay_expected_receipt": "../project_params_0110/manual_examples.json",
+  "tutorial_replay_expected_receipt": "../node_geometry_0110/manual_examples.json",
+  "tutorial_replay": {
+    "checks": 5,
+    "passed": true,
+    "receipt_sha256": "75dcd73eb8326c1485fc700c8f3352979b3d65ecc023a11296a4bad84638b5de",
+    "engine_source_files": 35,
+    "engine_sources_unchanged_after_replay": true,
+    "scope": "Saved tutorial requests and independent saved geometry/quantity references only; not a test of ATFNODE."
+  },
   "live_autocad": false,
   "release_published": false,
   "prior_release": {

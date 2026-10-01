@@ -1,0 +1,56 @@
+{
+  "schema": "aframe_node_numeric_golden/1",
+  "algorithm_revision": "vector1_2015_4_2_1_planes/1",
+  "numeric": [
+    {
+      "name": "decimal_108_95_53_34",
+      "input_digest": "8da35f1141887a243ed68f64472c43d010168022d80cd121ceff0d35454776fa",
+      "result_digest": "dd1a52a7cc5a4f9a9470f5e9a731c70f1b87b7d73881acc80021722cc9701150"
+    },
+    {
+      "name": "decimal_85_03_37_89",
+      "input_digest": "cf113c237ba9690a6252f4a6467dd9288d994df81dfbdebd6d3fa1f59937e35a",
+      "result_digest": "0914130d4ddc88d986c6dee3e87ee0c2e0513a0b0998b7e6bdbbad1dc7d05a9b"
+    },
+    {
+      "name": "decimal_85_37_64",
+      "input_digest": "ccfceda3d867423c4a3936478cab269bdfc118070d0726bbdcfda87edf7fac15",
+      "result_digest": "592e35f154bf6375fb06a3db20941796de68645c93667e4c8b4ecb89e429bff5"
+    },
+    {
+      "name": "next_down_170",
+      "input_digest": "dfb3c7f7ad25413b2a5f2602aad3cc9e2d8066b21a579c618be6bdf2d97054f5",
+      "result_digest": "deaec31c10f20bab216e16cc3a1e5befc7b1c763442c019975a523c6756b5856"
+    },
+    {
+      "name": "exact_170",
+      "input_digest": "179ba8b06aee39aff57626bfa81b62557a9730a1b245853128b79a7b2257ca87",
+      "result_digest": "8fc461e5debc117fc98bc7e8c7e65dc1e4eac4bbc9916003113febd2693a4ff6"
+    },
+    {
+      "name": "next_up_170",
+      "input_digest": "571589d35b518c08e05649e968384b53c7f39a79654cd9ea35ca14dd953a06fd",
+      "result_digest": "9c8e29f09e325b14da869c9db9749db349af3861a9df8cb213dc6e7c1c4ddaa6"
+    },
+    {
+      "name": "gap_19_999",
+      "input_digest": "d00588712b9a20ca324b34a64151685e406c9b48624e3e0bc62720fe57bbc7bd",
+      "result_digest": "74b3c0736aee6181bf2c89e24767a30fa78908e502707f60f034ca25451aeb0b"
+    },
+    {
+      "name": "gap_20_001",
+      "input_digest": "7be23a8ed33c92595c82298415c8ba98c019cb81a0cd16ca9644394563d33348",
+      "result_digest": "5d0c61cc6f3a995ef694d40ecf9fb233aaec4484600d466b444e5252d8178351"
+    },
+    {
+      "name": "next_up_479_82",
+      "input_digest": "3ffa9df266f8e3ffe33089bff8552be74932163b197c557b8aaa4612558820f6",
+      "result_digest": "80443c2e7434e7e5b5204eabfea55b5dac680c2a6e1719ec79a99c070d3aba91"
+    }
+  ],
+  "snapshot": {
+    "input_digest": "ea61ea9de46ac1da19e285aba2cac71aabdeccbdd96be0e895ef7bad42637b6b",
+    "result_digest": "ec22a4b4cf25ea4b7fa017feba58e836ff0b0356a4ba864bf985c476127a50d6",
+    "snapshot_digest": "55c32a58b6a38a89ffffdac4b43f55877e701934b4edb3a5d3f53e20e6bdbbcd"
+  }
+}

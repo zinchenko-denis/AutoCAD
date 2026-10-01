@@ -1,0 +1,11 @@
+[
+  {"name":"decimal_108_95_53_34","gap_text":"20","clearance_status":"pass","can_insert":true},
+  {"name":"decimal_85_03_37_89","gap_text":"20","clearance_status":"pass","can_insert":true},
+  {"name":"decimal_85_37_64","gap_text":"20","clearance_status":"pass","can_insert":true},
+  {"name":"next_down_170","gap_text":"19.99999999999997","clearance_status":"fail","can_insert":false},
+  {"name":"exact_170","gap_text":"20","clearance_status":"pass","can_insert":true},
+  {"name":"next_up_170","gap_text":"20.00000000000003","clearance_status":"pass","can_insert":true},
+  {"name":"gap_19_999","gap_text":"19.999","clearance_status":"fail","can_insert":false},
+  {"name":"gap_20_001","gap_text":"20.001","clearance_status":"pass","can_insert":true},
+  {"name":"next_up_479_82","gap_text":"20.00000000000005","clearance_status":"pass","can_insert":true}
+]

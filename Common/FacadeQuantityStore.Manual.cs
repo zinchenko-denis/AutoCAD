@@ -14,7 +14,7 @@ namespace FacadeSafety
         private const string ManualDirectoryKey = "MANUAL_INDEXES";
         private const string ManualRulePrefix = "MANUAL_RULE_";
         private static readonly string[] ManualGeneratedKeys = { OwnerKey, ElementKey, FrameOwnerKey, FrameElementKey, FrameUnavailableKey,
-            "ATFZONE", "ATFZONE_GEOMETRY", "ATTILE", "ATCLAD", "ATFRAME", "ATFRAME_RAIL", "ATLAYOUT_CURRENT", "ATTILE_GEOMETRY", "ATCLAD_GEOMETRY" };
+            "ATFZONE", "ATFZONE_GEOMETRY", "ATTILE", "ATCLAD", "ATFRAME", "ATFRAME_RAIL", "ATLAYOUT_CURRENT", "ATTILE_GEOMETRY", "ATCLAD_GEOMETRY", "AFRAME_NODE_GEOMETRY" };
 
         public sealed class ManualBinding
         {

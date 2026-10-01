@@ -126,7 +126,7 @@ def main():
     doc.core_properties.title = 'Фасадные модули AutoCAD Руководство начинающего пользователя'
     doc.core_properties.subject = 'Зоны облицовка подсистема и ведомости'
     doc.core_properties.author = 'Фасадные модули AutoCAD'
-    doc.core_properties.keywords = 'AFacades AClad AFrame ATFZONE ATTILE ATFRAME ATFTABLE ATFPROJECT ATFZONEPARAMS'
+    doc.core_properties.keywords = 'AFacades AClad AFrame ATFZONE ATTILE ATFRAME ATFTABLE ATFPROJECT ATFZONEPARAMS ATFNODE'
     head = sec.header.paragraphs[0]; head.text = 'Фасадные модули AutoCAD  •  Руководство начинающего пользователя'
     for r in head.runs: r.font.size = Pt(8); r.font.color.rgb = BLACK
     footer = sec.footer.paragraphs[0]; footer.alignment = WD_ALIGN_PARAGRAPH.RIGHT
@@ -146,7 +146,7 @@ def main():
             n += 1; continue
         if line.startswith('## ') and not in_toc:
             p = doc.add_paragraph()
-            r = p.add_run('Редакция для исходников после build-bundle #104. Этапы 2Б1 и 2Б2 ещё не входят в установочный выпуск. Перед занятием проверьте версию трёх бандлов по разделу «Какой версией пользоваться».')
+            r = p.add_run('Редакция для исходников после build-bundle #104. Этапы 2Б1–2Б3 ещё не входят в установочный выпуск. Перед занятием проверьте версию трёх бандлов по разделу «Какой версией пользоваться».')
             r.bold = True
             doc.add_page_break()
             doc.add_paragraph('Содержание', style='Heading 1')

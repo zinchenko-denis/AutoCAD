@@ -1,0 +1,113 @@
+{
+  "schema": "node_known_plane_order_review/1",
+  "phase": "before",
+  "status": "REPRODUCED_IN_UNFINISHED_NEW_INCREMENT",
+  "source_sha256": {
+    "AFrame/src/AFramePlugin/FrameNodeGeometry.cs": "b00c27ea72da7885ae2c032842da315d12ead328bf554e1e92cd29bf0f7a36d3",
+    "AFrame/src/AFramePlugin/FrameProjectParameters.cs": "612c46eabcb1c7c80c86e5a3e0fed2153a809b8f2b1734b1e9b596e2e26ec7f1",
+    "AFrame/src/AFramePlugin/FrameSolutionSelection.cs": "cb25b6e890ce2f1e5ee458f1e378510d21f7205e529ee1894520ed686a3abd66"
+  },
+  "probe_sha256": "6451ba4418054ed7fc84f0dd4ea2961101cf91f040232e122416c690e5419ef8",
+  "assembly_sha256": "7ec259c36c7dcff653214044c130a18de72bb5ecdc5c9bbb48ac799a6006a60f",
+  "fixture": {
+    "origin": "AFrame/engine/test_frame_solution_selection.py:example_selection",
+    "overrides": {
+      "geometry.insulation_layers_mm": [
+        150
+      ],
+      "geometry.cladding_front_offset_mm": 230,
+      "clearance_surface.kind": "unknown",
+      "profile_near_face_x_mm": [
+        100,
+        150,
+        151,
+        169.999,
+        170
+      ]
+    }
+  },
+  "probe_source": "using System; using System.Collections.Generic; using System.Linq; using System.IO; using System.Web.Script.Serialization; using AFramePlugin;\nclass ReviewProbe {\n static JavaScriptSerializer J=new JavaScriptSerializer();\n static void Main(string[] args) {\n var sample=FrameSolutionSelection.FromDict(J.DeserializeObject(File.ReadAllText(args[0])));\n var result=new List<object>();\n foreach(var x in new[]{100d,150d,151d,169.999d,170d}) {\n  var s=sample.Clone();s.geometry.insulation_layers_mm=new List<double>{150};s.geometry.cladding_front_offset_mm=230;\n  var i=FrameNodeGeometryInput.CreateDefault();i.profile_near_face_x_mm=x;\n  var r=FrameNodeGeometry.Evaluate(s,i);\n  result.Add(new { name=\"unknown_surface_profile_at_\"+x, r.CanInsert,r.Status,r.ClearanceStatus,r.GapText,issues=r.Issues.Select(p=>p.Code).ToArray(),r.Missing });\n }\n foreach(var x in new[]{1e-28,1e-29}) {\n  var s=sample.Clone();s.geometry.insulation_layers_mm=new List<double>();s.geometry.cladding_front_offset_mm=null;\n  var i=FrameNodeGeometryInput.CreateDefault();i.profile_near_face_x_mm=x;\n  try { var r=FrameNodeGeometry.Evaluate(s,i);result.Add(new{name=\"small_\"+x,status=r.Status}); }catch(FrameNodeGeometryException e){result.Add(new{name=\"small_\"+x,code=e.Code,message=e.Message});}\n }\n Console.WriteLine(J.Serialize(result));\n }\n}\n",
+  "observed": [
+    {
+      "name": "unknown_surface_profile_at_100",
+      "CanInsert": true,
+      "Status": "partial",
+      "ClearanceStatus": "not_evaluated",
+      "GapText": null,
+      "issues": [],
+      "Missing": [
+        "поверхность проверки просвета с учётом мембраны"
+      ]
+    },
+    {
+      "name": "unknown_surface_profile_at_150",
+      "CanInsert": true,
+      "Status": "partial",
+      "ClearanceStatus": "not_evaluated",
+      "GapText": null,
+      "issues": [],
+      "Missing": [
+        "поверхность проверки просвета с учётом мембраны"
+      ]
+    },
+    {
+      "name": "unknown_surface_profile_at_151",
+      "CanInsert": true,
+      "Status": "partial",
+      "ClearanceStatus": "not_evaluated",
+      "GapText": null,
+      "issues": [],
+      "Missing": [
+        "поверхность проверки просвета с учётом мембраны"
+      ]
+    },
+    {
+      "name": "unknown_surface_profile_at_169.999",
+      "CanInsert": true,
+      "Status": "partial",
+      "ClearanceStatus": "not_evaluated",
+      "GapText": null,
+      "issues": [],
+      "Missing": [
+        "поверхность проверки просвета с учётом мембраны"
+      ]
+    },
+    {
+      "name": "unknown_surface_profile_at_170",
+      "CanInsert": true,
+      "Status": "partial",
+      "ClearanceStatus": "not_evaluated",
+      "GapText": null,
+      "issues": [],
+      "Missing": [
+        "поверхность проверки просвета с учётом мембраны"
+      ]
+    },
+    {
+      "name": "small_1E-28",
+      "status": "partial"
+    },
+    {
+      "name": "small_1E-29",
+      "code": "E_NODE_NUMERIC_PRECISION",
+      "message": "Число 1E-29 невозможно сохранить точно в десятичной схеме; округление не выполняется."
+    }
+  ],
+  "finding": "При неизвестной поверхности просвет не вычисляется, но известное пересечение ГП со слоями также не отвергается: GP100/150 и insulation150 допускают вставку partial. Требуется отдельная проверка порядка уже известных плоскостей, не автоматический выбор поверхности и не вычисление min20.",
+  "expected_after": {
+    "profile_near_face_x_mm_100": {
+      "can_insert": false,
+      "clearance_status": "not_evaluated"
+    },
+    "profile_near_face_x_mm_150": {
+      "can_insert": false,
+      "clearance_status": "not_evaluated"
+    },
+    "profile_near_face_x_mm_170": {
+      "can_insert": true,
+      "clearance_status": "not_evaluated"
+    }
+  },
+  "scope": "Новый незавершённый инкремент ATFNODE; не ошибка старого опубликованного модуля и не живая проверка AutoCAD.",
+  "live_autocad_checked": false
+}

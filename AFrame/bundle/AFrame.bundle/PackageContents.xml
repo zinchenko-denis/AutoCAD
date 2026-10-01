@@ -36,6 +36,9 @@
         <Command Global="ATFRAME" Local="ATFRAME" />
         <Command Global="ATFRAMEDIM" Local="ATFRAMEDIM" />
         <Command Global="ATDEDUP" Local="ATDEDUP" />
+        <Command Global="ATFPROJECT" Local="ATFPROJECT" />
+        <Command Global="ATFZONEPARAMS" Local="ATFZONEPARAMS" />
+        <Command Global="ATFNODE" Local="ATFNODE" />
       </Commands>
     </ComponentEntry>
   </Components>

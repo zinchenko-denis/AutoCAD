@@ -1,0 +1,148 @@
+{
+  "status": "LOCAL_PASS_WINDOWS_CI_UI_PENDING",
+  "date_utc": "2026-10-01",
+  "branch": "feat/auto-reactor",
+  "base_commit": "a4cd2908213552437da93b4888145b3c6aeadd5b",
+  "product_commit": null,
+  "input_sha256_file": "input_sha256.json",
+  "input_files_count": 246,
+  "inputs_unchanged_during_final_gates": true,
+  "checks": {
+    "mandatory_groups": {
+      "passed": 54,
+      "total": 54,
+      "manifest": "gates_manifest.json"
+    },
+    "facade_plugin_compile": {
+      "passed": 3,
+      "total": 3,
+      "manifest": "compile_manifest.json"
+    },
+    "full_synthetic_and_roles": {
+      "passed": 8,
+      "total": 8,
+      "manifest": "full_synthetic_manifest.json"
+    },
+    "node_core": {
+      "passed": 1234,
+      "manifest": "core_manifest.json"
+    },
+    "node_actual_cad": {
+      "passed": 30,
+      "rollback_mutation_points": 54,
+      "manifest": "cad_manifest.json"
+    },
+    "independent_review": {
+      "status": "PASS",
+      "manifest": "independent_review.json"
+    },
+    "drawing_previews": {
+      "passed": 3,
+      "manifest": "drawing_visual_review.json"
+    },
+    "tutorials": {
+      "passed": 5,
+      "manifest": "manual_examples.json"
+    },
+    "windows_ui": {
+      "status": "PENDING",
+      "expected_png": 31,
+      "live_autocad_checked": false
+    }
+  },
+  "performance": {
+    "core": [
+      {
+        "kind": "layers",
+        "count": 1,
+        "elapsed_ms": 0.6313000000000001,
+        "bytes": 2628,
+        "planes": 4,
+        "dimensions": 4
+      },
+      {
+        "kind": "layers",
+        "count": 100,
+        "elapsed_ms": 4.0339,
+        "bytes": 35434,
+        "planes": 103,
+        "dimensions": 103
+      },
+      {
+        "kind": "layers",
+        "count": 1000,
+        "elapsed_ms": 31.572100000000002,
+        "bytes": 343256,
+        "planes": 1003,
+        "dimensions": 1003
+      },
+      {
+        "kind": "independent_operations",
+        "count": 1,
+        "elapsed_ms": 0.4509
+      },
+      {
+        "kind": "independent_operations",
+        "count": 100,
+        "elapsed_ms": 37.1796
+      },
+      {
+        "kind": "independent_operations",
+        "count": 1000,
+        "elapsed_ms": 351.9843
+      }
+    ],
+    "cad": [
+      {
+        "operations": 1,
+        "object_reads": 62,
+        "primitive_visits": 47,
+        "project_reads": 1,
+        "zone_reads": 1,
+        "elapsed_ms": 8.546000000000001,
+        "claim": "synthetic only; no native host time"
+      },
+      {
+        "operations": 100,
+        "object_reads": 6200,
+        "primitive_visits": 4700,
+        "project_reads": 100,
+        "zone_reads": 100,
+        "elapsed_ms": 764.5272,
+        "claim": "synthetic only; no native host time"
+      },
+      {
+        "operations": 1000,
+        "object_reads": 62000,
+        "primitive_visits": 47000,
+        "project_reads": 1000,
+        "zone_reads": 1000,
+        "elapsed_ms": 6806.592500000001,
+        "claim": "synthetic only; no native host time"
+      }
+    ],
+    "claim": "Operation counts and synthetic timings only; no live AutoCAD time claim"
+  },
+  "guide": {
+    "pages": 50,
+    "chapters": 20,
+    "figures": 10,
+    "dxf_files": 4,
+    "docx_sha256": "d79daaa1094203672512f8a7fdc7512e711178d75049059d4c8efd58407742fb",
+    "visual_review": "all50pages plus independent changed-page review; FINAL_QA.json"
+  },
+  "boundaries": {
+    "pilot": "Vector-1 2015 type1 porcelain node4.2.1 KR2+UK+GP",
+    "coverage": "Declared planes/layers and explicitly based local clearance only",
+    "automatic_bracket_selection": false,
+    "full_assembly_geometry": false,
+    "native_dynamic_block": false,
+    "static_model_confirmed": false,
+    "old_catalogue_and_schemas_unchanged": true,
+    "modelspace_scan": false,
+    "expanded_systems_and_sftk": "deferred until live pilot acceptance"
+  },
+  "live_autocad_checked": false,
+  "release_published": false,
+  "prior_release": "build-104 stage2A only"
+}

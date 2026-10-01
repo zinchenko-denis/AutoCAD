@@ -1,0 +1,180 @@
+{
+  "status": "PASS",
+  "checks": 30,
+  "result": {
+    "status": "PASS",
+    "checks": 30,
+    "failed": 0,
+    "cases": [
+      {
+        "name": "actual node command cancellation at action selection entity form and point leaves drawing untouched",
+        "status": "PASS"
+      },
+      {
+        "name": "actual node command refuses unbound and unverified source without creating project defaults",
+        "status": "PASS"
+      },
+      {
+        "name": "actual node command creates one honest snapshot without changing project or binding",
+        "status": "PASS"
+      },
+      {
+        "name": "actual node command recomputes rejected input even if form returns OK",
+        "status": "PASS"
+      },
+      {
+        "name": "actual renderer/store partial snapshot preserves permanent missing-check explanation",
+        "status": "PASS"
+      },
+      {
+        "name": "actual create fresh phase refuses project zone and geometry changes after point preview",
+        "status": "PASS"
+      },
+      {
+        "name": "actual create raw CAS refuses semantically equal project and zone rewrites",
+        "status": "PASS"
+      },
+      {
+        "name": "actual create rolls back every persistent mutation boundary",
+        "status": "PASS"
+      },
+      {
+        "name": "actual node renderer store roundtrip validates actual CAD body and snapshot",
+        "status": "PASS"
+      },
+      {
+        "name": "actual node store refuses copied owner and damaged record without scanning drawing",
+        "status": "PASS"
+      },
+      {
+        "name": "actual node body digest detects line text and primitive-set tampering",
+        "status": "PASS"
+      },
+      {
+        "name": "actual node transform keeps translation planar rotation but refuses physical scale mirror or tilt",
+        "status": "PASS"
+      },
+      {
+        "name": "actual node renderer refuses dynamic references attributes and foreign definition",
+        "status": "PASS"
+      },
+      {
+        "name": "actual node record distinguishes absent copied stale and damaged ownership",
+        "status": "PASS"
+      },
+      {
+        "name": "actual node record refuses reference substitution and invalid schema fields",
+        "status": "PASS"
+      },
+      {
+        "name": "actual body verification detects text style borders and transparency changes",
+        "status": "PASS"
+      },
+      {
+        "name": "actual own-body verification rejects clipping or unsupported extension dictionaries",
+        "status": "PASS"
+      },
+      {
+        "name": "actual node command unit contract refuses non-mm and cancellation of unitless confirmation",
+        "status": "PASS"
+      },
+      {
+        "name": "actual unitless affirmative contract persists and later unit changes are not silent",
+        "status": "PASS"
+      },
+      {
+        "name": "actual node command converts UCS pick once and rejects UCS change during pick",
+        "status": "PASS"
+      },
+      {
+        "name": "actual node check is read-only both current and stale project",
+        "status": "PASS"
+      },
+      {
+        "name": "actual create reads each source once per phase and verifies canonical geometry twice",
+        "status": "PASS"
+      },
+      {
+        "name": "actual check detects equal effective parameters with changed origin and removed binding",
+        "status": "PASS"
+      },
+      {
+        "name": "actual body reader capacity and source record limits reject without truncation",
+        "status": "PASS"
+      },
+      {
+        "name": "actual creation rejects late UCS units and deleted canonical owner before first write",
+        "status": "PASS"
+      },
+      {
+        "name": "actual node store requires explicit soft-reference translation contract",
+        "status": "PASS"
+      },
+      {
+        "name": "actual node definition units origin and drawing capacity stay explicit",
+        "status": "PASS"
+      },
+      {
+        "name": "actual create isolates current text style and preserves blocked destination layer",
+        "status": "PASS"
+      },
+      {
+        "name": "actual read-only check distinguishes deleted zone and explicit new generation",
+        "status": "PASS"
+      },
+      {
+        "name": "actual node CAD work stays bounded with unrelated ModelSpace and repeated checks",
+        "status": "PASS"
+      }
+    ],
+    "performance": [
+      {
+        "operations": 1,
+        "object_reads": 62,
+        "primitive_visits": 47,
+        "project_reads": 1,
+        "zone_reads": 1,
+        "elapsed_ms": 8.546000000000001,
+        "claim": "synthetic only; no native host time"
+      },
+      {
+        "operations": 100,
+        "object_reads": 6200,
+        "primitive_visits": 4700,
+        "project_reads": 100,
+        "zone_reads": 100,
+        "elapsed_ms": 764.5272,
+        "claim": "synthetic only; no native host time"
+      },
+      {
+        "operations": 1000,
+        "object_reads": 62000,
+        "primitive_visits": 47000,
+        "project_reads": 1000,
+        "zone_reads": 1000,
+        "elapsed_ms": 6806.592500000001,
+        "claim": "synthetic only; no native host time"
+      }
+    ],
+    "rollback_failure_points": 54,
+    "live_autocad_checked": false,
+    "scope": "Actual node command/store/renderer/drawing/core with prompt and canonical-zone verification seams and explicit CAD in-memory model; no native COPY/Undo/UCS/Save guarantee"
+  },
+  "live_autocad_checked": false,
+  "source_sha256": {
+    "tools/node_geometry_0110/NodeCadDoubles.cs": "cf532061c902d851ff51ed24860ebcbe07a65654856f301fd8cd814206d93882",
+    "tools/node_geometry_0110/NodeCommandDoubles.cs": "25389153e65be4e70b75a61a4204b1a9a622152663c72fcced4fb585c8943f59",
+    "tools/node_geometry_0110/NodeCadProbe.cs": "e7d24f4e0f6fdca662a09fd0946faa8673ad2d83d0ff26462665b43efff73197",
+    "Common/FacadeProjectParameterStore.cs": "71c1c2283e260514ee633c525fb8174b0e155b8e595c6433c021dcec847b948e",
+    "AFrame/src/AFramePlugin/FrameSolutionSelection.cs": "cb25b6e890ce2f1e5ee458f1e378510d21f7205e529ee1894520ed686a3abd66",
+    "AFrame/src/AFramePlugin/FrameProjectParameters.cs": "612c46eabcb1c7c80c86e5a3e0fed2153a809b8f2b1734b1e9b596e2e26ec7f1",
+    "AFrame/src/AFramePlugin/FrameNodeGeometry.cs": "cc73d9c0418f7d99718b1bcccdf6a624830ed984d9da276125043d7a0294f9df",
+    "AFrame/src/AFramePlugin/FrameNodeDrawing.cs": "42d24cf17582e84da1293a26ff059a0c49ec37f9c1063f3eaa72835bf5e62b88",
+    "AFrame/src/AFramePlugin/FrameNodeRenderer.cs": "80c0a621f592463b933c26414eb6a0db3985a9bd272cae72589568b0e1d19034",
+    "AFrame/src/AFramePlugin/FrameNodeStore.cs": "3a6bfdef84f62d1c97d5fb4dc51667671db1053635e6c4cb45a370073ad87ae5",
+    "AFrame/src/AFramePlugin/FrameNodeCommand.cs": "cc88ba17db4608ba99967330f24967a0f0cc278eaeef8f6cb29c97ff34909558",
+    "tools/node_geometry_0110/test_node_cad.py": "9f85d25212bd5a5fef21d5c667a0c58c2b65522bf98968b9be19b27f3b8f3c99",
+    "tools/quantities_3009/probe_runtime.py": "2d37fb13990a1b24129dfe79a81ce138875e3c86ef3211d1a3a4f9ec40d150e5"
+  },
+  "sources_unchanged_during_run": true
+}

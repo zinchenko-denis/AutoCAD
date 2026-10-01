@@ -1,0 +1,36 @@
+{
+  "status": "PASS",
+  "reviewer": "root",
+  "scope": "Actual drawing primitives exported by native C# tests, SVG rendered with Inkscape and all3 PNG visually viewed. Does not emulate AutoCAD font metrics, DWG or plotting.",
+  "live_autocad_checked": false,
+  "cases": [
+    {
+      "scenario": "pass",
+      "primitives": 47,
+      "drawing_digest": "2663b67a3b5d4935ab97a753794b40b46ef237feb8fead5ca0d1a2e841b11491",
+      "source_sha256": "b47db14c7bc8dba973626f398e9bcc00e85bf702761e8973a12583bd7057c8f2",
+      "svg_sha256": "534a1040501503d14242dd380ebd786285ce74268625360c8fd6fc567400f36e",
+      "status": "PASS"
+    },
+    {
+      "scenario": "partial",
+      "primitives": 38,
+      "drawing_digest": "e9d21dc1788d1b8b1c8153945f81696b20dd86928614bd61526101937d81f40f",
+      "source_sha256": "374da4ec3de2acdbc333cf1ca142dd97afe983332e78cb516c9759747d5761ce",
+      "svg_sha256": "1363eaabb72fc0851d2e4be4b548c447e8eb85a66c9c297135880d75807c1813",
+      "status": "PASS"
+    },
+    {
+      "scenario": "eight_layers",
+      "primitives": 107,
+      "drawing_digest": "3460c06790f435e222034139dcd31424db59b52390258b899049dcfa77a14024",
+      "source_sha256": "5673754dc8036a1fbb34a768cbdbb37b15b811e5978f32709fd13e9d7e803cfe",
+      "svg_sha256": "ffe081cbdb7cbb08c8a8dc6f50959f1092e1fc105d10141169492befd21a3f90",
+      "status": "PASS"
+    }
+  ],
+  "files_sha256": {
+    "AFrame/src/AFramePlugin/FrameNodeDrawing.cs": "42d24cf17582e84da1293a26ff059a0c49ec37f9c1063f3eaa72835bf5e62b88",
+    "tools/node_geometry_0110/render_drawings.py": "a7f68d57ff56454e1497efa646a90424cf866a3448aeaaf889f19eb41832fe40"
+  }
+}

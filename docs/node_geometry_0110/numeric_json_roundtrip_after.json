@@ -1,0 +1,23 @@
+{
+  "schema": "node_numeric_json_roundtrip_review/1",
+  "phase": "after",
+  "status": "PASS",
+  "source_sha256": {
+    "AFrame/src/AFramePlugin/FrameNodeGeometry.cs": "cc73d9c0418f7d99718b1bcccdf6a624830ed984d9da276125043d7a0294f9df",
+    "AFrame/src/AFramePlugin/FrameProjectParameters.cs": "612c46eabcb1c7c80c86e5a3e0fed2153a809b8f2b1734b1e9b596e2e26ec7f1",
+    "AFrame/src/AFramePlugin/FrameSolutionSelection.cs": "cb25b6e890ce2f1e5ee458f1e378510d21f7205e529ee1894520ed686a3abd66"
+  },
+  "probe_sha256": "fc5adaffbfe8c3bfb415c5219002d29cf0ba5e22a915bd4114b27b90d01f9ab5",
+  "assembly_sha256": "3a977b85dc76d15300c7186b039324d4bb92fef0b396f30f8e4e495600af6e63",
+  "same_probe_as": "numeric_json_roundtrip_before.json",
+  "observed": {
+    "status": "roundtrip_success",
+    "profile_before": 479.82000000000005,
+    "profile_after": 479.82000000000005,
+    "gap_before": "20.00000000000005",
+    "gap_after": "20.00000000000005"
+  },
+  "interpretation": "Actual JavaScriptSerializer serialize/DeserializeObject roundtrip now preserves the explicit nextUp479.82 input and exact gap text; Snapshot.FromDict validates its original digest successfully. No digest weakening.",
+  "live_autocad_checked": false,
+  "final_core_replay": true
+}

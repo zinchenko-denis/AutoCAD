@@ -216,6 +216,16 @@ internal static class ManualCadCheck
             var block=new BlockFixture(z.Db,false);var sr=Rule(Observe(z.Tr,block.Insert),"frame","clamp","symbol");sr.rule_id="symbol-rule";Import(z,sr,block.Insert);
             var e=Physical(Read(z,true),2);Require(e.Single(x=>x.role=="rail").length_mm==5000&&e.Single(x=>x.role=="clamp").length_mm==null,"manual quantities guessed symbol length");
         });
+        Test("node_geometry_schema_cannot_be_registered_as_one_bracket",()=>{
+            var z=Zone();var block=new BlockFixture(z.Db,false);
+            var rule=Rule(Observe(z.Tr,block.Insert),"frame","bracket","symbol");
+            Require(Preview(z,rule,block.Insert).Preview.accepted_count==1,"unmarked explicit manual symbol unexpectedly refused");
+            Put(z.Tr,block.Insert,"AFRAME_NODE_GEOMETRY","{}");
+            var approved=Preview(z,rule,block.Insert);
+            Require(approved.Preview.accepted_count==0,"whole node schema accepted as one physical bracket");
+            Refuses(()=>FacadeQuantityStore.ApplyImport(z.Tr,z.Db,approved),"node schema adopted into manual quantities");
+            Require(!FacadeQuantityStore.HasManual(z.Tr,block.Insert),"refused schema received a manual binding");
+        });
         Test("reimport_preserves_identity_and_deduplicates_selected_handles",()=>{
             var z=Zone();var p=Rect(z.Db,100,100);var rule=Rule(Observe(z.Tr,p));Import(z,rule,p,p);string id=Physical(Read(z),1)[0].element_id;
             Import(z,rule,p);Require(Physical(Read(z),1)[0].element_id==id,"reimport became new physical piece");

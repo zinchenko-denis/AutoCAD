@@ -1,0 +1,254 @@
+{
+  "status": "PASS",
+  "checks": 1234,
+  "native_checks": 1224,
+  "cases": [
+    {
+      "name": "engineer: exact decimal min20 without epsilon",
+      "status": "PASS"
+    },
+    {
+      "name": "novice: unknown surface is an explicit partial result",
+      "status": "PASS"
+    },
+    {
+      "name": "engineer: contradictory planes and gap are separate precise refusals",
+      "status": "PASS"
+    },
+    {
+      "name": "strict input and source identity; no legacy schema extension",
+      "status": "PASS"
+    },
+    {
+      "name": "numeric backend refuses loss instead of silently rounding",
+      "status": "PASS"
+    },
+    {
+      "name": "reviewer: immutable snapshot, strict digests and full provenance",
+      "status": "PASS"
+    },
+    {
+      "name": "calculator: declared members do not imply placement, capacity or min30",
+      "status": "PASS"
+    },
+    {
+      "name": "bound numeric source guard never silently adopts resolver rounding",
+      "status": "PASS"
+    },
+    {
+      "name": "linear output cardinality and independent operation measurements",
+      "status": "PASS"
+    },
+    {
+      "name": "cross-runtime exact decimal status and display fixtures",
+      "status": "PASS"
+    },
+    {
+      "name": "cross-runtime full result and input digests",
+      "status": "PASS"
+    },
+    {
+      "name": "cross-runtime project-bound snapshot digest",
+      "status": "PASS"
+    },
+    {
+      "name": "legacy layout stays preset for 180/[150, 50]",
+      "status": "PASS"
+    },
+    {
+      "name": "calculation refusal retained for 180/[150, 50]",
+      "status": "PASS"
+    },
+    {
+      "name": "legacy layout stays preset for 230/[100, 50]",
+      "status": "PASS"
+    },
+    {
+      "name": "calculation refusal retained for 230/[100, 50]",
+      "status": "PASS"
+    },
+    {
+      "name": "legacy layout stays preset for 230/[150, 50]",
+      "status": "PASS"
+    },
+    {
+      "name": "calculation refusal retained for 230/[150, 50]",
+      "status": "PASS"
+    },
+    {
+      "name": "node planes do not silently resize legacy physical frame",
+      "status": "PASS"
+    }
+  ],
+  "numeric": [
+    {
+      "name": "decimal_108_95_53_34",
+      "gap_text": "20",
+      "clearance_status": "pass",
+      "can_insert": true,
+      "result_digest": "dd1a52a7cc5a4f9a9470f5e9a731c70f1b87b7d73881acc80021722cc9701150",
+      "input_digest": "8da35f1141887a243ed68f64472c43d010168022d80cd121ceff0d35454776fa"
+    },
+    {
+      "name": "decimal_85_03_37_89",
+      "gap_text": "20",
+      "clearance_status": "pass",
+      "can_insert": true,
+      "result_digest": "0914130d4ddc88d986c6dee3e87ee0c2e0513a0b0998b7e6bdbbad1dc7d05a9b",
+      "input_digest": "cf113c237ba9690a6252f4a6467dd9288d994df81dfbdebd6d3fa1f59937e35a"
+    },
+    {
+      "name": "decimal_85_37_64",
+      "gap_text": "20",
+      "clearance_status": "pass",
+      "can_insert": true,
+      "result_digest": "592e35f154bf6375fb06a3db20941796de68645c93667e4c8b4ecb89e429bff5",
+      "input_digest": "ccfceda3d867423c4a3936478cab269bdfc118070d0726bbdcfda87edf7fac15"
+    },
+    {
+      "name": "next_down_170",
+      "gap_text": "19.99999999999997",
+      "clearance_status": "fail",
+      "can_insert": false,
+      "result_digest": "deaec31c10f20bab216e16cc3a1e5befc7b1c763442c019975a523c6756b5856",
+      "input_digest": "dfb3c7f7ad25413b2a5f2602aad3cc9e2d8066b21a579c618be6bdf2d97054f5"
+    },
+    {
+      "name": "exact_170",
+      "gap_text": "20",
+      "clearance_status": "pass",
+      "can_insert": true,
+      "result_digest": "8fc461e5debc117fc98bc7e8c7e65dc1e4eac4bbc9916003113febd2693a4ff6",
+      "input_digest": "179ba8b06aee39aff57626bfa81b62557a9730a1b245853128b79a7b2257ca87"
+    },
+    {
+      "name": "next_up_170",
+      "gap_text": "20.00000000000003",
+      "clearance_status": "pass",
+      "can_insert": true,
+      "result_digest": "9c8e29f09e325b14da869c9db9749db349af3861a9df8cb213dc6e7c1c4ddaa6",
+      "input_digest": "571589d35b518c08e05649e968384b53c7f39a79654cd9ea35ca14dd953a06fd"
+    },
+    {
+      "name": "gap_19_999",
+      "gap_text": "19.999",
+      "clearance_status": "fail",
+      "can_insert": false,
+      "result_digest": "74b3c0736aee6181bf2c89e24767a30fa78908e502707f60f034ca25451aeb0b",
+      "input_digest": "d00588712b9a20ca324b34a64151685e406c9b48624e3e0bc62720fe57bbc7bd"
+    },
+    {
+      "name": "gap_20_001",
+      "gap_text": "20.001",
+      "clearance_status": "pass",
+      "can_insert": true,
+      "result_digest": "5d0c61cc6f3a995ef694d40ecf9fb233aaec4484600d466b444e5252d8178351",
+      "input_digest": "7be23a8ed33c92595c82298415c8ba98c019cb81a0cd16ca9644394563d33348"
+    },
+    {
+      "name": "next_up_479_82",
+      "gap_text": "20.00000000000005",
+      "clearance_status": "pass",
+      "can_insert": true,
+      "result_digest": "80443c2e7434e7e5b5204eabfea55b5dac680c2a6e1719ec79a99c070d3aba91",
+      "input_digest": "3ffa9df266f8e3ffe33089bff8552be74932163b197c557b8aaa4612558820f6"
+    }
+  ],
+  "performance": [
+    {
+      "kind": "layers",
+      "count": 1,
+      "elapsed_ms": 0.6313000000000001,
+      "bytes": 2628,
+      "planes": 4,
+      "dimensions": 4
+    },
+    {
+      "kind": "layers",
+      "count": 100,
+      "elapsed_ms": 4.0339,
+      "bytes": 35434,
+      "planes": 103,
+      "dimensions": 103
+    },
+    {
+      "kind": "layers",
+      "count": 1000,
+      "elapsed_ms": 31.572100000000002,
+      "bytes": 343256,
+      "planes": 1003,
+      "dimensions": 1003
+    },
+    {
+      "kind": "independent_operations",
+      "count": 1,
+      "elapsed_ms": 0.4509
+    },
+    {
+      "kind": "independent_operations",
+      "count": 100,
+      "elapsed_ms": 37.1796
+    },
+    {
+      "kind": "independent_operations",
+      "count": 1000,
+      "elapsed_ms": 351.9843
+    }
+  ],
+  "legacy_frame_baseline": [
+    {
+      "front": 180,
+      "layers": [
+        150,
+        50
+      ],
+      "rails": 2,
+      "brackets": 8,
+      "geometry_effect": "existing_preset_only"
+    },
+    {
+      "front": 230,
+      "layers": [
+        100,
+        50
+      ],
+      "rails": 2,
+      "brackets": 8,
+      "geometry_effect": "existing_preset_only"
+    },
+    {
+      "front": 230,
+      "layers": [
+        150,
+        50
+      ],
+      "rails": 2,
+      "brackets": 8,
+      "geometry_effect": "existing_preset_only"
+    }
+  ],
+  "live_autocad_checked": false,
+  "scope": "Actual pure C# node core and unchanged real Python layout; no CAD/renderer",
+  "source_sha256": {
+    "tools/node_geometry_0110/NodeCoreProbe.cs": "0611258feb99c98f34e01b13327629f47acedf929198b1e3258df4d86478b6e5",
+    "AFrame/src/AFramePlugin/FrameNodeGeometry.cs": "cc73d9c0418f7d99718b1bcccdf6a624830ed984d9da276125043d7a0294f9df",
+    "AFrame/src/AFramePlugin/FrameProjectParameters.cs": "612c46eabcb1c7c80c86e5a3e0fed2153a809b8f2b1734b1e9b596e2e26ec7f1",
+    "AFrame/src/AFramePlugin/FrameSolutionSelection.cs": "cb25b6e890ce2f1e5ee458f1e378510d21f7205e529ee1894520ed686a3abd66",
+    "tools/node_geometry_0110/test_core.py": "d24cc8feb26038d39acfdb82c695f783d2a09619923a59b21947ab4e557dba8c",
+    "tools/node_geometry_0110/expected_numeric.json": "39a63126bdd61b63fed10798fd8ab06a5a23d107fb6c336f3a60766c2c787f6b",
+    "tools/node_geometry_0110/expected_digests.json": "803de82edc096cac249f362bc8c271a19a1ba2161915fec004b0348a50ccce7a",
+    "tools/quantities_3009/probe_runtime.py": "2d37fb13990a1b24129dfe79a81ce138875e3c86ef3211d1a3a4f9ec40d150e5",
+    "AFrame/engine/frame_rules.py": "511ec4ec48331034257859ccac70ef028a8c4b398acd7d5b238d778e3c63ea6f",
+    "AFrame/engine/frame_spatial.py": "003efc0e73b344d50d4465d2bc1bfc87f8ca149c7d443a1e7d9061e6dbfd6cec",
+    "AFrame/engine/frame_topology.py": "2455ab874309d1382591800acce35dd3bde04ea3be6519f8b1de89dd5514f5d5",
+    "AFrame/engine/frame_catalog.py": "947a0277f3a6202dff365c1de6e86c5832dbc2c97e2a810b99d500a5d6f6b163",
+    "AFrame/engine/frame_connections.py": "d4febc1ce6e147f1cbce29cb64690f2c3b592efe4e40b9c88da5c8a2dcc74985",
+    "AFrame/engine/frame_solution_catalog.py": "56e674855cc01e19bf2a0723dff1f3454497a99aef56f3de1b5bbf75c0d44764",
+    "AFrame/engine/frame_solution_selection.py": "6490da6ced48715c4dce5ca357e0f54be9c035dd7bb6fc8d86b684f1d15f6aee",
+    "AFrame/engine/frame_plan.py": "5c4b4bbbc8258d62e965c24604906cd819b6a06a04643425ed1770b07c5d7105",
+    "AFrame/engine/frame_engine.py": "b4acaaa98f48f91e0019b04231bb2ca361059e8d6a4e587cdbb64eb432790529",
+    "AFrame/engine/test_frame_solution_selection.py": "79b853ab20b95d491fc3e76f667fc7fb7106afa6ace7b5ae9d1ede191f99aceb",
+    "AFrame/engine/systems.json": "e9ee0a4cf0c535473dd9931f9b2a3d86dd1d932fe18f84682ef3fd221fbc03c3",
+    "AFrame/engine/assembly_catalog.json": "a202410e6c9872b73cf9f06183c6fc22b22280fb0dcbfb68e71561117d65456e"
+  }
+}

@@ -1,0 +1,86 @@
+{
+  "schema": "node_known_plane_order_review/1",
+  "phase": "after",
+  "status": "PASS",
+  "source_sha256": {
+    "AFrame/src/AFramePlugin/FrameNodeGeometry.cs": "cc73d9c0418f7d99718b1bcccdf6a624830ed984d9da276125043d7a0294f9df",
+    "AFrame/src/AFramePlugin/FrameProjectParameters.cs": "612c46eabcb1c7c80c86e5a3e0fed2153a809b8f2b1734b1e9b596e2e26ec7f1",
+    "AFrame/src/AFramePlugin/FrameSolutionSelection.cs": "cb25b6e890ce2f1e5ee458f1e378510d21f7205e529ee1894520ed686a3abd66"
+  },
+  "probe_sha256": "6451ba4418054ed7fc84f0dd4ea2961101cf91f040232e122416c690e5419ef8",
+  "assembly_sha256": "c91df274a9c5f95d38366c6cb18a2a12630fdd3e6e1a3d7a6ece97af20063181",
+  "same_probe_as": "known_plane_order_before.json",
+  "observed": [
+    {
+      "name": "unknown_surface_profile_at_100",
+      "CanInsert": false,
+      "Status": "rejected",
+      "ClearanceStatus": "not_evaluated",
+      "GapText": null,
+      "issues": [
+        "E_NODE_PROFILE_INSULATION"
+      ],
+      "Missing": [
+        "поверхность проверки просвета с учётом мембраны"
+      ]
+    },
+    {
+      "name": "unknown_surface_profile_at_150",
+      "CanInsert": false,
+      "Status": "rejected",
+      "ClearanceStatus": "not_evaluated",
+      "GapText": null,
+      "issues": [
+        "E_NODE_PROFILE_INSULATION"
+      ],
+      "Missing": [
+        "поверхность проверки просвета с учётом мембраны"
+      ]
+    },
+    {
+      "name": "unknown_surface_profile_at_151",
+      "CanInsert": true,
+      "Status": "partial",
+      "ClearanceStatus": "not_evaluated",
+      "GapText": null,
+      "issues": [],
+      "Missing": [
+        "поверхность проверки просвета с учётом мембраны"
+      ]
+    },
+    {
+      "name": "unknown_surface_profile_at_169.999",
+      "CanInsert": true,
+      "Status": "partial",
+      "ClearanceStatus": "not_evaluated",
+      "GapText": null,
+      "issues": [],
+      "Missing": [
+        "поверхность проверки просвета с учётом мембраны"
+      ]
+    },
+    {
+      "name": "unknown_surface_profile_at_170",
+      "CanInsert": true,
+      "Status": "partial",
+      "ClearanceStatus": "not_evaluated",
+      "GapText": null,
+      "issues": [],
+      "Missing": [
+        "поверхность проверки просвета с учётом мембраны"
+      ]
+    },
+    {
+      "name": "small_1E-28",
+      "status": "partial"
+    },
+    {
+      "name": "small_1E-29",
+      "code": "E_NODE_NUMERIC_RANGE",
+      "message": "Число 1E-29 меньше ненулевого технического диапазона десятичной схемы; округление до нуля не выполняется."
+    }
+  ],
+  "interpretation": "Known GP/insulation intersection and coincidence now refuse insertion without inventing a clearance surface. Unknown keeps gap unevaluated; legitimate partial cases retain that status. Sub-decimal-range1e-29 now reports technical RANGE as agreed.",
+  "live_autocad_checked": false,
+  "final_core_replay": true
+}

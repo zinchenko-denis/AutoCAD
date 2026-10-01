@@ -1,0 +1,78 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-12 -144 574 343.5" width="1400" height="838">
+<title>Синтетическая схема ATFNODE — просмотр примитивов без AutoCAD</title>
+<rect x="-12" y="-144" width="574" height="343.5" fill="white"/>
+<text x="0" y="-136" font-family="Arial, Liberation Sans, sans-serif" font-size="3.2" fill="#555">Учебные числа; предварительный просмотр примитивов, не снимок AutoCAD</text>
+<text x="0" y="-120.5" font-family="Arial, Liberation Sans, sans-serif" font-size="3.5" fill="#242b30">
+<tspan x="0" dy="0">Размерная схема заявленных плоскостей — не рабочий</tspan>
+<tspan x="0" dy="4.8999999999999995">узел</tspan>
+</text>
+<line x1="0" y1="0" x2="0" y2="-100" stroke="#242b30" stroke-width="0.25"/>
+<line x1="0" y1="-100" x2="246" y2="-100" stroke="#242b30" stroke-width="0.25"/>
+<text x="250" y="-98.5" font-family="Arial, Liberation Sans, sans-serif" font-size="3.5" fill="#242b30">
+<tspan x="250" dy="0">Поверхность строительного основания; x = 0 мм</tspan>
+</text>
+<line x1="100" y1="0" x2="100" y2="-100" stroke="#008044" stroke-width="0.25"/>
+<line x1="100" y1="-80" x2="246" y2="-80" stroke="#242b30" stroke-width="0.25"/>
+<text x="250" y="-78.5" font-family="Arial, Liberation Sans, sans-serif" font-size="3.5" fill="#008044">
+<tspan x="250" dy="0">Наружная граница слоя 1; x = 100 мм</tspan>
+</text>
+<line x1="150" y1="0" x2="150" y2="-100" stroke="#008044" stroke-width="0.25"/>
+<line x1="150" y1="-60" x2="246" y2="-60" stroke="#242b30" stroke-width="0.25"/>
+<text x="250" y="-58.5" font-family="Arial, Liberation Sans, sans-serif" font-size="3.5" fill="#008044">
+<tspan x="250" dy="0">Наружная граница слоя 2; x = 150 мм</tspan>
+</text>
+<line x1="230" y1="0" x2="230" y2="-100" stroke="#006f8c" stroke-width="0.25"/>
+<line x1="230" y1="-40" x2="246" y2="-40" stroke="#242b30" stroke-width="0.25"/>
+<text x="250" y="-38.5" font-family="Arial, Liberation Sans, sans-serif" font-size="3.5" fill="#006f8c">
+<tspan x="250" dy="0">Наружная поверхность облицовки; x = 230 мм</tspan>
+</text>
+<line x1="0" y1="0" x2="100" y2="0" stroke="#008044" stroke-width="0.25"/>
+<line x1="0" y1="-100" x2="100" y2="-100" stroke="#008044" stroke-width="0.25"/>
+<line x1="0" y1="-15" x2="100" y2="-85" stroke="#008044" stroke-width="0.25"/>
+<line x1="100" y1="0" x2="150" y2="0" stroke="#008044" stroke-width="0.25"/>
+<line x1="100" y1="-100" x2="150" y2="-100" stroke="#008044" stroke-width="0.25"/>
+<line x1="100" y1="-15" x2="150" y2="-85" stroke="#008044" stroke-width="0.25"/>
+<line x1="0" y1="18" x2="100" y2="18" stroke="#242b30" stroke-width="0.25"/>
+<line x1="0" y1="21" x2="0" y2="15" stroke="#242b30" stroke-width="0.25"/>
+<line x1="100" y1="21" x2="100" y2="15" stroke="#242b30" stroke-width="0.25"/>
+<text x="250" y="18.5" font-family="Arial, Liberation Sans, sans-serif" font-size="3.5" fill="#242b30">
+<tspan x="250" dy="0">Слой утеплителя 1 = 100 мм</tspan>
+</text>
+<line x1="100" y1="35" x2="150" y2="35" stroke="#242b30" stroke-width="0.25"/>
+<line x1="100" y1="38" x2="100" y2="32" stroke="#242b30" stroke-width="0.25"/>
+<line x1="150" y1="38" x2="150" y2="32" stroke="#242b30" stroke-width="0.25"/>
+<text x="250" y="35.5" font-family="Arial, Liberation Sans, sans-serif" font-size="3.5" fill="#242b30">
+<tspan x="250" dy="0">Слой утеплителя 2 = 50 мм</tspan>
+</text>
+<line x1="0" y1="52" x2="230" y2="52" stroke="#242b30" stroke-width="0.25"/>
+<line x1="0" y1="55" x2="0" y2="49" stroke="#242b30" stroke-width="0.25"/>
+<line x1="230" y1="55" x2="230" y2="49" stroke="#242b30" stroke-width="0.25"/>
+<text x="250" y="52.5" font-family="Arial, Liberation Sans, sans-serif" font-size="3.5" fill="#242b30">
+<tspan x="250" dy="0">Вынос наружной облицовки = 230 мм</tspan>
+</text>
+<text x="0" y="84.5" font-family="Arial, Liberation Sans, sans-serif" font-size="3.5" fill="#242b30">
+<tspan x="0" dy="0">Размерная схема Вектор-1 2015, узел 4.2.1 / PDF 20.</tspan>
+</text>
+<text x="0" y="97.0" font-family="Arial, Liberation Sans, sans-serif" font-size="3.5" fill="#242b30">
+<tspan x="0" dy="0">Снимок параметров: 2026-10-01T12:00:00.0000000Z.</tspan>
+<tspan x="0" dy="4.8999999999999995">Актуальность — ATFNODE Проверить.</tspan>
+</text>
+<text x="0" y="115.0" font-family="Arial, Liberation Sans, sans-serif" font-size="3.5" fill="#242b30">
+<tspan x="0" dy="0">Зона Ф-1; проект ред. 1; привязка ред. 1.</tspan>
+</text>
+<text x="0" y="127.5" font-family="Arial, Liberation Sans, sans-serif" font-size="3.5" fill="#242b30">
+<tspan x="0" dy="0">Проверка локального просвета не выполнена; данные</tspan>
+<tspan x="0" dy="4.8999999999999995">неполны.</tspan>
+</text>
+<text x="0" y="145.5" font-family="Arial, Liberation Sans, sans-serif" font-size="3.5" fill="#242b30">
+<tspan x="0" dy="0">Не рабочий узел. Посадки, регулировка,</tspan>
+<tspan x="0" dy="4.8999999999999995">совместимость, автоподбор и статика не подтверждены.</tspan>
+</text>
+<text x="0" y="163.5" font-family="Arial, Liberation Sans, sans-serif" font-size="3.5" fill="#242b30">
+<tspan x="0" dy="0">Не задано: координата ближайшей поверхности ГП</tspan>
+</text>
+<text x="0" y="176.0" font-family="Arial, Liberation Sans, sans-serif" font-size="3.5" fill="#242b30">
+<tspan x="0" dy="0">Не задано: поверхность проверки просвета с учётом</tspan>
+<tspan x="0" dy="4.8999999999999995">мембраны</tspan>
+</text>
+</svg>
