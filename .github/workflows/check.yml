@@ -304,6 +304,24 @@ jobs:
           path: table_lifecycle_results/
           if-no-files-found: warn
 
+      - name: Pilot node and table lifecycle (same canonical sources, explicit CAD doubles)
+        timeout-minutes: 5
+        shell: pwsh
+        env:
+          PYTHONUTF8: "1"
+          PYTHONIOENCODING: "utf-8"
+        run: |
+          python tools/node_lifecycle_0110/run_lifecycle.py --out node_lifecycle_results
+          exit $LASTEXITCODE
+
+      - name: Upload pilot node and table lifecycle evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: pilot-node-table-lifecycle
+          path: node_lifecycle_results/
+          if-no-files-found: warn
+
       - name: Upload historical catalogue UI evidence
         if: always()
         uses: actions/upload-artifact@v4

@@ -1,0 +1,202 @@
+{
+  "schema": "facade_plan_audit/1",
+  "date": "2026-10-01",
+  "baseline_commit": "b2a6d09bf3fcb3602ad2d782f564e0f4f4993280",
+  "scope": "Vector-1 2015 / type 1 / porcelain / 4.2.1 / KR2-PP-UK-GP",
+  "status": "ACCEPTED_PLAN_AUDIT_NOT_NEW_ENGINEERING_RESEARCH",
+  "decision": {
+    "critical_path_stops_at": "2V / P2",
+    "confirmed_calculation_3A": "BLOCKED",
+    "full_working_node_and_BOM": "NOT_COMPLETED",
+    "available_current_work": "bounded item 5 / P1-P5 integrated ATFNODE N1-N2 lifecycle",
+    "new_direct_P2_P3_functional_step_identified": false,
+    "physical_assignment": "not_asserted",
+    "mounting_status": "not_confirmed",
+    "automatic_bracket_selection_allowed": false
+  },
+  "progress_classification": {
+    "2V1_2V2": "candidate-link diagnostics",
+    "2V3": "audit of existing declaration boundary, no product change",
+    "last_two_sessions": "limited shared workflow, manual-axis cancellation fix, actual table command UCS fix; no closure of P2/P3"
+  },
+  "product_diff_reported_by_root": {
+    "range": "b35a514..b2a6d09",
+    "independently_repeated_by_this_reviewer": false,
+    "files": {
+      "ConnectionTableData": {
+        "added": 204,
+        "deleted": 4
+      },
+      "QuantityTablePreview": {
+        "added": 38,
+        "deleted": 0
+      },
+      "FrameCommand": {
+        "added": 2,
+        "deleted": 0
+      },
+      "FacadeQuantityTableCommand": {
+        "added": 15,
+        "deleted": 1
+      }
+    },
+    "total_added": 259,
+    "total_deleted": 5,
+    "engine_and_physical_assembly_model_changed": false
+  },
+  "missing_evidence": [
+    {
+      "id": "M2",
+      "topic": "physical component assignment",
+      "available": "ATR PDF20 depicts families; producer has geometric GP/bracket IDs",
+      "missing": "defined assembly executions mapped to actual instances including UK"
+    },
+    {
+      "id": "M3",
+      "topic": "two mounting interfaces",
+      "available": "ATR PDF20 and calculation PDF12-13 distinguish KR2-UK / UK-GP",
+      "missing": "both real endpoint pairs and applicable connection execution"
+    },
+    {
+      "id": "M4",
+      "topic": "mounting position and adjustment",
+      "available": "ATR PDF6/7/8/20 nominal 0/2/2+L and UK identity with unknown h",
+      "missing": "applicable complete mounting position; permitted extrema for range claims",
+      "not_substitutes": [
+        "min30 from other nodes",
+        "165-80=85 calculation line"
+      ]
+    },
+    {
+      "id": "M5",
+      "topic": "holes and fasteners",
+      "available": "calculation PDF12-13 checks two riveted interfaces under project assumptions",
+      "missing": "applicable hole layout, grip package and complete fastener mapping for actual interfaces"
+    },
+    {
+      "id": "M6",
+      "topic": "restraints and thermal action",
+      "available": "calculation PDF3/14 idealized support symbols",
+      "missing": "mapping of restraints/releases and justified mechanical model to real interfaces"
+    },
+    {
+      "id": "M7",
+      "topic": "gravity tributaries and splice action",
+      "available": "calculation PDF6 uses L1; geometric passport has separate GP pieces",
+      "missing": "coherent actual tributaries/reactions, splice N/Q/M transfer and continuity"
+    }
+  ],
+  "sufficiency_clarification": {
+    "universal_system_model_required": false,
+    "full_adjustment_range_required_for_one_fixed_case": false,
+    "numerical_stiffness_of_every_DOF_always_required": false,
+    "sufficient_limited_basis": "one proven mounting variant and justified applicable simplified mechanical model",
+    "that_basis_currently_proven": false,
+    "full_range_and_applicability_needed_for_claimed_auto_selection": true
+  },
+  "finite_current_acceptance": [
+    "create N1 on canonical zone",
+    "change project; N1 becomes stale",
+    "cancel or refuse N2 before write; N1 owner/definition/passport/body unchanged and stale",
+    "create N2 with distinct owner/definition and fresh source; N1 remains stale",
+    "physical quantity and XLSX results retained; node scheme not counted as physical facade part",
+    "no new full ModelSpace scan or engine calculation for node scheme"
+  ],
+  "stop_rule": {
+    "after": "finite N1-N2 scenario plus mandatory gates, independent review and exact-SHA CI",
+    "automatically_invent_another_adapter_or_diagnostic_stage": false,
+    "product_change_requires": "reproduced defect",
+    "remaining_host_tests": [
+      "DWG save/open",
+      "COPY",
+      "SaveAs",
+      "Undo",
+      "native rollback"
+    ],
+    "engineering_reentry_requires": "concrete new testable hypothesis or confirmed applicable fact",
+    "new_installer_requires": "new explicit user command Собираем"
+  },
+  "verification_scope": {
+    "product_modified_by_reviewer": false,
+    "new_tests_executed": false,
+    "new_albums_used": false,
+    "full_archive_reread": false,
+    "new_primary_visual_check": [
+      {
+        "source": "vector1_2015",
+        "pdf_page": 20,
+        "sheet": "4.2.1",
+        "kind": "existing saved private render"
+      }
+    ],
+    "other_primary_findings": "inherited from listed prior reviews",
+    "primary_pdf_hashes_recomputed": false,
+    "live_autocad_checked": false,
+    "private_originals_or_images_published": false
+  },
+  "primary_sources": [
+    {
+      "repository": "zinchenko-denis/atspec-testdata",
+      "path": "docs/facades_atr/ATR_Vector1_3.15_KG_KP_2015.pdf",
+      "sha256": "7386f4152de455a5e2622704d51a98d8f05afd20050807f634eea4572de37142"
+    },
+    {
+      "repository": "zinchenko-denis/atspec-testdata",
+      "path": "docs/facades_calc/Static_VEKTOR1_tip1_monolit_KG_2026.pdf",
+      "sha256": "495f8fadf882dc6f6c3f2c023a08611035c5e916a3cc92ee4da675cb2a0f16d2"
+    }
+  ],
+  "read_sources_at_baseline": [
+    {
+      "path": "CLAUDE.md",
+      "sha256": "78400d7d6b996f49aa5918086c1b12dc5c0e1a3a16bc0e376122af18ee5320df"
+    },
+    {
+      "path": "docs/PILOT_COMPLETION_PLAN_01.10.md",
+      "sha256": "20adbc38a11c6a95fb10361c76364f5df5ea6bb77d926572f460819b2a9702ee"
+    },
+    {
+      "path": "docs/FACADE_COMPLEX_ROADMAP_30.09.md",
+      "sha256": "c17429440f160637e935c76f7c08b62196eb52cc069c8ecf214ac42e501d14f1"
+    },
+    {
+      "path": "docs/STATIC_MODEL_REVIEW_30.09.md",
+      "sha256": "05ee1fdf12156ce41bd648758bdcc6f3dfdf15e641848ceb7b5dcb5e45eaee4c"
+    },
+    {
+      "path": "docs/NOMINAL_MOUNTING_01.10.md",
+      "sha256": "435a28fd21cc82caea701f409559e356fc31255259b6448c49567298aff50124"
+    },
+    {
+      "path": "docs/nominal_mounting_0110/source_facts.json",
+      "sha256": "29f0b877e2161988c0007a8153a2dfc1e1e5873f4f02bfedf60483ee6ca1c499"
+    },
+    {
+      "path": "docs/mounting_contract_0110/engineering_review.md",
+      "sha256": "33d189d0f627d41ae491a5a1444e96f4a5c36c8d6f45dbdaab19cf66d4c512a7"
+    },
+    {
+      "path": "docs/pilot_completion_0110/engineering_review.md",
+      "sha256": "accce6af416da9dfeedb801dc505adec002ad5c7becf600d25abe9323cabd8ed"
+    },
+    {
+      "path": "docs/pilot_completion_0110/source_facts.json",
+      "sha256": "892289cde64b50506d4e3addf255d03f0ea26910ce0db3505e241ab33d7155ac"
+    },
+    {
+      "path": "docs/table_lifecycle_0110/next_node_gap.md",
+      "sha256": "d012d3a03d5eb862a2e1014156806aeb5b0d7149ebf5e3f685af2be7da8dc9c2"
+    }
+  ],
+  "current_milestones_review": {
+    "path": "docs/CURRENT_MILESTONES.md",
+    "reviewed_snapshot_sha256": "581a155af4a28be10bcb89e83556061072443b9b1143b3d80db227fba97f178a",
+    "status": "NO_EVIDENT_CONTRADICTION_WITH_ACCEPTED_AUDIT",
+    "modified_by_reviewer": false,
+    "not_confirmation_of_current_unfinished_node_scenario": true
+  },
+  "report": {
+    "path": "docs/node_lifecycle_0110/plan_audit.md",
+    "sha256": "d964c87e35222247a84b9f4d6798efb5bdb68a123ea8934eff6411b120fc83a3"
+  }
+}

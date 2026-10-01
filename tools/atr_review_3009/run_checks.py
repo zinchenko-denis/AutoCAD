@@ -100,6 +100,8 @@ def main():
                                    '--out', str(out / 'frame_axis_cancel')]),
         ('table_command_lifecycle', '.', ['tools/table_lifecycle_0110/run_lifecycle.py',
                                          '--out', str(out / 'table_command_lifecycle')]),
+        ('pilot_node_table_lifecycle', '.', ['tools/node_lifecycle_0110/run_lifecycle.py',
+                                           '--out', str(out / 'pilot_node_table_lifecycle')]),
         ('project_parameters_core', '.', ['tools/project_params_0110/test_core.py',
                                          '--out', str(out / 'project_parameters_core')]),
         ('project_parameters_store', '.', ['tools/project_params_0110/test_store_contract.py',

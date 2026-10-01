@@ -59,7 +59,7 @@ namespace Autodesk.AutoCAD.Geometry
                 position.Y+x*Math.Sin(rotation)+y*Math.Cos(rotation),position.Z+(p.Z-origin.Z)*scale.Z);
         }
     }
-    public struct Vector3d
+    public partial struct Vector3d
     {
         public double X, Y, Z;
         public Vector3d(double x, double y, double z) { X=x; Y=y; Z=z; }
@@ -90,7 +90,7 @@ namespace Autodesk.AutoCAD.Geometry
 namespace Autodesk.AutoCAD.Colors
 {
     public enum ColorMethod { ByLayer = 192, ByBlock = 193, ByColor = 194, ByAci = 195 }
-    public sealed class Color
+    public sealed partial class Color
     {
         public ColorMethod ColorMethod = ColorMethod.ByAci;
         public bool IsByLayer;
@@ -136,6 +136,8 @@ namespace Autodesk.AutoCAD.DatabaseServices
     public class DBObject : IDisposable
     {
         public ObjectId ObjectId;
+        public ObjectId OwnerId, ExtensionDictionary;
+        public void CreateExtensionDictionary() { ExtensionDictionary = Database.Add(new DBDictionary()).ObjectId; }
         public Handle Handle;
         public Database Database;
         public bool IsErased;
@@ -144,15 +146,13 @@ namespace Autodesk.AutoCAD.DatabaseServices
         public void UpgradeOpen() { }
         public void Erase() { IsErased = true; }
     }
-    public class Entity : DBObject
+    public partial class Entity : DBObject
     {
         public bool Visible = true;
-        public ObjectId ExtensionDictionary;
         public string Layer = "0";
         public ObjectId LayerId;
-        public short ColorIndex = 7;
+        public int ColorIndex = 7;
         public Autodesk.AutoCAD.Colors.Color Color = new Autodesk.AutoCAD.Colors.Color();
-        public void CreateExtensionDictionary() { ExtensionDictionary = Database.Add(new DBDictionary()).ObjectId; }
     }
     public partial class Database
     {
@@ -168,18 +168,22 @@ namespace Autodesk.AutoCAD.DatabaseServices
                 var table = Add(new BlockTable()); blockTableId = table.ObjectId;
                 modelSpace = Add(new BlockTableRecord { Name = BlockTableRecord.ModelSpace });
                 table.Items.Add(BlockTableRecord.ModelSpace, modelSpace.ObjectId);
-                modelSpace.Children.AddRange(objects.Values.OfType<Entity>().Select(x => x.ObjectId));
+                foreach (var entity in objects.Values.OfType<Entity>().Where(x => x.OwnerId.IsNull)) {
+                    entity.OwnerId = modelSpace.ObjectId; modelSpace.Children.Add(entity.ObjectId);
+                }
             }
             return blockTableId;
         } }
         private long next;
         private readonly Dictionary<long, DBObject> objects = new Dictionary<long, DBObject>();
-        public T Add<T>(T obj) where T : DBObject
+        public T Add<T>(T obj, bool addToModelSpace = true) where T : DBObject
         {
             if (!obj.ObjectId.IsNull) return obj;
             obj.Database = this; obj.Handle = new Handle(++next); obj.ObjectId = new ObjectId { Item = obj };
             objects.Add(obj.Handle.Value, obj); CadCounters.ObjectsCreated++;
-            if (modelSpace != null && obj is Entity) modelSpace.Children.Add(obj.ObjectId);
+            if (addToModelSpace && modelSpace != null && obj is Entity) {
+                obj.OwnerId = modelSpace.ObjectId; modelSpace.Children.Add(obj.ObjectId);
+            }
             return obj;
         }
         public ObjectId GetObjectId(bool createIfNotFound, Handle handle, int xrefId)
@@ -210,7 +214,7 @@ namespace Autodesk.AutoCAD.DatabaseServices
         public void Dispose() { }
         public void Commit() { }
     }
-    public class DBDictionary : DBObject
+    public partial class DBDictionary : DBObject
     {
         public readonly Dictionary<string, ObjectId> Items = new Dictionary<string, ObjectId>();
         public bool Contains(string key) { CadCounters.DictionaryContains++; return Items.ContainsKey(key); }
@@ -244,9 +248,9 @@ namespace Autodesk.AutoCAD.DatabaseServices
         partial void AfterRead();
         public ResultBuffer Data { get { CadCounters.XrecordReads++; AfterRead(); return data; } set { CadCounters.XrecordWrites++; data=value; } }
         public bool XlateReferences; }
-    public class LayerTableRecord : DBObject { public Autodesk.AutoCAD.Colors.Color Color = new Autodesk.AutoCAD.Colors.Color(); }
+    public partial class LayerTableRecord : DBObject { public Autodesk.AutoCAD.Colors.Color Color = new Autodesk.AutoCAD.Colors.Color(); }
     public partial class Table : Entity { }
-    public class Line : Entity { public Point3d StartPoint, EndPoint; public double Thickness; public Vector3d Normal = Vector3d.ZAxis; }
+    public partial class Line : Entity { public Point3d StartPoint, EndPoint; public double Thickness; public Vector3d Normal = Vector3d.ZAxis; }
     public class Circle : Entity { public Point3d Center; public double Radius, Thickness; public Vector3d Normal = Vector3d.ZAxis; }
     public class Arc : Entity { public Point3d Center; public double Radius, StartAngle, EndAngle, Thickness; public Vector3d Normal = Vector3d.ZAxis; }
     public class Ellipse : Entity { public Point3d Center; public Vector3d MajorAxis, MinorAxis; public double StartAngle, EndAngle; }
@@ -258,23 +262,29 @@ namespace Autodesk.AutoCAD.DatabaseServices
     public class AttributeReference : DBText { public string Tag; }
     public class DBPoint : Entity { public Point3d Position; }
     public class Solid : Entity { public readonly Point3d[] Points = new Point3d[4]; public Point3d GetPointAt(int i) { CadCounters.PointsRead++; return Points[i]; } }
-    public class BlockTable : DBObject {
+    public partial class BlockTable : DBObject {
         public readonly Dictionary<string,ObjectId> Items = new Dictionary<string,ObjectId>();
         public ObjectId this[string name] { get { return Items[name]; } }
     }
-    public class BlockTableRecord : DBObject, IEnumerable<ObjectId>
+    public partial class BlockTableRecord : DBObject, IEnumerable<ObjectId>
     {
         public const string ModelSpace = "*Model_Space";
         public string Name;
         public Point3d Origin;
         public readonly List<ObjectId> Children = new List<ObjectId>();
-        public ObjectId AppendEntity(Entity entity) { Database.Add(entity); if (!Children.Contains(entity.ObjectId)) Children.Add(entity.ObjectId); return entity.ObjectId; }
+        public ObjectId AppendEntity(Entity entity) {
+            // Register definition primitives in their owning block, never in ModelSpace.
+            if (!entity.ObjectId.IsNull && entity.Database != Database) throw new InvalidOperationException("Foreign block entity");
+            if (!entity.OwnerId.IsNull && entity.OwnerId != ObjectId) throw new InvalidOperationException("Entity already belongs to another block");
+            Database.Add(entity, false); entity.OwnerId = ObjectId;
+            if (!Children.Contains(entity.ObjectId)) Children.Add(entity.ObjectId); return entity.ObjectId;
+        }
         public IEnumerator<ObjectId> GetEnumerator() {
             foreach(var child in Children) { if (Name == ModelSpace) CadCounters.ModelSpaceVisits++; yield return child; }
         }
         IEnumerator IEnumerable.GetEnumerator() { return GetEnumerator(); }
     }
-    public class BlockReference : Entity
+    public partial class BlockReference : Entity
     {
         public Point3d Position;
         public Scale3d ScaleFactors = new Scale3d(1);
@@ -348,7 +358,7 @@ namespace Autodesk.AutoCAD.DatabaseServices
         public ObjectIdCollection GetAssociatedObjectIdsAt(int i) { return AssociatedIds[i]; }
         public ObjectIdCollection GetAssociatedObjectIds() { return new ObjectIdCollection(AssociatedIds.SelectMany(ids=>ids).ToArray()); }
     }
-    public class MText : Entity {
+    public partial class MText : Entity {
         public Point3d Location; public string Contents; public Vector3d Normal = Vector3d.ZAxis;
         public double Rotation, Width, TextHeight;
     }

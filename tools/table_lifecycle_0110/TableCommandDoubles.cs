@@ -39,7 +39,7 @@ namespace Autodesk.AutoCAD.DatabaseServices {
 namespace Autodesk.AutoCAD.EditorInput {
  public enum PromptStatus {OK,Cancel,Error,None}
  public class PromptResult {public PromptStatus Status;public string StringResult;}
- public sealed class PromptKeywordOptions {public PromptKeywordOptions(string message,string keywords){}}
+ public sealed partial class PromptKeywordOptions {public PromptKeywordOptions(string message,string keywords){}}
  public sealed class PromptSelectionOptions {public string MessageForAdding;}
  public sealed class SelectedObject {public ObjectId ObjectId;}
  public sealed class SelectionSet:List<SelectedObject> {}
@@ -49,7 +49,7 @@ namespace Autodesk.AutoCAD.EditorInput {
  public sealed class PromptDoubleOptions {public double DefaultValue;public bool AllowNegative,AllowZero;public PromptDoubleOptions(string text){}}
  public sealed class PromptDoubleResult:PromptResult {public double Value;}
  public sealed class PromptPointResult:PromptResult {public Point3d Value;}
- public sealed class Editor {
+ public sealed partial class Editor {
   private Matrix3d ucs=Matrix3d.Identity;public int UcsReads;public Matrix3d CurrentUserCoordinateSystem {get{UcsReads++;return ucs;}set{ucs=value;}}
   public readonly Queue<PromptResult> Keywords=new Queue<PromptResult>();
   public PromptSelectionResult Selection;public PromptEntityResult Entity;public PromptDoubleResult Height;public PromptPointResult Point;
@@ -68,7 +68,7 @@ namespace Autodesk.AutoCAD.ApplicationServices {
   public Document(Database db){Database=db;}public IDisposable LockDocument(){if(BeforeLock!=null)BeforeLock();return new Empty();}
   sealed class Empty:IDisposable {public void Dispose(){}}
  }
- public static class Application {
+ public static partial class Application {
   public static Func<object,System.Windows.Forms.DialogResult> Dialog;public static int DialogCalls;
   public static System.Windows.Forms.DialogResult ShowModalDialog(object form){DialogCalls++;return Dialog(form);}
  }

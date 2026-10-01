@@ -1,0 +1,17 @@
+{
+  "schema": "node_lifecycle_integration_review/1",
+  "status": "PASS",
+  "base_commit": "b2a6d09bf3fcb3602ad2d782f564e0f4f4993280",
+  "previous_groups": 59,
+  "current_groups": 60,
+  "previous_jobs_unchanged": true,
+  "previous_ci_steps_unchanged": true,
+  "new_group": "pilot_node_table_lifecycle",
+  "new_artifact": "pilot-node-table-lifecycle",
+  "timeout_minutes": 5,
+  "local_execution": "60/60;compile3/3;standalone limited1275/table4886/combined5119 PASS",
+  "source_sha256": {
+    "tools/atr_review_3009/run_checks.py": "5c478853eda52d3bedd3a1c22490b7c261d7fb6e64853022620da5490a1137b2",
+    ".github/workflows/check.yml": "181d1401bc8debc58a26169f92c20f53fc9c22d9996e353b7068d1d7bc9e11b0"
+  }
+}

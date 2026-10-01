@@ -1,0 +1,11 @@
+{
+  "status": "LEGACY_ADAPTER_GAP_REPRODUCED",
+  "source_sha256": "ffb9bb0f4f0b22c909b6c3e5eb4c03891c538064fd08e644844e1899903fbc3b",
+  "observed": {
+    "model_count": 2,
+    "definition_count": 1,
+    "internal_primitive_leaked": true,
+    "reference_membership_count": 1,
+    "lazy_internal_primitive_leaked": true
+  }
+}

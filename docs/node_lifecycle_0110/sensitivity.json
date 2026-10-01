@@ -1,0 +1,17 @@
+{
+  "status": "PASS",
+  "expected_failure": true,
+  "returncode": 1,
+  "message": "AssertionError: Adapter ownership expectation not met: {'model_count': 2, 'definition_count': 1, 'internal_primitive_leaked': True, 'reference_membership_count': 1, 'lazy_internal_primitive_leaked': True}",
+  "command": [
+    "python3",
+    "tools/node_lifecycle_0110/run_lifecycle.py",
+    "--out",
+    "/workspace/scratch/58a6cc5ac740/node_lifecycle/sensitivity",
+    "--ownership-source",
+    "docs/node_lifecycle_0110/before/QuantityCadDoubles.cs",
+    "--expect-ownership",
+    "fixed"
+  ],
+  "meaning": "old adapter is rejected by fixed ownership expectation; no product regression is alleged"
+}

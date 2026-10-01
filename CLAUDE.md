@@ -1,12 +1,16 @@
 # AutoCAD — плагины для фасадов
 
+<!-- node-lifecycle-claude:start -->
+- **Текущий маршрут:** `docs/CURRENT_MILESTONES.md`. Денис требует связывать каждый отчёт с исходным пунктом плана и результатом для пользователя. Последний результат — ограниченный пункт5: узел/ведомости на общих источниках; продукт не менялся, исправлен ownership тестового адаптера. 60/60 и compile3/3; полный5/host NOT_RUN,2В/3А BLOCKED. После конечного N1/N2 не назначать автоматически новые adapter-этапы. Промт — `docs/SESSION_PROMPT_AFTER_NODE_LIFECYCLE_01.10.md`. Продолжение от `b2a6d09`. Локальные проверки и независимая ревизия завершены; новый Windows CI ожидается после публикации. Продуктовый код остаётся прежним (`b4bf289`); №218 проверял предшествующий стенд.
+<!-- node-lifecycle-claude:end -->
+
 Этот файл Claude Code читает сам в начале каждой сессии (локальной и облачной).
 Общение — по-русски, простыми словами, без внутренних кодов; числа сначала
 проверить, потом писать. Честность важнее лести.
 
 ## Что где
 <!-- table-lifecycle-claude:start -->
-- Текущий командный этап — `docs/TABLE_COMMAND_LIFECYCLE_01.10.md` и `docs/table_lifecycle_0110/`: новая ATFTABLE переводит точку ПСК→МСК и отказывает сменившейся ПСК до записи. Настоящая ветвь команды исполняется на общей базе пилота; локально 59/59, compile 3/3, независимая ревизия PASS. Полный П5/живой host NOT_RUN; 2В/3А BLOCKED. Далее — интеграция ATFNODE с реальной канонической зоной и сохранность N1 при неудачной N2. Промт: `docs/SESSION_PROMPT_AFTER_TABLE_LIFECYCLE_01.10.md`. Исходники `b4bf2897f6df85e4219c83ab64b39dd59d2d17d8`, Windows check №218 success.
+- Предыдущий командный этап ведомостей — `docs/TABLE_COMMAND_LIFECYCLE_01.10.md` и `docs/table_lifecycle_0110/`: новая ATFTABLE переводит точку ПСК→МСК и отказывает сменившейся ПСК до записи. Настоящая ветвь команды исполняется на общей базе пилота; локально 59/59, compile 3/3, независимая ревизия PASS. Полный П5/живой host NOT_RUN; 2В/3А BLOCKED. Его тогдашний следующий участок — интеграция ATFNODE с реальной канонической зоной и сохранность N1 при неудачной N2 — выполнен ограниченным совместным проходом, указанным выше. Промт: `docs/SESSION_PROMPT_AFTER_TABLE_LIFECYCLE_01.10.md`. Исходники `b4bf2897f6df85e4219c83ab64b39dd59d2d17d8`, Windows check №218 success.
 <!-- table-lifecycle-claude:end -->
 <!-- limited-pilot-claude:start -->
 - Предыдущий ограниченный проход П1/П5 — `docs/LIMITED_PILOT_ACCEPTANCE_01.10.md` и `docs/limited_pilot_0110/`: исправлен Esc ручных осей ATFRAME; один persistent сценарий реальных данных проходит 1275 проверок/9 XLSX. Локально58/58, compile3/3; независимая ревизия PASS. Полные команды DWG/П5 и живой AutoCAD NOT_RUN, монтаж2В/3А BLOCKED. План П1…П7 сохраняется; далее конкретный пробел жизненного цикла узла/таблицы. Промт — `docs/SESSION_PROMPT_AFTER_LIMITED_PILOT_01.10.md`. Проверенный SHA `4edc342f3a8cd6a7cde196d37a440fc6e134972d`, Windows check №217 success.
@@ -69,7 +73,7 @@ python3 Facades/tools/zones_synth.py --quick
 python3 AClad/tools/attile_synth.py --quick
 python3 tools/roles_synth.py --quick          # «в ролях конструктора»: ATFZONE → раскладка → ATFRAME (нужен mono)
 python3 tools/fixes_3009/run_facade_regressions.py  # shapely/openpyxl + mono/mcs; --python-only — неполный набор
-python3 tools/atr_review_3009/run_checks.py --out <папка> # 59 групп: включая persistent пилот, Esc осей и командный цикл таблиц
+python3 tools/atr_review_3009/run_checks.py --out <папка> # 60 групп: включая общий процесс узла и ведомостей на канонических источниках
 ```
 C# фасадов можно проверить полной компиляцией через
 `tools/fixes_3009/compile_facades.py` (dotnet либо Roslyn/Mono с официальными

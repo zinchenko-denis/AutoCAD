@@ -1,0 +1,23 @@
+{
+  "status": "PASS",
+  "before_scope": "adapter ownership reproduction only; not production defect",
+  "baseline_commit": "b2a6d09bf3fcb3602ad2d782f564e0f4f4993280",
+  "before_source": {
+    "path": "before/QuantityCadDoubles.cs",
+    "sha256": "ffb9bb0f4f0b22c909b6c3e5eb4c03891c538064fd08e644844e1899903fbc3b"
+  },
+  "before_receipt": {
+    "path": "before/ownership.json",
+    "sha256": "55f423f5c3f033d67f35714ca49eaf980ecb715fe7e4a0c8bf1755692a5fba5c"
+  },
+  "after_receipt": {
+    "path": "after/ownership.json",
+    "sha256": "4cb61109df36c753b8fc7389768f574b9c4d0de204829f48b1f46cc402ad5041"
+  },
+  "combined_manifest": {
+    "path": "after/manifest.json",
+    "sha256": "13f5ebb435950120ffcf7641b1eea990be9d25f183be219988998f9bb4dc62f0"
+  },
+  "product_change": "NONE",
+  "full_legacy_lifecycle": "NOT_RUN: legacy definition primitives are incorrectly owned by ModelSpace; do not use for product evidence"
+}

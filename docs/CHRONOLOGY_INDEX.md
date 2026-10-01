@@ -1,5 +1,9 @@
 # Указатель хронологии (генерируется: `tools/make_chronology.py`)
 
+<!-- node-lifecycle-index:start -->
+01.10: [текущие основные вехи](CURRENT_MILESTONES.md), [ограниченный совместный узел/ведомости](NODE_TABLE_LIFECYCLE_01.10.md), [промт](SESSION_PROMPT_AFTER_NODE_LIFECYCLE_01.10.md). Продолжение от `b2a6d09`. Локальные проверки и независимая ревизия завершены; новый Windows CI ожидается после публикации. Продуктовый код остаётся прежним (`b4bf289`); №218 проверял предшествующий стенд.
+<!-- node-lifecycle-index:end -->
+
 <!-- table-lifecycle-index:start -->
 Текущее продолжение 01.10: [командный цикл ведомостей](TABLE_COMMAND_LIFECYCLE_01.10.md), [протоколы](table_lifecycle_0110/), [промт](SESSION_PROMPT_AFTER_TABLE_LIFECYCLE_01.10.md). Проверенный продукт/стенд **`b4bf2897f6df85e4219c83ab64b39dd59d2d17d8`**, Windows **[check №218](https://github.com/zinchenko-denis/AutoCAD/actions/runs/36911126842) — success**. Скачанный артефакт связан с точным Git SHA и проверен; итоговый протокол — `docs/table_lifecycle_0110/github_publication.json`. Следующий коммит передачи меняет только документацию.
 <!-- table-lifecycle-index:end -->

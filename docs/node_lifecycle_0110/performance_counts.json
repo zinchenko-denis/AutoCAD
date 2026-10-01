@@ -1,0 +1,541 @@
+{
+  "status": "PASS",
+  "product_modified": false,
+  "node_command_counter_scope": "captured immediately after command returns; inspections excluded",
+  "node_commands": [
+    {
+      "name": "create_n1",
+      "counters": {
+        "get_object_read": 88,
+        "get_object_write": 2,
+        "dictionary_contains": 14,
+        "dictionary_get": 14,
+        "dictionary_set": 1,
+        "xrecord_data_get": 20,
+        "xrecord_data_set": 1,
+        "buffer_enumerations": 12,
+        "buffer_values": 44,
+        "buffer_text_chars": 9157,
+        "points_read": 8,
+        "bulges_read": 8,
+        "hatch_loops_read": 2,
+        "typed_values_allocated": 16,
+        "objects_created": 55,
+        "modelspace_visits": 0
+      },
+      "milliseconds": 19.9119
+    },
+    {
+      "name": "n1_initial_fresh",
+      "counters": {
+        "get_object_read": 72,
+        "get_object_write": 0,
+        "dictionary_contains": 8,
+        "dictionary_get": 8,
+        "dictionary_set": 0,
+        "xrecord_data_get": 11,
+        "xrecord_data_set": 0,
+        "buffer_enumerations": 7,
+        "buffer_values": 38,
+        "buffer_text_chars": 7685,
+        "points_read": 4,
+        "bulges_read": 4,
+        "hatch_loops_read": 1,
+        "typed_values_allocated": 0,
+        "objects_created": 0,
+        "modelspace_visits": 0
+      },
+      "milliseconds": 9.756400000000001
+    },
+    {
+      "name": "n1_after_project_change",
+      "counters": {
+        "get_object_read": 72,
+        "get_object_write": 0,
+        "dictionary_contains": 8,
+        "dictionary_get": 8,
+        "dictionary_set": 0,
+        "xrecord_data_get": 11,
+        "xrecord_data_set": 0,
+        "buffer_enumerations": 7,
+        "buffer_values": 38,
+        "buffer_text_chars": 7685,
+        "points_read": 4,
+        "bulges_read": 4,
+        "hatch_loops_read": 1,
+        "typed_values_allocated": 0,
+        "objects_created": 0,
+        "modelspace_visits": 0
+      },
+      "milliseconds": 17.586100000000002
+    },
+    {
+      "name": "cancel_dialog",
+      "counters": {
+        "get_object_read": 17,
+        "get_object_write": 0,
+        "dictionary_contains": 7,
+        "dictionary_get": 7,
+        "dictionary_set": 0,
+        "xrecord_data_get": 10,
+        "xrecord_data_set": 0,
+        "buffer_enumerations": 6,
+        "buffer_values": 22,
+        "buffer_text_chars": 4578,
+        "points_read": 4,
+        "bulges_read": 4,
+        "hatch_loops_read": 1,
+        "typed_values_allocated": 0,
+        "objects_created": 0,
+        "modelspace_visits": 0
+      },
+      "milliseconds": 5.6595
+    },
+    {
+      "name": "cancel_dialog_n1_stale",
+      "counters": {
+        "get_object_read": 72,
+        "get_object_write": 0,
+        "dictionary_contains": 8,
+        "dictionary_get": 8,
+        "dictionary_set": 0,
+        "xrecord_data_get": 11,
+        "xrecord_data_set": 0,
+        "buffer_enumerations": 7,
+        "buffer_values": 38,
+        "buffer_text_chars": 7685,
+        "points_read": 4,
+        "bulges_read": 4,
+        "hatch_loops_read": 1,
+        "typed_values_allocated": 0,
+        "objects_created": 0,
+        "modelspace_visits": 0
+      },
+      "milliseconds": 16.2198
+    },
+    {
+      "name": "cancel_point",
+      "counters": {
+        "get_object_read": 17,
+        "get_object_write": 0,
+        "dictionary_contains": 7,
+        "dictionary_get": 7,
+        "dictionary_set": 0,
+        "xrecord_data_get": 10,
+        "xrecord_data_set": 0,
+        "buffer_enumerations": 6,
+        "buffer_values": 22,
+        "buffer_text_chars": 4578,
+        "points_read": 4,
+        "bulges_read": 4,
+        "hatch_loops_read": 1,
+        "typed_values_allocated": 0,
+        "objects_created": 0,
+        "modelspace_visits": 0
+      },
+      "milliseconds": 5.0934
+    },
+    {
+      "name": "cancel_point_n1_stale",
+      "counters": {
+        "get_object_read": 72,
+        "get_object_write": 0,
+        "dictionary_contains": 8,
+        "dictionary_get": 8,
+        "dictionary_set": 0,
+        "xrecord_data_get": 11,
+        "xrecord_data_set": 0,
+        "buffer_enumerations": 7,
+        "buffer_values": 38,
+        "buffer_text_chars": 7685,
+        "points_read": 4,
+        "bulges_read": 4,
+        "hatch_loops_read": 1,
+        "typed_values_allocated": 0,
+        "objects_created": 0,
+        "modelspace_visits": 0
+      },
+      "milliseconds": 6.604100000000001
+    },
+    {
+      "name": "refuse_ucs",
+      "counters": {
+        "get_object_read": 17,
+        "get_object_write": 0,
+        "dictionary_contains": 7,
+        "dictionary_get": 7,
+        "dictionary_set": 0,
+        "xrecord_data_get": 10,
+        "xrecord_data_set": 0,
+        "buffer_enumerations": 6,
+        "buffer_values": 22,
+        "buffer_text_chars": 4578,
+        "points_read": 4,
+        "bulges_read": 4,
+        "hatch_loops_read": 1,
+        "typed_values_allocated": 0,
+        "objects_created": 0,
+        "modelspace_visits": 0
+      },
+      "milliseconds": 6.0262
+    },
+    {
+      "name": "refuse_ucs_n1_stale",
+      "counters": {
+        "get_object_read": 72,
+        "get_object_write": 0,
+        "dictionary_contains": 8,
+        "dictionary_get": 8,
+        "dictionary_set": 0,
+        "xrecord_data_get": 11,
+        "xrecord_data_set": 0,
+        "buffer_enumerations": 7,
+        "buffer_values": 38,
+        "buffer_text_chars": 7685,
+        "points_read": 4,
+        "bulges_read": 4,
+        "hatch_loops_read": 1,
+        "typed_values_allocated": 0,
+        "objects_created": 0,
+        "modelspace_visits": 0
+      },
+      "milliseconds": 6.8727
+    },
+    {
+      "name": "create_n2",
+      "counters": {
+        "get_object_read": 89,
+        "get_object_write": 2,
+        "dictionary_contains": 14,
+        "dictionary_get": 14,
+        "dictionary_set": 1,
+        "xrecord_data_get": 20,
+        "xrecord_data_set": 1,
+        "buffer_enumerations": 12,
+        "buffer_values": 44,
+        "buffer_text_chars": 9157,
+        "points_read": 8,
+        "bulges_read": 8,
+        "hatch_loops_read": 2,
+        "typed_values_allocated": 16,
+        "objects_created": 52,
+        "modelspace_visits": 0
+      },
+      "milliseconds": 10.8092
+    },
+    {
+      "name": "n2_fresh_at_issue",
+      "counters": {
+        "get_object_read": 72,
+        "get_object_write": 0,
+        "dictionary_contains": 8,
+        "dictionary_get": 8,
+        "dictionary_set": 0,
+        "xrecord_data_get": 11,
+        "xrecord_data_set": 0,
+        "buffer_enumerations": 7,
+        "buffer_values": 38,
+        "buffer_text_chars": 7685,
+        "points_read": 4,
+        "bulges_read": 4,
+        "hatch_loops_read": 1,
+        "typed_values_allocated": 0,
+        "objects_created": 0,
+        "modelspace_visits": 0
+      },
+      "milliseconds": 7.1085
+    },
+    {
+      "name": "n1_stale_after_n2",
+      "counters": {
+        "get_object_read": 72,
+        "get_object_write": 0,
+        "dictionary_contains": 8,
+        "dictionary_get": 8,
+        "dictionary_set": 0,
+        "xrecord_data_get": 11,
+        "xrecord_data_set": 0,
+        "buffer_enumerations": 7,
+        "buffer_values": 38,
+        "buffer_text_chars": 7685,
+        "points_read": 4,
+        "bulges_read": 4,
+        "hatch_loops_read": 1,
+        "typed_values_allocated": 0,
+        "objects_created": 0,
+        "modelspace_visits": 0
+      },
+      "milliseconds": 7.2485
+    },
+    {
+      "name": "n2_fresh_before_table_late_mutation",
+      "counters": {
+        "get_object_read": 72,
+        "get_object_write": 0,
+        "dictionary_contains": 8,
+        "dictionary_get": 8,
+        "dictionary_set": 0,
+        "xrecord_data_get": 11,
+        "xrecord_data_set": 0,
+        "buffer_enumerations": 7,
+        "buffer_values": 38,
+        "buffer_text_chars": 7685,
+        "points_read": 4,
+        "bulges_read": 4,
+        "hatch_loops_read": 1,
+        "typed_values_allocated": 0,
+        "objects_created": 0,
+        "modelspace_visits": 0
+      },
+      "milliseconds": 8.0464
+    },
+    {
+      "name": "n1_after_table_project_revision3",
+      "counters": {
+        "get_object_read": 72,
+        "get_object_write": 0,
+        "dictionary_contains": 8,
+        "dictionary_get": 8,
+        "dictionary_set": 0,
+        "xrecord_data_get": 11,
+        "xrecord_data_set": 0,
+        "buffer_enumerations": 7,
+        "buffer_values": 38,
+        "buffer_text_chars": 7685,
+        "points_read": 4,
+        "bulges_read": 4,
+        "hatch_loops_read": 1,
+        "typed_values_allocated": 0,
+        "objects_created": 0,
+        "modelspace_visits": 0
+      },
+      "milliseconds": 7.159800000000001
+    },
+    {
+      "name": "n2_after_table_project_revision3",
+      "counters": {
+        "get_object_read": 72,
+        "get_object_write": 0,
+        "dictionary_contains": 8,
+        "dictionary_get": 8,
+        "dictionary_set": 0,
+        "xrecord_data_get": 11,
+        "xrecord_data_set": 0,
+        "buffer_enumerations": 7,
+        "buffer_values": 38,
+        "buffer_text_chars": 7685,
+        "points_read": 4,
+        "bulges_read": 4,
+        "hatch_loops_read": 1,
+        "typed_values_allocated": 0,
+        "objects_created": 0,
+        "modelspace_visits": 0
+      },
+      "milliseconds": 7.0247
+    }
+  ],
+  "node_modelspace_visits": 0,
+  "node_additional_engine_calls": 0,
+  "table_comparison": [
+    {
+      "case": "initial_cladding",
+      "before_modelspace_visits": 52,
+      "with_nodes_modelspace_visits": 54,
+      "additional_visits": 2,
+      "additional_object_reads": 4,
+      "extra_reads_explained_by_node_reference_visits": true
+    },
+    {
+      "case": "initial_frame",
+      "before_modelspace_visits": 54,
+      "with_nodes_modelspace_visits": 56,
+      "additional_visits": 2,
+      "additional_object_reads": 4,
+      "extra_reads_explained_by_node_reference_visits": true
+    },
+    {
+      "case": "initial_connections",
+      "before_modelspace_visits": 56,
+      "with_nodes_modelspace_visits": 58,
+      "additional_visits": 2,
+      "additional_object_reads": 4,
+      "extra_reads_explained_by_node_reference_visits": true
+    },
+    {
+      "case": "cancel_preview",
+      "before_modelspace_visits": 31,
+      "with_nodes_modelspace_visits": 32,
+      "additional_visits": 1,
+      "additional_object_reads": 2,
+      "extra_reads_explained_by_node_reference_visits": true
+    },
+    {
+      "case": "cancel_update_second_preview",
+      "before_modelspace_visits": 31,
+      "with_nodes_modelspace_visits": 32,
+      "additional_visits": 1,
+      "additional_object_reads": 2,
+      "extra_reads_explained_by_node_reference_visits": true
+    },
+    {
+      "case": "cancel_point",
+      "before_modelspace_visits": 31,
+      "with_nodes_modelspace_visits": 32,
+      "additional_visits": 1,
+      "additional_object_reads": 2,
+      "extra_reads_explained_by_node_reference_visits": true
+    },
+    {
+      "case": "cancel_save_dialog",
+      "before_modelspace_visits": 31,
+      "with_nodes_modelspace_visits": 32,
+      "additional_visits": 1,
+      "additional_object_reads": 2,
+      "extra_reads_explained_by_node_reference_visits": true
+    },
+    {
+      "case": "wrong_target_cladding",
+      "before_modelspace_visits": 31,
+      "with_nodes_modelspace_visits": 32,
+      "additional_visits": 1,
+      "additional_object_reads": 2,
+      "extra_reads_explained_by_node_reference_visits": true
+    },
+    {
+      "case": "wrong_target_connections",
+      "before_modelspace_visits": 31,
+      "with_nodes_modelspace_visits": 32,
+      "additional_visits": 1,
+      "additional_object_reads": 2,
+      "extra_reads_explained_by_node_reference_visits": true
+    },
+    {
+      "case": "project_changed_refuse",
+      "before_modelspace_visits": 0,
+      "with_nodes_modelspace_visits": 0,
+      "additional_visits": 0,
+      "additional_object_reads": 0,
+      "extra_reads_explained_by_node_reference_visits": true
+    },
+    {
+      "case": "project_reissued_cladding",
+      "before_modelspace_visits": 78,
+      "with_nodes_modelspace_visits": 82,
+      "additional_visits": 4,
+      "additional_object_reads": 8,
+      "extra_reads_explained_by_node_reference_visits": true
+    },
+    {
+      "case": "project_reissued_frame",
+      "before_modelspace_visits": 78,
+      "with_nodes_modelspace_visits": 82,
+      "additional_visits": 4,
+      "additional_object_reads": 8,
+      "extra_reads_explained_by_node_reference_visits": true
+    },
+    {
+      "case": "project_reissued_connections",
+      "before_modelspace_visits": 78,
+      "with_nodes_modelspace_visits": 82,
+      "additional_visits": 4,
+      "additional_object_reads": 8,
+      "extra_reads_explained_by_node_reference_visits": true
+    },
+    {
+      "case": "zone_changed_refuse",
+      "before_modelspace_visits": 0,
+      "with_nodes_modelspace_visits": 0,
+      "additional_visits": 0,
+      "additional_object_reads": 0,
+      "extra_reads_explained_by_node_reference_visits": true
+    },
+    {
+      "case": "zone_reissued_cladding",
+      "before_modelspace_visits": 86,
+      "with_nodes_modelspace_visits": 90,
+      "additional_visits": 4,
+      "additional_object_reads": 8,
+      "extra_reads_explained_by_node_reference_visits": true
+    },
+    {
+      "case": "zone_reissued_frame",
+      "before_modelspace_visits": 86,
+      "with_nodes_modelspace_visits": 90,
+      "additional_visits": 4,
+      "additional_object_reads": 8,
+      "extra_reads_explained_by_node_reference_visits": true
+    },
+    {
+      "case": "zone_reissued_connections",
+      "before_modelspace_visits": 86,
+      "with_nodes_modelspace_visits": 90,
+      "additional_visits": 4,
+      "additional_object_reads": 8,
+      "extra_reads_explained_by_node_reference_visits": true
+    },
+    {
+      "case": "late_ucs_point",
+      "before_modelspace_visits": 43,
+      "with_nodes_modelspace_visits": 45,
+      "additional_visits": 2,
+      "additional_object_reads": 4,
+      "extra_reads_explained_by_node_reference_visits": true
+    },
+    {
+      "case": "late_ucs_save_dialog",
+      "before_modelspace_visits": 86,
+      "with_nodes_modelspace_visits": 90,
+      "additional_visits": 4,
+      "additional_object_reads": 8,
+      "extra_reads_explained_by_node_reference_visits": true
+    },
+    {
+      "case": "late_ucs_lock",
+      "before_modelspace_visits": 86,
+      "with_nodes_modelspace_visits": 90,
+      "additional_visits": 4,
+      "additional_object_reads": 8,
+      "extra_reads_explained_by_node_reference_visits": true
+    },
+    {
+      "case": "late_ucs_fresh_read",
+      "before_modelspace_visits": 86,
+      "with_nodes_modelspace_visits": 90,
+      "additional_visits": 4,
+      "additional_object_reads": 8,
+      "extra_reads_explained_by_node_reference_visits": true
+    },
+    {
+      "case": "excel_only",
+      "before_modelspace_visits": 86,
+      "with_nodes_modelspace_visits": 90,
+      "additional_visits": 4,
+      "additional_object_reads": 8,
+      "extra_reads_explained_by_node_reference_visits": true
+    },
+    {
+      "case": "late_target",
+      "before_modelspace_visits": 86,
+      "with_nodes_modelspace_visits": 90,
+      "additional_visits": 4,
+      "additional_object_reads": 8,
+      "extra_reads_explained_by_node_reference_visits": true
+    },
+    {
+      "case": "late_project",
+      "before_modelspace_visits": 43,
+      "with_nodes_modelspace_visits": 45,
+      "additional_visits": 2,
+      "additional_object_reads": 4,
+      "extra_reads_explained_by_node_reference_visits": true
+    }
+  ],
+  "baseline": "b2a6d09 docs/table_lifecycle_0110/after/table_command/result.json",
+  "explanation": "Existing quantity passes see 1 initial / 2 later node references. Each extra reference adds 2 object reads per pass. No internal definition primitives leak into ModelSpace; no production scan added.",
+  "timings": {
+    "compile_seconds": 0.8096766660019057,
+    "persistent_pipeline_seconds": 1.655427535995841,
+    "scope": "managed adapters only; not AutoCAD performance"
+  },
+  "host_performance": "NOT_RUN"
+}

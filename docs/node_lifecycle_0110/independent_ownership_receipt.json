@@ -1,0 +1,30 @@
+{
+  "status": "PASS",
+  "baseline_commit": "b2a6d09bf3fcb3602ad2d782f564e0f4f4993280",
+  "baseline_cad_sha256": "ffb9bb0f4f0b22c909b6c3e5eb4c03891c538064fd08e644844e1899903fbc3b",
+  "reproduction": {
+    "status": "LEGACY_ADAPTER_GAP_REPRODUCED",
+    "source_sha256": "ffb9bb0f4f0b22c909b6c3e5eb4c03891c538064fd08e644844e1899903fbc3b",
+    "observed": {
+      "model_count": 2,
+      "definition_count": 1,
+      "internal_primitive_leaked": true,
+      "reference_membership_count": 1,
+      "lazy_internal_primitive_leaked": true
+    }
+  },
+  "runs": [
+    {
+      "name": "before",
+      "expected_exit_code": 0,
+      "observed_exit_code": 0,
+      "reason": "Ownership adapter: LEGACY_GAP_REPRODUCED"
+    },
+    {
+      "name": "sensitivity",
+      "expected_exit_code": 1,
+      "observed_exit_code": 1,
+      "reason": "Adapter ownership expectation not met"
+    }
+  ]
+}

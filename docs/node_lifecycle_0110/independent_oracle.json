@@ -1,0 +1,58 @@
+{
+  "schema": "node_lifecycle_independent_oracle/1",
+  "baseline_commit": "b2a6d09bf3fcb3602ad2d782f564e0f4f4993280",
+  "plan_item": "5 / limited P5: existing node and table commands on same canonical pilot data",
+  "scope": "Managed explicit CAD doubles only; no new engineering facts or product change presumed",
+  "node_arithmetic": {
+    "insulation_layers_mm": [
+      100,
+      50
+    ],
+    "outer_surface_mm": 150,
+    "gp_near_mm": 170,
+    "local_clearance_mm": 20,
+    "front_initial_mm": 230,
+    "front_project_changed_mm": 240,
+    "front_right_override_mm": 260
+  },
+  "expected_transitions": [
+    "N1 fresh immediately after initial creation",
+    "Project change makes N1 stale",
+    "Cancelled or refused N2 before write preserves N1 owner/definition/record/body unchanged",
+    "Successful N2 shares canonical source zone with N1 but has distinct owner and definition; N2 fresh at its issuance and N1 still stale",
+    "Later externally committed source mutations remain committed and may stale N2; do not reset source to pass the test"
+  ],
+  "quantity_expected": {
+    "tiles": 12,
+    "installed_tile_area_m2": 4.32,
+    "rails": 2,
+    "rail_length_m": 3.64,
+    "brackets": 6,
+    "candidate_support_links": 6,
+    "node_schemes_count_as_physical_parts": false
+  },
+  "ownership": {
+    "definition_children_in_modelspace": false,
+    "each_node_reference_in_modelspace_once": true,
+    "old_definition_reused_for_new_node": false
+  },
+  "performance": {
+    "node_command_modelspace_visits": 0,
+    "node_command_engine_invocations": 0,
+    "inspection_counts_separate": true,
+    "quantity_scan_extra_node_references": "Count explicitly; internal definition primitives must not leak"
+  },
+  "engineering": {
+    "physical_assignment": "not_asserted",
+    "mounting_status": "not_confirmed",
+    "automatic_bracket_selection_allowed": false,
+    "full_2V": "BLOCKED",
+    "calculation_3A": "BLOCKED"
+  },
+  "native_host": {
+    "DWG_save_reopen": "NOT_RUN",
+    "COPY_SaveAs": "NOT_RUN",
+    "CAD_rollback_Undo": "NOT_RUN",
+    "Table_rendering": "NOT_RUN"
+  }
+}

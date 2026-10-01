@@ -1,0 +1,836 @@
+{
+  "verification": "PASS",
+  "engineering_assessment": "BLOCKED",
+  "runs": [
+    {
+      "epoch": "initial",
+      "zone_id": "П-1",
+      "owner": "6",
+      "source_contour": "2",
+      "geometry_fingerprint": "fz1:a04ca4bda44f49cd9c6510c94307ecbb:37fec0ea7a579607fbeeab4b73352b6e032e634864f75c88f97425ffd1c8abca",
+      "run_id": "ac920bee10f842bba5708c4387c18573",
+      "document_id": "a60d65d0ed2e4317be35afe3772ddd0f",
+      "context": {
+        "schema": "aframe_parameter_context/1",
+        "project": {
+          "project_id": "11111111111111111111111111111111",
+          "revision": 1,
+          "content_digest": "0da091c7ad681a27a4f6d3a7f49cf86cb65a42abae6cdc3b63a9b2106418b048",
+          "record_digest": "8f410e63a587e6e3f7b14da34918d36452b4135c541e525c3f6e189f2d88bc3f"
+        },
+        "zone": {
+          "owner_handle": "6",
+          "zone_id": "П-1",
+          "revision": 1,
+          "content_digest": "ebac77d00952f64a77b74e2493438814e734774f4d819acdfb1d9b03f84f00f0",
+          "record_digest": "33ee90d947eb9681a358d3e16460ea4007239a60d3fe2f62da6940c15f037dd1"
+        },
+        "effective_digest": "359331b4a038cda3e4a47a3b1b7fffcf179ec1cc3d0381423f3fb12714dfd40e",
+        "origins": {
+          "bracket.execution": "project_default",
+          "bracket.nominal_width_mm": "project_default",
+          "bracket.L_mm": "project_default",
+          "extender.execution": "project_default",
+          "extender.nominal_width_mm": "project_default",
+          "extender.L_mm": "project_default",
+          "extender.thickness_mm": "project_default",
+          "profile.execution": "project_default",
+          "profile.a_mm": "project_default",
+          "profile.b_mm": "project_default",
+          "profile.thickness_mm": "project_default",
+          "geometry.cladding_front_offset_mm": "project_default",
+          "geometry.insulation_layers_mm": "project_default"
+        }
+      },
+      "source_snapshot": {
+        "sources": [
+          {
+            "handle": "6",
+            "geometry": "1A1736F97C6554A9248CCFE06E210BB2755E858011D30C03C6385CD04AC0AC64",
+            "metadata": "82F1FBCF9A1DE6EC6DC2906D0803B54F7614B572E6415A3E41BCFC90909440A5"
+          },
+          {
+            "handle": "2",
+            "geometry": "1CDDA4AC766AB4B8692ECD8E82199793D0832417D44EDDB1FB5F6C6BDFB8A71F",
+            "metadata": "46868B69ABDF5F30D8F8E3A920B97EC420C31DBDB03B08C763F59AB6D2EAFA87"
+          }
+        ],
+        "project_dependency": {
+          "project_id": "11111111111111111111111111111111",
+          "revision": 1,
+          "content_digest": "0da091c7ad681a27a4f6d3a7f49cf86cb65a42abae6cdc3b63a9b2106418b048",
+          "record_digest": "8f410e63a587e6e3f7b14da34918d36452b4135c541e525c3f6e189f2d88bc3f"
+        }
+      },
+      "node_digest": "5f3eb7397e12184f1ae8b27c85b7b6e76c468000867f2d299e1325a4067ce6c2",
+      "physical": [
+        {
+          "element_id": "ac920bee10f842bba5708c4387c18573:rails:0",
+          "role": "rail",
+          "mark": "ГП-40-40-1,2",
+          "product_id": null,
+          "cad_entities": [
+            {
+              "handle": "33",
+              "role": "outer",
+              "fingerprint": "7687815C3272836FA4C9A83EE01C2D32CF9551F6119212C8CE8E149008C85A6B"
+            }
+          ]
+        },
+        {
+          "element_id": "ac920bee10f842bba5708c4387c18573:brackets:0",
+          "role": "bracket",
+          "mark": null,
+          "product_id": null,
+          "cad_entities": [
+            {
+              "handle": "34",
+              "role": "outer",
+              "fingerprint": "A0DA224E9B307A0C1F656732E597DD2DE37E5FF5FEC010A9ACA1DB5387EFB5B1"
+            }
+          ]
+        },
+        {
+          "element_id": "ac920bee10f842bba5708c4387c18573:brackets:1",
+          "role": "bracket",
+          "mark": null,
+          "product_id": null,
+          "cad_entities": [
+            {
+              "handle": "35",
+              "role": "outer",
+              "fingerprint": "0D614DBA753142B72BB19BDEFE1E8CEC186308B02B32E1D82826A17872E5345F"
+            }
+          ]
+        },
+        {
+          "element_id": "ac920bee10f842bba5708c4387c18573:brackets:2",
+          "role": "bracket",
+          "mark": null,
+          "product_id": null,
+          "cad_entities": [
+            {
+              "handle": "36",
+              "role": "outer",
+              "fingerprint": "DFF4DFD24435E2760DE84736436C2347F620F9187652D705C434AD675CF93DF4"
+            }
+          ]
+        }
+      ],
+      "candidate_pairs": [
+        {
+          "rail_element_id": "ac920bee10f842bba5708c4387c18573:rails:0",
+          "bracket_element_id": "ac920bee10f842bba5708c4387c18573:brackets:0",
+          "offset_mm": 300,
+          "zone_id": "П-1"
+        },
+        {
+          "rail_element_id": "ac920bee10f842bba5708c4387c18573:rails:0",
+          "bracket_element_id": "ac920bee10f842bba5708c4387c18573:brackets:1",
+          "offset_mm": 1100,
+          "zone_id": "П-1"
+        },
+        {
+          "rail_element_id": "ac920bee10f842bba5708c4387c18573:rails:0",
+          "bracket_element_id": "ac920bee10f842bba5708c4387c18573:brackets:2",
+          "offset_mm": 1520,
+          "zone_id": "П-1"
+        }
+      ],
+      "physical_uk": "NOT_REPRESENTED",
+      "typed_interfaces": "NOT_REPRESENTED"
+    },
+    {
+      "epoch": "initial",
+      "zone_id": "П-2",
+      "owner": "F",
+      "source_contour": "1",
+      "geometry_fingerprint": "fz1:32dfb5526a4d4cffb1c49db77aa9ef51:2814a08265d7afb2f99bf301fa8418547bfc1c20cb127f90cc81d07964cbeca5",
+      "run_id": "72d7cb952278423c80541385f7e4745c",
+      "document_id": "a60d65d0ed2e4317be35afe3772ddd0f",
+      "context": {
+        "schema": "aframe_parameter_context/1",
+        "project": {
+          "project_id": "11111111111111111111111111111111",
+          "revision": 1,
+          "content_digest": "0da091c7ad681a27a4f6d3a7f49cf86cb65a42abae6cdc3b63a9b2106418b048",
+          "record_digest": "8f410e63a587e6e3f7b14da34918d36452b4135c541e525c3f6e189f2d88bc3f"
+        },
+        "zone": {
+          "owner_handle": "F",
+          "zone_id": "П-2",
+          "revision": 1,
+          "content_digest": "ebac77d00952f64a77b74e2493438814e734774f4d819acdfb1d9b03f84f00f0",
+          "record_digest": "fd33b83ef5d713f153e110d53e02e8e10828a3a6c1861b02639ba88889ab1347"
+        },
+        "effective_digest": "359331b4a038cda3e4a47a3b1b7fffcf179ec1cc3d0381423f3fb12714dfd40e",
+        "origins": {
+          "bracket.execution": "project_default",
+          "bracket.nominal_width_mm": "project_default",
+          "bracket.L_mm": "project_default",
+          "extender.execution": "project_default",
+          "extender.nominal_width_mm": "project_default",
+          "extender.L_mm": "project_default",
+          "extender.thickness_mm": "project_default",
+          "profile.execution": "project_default",
+          "profile.a_mm": "project_default",
+          "profile.b_mm": "project_default",
+          "profile.thickness_mm": "project_default",
+          "geometry.cladding_front_offset_mm": "project_default",
+          "geometry.insulation_layers_mm": "project_default"
+        }
+      },
+      "source_snapshot": {
+        "sources": [
+          {
+            "handle": "F",
+            "geometry": "4A87F2735146EBB87C52C5F363F1CE0702827AFDACE0789C6239D7920FDE47D7",
+            "metadata": "4A7C5354084042C06D129EF24CAFB7882EC28E3A6E009A69773E41F19DF8B13B"
+          },
+          {
+            "handle": "1",
+            "geometry": "AE525315731D119E3579FAAE8C08B54EBA07763C30AD30303AF884A69CFDAAAC",
+            "metadata": "46868B69ABDF5F30D8F8E3A920B97EC420C31DBDB03B08C763F59AB6D2EAFA87"
+          }
+        ],
+        "project_dependency": {
+          "project_id": "11111111111111111111111111111111",
+          "revision": 1,
+          "content_digest": "0da091c7ad681a27a4f6d3a7f49cf86cb65a42abae6cdc3b63a9b2106418b048",
+          "record_digest": "8f410e63a587e6e3f7b14da34918d36452b4135c541e525c3f6e189f2d88bc3f"
+        }
+      },
+      "node_digest": "97967030552fd4f36144aa28c243b03241bf4f30549102838444ac5d977d912c",
+      "physical": [
+        {
+          "element_id": "72d7cb952278423c80541385f7e4745c:rails:0",
+          "role": "rail",
+          "mark": "ГП-40-40-1,2",
+          "product_id": null,
+          "cad_entities": [
+            {
+              "handle": "59",
+              "role": "outer",
+              "fingerprint": "391135C883F8DC3AA930A5BBB9527C1B52F41B895CFDBCFE2A687DBFEDADCAEA"
+            }
+          ]
+        },
+        {
+          "element_id": "72d7cb952278423c80541385f7e4745c:brackets:0",
+          "role": "bracket",
+          "mark": null,
+          "product_id": null,
+          "cad_entities": [
+            {
+              "handle": "5A",
+              "role": "outer",
+              "fingerprint": "82B8AD9352F00CEE8D417EDC09937830E6CEA5DE60FB76B03FEE67F3D19C4B8C"
+            }
+          ]
+        },
+        {
+          "element_id": "72d7cb952278423c80541385f7e4745c:brackets:1",
+          "role": "bracket",
+          "mark": null,
+          "product_id": null,
+          "cad_entities": [
+            {
+              "handle": "5B",
+              "role": "outer",
+              "fingerprint": "F99744078E00365DCE7A598F4E1D7EC78C9D627889C7DF6A7C874C495E4CD3F4"
+            }
+          ]
+        },
+        {
+          "element_id": "72d7cb952278423c80541385f7e4745c:brackets:2",
+          "role": "bracket",
+          "mark": null,
+          "product_id": null,
+          "cad_entities": [
+            {
+              "handle": "5C",
+              "role": "outer",
+              "fingerprint": "B732370BA2C2D2A714CCBC00A6A8681706BE48C080F86F2CFEDE52DB05A87F9E"
+            }
+          ]
+        }
+      ],
+      "candidate_pairs": [
+        {
+          "rail_element_id": "72d7cb952278423c80541385f7e4745c:rails:0",
+          "bracket_element_id": "72d7cb952278423c80541385f7e4745c:brackets:0",
+          "offset_mm": 300,
+          "zone_id": "П-2"
+        },
+        {
+          "rail_element_id": "72d7cb952278423c80541385f7e4745c:rails:0",
+          "bracket_element_id": "72d7cb952278423c80541385f7e4745c:brackets:1",
+          "offset_mm": 1100,
+          "zone_id": "П-2"
+        },
+        {
+          "rail_element_id": "72d7cb952278423c80541385f7e4745c:rails:0",
+          "bracket_element_id": "72d7cb952278423c80541385f7e4745c:brackets:2",
+          "offset_mm": 1520,
+          "zone_id": "П-2"
+        }
+      ],
+      "physical_uk": "NOT_REPRESENTED",
+      "typed_interfaces": "NOT_REPRESENTED"
+    },
+    {
+      "epoch": "project_reissue",
+      "zone_id": "П-1",
+      "owner": "6",
+      "source_contour": "2",
+      "geometry_fingerprint": "fz1:a04ca4bda44f49cd9c6510c94307ecbb:37fec0ea7a579607fbeeab4b73352b6e032e634864f75c88f97425ffd1c8abca",
+      "run_id": "570acbeb58334a8dbc50a1ded8b2b90f",
+      "document_id": "a60d65d0ed2e4317be35afe3772ddd0f",
+      "context": {
+        "schema": "aframe_parameter_context/1",
+        "project": {
+          "project_id": "11111111111111111111111111111111",
+          "revision": 2,
+          "content_digest": "32d21c0067c04d574b8cacde8038d081a748294cd64116ba53e7466920b0cda9",
+          "record_digest": "8a219a9807bd1fa5e6a68ce6006846314952e404df17be6ac06942f75d32f8e5"
+        },
+        "zone": {
+          "owner_handle": "6",
+          "zone_id": "П-1",
+          "revision": 1,
+          "content_digest": "ebac77d00952f64a77b74e2493438814e734774f4d819acdfb1d9b03f84f00f0",
+          "record_digest": "33ee90d947eb9681a358d3e16460ea4007239a60d3fe2f62da6940c15f037dd1"
+        },
+        "effective_digest": "aea4fdf1e025a6a6d83bdeba215d7bc63b17a3ba0f874fd2dca83480a0d78425",
+        "origins": {
+          "bracket.execution": "project_default",
+          "bracket.nominal_width_mm": "project_default",
+          "bracket.L_mm": "project_default",
+          "extender.execution": "project_default",
+          "extender.nominal_width_mm": "project_default",
+          "extender.L_mm": "project_default",
+          "extender.thickness_mm": "project_default",
+          "profile.execution": "project_default",
+          "profile.a_mm": "project_default",
+          "profile.b_mm": "project_default",
+          "profile.thickness_mm": "project_default",
+          "geometry.cladding_front_offset_mm": "project_default",
+          "geometry.insulation_layers_mm": "project_default"
+        }
+      },
+      "source_snapshot": {
+        "sources": [
+          {
+            "handle": "6",
+            "geometry": "1A1736F97C6554A9248CCFE06E210BB2755E858011D30C03C6385CD04AC0AC64",
+            "metadata": "82F1FBCF9A1DE6EC6DC2906D0803B54F7614B572E6415A3E41BCFC90909440A5"
+          },
+          {
+            "handle": "2",
+            "geometry": "1CDDA4AC766AB4B8692ECD8E82199793D0832417D44EDDB1FB5F6C6BDFB8A71F",
+            "metadata": "46868B69ABDF5F30D8F8E3A920B97EC420C31DBDB03B08C763F59AB6D2EAFA87"
+          }
+        ],
+        "project_dependency": {
+          "project_id": "11111111111111111111111111111111",
+          "revision": 2,
+          "content_digest": "32d21c0067c04d574b8cacde8038d081a748294cd64116ba53e7466920b0cda9",
+          "record_digest": "8a219a9807bd1fa5e6a68ce6006846314952e404df17be6ac06942f75d32f8e5"
+        }
+      },
+      "node_digest": "c31975d316b968da7e8d3a656739451787b447f0c87d192efb043802cf241357",
+      "physical": [
+        {
+          "element_id": "570acbeb58334a8dbc50a1ded8b2b90f:rails:0",
+          "role": "rail",
+          "mark": "ГП-40-40-1,2",
+          "product_id": null,
+          "cad_entities": [
+            {
+              "handle": "E2",
+              "role": "outer",
+              "fingerprint": "7687815C3272836FA4C9A83EE01C2D32CF9551F6119212C8CE8E149008C85A6B"
+            }
+          ]
+        },
+        {
+          "element_id": "570acbeb58334a8dbc50a1ded8b2b90f:brackets:0",
+          "role": "bracket",
+          "mark": null,
+          "product_id": null,
+          "cad_entities": [
+            {
+              "handle": "E3",
+              "role": "outer",
+              "fingerprint": "A0DA224E9B307A0C1F656732E597DD2DE37E5FF5FEC010A9ACA1DB5387EFB5B1"
+            }
+          ]
+        },
+        {
+          "element_id": "570acbeb58334a8dbc50a1ded8b2b90f:brackets:1",
+          "role": "bracket",
+          "mark": null,
+          "product_id": null,
+          "cad_entities": [
+            {
+              "handle": "E4",
+              "role": "outer",
+              "fingerprint": "0D614DBA753142B72BB19BDEFE1E8CEC186308B02B32E1D82826A17872E5345F"
+            }
+          ]
+        },
+        {
+          "element_id": "570acbeb58334a8dbc50a1ded8b2b90f:brackets:2",
+          "role": "bracket",
+          "mark": null,
+          "product_id": null,
+          "cad_entities": [
+            {
+              "handle": "E5",
+              "role": "outer",
+              "fingerprint": "DFF4DFD24435E2760DE84736436C2347F620F9187652D705C434AD675CF93DF4"
+            }
+          ]
+        }
+      ],
+      "candidate_pairs": [
+        {
+          "rail_element_id": "570acbeb58334a8dbc50a1ded8b2b90f:rails:0",
+          "bracket_element_id": "570acbeb58334a8dbc50a1ded8b2b90f:brackets:0",
+          "offset_mm": 300,
+          "zone_id": "П-1"
+        },
+        {
+          "rail_element_id": "570acbeb58334a8dbc50a1ded8b2b90f:rails:0",
+          "bracket_element_id": "570acbeb58334a8dbc50a1ded8b2b90f:brackets:1",
+          "offset_mm": 1100,
+          "zone_id": "П-1"
+        },
+        {
+          "rail_element_id": "570acbeb58334a8dbc50a1ded8b2b90f:rails:0",
+          "bracket_element_id": "570acbeb58334a8dbc50a1ded8b2b90f:brackets:2",
+          "offset_mm": 1520,
+          "zone_id": "П-1"
+        }
+      ],
+      "physical_uk": "NOT_REPRESENTED",
+      "typed_interfaces": "NOT_REPRESENTED"
+    },
+    {
+      "epoch": "project_reissue",
+      "zone_id": "П-2",
+      "owner": "F",
+      "source_contour": "1",
+      "geometry_fingerprint": "fz1:32dfb5526a4d4cffb1c49db77aa9ef51:2814a08265d7afb2f99bf301fa8418547bfc1c20cb127f90cc81d07964cbeca5",
+      "run_id": "2f500d73dbed43e8beceac410dd31bd8",
+      "document_id": "a60d65d0ed2e4317be35afe3772ddd0f",
+      "context": {
+        "schema": "aframe_parameter_context/1",
+        "project": {
+          "project_id": "11111111111111111111111111111111",
+          "revision": 2,
+          "content_digest": "32d21c0067c04d574b8cacde8038d081a748294cd64116ba53e7466920b0cda9",
+          "record_digest": "8a219a9807bd1fa5e6a68ce6006846314952e404df17be6ac06942f75d32f8e5"
+        },
+        "zone": {
+          "owner_handle": "F",
+          "zone_id": "П-2",
+          "revision": 1,
+          "content_digest": "ebac77d00952f64a77b74e2493438814e734774f4d819acdfb1d9b03f84f00f0",
+          "record_digest": "fd33b83ef5d713f153e110d53e02e8e10828a3a6c1861b02639ba88889ab1347"
+        },
+        "effective_digest": "aea4fdf1e025a6a6d83bdeba215d7bc63b17a3ba0f874fd2dca83480a0d78425",
+        "origins": {
+          "bracket.execution": "project_default",
+          "bracket.nominal_width_mm": "project_default",
+          "bracket.L_mm": "project_default",
+          "extender.execution": "project_default",
+          "extender.nominal_width_mm": "project_default",
+          "extender.L_mm": "project_default",
+          "extender.thickness_mm": "project_default",
+          "profile.execution": "project_default",
+          "profile.a_mm": "project_default",
+          "profile.b_mm": "project_default",
+          "profile.thickness_mm": "project_default",
+          "geometry.cladding_front_offset_mm": "project_default",
+          "geometry.insulation_layers_mm": "project_default"
+        }
+      },
+      "source_snapshot": {
+        "sources": [
+          {
+            "handle": "F",
+            "geometry": "4A87F2735146EBB87C52C5F363F1CE0702827AFDACE0789C6239D7920FDE47D7",
+            "metadata": "4A7C5354084042C06D129EF24CAFB7882EC28E3A6E009A69773E41F19DF8B13B"
+          },
+          {
+            "handle": "1",
+            "geometry": "AE525315731D119E3579FAAE8C08B54EBA07763C30AD30303AF884A69CFDAAAC",
+            "metadata": "46868B69ABDF5F30D8F8E3A920B97EC420C31DBDB03B08C763F59AB6D2EAFA87"
+          }
+        ],
+        "project_dependency": {
+          "project_id": "11111111111111111111111111111111",
+          "revision": 2,
+          "content_digest": "32d21c0067c04d574b8cacde8038d081a748294cd64116ba53e7466920b0cda9",
+          "record_digest": "8a219a9807bd1fa5e6a68ce6006846314952e404df17be6ac06942f75d32f8e5"
+        }
+      },
+      "node_digest": "aa59c75868c0ecdbeaf03bd9686d13a6c86e1b154e0a5fdf782bdd137d8515d0",
+      "physical": [
+        {
+          "element_id": "2f500d73dbed43e8beceac410dd31bd8:rails:0",
+          "role": "rail",
+          "mark": "ГП-40-40-1,2",
+          "product_id": null,
+          "cad_entities": [
+            {
+              "handle": "EF",
+              "role": "outer",
+              "fingerprint": "391135C883F8DC3AA930A5BBB9527C1B52F41B895CFDBCFE2A687DBFEDADCAEA"
+            }
+          ]
+        },
+        {
+          "element_id": "2f500d73dbed43e8beceac410dd31bd8:brackets:0",
+          "role": "bracket",
+          "mark": null,
+          "product_id": null,
+          "cad_entities": [
+            {
+              "handle": "F0",
+              "role": "outer",
+              "fingerprint": "82B8AD9352F00CEE8D417EDC09937830E6CEA5DE60FB76B03FEE67F3D19C4B8C"
+            }
+          ]
+        },
+        {
+          "element_id": "2f500d73dbed43e8beceac410dd31bd8:brackets:1",
+          "role": "bracket",
+          "mark": null,
+          "product_id": null,
+          "cad_entities": [
+            {
+              "handle": "F1",
+              "role": "outer",
+              "fingerprint": "F99744078E00365DCE7A598F4E1D7EC78C9D627889C7DF6A7C874C495E4CD3F4"
+            }
+          ]
+        },
+        {
+          "element_id": "2f500d73dbed43e8beceac410dd31bd8:brackets:2",
+          "role": "bracket",
+          "mark": null,
+          "product_id": null,
+          "cad_entities": [
+            {
+              "handle": "F2",
+              "role": "outer",
+              "fingerprint": "B732370BA2C2D2A714CCBC00A6A8681706BE48C080F86F2CFEDE52DB05A87F9E"
+            }
+          ]
+        }
+      ],
+      "candidate_pairs": [
+        {
+          "rail_element_id": "2f500d73dbed43e8beceac410dd31bd8:rails:0",
+          "bracket_element_id": "2f500d73dbed43e8beceac410dd31bd8:brackets:0",
+          "offset_mm": 300,
+          "zone_id": "П-2"
+        },
+        {
+          "rail_element_id": "2f500d73dbed43e8beceac410dd31bd8:rails:0",
+          "bracket_element_id": "2f500d73dbed43e8beceac410dd31bd8:brackets:1",
+          "offset_mm": 1100,
+          "zone_id": "П-2"
+        },
+        {
+          "rail_element_id": "2f500d73dbed43e8beceac410dd31bd8:rails:0",
+          "bracket_element_id": "2f500d73dbed43e8beceac410dd31bd8:brackets:2",
+          "offset_mm": 1520,
+          "zone_id": "П-2"
+        }
+      ],
+      "physical_uk": "NOT_REPRESENTED",
+      "typed_interfaces": "NOT_REPRESENTED"
+    },
+    {
+      "epoch": "zone_reissue",
+      "zone_id": "П-1",
+      "owner": "6",
+      "source_contour": "2",
+      "geometry_fingerprint": "fz1:a04ca4bda44f49cd9c6510c94307ecbb:37fec0ea7a579607fbeeab4b73352b6e032e634864f75c88f97425ffd1c8abca",
+      "run_id": "1529e7d78aa848e797060acd2e28c02a",
+      "document_id": "a60d65d0ed2e4317be35afe3772ddd0f",
+      "context": {
+        "schema": "aframe_parameter_context/1",
+        "project": {
+          "project_id": "11111111111111111111111111111111",
+          "revision": 2,
+          "content_digest": "32d21c0067c04d574b8cacde8038d081a748294cd64116ba53e7466920b0cda9",
+          "record_digest": "8a219a9807bd1fa5e6a68ce6006846314952e404df17be6ac06942f75d32f8e5"
+        },
+        "zone": {
+          "owner_handle": "6",
+          "zone_id": "П-1",
+          "revision": 2,
+          "content_digest": "851dde3fb18a627127edd2e2e2da35214c56e246b865a45a3710c74834eb2838",
+          "record_digest": "4b0420b5d6188d2a892f97d083e952f823e8b765c171a62a957db7120066f406"
+        },
+        "effective_digest": "6d764ddb0a2bdfca3a720f5f2ee726a35a4b7a02d2da511fa8397e1933ef2257",
+        "origins": {
+          "bracket.execution": "project_default",
+          "bracket.nominal_width_mm": "project_default",
+          "bracket.L_mm": "project_default",
+          "extender.execution": "project_default",
+          "extender.nominal_width_mm": "project_default",
+          "extender.L_mm": "project_default",
+          "extender.thickness_mm": "project_default",
+          "profile.execution": "project_default",
+          "profile.a_mm": "project_default",
+          "profile.b_mm": "project_default",
+          "profile.thickness_mm": "project_default",
+          "geometry.cladding_front_offset_mm": "zone_override",
+          "geometry.insulation_layers_mm": "project_default"
+        }
+      },
+      "source_snapshot": {
+        "sources": [
+          {
+            "handle": "6",
+            "geometry": "1A1736F97C6554A9248CCFE06E210BB2755E858011D30C03C6385CD04AC0AC64",
+            "metadata": "2CC9664F3A8ACB0B97B7731EAAB7ACB2E18F263C0FBB1CB7190F7F7A077FF946"
+          },
+          {
+            "handle": "2",
+            "geometry": "1CDDA4AC766AB4B8692ECD8E82199793D0832417D44EDDB1FB5F6C6BDFB8A71F",
+            "metadata": "46868B69ABDF5F30D8F8E3A920B97EC420C31DBDB03B08C763F59AB6D2EAFA87"
+          }
+        ],
+        "project_dependency": {
+          "project_id": "11111111111111111111111111111111",
+          "revision": 2,
+          "content_digest": "32d21c0067c04d574b8cacde8038d081a748294cd64116ba53e7466920b0cda9",
+          "record_digest": "8a219a9807bd1fa5e6a68ce6006846314952e404df17be6ac06942f75d32f8e5"
+        }
+      },
+      "node_digest": "2badedd2ba62b0f4a1d1d9db103452d5c69e683f0146b819da81df17d6ba88df",
+      "physical": [
+        {
+          "element_id": "1529e7d78aa848e797060acd2e28c02a:rails:0",
+          "role": "rail",
+          "mark": "ГП-40-40-1,2",
+          "product_id": null,
+          "cad_entities": [
+            {
+              "handle": "FC",
+              "role": "outer",
+              "fingerprint": "7687815C3272836FA4C9A83EE01C2D32CF9551F6119212C8CE8E149008C85A6B"
+            }
+          ]
+        },
+        {
+          "element_id": "1529e7d78aa848e797060acd2e28c02a:brackets:0",
+          "role": "bracket",
+          "mark": null,
+          "product_id": null,
+          "cad_entities": [
+            {
+              "handle": "FD",
+              "role": "outer",
+              "fingerprint": "A0DA224E9B307A0C1F656732E597DD2DE37E5FF5FEC010A9ACA1DB5387EFB5B1"
+            }
+          ]
+        },
+        {
+          "element_id": "1529e7d78aa848e797060acd2e28c02a:brackets:1",
+          "role": "bracket",
+          "mark": null,
+          "product_id": null,
+          "cad_entities": [
+            {
+              "handle": "FE",
+              "role": "outer",
+              "fingerprint": "0D614DBA753142B72BB19BDEFE1E8CEC186308B02B32E1D82826A17872E5345F"
+            }
+          ]
+        },
+        {
+          "element_id": "1529e7d78aa848e797060acd2e28c02a:brackets:2",
+          "role": "bracket",
+          "mark": null,
+          "product_id": null,
+          "cad_entities": [
+            {
+              "handle": "FF",
+              "role": "outer",
+              "fingerprint": "DFF4DFD24435E2760DE84736436C2347F620F9187652D705C434AD675CF93DF4"
+            }
+          ]
+        }
+      ],
+      "candidate_pairs": [
+        {
+          "rail_element_id": "1529e7d78aa848e797060acd2e28c02a:rails:0",
+          "bracket_element_id": "1529e7d78aa848e797060acd2e28c02a:brackets:0",
+          "offset_mm": 300,
+          "zone_id": "П-1"
+        },
+        {
+          "rail_element_id": "1529e7d78aa848e797060acd2e28c02a:rails:0",
+          "bracket_element_id": "1529e7d78aa848e797060acd2e28c02a:brackets:1",
+          "offset_mm": 1100,
+          "zone_id": "П-1"
+        },
+        {
+          "rail_element_id": "1529e7d78aa848e797060acd2e28c02a:rails:0",
+          "bracket_element_id": "1529e7d78aa848e797060acd2e28c02a:brackets:2",
+          "offset_mm": 1520,
+          "zone_id": "П-1"
+        }
+      ],
+      "physical_uk": "NOT_REPRESENTED",
+      "typed_interfaces": "NOT_REPRESENTED"
+    },
+    {
+      "epoch": "zone_reissue",
+      "zone_id": "П-2",
+      "owner": "F",
+      "source_contour": "1",
+      "geometry_fingerprint": "fz1:32dfb5526a4d4cffb1c49db77aa9ef51:2814a08265d7afb2f99bf301fa8418547bfc1c20cb127f90cc81d07964cbeca5",
+      "run_id": "2f500d73dbed43e8beceac410dd31bd8",
+      "document_id": "a60d65d0ed2e4317be35afe3772ddd0f",
+      "context": {
+        "schema": "aframe_parameter_context/1",
+        "project": {
+          "project_id": "11111111111111111111111111111111",
+          "revision": 2,
+          "content_digest": "32d21c0067c04d574b8cacde8038d081a748294cd64116ba53e7466920b0cda9",
+          "record_digest": "8a219a9807bd1fa5e6a68ce6006846314952e404df17be6ac06942f75d32f8e5"
+        },
+        "zone": {
+          "owner_handle": "F",
+          "zone_id": "П-2",
+          "revision": 1,
+          "content_digest": "ebac77d00952f64a77b74e2493438814e734774f4d819acdfb1d9b03f84f00f0",
+          "record_digest": "fd33b83ef5d713f153e110d53e02e8e10828a3a6c1861b02639ba88889ab1347"
+        },
+        "effective_digest": "aea4fdf1e025a6a6d83bdeba215d7bc63b17a3ba0f874fd2dca83480a0d78425",
+        "origins": {
+          "bracket.execution": "project_default",
+          "bracket.nominal_width_mm": "project_default",
+          "bracket.L_mm": "project_default",
+          "extender.execution": "project_default",
+          "extender.nominal_width_mm": "project_default",
+          "extender.L_mm": "project_default",
+          "extender.thickness_mm": "project_default",
+          "profile.execution": "project_default",
+          "profile.a_mm": "project_default",
+          "profile.b_mm": "project_default",
+          "profile.thickness_mm": "project_default",
+          "geometry.cladding_front_offset_mm": "project_default",
+          "geometry.insulation_layers_mm": "project_default"
+        }
+      },
+      "source_snapshot": {
+        "sources": [
+          {
+            "handle": "F",
+            "geometry": "4A87F2735146EBB87C52C5F363F1CE0702827AFDACE0789C6239D7920FDE47D7",
+            "metadata": "4A7C5354084042C06D129EF24CAFB7882EC28E3A6E009A69773E41F19DF8B13B"
+          },
+          {
+            "handle": "1",
+            "geometry": "AE525315731D119E3579FAAE8C08B54EBA07763C30AD30303AF884A69CFDAAAC",
+            "metadata": "46868B69ABDF5F30D8F8E3A920B97EC420C31DBDB03B08C763F59AB6D2EAFA87"
+          }
+        ],
+        "project_dependency": {
+          "project_id": "11111111111111111111111111111111",
+          "revision": 2,
+          "content_digest": "32d21c0067c04d574b8cacde8038d081a748294cd64116ba53e7466920b0cda9",
+          "record_digest": "8a219a9807bd1fa5e6a68ce6006846314952e404df17be6ac06942f75d32f8e5"
+        }
+      },
+      "node_digest": "aa59c75868c0ecdbeaf03bd9686d13a6c86e1b154e0a5fdf782bdd137d8515d0",
+      "physical": [
+        {
+          "element_id": "2f500d73dbed43e8beceac410dd31bd8:rails:0",
+          "role": "rail",
+          "mark": "ГП-40-40-1,2",
+          "product_id": null,
+          "cad_entities": [
+            {
+              "handle": "EF",
+              "role": "outer",
+              "fingerprint": "391135C883F8DC3AA930A5BBB9527C1B52F41B895CFDBCFE2A687DBFEDADCAEA"
+            }
+          ]
+        },
+        {
+          "element_id": "2f500d73dbed43e8beceac410dd31bd8:brackets:0",
+          "role": "bracket",
+          "mark": null,
+          "product_id": null,
+          "cad_entities": [
+            {
+              "handle": "F0",
+              "role": "outer",
+              "fingerprint": "82B8AD9352F00CEE8D417EDC09937830E6CEA5DE60FB76B03FEE67F3D19C4B8C"
+            }
+          ]
+        },
+        {
+          "element_id": "2f500d73dbed43e8beceac410dd31bd8:brackets:1",
+          "role": "bracket",
+          "mark": null,
+          "product_id": null,
+          "cad_entities": [
+            {
+              "handle": "F1",
+              "role": "outer",
+              "fingerprint": "F99744078E00365DCE7A598F4E1D7EC78C9D627889C7DF6A7C874C495E4CD3F4"
+            }
+          ]
+        },
+        {
+          "element_id": "2f500d73dbed43e8beceac410dd31bd8:brackets:2",
+          "role": "bracket",
+          "mark": null,
+          "product_id": null,
+          "cad_entities": [
+            {
+              "handle": "F2",
+              "role": "outer",
+              "fingerprint": "B732370BA2C2D2A714CCBC00A6A8681706BE48C080F86F2CFEDE52DB05A87F9E"
+            }
+          ]
+        }
+      ],
+      "candidate_pairs": [
+        {
+          "rail_element_id": "2f500d73dbed43e8beceac410dd31bd8:rails:0",
+          "bracket_element_id": "2f500d73dbed43e8beceac410dd31bd8:brackets:0",
+          "offset_mm": 300,
+          "zone_id": "П-2"
+        },
+        {
+          "rail_element_id": "2f500d73dbed43e8beceac410dd31bd8:rails:0",
+          "bracket_element_id": "2f500d73dbed43e8beceac410dd31bd8:brackets:1",
+          "offset_mm": 1100,
+          "zone_id": "П-2"
+        },
+        {
+          "rail_element_id": "2f500d73dbed43e8beceac410dd31bd8:rails:0",
+          "bracket_element_id": "2f500d73dbed43e8beceac410dd31bd8:brackets:2",
+          "offset_mm": 1520,
+          "zone_id": "П-2"
+        }
+      ],
+      "physical_uk": "NOT_REPRESENTED",
+      "typed_interfaces": "NOT_REPRESENTED"
+    }
+  ],
+  "identity_note": "New producer generations have new physical IDs; unchanged geometry does not imply identical physical identities.",
+  "node_scope": "Pure snapshot/drawing plus source predicate only; actual command/store NOT_RUN"
+}

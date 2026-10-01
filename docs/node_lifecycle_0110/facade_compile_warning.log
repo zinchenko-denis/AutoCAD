@@ -1,0 +1,1 @@
+Facades/src/AFacadesPlugin/ManualQuantityForm.cs(226,33): warning CS0108: 'ManualQuantityForm.Select()' hides inherited member 'Control.Select()'. Use the new keyword if hiding was intended.

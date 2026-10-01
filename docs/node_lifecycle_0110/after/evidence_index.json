@@ -1,0 +1,11 @@
+{
+  "status": "PASS",
+  "manifest_sha256": "13f5ebb435950120ffcf7641b1eea990be9d25f183be219988998f9bb4dc62f0",
+  "artifact_count": 106,
+  "extracted_helpers": 4,
+  "all_bound_files_verified": true,
+  "issued_xlsx": 19,
+  "physical_xlsx_files": 29,
+  "sentinel_xlsx_copies": 10,
+  "binaries_saved": false
+}
