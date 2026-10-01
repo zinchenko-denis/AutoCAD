@@ -1,11 +1,50 @@
 {
-  "status": "LOCAL_PASS_NOT_YET_PUBLISHED",
+  "status": "SOURCE_PUBLISHED_WINDOWS_CI_UI_PASS",
   "repository": "zinchenko-denis/AutoCAD",
   "branch": "feat/auto-reactor",
   "base_commit": "29dd38627ebb756dc3ef42f8db8a76a0e52a7d59",
-  "product_commit": null,
-  "github_actions": null,
+  "product_commit": "2bc0e7da05fa287c758a5359646593ad3d0ca05e",
+  "github_actions": {
+    "head_sha": "2bc0e7da05fa287c758a5359646593ad3d0ca05e",
+    "run_number": 211,
+    "event": "push",
+    "status": "completed",
+    "conclusion": "success",
+    "html_url": "https://github.com/zinchenko-denis/AutoCAD/actions/runs/36856237558",
+    "created_at": "2026-10-01T11:34:41Z",
+    "updated_at": "2026-10-01T11:40:36Z",
+    "run_id": 36856237558,
+    "job_id": 110349266499,
+    "mounting_core_checks": 173,
+    "node_core_checks": 1270,
+    "node_cad_groups": 35,
+    "node_ui_checks": 497,
+    "node_ui_failures": 0,
+    "node_ui_png": 14,
+    "legacy_ui_checks": 919,
+    "project_ui_checks": 1730,
+    "reviewed_png": 35,
+    "ui_reviews": [
+      "ui_visual_review_ci211.json",
+      "legacy_ui_visual_review_ci211.json",
+      "project_ui_visual_review_ci211.json"
+    ],
+    "screenshot": {
+      "path": "ci211_success.jpg",
+      "sha256": "26b71fe060564cf3e43beda6376d81749ed634f4c3bed0deae87ae842fa4305c",
+      "visible_status": "Success",
+      "capture": "browser viewport; same inspected and saved bytes"
+    },
+    "nonblocking_warnings": [
+      "Existing ManualQuantityForm.Select hides Control.Select",
+      "Actions Node20 deprecation; update separately with compatibility verification"
+    ]
+  },
   "main_changed": false,
   "release_published": false,
-  "live_autocad_checked": false
+  "live_autocad_checked": false,
+  "validated_commit": "2bc0e7da05fa287c758a5359646593ad3d0ca05e",
+  "product_tree": "8807c6f409a6cb10a174600b3cfa4b6a3a9d9229",
+  "artifact_verification": "windows_artifact_verification_ci211.json",
+  "observed_at_utc": "2026-10-01T11:43:15.756044+00:00"
 }

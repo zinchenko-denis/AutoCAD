@@ -3,7 +3,7 @@
   "date": "2026-10-01",
   "reviewer": "mount_independent_review",
   "base_commit": "29dd38627ebb756dc3ef42f8db8a76a0e52a7d59",
-  "status": "LOCAL_CODE_REVIEW_PASS_WINDOWS_UI_PENDING",
+  "status": "PASS",
   "scope": "Read-only independent review of pure mounting assessment, ATFNODE review/check integration and source boundaries. No live AutoCAD and no engineering approval of an assembly.",
   "blocking_findings": [],
   "findings": [
@@ -44,8 +44,8 @@
     },
     {
       "id": "ui-readability",
-      "status": "PENDING_WINDOWS_VISUAL",
-      "evidence": "Form preserves CRLF, read-only vertical scroll and current CanInsert; input/back invalidation clears hidden old report. Native UI assertions cover full current report, source locators, dedicated small-window mounting scroll and large-font tail. Probe compiles locally but actual Windows screenshots still require inspection after CI."
+      "status": "PASS",
+      "evidence": "Windows check211 for 2bc0e7d: 497 native UI checks, zero failures, all14 original PNG individually inspected. Mounting members/dependencies, dedicated small-window report and large-font tail are readable; source qualifiers and separate local/mounting statuses preserved. See ui_visual_review_ci211.json."
     }
   ],
   "tests": {
@@ -188,7 +188,6 @@
     "tools/atr_review_3009/run_checks.py": "f93f47d5ec7f399679b7eb43e579ed456580d2c62993bfac82545374fe4cd2fc"
   },
   "not_verified": [
-    "Windows native UI screenshots for this increment (pending CI)",
     "Live AutoCAD placement, scrolling, COPY, Undo, Save/reopen and actual DWG latency",
     "Complete mounting envelope, hole patterns, fastener BOM and statics"
   ],
@@ -201,5 +200,17 @@
       "A null displayed member dimension reads only not-declared, without a contradictory project declaration suffix. Existing validator still rejects absent GP b/c; no contract was relaxed."
     ],
     "verification": "Read final ReviewText delta and reran independent 18-check C# probe, including explicit unknown-clearance wording. No broad regression repeat for text-only delta."
-  }
+  },
+  "windows_ui_review": {
+    "status": "PASS",
+    "run_id": 36856237558,
+    "run_number": 211,
+    "head_sha": "2bc0e7da05fa287c758a5359646593ad3d0ca05e",
+    "images_reviewed": 14,
+    "native_checks": 497,
+    "native_failures": 0,
+    "report": "ui_visual_review_ci211.json",
+    "root_independent_images_reviewed": 4
+  },
+  "review_scope_status": "LOCAL_CODE_AND_WINDOWS_UI_REVIEW_PASS"
 }

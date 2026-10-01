@@ -1,9 +1,9 @@
 {
-  "status": "LOCAL_PASS_WINDOWS_CI_UI_PENDING",
+  "status": "LOCAL_AND_WINDOWS_CI_UI_PASS",
   "date_utc": "2026-10-01",
   "branch": "feat/auto-reactor",
   "base_commit": "29dd38627ebb756dc3ef42f8db8a76a0e52a7d59",
-  "product_commit": null,
+  "product_commit": "2bc0e7da05fa287c758a5359646593ad3d0ca05e",
   "scope": "2Б4: separate mounting-data assessment for the same Vector-1 2015 type1 porcelain node 4.2.1; no mounting fit or automatic bracket selection",
   "input_sha256_file": "input_sha256.json",
   "input_files_count": 251,
@@ -20,8 +20,11 @@
     "independent_core": 18,
     "independent_catalogue_combinations": 124,
     "tutorial_replays": 5,
-    "windows_ci": "PENDING",
-    "windows_ui": "PENDING"
+    "windows_ci": "PASS",
+    "windows_ui": "PASS",
+    "windows_run_number": 211,
+    "windows_ui_checks": 497,
+    "reviewed_png": 35
   },
   "performance": {
     "new_cad_reads": 0,
@@ -62,5 +65,6 @@
   "live_autocad_checked": false,
   "release_published": false,
   "prior_release": "build-104",
-  "main_changed": false
+  "main_changed": false,
+  "validated_commit": "2bc0e7da05fa287c758a5359646593ad3d0ca05e"
 }

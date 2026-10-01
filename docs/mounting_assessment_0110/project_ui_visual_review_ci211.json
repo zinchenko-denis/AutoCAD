@@ -1,0 +1,120 @@
+{
+  "status": "PASS",
+  "head_sha": "2bc0e7da05fa287c758a5359646593ad3d0ca05e",
+  "run_id": 36856237558,
+  "reviewer": "catalog_manual",
+  "reviewed_count": 11,
+  "method": "Each of the 11 actual CI211 PNGs was opened and visually inspected individually through view_image(detail=original). This is a fresh visual review, not inferred from CI210 hash equality or automated test status.",
+  "reviewed_files": [
+    {
+      "file": "project_parameters_ui_results/bound_atframe.png",
+      "sha256": "c9c43601ed31a9d42f685a575a2ff5129530fb5bd35a8201898e9287ffa6f15a",
+      "width_px": 916,
+      "height_px": 689,
+      "status": "PASS",
+      "findings": [],
+      "observation": "Окно только для чтения: видны происхождение значений, пояснение ATFRAME и кнопка «Закрыть»; наложений на нижнюю панель нет."
+    },
+    {
+      "file": "project_parameters_ui_results/bound_group_large_font.png",
+      "sha256": "f71bd0ac71e1600a2f649e97550e17553462aa6196655cc010aec841a5ffcba4",
+      "width_px": 1024,
+      "height_px": 728,
+      "status": "PASS",
+      "findings": [],
+      "observation": "Увеличенный шрифт: текст группы по происхождению переносится, окно целиком в кадре, нижняя панель и «Закрыть» видны. Часть содержимого находится за границами прокручиваемой области; её полоса видна."
+    },
+    {
+      "file": "project_parameters_ui_results/bound_group_origins.png",
+      "sha256": "1ed664f2ab9b721750664bcd55a5eb39b7af3eecb7671aa61d3513ce34f36a62",
+      "width_px": 916,
+      "height_px": 689,
+      "status": "PASS",
+      "findings": [],
+      "observation": "Показано количество зон каждого происхождения. Прокрученная область отделена от пояснения и кнопки закрытия; наложений нет."
+    },
+    {
+      "file": "project_parameters_ui_results/project_filled.png",
+      "sha256": "01f152a7a3f1dbab773ec651cc45e3250f197195bd4f5af96bf643fc65221202",
+      "width_px": 916,
+      "height_px": 689,
+      "status": "PASS",
+      "findings": [],
+      "observation": "Значения КР2/УК/ГП и необязательные поля читаемы; источник расположен в прокручиваемой области; кнопки проверки и отмены видны."
+    },
+    {
+      "file": "project_parameters_ui_results/project_review.png",
+      "sha256": "e0bdf8a0ae9c5fcc95ae8b9cd0540ffab9ee597a7f3f4dddbd67173881f580b2",
+      "width_px": 916,
+      "height_px": 689,
+      "status": "PASS",
+      "findings": [],
+      "observation": "Обзор создания проекта читаем, переносы строк сохранены, выделение текста не скрывает символы; кнопки «Назад», «Сохранить проект», «Отмена» полностью видны."
+    },
+    {
+      "file": "project_parameters_ui_results/zone_detach_review.png",
+      "sha256": "aa952ce02bfb0b6d3d14a046b19277a1e4fc9e68ee8b908598f08727c7211a35",
+      "width_px": 916,
+      "height_px": 689,
+      "status": "PASS",
+      "findings": [],
+      "observation": "Обзор снятия привязки и последствия для прежнего результата читаемы; кнопки «Назад», «Сохранить зоны», «Отмена» видны."
+    },
+    {
+      "file": "project_parameters_ui_results/zone_large_font.png",
+      "sha256": "7bbed570b4ccab9b7d902e8206b7834ccecd894b6fc84a27cdc45ddc837fa7ec",
+      "width_px": 1024,
+      "height_px": 728,
+      "status": "PASS",
+      "findings": [],
+      "observation": "Увеличенный шрифт: флажки «Своё значение», происхождение и пояснения читаемы; окно ограничено кадром, нижние кнопки доступны визуально, видна прокрутка содержимого."
+    },
+    {
+      "file": "project_parameters_ui_results/zone_large_font_review.png",
+      "sha256": "50777187215e2fd3b5a2b94eb7c090961d749ed0a77d10c722280e1e471b7008",
+      "width_px": 1024,
+      "height_px": 728,
+      "status": "PASS",
+      "findings": [],
+      "observation": "Обзор при увеличенном шрифте показывает отсутствие изменений и сохранение редакции; текст и все три нижние кнопки помещаются."
+    },
+    {
+      "file": "project_parameters_ui_results/zone_overrides.png",
+      "sha256": "5bf093b91d4e0abe2c1e143cbe8763d0afada3168d92da0b7ae53c41f5310253",
+      "width_px": 916,
+      "height_px": 689,
+      "status": "PASS",
+      "findings": [],
+      "observation": "Виден явный пустой вынос со своим значением и подписью «В зоне не задано»; флажки, пояснение и нижние кнопки не перекрыты."
+    },
+    {
+      "file": "project_parameters_ui_results/zone_review.png",
+      "sha256": "4b3a008b8c0821cef592f3a18c94f35bfd3f94419a161ecc818c0adeebe76ff9",
+      "width_px": 916,
+      "height_px": 689,
+      "status": "PASS",
+      "findings": [],
+      "observation": "Обзор собственной полки b и очистки необязательных полей читаем; наследование и явная очистка различимы, предупреждение о полном ATFRAME видно."
+    },
+    {
+      "file": "project_parameters_ui_results/zone_small.png",
+      "sha256": "d94b6f44d794178aace6dbc4a79b720b83b779d46e21e451cfada6d76c0b5bf8",
+      "width_px": 760,
+      "height_px": 530,
+      "status": "PASS",
+      "findings": [],
+      "observation": "Малое окно: верхнее пояснение переносится, флажки и числа читаемы; содержимое имеет полосу прокрутки, кнопки «Снять привязку», «Проверить изменения», «Отмена» целиком в кадре."
+    }
+  ],
+  "findings": [],
+  "observations": [
+    "В закрытых полях списков длинные названия исполнений видны лишь в пределах ширины поля; раскрытые списки не представлены на этих снимках. Это ограничение данного просмотра, а не доказательство полного отображения каждого пункта.",
+    "Частично видимые верхние или нижние строки в прокрученных формах находятся внутри области с полосой прокрутки; кнопки и нижние сообщения не обрезаны границами окна."
+  ],
+  "scope": "Readability and visible layout of inherited project/zone/ATFRAME parameter windows in the native Windows CI harness.",
+  "limitations": [
+    "Статические PNG не проверяют взаимодействие с AutoCAD, сохранение DWG, клавиатурную навигацию или фактическую прокрутку.",
+    "Это не живая приёмка AutoCAD и не отдельный итог всех продуктовых проверок CI."
+  ],
+  "live_autocad": false
+}

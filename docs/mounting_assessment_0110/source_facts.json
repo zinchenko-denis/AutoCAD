@@ -16,7 +16,7 @@
     "pdf_page": 20
   },
   "engineering_status": "not_confirmed",
-  "verification_status": "LOCAL_55_GROUPS_3_COMPILES_PASS_WINDOWS_CI_UI_PENDING",
+  "verification_status": "LOCAL_AND_WINDOWS_CI_UI_PASS",
   "sources": [
     {
       "source_id": "vector1_2015",

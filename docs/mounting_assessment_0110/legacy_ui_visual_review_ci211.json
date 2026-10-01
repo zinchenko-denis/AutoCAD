@@ -1,0 +1,152 @@
+{
+  "schema": "legacy_solution_ui_visual_review/1",
+  "date": "2026-10-01",
+  "status": "PASS",
+  "blocking_findings": [],
+  "reviewed_commit": "2bc0e7da05fa287c758a5359646593ad3d0ca05e",
+  "product_commit": "2bc0e7da05fa287c758a5359646593ad3d0ca05e",
+  "run_id": 36856237558,
+  "run_number": 211,
+  "run_url": "https://github.com/zinchenko-denis/AutoCAD/actions/runs/36856237558",
+  "artifact": {
+    "name": "solution-catalog-ui",
+    "manifest_sha256": "35a4370fbed2f8c6ebdd289780be0ff6b4be484d475dc927ce6dec638fd65c99",
+    "ui_checks_sha256": "e72a8d545a6472df5bcf431d9b51fcb8d1529dc9c37b37fa2388b95db12864f2",
+    "archive_verification": "Архив и точный commit проверены отдельно ведущим агентом; этот отчёт фиксирует просмотр изображений и сверку их SHA-256 с manifest."
+  },
+  "native_ui_checks": {
+    "status": "PASS",
+    "checks": 919,
+    "failures": 0,
+    "runtime": "Microsoft Windows NT 6.2.9200.0"
+  },
+  "images": [
+    {
+      "file": "frame_main_before.png",
+      "status": "PASS",
+      "sha256": "4ac9745e227e590a09a0360d73cb4f0ed774345b1f64902c677070acd299f1bf",
+      "pixels": [
+        876,
+        753
+      ],
+      "individually_viewed_original_png": true,
+      "matches_artifact_manifest": true,
+      "observation": "Все группы и нижние действия видны. Справа явно указан отказ для неподтверждённых расчётного сечения и массы ГП-60-40."
+    },
+    {
+      "file": "frame_main_selected.png",
+      "status": "PASS",
+      "sha256": "3f4e52d9fd625d309adca666ef0ca24a18064239c4430120cd6a4bae1b917526",
+      "pixels": [
+        876,
+        753
+      ],
+      "individually_viewed_original_png": true,
+      "matches_artifact_manifest": true,
+      "observation": "Справа красным текстом показан запрет автоматического расчёта для исторического выбора Вектор-1 2015 и требование ручных шагов по отдельному расчёту. Нижние кнопки не перекрыты."
+    },
+    {
+      "file": "solution_blank.png",
+      "status": "PASS",
+      "sha256": "70b06a76ef4bc47c6e738e5075727ad65d745d7423a5ca282170e23d82f923b7",
+      "pixels": [
+        916,
+        689
+      ],
+      "individually_viewed_original_png": true,
+      "matches_artifact_manifest": true,
+      "observation": "Решение и исполнения не назначены; пустые проектные поля и красное сообщение об отсутствии выбора видны. Нижние действия полностью доступны."
+    },
+    {
+      "file": "solution_filled.png",
+      "status": "PASS",
+      "sha256": "00d58cb783b66938e053ffa2aaa85f6e4ce0d0c5c626c52f9c325c0d11399f05",
+      "pixels": [
+        916,
+        689
+      ],
+      "individually_viewed_original_png": true,
+      "matches_artifact_manifest": true,
+      "observation": "Заданные размеры КР2, УК и ГП и различные исполнения отображены. Предупреждение о ручной расстановке, пояснение об обязательных b/c и нижние действия читаются."
+    },
+    {
+      "file": "solution_source.png",
+      "status": "PASS",
+      "sha256": "5397b1c4900cfaf522c8de9ae6329b5a91b6c243e73145c7dedb01fcbe29abb7",
+      "pixels": [
+        916,
+        689
+      ],
+      "individually_viewed_original_png": true,
+      "matches_artifact_manifest": true,
+      "observation": "После прокрутки видны полный источник, узел 4.2.1 / PDF 20, SHA-256, редакция реестра и ограничения. Явно сохранено различие минимума 30 мм соседнего узла с У2/У и выбранного узла с УК."
+    },
+    {
+      "file": "solution_readonly.png",
+      "status": "PASS",
+      "sha256": "a41cba327b7a433b81f7c6bdc19b42c532f3c2f5fbca9938562682db8fb0fbc6",
+      "pixels": [
+        916,
+        689
+      ],
+      "individually_viewed_original_png": true,
+      "matches_artifact_manifest": true,
+      "observation": "Режим просмотра существующего каркаса при выборе только кляммеров обозначен сверху и в статусе. Изменение решения и снятие выбора недоступны; кнопка Закрыть видна."
+    },
+    {
+      "file": "solution_mismatch.png",
+      "status": "PASS",
+      "sha256": "3e3339c533d6555e7c82484d2c60ae27b87d19d2fb533c2bf1546d6ab552c062",
+      "pixels": [
+        916,
+        689
+      ],
+      "individually_viewed_original_png": true,
+      "matches_artifact_manifest": true,
+      "observation": "Несоответствующая редакция каталога сопровождается красным сообщением о необходимости повторного явного выбора. Сообщение читается и не перекрывает нижние действия."
+    },
+    {
+      "file": "solution_small.png",
+      "status": "PASS",
+      "sha256": "2ee75f717faaee508aae5fbdcd04717f87c02a7883bd3439f778be04081023a3",
+      "pixels": [
+        760,
+        530
+      ],
+      "individually_viewed_original_png": true,
+      "matches_artifact_manifest": true,
+      "observation": "При минимальном размере окна основные поля и все нижние действия видны. Продолжение содержимого доступно через вертикальную прокрутку; горизонтального наложения элементов нет."
+    },
+    {
+      "file": "solution_small_source.png",
+      "status": "PASS",
+      "sha256": "24a34e4bcc0e2ba381ded8f6f314c3d4f21ac61799b1e40842684e371096150a",
+      "pixels": [
+        760,
+        530
+      ],
+      "individually_viewed_original_png": true,
+      "matches_artifact_manifest": true,
+      "observation": "В минимальном окне источник доступен после прокрутки. Длинный текст имеет собственную вертикальную полосу; нижняя часть текста выходит за текущую область просмотра ожидаемо. Все нижние действия остаются видимыми."
+    },
+    {
+      "file": "solution_large_font.png",
+      "status": "PASS",
+      "sha256": "cb394ca856a01b05d90dfa74253955302ae9d32c6475fecf69f1b4b0a7a6c6d7",
+      "pixels": [
+        1024,
+        728
+      ],
+      "individually_viewed_original_png": true,
+      "matches_artifact_manifest": true,
+      "observation": "При увеличенном шрифте заголовок и подписи читаются, длинные строки перенесены, нижние действия полностью помещаются. Содержимое имеет вертикальную прокрутку."
+    }
+  ],
+  "layout_observations": [
+    "В закрытых ComboBox длинные названия исполнений сокращены шириной поля; полный текст виден в разделе источника. Значения и действия не перекрыты.",
+    "В малом окне и при крупном шрифте часть содержимого закономерно находится вне текущей области просмотра; вертикальная прокрутка и нижняя панель действий видны."
+  ],
+  "scope": "Все 10 оригинальных PNG Windows CI №211 просмотрены по отдельности. Совпадение с прежними изображениями или результаты автоматических утверждений не заменяли этот просмотр. Проверены SHA-256 всех PNG по artifact manifest.",
+  "live_autocad_checked": false,
+  "new_node_ui_review": "Окно ATFNODE и новый монтажный отчёт проверяются отдельным рецензентом; данный отчёт относится только к прежним окнам каталога/ATFRAME."
+}

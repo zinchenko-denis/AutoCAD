@@ -1,0 +1,177 @@
+{
+  "schema": "mounting_ui_visual_review/1",
+  "date": "2026-10-01",
+  "reviewer": "mount_independent_review",
+  "status": "PASS",
+  "run_id": 36856237558,
+  "run_number": 211,
+  "head_sha": "2bc0e7da05fa287c758a5359646593ad3d0ca05e",
+  "method": "Viewed all 14 original Windows PNG files individually at original resolution; no montage substituted for inspection. Evaluated actual text, source qualifiers, numeric/refusal states, scroll continuation, wrapping and footer visibility.",
+  "artifact_verification": "windows_artifact_verification_ci211.json (root verified ZIP hashes and source manifests separately)",
+  "ui_manifest_sha256": "6139db2e67f28f51d2a46461cfad764c0f116fc816e54b482ec17da0614f4bc0",
+  "ui_checks_sha256": "e13e69a3f858a7b048d165f0f0dd622824a8574d45cb3d6160129897032e1d55",
+  "native_ui_checks": 497,
+  "native_ui_failures": 0,
+  "blocking_findings": [],
+  "nonblocking_observations": [
+    "A partially visible last text line at an intermediate scroll position is expected vertical viewport continuation; inspected report-tail screenshot shows all closing limitations.",
+    "Inherited read-only text is selected in blank/small editor screenshots due to focus; labels, values and footer remain readable."
+  ],
+  "images": [
+    {
+      "file": "node_blank.png",
+      "sha256": "4794f71f1aa4c41b281006cefa817a245785c6d172c0be5bc5c969f6e704d0df",
+      "pixels": [
+        916,
+        689
+      ],
+      "status": "PASS",
+      "finding": "Unknown clearance surface remains explicit, blank local coordinates are not filled automatically, inherited values and source area are read-only. Check/Cancel visible, Insert disabled."
+    },
+    {
+      "file": "node_partial.png",
+      "sha256": "0d48f1f462530c2f94faa08c70de4cebb57d1704df0c2ebd3925632c51e4cce6",
+      "pixels": [
+        916,
+        689
+      ],
+      "status": "PASS",
+      "finding": "Geometry says local check not performed and names missing coordinate/surface. Separate mounting header, not-confirmed status and no-autoselection text are legible; footer permits only partial dimensional scheme."
+    },
+    {
+      "file": "node_valid.png",
+      "sha256": "12030e2a377e62e5f42618924b36103d7bf05a3960e1c0bfc6bb1dd776a098c6",
+      "pixels": [
+        916,
+        689
+      ],
+      "status": "PASS",
+      "finding": "20 mm is shown as a local-only clearance result. Mounting status remains unconfirmed directly below geometry limitations. Readable distinct lines and source/member section; Insert is labeled schema."
+    },
+    {
+      "file": "node_mounting_members.png",
+      "sha256": "91f2c8f561890a85203ffb501a7fb2ad61e48819e37f784567b5a87f530f7fc8",
+      "pixels": [
+        916,
+        689
+      ],
+      "status": "PASS",
+      "finding": "Scrolled report start shows not-confirmed mounting status and no automatic bracket selection, KR2/UK/GP execution, selected dimensions and each precise album page. GP b47.5/c1.5 are explicitly project declarations without strength confirmation."
+    },
+    {
+      "file": "node_mounting_requirements.png",
+      "sha256": "2e55018c79e3ca324dc38c3e5d1d35c1080ed361d0dc2236b0b7da2941393a2f",
+      "pixels": [
+        916,
+        689
+      ],
+      "status": "PASS",
+      "finding": "Named dependency blocks1–6 are readable with Known/Required/Without this/source locators. Long GP-clamp-cladding chain wraps inside vertical scroll; no overlap with fixed local-only footer."
+    },
+    {
+      "file": "node_rejected.png",
+      "sha256": "4ebefd9ec9890705c69de8be3d665f487ba1e3021fe1f69266cd0d6661608892",
+      "pixels": [
+        916,
+        689
+      ],
+      "status": "PASS",
+      "finding": "19.999 mm and exact rejection reason are visible. Mounting diagnostic explicitly does not permit insertion; red footer and disabled Insert agree."
+    },
+    {
+      "file": "node_exact_boundary.png",
+      "sha256": "2f3355380410e2d344413c9a3217e7a8a6482eda48afdb530eb167e1fab6bbbc",
+      "pixels": [
+        916,
+        689
+      ],
+      "status": "PASS",
+      "finding": "19.99999999999997 is displayed without rounding to20, with rejection in geometry and mounting text. Buttons remain within window; Insert disabled."
+    },
+    {
+      "file": "node_membrane.png",
+      "sha256": "274f69b6bcd4c31a4a755e2fdff69480feb707bf741527c8b9bb0f15fe5ba6d3",
+      "pixels": [
+        916,
+        689
+      ],
+      "status": "PASS",
+      "finding": "Explicit membrane coordinate170 and profile190 give local20; inherited insulation150 is distinct. Mounting remains unconfirmed and does not reuse insulation as membrane coordinate."
+    },
+    {
+      "file": "node_small.png",
+      "sha256": "50d1f3ce397d5780ee2b1474d99bb08e6ae7489a8f73bd1665727fbe14a7bc8b",
+      "pixels": [
+        760,
+        530
+      ],
+      "status": "PASS",
+      "finding": "At 760x530 outer window inherited parameters, local fields, vertical scroll and footer controls fit. No horizontal clipping of footer; Insert disabled before current review."
+    },
+    {
+      "file": "node_mounting_small.png",
+      "sha256": "69de4559650aca2c744e6edf4509adca52d38b26454db95014d24ee4e46c8c21",
+      "pixels": [
+        760,
+        530
+      ],
+      "status": "PASS",
+      "finding": "Dedicated small-window report shows dependencies1–4 with readable wrapped lines and vertical continuation. Back/Insert schema/Cancel stay visible and usable; footer still states only local20 was checked."
+    },
+    {
+      "file": "node_large_font.png",
+      "sha256": "ae1f70279f147db6b1a8f9de0329cad46d15eaab8ea8959944ad611db5e59214",
+      "pixels": [
+        1024,
+        728
+      ],
+      "status": "PASS",
+      "finding": "Larger-font editor wraps explanatory text, preserves labels/fields and accessible Check/Insert/Cancel footer. Unknown/newly invalidated review does not permit insertion."
+    },
+    {
+      "file": "node_large_font_review.png",
+      "sha256": "ab25b015665c58cc5973f153b3c19d4e9dbe87d6ab092ab6cf94fe8753c338ca",
+      "pixels": [
+        1024,
+        728
+      ],
+      "status": "PASS",
+      "finding": "Larger-font geometry and mounting heading/status are readable as distinct lines. Local20 does not become mounting approval; fixed footer remains fully visible."
+    },
+    {
+      "file": "node_mounting_tail_large_font.png",
+      "sha256": "01e5293a32e376bd1a1bf564ecfdd80091b28b14926da2164760aee41c83cdda",
+      "pixels": [
+        1024,
+        728
+      ],
+      "status": "PASS",
+      "finding": "Large-font tail shows dependency7 and all terminal limits: width equality does not prove fit, unequal widths do not establish rejection, no inferred tolerance, no min30 transfer, fixed/sliding/supports/splices and strength remain outside assessment. Last line and footer/buttons fully visible."
+    },
+    {
+      "file": "node_contradiction.png",
+      "sha256": "a0880359c8823dae53d62b62518374e27944884945bd89c8a387f4c2b6d750ec",
+      "pixels": [
+        916,
+        689
+      ],
+      "status": "PASS",
+      "finding": "Insulation200 versus outer cladding180 is visibly rejected even without local clearance inputs. New generic no-local-check wording points to geometry reasons rather than falsely declaring only missing data. Insert disabled."
+    }
+  ],
+  "live_autocad_checked": false,
+  "limitations": [
+    "Standalone Windows WinForms probe is not live AutoCAD.",
+    "No claim about native AutoCAD latency, save/reopen, COPY, Undo or actual assembly compatibility."
+  ],
+  "root_cross_review": {
+    "status": "PASS",
+    "images": [
+      "node_mounting_members.png",
+      "node_mounting_requirements.png",
+      "node_mounting_small.png",
+      "node_mounting_tail_large_font.png"
+    ],
+    "evidence": "Root independently viewed the four original new mounting PNG: source/member readability, scrollable seven requirements and small/large-font footer accessibility confirmed."
+  }
+}

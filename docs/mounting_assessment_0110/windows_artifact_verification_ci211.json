@@ -1,0 +1,1583 @@
+{
+  "status": "PASS",
+  "head_sha": "2bc0e7da05fa287c758a5359646593ad3d0ca05e",
+  "run_id": 36856237558,
+  "run_number": 211,
+  "artifacts": [
+    {
+      "id": 11159233042,
+      "name": "project-parameters-ui",
+      "sha256": "27d9d81037718241bef4510aff4e039838520f16efe49dcbacbec9dd055db2e4",
+      "archive_verified": true,
+      "manifests": [
+        {
+          "path": "project_parameters_core_results/manifest.json",
+          "sha256": "a74a1ce2817f19b9ae9d0131c32e40b9a3880ba535617a1d4ab0c72bdffdda5e",
+          "status": "PASS",
+          "source_files": [
+            {
+              "path": "tools/project_params_0110/CoreProbe.cs",
+              "sha256": "73bca7be7d5bef8cd4241bf82e9096dc1bbf1cd6d131af3ae4771aa224c4fe8c",
+              "comparison": "LF_to_CRLF"
+            },
+            {
+              "path": "AFrame/src/AFramePlugin/FrameProjectParameters.cs",
+              "sha256": "916fbdc792a35ab023b7d586fd929da64675a79e3e2aa4202a206bcfeba77482",
+              "comparison": "LF_to_CRLF"
+            },
+            {
+              "path": "AFrame/src/AFramePlugin/FrameSolutionSelection.cs",
+              "sha256": "a79f45984e52bcf023d3ac35a3cabdfc84fff77c07ac662e411cbaf8a8b032f7",
+              "comparison": "LF_to_CRLF"
+            },
+            {
+              "path": "AFrame/src/AFramePlugin/FrameSettings.cs",
+              "sha256": "14fa9ad2c20caa2e4bd9931c25f24b7b6affd5ef30943410d551e556d28082e2",
+              "comparison": "LF_to_CRLF"
+            },
+            {
+              "path": "tools/project_params_0110/test_core.py",
+              "sha256": "03150d97f5df3abdbeaf8af8bb705fffd983c3ef4b9b1ce13ef177c7ddcbceb2",
+              "comparison": "LF_to_CRLF"
+            },
+            {
+              "path": "AFrame/engine/frame_solution_selection.py",
+              "sha256": "8d7665fd417caae469b7c50a4580fd2182cab2c73c61803b178e52a5e83ae36b",
+              "comparison": "LF_to_CRLF"
+            },
+            {
+              "path": "AFrame/engine/frame_solution_catalog.py",
+              "sha256": "3649cb9bc72344c206efd5011e94efe51ef448ac295ff8d2fb0cbc6af53bb02f",
+              "comparison": "LF_to_CRLF"
+            }
+          ],
+          "checks": 152
+        },
+        {
+          "path": "project_parameters_integration_results/manifest.json",
+          "sha256": "cd87af525b0d6916c6a31e093737453c2201a5be2e95e60ee2ecda65ea8fd49d",
+          "status": "PASS",
+          "source_files": [
+            {
+              "path": "tools/project_params_0110/command_doubles.cs",
+              "sha256": "504edf7cbed78a8681418a9d16ecb392bda0880881ba88061f163ac1d84cfec5",
+              "comparison": "LF_to_CRLF"
+            },
+            {
+              "path": "tools/project_params_0110/CommandIntegrationProbe.cs",
+              "sha256": "45dfe8f3e32b1e7018c559dc42c5d27825c07498cec8268defebee1774052403",
+              "comparison": "LF_to_CRLF"
+            },
+            {
+              "path": "Common/FacadeProjectParameterStore.cs",
+              "sha256": "6278d9e9d12444fdda61b70b910f6516d866c0041ada1f1f90ad49ed8bfe20c2",
+              "comparison": "LF_to_CRLF"
+            },
+            {
+              "path": "AFrame/src/AFramePlugin/FrameProjectParameters.cs",
+              "sha256": "916fbdc792a35ab023b7d586fd929da64675a79e3e2aa4202a206bcfeba77482",
+              "comparison": "LF_to_CRLF"
+            },
+            {
+              "path": "AFrame/src/AFramePlugin/FrameSolutionSelection.cs",
+              "sha256": "a79f45984e52bcf023d3ac35a3cabdfc84fff77c07ac662e411cbaf8a8b032f7",
+              "comparison": "LF_to_CRLF"
+            },
+            {
+              "path": "AFrame/src/AFramePlugin/FrameSettings.cs",
+              "sha256": "14fa9ad2c20caa2e4bd9931c25f24b7b6affd5ef30943410d551e556d28082e2",
+              "comparison": "LF_to_CRLF"
+            },
+            {
+              "path": "AFrame/src/AFramePlugin/FrameProjectCommand.cs",
+              "sha256": "7bb428cbc9edf42f004798d554049d3d4d01c859e78355b2238154cc606b5d01",
+              "comparison": "LF_to_CRLF"
+            },
+            {
+              "path": "tools/project_params_0110/native_store_cad.cs",
+              "sha256": "b44b40fe72a8bfb4ce0b4526eb7ac936072b5586477abc903675c536bd247db5",
+              "comparison": "LF_to_CRLF"
+            },
+            {
+              "path": "tools/project_params_0110/test_integration.py",
+              "sha256": "5e97410fa789c4d7c0ab642fc6da1a2955ad6b1bd88dfcd2ea47a5b1d3fc2edf",
+              "comparison": "LF_to_CRLF"
+            },
+            {
+              "path": "AFrame/src/AFramePlugin/FrameCommand.cs",
+              "sha256": "77ab95312ff52c08f01952f62e10bad3718bd44c32f1f81f8c5029973ffcbc8d",
+              "comparison": "LF_to_CRLF"
+            }
+          ],
+          "checks": 33
+        },
+        {
+          "path": "project_parameters_store_results/manifest.json",
+          "sha256": "d6b8f2d790dcfb2297d2005102c5687ec93591d1d2ece0490e8e21e2f6e57f3f",
+          "status": "PASS",
+          "source_files": [
+            {
+              "path": "Common/FacadeProjectParameterStore.cs",
+              "sha256": "6278d9e9d12444fdda61b70b910f6516d866c0041ada1f1f90ad49ed8bfe20c2",
+              "comparison": "LF_to_CRLF"
+            },
+            {
+              "path": "tools/project_params_0110/native_store_cad.cs",
+              "sha256": "b44b40fe72a8bfb4ce0b4526eb7ac936072b5586477abc903675c536bd247db5",
+              "comparison": "LF_to_CRLF"
+            },
+            {
+              "path": "tools/project_params_0110/native_store_probe.cs",
+              "sha256": "0dffabe165ab127f1db04941b2d631e7a55389319162668252940b6da20c159d",
+              "comparison": "LF_to_CRLF"
+            },
+            {
+              "path": "Common/GeometryFingerprint.cs",
+              "sha256": "726c44b190b72dd73a7f89374c577c6d60615458e601e52f9e147cf6089cc84c",
+              "comparison": "LF_to_CRLF"
+            },
+            {
+              "path": "Common/ZoneGeometryGuard.cs",
+              "sha256": "0871ab6bc97ffc5ad162422c7e3360b0b23b836aed167e00807519a9b3d87116",
+              "comparison": "LF_to_CRLF"
+            },
+            {
+              "path": "Common/LayoutGeometryGuard.cs",
+              "sha256": "53f4151911effc493abb22b3b525256aad5ff1032ae896b18c742737ae47c402",
+              "comparison": "LF_to_CRLF"
+            },
+            {
+              "path": "Common/FacadeQuantities.cs",
+              "sha256": "9453f7fdd91aac9aeab389d3b0ccc9b1968c59c48dfbd04664cd8150b24af305",
+              "comparison": "LF_to_CRLF"
+            },
+            {
+              "path": "Common/FacadeQuantityStore.cs",
+              "sha256": "4adb2edeaf52958e06fda83529a6edc6b672a9fb0cfc329e2cc5c6b629bd3ec4",
+              "comparison": "LF_to_CRLF"
+            },
+            {
+              "path": "Common/FacadeQuantityStore.Frame.cs",
+              "sha256": "a4f2aa29a264a534e06a4e5ab5cfec291f503c8bc586d22da6106400a223ab8a",
+              "comparison": "LF_to_CRLF"
+            },
+            {
+              "path": "Common/ManualQuantities.cs",
+              "sha256": "8e97a24b3e710e39c2a9ad49ec94dad6f6408664874275f0053f034842762f49",
+              "comparison": "LF_to_CRLF"
+            },
+            {
+              "path": "Common/ManualQuantityGeometry.cs",
+              "sha256": "4fc91d0bc6a3412ecffd3cf5472f2051a7d88b3711edd374f81a2955726e841b",
+              "comparison": "LF_to_CRLF"
+            },
+            {
+              "path": "Common/FacadeQuantityStore.Manual.cs",
+              "sha256": "0a228ef4f498b8064806b3c19f2f837e34e9eda2ff4de29dc47462f71f289994",
+              "comparison": "LF_to_CRLF"
+            },
+            {
+              "path": "tools/quantities_3009/QuantityStoreCheck.cs",
+              "sha256": "80bd7bda35ecf9c9d39b46d70c66be189f9d741cfa86c46d76c1cfe685bbb7b0",
+              "comparison": "LF_to_CRLF"
+            },
+            {
+              "path": "tools/quantities_3009/QuantityCadDoubles.cs",
+              "sha256": "448fb8bd95e46e27c81ec2640e25f5f1769e667793d31f0a819853a0145df352",
+              "comparison": "LF_to_CRLF"
+            },
+            {
+              "path": "tools/fixes_3009/test_zone_geometry_adapter.py",
+              "sha256": "f3e536812326937ba79c350677de23a080522af736582f6c6a6e888d1690312f",
+              "comparison": "LF_to_CRLF"
+            },
+            {
+              "path": "Facades/engine/facade_zones.py",
+              "sha256": "832a5bbf012e310f70ed830c843285457fc614e44f11c0261c2c2d9c103ee0ec",
+              "comparison": "LF_to_CRLF"
+            },
+            {
+              "path": "Facades/engine/facades_engine.py",
+              "sha256": "c7af789c1d1495e1452f6f7ecf5f6d8d6379412def8510773825725bc93576dd",
+              "comparison": "LF_to_CRLF"
+            },
+            {
+              "path": "tools/project_params_0110/native_quantity_probe.cs",
+              "sha256": "8029d8d97063e6d9f5ff3dd1521c47e81df230cbae595df005fc9883a431fb89",
+              "comparison": "LF_to_CRLF"
+            },
+            {
+              "path": "tools/project_params_0110/native_legacy_source_metadata.cs",
+              "sha256": "f19836407e63b8790486cddd2b3f4606dce433f6823c76e09bdd6a4c41215a20",
+              "comparison": "LF_to_CRLF"
+            },
+            {
+              "path": "tools/project_params_0110/test_store_contract.py",
+              "sha256": "83d3e8a37cbb2c915b8029da60db046f956eba6ef779d2fe69558fce7ca70ae3",
+              "comparison": "LF_to_CRLF"
+            },
+            {
+              "path": "tools/quantities_3009/probe_runtime.py",
+              "sha256": "6a493fbf8816c34d925b9b8576f9fc6e0aa11e27925492a8aa18a27eae1825a8",
+              "comparison": "LF_to_CRLF"
+            }
+          ],
+          "checks": 44
+        },
+        {
+          "path": "project_parameters_ui_results/manifest.json",
+          "sha256": "337a1649b532ab1f83065533ef944b27f2b56030da2293a140df8451dbb2acbf",
+          "status": "PASS",
+          "source_files": [
+            {
+              "path": "tools/project_params_0110/ProjectUiProbe.cs",
+              "sha256": "19cabaa4f951105d52b6495b3e0528cfb558d0de745443b6bb7aee0d5a00ae97",
+              "comparison": "LF_to_CRLF"
+            },
+            {
+              "path": "AFrame/src/AFramePlugin/FrameForm.cs",
+              "sha256": "6c17649902a4af49ead0fb412d878e726b856fd977503ee47afa4564a21b54db",
+              "comparison": "LF_to_CRLF"
+            },
+            {
+              "path": "AFrame/src/AFramePlugin/FrameSettings.cs",
+              "sha256": "14fa9ad2c20caa2e4bd9931c25f24b7b6affd5ef30943410d551e556d28082e2",
+              "comparison": "LF_to_CRLF"
+            },
+            {
+              "path": "AFrame/src/AFramePlugin/FrameSolutionSelection.cs",
+              "sha256": "a79f45984e52bcf023d3ac35a3cabdfc84fff77c07ac662e411cbaf8a8b032f7",
+              "comparison": "LF_to_CRLF"
+            },
+            {
+              "path": "AFrame/src/AFramePlugin/FrameSolutionForm.cs",
+              "sha256": "b51920bcbb988a424dcc23a32088e940cc1591ae60f5db53d415984a462bb693",
+              "comparison": "LF_to_CRLF"
+            },
+            {
+              "path": "AFrame/src/AFramePlugin/FrameProjectParameters.cs",
+              "sha256": "916fbdc792a35ab023b7d586fd929da64675a79e3e2aa4202a206bcfeba77482",
+              "comparison": "LF_to_CRLF"
+            },
+            {
+              "path": "AFrame/src/AFramePlugin/FrameProjectForms.cs",
+              "sha256": "a57f2ea8b38c548f2463b5b6dc320d84593dc9a277a9a86646e07b09d72314ed",
+              "comparison": "LF_to_CRLF"
+            },
+            {
+              "path": "AFrame/src/AFramePlugin/FrameBoundedForm.cs",
+              "sha256": "a55749a27922012f2ea2f98db2f6a3073ca3b87ed71599eac5221f7257941ce6",
+              "comparison": "LF_to_CRLF"
+            },
+            {
+              "path": "tools/solution_catalog_0110/test_solution_ui.py",
+              "sha256": "05fb5c5d6b30c6bbac7a7a8f0e8b2fd239611e20df70da28a5442dede256044d",
+              "comparison": "LF_to_CRLF"
+            },
+            {
+              "path": "tools/project_params_0110/test_ui.py",
+              "sha256": "1760d7d9d8a7c80fc549aff46346eb25c553c3a8da902b3762ccb48c1c922952",
+              "comparison": "LF_to_CRLF"
+            }
+          ],
+          "native_ui": {
+            "status": "PASS",
+            "checks": 1730,
+            "failures": 0,
+            "reasons": [],
+            "images": [
+              "project_filled.png",
+              "project_review.png",
+              "zone_overrides.png",
+              "zone_review.png",
+              "zone_detach_review.png",
+              "zone_small.png",
+              "zone_large_font.png",
+              "zone_large_font_review.png",
+              "bound_group_origins.png",
+              "bound_group_large_font.png",
+              "bound_atframe.png"
+            ],
+            "layouts": [
+              {
+                "scenario": "project_filled",
+                "window": "{X=10,Y=10,Width=916,Height=689}",
+                "native_client": "{X=18,Y=41,Width=900,Height=650}",
+                "cached_client": "{X=0,Y=0,Width=900,Height=650}",
+                "screen": "{X=0,Y=0,Width=1024,Height=728}",
+                "font_points": 9,
+                "minimum_size": "{Width=760, Height=530}"
+              },
+              {
+                "scenario": "project_review",
+                "window": "{X=10,Y=10,Width=916,Height=689}",
+                "native_client": "{X=18,Y=41,Width=900,Height=650}",
+                "cached_client": "{X=0,Y=0,Width=900,Height=650}",
+                "screen": "{X=0,Y=0,Width=1024,Height=728}",
+                "font_points": 9,
+                "minimum_size": "{Width=760, Height=530}"
+              },
+              {
+                "scenario": "zone_overrides",
+                "window": "{X=10,Y=10,Width=916,Height=689}",
+                "native_client": "{X=18,Y=41,Width=900,Height=650}",
+                "cached_client": "{X=0,Y=0,Width=900,Height=650}",
+                "screen": "{X=0,Y=0,Width=1024,Height=728}",
+                "font_points": 9,
+                "minimum_size": "{Width=760, Height=530}"
+              },
+              {
+                "scenario": "zone_review",
+                "window": "{X=10,Y=10,Width=916,Height=689}",
+                "native_client": "{X=18,Y=41,Width=900,Height=650}",
+                "cached_client": "{X=0,Y=0,Width=900,Height=650}",
+                "screen": "{X=0,Y=0,Width=1024,Height=728}",
+                "font_points": 9,
+                "minimum_size": "{Width=760, Height=530}"
+              },
+              {
+                "scenario": "zone_detach_review",
+                "window": "{X=10,Y=10,Width=916,Height=689}",
+                "native_client": "{X=18,Y=41,Width=900,Height=650}",
+                "cached_client": "{X=0,Y=0,Width=900,Height=650}",
+                "screen": "{X=0,Y=0,Width=1024,Height=728}",
+                "font_points": 9,
+                "minimum_size": "{Width=760, Height=530}"
+              },
+              {
+                "scenario": "zone_small",
+                "window": "{X=10,Y=10,Width=760,Height=530}",
+                "native_client": "{X=18,Y=41,Width=744,Height=491}",
+                "cached_client": "{X=0,Y=0,Width=744,Height=491}",
+                "screen": "{X=0,Y=0,Width=1024,Height=728}",
+                "font_points": 9,
+                "minimum_size": "{Width=760, Height=530}"
+              },
+              {
+                "scenario": "zone_large_font",
+                "window": "{X=0,Y=0,Width=1024,Height=728}",
+                "native_client": "{X=8,Y=31,Width=1008,Height=689}",
+                "cached_client": "{X=0,Y=0,Width=1008,Height=689}",
+                "screen": "{X=0,Y=0,Width=1024,Height=728}",
+                "font_points": 12,
+                "minimum_size": "{Width=973, Height=726}"
+              },
+              {
+                "scenario": "zone_large_font_review",
+                "window": "{X=0,Y=0,Width=1024,Height=728}",
+                "native_client": "{X=8,Y=31,Width=1008,Height=689}",
+                "cached_client": "{X=0,Y=0,Width=1008,Height=689}",
+                "screen": "{X=0,Y=0,Width=1024,Height=728}",
+                "font_points": 12,
+                "minimum_size": "{Width=973, Height=726}"
+              },
+              {
+                "scenario": "bound_group_origins",
+                "window": "{X=10,Y=10,Width=916,Height=689}",
+                "native_client": "{X=18,Y=41,Width=900,Height=650}",
+                "cached_client": "{X=0,Y=0,Width=900,Height=650}",
+                "screen": "{X=0,Y=0,Width=1024,Height=728}",
+                "font_points": 9,
+                "minimum_size": "{Width=760, Height=530}"
+              },
+              {
+                "scenario": "bound_group_large_font",
+                "window": "{X=0,Y=0,Width=1024,Height=728}",
+                "native_client": "{X=8,Y=31,Width=1008,Height=689}",
+                "cached_client": "{X=0,Y=0,Width=1008,Height=689}",
+                "screen": "{X=0,Y=0,Width=1024,Height=728}",
+                "font_points": 12,
+                "minimum_size": "{Width=973, Height=726}"
+              },
+              {
+                "scenario": "bound_atframe",
+                "window": "{X=0,Y=39,Width=916,Height=689}",
+                "native_client": "{X=8,Y=70,Width=900,Height=650}",
+                "cached_client": "{X=0,Y=0,Width=900,Height=650}",
+                "screen": "{X=0,Y=0,Width=1024,Height=728}",
+                "font_points": 9,
+                "minimum_size": "{Width=760, Height=530}"
+              }
+            ],
+            "live_autocad_checked": false
+          }
+        }
+      ]
+    },
+    {
+      "id": 11158888421,
+      "name": "solution-settings-contract",
+      "sha256": "82c8016f54b443557be91cd586bfb1b014b5ba4d29ebd23b63cbd19353cb1c25",
+      "archive_verified": true,
+      "manifests": [
+        {
+          "path": "manifest.json",
+          "sha256": "1105666147e71890bdde9e1f25993d275ea43bea0a6e87a232c5d2502e44c86c",
+          "status": "PASS",
+          "source_files": [
+            {
+              "path": "tools/solution_catalog_0110/test_settings_contract.py",
+              "sha256": "d1c99718983bd5c6d4f4aff9c4c9337c0fac1060b522040fea43251d2ed00b07",
+              "comparison": "LF_to_CRLF"
+            },
+            {
+              "path": "tools/solution_catalog_0110/SettingsContractProbe.cs",
+              "sha256": "328138dc1cbf308dafb9b72bfedd4971f2727098aa0254cfa892ca2cc4f416f7",
+              "comparison": "LF_to_CRLF"
+            },
+            {
+              "path": "AFrame/src/AFramePlugin/FrameSettings.cs",
+              "sha256": "14fa9ad2c20caa2e4bd9931c25f24b7b6affd5ef30943410d551e556d28082e2",
+              "comparison": "LF_to_CRLF"
+            },
+            {
+              "path": "AFrame/src/AFramePlugin/FrameSolutionSelection.cs",
+              "sha256": "a79f45984e52bcf023d3ac35a3cabdfc84fff77c07ac662e411cbaf8a8b032f7",
+              "comparison": "LF_to_CRLF"
+            },
+            {
+              "path": "AFrame/src/AFramePlugin/FrameProjectParameters.cs",
+              "sha256": "916fbdc792a35ab023b7d586fd929da64675a79e3e2aa4202a206bcfeba77482",
+              "comparison": "LF_to_CRLF"
+            },
+            {
+              "path": "AFrame/src/AFramePlugin/FrameCommand.cs",
+              "sha256": "77ab95312ff52c08f01952f62e10bad3718bd44c32f1f81f8c5029973ffcbc8d",
+              "comparison": "LF_to_CRLF"
+            },
+            {
+              "path": "AFrame/src/AFramePlugin/FrameQuantities.cs",
+              "sha256": "1c1049382e171f79fa4866a555979eced505e28ebbe691d1822253a94192d36c",
+              "comparison": "LF_to_CRLF"
+            },
+            {
+              "path": "Common/FacadeQuantities.cs",
+              "sha256": "9453f7fdd91aac9aeab389d3b0ccc9b1968c59c48dfbd04664cd8150b24af305",
+              "comparison": "LF_to_CRLF"
+            },
+            {
+              "path": "Common/catalogs/vector1_2015_type1_historical.json",
+              "sha256": "750eb47d0ec22862267b960262ab591651ba0576c10328b85b5bde405f3ff0d7",
+              "comparison": "LF_to_CRLF"
+            },
+            {
+              "path": "AFrame/engine/analiz_klu_poligon.py",
+              "sha256": "33935bb1083c334fc2e3318176b20855c06ca7c7573e2be169be00e53d0e385f",
+              "comparison": "LF_to_CRLF"
+            },
+            {
+              "path": "AFrame/engine/audit_frame.py",
+              "sha256": "a1a42d5b3e49b085036ee212623de1f42e098d4c11a7158b6b2cd223725fab8f",
+              "comparison": "LF_to_CRLF"
+            },
+            {
+              "path": "AFrame/engine/dsverka_poligon.py",
+              "sha256": "1ec28d3531cc2f0b16020961d87d441913fd7befe54a0d407a85e698267dee49",
+              "comparison": "LF_to_CRLF"
+            },
+            {
+              "path": "AFrame/engine/frame_calc.py",
+              "sha256": "e85641d1e802660af062519cb88596caec154a6af9baada15bab95a3ddb222da",
+              "comparison": "LF_to_CRLF"
+            },
+            {
+              "path": "AFrame/engine/frame_catalog.py",
+              "sha256": "be987c0ce8452eadbc5babf0dff28dfba895baf525eea2de5278262ec5af5698",
+              "comparison": "LF_to_CRLF"
+            },
+            {
+              "path": "AFrame/engine/frame_connections.py",
+              "sha256": "2f570417d9ca5fda157423fb2ff14f813e7ccc4f067183b924fce75365f992b2",
+              "comparison": "LF_to_CRLF"
+            },
+            {
+              "path": "AFrame/engine/frame_engine.py",
+              "sha256": "7d85bf5beda118f0750d926c16714282201a1f965e2c27cf93726126a66d6db3",
+              "comparison": "LF_to_CRLF"
+            },
+            {
+              "path": "AFrame/engine/frame_plan.py",
+              "sha256": "36df2b6d2aeaa1dfceb0e31b167eb3cb392a734c2c6eb4aa43a40694531400ad",
+              "comparison": "LF_to_CRLF"
+            },
+            {
+              "path": "AFrame/engine/frame_rules.py",
+              "sha256": "1383ac5badcb5ac07eab12def255b86d679966191acef250e2b09fa41757be5e",
+              "comparison": "LF_to_CRLF"
+            },
+            {
+              "path": "AFrame/engine/frame_solution_catalog.py",
+              "sha256": "3649cb9bc72344c206efd5011e94efe51ef448ac295ff8d2fb0cbc6af53bb02f",
+              "comparison": "LF_to_CRLF"
+            },
+            {
+              "path": "AFrame/engine/frame_solution_selection.py",
+              "sha256": "8d7665fd417caae469b7c50a4580fd2182cab2c73c61803b178e52a5e83ae36b",
+              "comparison": "LF_to_CRLF"
+            },
+            {
+              "path": "AFrame/engine/frame_spatial.py",
+              "sha256": "7dc4113560b2baa8d5d786c596428f7a2731ad978c188bfea87aa86161bde2f6",
+              "comparison": "LF_to_CRLF"
+            },
+            {
+              "path": "AFrame/engine/frame_topology.py",
+              "sha256": "711625511ff543363bf5738b9b924ee9fd2104c5d870bffc66097962c69f969c",
+              "comparison": "LF_to_CRLF"
+            },
+            {
+              "path": "AFrame/engine/test_frame_calc.py",
+              "sha256": "5b8f2850515ea3c7528480f579a5495cbbd9432eb8e2075c99ade0a9726a185c",
+              "comparison": "LF_to_CRLF"
+            },
+            {
+              "path": "AFrame/engine/test_frame_connections.py",
+              "sha256": "7796a9ee818f2f0a692d685555972ee8fdc34cefa73b3a5d9709ddf228404790",
+              "comparison": "LF_to_CRLF"
+            },
+            {
+              "path": "AFrame/engine/test_frame_engine.py",
+              "sha256": "a137c20f943630a59f61aa4e6a7fa5288a58fc4c4f863d60c0e7dc9197859bfa",
+              "comparison": "LF_to_CRLF"
+            },
+            {
+              "path": "AFrame/engine/test_frame_plan.py",
+              "sha256": "91fd40dff46ab004b00d6fdcd53aaf2f1358951ac1e05c71fafb45a70085ed85",
+              "comparison": "LF_to_CRLF"
+            },
+            {
+              "path": "AFrame/engine/test_frame_rules.py",
+              "sha256": "df7b291c70df8ab489b74e6b5b8bc2e3da9963e44f718bd0e0b5556ae261b616",
+              "comparison": "LF_to_CRLF"
+            },
+            {
+              "path": "AFrame/engine/test_frame_solution_selection.py",
+              "sha256": "7f53b246ff33174a7759d93bc9eca9525627f73faf70e179a8fad06ff4cb4abb",
+              "comparison": "LF_to_CRLF"
+            },
+            {
+              "path": "AFrame/engine/test_frame_topology.py",
+              "sha256": "a3283a3509f6a5e6cb62fa3eb47bb63de7375592ad2955516e67e0f6b6d458f6",
+              "comparison": "LF_to_CRLF"
+            },
+            {
+              "path": "AFrame/engine/test_frame_topology_index.py",
+              "sha256": "43898e957f3843c21d8e9239fd5baa29b8537af8e3fd15e8cb02ee0351da6c32",
+              "comparison": "LF_to_CRLF"
+            }
+          ],
+          "checks": 70
+        }
+      ]
+    },
+    {
+      "id": 11158883249,
+      "name": "solution-catalog-ui",
+      "sha256": "c328889c465e5ed4e1a5a372db45ee6eaf5129cfc4481d33bcdc263b9e525966",
+      "archive_verified": true,
+      "manifests": [
+        {
+          "path": "manifest.json",
+          "sha256": "35a4370fbed2f8c6ebdd289780be0ff6b4be484d475dc927ce6dec638fd65c99",
+          "status": "PASS",
+          "source_files": [
+            {
+              "path": "tools/solution_catalog_0110/SolutionUiProbe.cs",
+              "sha256": "3b8a205c4b6fe20b6b71d72129779c6bc5a0cf5b3f83edbe807a66db1a3aea71",
+              "comparison": "LF_to_CRLF"
+            },
+            {
+              "path": "AFrame/src/AFramePlugin/FrameForm.cs",
+              "sha256": "6c17649902a4af49ead0fb412d878e726b856fd977503ee47afa4564a21b54db",
+              "comparison": "LF_to_CRLF"
+            },
+            {
+              "path": "AFrame/src/AFramePlugin/FrameSettings.cs",
+              "sha256": "14fa9ad2c20caa2e4bd9931c25f24b7b6affd5ef30943410d551e556d28082e2",
+              "comparison": "LF_to_CRLF"
+            },
+            {
+              "path": "AFrame/src/AFramePlugin/FrameSolutionSelection.cs",
+              "sha256": "a79f45984e52bcf023d3ac35a3cabdfc84fff77c07ac662e411cbaf8a8b032f7",
+              "comparison": "LF_to_CRLF"
+            },
+            {
+              "path": "AFrame/src/AFramePlugin/FrameSolutionForm.cs",
+              "sha256": "b51920bcbb988a424dcc23a32088e940cc1591ae60f5db53d415984a462bb693",
+              "comparison": "LF_to_CRLF"
+            },
+            {
+              "path": "AFrame/src/AFramePlugin/FrameProjectParameters.cs",
+              "sha256": "916fbdc792a35ab023b7d586fd929da64675a79e3e2aa4202a206bcfeba77482",
+              "comparison": "LF_to_CRLF"
+            },
+            {
+              "path": "AFrame/src/AFramePlugin/FrameProjectForms.cs",
+              "sha256": "a57f2ea8b38c548f2463b5b6dc320d84593dc9a277a9a86646e07b09d72314ed",
+              "comparison": "LF_to_CRLF"
+            },
+            {
+              "path": "AFrame/src/AFramePlugin/FrameBoundedForm.cs",
+              "sha256": "a55749a27922012f2ea2f98db2f6a3073ca3b87ed71599eac5221f7257941ce6",
+              "comparison": "LF_to_CRLF"
+            },
+            {
+              "path": "tools/solution_catalog_0110/test_solution_ui.py",
+              "sha256": "05fb5c5d6b30c6bbac7a7a8f0e8b2fd239611e20df70da28a5442dede256044d",
+              "comparison": "LF_to_CRLF"
+            }
+          ],
+          "native_ui": {
+            "status": "PASS",
+            "checks": 919,
+            "failures": 0,
+            "reasons": [],
+            "images": [
+              "solution_blank.png",
+              "solution_filled.png",
+              "solution_source.png",
+              "solution_readonly.png",
+              "solution_mismatch.png",
+              "solution_small.png",
+              "solution_small_source.png",
+              "solution_large_font.png",
+              "frame_main_before.png",
+              "frame_main_selected.png"
+            ],
+            "layouts": [
+              {
+                "scenario": "blank",
+                "window": "{X=10,Y=10,Width=916,Height=689}",
+                "client": "{X=0,Y=0,Width=900,Height=650}",
+                "native_window": "{X=10,Y=10,Width=916,Height=689}",
+                "native_client": "{X=18,Y=41,Width=900,Height=650}",
+                "screen": "{X=0,Y=0,Width=1024,Height=728}",
+                "font_points": 9,
+                "minimum_size": "{Width=760, Height=530}",
+                "controls": [
+                  {
+                    "type": "TableLayoutPanel",
+                    "Name": "",
+                    "bounds": "{X=0,Y=0,Width=900,Height=650}",
+                    "parent_client": "{X=0,Y=0,Width=900,Height=650}"
+                  },
+                  {
+                    "type": "TableLayoutPanel",
+                    "Name": "",
+                    "bounds": "{X=10,Y=10,Width=880,Height=84}",
+                    "parent_client": "{X=0,Y=0,Width=900,Height=650}"
+                  },
+                  {
+                    "type": "TableLayoutPanel",
+                    "Name": "",
+                    "bounds": "{X=0,Y=0,Width=863,Height=614}",
+                    "parent_client": "{X=0,Y=0,Width=863,Height=448}"
+                  },
+                  {
+                    "type": "TableLayoutPanel",
+                    "Name": "",
+                    "bounds": "{X=8,Y=36,Width=405,Height=116}",
+                    "parent_client": "{X=0,Y=0,Width=421,Height=160}"
+                  },
+                  {
+                    "type": "TableLayoutPanel",
+                    "Name": "",
+                    "bounds": "{X=8,Y=36,Width=406,Height=116}",
+                    "parent_client": "{X=0,Y=0,Width=422,Height=160}"
+                  },
+                  {
+                    "type": "TableLayoutPanel",
+                    "Name": "",
+                    "bounds": "{X=8,Y=36,Width=405,Height=160}",
+                    "parent_client": "{X=0,Y=0,Width=421,Height=204}"
+                  },
+                  {
+                    "type": "TableLayoutPanel",
+                    "Name": "",
+                    "bounds": "{X=8,Y=36,Width=406,Height=160}",
+                    "parent_client": "{X=0,Y=0,Width=422,Height=204}"
+                  },
+                  {
+                    "type": "TableLayoutPanel",
+                    "Name": "",
+                    "bounds": "{X=8,Y=36,Width=833,Height=182}",
+                    "parent_client": "{X=0,Y=0,Width=849,Height=226}"
+                  },
+                  {
+                    "type": "TableLayoutPanel",
+                    "Name": "",
+                    "bounds": "{X=10,Y=546,Width=880,Height=94}",
+                    "parent_client": "{X=0,Y=0,Width=900,Height=650}"
+                  },
+                  {
+                    "type": "Button",
+                    "Name": "cancel_selection",
+                    "bounds": "{X=776,Y=3,Width=95,Height=30}",
+                    "parent_client": "{X=0,Y=0,Width=874,Height=32}"
+                  },
+                  {
+                    "type": "Button",
+                    "Name": "apply_selection",
+                    "bounds": "{X=625,Y=3,Width=145,Height=30}",
+                    "parent_client": "{X=0,Y=0,Width=874,Height=32}"
+                  },
+                  {
+                    "type": "Button",
+                    "Name": "clear_selection",
+                    "bounds": "{X=444,Y=3,Width=175,Height=30}",
+                    "parent_client": "{X=0,Y=0,Width=874,Height=32}"
+                  }
+                ]
+              },
+              {
+                "scenario": "filled",
+                "window": "{X=10,Y=10,Width=916,Height=689}",
+                "client": "{X=0,Y=0,Width=900,Height=650}",
+                "native_window": "{X=10,Y=10,Width=916,Height=689}",
+                "native_client": "{X=18,Y=41,Width=900,Height=650}",
+                "screen": "{X=0,Y=0,Width=1024,Height=728}",
+                "font_points": 9,
+                "minimum_size": "{Width=760, Height=530}",
+                "controls": [
+                  {
+                    "type": "TableLayoutPanel",
+                    "Name": "",
+                    "bounds": "{X=0,Y=0,Width=900,Height=650}",
+                    "parent_client": "{X=0,Y=0,Width=900,Height=650}"
+                  },
+                  {
+                    "type": "TableLayoutPanel",
+                    "Name": "",
+                    "bounds": "{X=10,Y=10,Width=880,Height=84}",
+                    "parent_client": "{X=0,Y=0,Width=900,Height=650}"
+                  },
+                  {
+                    "type": "TableLayoutPanel",
+                    "Name": "",
+                    "bounds": "{X=0,Y=0,Width=863,Height=614}",
+                    "parent_client": "{X=0,Y=0,Width=863,Height=448}"
+                  },
+                  {
+                    "type": "TableLayoutPanel",
+                    "Name": "",
+                    "bounds": "{X=8,Y=36,Width=405,Height=116}",
+                    "parent_client": "{X=0,Y=0,Width=421,Height=160}"
+                  },
+                  {
+                    "type": "TableLayoutPanel",
+                    "Name": "",
+                    "bounds": "{X=8,Y=36,Width=406,Height=116}",
+                    "parent_client": "{X=0,Y=0,Width=422,Height=160}"
+                  },
+                  {
+                    "type": "TableLayoutPanel",
+                    "Name": "",
+                    "bounds": "{X=8,Y=36,Width=405,Height=160}",
+                    "parent_client": "{X=0,Y=0,Width=421,Height=204}"
+                  },
+                  {
+                    "type": "TableLayoutPanel",
+                    "Name": "",
+                    "bounds": "{X=8,Y=36,Width=406,Height=160}",
+                    "parent_client": "{X=0,Y=0,Width=422,Height=204}"
+                  },
+                  {
+                    "type": "TableLayoutPanel",
+                    "Name": "",
+                    "bounds": "{X=8,Y=36,Width=833,Height=182}",
+                    "parent_client": "{X=0,Y=0,Width=849,Height=226}"
+                  },
+                  {
+                    "type": "TableLayoutPanel",
+                    "Name": "",
+                    "bounds": "{X=10,Y=546,Width=880,Height=94}",
+                    "parent_client": "{X=0,Y=0,Width=900,Height=650}"
+                  },
+                  {
+                    "type": "Button",
+                    "Name": "cancel_selection",
+                    "bounds": "{X=776,Y=3,Width=95,Height=30}",
+                    "parent_client": "{X=0,Y=0,Width=874,Height=32}"
+                  },
+                  {
+                    "type": "Button",
+                    "Name": "apply_selection",
+                    "bounds": "{X=625,Y=3,Width=145,Height=30}",
+                    "parent_client": "{X=0,Y=0,Width=874,Height=32}"
+                  },
+                  {
+                    "type": "Button",
+                    "Name": "clear_selection",
+                    "bounds": "{X=444,Y=3,Width=175,Height=30}",
+                    "parent_client": "{X=0,Y=0,Width=874,Height=32}"
+                  }
+                ]
+              },
+              {
+                "scenario": "readonly",
+                "window": "{X=10,Y=10,Width=916,Height=689}",
+                "client": "{X=0,Y=0,Width=900,Height=650}",
+                "native_window": "{X=10,Y=10,Width=916,Height=689}",
+                "native_client": "{X=18,Y=41,Width=900,Height=650}",
+                "screen": "{X=0,Y=0,Width=1024,Height=728}",
+                "font_points": 9,
+                "minimum_size": "{Width=760, Height=530}",
+                "controls": [
+                  {
+                    "type": "TableLayoutPanel",
+                    "Name": "",
+                    "bounds": "{X=0,Y=0,Width=900,Height=650}",
+                    "parent_client": "{X=0,Y=0,Width=900,Height=650}"
+                  },
+                  {
+                    "type": "TableLayoutPanel",
+                    "Name": "",
+                    "bounds": "{X=10,Y=10,Width=880,Height=84}",
+                    "parent_client": "{X=0,Y=0,Width=900,Height=650}"
+                  },
+                  {
+                    "type": "TableLayoutPanel",
+                    "Name": "",
+                    "bounds": "{X=0,Y=0,Width=863,Height=614}",
+                    "parent_client": "{X=0,Y=0,Width=863,Height=448}"
+                  },
+                  {
+                    "type": "TableLayoutPanel",
+                    "Name": "",
+                    "bounds": "{X=8,Y=36,Width=405,Height=116}",
+                    "parent_client": "{X=0,Y=0,Width=421,Height=160}"
+                  },
+                  {
+                    "type": "TableLayoutPanel",
+                    "Name": "",
+                    "bounds": "{X=8,Y=36,Width=406,Height=116}",
+                    "parent_client": "{X=0,Y=0,Width=422,Height=160}"
+                  },
+                  {
+                    "type": "TableLayoutPanel",
+                    "Name": "",
+                    "bounds": "{X=8,Y=36,Width=405,Height=160}",
+                    "parent_client": "{X=0,Y=0,Width=421,Height=204}"
+                  },
+                  {
+                    "type": "TableLayoutPanel",
+                    "Name": "",
+                    "bounds": "{X=8,Y=36,Width=406,Height=160}",
+                    "parent_client": "{X=0,Y=0,Width=422,Height=204}"
+                  },
+                  {
+                    "type": "TableLayoutPanel",
+                    "Name": "",
+                    "bounds": "{X=8,Y=36,Width=833,Height=182}",
+                    "parent_client": "{X=0,Y=0,Width=849,Height=226}"
+                  },
+                  {
+                    "type": "TableLayoutPanel",
+                    "Name": "",
+                    "bounds": "{X=10,Y=546,Width=880,Height=94}",
+                    "parent_client": "{X=0,Y=0,Width=900,Height=650}"
+                  },
+                  {
+                    "type": "Button",
+                    "Name": "cancel_selection",
+                    "bounds": "{X=776,Y=3,Width=95,Height=30}",
+                    "parent_client": "{X=0,Y=0,Width=874,Height=32}"
+                  },
+                  {
+                    "type": "Button",
+                    "Name": "apply_selection",
+                    "bounds": "{X=625,Y=3,Width=145,Height=30}",
+                    "parent_client": "{X=0,Y=0,Width=874,Height=32}"
+                  },
+                  {
+                    "type": "Button",
+                    "Name": "clear_selection",
+                    "bounds": "{X=444,Y=3,Width=175,Height=30}",
+                    "parent_client": "{X=0,Y=0,Width=874,Height=32}"
+                  }
+                ]
+              },
+              {
+                "scenario": "small",
+                "window": "{X=10,Y=10,Width=760,Height=530}",
+                "client": "{X=0,Y=0,Width=744,Height=491}",
+                "native_window": "{X=10,Y=10,Width=760,Height=530}",
+                "native_client": "{X=18,Y=41,Width=744,Height=491}",
+                "screen": "{X=0,Y=0,Width=1024,Height=728}",
+                "font_points": 9,
+                "minimum_size": "{Width=760, Height=530}",
+                "controls": [
+                  {
+                    "type": "TableLayoutPanel",
+                    "Name": "",
+                    "bounds": "{X=0,Y=0,Width=744,Height=491}",
+                    "parent_client": "{X=0,Y=0,Width=744,Height=491}"
+                  },
+                  {
+                    "type": "TableLayoutPanel",
+                    "Name": "",
+                    "bounds": "{X=10,Y=10,Width=724,Height=84}",
+                    "parent_client": "{X=0,Y=0,Width=744,Height=491}"
+                  },
+                  {
+                    "type": "TableLayoutPanel",
+                    "Name": "",
+                    "bounds": "{X=0,Y=0,Width=707,Height=614}",
+                    "parent_client": "{X=0,Y=0,Width=707,Height=289}"
+                  },
+                  {
+                    "type": "TableLayoutPanel",
+                    "Name": "",
+                    "bounds": "{X=8,Y=36,Width=327,Height=116}",
+                    "parent_client": "{X=0,Y=0,Width=343,Height=160}"
+                  },
+                  {
+                    "type": "TableLayoutPanel",
+                    "Name": "",
+                    "bounds": "{X=8,Y=36,Width=328,Height=116}",
+                    "parent_client": "{X=0,Y=0,Width=344,Height=160}"
+                  },
+                  {
+                    "type": "TableLayoutPanel",
+                    "Name": "",
+                    "bounds": "{X=8,Y=36,Width=327,Height=160}",
+                    "parent_client": "{X=0,Y=0,Width=343,Height=204}"
+                  },
+                  {
+                    "type": "TableLayoutPanel",
+                    "Name": "",
+                    "bounds": "{X=8,Y=36,Width=328,Height=160}",
+                    "parent_client": "{X=0,Y=0,Width=344,Height=204}"
+                  },
+                  {
+                    "type": "TableLayoutPanel",
+                    "Name": "",
+                    "bounds": "{X=8,Y=36,Width=677,Height=182}",
+                    "parent_client": "{X=0,Y=0,Width=693,Height=226}"
+                  },
+                  {
+                    "type": "TableLayoutPanel",
+                    "Name": "",
+                    "bounds": "{X=10,Y=387,Width=724,Height=94}",
+                    "parent_client": "{X=0,Y=0,Width=744,Height=491}"
+                  },
+                  {
+                    "type": "Button",
+                    "Name": "cancel_selection",
+                    "bounds": "{X=620,Y=3,Width=95,Height=30}",
+                    "parent_client": "{X=0,Y=0,Width=718,Height=32}"
+                  },
+                  {
+                    "type": "Button",
+                    "Name": "apply_selection",
+                    "bounds": "{X=469,Y=3,Width=145,Height=30}",
+                    "parent_client": "{X=0,Y=0,Width=718,Height=32}"
+                  },
+                  {
+                    "type": "Button",
+                    "Name": "clear_selection",
+                    "bounds": "{X=288,Y=3,Width=175,Height=30}",
+                    "parent_client": "{X=0,Y=0,Width=718,Height=32}"
+                  }
+                ]
+              },
+              {
+                "scenario": "large_font",
+                "window": "{X=0,Y=0,Width=1024,Height=728}",
+                "client": "{X=0,Y=0,Width=1008,Height=689}",
+                "native_window": "{X=0,Y=0,Width=1024,Height=728}",
+                "native_client": "{X=8,Y=31,Width=1008,Height=689}",
+                "screen": "{X=0,Y=0,Width=1024,Height=728}",
+                "font_points": 12,
+                "minimum_size": "{Width=973, Height=726}",
+                "controls": [
+                  {
+                    "type": "TableLayoutPanel",
+                    "Name": "",
+                    "bounds": "{X=0,Y=0,Width=1008,Height=689}",
+                    "parent_client": "{X=0,Y=0,Width=1008,Height=689}"
+                  },
+                  {
+                    "type": "TableLayoutPanel",
+                    "Name": "",
+                    "bounds": "{X=13,Y=14,Width=982,Height=118}",
+                    "parent_client": "{X=0,Y=0,Width=1008,Height=689}"
+                  },
+                  {
+                    "type": "TableLayoutPanel",
+                    "Name": "",
+                    "bounds": "{X=0,Y=0,Width=965,Height=845}",
+                    "parent_client": "{X=0,Y=0,Width=965,Height=405}"
+                  },
+                  {
+                    "type": "TableLayoutPanel",
+                    "Name": "",
+                    "bounds": "{X=10,Y=50,Width=449,Height=160}",
+                    "parent_client": "{X=0,Y=0,Width=469,Height=221}"
+                  },
+                  {
+                    "type": "TableLayoutPanel",
+                    "Name": "",
+                    "bounds": "{X=10,Y=50,Width=450,Height=160}",
+                    "parent_client": "{X=0,Y=0,Width=470,Height=221}"
+                  },
+                  {
+                    "type": "TableLayoutPanel",
+                    "Name": "",
+                    "bounds": "{X=10,Y=50,Width=449,Height=216}",
+                    "parent_client": "{X=0,Y=0,Width=469,Height=277}"
+                  },
+                  {
+                    "type": "TableLayoutPanel",
+                    "Name": "",
+                    "bounds": "{X=10,Y=50,Width=450,Height=216}",
+                    "parent_client": "{X=0,Y=0,Width=470,Height=277}"
+                  },
+                  {
+                    "type": "TableLayoutPanel",
+                    "Name": "",
+                    "bounds": "{X=10,Y=50,Width=927,Height=253}",
+                    "parent_client": "{X=0,Y=0,Width=947,Height=314}"
+                  },
+                  {
+                    "type": "TableLayoutPanel",
+                    "Name": "",
+                    "bounds": "{X=13,Y=543,Width=982,Height=132}",
+                    "parent_client": "{X=0,Y=0,Width=1008,Height=689}"
+                  },
+                  {
+                    "type": "Button",
+                    "Name": "cancel_selection",
+                    "bounds": "{X=848,Y=4,Width=122,Height=42}",
+                    "parent_client": "{X=0,Y=0,Width=974,Height=45}"
+                  },
+                  {
+                    "type": "Button",
+                    "Name": "apply_selection",
+                    "bounds": "{X=654,Y=4,Width=186,Height=42}",
+                    "parent_client": "{X=0,Y=0,Width=974,Height=45}"
+                  },
+                  {
+                    "type": "Button",
+                    "Name": "clear_selection",
+                    "bounds": "{X=421,Y=4,Width=225,Height=42}",
+                    "parent_client": "{X=0,Y=0,Width=974,Height=45}"
+                  }
+                ]
+              }
+            ],
+            "runtime": "Microsoft Windows NT 6.2.9200.0",
+            "live_autocad_checked": false,
+            "scope": "Actual WinForms dialogs, controls, modal apply/cancel, read-only mode, font scaling and bitmap rendering; no AutoCAD host"
+          }
+        }
+      ]
+    },
+    {
+      "id": 11159198160,
+      "name": "node-geometry",
+      "sha256": "ffdaaf87eab1b225afbfc85ee90ad640f9b6a9249c51f6a85f22648c17d0a530",
+      "archive_verified": true,
+      "manifests": [
+        {
+          "path": "mounting_assessment_core_results/manifest.json",
+          "sha256": "1921cd46a81ecee6f3387c377f36363bca7fccbda9d912b157b86458390c24a6",
+          "status": "PASS",
+          "source_files": [
+            {
+              "path": "tools/mounting_assessment_0110/MountingCoreProbe.cs",
+              "sha256": "531517881c383ce14af72a44ba35a3a2321fcc500be865ed6894d8e6a3addbd8",
+              "comparison": "LF_to_CRLF"
+            },
+            {
+              "path": "AFrame/src/AFramePlugin/FrameMountingAssessment.cs",
+              "sha256": "524c05e3611602a4c34971e28bdc72246229b08734a40feaa72f8e464e8f6275",
+              "comparison": "LF_to_CRLF"
+            },
+            {
+              "path": "AFrame/src/AFramePlugin/FrameNodeGeometry.cs",
+              "sha256": "3aceaab1eec32cf3a7476dea9f37d67423c81d0446593a83a1b1369cb5530b93",
+              "comparison": "LF_to_CRLF"
+            },
+            {
+              "path": "AFrame/src/AFramePlugin/FrameProjectParameters.cs",
+              "sha256": "916fbdc792a35ab023b7d586fd929da64675a79e3e2aa4202a206bcfeba77482",
+              "comparison": "LF_to_CRLF"
+            },
+            {
+              "path": "AFrame/src/AFramePlugin/FrameSolutionSelection.cs",
+              "sha256": "a79f45984e52bcf023d3ac35a3cabdfc84fff77c07ac662e411cbaf8a8b032f7",
+              "comparison": "LF_to_CRLF"
+            },
+            {
+              "path": "tools/mounting_assessment_0110/test_core.py",
+              "sha256": "f98255b27057e955632045e1fb50654080ca05b98fd591ad844165b8248c1620",
+              "comparison": "LF_to_CRLF"
+            },
+            {
+              "path": "tools/node_geometry_0110/expected_numeric.json",
+              "sha256": "6c2decc9d82701f4ed4ee979f08cbb311099f26ee4cb946e63ac24afa883949a",
+              "comparison": "LF_to_CRLF"
+            },
+            {
+              "path": "tools/node_geometry_0110/expected_digests.json",
+              "sha256": "b6789a3d3d0c1bc51230fa508bdc8dc5a9400760ffa22585e3b81a0911bab3e3",
+              "comparison": "LF_to_CRLF"
+            },
+            {
+              "path": "tools/quantities_3009/probe_runtime.py",
+              "sha256": "6a493fbf8816c34d925b9b8576f9fc6e0aa11e27925492a8aa18a27eae1825a8",
+              "comparison": "LF_to_CRLF"
+            },
+            {
+              "path": "AFrame/engine/test_frame_solution_selection.py",
+              "sha256": "7f53b246ff33174a7759d93bc9eca9525627f73faf70e179a8fad06ff4cb4abb",
+              "comparison": "LF_to_CRLF"
+            },
+            {
+              "path": "AFrame/engine/frame_solution_catalog.py",
+              "sha256": "3649cb9bc72344c206efd5011e94efe51ef448ac295ff8d2fb0cbc6af53bb02f",
+              "comparison": "LF_to_CRLF"
+            }
+          ],
+          "checks": 173
+        },
+        {
+          "path": "node_geometry_cad_results/manifest.json",
+          "sha256": "aee3339bfae2449402bbf1b2194a3cb4c2087d50dd9ea540aeda1fc53634a43c",
+          "status": "PASS",
+          "source_files": [
+            {
+              "path": "tools/node_geometry_0110/NodeCadDoubles.cs",
+              "sha256": "2af5435f7c81672a8f3344e16b64e645e30d42752f15112a8160ca7fd2c7f30d",
+              "comparison": "LF_to_CRLF"
+            },
+            {
+              "path": "tools/node_geometry_0110/NodeCommandDoubles.cs",
+              "sha256": "dd6d15bfb8a1bc78c3d3aa9a0969ed795fdad4194f4b644a5c5ca3f2113e2d1c",
+              "comparison": "LF_to_CRLF"
+            },
+            {
+              "path": "tools/node_geometry_0110/NodeCadProbe.cs",
+              "sha256": "ba4e7c17130523376118aab541a34ac1d42c2ee37788bb122586f25e13865226",
+              "comparison": "LF_to_CRLF"
+            },
+            {
+              "path": "Common/FacadeProjectParameterStore.cs",
+              "sha256": "6278d9e9d12444fdda61b70b910f6516d866c0041ada1f1f90ad49ed8bfe20c2",
+              "comparison": "LF_to_CRLF"
+            },
+            {
+              "path": "AFrame/src/AFramePlugin/FrameSolutionSelection.cs",
+              "sha256": "a79f45984e52bcf023d3ac35a3cabdfc84fff77c07ac662e411cbaf8a8b032f7",
+              "comparison": "LF_to_CRLF"
+            },
+            {
+              "path": "AFrame/src/AFramePlugin/FrameProjectParameters.cs",
+              "sha256": "916fbdc792a35ab023b7d586fd929da64675a79e3e2aa4202a206bcfeba77482",
+              "comparison": "LF_to_CRLF"
+            },
+            {
+              "path": "AFrame/src/AFramePlugin/FrameNodeGeometry.cs",
+              "sha256": "3aceaab1eec32cf3a7476dea9f37d67423c81d0446593a83a1b1369cb5530b93",
+              "comparison": "LF_to_CRLF"
+            },
+            {
+              "path": "AFrame/src/AFramePlugin/FrameMountingAssessment.cs",
+              "sha256": "524c05e3611602a4c34971e28bdc72246229b08734a40feaa72f8e464e8f6275",
+              "comparison": "LF_to_CRLF"
+            },
+            {
+              "path": "AFrame/src/AFramePlugin/FrameNodeDrawing.cs",
+              "sha256": "77368b90639258c0c7753780f07d8194d81780e5e30983b72573a26d0f788d9a",
+              "comparison": "LF_to_CRLF"
+            },
+            {
+              "path": "AFrame/src/AFramePlugin/FrameNodeRenderer.cs",
+              "sha256": "86cd4441f6720f5051b9a6d69f4e224671d1d7f13222efa42c0b5ce469a0ea41",
+              "comparison": "LF_to_CRLF"
+            },
+            {
+              "path": "AFrame/src/AFramePlugin/FrameNodeStore.cs",
+              "sha256": "ee6c41db26a6e2812a6d47623482762bbbfcc6ef1b3af32c8140dc9ef878d635",
+              "comparison": "LF_to_CRLF"
+            },
+            {
+              "path": "AFrame/src/AFramePlugin/FrameNodeCommand.cs",
+              "sha256": "6e8cf8d2ce6e5ebae6dad1297894b8c2b40ba7907399c5f95a6ef54daa86ba43",
+              "comparison": "LF_to_CRLF"
+            },
+            {
+              "path": "tools/node_geometry_0110/test_node_cad.py",
+              "sha256": "19ae024e327665774cdec2d803aac6c51338eb28ae1f3c638b11964b7f166ad3",
+              "comparison": "LF_to_CRLF"
+            },
+            {
+              "path": "tools/quantities_3009/probe_runtime.py",
+              "sha256": "6a493fbf8816c34d925b9b8576f9fc6e0aa11e27925492a8aa18a27eae1825a8",
+              "comparison": "LF_to_CRLF"
+            }
+          ],
+          "checks": 35
+        },
+        {
+          "path": "node_geometry_core_results/manifest.json",
+          "sha256": "f3e63d6e33dc4f0297f24fce79dbf0988e063148ccba83f911805e3a77cf0e98",
+          "status": "PASS",
+          "source_files": [
+            {
+              "path": "tools/node_geometry_0110/NodeCoreProbe.cs",
+              "sha256": "6d4a8f5167f7df2dca6d85fa765f6628ff0428e956fe88823a395b75ae7c7fa8",
+              "comparison": "LF_to_CRLF"
+            },
+            {
+              "path": "AFrame/src/AFramePlugin/FrameNodeGeometry.cs",
+              "sha256": "3aceaab1eec32cf3a7476dea9f37d67423c81d0446593a83a1b1369cb5530b93",
+              "comparison": "LF_to_CRLF"
+            },
+            {
+              "path": "AFrame/src/AFramePlugin/FrameProjectParameters.cs",
+              "sha256": "916fbdc792a35ab023b7d586fd929da64675a79e3e2aa4202a206bcfeba77482",
+              "comparison": "LF_to_CRLF"
+            },
+            {
+              "path": "AFrame/src/AFramePlugin/FrameSolutionSelection.cs",
+              "sha256": "a79f45984e52bcf023d3ac35a3cabdfc84fff77c07ac662e411cbaf8a8b032f7",
+              "comparison": "LF_to_CRLF"
+            },
+            {
+              "path": "tools/node_geometry_0110/test_core.py",
+              "sha256": "fef635efdfdd18a4e2f45eb3b2f1bdf211040a76f386cb7f87c144817cda1c1e",
+              "comparison": "LF_to_CRLF"
+            },
+            {
+              "path": "tools/node_geometry_0110/expected_numeric.json",
+              "sha256": "6c2decc9d82701f4ed4ee979f08cbb311099f26ee4cb946e63ac24afa883949a",
+              "comparison": "LF_to_CRLF"
+            },
+            {
+              "path": "tools/node_geometry_0110/expected_digests.json",
+              "sha256": "b6789a3d3d0c1bc51230fa508bdc8dc5a9400760ffa22585e3b81a0911bab3e3",
+              "comparison": "LF_to_CRLF"
+            },
+            {
+              "path": "tools/quantities_3009/probe_runtime.py",
+              "sha256": "6a493fbf8816c34d925b9b8576f9fc6e0aa11e27925492a8aa18a27eae1825a8",
+              "comparison": "LF_to_CRLF"
+            },
+            {
+              "path": "AFrame/engine/frame_rules.py",
+              "sha256": "1383ac5badcb5ac07eab12def255b86d679966191acef250e2b09fa41757be5e",
+              "comparison": "LF_to_CRLF"
+            },
+            {
+              "path": "AFrame/engine/frame_spatial.py",
+              "sha256": "7dc4113560b2baa8d5d786c596428f7a2731ad978c188bfea87aa86161bde2f6",
+              "comparison": "LF_to_CRLF"
+            },
+            {
+              "path": "AFrame/engine/frame_topology.py",
+              "sha256": "711625511ff543363bf5738b9b924ee9fd2104c5d870bffc66097962c69f969c",
+              "comparison": "LF_to_CRLF"
+            },
+            {
+              "path": "AFrame/engine/frame_catalog.py",
+              "sha256": "be987c0ce8452eadbc5babf0dff28dfba895baf525eea2de5278262ec5af5698",
+              "comparison": "LF_to_CRLF"
+            },
+            {
+              "path": "AFrame/engine/frame_connections.py",
+              "sha256": "2f570417d9ca5fda157423fb2ff14f813e7ccc4f067183b924fce75365f992b2",
+              "comparison": "LF_to_CRLF"
+            },
+            {
+              "path": "AFrame/engine/frame_solution_catalog.py",
+              "sha256": "3649cb9bc72344c206efd5011e94efe51ef448ac295ff8d2fb0cbc6af53bb02f",
+              "comparison": "LF_to_CRLF"
+            },
+            {
+              "path": "AFrame/engine/frame_solution_selection.py",
+              "sha256": "8d7665fd417caae469b7c50a4580fd2182cab2c73c61803b178e52a5e83ae36b",
+              "comparison": "LF_to_CRLF"
+            },
+            {
+              "path": "AFrame/engine/frame_plan.py",
+              "sha256": "36df2b6d2aeaa1dfceb0e31b167eb3cb392a734c2c6eb4aa43a40694531400ad",
+              "comparison": "LF_to_CRLF"
+            },
+            {
+              "path": "AFrame/engine/frame_engine.py",
+              "sha256": "7d85bf5beda118f0750d926c16714282201a1f965e2c27cf93726126a66d6db3",
+              "comparison": "LF_to_CRLF"
+            },
+            {
+              "path": "AFrame/engine/test_frame_solution_selection.py",
+              "sha256": "7f53b246ff33174a7759d93bc9eca9525627f73faf70e179a8fad06ff4cb4abb",
+              "comparison": "LF_to_CRLF"
+            },
+            {
+              "path": "AFrame/engine/systems.json",
+              "sha256": "881cce9e53278755266ca2441e4891ae71196524dde63634e9742e6e072236ca",
+              "comparison": "LF_to_CRLF"
+            },
+            {
+              "path": "AFrame/engine/assembly_catalog.json",
+              "sha256": "52a8219f6c24ebe5199931f398ffa104bb603237267a4bd8193f7af01922d729",
+              "comparison": "LF_to_CRLF"
+            }
+          ],
+          "checks": 1270
+        },
+        {
+          "path": "node_geometry_ui_results/manifest.json",
+          "sha256": "6139db2e67f28f51d2a46461cfad764c0f116fc816e54b482ec17da0614f4bc0",
+          "status": "PASS",
+          "source_files": [
+            {
+              "path": "tools/node_ui_0110/NodeUiProbe.cs",
+              "sha256": "039e084a107e1a5cbd479b543106c31c30ad7c86bd4c807900c504678bf41927",
+              "comparison": "LF_to_CRLF"
+            },
+            {
+              "path": "AFrame/src/AFramePlugin/FrameBoundedForm.cs",
+              "sha256": "a55749a27922012f2ea2f98db2f6a3073ca3b87ed71599eac5221f7257941ce6",
+              "comparison": "LF_to_CRLF"
+            },
+            {
+              "path": "AFrame/src/AFramePlugin/FrameSolutionSelection.cs",
+              "sha256": "a79f45984e52bcf023d3ac35a3cabdfc84fff77c07ac662e411cbaf8a8b032f7",
+              "comparison": "LF_to_CRLF"
+            },
+            {
+              "path": "AFrame/src/AFramePlugin/FrameProjectParameters.cs",
+              "sha256": "916fbdc792a35ab023b7d586fd929da64675a79e3e2aa4202a206bcfeba77482",
+              "comparison": "LF_to_CRLF"
+            },
+            {
+              "path": "AFrame/src/AFramePlugin/FrameNodeGeometry.cs",
+              "sha256": "3aceaab1eec32cf3a7476dea9f37d67423c81d0446593a83a1b1369cb5530b93",
+              "comparison": "LF_to_CRLF"
+            },
+            {
+              "path": "AFrame/src/AFramePlugin/FrameMountingAssessment.cs",
+              "sha256": "524c05e3611602a4c34971e28bdc72246229b08734a40feaa72f8e464e8f6275",
+              "comparison": "LF_to_CRLF"
+            },
+            {
+              "path": "AFrame/src/AFramePlugin/FrameNodeForm.cs",
+              "sha256": "775fb3730ed56c40b8ee367254897f84c4946588e8ea4cd2daa40d7366ffd56b",
+              "comparison": "LF_to_CRLF"
+            },
+            {
+              "path": "tools/solution_catalog_0110/test_solution_ui.py",
+              "sha256": "05fb5c5d6b30c6bbac7a7a8f0e8b2fd239611e20df70da28a5442dede256044d",
+              "comparison": "LF_to_CRLF"
+            },
+            {
+              "path": "tools/node_ui_0110/test_ui.py",
+              "sha256": "61d3a995afe60652dc3c97b4329d698dab43b1f75c595a978ecd3ec1f3d54720",
+              "comparison": "LF_to_CRLF"
+            }
+          ],
+          "native_ui": {
+            "status": "PASS",
+            "checks": 497,
+            "failures": 0,
+            "reasons": [],
+            "images": [
+              "node_blank.png",
+              "node_partial.png",
+              "node_valid.png",
+              "node_mounting_members.png",
+              "node_mounting_requirements.png",
+              "node_rejected.png",
+              "node_exact_boundary.png",
+              "node_membrane.png",
+              "node_small.png",
+              "node_mounting_small.png",
+              "node_large_font.png",
+              "node_large_font_review.png",
+              "node_mounting_tail_large_font.png",
+              "node_contradiction.png"
+            ],
+            "layouts": [
+              {
+                "scenario": "node_blank",
+                "window": "{X=10,Y=10,Width=916,Height=689}",
+                "native_client": "{X=18,Y=41,Width=900,Height=650}",
+                "cached_client": "{X=0,Y=0,Width=900,Height=650}",
+                "screen": "{X=0,Y=0,Width=1024,Height=728}",
+                "font_points": 9,
+                "minimum_size": "{Width=760, Height=530}"
+              },
+              {
+                "scenario": "node_partial",
+                "window": "{X=10,Y=10,Width=916,Height=689}",
+                "native_client": "{X=18,Y=41,Width=900,Height=650}",
+                "cached_client": "{X=0,Y=0,Width=900,Height=650}",
+                "screen": "{X=0,Y=0,Width=1024,Height=728}",
+                "font_points": 9,
+                "minimum_size": "{Width=760, Height=530}"
+              },
+              {
+                "scenario": "node_valid",
+                "window": "{X=10,Y=10,Width=916,Height=689}",
+                "native_client": "{X=18,Y=41,Width=900,Height=650}",
+                "cached_client": "{X=0,Y=0,Width=900,Height=650}",
+                "screen": "{X=0,Y=0,Width=1024,Height=728}",
+                "font_points": 9,
+                "minimum_size": "{Width=760, Height=530}"
+              },
+              {
+                "scenario": "node_mounting_members",
+                "window": "{X=10,Y=10,Width=916,Height=689}",
+                "native_client": "{X=18,Y=41,Width=900,Height=650}",
+                "cached_client": "{X=0,Y=0,Width=900,Height=650}",
+                "screen": "{X=0,Y=0,Width=1024,Height=728}",
+                "font_points": 9,
+                "minimum_size": "{Width=760, Height=530}"
+              },
+              {
+                "scenario": "node_mounting_requirements",
+                "window": "{X=10,Y=10,Width=916,Height=689}",
+                "native_client": "{X=18,Y=41,Width=900,Height=650}",
+                "cached_client": "{X=0,Y=0,Width=900,Height=650}",
+                "screen": "{X=0,Y=0,Width=1024,Height=728}",
+                "font_points": 9,
+                "minimum_size": "{Width=760, Height=530}"
+              },
+              {
+                "scenario": "node_rejected",
+                "window": "{X=10,Y=10,Width=916,Height=689}",
+                "native_client": "{X=18,Y=41,Width=900,Height=650}",
+                "cached_client": "{X=0,Y=0,Width=900,Height=650}",
+                "screen": "{X=0,Y=0,Width=1024,Height=728}",
+                "font_points": 9,
+                "minimum_size": "{Width=760, Height=530}"
+              },
+              {
+                "scenario": "node_exact_boundary",
+                "window": "{X=10,Y=10,Width=916,Height=689}",
+                "native_client": "{X=18,Y=41,Width=900,Height=650}",
+                "cached_client": "{X=0,Y=0,Width=900,Height=650}",
+                "screen": "{X=0,Y=0,Width=1024,Height=728}",
+                "font_points": 9,
+                "minimum_size": "{Width=760, Height=530}"
+              },
+              {
+                "scenario": "node_membrane",
+                "window": "{X=10,Y=10,Width=916,Height=689}",
+                "native_client": "{X=18,Y=41,Width=900,Height=650}",
+                "cached_client": "{X=0,Y=0,Width=900,Height=650}",
+                "screen": "{X=0,Y=0,Width=1024,Height=728}",
+                "font_points": 9,
+                "minimum_size": "{Width=760, Height=530}"
+              },
+              {
+                "scenario": "node_small",
+                "window": "{X=10,Y=10,Width=760,Height=530}",
+                "native_client": "{X=18,Y=41,Width=744,Height=491}",
+                "cached_client": "{X=0,Y=0,Width=744,Height=491}",
+                "screen": "{X=0,Y=0,Width=1024,Height=728}",
+                "font_points": 9,
+                "minimum_size": "{Width=760, Height=530}"
+              },
+              {
+                "scenario": "node_mounting_small",
+                "window": "{X=10,Y=10,Width=760,Height=530}",
+                "native_client": "{X=18,Y=41,Width=744,Height=491}",
+                "cached_client": "{X=0,Y=0,Width=744,Height=491}",
+                "screen": "{X=0,Y=0,Width=1024,Height=728}",
+                "font_points": 9,
+                "minimum_size": "{Width=760, Height=530}"
+              },
+              {
+                "scenario": "node_large_font",
+                "window": "{X=0,Y=0,Width=1024,Height=728}",
+                "native_client": "{X=8,Y=31,Width=1008,Height=689}",
+                "cached_client": "{X=0,Y=0,Width=1008,Height=689}",
+                "screen": "{X=0,Y=0,Width=1024,Height=728}",
+                "font_points": 12,
+                "minimum_size": "{Width=973, Height=726}"
+              },
+              {
+                "scenario": "node_large_font_review",
+                "window": "{X=0,Y=0,Width=1024,Height=728}",
+                "native_client": "{X=8,Y=31,Width=1008,Height=689}",
+                "cached_client": "{X=0,Y=0,Width=1008,Height=689}",
+                "screen": "{X=0,Y=0,Width=1024,Height=728}",
+                "font_points": 12,
+                "minimum_size": "{Width=973, Height=726}"
+              },
+              {
+                "scenario": "node_mounting_tail_large_font",
+                "window": "{X=0,Y=0,Width=1024,Height=728}",
+                "native_client": "{X=8,Y=31,Width=1008,Height=689}",
+                "cached_client": "{X=0,Y=0,Width=1008,Height=689}",
+                "screen": "{X=0,Y=0,Width=1024,Height=728}",
+                "font_points": 12,
+                "minimum_size": "{Width=973, Height=726}"
+              },
+              {
+                "scenario": "node_contradiction",
+                "window": "{X=10,Y=10,Width=916,Height=689}",
+                "native_client": "{X=18,Y=41,Width=900,Height=650}",
+                "cached_client": "{X=0,Y=0,Width=900,Height=650}",
+                "screen": "{X=0,Y=0,Width=1024,Height=728}",
+                "font_points": 9,
+                "minimum_size": "{Width=760, Height=530}"
+              }
+            ],
+            "numeric_diagnostics": [
+              {
+                "scenario": "tiny_declared_layer",
+                "expected": {
+                  "roundtrip": "1E-28",
+                  "ieee754_hex": "3A1FB0F6BE506019"
+                },
+                "typed_clone": {
+                  "roundtrip": "1E-28",
+                  "ieee754_hex": "3A1FB0F6BE506019"
+                },
+                "direct_evaluation": {
+                  "roundtrip": "1E-28",
+                  "ieee754_hex": "3A1FB0F6BE506019"
+                },
+                "form_evaluation": {
+                  "roundtrip": "1E-28",
+                  "ieee754_hex": "3A1FB0F6BE506019"
+                },
+                "form_has_geometry": true,
+                "form_status": "Частичная размерная схема. Проверка локального просвета не выполнена. Это не рабочий узел."
+              },
+              {
+                "scenario": "adjacent_declared_cladding",
+                "expected": {
+                  "roundtrip": "479.82000000000005",
+                  "ieee754_hex": "407DFD1EB851EB86"
+                },
+                "typed_clone": {
+                  "roundtrip": "479.82000000000005",
+                  "ieee754_hex": "407DFD1EB851EB86"
+                },
+                "direct_evaluation": {
+                  "roundtrip": "479.82000000000005",
+                  "ieee754_hex": "407DFD1EB851EB86"
+                },
+                "form_evaluation": {
+                  "roundtrip": "479.82000000000005",
+                  "ieee754_hex": "407DFD1EB851EB86"
+                },
+                "form_has_geometry": true,
+                "form_status": "Частичная размерная схема. Проверка локального просвета не выполнена. Это не рабочий узел."
+              }
+            ],
+            "live_autocad_checked": false
+          }
+        }
+      ]
+    }
+  ],
+  "live_autocad_checked": false,
+  "normalization_note": "Only exact bytes or deterministic LF-to-CRLF transformation accepted; source hash mismatches fail."
+}
