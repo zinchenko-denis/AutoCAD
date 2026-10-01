@@ -1,5 +1,9 @@
 # Указатель хронологии (генерируется: `tools/make_chronology.py`)
 
+<!-- orphan-index:start -->
+Текущая работа 01.10: [инкремент 2В2](ORPHAN_CONNECTIONS_01.10.md), адресная полнота кандидатов физического состава. Проверки и публикация выполняются; окончательный статус будет указан в `orphan_connections_0110/verification_manifest.json`.
+<!-- orphan-index:end -->
+
 Актуальное продолжение 01.10 (`546fcd3`, Windows check №214 success): [монтажная принадлежность, 2В1](MOUNTING_CONTRACT_01.10.md); [протоколы](mounting_contract_0110/verification_manifest.json). Полный монтажный контракт и 3А остаются неподтверждёнными.
 
 Повествование, фазы, сборки и люди — `docs/CHRONOLOGY.md`. Здесь — ВСЁ по дням: теги сборок,

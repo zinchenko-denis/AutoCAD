@@ -1,0 +1,3127 @@
+{
+  "status": "PASS",
+  "expected": "fixed",
+  "inputs": {
+    "minimal": {
+      "gap": 10,
+      "step": null,
+      "zones": 1,
+      "rail_count": 2,
+      "bracket_count": 1,
+      "orphan_indices": [
+        0
+      ],
+      "report": "/workspace/scratch/58a6cc5ac740/2v2_gap/final_after_boundary/minimal/report.json",
+      "input_sha256": "d8334ab80a1589db61798c477769aade7bc72a702a820056b77f807114803007",
+      "report_sha256": "b526f223557902e23644762d31366495fa35ee7b177c76261deb8be4bde71c0e"
+    },
+    "two_same_coordinate_zones": {
+      "gap": 10,
+      "step": null,
+      "zones": 2,
+      "rail_count": 4,
+      "bracket_count": 2,
+      "orphan_indices": [
+        0,
+        1
+      ],
+      "report": "/workspace/scratch/58a6cc5ac740/2v2_gap/final_after_boundary/two_same_coordinate_zones/report.json",
+      "input_sha256": "4ab8d9540313334742b6ea61869c46405fe690990b7afae0b7fcebf1c141ef84",
+      "report_sha256": "1838555548b577eee4f77514583f53aaa720b564039eae40f2bf27b1dc1236c8"
+    },
+    "gap_zero": {
+      "gap": 0,
+      "step": null,
+      "zones": 1,
+      "rail_count": 2,
+      "bracket_count": 1,
+      "orphan_indices": [],
+      "report": "/workspace/scratch/58a6cc5ac740/2v2_gap/final_after_boundary/gap_zero/report.json",
+      "input_sha256": "e52ae225c27da1a6d6247ae9ccd8725586090924c6427396b179573888053b33",
+      "report_sha256": "29018bd10b168905ea52bbbe4fa911a43f2f80919b1a0f69fbea632d320dcec8"
+    },
+    "gap_one": {
+      "gap": 1,
+      "step": null,
+      "zones": 1,
+      "rail_count": 2,
+      "bracket_count": 1,
+      "orphan_indices": [],
+      "report": "/workspace/scratch/58a6cc5ac740/2v2_gap/final_after_boundary/gap_one/report.json",
+      "input_sha256": "3cf08545645ee65c0bcc0fbb45e0b7d4aba139238e46f809e1ad3a3e9662d5f2",
+      "report_sha256": "e25c969a72cef24d8c84b8f3fd3fe222a9a19a6642959ab914a310fffd8c6c13"
+    },
+    "gap_one_plus": {
+      "gap": 1.0002,
+      "step": null,
+      "zones": 1,
+      "rail_count": 2,
+      "bracket_count": 1,
+      "orphan_indices": [
+        0
+      ],
+      "report": "/workspace/scratch/58a6cc5ac740/2v2_gap/final_after_boundary/gap_one_plus/report.json",
+      "input_sha256": "7d51b004b7046e99ce4800d17bed795010f78b61075ad7c29c85c43cc373c1b9",
+      "report_sha256": "1e5ac9b243ff33b4796e70366e8d7fb4d23c65e717a7eb823ddb55dedc48f6fc"
+    },
+    "normal_positive_steps": {
+      "gap": 10,
+      "step": 800,
+      "zones": 1,
+      "rail_count": 2,
+      "bracket_count": 6,
+      "orphan_indices": [],
+      "report": "/workspace/scratch/58a6cc5ac740/2v2_gap/final_after_boundary/normal_positive_steps/report.json",
+      "input_sha256": "0bf3ebcf41ce201cb9f0d0c555907d04c1970ac35df45d984156353ad3897ae8",
+      "report_sha256": "e3344eddc6389c198dce90db60f1be96dca1dd96fa7e135e084ee5b7d5b90b4d"
+    }
+  },
+  "checks": 2577,
+  "xlsx_exports": [
+    {
+      "path": "gap_one/scope/all.xlsx",
+      "maximum_cell_characters": 436,
+      "roundtrip_exact": true,
+      "sha256": "19e811cff0f2839d7b3b187b6438fee80a4032c9a90c35165f4be68ca0176749"
+    },
+    {
+      "path": "gap_one/scope/duplicates.xlsx",
+      "maximum_cell_characters": 436,
+      "roundtrip_exact": true,
+      "sha256": "19e811cff0f2839d7b3b187b6438fee80a4032c9a90c35165f4be68ca0176749"
+    },
+    {
+      "path": "gap_one/scope/legacy.xlsx",
+      "maximum_cell_characters": 304,
+      "roundtrip_exact": true,
+      "sha256": "ddd24147d70fb69b7acd0a346136bb89a1595ba7636ee8cde87e34ae0687b5f5"
+    },
+    {
+      "path": "gap_one/scope/manual_without_passport.xlsx",
+      "maximum_cell_characters": 304,
+      "roundtrip_exact": true,
+      "sha256": "c2225b1cf1d61f42a7efdaa1ceb2d263ec14d111298c0e3df9ad978a5691e573"
+    },
+    {
+      "path": "gap_one/scope/retained.xlsx",
+      "maximum_cell_characters": 436,
+      "roundtrip_exact": true,
+      "sha256": "19e811cff0f2839d7b3b187b6438fee80a4032c9a90c35165f4be68ca0176749"
+    },
+    {
+      "path": "gap_one/scope/retained_removed.xlsx",
+      "maximum_cell_characters": 436,
+      "roundtrip_exact": true,
+      "sha256": "19e811cff0f2839d7b3b187b6438fee80a4032c9a90c35165f4be68ca0176749"
+    },
+    {
+      "path": "gap_one/scope/selected_Z0.xlsx",
+      "maximum_cell_characters": 436,
+      "roundtrip_exact": true,
+      "sha256": "19e811cff0f2839d7b3b187b6438fee80a4032c9a90c35165f4be68ca0176749"
+    },
+    {
+      "path": "gap_one/scope/unavailable.xlsx",
+      "maximum_cell_characters": 304,
+      "roundtrip_exact": true,
+      "sha256": "b1069a90328a2855d0ea2b0e8b2baac6757084b927c5aac7d714f508ebe92ca0"
+    },
+    {
+      "path": "gap_one_plus/scope/all.xlsx",
+      "maximum_cell_characters": 304,
+      "roundtrip_exact": true,
+      "sha256": "1207487b7f7941220a5b21b0dc4d3517f3c2e1ed4742a1cfac2bf92a95e5d05f"
+    },
+    {
+      "path": "gap_one_plus/scope/duplicates.xlsx",
+      "maximum_cell_characters": 304,
+      "roundtrip_exact": true,
+      "sha256": "1207487b7f7941220a5b21b0dc4d3517f3c2e1ed4742a1cfac2bf92a95e5d05f"
+    },
+    {
+      "path": "gap_one_plus/scope/legacy.xlsx",
+      "maximum_cell_characters": 304,
+      "roundtrip_exact": true,
+      "sha256": "ddd24147d70fb69b7acd0a346136bb89a1595ba7636ee8cde87e34ae0687b5f5"
+    },
+    {
+      "path": "gap_one_plus/scope/manual_without_passport.xlsx",
+      "maximum_cell_characters": 304,
+      "roundtrip_exact": true,
+      "sha256": "c2225b1cf1d61f42a7efdaa1ceb2d263ec14d111298c0e3df9ad978a5691e573"
+    },
+    {
+      "path": "gap_one_plus/scope/retained.xlsx",
+      "maximum_cell_characters": 304,
+      "roundtrip_exact": true,
+      "sha256": "1207487b7f7941220a5b21b0dc4d3517f3c2e1ed4742a1cfac2bf92a95e5d05f"
+    },
+    {
+      "path": "gap_one_plus/scope/retained_removed.xlsx",
+      "maximum_cell_characters": 304,
+      "roundtrip_exact": true,
+      "sha256": "fbd5071a21fcfeb17affe19ff7d51bcba5fdda6e29de4979e4112c5eada48473"
+    },
+    {
+      "path": "gap_one_plus/scope/selected_Z0.xlsx",
+      "maximum_cell_characters": 304,
+      "roundtrip_exact": true,
+      "sha256": "1207487b7f7941220a5b21b0dc4d3517f3c2e1ed4742a1cfac2bf92a95e5d05f"
+    },
+    {
+      "path": "gap_one_plus/scope/unavailable.xlsx",
+      "maximum_cell_characters": 304,
+      "roundtrip_exact": true,
+      "sha256": "b1069a90328a2855d0ea2b0e8b2baac6757084b927c5aac7d714f508ebe92ca0"
+    },
+    {
+      "path": "gap_zero/scope/all.xlsx",
+      "maximum_cell_characters": 436,
+      "roundtrip_exact": true,
+      "sha256": "e34fbe166a2a2336e044391058d777ab144b25f64511928e508ae740d6f01929"
+    },
+    {
+      "path": "gap_zero/scope/duplicates.xlsx",
+      "maximum_cell_characters": 436,
+      "roundtrip_exact": true,
+      "sha256": "e34fbe166a2a2336e044391058d777ab144b25f64511928e508ae740d6f01929"
+    },
+    {
+      "path": "gap_zero/scope/legacy.xlsx",
+      "maximum_cell_characters": 304,
+      "roundtrip_exact": true,
+      "sha256": "ddd24147d70fb69b7acd0a346136bb89a1595ba7636ee8cde87e34ae0687b5f5"
+    },
+    {
+      "path": "gap_zero/scope/manual_without_passport.xlsx",
+      "maximum_cell_characters": 304,
+      "roundtrip_exact": true,
+      "sha256": "c2225b1cf1d61f42a7efdaa1ceb2d263ec14d111298c0e3df9ad978a5691e573"
+    },
+    {
+      "path": "gap_zero/scope/retained.xlsx",
+      "maximum_cell_characters": 436,
+      "roundtrip_exact": true,
+      "sha256": "e34fbe166a2a2336e044391058d777ab144b25f64511928e508ae740d6f01929"
+    },
+    {
+      "path": "gap_zero/scope/retained_removed.xlsx",
+      "maximum_cell_characters": 436,
+      "roundtrip_exact": true,
+      "sha256": "e34fbe166a2a2336e044391058d777ab144b25f64511928e508ae740d6f01929"
+    },
+    {
+      "path": "gap_zero/scope/selected_Z0.xlsx",
+      "maximum_cell_characters": 436,
+      "roundtrip_exact": true,
+      "sha256": "e34fbe166a2a2336e044391058d777ab144b25f64511928e508ae740d6f01929"
+    },
+    {
+      "path": "gap_zero/scope/unavailable.xlsx",
+      "maximum_cell_characters": 304,
+      "roundtrip_exact": true,
+      "sha256": "b1069a90328a2855d0ea2b0e8b2baac6757084b927c5aac7d714f508ebe92ca0"
+    },
+    {
+      "path": "minimal/scope/alias_linked_first.xlsx",
+      "maximum_cell_characters": 437,
+      "roundtrip_exact": true,
+      "sha256": "99088f3d6805200dcf5cf5f88a6b1f0226562700215e846bf2602d32ba5e1072"
+    },
+    {
+      "path": "minimal/scope/alias_unlinked_first.xlsx",
+      "maximum_cell_characters": 304,
+      "roundtrip_exact": true,
+      "sha256": "253aa9f36fca1f71bd9064f55476c396cf672a484911354a7e64a70ecff4a915"
+    },
+    {
+      "path": "minimal/scope/all.xlsx",
+      "maximum_cell_characters": 304,
+      "roundtrip_exact": true,
+      "sha256": "97803249a80b8ef817ef4fad9071dcebdfdc25a139cccaf9eef85080378ae71a"
+    },
+    {
+      "path": "minimal/scope/display_zone_disagrees.xlsx",
+      "maximum_cell_characters": 304,
+      "roundtrip_exact": true,
+      "sha256": "97803249a80b8ef817ef4fad9071dcebdfdc25a139cccaf9eef85080378ae71a"
+    },
+    {
+      "path": "minimal/scope/duplicate_zone_ids.xlsx",
+      "maximum_cell_characters": 304,
+      "roundtrip_exact": true,
+      "sha256": "97803249a80b8ef817ef4fad9071dcebdfdc25a139cccaf9eef85080378ae71a"
+    },
+    {
+      "path": "minimal/scope/duplicates.xlsx",
+      "maximum_cell_characters": 304,
+      "roundtrip_exact": true,
+      "sha256": "97803249a80b8ef817ef4fad9071dcebdfdc25a139cccaf9eef85080378ae71a"
+    },
+    {
+      "path": "minimal/scope/empty_zone_ids_fallback.xlsx",
+      "maximum_cell_characters": 304,
+      "roundtrip_exact": true,
+      "sha256": "97803249a80b8ef817ef4fad9071dcebdfdc25a139cccaf9eef85080378ae71a"
+    },
+    {
+      "path": "minimal/scope/foreign_source_run.xlsx",
+      "maximum_cell_characters": 304,
+      "roundtrip_exact": true,
+      "sha256": "253aa9f36fca1f71bd9064f55476c396cf672a484911354a7e64a70ecff4a915"
+    },
+    {
+      "path": "minimal/scope/legacy.xlsx",
+      "maximum_cell_characters": 304,
+      "roundtrip_exact": true,
+      "sha256": "2efe05c06586b83a36424e58c1faaa44c218c975c55b8ae9005323c3646a9999"
+    },
+    {
+      "path": "minimal/scope/long_identity.xlsx",
+      "maximum_cell_characters": 20127,
+      "roundtrip_exact": true,
+      "sha256": "9b6f5347d3ae9101cdbc110641ddcad73c48b904ead455b15878568b953db192"
+    },
+    {
+      "path": "minimal/scope/long_unicode_identity.xlsx",
+      "maximum_cell_characters": 13206,
+      "roundtrip_exact": true,
+      "sha256": "1ac41b29af627ab1ae0289a7cbcdf19c3d47b606ec9e9e3a94019c97806f886e"
+    },
+    {
+      "path": "minimal/scope/manual_origin.xlsx",
+      "maximum_cell_characters": 304,
+      "roundtrip_exact": true,
+      "sha256": "253aa9f36fca1f71bd9064f55476c396cf672a484911354a7e64a70ecff4a915"
+    },
+    {
+      "path": "minimal/scope/manual_without_passport.xlsx",
+      "maximum_cell_characters": 304,
+      "roundtrip_exact": true,
+      "sha256": "5597dfea72c40e5aadfb1a79214960bd0a82f41ce25ca8b0a2f7f9a8d25cc967"
+    },
+    {
+      "path": "minimal/scope/multiple_canonical_zones.xlsx",
+      "maximum_cell_characters": 304,
+      "roundtrip_exact": true,
+      "sha256": "e6b43adbc635d3d2da88418704a9752f4eecd82d1a700086c644e66b13d5fb70"
+    },
+    {
+      "path": "minimal/scope/retained.xlsx",
+      "maximum_cell_characters": 304,
+      "roundtrip_exact": true,
+      "sha256": "97803249a80b8ef817ef4fad9071dcebdfdc25a139cccaf9eef85080378ae71a"
+    },
+    {
+      "path": "minimal/scope/retained_removed.xlsx",
+      "maximum_cell_characters": 304,
+      "roundtrip_exact": true,
+      "sha256": "1e6081db9ec94c96c8cba4e1f436e56985fd06b1b573e214390f3e59e9226286"
+    },
+    {
+      "path": "minimal/scope/scale_1.xlsx",
+      "maximum_cell_characters": 304,
+      "roundtrip_exact": true,
+      "sha256": "bdebf1ad4988c02c1e6a0255eeaedfc71976173fad08d6bcba4bb653718dd93b"
+    },
+    {
+      "path": "minimal/scope/scale_100.xlsx",
+      "maximum_cell_characters": 304,
+      "roundtrip_exact": true,
+      "sha256": "32e9da15aaa52f893b06cb4b2aa8f3f5ea038ff1f374221dd61d22d63e46455b"
+    },
+    {
+      "path": "minimal/scope/scale_1000.xlsx",
+      "maximum_cell_characters": 304,
+      "roundtrip_exact": true,
+      "sha256": "9c13b9cf7a992b2d9405ec14f9a626191281f6cf56880a2b8488edaec9050049"
+    },
+    {
+      "path": "minimal/scope/selected_Z0.xlsx",
+      "maximum_cell_characters": 304,
+      "roundtrip_exact": true,
+      "sha256": "97803249a80b8ef817ef4fad9071dcebdfdc25a139cccaf9eef85080378ae71a"
+    },
+    {
+      "path": "minimal/scope/unavailable.xlsx",
+      "maximum_cell_characters": 304,
+      "roundtrip_exact": true,
+      "sha256": "469fb9ba87d4d9411744a164e09aa5dcaccc55acf3caf76314cda4189c81d165"
+    },
+    {
+      "path": "minimal/scope/unselected_zone.xlsx",
+      "maximum_cell_characters": 304,
+      "roundtrip_exact": true,
+      "sha256": "253aa9f36fca1f71bd9064f55476c396cf672a484911354a7e64a70ecff4a915"
+    },
+    {
+      "path": "normal_positive_steps/scope/all.xlsx",
+      "maximum_cell_characters": 391,
+      "roundtrip_exact": true,
+      "sha256": "5e1b47e8d7b10f7eb9b4d195442021af2c35f58db48efefd188949f6d4018e1e"
+    },
+    {
+      "path": "normal_positive_steps/scope/duplicates.xlsx",
+      "maximum_cell_characters": 391,
+      "roundtrip_exact": true,
+      "sha256": "5e1b47e8d7b10f7eb9b4d195442021af2c35f58db48efefd188949f6d4018e1e"
+    },
+    {
+      "path": "normal_positive_steps/scope/legacy.xlsx",
+      "maximum_cell_characters": 304,
+      "roundtrip_exact": true,
+      "sha256": "eead52a1e79b32ac36919db6e564eeb01dfa54609dcd113da3eaa0b3b3b99047"
+    },
+    {
+      "path": "normal_positive_steps/scope/manual_without_passport.xlsx",
+      "maximum_cell_characters": 304,
+      "roundtrip_exact": true,
+      "sha256": "b4446b4aba1e0f890d8d47be8eb724c88d0a6294112cea9c4cd67f7d5a146a44"
+    },
+    {
+      "path": "normal_positive_steps/scope/retained.xlsx",
+      "maximum_cell_characters": 391,
+      "roundtrip_exact": true,
+      "sha256": "5e1b47e8d7b10f7eb9b4d195442021af2c35f58db48efefd188949f6d4018e1e"
+    },
+    {
+      "path": "normal_positive_steps/scope/retained_removed.xlsx",
+      "maximum_cell_characters": 391,
+      "roundtrip_exact": true,
+      "sha256": "5e1b47e8d7b10f7eb9b4d195442021af2c35f58db48efefd188949f6d4018e1e"
+    },
+    {
+      "path": "normal_positive_steps/scope/selected_Z0.xlsx",
+      "maximum_cell_characters": 391,
+      "roundtrip_exact": true,
+      "sha256": "5e1b47e8d7b10f7eb9b4d195442021af2c35f58db48efefd188949f6d4018e1e"
+    },
+    {
+      "path": "normal_positive_steps/scope/unavailable.xlsx",
+      "maximum_cell_characters": 304,
+      "roundtrip_exact": true,
+      "sha256": "b0860aa63290acb40b317a489a7d4c22776ebac53d9826555f94a1d0b5d0c933"
+    },
+    {
+      "path": "two_same_coordinate_zones/scope/alias_linked_first.xlsx",
+      "maximum_cell_characters": 437,
+      "roundtrip_exact": true,
+      "sha256": "5ebe5385a4b078a9277597aedb1d5400871ba1d34612fa2c2358d2ed09862d4d"
+    },
+    {
+      "path": "two_same_coordinate_zones/scope/alias_unlinked_first.xlsx",
+      "maximum_cell_characters": 304,
+      "roundtrip_exact": true,
+      "sha256": "af463fabab2e14811371c9c426a17b2bdadbaf9e1daf1d15d7b03165d56fe40f"
+    },
+    {
+      "path": "two_same_coordinate_zones/scope/all.xlsx",
+      "maximum_cell_characters": 304,
+      "roundtrip_exact": true,
+      "sha256": "a496a814ad6a1fc3ae66fbaa81b432dc607f39608286b296aade5dc2075a625a"
+    },
+    {
+      "path": "two_same_coordinate_zones/scope/display_zone_disagrees.xlsx",
+      "maximum_cell_characters": 304,
+      "roundtrip_exact": true,
+      "sha256": "a496a814ad6a1fc3ae66fbaa81b432dc607f39608286b296aade5dc2075a625a"
+    },
+    {
+      "path": "two_same_coordinate_zones/scope/duplicate_zone_ids.xlsx",
+      "maximum_cell_characters": 304,
+      "roundtrip_exact": true,
+      "sha256": "a496a814ad6a1fc3ae66fbaa81b432dc607f39608286b296aade5dc2075a625a"
+    },
+    {
+      "path": "two_same_coordinate_zones/scope/duplicates.xlsx",
+      "maximum_cell_characters": 304,
+      "roundtrip_exact": true,
+      "sha256": "a496a814ad6a1fc3ae66fbaa81b432dc607f39608286b296aade5dc2075a625a"
+    },
+    {
+      "path": "two_same_coordinate_zones/scope/empty_zone_ids_fallback.xlsx",
+      "maximum_cell_characters": 304,
+      "roundtrip_exact": true,
+      "sha256": "a496a814ad6a1fc3ae66fbaa81b432dc607f39608286b296aade5dc2075a625a"
+    },
+    {
+      "path": "two_same_coordinate_zones/scope/foreign_source_run.xlsx",
+      "maximum_cell_characters": 304,
+      "roundtrip_exact": true,
+      "sha256": "70b901de28dab050eb6a8cc03a5deae973465e7209d9dd633a1599f23b793e4e"
+    },
+    {
+      "path": "two_same_coordinate_zones/scope/legacy.xlsx",
+      "maximum_cell_characters": 304,
+      "roundtrip_exact": true,
+      "sha256": "5483c8027a67cb540e69189b017bff4f24727a8ba828d69713acfa07fad10220"
+    },
+    {
+      "path": "two_same_coordinate_zones/scope/manual_origin.xlsx",
+      "maximum_cell_characters": 304,
+      "roundtrip_exact": true,
+      "sha256": "70b901de28dab050eb6a8cc03a5deae973465e7209d9dd633a1599f23b793e4e"
+    },
+    {
+      "path": "two_same_coordinate_zones/scope/manual_without_passport.xlsx",
+      "maximum_cell_characters": 304,
+      "roundtrip_exact": true,
+      "sha256": "6e7b4c9b3cf9615dae9721d7097184f3ec78ac7b7ac96082c0a1d0aa27e54a44"
+    },
+    {
+      "path": "two_same_coordinate_zones/scope/multiple_canonical_zones.xlsx",
+      "maximum_cell_characters": 304,
+      "roundtrip_exact": true,
+      "sha256": "78a669a71f3938c910b89be69bef34cb1a7ee316f0bf32442391882ef50f0a2c"
+    },
+    {
+      "path": "two_same_coordinate_zones/scope/retained.xlsx",
+      "maximum_cell_characters": 304,
+      "roundtrip_exact": true,
+      "sha256": "a496a814ad6a1fc3ae66fbaa81b432dc607f39608286b296aade5dc2075a625a"
+    },
+    {
+      "path": "two_same_coordinate_zones/scope/retained_removed.xlsx",
+      "maximum_cell_characters": 304,
+      "roundtrip_exact": true,
+      "sha256": "a22e0a2114a68ce6f3edf0842728ba6c057faf4cef7321ff65b75d361d41ef05"
+    },
+    {
+      "path": "two_same_coordinate_zones/scope/selected_Z0.xlsx",
+      "maximum_cell_characters": 304,
+      "roundtrip_exact": true,
+      "sha256": "a7bb3ead103335a495ccd1c9b43d8f650a4c5a55cf546d81122629e556460951"
+    },
+    {
+      "path": "two_same_coordinate_zones/scope/selected_Z1.xlsx",
+      "maximum_cell_characters": 304,
+      "roundtrip_exact": true,
+      "sha256": "ab7c9de8504e125ff89a163a2cb528f8e1d393ed556db4413e8b992f03695b18"
+    },
+    {
+      "path": "two_same_coordinate_zones/scope/unavailable.xlsx",
+      "maximum_cell_characters": 304,
+      "roundtrip_exact": true,
+      "sha256": "e29732c3acd827605f7fcf41b1ee8ddc7bcf760012a43771594532ede78a9195"
+    },
+    {
+      "path": "two_same_coordinate_zones/scope/unselected_zone.xlsx",
+      "maximum_cell_characters": 304,
+      "roundtrip_exact": true,
+      "sha256": "70b901de28dab050eb6a8cc03a5deae973465e7209d9dd633a1599f23b793e4e"
+    }
+  ],
+  "response_was_modified": false,
+  "path": "actual frame_engine -> actual FrameQuantities producer -> common validator -> table -> XLSX",
+  "scope_variants": "retained/legacy/unavailable/alias/removed-element variants modify typed DTOs after the producer; source engine responses are unchanged",
+  "legacy_api_fallback_ui_reachability": "not_asserted; current FrameSettings manual mode supplies positive steps",
+  "engineering_status": "unchanged; mounting not confirmed",
+  "live_autocad_checked": false,
+  "source_sha256": {
+    "AFrame/engine/analiz_klu_poligon.py": "903a3080c4b01dea51e936560adba060f12f172fe13887bd2785456881f5fa27",
+    "AFrame/engine/audit_frame.py": "7ce9adac3adddcb7619b88d789b78f4b811f9c890e9fd9b08f884b32ee4e2d48",
+    "AFrame/engine/dsverka_poligon.py": "a971bd36882c6663c0fcbc466de5e288d9aa1f4d1f6d55e5eb462ae5d635a1ec",
+    "AFrame/engine/frame_calc.py": "abe20fd3c0de0937ba0636914f083f7c48a7a65b3b4c85f05673278a95e1da88",
+    "AFrame/engine/frame_catalog.py": "947a0277f3a6202dff365c1de6e86c5832dbc2c97e2a810b99d500a5d6f6b163",
+    "AFrame/engine/frame_connections.py": "d4febc1ce6e147f1cbce29cb64690f2c3b592efe4e40b9c88da5c8a2dcc74985",
+    "AFrame/engine/frame_engine.py": "b4acaaa98f48f91e0019b04231bb2ca361059e8d6a4e587cdbb64eb432790529",
+    "AFrame/engine/frame_plan.py": "5c4b4bbbc8258d62e965c24604906cd819b6a06a04643425ed1770b07c5d7105",
+    "AFrame/engine/frame_rules.py": "511ec4ec48331034257859ccac70ef028a8c4b398acd7d5b238d778e3c63ea6f",
+    "AFrame/engine/frame_solution_catalog.py": "56e674855cc01e19bf2a0723dff1f3454497a99aef56f3de1b5bbf75c0d44764",
+    "AFrame/engine/frame_solution_selection.py": "6490da6ced48715c4dce5ca357e0f54be9c035dd7bb6fc8d86b684f1d15f6aee",
+    "AFrame/engine/frame_spatial.py": "003efc0e73b344d50d4465d2bc1bfc87f8ca149c7d443a1e7d9061e6dbfd6cec",
+    "AFrame/engine/frame_topology.py": "2455ab874309d1382591800acce35dd3bde04ea3be6519f8b1de89dd5514f5d5",
+    "AFrame/engine/systems.json": "e9ee0a4cf0c535473dd9931f9b2a3d86dd1d932fe18f84682ef3fd221fbc03c3",
+    "AFrame/engine/test_frame_calc.py": "f72160fe7a3483c35a6c0d7ef669a612e6e44defb95c33916a850c2a605d5239",
+    "AFrame/engine/test_frame_connections.py": "21f2c64b59b1a1f052eadcf1c69d1aa8f0e0e60ad42182f793ac914a16971353",
+    "AFrame/engine/test_frame_engine.py": "3d32ffb69a6e9bc5d229ed11201e7e09500b5f193859b6a2cbab190c73679270",
+    "AFrame/engine/test_frame_plan.py": "fa35454f0a80362fc17441d078feaaf18bcb271a84e599de82517329005708a6",
+    "AFrame/engine/test_frame_rules.py": "0f629daa13207e436eb5e425e1f4e3d7189d205ffc6956bceca0427eb237b26e",
+    "AFrame/engine/test_frame_solution_selection.py": "79b853ab20b95d491fc3e76f667fc7fb7106afa6ace7b5ae9d1ede191f99aceb",
+    "AFrame/engine/test_frame_topology.py": "88f59edd4e8543ec3c444eb3557dbe7a10b922318362ca82360675da1c11586c",
+    "AFrame/engine/test_frame_topology_index.py": "d8e139847c458cdf87fddf24b7c790e15e479ff4c2bbbd3a4848757e6560a1a7",
+    "AFrame/src/AFramePlugin/FrameQuantities.cs": "d34f7cf6219dbfec7c88796b12477bea9382d4cca2dc125e4ebd1a252b1cf791",
+    "Common/FacadeQuantities.cs": "b092bf95f154d6aa8041936bffa79a82c613d7ac8f27fee9d1e6d7c0cde09f90",
+    "Facades/src/AFacadesPlugin/CladdingTableData.cs": "8dec6b35b881f29b9da51d9e2c3769be360f53c6fac06670c2005a60e94405fa",
+    "Facades/src/AFacadesPlugin/ConnectionTableData.cs": "04fb3ddfcaa568ca68703a32dc49ec08c1bd59d98d3766201b90c0920ffe26f9",
+    "Facades/src/AFacadesPlugin/FrameTableData.cs": "58de42f818cf70d470bb438b025cb6cb4c70391700d43eeeaee23042281f1ffc",
+    "Facades/src/AFacadesPlugin/QuantityTableIdentity.cs": "82044b27845ff586b475040e4a968398c0325bdf8c6205cd6f5b226597810454",
+    "Facades/src/AFacadesPlugin/QuantityTableView.Connections.cs": "1dbc4269e64eda11011c6ad63400870072ebe4d37ac7f959bf74e0d18438e8f8",
+    "Facades/src/AFacadesPlugin/QuantityTableView.cs": "9656e74f8c3e4a932e4303e694a0690ddf2e14c308de64afa53bce9a8dc80480",
+    "Facades/src/AFacadesPlugin/QuantityXlsxFile.cs": "3c79e7a701ad6ba50bc81ce41cc88ba5d9c0c76c52e601115ccd3df460c3f75e",
+    "Facades/src/AFacadesPlugin/XlsxWriter.cs": "6c4ef614b5fde416fa91ce29adc0ebf99599bb21b285bd7d885bf00469c428fc",
+    "tools/catalog_connections_0110/ConnectionStoreProbe.cs": "fa9a6c335001d5700ae3cf32af25d7dea685a57bf4a96499352989a8b0e329ac",
+    "tools/catalog_connections_0110/test_connection_store.py": "9aaee54e4c8a540f345efb64b0cf924a1956790d9e7ac08705b28df9f290ff0e",
+    "tools/orphan_connections_0110/OrphanTableProbe.cs": "6e1316e9553aba781f86136594f30f99d0391fddd149247b509d104bca124f1b",
+    "tools/orphan_connections_0110/reproduce_gap.py": "d22fedcd31a382599c096f4f9c8d3587959c178e621558958b39a613f9a05fd8",
+    "tools/quantities_3009/probe_runtime.py": "2d37fb13990a1b24129dfe79a81ce138875e3c86ef3211d1a3a4f9ec40d150e5"
+  },
+  "projection": {
+    "kind": "compact_projection_of_actual_runner_manifest",
+    "raw_manifest_sha256": "8185e8462ecd858c417a2c40a69e9783d458fe02780b3a707f64749d163b5755",
+    "omitted": "Large repeated message text, ID arrays, and long zone values; exact counts and SHA-256 retained. Actual fixtures and runner reconstruct them.",
+    "long_identity_note": "Contiguous substring presence is not the long-value reconstruction check; the runner separately reconstructs every continued ID and zone."
+  },
+  "cases": [
+    {
+      "fixture": "minimal",
+      "status": "PASS",
+      "checks": 2328,
+      "cases": [
+        {
+          "name": "all",
+          "core_ok": true,
+          "eligible_brackets": 1,
+          "linked_brackets": 0,
+          "table_member_count": 2,
+          "missing_passport_text": false,
+          "source_unchanged": true,
+          "physical_elements": 3,
+          "counters": {
+            "PhysicalElementsVisited": 3,
+            "BracketZoneLinksVisited": 1,
+            "PassportScopesVisited": 1,
+            "EligibleBracketsVisited": 1,
+            "MembersIndexed": 2,
+            "SupportLinksIndexed": 0,
+            "UnlinkedBrackets": 1,
+            "CandidateLinksForAbsenceVisited": 0
+          },
+          "core_issue_codes": [
+            "Q_FRAME_ENGINEERING_LIMIT",
+            "Q_VALUE_UNKNOWN"
+          ],
+          "selected_zone_count": 1,
+          "selected": [
+            "Z0"
+          ],
+          "orphan_count": 1,
+          "orphan_ids": [
+            "bee28e6925254aa68560f828b488d13c:brackets:0"
+          ],
+          "literal_contiguous_orphan_ids_visible": 1,
+          "table_message_count": 9,
+          "table_messages_sha256": "aef3e7f1f79743e665d614930e7400102ff8006baf95cb40fdddaee67ddc50d0",
+          "case_assertions_passed": true
+        },
+        {
+          "name": "selected_Z0",
+          "core_ok": true,
+          "eligible_brackets": 1,
+          "linked_brackets": 0,
+          "table_member_count": 2,
+          "missing_passport_text": false,
+          "source_unchanged": true,
+          "physical_elements": 3,
+          "counters": {
+            "PhysicalElementsVisited": 3,
+            "BracketZoneLinksVisited": 1,
+            "PassportScopesVisited": 1,
+            "EligibleBracketsVisited": 1,
+            "MembersIndexed": 2,
+            "SupportLinksIndexed": 0,
+            "UnlinkedBrackets": 1,
+            "CandidateLinksForAbsenceVisited": 0
+          },
+          "core_issue_codes": [
+            "Q_FRAME_ENGINEERING_LIMIT",
+            "Q_VALUE_UNKNOWN"
+          ],
+          "selected_zone_count": 1,
+          "selected": [
+            "Z0"
+          ],
+          "orphan_count": 1,
+          "orphan_ids": [
+            "bee28e6925254aa68560f828b488d13c:brackets:0"
+          ],
+          "literal_contiguous_orphan_ids_visible": 1,
+          "table_message_count": 9,
+          "table_messages_sha256": "aef3e7f1f79743e665d614930e7400102ff8006baf95cb40fdddaee67ddc50d0",
+          "case_assertions_passed": true
+        },
+        {
+          "name": "retained_distinct_report_run",
+          "core_ok": true,
+          "eligible_brackets": 1,
+          "linked_brackets": 0,
+          "table_member_count": 2,
+          "missing_passport_text": false,
+          "source_unchanged": true,
+          "physical_elements": 3,
+          "counters": {
+            "PhysicalElementsVisited": 3,
+            "BracketZoneLinksVisited": 1,
+            "PassportScopesVisited": 1,
+            "EligibleBracketsVisited": 1,
+            "MembersIndexed": 2,
+            "SupportLinksIndexed": 0,
+            "UnlinkedBrackets": 1,
+            "CandidateLinksForAbsenceVisited": 0
+          },
+          "core_issue_codes": [
+            "Q_FRAME_ENGINEERING_LIMIT",
+            "Q_VALUE_UNKNOWN"
+          ],
+          "selected_zone_count": 1,
+          "selected": [
+            "Z0"
+          ],
+          "orphan_count": 1,
+          "orphan_ids": [
+            "bee28e6925254aa68560f828b488d13c:brackets:0"
+          ],
+          "literal_contiguous_orphan_ids_visible": 1,
+          "table_message_count": 9,
+          "table_messages_sha256": "aef3e7f1f79743e665d614930e7400102ff8006baf95cb40fdddaee67ddc50d0",
+          "case_assertions_passed": true
+        },
+        {
+          "name": "retained_duplicate_reports",
+          "core_ok": true,
+          "eligible_brackets": 1,
+          "linked_brackets": 0,
+          "table_member_count": 2,
+          "missing_passport_text": false,
+          "source_unchanged": true,
+          "physical_elements": 3,
+          "counters": {
+            "PhysicalElementsVisited": 6,
+            "BracketZoneLinksVisited": 2,
+            "PassportScopesVisited": 2,
+            "EligibleBracketsVisited": 2,
+            "MembersIndexed": 2,
+            "SupportLinksIndexed": 0,
+            "UnlinkedBrackets": 1,
+            "CandidateLinksForAbsenceVisited": 0
+          },
+          "core_issue_codes": [
+            "Q_FRAME_ENGINEERING_LIMIT",
+            "Q_VALUE_UNKNOWN"
+          ],
+          "selected_zone_count": 1,
+          "selected": [
+            "Z0"
+          ],
+          "orphan_count": 1,
+          "orphan_ids": [
+            "bee28e6925254aa68560f828b488d13c:brackets:0"
+          ],
+          "literal_contiguous_orphan_ids_visible": 1,
+          "table_message_count": 9,
+          "table_messages_sha256": "aef3e7f1f79743e665d614930e7400102ff8006baf95cb40fdddaee67ddc50d0",
+          "case_assertions_passed": true
+        },
+        {
+          "name": "retained_unlinked_elements_no_longer_present",
+          "core_ok": true,
+          "eligible_brackets": 0,
+          "linked_brackets": 0,
+          "table_member_count": 2,
+          "missing_passport_text": false,
+          "source_unchanged": true,
+          "physical_elements": 2,
+          "counters": {
+            "PhysicalElementsVisited": 2,
+            "BracketZoneLinksVisited": 0,
+            "PassportScopesVisited": 1,
+            "EligibleBracketsVisited": 0,
+            "MembersIndexed": 2,
+            "SupportLinksIndexed": 0,
+            "UnlinkedBrackets": 0,
+            "CandidateLinksForAbsenceVisited": 0
+          },
+          "core_issue_codes": [
+            "Q_FRAME_ENGINEERING_LIMIT",
+            "Q_VALUE_UNKNOWN"
+          ],
+          "selected_zone_count": 1,
+          "selected": [
+            "Z0"
+          ],
+          "orphan_count": 0,
+          "orphan_ids": [],
+          "literal_contiguous_orphan_ids_visible": 0,
+          "table_message_count": 7,
+          "table_messages_sha256": "8dfdea7ea5c41b37a937dc11d252d16bdf88d096a12fd620c66270f1ad92c40d",
+          "case_assertions_passed": true
+        },
+        {
+          "name": "unavailable_passport_not_zero_relation",
+          "core_ok": true,
+          "eligible_brackets": 0,
+          "linked_brackets": 0,
+          "table_member_count": 1,
+          "missing_passport_text": true,
+          "source_unchanged": true,
+          "physical_elements": 3,
+          "counters": {
+            "PhysicalElementsVisited": 3,
+            "BracketZoneLinksVisited": 1,
+            "PassportScopesVisited": 0,
+            "EligibleBracketsVisited": 0,
+            "MembersIndexed": 0,
+            "SupportLinksIndexed": 0,
+            "UnlinkedBrackets": 0,
+            "CandidateLinksForAbsenceVisited": 0
+          },
+          "core_issue_codes": [
+            "Q_FRAME_ENGINEERING_LIMIT",
+            "Q_VALUE_UNKNOWN"
+          ],
+          "selected_zone_count": 1,
+          "selected": [
+            "Z0"
+          ],
+          "orphan_count": 0,
+          "orphan_ids": [],
+          "literal_contiguous_orphan_ids_visible": 0,
+          "table_message_count": 4,
+          "table_messages_sha256": "910a8657d2576e411cc3fcbf41268166611938c3ee71a1548d246b63ee68f225",
+          "case_assertions_passed": true
+        },
+        {
+          "name": "legacy_absent_passport_not_zero_relation",
+          "core_ok": true,
+          "eligible_brackets": 0,
+          "linked_brackets": 0,
+          "table_member_count": 1,
+          "missing_passport_text": true,
+          "source_unchanged": true,
+          "physical_elements": 3,
+          "counters": {
+            "PhysicalElementsVisited": 3,
+            "BracketZoneLinksVisited": 1,
+            "PassportScopesVisited": 0,
+            "EligibleBracketsVisited": 0,
+            "MembersIndexed": 0,
+            "SupportLinksIndexed": 0,
+            "UnlinkedBrackets": 0,
+            "CandidateLinksForAbsenceVisited": 0
+          },
+          "core_issue_codes": [
+            "Q_FRAME_ENGINEERING_LIMIT",
+            "Q_VALUE_UNKNOWN"
+          ],
+          "selected_zone_count": 1,
+          "selected": [
+            "Z0"
+          ],
+          "orphan_count": 0,
+          "orphan_ids": [],
+          "literal_contiguous_orphan_ids_visible": 0,
+          "table_message_count": 4,
+          "table_messages_sha256": "910a8657d2576e411cc3fcbf41268166611938c3ee71a1548d246b63ee68f225",
+          "case_assertions_passed": true
+        },
+        {
+          "name": "manual_registration_without_passport",
+          "core_ok": true,
+          "eligible_brackets": 0,
+          "linked_brackets": 0,
+          "table_member_count": 1,
+          "missing_passport_text": true,
+          "source_unchanged": true,
+          "physical_elements": 1,
+          "counters": {
+            "PhysicalElementsVisited": 1,
+            "BracketZoneLinksVisited": 0,
+            "PassportScopesVisited": 0,
+            "EligibleBracketsVisited": 0,
+            "MembersIndexed": 0,
+            "SupportLinksIndexed": 0,
+            "UnlinkedBrackets": 0,
+            "CandidateLinksForAbsenceVisited": 0
+          },
+          "core_issue_codes": [
+            "Q_FRAME_ENGINEERING_LIMIT",
+            "Q_VALUE_UNKNOWN"
+          ],
+          "selected_zone_count": 1,
+          "selected": [
+            "Z0"
+          ],
+          "orphan_count": 0,
+          "orphan_ids": [],
+          "literal_contiguous_orphan_ids_visible": 0,
+          "table_message_count": 3,
+          "table_messages_sha256": "2c172808fc3c76598fa943234d188fd19af5ca9948bc120db9747d82c51e355b",
+          "case_assertions_passed": true
+        },
+        {
+          "name": "foreign_source_run",
+          "core_ok": true,
+          "eligible_brackets": 0,
+          "linked_brackets": 0,
+          "table_member_count": 2,
+          "missing_passport_text": false,
+          "source_unchanged": true,
+          "physical_elements": 3,
+          "counters": {
+            "PhysicalElementsVisited": 3,
+            "BracketZoneLinksVisited": 1,
+            "PassportScopesVisited": 1,
+            "EligibleBracketsVisited": 0,
+            "MembersIndexed": 2,
+            "SupportLinksIndexed": 0,
+            "UnlinkedBrackets": 0,
+            "CandidateLinksForAbsenceVisited": 0
+          },
+          "core_issue_codes": [
+            "Q_FRAME_ENGINEERING_LIMIT",
+            "Q_VALUE_UNKNOWN"
+          ],
+          "selected_zone_count": 1,
+          "selected": [
+            "Z0"
+          ],
+          "orphan_count": 0,
+          "orphan_ids": [],
+          "literal_contiguous_orphan_ids_visible": 0,
+          "table_message_count": 8,
+          "table_messages_sha256": "7bec665fb333191d37465dfe53b5e302738f701e5c1feaf6bfa6a5a7f58bef5d",
+          "case_assertions_passed": true
+        },
+        {
+          "name": "manual_origin",
+          "core_ok": true,
+          "eligible_brackets": 0,
+          "linked_brackets": 0,
+          "table_member_count": 2,
+          "missing_passport_text": false,
+          "source_unchanged": true,
+          "physical_elements": 3,
+          "counters": {
+            "PhysicalElementsVisited": 3,
+            "BracketZoneLinksVisited": 0,
+            "PassportScopesVisited": 1,
+            "EligibleBracketsVisited": 0,
+            "MembersIndexed": 2,
+            "SupportLinksIndexed": 0,
+            "UnlinkedBrackets": 0,
+            "CandidateLinksForAbsenceVisited": 0
+          },
+          "core_issue_codes": [
+            "Q_FRAME_ENGINEERING_LIMIT",
+            "Q_VALUE_UNKNOWN"
+          ],
+          "selected_zone_count": 1,
+          "selected": [
+            "Z0"
+          ],
+          "orphan_count": 0,
+          "orphan_ids": [],
+          "literal_contiguous_orphan_ids_visible": 0,
+          "table_message_count": 8,
+          "table_messages_sha256": "7bec665fb333191d37465dfe53b5e302738f701e5c1feaf6bfa6a5a7f58bef5d",
+          "case_assertions_passed": true
+        },
+        {
+          "name": "duplicate_zone_ids",
+          "core_ok": true,
+          "eligible_brackets": 1,
+          "linked_brackets": 0,
+          "table_member_count": 2,
+          "missing_passport_text": false,
+          "source_unchanged": true,
+          "physical_elements": 3,
+          "counters": {
+            "PhysicalElementsVisited": 3,
+            "BracketZoneLinksVisited": 3,
+            "PassportScopesVisited": 1,
+            "EligibleBracketsVisited": 1,
+            "MembersIndexed": 2,
+            "SupportLinksIndexed": 0,
+            "UnlinkedBrackets": 1,
+            "CandidateLinksForAbsenceVisited": 0
+          },
+          "core_issue_codes": [
+            "Q_FRAME_ENGINEERING_LIMIT",
+            "Q_VALUE_UNKNOWN"
+          ],
+          "selected_zone_count": 1,
+          "selected": [
+            "Z0"
+          ],
+          "orphan_count": 1,
+          "orphan_ids": [
+            "bee28e6925254aa68560f828b488d13c:brackets:0"
+          ],
+          "literal_contiguous_orphan_ids_visible": 1,
+          "table_message_count": 9,
+          "table_messages_sha256": "aef3e7f1f79743e665d614930e7400102ff8006baf95cb40fdddaee67ddc50d0",
+          "case_assertions_passed": true
+        },
+        {
+          "name": "empty_zone_ids_fallback",
+          "core_ok": true,
+          "eligible_brackets": 1,
+          "linked_brackets": 0,
+          "table_member_count": 2,
+          "missing_passport_text": false,
+          "source_unchanged": true,
+          "physical_elements": 3,
+          "counters": {
+            "PhysicalElementsVisited": 3,
+            "BracketZoneLinksVisited": 0,
+            "PassportScopesVisited": 1,
+            "EligibleBracketsVisited": 1,
+            "MembersIndexed": 2,
+            "SupportLinksIndexed": 0,
+            "UnlinkedBrackets": 1,
+            "CandidateLinksForAbsenceVisited": 0
+          },
+          "core_issue_codes": [
+            "Q_FRAME_ENGINEERING_LIMIT",
+            "Q_VALUE_UNKNOWN"
+          ],
+          "selected_zone_count": 1,
+          "selected": [
+            "Z0"
+          ],
+          "orphan_count": 1,
+          "orphan_ids": [
+            "bee28e6925254aa68560f828b488d13c:brackets:0"
+          ],
+          "literal_contiguous_orphan_ids_visible": 1,
+          "table_message_count": 9,
+          "table_messages_sha256": "aef3e7f1f79743e665d614930e7400102ff8006baf95cb40fdddaee67ddc50d0",
+          "case_assertions_passed": true
+        },
+        {
+          "name": "display_zone_disagrees",
+          "core_ok": true,
+          "eligible_brackets": 1,
+          "linked_brackets": 0,
+          "table_member_count": 2,
+          "missing_passport_text": false,
+          "source_unchanged": true,
+          "physical_elements": 3,
+          "counters": {
+            "PhysicalElementsVisited": 3,
+            "BracketZoneLinksVisited": 1,
+            "PassportScopesVisited": 1,
+            "EligibleBracketsVisited": 1,
+            "MembersIndexed": 2,
+            "SupportLinksIndexed": 0,
+            "UnlinkedBrackets": 1,
+            "CandidateLinksForAbsenceVisited": 0
+          },
+          "core_issue_codes": [
+            "Q_FRAME_ENGINEERING_LIMIT",
+            "Q_VALUE_UNKNOWN"
+          ],
+          "selected_zone_count": 1,
+          "selected": [
+            "Z0"
+          ],
+          "orphan_count": 1,
+          "orphan_ids": [
+            "bee28e6925254aa68560f828b488d13c:brackets:0"
+          ],
+          "literal_contiguous_orphan_ids_visible": 1,
+          "table_message_count": 9,
+          "table_messages_sha256": "aef3e7f1f79743e665d614930e7400102ff8006baf95cb40fdddaee67ddc50d0",
+          "case_assertions_passed": true
+        },
+        {
+          "name": "unselected_zone",
+          "core_ok": true,
+          "eligible_brackets": 0,
+          "linked_brackets": 0,
+          "table_member_count": 2,
+          "missing_passport_text": false,
+          "source_unchanged": true,
+          "physical_elements": 3,
+          "counters": {
+            "PhysicalElementsVisited": 3,
+            "BracketZoneLinksVisited": 1,
+            "PassportScopesVisited": 1,
+            "EligibleBracketsVisited": 0,
+            "MembersIndexed": 2,
+            "SupportLinksIndexed": 0,
+            "UnlinkedBrackets": 0,
+            "CandidateLinksForAbsenceVisited": 0
+          },
+          "core_issue_codes": [
+            "Q_FRAME_ENGINEERING_LIMIT",
+            "Q_VALUE_UNKNOWN"
+          ],
+          "selected_zone_count": 1,
+          "selected": [
+            "Z0"
+          ],
+          "orphan_count": 0,
+          "orphan_ids": [],
+          "literal_contiguous_orphan_ids_visible": 0,
+          "table_message_count": 8,
+          "table_messages_sha256": "7bec665fb333191d37465dfe53b5e302738f701e5c1feaf6bfa6a5a7f58bef5d",
+          "case_assertions_passed": true
+        },
+        {
+          "name": "multiple_canonical_zones",
+          "core_ok": true,
+          "eligible_brackets": 0,
+          "linked_brackets": 0,
+          "table_member_count": 3,
+          "missing_passport_text": true,
+          "source_unchanged": true,
+          "physical_elements": 3,
+          "counters": {
+            "PhysicalElementsVisited": 3,
+            "BracketZoneLinksVisited": 2,
+            "PassportScopesVisited": 1,
+            "EligibleBracketsVisited": 0,
+            "MembersIndexed": 2,
+            "SupportLinksIndexed": 0,
+            "UnlinkedBrackets": 0,
+            "CandidateLinksForAbsenceVisited": 0
+          },
+          "core_issue_codes": [
+            "Q_FRAME_ENGINEERING_LIMIT",
+            "Q_VALUE_UNKNOWN"
+          ],
+          "selected_zone_count": 2,
+          "selected": [
+            "Z0",
+            "other-zone"
+          ],
+          "orphan_count": 0,
+          "orphan_ids": [],
+          "literal_contiguous_orphan_ids_visible": 0,
+          "table_message_count": 8,
+          "table_messages_sha256": "7bec665fb333191d37465dfe53b5e302738f701e5c1feaf6bfa6a5a7f58bef5d",
+          "case_assertions_passed": true
+        },
+        {
+          "name": "distinct_passport_alias_unlinked_first",
+          "core_ok": true,
+          "eligible_brackets": 1,
+          "linked_brackets": 1,
+          "table_member_count": 2,
+          "missing_passport_text": false,
+          "source_unchanged": true,
+          "physical_elements": 3,
+          "counters": {
+            "PhysicalElementsVisited": 6,
+            "BracketZoneLinksVisited": 2,
+            "PassportScopesVisited": 2,
+            "EligibleBracketsVisited": 2,
+            "MembersIndexed": 2,
+            "SupportLinksIndexed": 0,
+            "UnlinkedBrackets": 0,
+            "CandidateLinksForAbsenceVisited": 2
+          },
+          "core_issue_codes": [
+            "Q_FRAME_ENGINEERING_LIMIT",
+            "Q_VALUE_UNKNOWN"
+          ],
+          "selected_zone_count": 1,
+          "selected": [
+            "Z0"
+          ],
+          "orphan_count": 0,
+          "orphan_ids": [],
+          "literal_contiguous_orphan_ids_visible": 0,
+          "table_message_count": 8,
+          "table_messages_sha256": "7bec665fb333191d37465dfe53b5e302738f701e5c1feaf6bfa6a5a7f58bef5d",
+          "case_assertions_passed": true
+        },
+        {
+          "name": "distinct_passport_alias_linked_first",
+          "core_ok": true,
+          "eligible_brackets": 1,
+          "linked_brackets": 1,
+          "table_member_count": 2,
+          "missing_passport_text": false,
+          "source_unchanged": true,
+          "physical_elements": 3,
+          "counters": {
+            "PhysicalElementsVisited": 6,
+            "BracketZoneLinksVisited": 2,
+            "PassportScopesVisited": 2,
+            "EligibleBracketsVisited": 2,
+            "MembersIndexed": 2,
+            "SupportLinksIndexed": 2,
+            "UnlinkedBrackets": 0,
+            "CandidateLinksForAbsenceVisited": 2
+          },
+          "core_issue_codes": [
+            "Q_FRAME_ENGINEERING_LIMIT",
+            "Q_VALUE_UNKNOWN"
+          ],
+          "selected_zone_count": 1,
+          "selected": [
+            "Z0"
+          ],
+          "orphan_count": 0,
+          "orphan_ids": [],
+          "literal_contiguous_orphan_ids_visible": 0,
+          "table_message_count": 9,
+          "table_messages_sha256": "e3519f5e0973946e45afecb9632130e0c2940a2d6fd7b353d3c854480d99e2bb",
+          "case_assertions_passed": true
+        },
+        {
+          "name": "scale_1",
+          "core_ok": true,
+          "eligible_brackets": 1,
+          "linked_brackets": 0,
+          "table_member_count": 2,
+          "missing_passport_text": false,
+          "source_unchanged": true,
+          "physical_elements": 3,
+          "counters": {
+            "PhysicalElementsVisited": 3,
+            "BracketZoneLinksVisited": 1,
+            "PassportScopesVisited": 1,
+            "EligibleBracketsVisited": 1,
+            "MembersIndexed": 2,
+            "SupportLinksIndexed": 0,
+            "UnlinkedBrackets": 1,
+            "CandidateLinksForAbsenceVisited": 0
+          },
+          "core_issue_codes": [
+            "Q_FRAME_ENGINEERING_LIMIT",
+            "Q_VALUE_UNKNOWN"
+          ],
+          "selected_zone_count": 1,
+          "selected": [
+            "Z0"
+          ],
+          "orphan_count": 1,
+          "orphan_ids": [
+            "synthetic0:brackets:0"
+          ],
+          "literal_contiguous_orphan_ids_visible": 1,
+          "table_message_count": 9,
+          "table_messages_sha256": "7cebda67bad53dc6c09ba8de31e8a289ac86dd4a8e88f89bc48b27a5f1669f02",
+          "case_assertions_passed": true
+        },
+        {
+          "name": "scale_100",
+          "core_ok": true,
+          "eligible_brackets": 100,
+          "linked_brackets": 0,
+          "table_member_count": 200,
+          "missing_passport_text": false,
+          "source_unchanged": true,
+          "physical_elements": 300,
+          "counters": {
+            "PhysicalElementsVisited": 300,
+            "BracketZoneLinksVisited": 100,
+            "PassportScopesVisited": 100,
+            "EligibleBracketsVisited": 100,
+            "MembersIndexed": 200,
+            "SupportLinksIndexed": 0,
+            "UnlinkedBrackets": 100,
+            "CandidateLinksForAbsenceVisited": 0
+          },
+          "core_issue_codes": [
+            "Q_FRAME_ENGINEERING_LIMIT",
+            "Q_VALUE_UNKNOWN"
+          ],
+          "selected_zone_count": 1,
+          "selected": [
+            "Z0"
+          ],
+          "orphan_count": 100,
+          "orphan_ids_sha256": "f24d45447943027a361fe93e48423467dccccfdaaa4d5b7cca4c41093d5f430b",
+          "literal_contiguous_orphan_ids_visible": 100,
+          "table_message_count": 108,
+          "table_messages_sha256": "061edf02b7f645a052c74ef094f33959545537d102ed309c803fbbc2dce6248a",
+          "case_assertions_passed": true
+        },
+        {
+          "name": "scale_1000",
+          "core_ok": true,
+          "eligible_brackets": 1000,
+          "linked_brackets": 0,
+          "table_member_count": 2000,
+          "missing_passport_text": false,
+          "source_unchanged": true,
+          "physical_elements": 3000,
+          "counters": {
+            "PhysicalElementsVisited": 3000,
+            "BracketZoneLinksVisited": 1000,
+            "PassportScopesVisited": 1000,
+            "EligibleBracketsVisited": 1000,
+            "MembersIndexed": 2000,
+            "SupportLinksIndexed": 0,
+            "UnlinkedBrackets": 1000,
+            "CandidateLinksForAbsenceVisited": 0
+          },
+          "core_issue_codes": [
+            "Q_FRAME_ENGINEERING_LIMIT",
+            "Q_VALUE_UNKNOWN"
+          ],
+          "selected_zone_count": 1,
+          "selected": [
+            "Z0"
+          ],
+          "orphan_count": 1000,
+          "orphan_ids_sha256": "7a405362de6d5b7b81d653a65837374c3f3d5ad7151c858739eba420020d114f",
+          "literal_contiguous_orphan_ids_visible": 1000,
+          "table_message_count": 1008,
+          "table_messages_sha256": "91ebb86ebd31bb551b3c66795bdf82875a7af9508dbb4dbffbc350fbf0309081",
+          "case_assertions_passed": true
+        },
+        {
+          "name": "long_identity",
+          "core_ok": true,
+          "eligible_brackets": 1,
+          "linked_brackets": 0,
+          "table_member_count": 2,
+          "missing_passport_text": false,
+          "source_unchanged": true,
+          "physical_elements": 3,
+          "counters": {
+            "PhysicalElementsVisited": 3,
+            "BracketZoneLinksVisited": 1,
+            "PassportScopesVisited": 1,
+            "EligibleBracketsVisited": 1,
+            "MembersIndexed": 2,
+            "SupportLinksIndexed": 0,
+            "UnlinkedBrackets": 1,
+            "CandidateLinksForAbsenceVisited": 0
+          },
+          "core_issue_codes": [
+            "Q_FRAME_ENGINEERING_LIMIT",
+            "Q_VALUE_UNKNOWN"
+          ],
+          "selected_zone_count": 1,
+          "selected_zone_values_sha256": "5ac9d9caa92df51cb57b1a64b87b000fbf6dcb413a64547723ac7a5545b6610f",
+          "orphan_count": 1,
+          "orphan_ids_sha256": "9e101e09ea69c3eee2db22524a25ff9119ddc4dbe0d04cf44a022a46854cec9f",
+          "literal_contiguous_orphan_ids_visible": 0,
+          "table_message_count": 14,
+          "table_messages_sha256": "9d1935aafd037ccb5846591a513229882f844947adc2f9531ad6181f5048ecbe",
+          "case_assertions_passed": true
+        },
+        {
+          "name": "long_unicode_identity",
+          "core_ok": true,
+          "eligible_brackets": 1,
+          "linked_brackets": 0,
+          "table_member_count": 2,
+          "missing_passport_text": false,
+          "source_unchanged": true,
+          "physical_elements": 3,
+          "counters": {
+            "PhysicalElementsVisited": 3,
+            "BracketZoneLinksVisited": 1,
+            "PassportScopesVisited": 1,
+            "EligibleBracketsVisited": 1,
+            "MembersIndexed": 2,
+            "SupportLinksIndexed": 0,
+            "UnlinkedBrackets": 1,
+            "CandidateLinksForAbsenceVisited": 0
+          },
+          "core_issue_codes": [
+            "Q_FRAME_ENGINEERING_LIMIT",
+            "Q_VALUE_UNKNOWN"
+          ],
+          "selected_zone_count": 1,
+          "selected_zone_values_sha256": "af647a84bd9ec43409b71de7783c241fb47f45ec965b025febd79b3f1195aee8",
+          "orphan_count": 1,
+          "orphan_ids_sha256": "9e101e09ea69c3eee2db22524a25ff9119ddc4dbe0d04cf44a022a46854cec9f",
+          "literal_contiguous_orphan_ids_visible": 0,
+          "table_message_count": 14,
+          "table_messages_sha256": "c8483cf131596a6fe8f7de65524746a3b2c6c1cd27dffb4d43779940f7fecf24",
+          "case_assertions_passed": true
+        }
+      ]
+    },
+    {
+      "fixture": "two_same_coordinate_zones",
+      "status": "PASS",
+      "checks": 109,
+      "cases": [
+        {
+          "name": "all",
+          "core_ok": true,
+          "eligible_brackets": 2,
+          "linked_brackets": 0,
+          "table_member_count": 4,
+          "missing_passport_text": false,
+          "source_unchanged": true,
+          "physical_elements": 6,
+          "counters": {
+            "PhysicalElementsVisited": 6,
+            "BracketZoneLinksVisited": 2,
+            "PassportScopesVisited": 2,
+            "EligibleBracketsVisited": 2,
+            "MembersIndexed": 4,
+            "SupportLinksIndexed": 0,
+            "UnlinkedBrackets": 2,
+            "CandidateLinksForAbsenceVisited": 0
+          },
+          "core_issue_codes": [
+            "Q_FRAME_ENGINEERING_LIMIT",
+            "Q_VALUE_UNKNOWN"
+          ],
+          "selected_zone_count": 2,
+          "selected": [
+            "Z0",
+            "Z1"
+          ],
+          "orphan_count": 2,
+          "orphan_ids": [
+            "06463c3a27a6458f95b2fa7b37999e0b:brackets:0",
+            "06463c3a27a6458f95b2fa7b37999e0b:brackets:1"
+          ],
+          "literal_contiguous_orphan_ids_visible": 2,
+          "table_message_count": 10,
+          "table_messages_sha256": "d3c3b2411561fd2c3bf1f4ff82d4e91f20999c3c1bc6d13980940534a469e314",
+          "case_assertions_passed": true
+        },
+        {
+          "name": "selected_Z0",
+          "core_ok": true,
+          "eligible_brackets": 1,
+          "linked_brackets": 0,
+          "table_member_count": 2,
+          "missing_passport_text": false,
+          "source_unchanged": true,
+          "physical_elements": 6,
+          "counters": {
+            "PhysicalElementsVisited": 6,
+            "BracketZoneLinksVisited": 2,
+            "PassportScopesVisited": 1,
+            "EligibleBracketsVisited": 1,
+            "MembersIndexed": 2,
+            "SupportLinksIndexed": 0,
+            "UnlinkedBrackets": 1,
+            "CandidateLinksForAbsenceVisited": 0
+          },
+          "core_issue_codes": [
+            "Q_FRAME_ENGINEERING_LIMIT",
+            "Q_VALUE_UNKNOWN",
+            "Q_ESTIMATE_SCOPE_PARTIAL"
+          ],
+          "selected_zone_count": 1,
+          "selected": [
+            "Z0"
+          ],
+          "orphan_count": 1,
+          "orphan_ids": [
+            "06463c3a27a6458f95b2fa7b37999e0b:brackets:0"
+          ],
+          "literal_contiguous_orphan_ids_visible": 1,
+          "table_message_count": 10,
+          "table_messages_sha256": "6e232e6443895620bc670af58bdbaab19b2e2345b7106e1a10adefd189048f20",
+          "case_assertions_passed": true
+        },
+        {
+          "name": "selected_Z1",
+          "core_ok": true,
+          "eligible_brackets": 1,
+          "linked_brackets": 0,
+          "table_member_count": 2,
+          "missing_passport_text": false,
+          "source_unchanged": true,
+          "physical_elements": 6,
+          "counters": {
+            "PhysicalElementsVisited": 6,
+            "BracketZoneLinksVisited": 2,
+            "PassportScopesVisited": 1,
+            "EligibleBracketsVisited": 1,
+            "MembersIndexed": 2,
+            "SupportLinksIndexed": 0,
+            "UnlinkedBrackets": 1,
+            "CandidateLinksForAbsenceVisited": 0
+          },
+          "core_issue_codes": [
+            "Q_FRAME_ENGINEERING_LIMIT",
+            "Q_VALUE_UNKNOWN",
+            "Q_ESTIMATE_SCOPE_PARTIAL"
+          ],
+          "selected_zone_count": 1,
+          "selected": [
+            "Z1"
+          ],
+          "orphan_count": 1,
+          "orphan_ids": [
+            "06463c3a27a6458f95b2fa7b37999e0b:brackets:1"
+          ],
+          "literal_contiguous_orphan_ids_visible": 1,
+          "table_message_count": 10,
+          "table_messages_sha256": "78e373444bf8d06a4936cab6b9b9c971a31c0e5a63ea6b52178c121e9f4761ef",
+          "case_assertions_passed": true
+        },
+        {
+          "name": "retained_distinct_report_run",
+          "core_ok": true,
+          "eligible_brackets": 2,
+          "linked_brackets": 0,
+          "table_member_count": 4,
+          "missing_passport_text": false,
+          "source_unchanged": true,
+          "physical_elements": 6,
+          "counters": {
+            "PhysicalElementsVisited": 6,
+            "BracketZoneLinksVisited": 2,
+            "PassportScopesVisited": 2,
+            "EligibleBracketsVisited": 2,
+            "MembersIndexed": 4,
+            "SupportLinksIndexed": 0,
+            "UnlinkedBrackets": 2,
+            "CandidateLinksForAbsenceVisited": 0
+          },
+          "core_issue_codes": [
+            "Q_FRAME_ENGINEERING_LIMIT",
+            "Q_VALUE_UNKNOWN"
+          ],
+          "selected_zone_count": 2,
+          "selected": [
+            "Z0",
+            "Z1"
+          ],
+          "orphan_count": 2,
+          "orphan_ids": [
+            "06463c3a27a6458f95b2fa7b37999e0b:brackets:0",
+            "06463c3a27a6458f95b2fa7b37999e0b:brackets:1"
+          ],
+          "literal_contiguous_orphan_ids_visible": 2,
+          "table_message_count": 10,
+          "table_messages_sha256": "d3c3b2411561fd2c3bf1f4ff82d4e91f20999c3c1bc6d13980940534a469e314",
+          "case_assertions_passed": true
+        },
+        {
+          "name": "retained_duplicate_reports",
+          "core_ok": true,
+          "eligible_brackets": 2,
+          "linked_brackets": 0,
+          "table_member_count": 4,
+          "missing_passport_text": false,
+          "source_unchanged": true,
+          "physical_elements": 6,
+          "counters": {
+            "PhysicalElementsVisited": 12,
+            "BracketZoneLinksVisited": 4,
+            "PassportScopesVisited": 4,
+            "EligibleBracketsVisited": 4,
+            "MembersIndexed": 4,
+            "SupportLinksIndexed": 0,
+            "UnlinkedBrackets": 2,
+            "CandidateLinksForAbsenceVisited": 0
+          },
+          "core_issue_codes": [
+            "Q_FRAME_ENGINEERING_LIMIT",
+            "Q_VALUE_UNKNOWN"
+          ],
+          "selected_zone_count": 2,
+          "selected": [
+            "Z0",
+            "Z1"
+          ],
+          "orphan_count": 2,
+          "orphan_ids": [
+            "06463c3a27a6458f95b2fa7b37999e0b:brackets:0",
+            "06463c3a27a6458f95b2fa7b37999e0b:brackets:1"
+          ],
+          "literal_contiguous_orphan_ids_visible": 2,
+          "table_message_count": 10,
+          "table_messages_sha256": "d3c3b2411561fd2c3bf1f4ff82d4e91f20999c3c1bc6d13980940534a469e314",
+          "case_assertions_passed": true
+        },
+        {
+          "name": "retained_unlinked_elements_no_longer_present",
+          "core_ok": true,
+          "eligible_brackets": 0,
+          "linked_brackets": 0,
+          "table_member_count": 4,
+          "missing_passport_text": false,
+          "source_unchanged": true,
+          "physical_elements": 4,
+          "counters": {
+            "PhysicalElementsVisited": 4,
+            "BracketZoneLinksVisited": 0,
+            "PassportScopesVisited": 2,
+            "EligibleBracketsVisited": 0,
+            "MembersIndexed": 4,
+            "SupportLinksIndexed": 0,
+            "UnlinkedBrackets": 0,
+            "CandidateLinksForAbsenceVisited": 0
+          },
+          "core_issue_codes": [
+            "Q_FRAME_ENGINEERING_LIMIT",
+            "Q_VALUE_UNKNOWN"
+          ],
+          "selected_zone_count": 2,
+          "selected": [
+            "Z0",
+            "Z1"
+          ],
+          "orphan_count": 0,
+          "orphan_ids": [],
+          "literal_contiguous_orphan_ids_visible": 0,
+          "table_message_count": 7,
+          "table_messages_sha256": "9ea4c73578024ae3bd909575b6c28a17d909786c29f48ea83a8eda655f43d3d4",
+          "case_assertions_passed": true
+        },
+        {
+          "name": "unavailable_passport_not_zero_relation",
+          "core_ok": true,
+          "eligible_brackets": 0,
+          "linked_brackets": 0,
+          "table_member_count": 2,
+          "missing_passport_text": true,
+          "source_unchanged": true,
+          "physical_elements": 6,
+          "counters": {
+            "PhysicalElementsVisited": 6,
+            "BracketZoneLinksVisited": 2,
+            "PassportScopesVisited": 0,
+            "EligibleBracketsVisited": 0,
+            "MembersIndexed": 0,
+            "SupportLinksIndexed": 0,
+            "UnlinkedBrackets": 0,
+            "CandidateLinksForAbsenceVisited": 0
+          },
+          "core_issue_codes": [
+            "Q_FRAME_ENGINEERING_LIMIT",
+            "Q_VALUE_UNKNOWN"
+          ],
+          "selected_zone_count": 2,
+          "selected": [
+            "Z0",
+            "Z1"
+          ],
+          "orphan_count": 0,
+          "orphan_ids": [],
+          "literal_contiguous_orphan_ids_visible": 0,
+          "table_message_count": 4,
+          "table_messages_sha256": "f5d8fcede9f4e552d95561f202004c47471a6180328e7dbaa5e7b4df45a628c8",
+          "case_assertions_passed": true
+        },
+        {
+          "name": "legacy_absent_passport_not_zero_relation",
+          "core_ok": true,
+          "eligible_brackets": 0,
+          "linked_brackets": 0,
+          "table_member_count": 2,
+          "missing_passport_text": true,
+          "source_unchanged": true,
+          "physical_elements": 6,
+          "counters": {
+            "PhysicalElementsVisited": 6,
+            "BracketZoneLinksVisited": 2,
+            "PassportScopesVisited": 0,
+            "EligibleBracketsVisited": 0,
+            "MembersIndexed": 0,
+            "SupportLinksIndexed": 0,
+            "UnlinkedBrackets": 0,
+            "CandidateLinksForAbsenceVisited": 0
+          },
+          "core_issue_codes": [
+            "Q_FRAME_ENGINEERING_LIMIT",
+            "Q_VALUE_UNKNOWN"
+          ],
+          "selected_zone_count": 2,
+          "selected": [
+            "Z0",
+            "Z1"
+          ],
+          "orphan_count": 0,
+          "orphan_ids": [],
+          "literal_contiguous_orphan_ids_visible": 0,
+          "table_message_count": 4,
+          "table_messages_sha256": "f5d8fcede9f4e552d95561f202004c47471a6180328e7dbaa5e7b4df45a628c8",
+          "case_assertions_passed": true
+        },
+        {
+          "name": "manual_registration_without_passport",
+          "core_ok": true,
+          "eligible_brackets": 0,
+          "linked_brackets": 0,
+          "table_member_count": 2,
+          "missing_passport_text": true,
+          "source_unchanged": true,
+          "physical_elements": 2,
+          "counters": {
+            "PhysicalElementsVisited": 2,
+            "BracketZoneLinksVisited": 0,
+            "PassportScopesVisited": 0,
+            "EligibleBracketsVisited": 0,
+            "MembersIndexed": 0,
+            "SupportLinksIndexed": 0,
+            "UnlinkedBrackets": 0,
+            "CandidateLinksForAbsenceVisited": 0
+          },
+          "core_issue_codes": [
+            "Q_FRAME_ENGINEERING_LIMIT",
+            "Q_VALUE_UNKNOWN"
+          ],
+          "selected_zone_count": 2,
+          "selected": [
+            "Z0",
+            "Z1"
+          ],
+          "orphan_count": 0,
+          "orphan_ids": [],
+          "literal_contiguous_orphan_ids_visible": 0,
+          "table_message_count": 3,
+          "table_messages_sha256": "c8805796f930f405eb2b141b7ce80bc7538239be9e077871b1db9b887fe6ed47",
+          "case_assertions_passed": true
+        },
+        {
+          "name": "foreign_source_run",
+          "core_ok": true,
+          "eligible_brackets": 1,
+          "linked_brackets": 0,
+          "table_member_count": 4,
+          "missing_passport_text": false,
+          "source_unchanged": true,
+          "physical_elements": 6,
+          "counters": {
+            "PhysicalElementsVisited": 6,
+            "BracketZoneLinksVisited": 2,
+            "PassportScopesVisited": 2,
+            "EligibleBracketsVisited": 1,
+            "MembersIndexed": 4,
+            "SupportLinksIndexed": 0,
+            "UnlinkedBrackets": 1,
+            "CandidateLinksForAbsenceVisited": 0
+          },
+          "core_issue_codes": [
+            "Q_FRAME_ENGINEERING_LIMIT",
+            "Q_VALUE_UNKNOWN"
+          ],
+          "selected_zone_count": 2,
+          "selected": [
+            "Z0",
+            "Z1"
+          ],
+          "orphan_count": 1,
+          "orphan_ids": [
+            "06463c3a27a6458f95b2fa7b37999e0b:brackets:1"
+          ],
+          "literal_contiguous_orphan_ids_visible": 1,
+          "table_message_count": 9,
+          "table_messages_sha256": "0c57cfc2c2586db892cce80d14d4d86be2cad607fd6814c8be78fcc721637b42",
+          "case_assertions_passed": true
+        },
+        {
+          "name": "manual_origin",
+          "core_ok": true,
+          "eligible_brackets": 1,
+          "linked_brackets": 0,
+          "table_member_count": 4,
+          "missing_passport_text": false,
+          "source_unchanged": true,
+          "physical_elements": 6,
+          "counters": {
+            "PhysicalElementsVisited": 6,
+            "BracketZoneLinksVisited": 1,
+            "PassportScopesVisited": 2,
+            "EligibleBracketsVisited": 1,
+            "MembersIndexed": 4,
+            "SupportLinksIndexed": 0,
+            "UnlinkedBrackets": 1,
+            "CandidateLinksForAbsenceVisited": 0
+          },
+          "core_issue_codes": [
+            "Q_FRAME_ENGINEERING_LIMIT",
+            "Q_VALUE_UNKNOWN"
+          ],
+          "selected_zone_count": 2,
+          "selected": [
+            "Z0",
+            "Z1"
+          ],
+          "orphan_count": 1,
+          "orphan_ids": [
+            "06463c3a27a6458f95b2fa7b37999e0b:brackets:1"
+          ],
+          "literal_contiguous_orphan_ids_visible": 1,
+          "table_message_count": 9,
+          "table_messages_sha256": "0c57cfc2c2586db892cce80d14d4d86be2cad607fd6814c8be78fcc721637b42",
+          "case_assertions_passed": true
+        },
+        {
+          "name": "duplicate_zone_ids",
+          "core_ok": true,
+          "eligible_brackets": 2,
+          "linked_brackets": 0,
+          "table_member_count": 4,
+          "missing_passport_text": false,
+          "source_unchanged": true,
+          "physical_elements": 6,
+          "counters": {
+            "PhysicalElementsVisited": 6,
+            "BracketZoneLinksVisited": 4,
+            "PassportScopesVisited": 2,
+            "EligibleBracketsVisited": 2,
+            "MembersIndexed": 4,
+            "SupportLinksIndexed": 0,
+            "UnlinkedBrackets": 2,
+            "CandidateLinksForAbsenceVisited": 0
+          },
+          "core_issue_codes": [
+            "Q_FRAME_ENGINEERING_LIMIT",
+            "Q_VALUE_UNKNOWN"
+          ],
+          "selected_zone_count": 2,
+          "selected": [
+            "Z0",
+            "Z1"
+          ],
+          "orphan_count": 2,
+          "orphan_ids": [
+            "06463c3a27a6458f95b2fa7b37999e0b:brackets:0",
+            "06463c3a27a6458f95b2fa7b37999e0b:brackets:1"
+          ],
+          "literal_contiguous_orphan_ids_visible": 2,
+          "table_message_count": 10,
+          "table_messages_sha256": "d3c3b2411561fd2c3bf1f4ff82d4e91f20999c3c1bc6d13980940534a469e314",
+          "case_assertions_passed": true
+        },
+        {
+          "name": "empty_zone_ids_fallback",
+          "core_ok": true,
+          "eligible_brackets": 2,
+          "linked_brackets": 0,
+          "table_member_count": 4,
+          "missing_passport_text": false,
+          "source_unchanged": true,
+          "physical_elements": 6,
+          "counters": {
+            "PhysicalElementsVisited": 6,
+            "BracketZoneLinksVisited": 1,
+            "PassportScopesVisited": 2,
+            "EligibleBracketsVisited": 2,
+            "MembersIndexed": 4,
+            "SupportLinksIndexed": 0,
+            "UnlinkedBrackets": 2,
+            "CandidateLinksForAbsenceVisited": 0
+          },
+          "core_issue_codes": [
+            "Q_FRAME_ENGINEERING_LIMIT",
+            "Q_VALUE_UNKNOWN"
+          ],
+          "selected_zone_count": 2,
+          "selected": [
+            "Z0",
+            "Z1"
+          ],
+          "orphan_count": 2,
+          "orphan_ids": [
+            "06463c3a27a6458f95b2fa7b37999e0b:brackets:0",
+            "06463c3a27a6458f95b2fa7b37999e0b:brackets:1"
+          ],
+          "literal_contiguous_orphan_ids_visible": 2,
+          "table_message_count": 10,
+          "table_messages_sha256": "d3c3b2411561fd2c3bf1f4ff82d4e91f20999c3c1bc6d13980940534a469e314",
+          "case_assertions_passed": true
+        },
+        {
+          "name": "display_zone_disagrees",
+          "core_ok": true,
+          "eligible_brackets": 2,
+          "linked_brackets": 0,
+          "table_member_count": 4,
+          "missing_passport_text": false,
+          "source_unchanged": true,
+          "physical_elements": 6,
+          "counters": {
+            "PhysicalElementsVisited": 6,
+            "BracketZoneLinksVisited": 2,
+            "PassportScopesVisited": 2,
+            "EligibleBracketsVisited": 2,
+            "MembersIndexed": 4,
+            "SupportLinksIndexed": 0,
+            "UnlinkedBrackets": 2,
+            "CandidateLinksForAbsenceVisited": 0
+          },
+          "core_issue_codes": [
+            "Q_FRAME_ENGINEERING_LIMIT",
+            "Q_VALUE_UNKNOWN"
+          ],
+          "selected_zone_count": 2,
+          "selected": [
+            "Z0",
+            "Z1"
+          ],
+          "orphan_count": 2,
+          "orphan_ids": [
+            "06463c3a27a6458f95b2fa7b37999e0b:brackets:0",
+            "06463c3a27a6458f95b2fa7b37999e0b:brackets:1"
+          ],
+          "literal_contiguous_orphan_ids_visible": 2,
+          "table_message_count": 10,
+          "table_messages_sha256": "d3c3b2411561fd2c3bf1f4ff82d4e91f20999c3c1bc6d13980940534a469e314",
+          "case_assertions_passed": true
+        },
+        {
+          "name": "unselected_zone",
+          "core_ok": true,
+          "eligible_brackets": 1,
+          "linked_brackets": 0,
+          "table_member_count": 4,
+          "missing_passport_text": false,
+          "source_unchanged": true,
+          "physical_elements": 6,
+          "counters": {
+            "PhysicalElementsVisited": 6,
+            "BracketZoneLinksVisited": 2,
+            "PassportScopesVisited": 2,
+            "EligibleBracketsVisited": 1,
+            "MembersIndexed": 4,
+            "SupportLinksIndexed": 0,
+            "UnlinkedBrackets": 1,
+            "CandidateLinksForAbsenceVisited": 0
+          },
+          "core_issue_codes": [
+            "Q_FRAME_ENGINEERING_LIMIT",
+            "Q_VALUE_UNKNOWN"
+          ],
+          "selected_zone_count": 2,
+          "selected": [
+            "Z0",
+            "Z1"
+          ],
+          "orphan_count": 1,
+          "orphan_ids": [
+            "06463c3a27a6458f95b2fa7b37999e0b:brackets:1"
+          ],
+          "literal_contiguous_orphan_ids_visible": 1,
+          "table_message_count": 9,
+          "table_messages_sha256": "0c57cfc2c2586db892cce80d14d4d86be2cad607fd6814c8be78fcc721637b42",
+          "case_assertions_passed": true
+        },
+        {
+          "name": "multiple_canonical_zones",
+          "core_ok": true,
+          "eligible_brackets": 1,
+          "linked_brackets": 0,
+          "table_member_count": 5,
+          "missing_passport_text": true,
+          "source_unchanged": true,
+          "physical_elements": 6,
+          "counters": {
+            "PhysicalElementsVisited": 6,
+            "BracketZoneLinksVisited": 3,
+            "PassportScopesVisited": 2,
+            "EligibleBracketsVisited": 1,
+            "MembersIndexed": 4,
+            "SupportLinksIndexed": 0,
+            "UnlinkedBrackets": 1,
+            "CandidateLinksForAbsenceVisited": 0
+          },
+          "core_issue_codes": [
+            "Q_FRAME_ENGINEERING_LIMIT",
+            "Q_VALUE_UNKNOWN"
+          ],
+          "selected_zone_count": 3,
+          "selected": [
+            "Z0",
+            "Z1",
+            "other-zone"
+          ],
+          "orphan_count": 1,
+          "orphan_ids": [
+            "06463c3a27a6458f95b2fa7b37999e0b:brackets:1"
+          ],
+          "literal_contiguous_orphan_ids_visible": 1,
+          "table_message_count": 9,
+          "table_messages_sha256": "0c57cfc2c2586db892cce80d14d4d86be2cad607fd6814c8be78fcc721637b42",
+          "case_assertions_passed": true
+        },
+        {
+          "name": "distinct_passport_alias_unlinked_first",
+          "core_ok": true,
+          "eligible_brackets": 2,
+          "linked_brackets": 2,
+          "table_member_count": 4,
+          "missing_passport_text": false,
+          "source_unchanged": true,
+          "physical_elements": 6,
+          "counters": {
+            "PhysicalElementsVisited": 12,
+            "BracketZoneLinksVisited": 4,
+            "PassportScopesVisited": 4,
+            "EligibleBracketsVisited": 4,
+            "MembersIndexed": 4,
+            "SupportLinksIndexed": 0,
+            "UnlinkedBrackets": 0,
+            "CandidateLinksForAbsenceVisited": 4
+          },
+          "core_issue_codes": [
+            "Q_FRAME_ENGINEERING_LIMIT",
+            "Q_VALUE_UNKNOWN"
+          ],
+          "selected_zone_count": 2,
+          "selected": [
+            "Z0",
+            "Z1"
+          ],
+          "orphan_count": 0,
+          "orphan_ids": [],
+          "literal_contiguous_orphan_ids_visible": 0,
+          "table_message_count": 8,
+          "table_messages_sha256": "ac1b0243fefa0e646f553c685d945ddfcfb52518b150760467be1b252774c1c9",
+          "case_assertions_passed": true
+        },
+        {
+          "name": "distinct_passport_alias_linked_first",
+          "core_ok": true,
+          "eligible_brackets": 2,
+          "linked_brackets": 2,
+          "table_member_count": 4,
+          "missing_passport_text": false,
+          "source_unchanged": true,
+          "physical_elements": 6,
+          "counters": {
+            "PhysicalElementsVisited": 12,
+            "BracketZoneLinksVisited": 4,
+            "PassportScopesVisited": 4,
+            "EligibleBracketsVisited": 4,
+            "MembersIndexed": 4,
+            "SupportLinksIndexed": 4,
+            "UnlinkedBrackets": 0,
+            "CandidateLinksForAbsenceVisited": 4
+          },
+          "core_issue_codes": [
+            "Q_FRAME_ENGINEERING_LIMIT",
+            "Q_VALUE_UNKNOWN"
+          ],
+          "selected_zone_count": 2,
+          "selected": [
+            "Z0",
+            "Z1"
+          ],
+          "orphan_count": 0,
+          "orphan_ids": [],
+          "literal_contiguous_orphan_ids_visible": 0,
+          "table_message_count": 10,
+          "table_messages_sha256": "b25797110cbed5a48e826ae249a46d9cb1f8c2f123d5e0ac748f3eed27bced15",
+          "case_assertions_passed": true
+        }
+      ]
+    },
+    {
+      "fixture": "gap_zero",
+      "status": "PASS",
+      "checks": 33,
+      "cases": [
+        {
+          "name": "all",
+          "core_ok": true,
+          "eligible_brackets": 1,
+          "linked_brackets": 1,
+          "table_member_count": 2,
+          "missing_passport_text": false,
+          "source_unchanged": true,
+          "physical_elements": 3,
+          "counters": {
+            "PhysicalElementsVisited": 3,
+            "BracketZoneLinksVisited": 1,
+            "PassportScopesVisited": 1,
+            "EligibleBracketsVisited": 1,
+            "MembersIndexed": 2,
+            "SupportLinksIndexed": 2,
+            "UnlinkedBrackets": 0,
+            "CandidateLinksForAbsenceVisited": 2
+          },
+          "core_issue_codes": [
+            "Q_FRAME_ENGINEERING_LIMIT",
+            "Q_VALUE_UNKNOWN"
+          ],
+          "selected_zone_count": 1,
+          "selected": [
+            "Z0"
+          ],
+          "orphan_count": 0,
+          "orphan_ids": [],
+          "literal_contiguous_orphan_ids_visible": 0,
+          "table_message_count": 9,
+          "table_messages_sha256": "912e0b3984e2aa5392c1a7f85f32faef63ed9ec3b209536001b0a12d7de2ac8e",
+          "case_assertions_passed": true
+        },
+        {
+          "name": "selected_Z0",
+          "core_ok": true,
+          "eligible_brackets": 1,
+          "linked_brackets": 1,
+          "table_member_count": 2,
+          "missing_passport_text": false,
+          "source_unchanged": true,
+          "physical_elements": 3,
+          "counters": {
+            "PhysicalElementsVisited": 3,
+            "BracketZoneLinksVisited": 1,
+            "PassportScopesVisited": 1,
+            "EligibleBracketsVisited": 1,
+            "MembersIndexed": 2,
+            "SupportLinksIndexed": 2,
+            "UnlinkedBrackets": 0,
+            "CandidateLinksForAbsenceVisited": 2
+          },
+          "core_issue_codes": [
+            "Q_FRAME_ENGINEERING_LIMIT",
+            "Q_VALUE_UNKNOWN"
+          ],
+          "selected_zone_count": 1,
+          "selected": [
+            "Z0"
+          ],
+          "orphan_count": 0,
+          "orphan_ids": [],
+          "literal_contiguous_orphan_ids_visible": 0,
+          "table_message_count": 9,
+          "table_messages_sha256": "912e0b3984e2aa5392c1a7f85f32faef63ed9ec3b209536001b0a12d7de2ac8e",
+          "case_assertions_passed": true
+        },
+        {
+          "name": "retained_distinct_report_run",
+          "core_ok": true,
+          "eligible_brackets": 1,
+          "linked_brackets": 1,
+          "table_member_count": 2,
+          "missing_passport_text": false,
+          "source_unchanged": true,
+          "physical_elements": 3,
+          "counters": {
+            "PhysicalElementsVisited": 3,
+            "BracketZoneLinksVisited": 1,
+            "PassportScopesVisited": 1,
+            "EligibleBracketsVisited": 1,
+            "MembersIndexed": 2,
+            "SupportLinksIndexed": 2,
+            "UnlinkedBrackets": 0,
+            "CandidateLinksForAbsenceVisited": 2
+          },
+          "core_issue_codes": [
+            "Q_FRAME_ENGINEERING_LIMIT",
+            "Q_VALUE_UNKNOWN"
+          ],
+          "selected_zone_count": 1,
+          "selected": [
+            "Z0"
+          ],
+          "orphan_count": 0,
+          "orphan_ids": [],
+          "literal_contiguous_orphan_ids_visible": 0,
+          "table_message_count": 9,
+          "table_messages_sha256": "912e0b3984e2aa5392c1a7f85f32faef63ed9ec3b209536001b0a12d7de2ac8e",
+          "case_assertions_passed": true
+        },
+        {
+          "name": "retained_duplicate_reports",
+          "core_ok": true,
+          "eligible_brackets": 1,
+          "linked_brackets": 1,
+          "table_member_count": 2,
+          "missing_passport_text": false,
+          "source_unchanged": true,
+          "physical_elements": 3,
+          "counters": {
+            "PhysicalElementsVisited": 6,
+            "BracketZoneLinksVisited": 2,
+            "PassportScopesVisited": 2,
+            "EligibleBracketsVisited": 2,
+            "MembersIndexed": 2,
+            "SupportLinksIndexed": 2,
+            "UnlinkedBrackets": 0,
+            "CandidateLinksForAbsenceVisited": 4
+          },
+          "core_issue_codes": [
+            "Q_FRAME_ENGINEERING_LIMIT",
+            "Q_VALUE_UNKNOWN"
+          ],
+          "selected_zone_count": 1,
+          "selected": [
+            "Z0"
+          ],
+          "orphan_count": 0,
+          "orphan_ids": [],
+          "literal_contiguous_orphan_ids_visible": 0,
+          "table_message_count": 9,
+          "table_messages_sha256": "912e0b3984e2aa5392c1a7f85f32faef63ed9ec3b209536001b0a12d7de2ac8e",
+          "case_assertions_passed": true
+        },
+        {
+          "name": "retained_unlinked_elements_no_longer_present",
+          "core_ok": true,
+          "eligible_brackets": 1,
+          "linked_brackets": 1,
+          "table_member_count": 2,
+          "missing_passport_text": false,
+          "source_unchanged": true,
+          "physical_elements": 3,
+          "counters": {
+            "PhysicalElementsVisited": 3,
+            "BracketZoneLinksVisited": 1,
+            "PassportScopesVisited": 1,
+            "EligibleBracketsVisited": 1,
+            "MembersIndexed": 2,
+            "SupportLinksIndexed": 2,
+            "UnlinkedBrackets": 0,
+            "CandidateLinksForAbsenceVisited": 2
+          },
+          "core_issue_codes": [
+            "Q_FRAME_ENGINEERING_LIMIT",
+            "Q_VALUE_UNKNOWN"
+          ],
+          "selected_zone_count": 1,
+          "selected": [
+            "Z0"
+          ],
+          "orphan_count": 0,
+          "orphan_ids": [],
+          "literal_contiguous_orphan_ids_visible": 0,
+          "table_message_count": 9,
+          "table_messages_sha256": "912e0b3984e2aa5392c1a7f85f32faef63ed9ec3b209536001b0a12d7de2ac8e",
+          "case_assertions_passed": true
+        },
+        {
+          "name": "unavailable_passport_not_zero_relation",
+          "core_ok": true,
+          "eligible_brackets": 0,
+          "linked_brackets": 0,
+          "table_member_count": 1,
+          "missing_passport_text": true,
+          "source_unchanged": true,
+          "physical_elements": 3,
+          "counters": {
+            "PhysicalElementsVisited": 3,
+            "BracketZoneLinksVisited": 1,
+            "PassportScopesVisited": 0,
+            "EligibleBracketsVisited": 0,
+            "MembersIndexed": 0,
+            "SupportLinksIndexed": 0,
+            "UnlinkedBrackets": 0,
+            "CandidateLinksForAbsenceVisited": 0
+          },
+          "core_issue_codes": [
+            "Q_FRAME_ENGINEERING_LIMIT",
+            "Q_VALUE_UNKNOWN"
+          ],
+          "selected_zone_count": 1,
+          "selected": [
+            "Z0"
+          ],
+          "orphan_count": 0,
+          "orphan_ids": [],
+          "literal_contiguous_orphan_ids_visible": 0,
+          "table_message_count": 4,
+          "table_messages_sha256": "910a8657d2576e411cc3fcbf41268166611938c3ee71a1548d246b63ee68f225",
+          "case_assertions_passed": true
+        },
+        {
+          "name": "legacy_absent_passport_not_zero_relation",
+          "core_ok": true,
+          "eligible_brackets": 0,
+          "linked_brackets": 0,
+          "table_member_count": 1,
+          "missing_passport_text": true,
+          "source_unchanged": true,
+          "physical_elements": 3,
+          "counters": {
+            "PhysicalElementsVisited": 3,
+            "BracketZoneLinksVisited": 1,
+            "PassportScopesVisited": 0,
+            "EligibleBracketsVisited": 0,
+            "MembersIndexed": 0,
+            "SupportLinksIndexed": 0,
+            "UnlinkedBrackets": 0,
+            "CandidateLinksForAbsenceVisited": 0
+          },
+          "core_issue_codes": [
+            "Q_FRAME_ENGINEERING_LIMIT",
+            "Q_VALUE_UNKNOWN"
+          ],
+          "selected_zone_count": 1,
+          "selected": [
+            "Z0"
+          ],
+          "orphan_count": 0,
+          "orphan_ids": [],
+          "literal_contiguous_orphan_ids_visible": 0,
+          "table_message_count": 4,
+          "table_messages_sha256": "910a8657d2576e411cc3fcbf41268166611938c3ee71a1548d246b63ee68f225",
+          "case_assertions_passed": true
+        },
+        {
+          "name": "manual_registration_without_passport",
+          "core_ok": true,
+          "eligible_brackets": 0,
+          "linked_brackets": 0,
+          "table_member_count": 1,
+          "missing_passport_text": true,
+          "source_unchanged": true,
+          "physical_elements": 1,
+          "counters": {
+            "PhysicalElementsVisited": 1,
+            "BracketZoneLinksVisited": 0,
+            "PassportScopesVisited": 0,
+            "EligibleBracketsVisited": 0,
+            "MembersIndexed": 0,
+            "SupportLinksIndexed": 0,
+            "UnlinkedBrackets": 0,
+            "CandidateLinksForAbsenceVisited": 0
+          },
+          "core_issue_codes": [
+            "Q_FRAME_ENGINEERING_LIMIT",
+            "Q_VALUE_UNKNOWN"
+          ],
+          "selected_zone_count": 1,
+          "selected": [
+            "Z0"
+          ],
+          "orphan_count": 0,
+          "orphan_ids": [],
+          "literal_contiguous_orphan_ids_visible": 0,
+          "table_message_count": 3,
+          "table_messages_sha256": "2c172808fc3c76598fa943234d188fd19af5ca9948bc120db9747d82c51e355b",
+          "case_assertions_passed": true
+        }
+      ]
+    },
+    {
+      "fixture": "gap_one",
+      "status": "PASS",
+      "checks": 33,
+      "cases": [
+        {
+          "name": "all",
+          "core_ok": true,
+          "eligible_brackets": 1,
+          "linked_brackets": 1,
+          "table_member_count": 2,
+          "missing_passport_text": false,
+          "source_unchanged": true,
+          "physical_elements": 3,
+          "counters": {
+            "PhysicalElementsVisited": 3,
+            "BracketZoneLinksVisited": 1,
+            "PassportScopesVisited": 1,
+            "EligibleBracketsVisited": 1,
+            "MembersIndexed": 2,
+            "SupportLinksIndexed": 2,
+            "UnlinkedBrackets": 0,
+            "CandidateLinksForAbsenceVisited": 2
+          },
+          "core_issue_codes": [
+            "Q_FRAME_ENGINEERING_LIMIT",
+            "Q_VALUE_UNKNOWN"
+          ],
+          "selected_zone_count": 1,
+          "selected": [
+            "Z0"
+          ],
+          "orphan_count": 0,
+          "orphan_ids": [],
+          "literal_contiguous_orphan_ids_visible": 0,
+          "table_message_count": 9,
+          "table_messages_sha256": "6e282eb11f09b91de815384178d7390157836276370584c8933d17b2ddbcca53",
+          "case_assertions_passed": true
+        },
+        {
+          "name": "selected_Z0",
+          "core_ok": true,
+          "eligible_brackets": 1,
+          "linked_brackets": 1,
+          "table_member_count": 2,
+          "missing_passport_text": false,
+          "source_unchanged": true,
+          "physical_elements": 3,
+          "counters": {
+            "PhysicalElementsVisited": 3,
+            "BracketZoneLinksVisited": 1,
+            "PassportScopesVisited": 1,
+            "EligibleBracketsVisited": 1,
+            "MembersIndexed": 2,
+            "SupportLinksIndexed": 2,
+            "UnlinkedBrackets": 0,
+            "CandidateLinksForAbsenceVisited": 2
+          },
+          "core_issue_codes": [
+            "Q_FRAME_ENGINEERING_LIMIT",
+            "Q_VALUE_UNKNOWN"
+          ],
+          "selected_zone_count": 1,
+          "selected": [
+            "Z0"
+          ],
+          "orphan_count": 0,
+          "orphan_ids": [],
+          "literal_contiguous_orphan_ids_visible": 0,
+          "table_message_count": 9,
+          "table_messages_sha256": "6e282eb11f09b91de815384178d7390157836276370584c8933d17b2ddbcca53",
+          "case_assertions_passed": true
+        },
+        {
+          "name": "retained_distinct_report_run",
+          "core_ok": true,
+          "eligible_brackets": 1,
+          "linked_brackets": 1,
+          "table_member_count": 2,
+          "missing_passport_text": false,
+          "source_unchanged": true,
+          "physical_elements": 3,
+          "counters": {
+            "PhysicalElementsVisited": 3,
+            "BracketZoneLinksVisited": 1,
+            "PassportScopesVisited": 1,
+            "EligibleBracketsVisited": 1,
+            "MembersIndexed": 2,
+            "SupportLinksIndexed": 2,
+            "UnlinkedBrackets": 0,
+            "CandidateLinksForAbsenceVisited": 2
+          },
+          "core_issue_codes": [
+            "Q_FRAME_ENGINEERING_LIMIT",
+            "Q_VALUE_UNKNOWN"
+          ],
+          "selected_zone_count": 1,
+          "selected": [
+            "Z0"
+          ],
+          "orphan_count": 0,
+          "orphan_ids": [],
+          "literal_contiguous_orphan_ids_visible": 0,
+          "table_message_count": 9,
+          "table_messages_sha256": "6e282eb11f09b91de815384178d7390157836276370584c8933d17b2ddbcca53",
+          "case_assertions_passed": true
+        },
+        {
+          "name": "retained_duplicate_reports",
+          "core_ok": true,
+          "eligible_brackets": 1,
+          "linked_brackets": 1,
+          "table_member_count": 2,
+          "missing_passport_text": false,
+          "source_unchanged": true,
+          "physical_elements": 3,
+          "counters": {
+            "PhysicalElementsVisited": 6,
+            "BracketZoneLinksVisited": 2,
+            "PassportScopesVisited": 2,
+            "EligibleBracketsVisited": 2,
+            "MembersIndexed": 2,
+            "SupportLinksIndexed": 2,
+            "UnlinkedBrackets": 0,
+            "CandidateLinksForAbsenceVisited": 4
+          },
+          "core_issue_codes": [
+            "Q_FRAME_ENGINEERING_LIMIT",
+            "Q_VALUE_UNKNOWN"
+          ],
+          "selected_zone_count": 1,
+          "selected": [
+            "Z0"
+          ],
+          "orphan_count": 0,
+          "orphan_ids": [],
+          "literal_contiguous_orphan_ids_visible": 0,
+          "table_message_count": 9,
+          "table_messages_sha256": "6e282eb11f09b91de815384178d7390157836276370584c8933d17b2ddbcca53",
+          "case_assertions_passed": true
+        },
+        {
+          "name": "retained_unlinked_elements_no_longer_present",
+          "core_ok": true,
+          "eligible_brackets": 1,
+          "linked_brackets": 1,
+          "table_member_count": 2,
+          "missing_passport_text": false,
+          "source_unchanged": true,
+          "physical_elements": 3,
+          "counters": {
+            "PhysicalElementsVisited": 3,
+            "BracketZoneLinksVisited": 1,
+            "PassportScopesVisited": 1,
+            "EligibleBracketsVisited": 1,
+            "MembersIndexed": 2,
+            "SupportLinksIndexed": 2,
+            "UnlinkedBrackets": 0,
+            "CandidateLinksForAbsenceVisited": 2
+          },
+          "core_issue_codes": [
+            "Q_FRAME_ENGINEERING_LIMIT",
+            "Q_VALUE_UNKNOWN"
+          ],
+          "selected_zone_count": 1,
+          "selected": [
+            "Z0"
+          ],
+          "orphan_count": 0,
+          "orphan_ids": [],
+          "literal_contiguous_orphan_ids_visible": 0,
+          "table_message_count": 9,
+          "table_messages_sha256": "6e282eb11f09b91de815384178d7390157836276370584c8933d17b2ddbcca53",
+          "case_assertions_passed": true
+        },
+        {
+          "name": "unavailable_passport_not_zero_relation",
+          "core_ok": true,
+          "eligible_brackets": 0,
+          "linked_brackets": 0,
+          "table_member_count": 1,
+          "missing_passport_text": true,
+          "source_unchanged": true,
+          "physical_elements": 3,
+          "counters": {
+            "PhysicalElementsVisited": 3,
+            "BracketZoneLinksVisited": 1,
+            "PassportScopesVisited": 0,
+            "EligibleBracketsVisited": 0,
+            "MembersIndexed": 0,
+            "SupportLinksIndexed": 0,
+            "UnlinkedBrackets": 0,
+            "CandidateLinksForAbsenceVisited": 0
+          },
+          "core_issue_codes": [
+            "Q_FRAME_ENGINEERING_LIMIT",
+            "Q_VALUE_UNKNOWN"
+          ],
+          "selected_zone_count": 1,
+          "selected": [
+            "Z0"
+          ],
+          "orphan_count": 0,
+          "orphan_ids": [],
+          "literal_contiguous_orphan_ids_visible": 0,
+          "table_message_count": 4,
+          "table_messages_sha256": "910a8657d2576e411cc3fcbf41268166611938c3ee71a1548d246b63ee68f225",
+          "case_assertions_passed": true
+        },
+        {
+          "name": "legacy_absent_passport_not_zero_relation",
+          "core_ok": true,
+          "eligible_brackets": 0,
+          "linked_brackets": 0,
+          "table_member_count": 1,
+          "missing_passport_text": true,
+          "source_unchanged": true,
+          "physical_elements": 3,
+          "counters": {
+            "PhysicalElementsVisited": 3,
+            "BracketZoneLinksVisited": 1,
+            "PassportScopesVisited": 0,
+            "EligibleBracketsVisited": 0,
+            "MembersIndexed": 0,
+            "SupportLinksIndexed": 0,
+            "UnlinkedBrackets": 0,
+            "CandidateLinksForAbsenceVisited": 0
+          },
+          "core_issue_codes": [
+            "Q_FRAME_ENGINEERING_LIMIT",
+            "Q_VALUE_UNKNOWN"
+          ],
+          "selected_zone_count": 1,
+          "selected": [
+            "Z0"
+          ],
+          "orphan_count": 0,
+          "orphan_ids": [],
+          "literal_contiguous_orphan_ids_visible": 0,
+          "table_message_count": 4,
+          "table_messages_sha256": "910a8657d2576e411cc3fcbf41268166611938c3ee71a1548d246b63ee68f225",
+          "case_assertions_passed": true
+        },
+        {
+          "name": "manual_registration_without_passport",
+          "core_ok": true,
+          "eligible_brackets": 0,
+          "linked_brackets": 0,
+          "table_member_count": 1,
+          "missing_passport_text": true,
+          "source_unchanged": true,
+          "physical_elements": 1,
+          "counters": {
+            "PhysicalElementsVisited": 1,
+            "BracketZoneLinksVisited": 0,
+            "PassportScopesVisited": 0,
+            "EligibleBracketsVisited": 0,
+            "MembersIndexed": 0,
+            "SupportLinksIndexed": 0,
+            "UnlinkedBrackets": 0,
+            "CandidateLinksForAbsenceVisited": 0
+          },
+          "core_issue_codes": [
+            "Q_FRAME_ENGINEERING_LIMIT",
+            "Q_VALUE_UNKNOWN"
+          ],
+          "selected_zone_count": 1,
+          "selected": [
+            "Z0"
+          ],
+          "orphan_count": 0,
+          "orphan_ids": [],
+          "literal_contiguous_orphan_ids_visible": 0,
+          "table_message_count": 3,
+          "table_messages_sha256": "2c172808fc3c76598fa943234d188fd19af5ca9948bc120db9747d82c51e355b",
+          "case_assertions_passed": true
+        }
+      ]
+    },
+    {
+      "fixture": "gap_one_plus",
+      "status": "PASS",
+      "checks": 41,
+      "cases": [
+        {
+          "name": "all",
+          "core_ok": true,
+          "eligible_brackets": 1,
+          "linked_brackets": 0,
+          "table_member_count": 2,
+          "missing_passport_text": false,
+          "source_unchanged": true,
+          "physical_elements": 3,
+          "counters": {
+            "PhysicalElementsVisited": 3,
+            "BracketZoneLinksVisited": 1,
+            "PassportScopesVisited": 1,
+            "EligibleBracketsVisited": 1,
+            "MembersIndexed": 2,
+            "SupportLinksIndexed": 0,
+            "UnlinkedBrackets": 1,
+            "CandidateLinksForAbsenceVisited": 0
+          },
+          "core_issue_codes": [
+            "Q_FRAME_ENGINEERING_LIMIT",
+            "Q_VALUE_UNKNOWN"
+          ],
+          "selected_zone_count": 1,
+          "selected": [
+            "Z0"
+          ],
+          "orphan_count": 1,
+          "orphan_ids": [
+            "9082889c85164939ad59480128269144:brackets:0"
+          ],
+          "literal_contiguous_orphan_ids_visible": 1,
+          "table_message_count": 9,
+          "table_messages_sha256": "b844bb08f23d7686a866222b86863a73c3ce78cc3c049dfded75c0c42f308f6b",
+          "case_assertions_passed": true
+        },
+        {
+          "name": "selected_Z0",
+          "core_ok": true,
+          "eligible_brackets": 1,
+          "linked_brackets": 0,
+          "table_member_count": 2,
+          "missing_passport_text": false,
+          "source_unchanged": true,
+          "physical_elements": 3,
+          "counters": {
+            "PhysicalElementsVisited": 3,
+            "BracketZoneLinksVisited": 1,
+            "PassportScopesVisited": 1,
+            "EligibleBracketsVisited": 1,
+            "MembersIndexed": 2,
+            "SupportLinksIndexed": 0,
+            "UnlinkedBrackets": 1,
+            "CandidateLinksForAbsenceVisited": 0
+          },
+          "core_issue_codes": [
+            "Q_FRAME_ENGINEERING_LIMIT",
+            "Q_VALUE_UNKNOWN"
+          ],
+          "selected_zone_count": 1,
+          "selected": [
+            "Z0"
+          ],
+          "orphan_count": 1,
+          "orphan_ids": [
+            "9082889c85164939ad59480128269144:brackets:0"
+          ],
+          "literal_contiguous_orphan_ids_visible": 1,
+          "table_message_count": 9,
+          "table_messages_sha256": "b844bb08f23d7686a866222b86863a73c3ce78cc3c049dfded75c0c42f308f6b",
+          "case_assertions_passed": true
+        },
+        {
+          "name": "retained_distinct_report_run",
+          "core_ok": true,
+          "eligible_brackets": 1,
+          "linked_brackets": 0,
+          "table_member_count": 2,
+          "missing_passport_text": false,
+          "source_unchanged": true,
+          "physical_elements": 3,
+          "counters": {
+            "PhysicalElementsVisited": 3,
+            "BracketZoneLinksVisited": 1,
+            "PassportScopesVisited": 1,
+            "EligibleBracketsVisited": 1,
+            "MembersIndexed": 2,
+            "SupportLinksIndexed": 0,
+            "UnlinkedBrackets": 1,
+            "CandidateLinksForAbsenceVisited": 0
+          },
+          "core_issue_codes": [
+            "Q_FRAME_ENGINEERING_LIMIT",
+            "Q_VALUE_UNKNOWN"
+          ],
+          "selected_zone_count": 1,
+          "selected": [
+            "Z0"
+          ],
+          "orphan_count": 1,
+          "orphan_ids": [
+            "9082889c85164939ad59480128269144:brackets:0"
+          ],
+          "literal_contiguous_orphan_ids_visible": 1,
+          "table_message_count": 9,
+          "table_messages_sha256": "b844bb08f23d7686a866222b86863a73c3ce78cc3c049dfded75c0c42f308f6b",
+          "case_assertions_passed": true
+        },
+        {
+          "name": "retained_duplicate_reports",
+          "core_ok": true,
+          "eligible_brackets": 1,
+          "linked_brackets": 0,
+          "table_member_count": 2,
+          "missing_passport_text": false,
+          "source_unchanged": true,
+          "physical_elements": 3,
+          "counters": {
+            "PhysicalElementsVisited": 6,
+            "BracketZoneLinksVisited": 2,
+            "PassportScopesVisited": 2,
+            "EligibleBracketsVisited": 2,
+            "MembersIndexed": 2,
+            "SupportLinksIndexed": 0,
+            "UnlinkedBrackets": 1,
+            "CandidateLinksForAbsenceVisited": 0
+          },
+          "core_issue_codes": [
+            "Q_FRAME_ENGINEERING_LIMIT",
+            "Q_VALUE_UNKNOWN"
+          ],
+          "selected_zone_count": 1,
+          "selected": [
+            "Z0"
+          ],
+          "orphan_count": 1,
+          "orphan_ids": [
+            "9082889c85164939ad59480128269144:brackets:0"
+          ],
+          "literal_contiguous_orphan_ids_visible": 1,
+          "table_message_count": 9,
+          "table_messages_sha256": "b844bb08f23d7686a866222b86863a73c3ce78cc3c049dfded75c0c42f308f6b",
+          "case_assertions_passed": true
+        },
+        {
+          "name": "retained_unlinked_elements_no_longer_present",
+          "core_ok": true,
+          "eligible_brackets": 0,
+          "linked_brackets": 0,
+          "table_member_count": 2,
+          "missing_passport_text": false,
+          "source_unchanged": true,
+          "physical_elements": 2,
+          "counters": {
+            "PhysicalElementsVisited": 2,
+            "BracketZoneLinksVisited": 0,
+            "PassportScopesVisited": 1,
+            "EligibleBracketsVisited": 0,
+            "MembersIndexed": 2,
+            "SupportLinksIndexed": 0,
+            "UnlinkedBrackets": 0,
+            "CandidateLinksForAbsenceVisited": 0
+          },
+          "core_issue_codes": [
+            "Q_FRAME_ENGINEERING_LIMIT",
+            "Q_VALUE_UNKNOWN"
+          ],
+          "selected_zone_count": 1,
+          "selected": [
+            "Z0"
+          ],
+          "orphan_count": 0,
+          "orphan_ids": [],
+          "literal_contiguous_orphan_ids_visible": 0,
+          "table_message_count": 7,
+          "table_messages_sha256": "8dfdea7ea5c41b37a937dc11d252d16bdf88d096a12fd620c66270f1ad92c40d",
+          "case_assertions_passed": true
+        },
+        {
+          "name": "unavailable_passport_not_zero_relation",
+          "core_ok": true,
+          "eligible_brackets": 0,
+          "linked_brackets": 0,
+          "table_member_count": 1,
+          "missing_passport_text": true,
+          "source_unchanged": true,
+          "physical_elements": 3,
+          "counters": {
+            "PhysicalElementsVisited": 3,
+            "BracketZoneLinksVisited": 1,
+            "PassportScopesVisited": 0,
+            "EligibleBracketsVisited": 0,
+            "MembersIndexed": 0,
+            "SupportLinksIndexed": 0,
+            "UnlinkedBrackets": 0,
+            "CandidateLinksForAbsenceVisited": 0
+          },
+          "core_issue_codes": [
+            "Q_FRAME_ENGINEERING_LIMIT",
+            "Q_VALUE_UNKNOWN"
+          ],
+          "selected_zone_count": 1,
+          "selected": [
+            "Z0"
+          ],
+          "orphan_count": 0,
+          "orphan_ids": [],
+          "literal_contiguous_orphan_ids_visible": 0,
+          "table_message_count": 4,
+          "table_messages_sha256": "910a8657d2576e411cc3fcbf41268166611938c3ee71a1548d246b63ee68f225",
+          "case_assertions_passed": true
+        },
+        {
+          "name": "legacy_absent_passport_not_zero_relation",
+          "core_ok": true,
+          "eligible_brackets": 0,
+          "linked_brackets": 0,
+          "table_member_count": 1,
+          "missing_passport_text": true,
+          "source_unchanged": true,
+          "physical_elements": 3,
+          "counters": {
+            "PhysicalElementsVisited": 3,
+            "BracketZoneLinksVisited": 1,
+            "PassportScopesVisited": 0,
+            "EligibleBracketsVisited": 0,
+            "MembersIndexed": 0,
+            "SupportLinksIndexed": 0,
+            "UnlinkedBrackets": 0,
+            "CandidateLinksForAbsenceVisited": 0
+          },
+          "core_issue_codes": [
+            "Q_FRAME_ENGINEERING_LIMIT",
+            "Q_VALUE_UNKNOWN"
+          ],
+          "selected_zone_count": 1,
+          "selected": [
+            "Z0"
+          ],
+          "orphan_count": 0,
+          "orphan_ids": [],
+          "literal_contiguous_orphan_ids_visible": 0,
+          "table_message_count": 4,
+          "table_messages_sha256": "910a8657d2576e411cc3fcbf41268166611938c3ee71a1548d246b63ee68f225",
+          "case_assertions_passed": true
+        },
+        {
+          "name": "manual_registration_without_passport",
+          "core_ok": true,
+          "eligible_brackets": 0,
+          "linked_brackets": 0,
+          "table_member_count": 1,
+          "missing_passport_text": true,
+          "source_unchanged": true,
+          "physical_elements": 1,
+          "counters": {
+            "PhysicalElementsVisited": 1,
+            "BracketZoneLinksVisited": 0,
+            "PassportScopesVisited": 0,
+            "EligibleBracketsVisited": 0,
+            "MembersIndexed": 0,
+            "SupportLinksIndexed": 0,
+            "UnlinkedBrackets": 0,
+            "CandidateLinksForAbsenceVisited": 0
+          },
+          "core_issue_codes": [
+            "Q_FRAME_ENGINEERING_LIMIT",
+            "Q_VALUE_UNKNOWN"
+          ],
+          "selected_zone_count": 1,
+          "selected": [
+            "Z0"
+          ],
+          "orphan_count": 0,
+          "orphan_ids": [],
+          "literal_contiguous_orphan_ids_visible": 0,
+          "table_message_count": 3,
+          "table_messages_sha256": "2c172808fc3c76598fa943234d188fd19af5ca9948bc120db9747d82c51e355b",
+          "case_assertions_passed": true
+        }
+      ]
+    },
+    {
+      "fixture": "normal_positive_steps",
+      "status": "PASS",
+      "checks": 33,
+      "cases": [
+        {
+          "name": "all",
+          "core_ok": true,
+          "eligible_brackets": 6,
+          "linked_brackets": 6,
+          "table_member_count": 2,
+          "missing_passport_text": false,
+          "source_unchanged": true,
+          "physical_elements": 8,
+          "counters": {
+            "PhysicalElementsVisited": 8,
+            "BracketZoneLinksVisited": 6,
+            "PassportScopesVisited": 1,
+            "EligibleBracketsVisited": 6,
+            "MembersIndexed": 2,
+            "SupportLinksIndexed": 6,
+            "UnlinkedBrackets": 0,
+            "CandidateLinksForAbsenceVisited": 6
+          },
+          "core_issue_codes": [
+            "Q_FRAME_ENGINEERING_LIMIT",
+            "Q_VALUE_UNKNOWN"
+          ],
+          "selected_zone_count": 1,
+          "selected": [
+            "Z0"
+          ],
+          "orphan_count": 0,
+          "orphan_ids": [],
+          "literal_contiguous_orphan_ids_visible": 0,
+          "table_message_count": 8,
+          "table_messages_sha256": "3de1c5a2460351ac46144f9ddc39974b9abd049310163e156f53e1cdf4f5d2c3",
+          "case_assertions_passed": true
+        },
+        {
+          "name": "selected_Z0",
+          "core_ok": true,
+          "eligible_brackets": 6,
+          "linked_brackets": 6,
+          "table_member_count": 2,
+          "missing_passport_text": false,
+          "source_unchanged": true,
+          "physical_elements": 8,
+          "counters": {
+            "PhysicalElementsVisited": 8,
+            "BracketZoneLinksVisited": 6,
+            "PassportScopesVisited": 1,
+            "EligibleBracketsVisited": 6,
+            "MembersIndexed": 2,
+            "SupportLinksIndexed": 6,
+            "UnlinkedBrackets": 0,
+            "CandidateLinksForAbsenceVisited": 6
+          },
+          "core_issue_codes": [
+            "Q_FRAME_ENGINEERING_LIMIT",
+            "Q_VALUE_UNKNOWN"
+          ],
+          "selected_zone_count": 1,
+          "selected": [
+            "Z0"
+          ],
+          "orphan_count": 0,
+          "orphan_ids": [],
+          "literal_contiguous_orphan_ids_visible": 0,
+          "table_message_count": 8,
+          "table_messages_sha256": "3de1c5a2460351ac46144f9ddc39974b9abd049310163e156f53e1cdf4f5d2c3",
+          "case_assertions_passed": true
+        },
+        {
+          "name": "retained_distinct_report_run",
+          "core_ok": true,
+          "eligible_brackets": 6,
+          "linked_brackets": 6,
+          "table_member_count": 2,
+          "missing_passport_text": false,
+          "source_unchanged": true,
+          "physical_elements": 8,
+          "counters": {
+            "PhysicalElementsVisited": 8,
+            "BracketZoneLinksVisited": 6,
+            "PassportScopesVisited": 1,
+            "EligibleBracketsVisited": 6,
+            "MembersIndexed": 2,
+            "SupportLinksIndexed": 6,
+            "UnlinkedBrackets": 0,
+            "CandidateLinksForAbsenceVisited": 6
+          },
+          "core_issue_codes": [
+            "Q_FRAME_ENGINEERING_LIMIT",
+            "Q_VALUE_UNKNOWN"
+          ],
+          "selected_zone_count": 1,
+          "selected": [
+            "Z0"
+          ],
+          "orphan_count": 0,
+          "orphan_ids": [],
+          "literal_contiguous_orphan_ids_visible": 0,
+          "table_message_count": 8,
+          "table_messages_sha256": "3de1c5a2460351ac46144f9ddc39974b9abd049310163e156f53e1cdf4f5d2c3",
+          "case_assertions_passed": true
+        },
+        {
+          "name": "retained_duplicate_reports",
+          "core_ok": true,
+          "eligible_brackets": 6,
+          "linked_brackets": 6,
+          "table_member_count": 2,
+          "missing_passport_text": false,
+          "source_unchanged": true,
+          "physical_elements": 8,
+          "counters": {
+            "PhysicalElementsVisited": 16,
+            "BracketZoneLinksVisited": 12,
+            "PassportScopesVisited": 2,
+            "EligibleBracketsVisited": 12,
+            "MembersIndexed": 2,
+            "SupportLinksIndexed": 6,
+            "UnlinkedBrackets": 0,
+            "CandidateLinksForAbsenceVisited": 12
+          },
+          "core_issue_codes": [
+            "Q_FRAME_ENGINEERING_LIMIT",
+            "Q_VALUE_UNKNOWN"
+          ],
+          "selected_zone_count": 1,
+          "selected": [
+            "Z0"
+          ],
+          "orphan_count": 0,
+          "orphan_ids": [],
+          "literal_contiguous_orphan_ids_visible": 0,
+          "table_message_count": 8,
+          "table_messages_sha256": "3de1c5a2460351ac46144f9ddc39974b9abd049310163e156f53e1cdf4f5d2c3",
+          "case_assertions_passed": true
+        },
+        {
+          "name": "retained_unlinked_elements_no_longer_present",
+          "core_ok": true,
+          "eligible_brackets": 6,
+          "linked_brackets": 6,
+          "table_member_count": 2,
+          "missing_passport_text": false,
+          "source_unchanged": true,
+          "physical_elements": 8,
+          "counters": {
+            "PhysicalElementsVisited": 8,
+            "BracketZoneLinksVisited": 6,
+            "PassportScopesVisited": 1,
+            "EligibleBracketsVisited": 6,
+            "MembersIndexed": 2,
+            "SupportLinksIndexed": 6,
+            "UnlinkedBrackets": 0,
+            "CandidateLinksForAbsenceVisited": 6
+          },
+          "core_issue_codes": [
+            "Q_FRAME_ENGINEERING_LIMIT",
+            "Q_VALUE_UNKNOWN"
+          ],
+          "selected_zone_count": 1,
+          "selected": [
+            "Z0"
+          ],
+          "orphan_count": 0,
+          "orphan_ids": [],
+          "literal_contiguous_orphan_ids_visible": 0,
+          "table_message_count": 8,
+          "table_messages_sha256": "3de1c5a2460351ac46144f9ddc39974b9abd049310163e156f53e1cdf4f5d2c3",
+          "case_assertions_passed": true
+        },
+        {
+          "name": "unavailable_passport_not_zero_relation",
+          "core_ok": true,
+          "eligible_brackets": 0,
+          "linked_brackets": 0,
+          "table_member_count": 1,
+          "missing_passport_text": true,
+          "source_unchanged": true,
+          "physical_elements": 8,
+          "counters": {
+            "PhysicalElementsVisited": 8,
+            "BracketZoneLinksVisited": 6,
+            "PassportScopesVisited": 0,
+            "EligibleBracketsVisited": 0,
+            "MembersIndexed": 0,
+            "SupportLinksIndexed": 0,
+            "UnlinkedBrackets": 0,
+            "CandidateLinksForAbsenceVisited": 0
+          },
+          "core_issue_codes": [
+            "Q_FRAME_ENGINEERING_LIMIT",
+            "Q_VALUE_UNKNOWN"
+          ],
+          "selected_zone_count": 1,
+          "selected": [
+            "Z0"
+          ],
+          "orphan_count": 0,
+          "orphan_ids": [],
+          "literal_contiguous_orphan_ids_visible": 0,
+          "table_message_count": 4,
+          "table_messages_sha256": "51ff17dc8a6e0d7825b8403cff3f44e0336204d7bbc0b6d9845a642111af8358",
+          "case_assertions_passed": true
+        },
+        {
+          "name": "legacy_absent_passport_not_zero_relation",
+          "core_ok": true,
+          "eligible_brackets": 0,
+          "linked_brackets": 0,
+          "table_member_count": 1,
+          "missing_passport_text": true,
+          "source_unchanged": true,
+          "physical_elements": 8,
+          "counters": {
+            "PhysicalElementsVisited": 8,
+            "BracketZoneLinksVisited": 6,
+            "PassportScopesVisited": 0,
+            "EligibleBracketsVisited": 0,
+            "MembersIndexed": 0,
+            "SupportLinksIndexed": 0,
+            "UnlinkedBrackets": 0,
+            "CandidateLinksForAbsenceVisited": 0
+          },
+          "core_issue_codes": [
+            "Q_FRAME_ENGINEERING_LIMIT",
+            "Q_VALUE_UNKNOWN"
+          ],
+          "selected_zone_count": 1,
+          "selected": [
+            "Z0"
+          ],
+          "orphan_count": 0,
+          "orphan_ids": [],
+          "literal_contiguous_orphan_ids_visible": 0,
+          "table_message_count": 4,
+          "table_messages_sha256": "51ff17dc8a6e0d7825b8403cff3f44e0336204d7bbc0b6d9845a642111af8358",
+          "case_assertions_passed": true
+        },
+        {
+          "name": "manual_registration_without_passport",
+          "core_ok": true,
+          "eligible_brackets": 0,
+          "linked_brackets": 0,
+          "table_member_count": 1,
+          "missing_passport_text": true,
+          "source_unchanged": true,
+          "physical_elements": 6,
+          "counters": {
+            "PhysicalElementsVisited": 6,
+            "BracketZoneLinksVisited": 0,
+            "PassportScopesVisited": 0,
+            "EligibleBracketsVisited": 0,
+            "MembersIndexed": 0,
+            "SupportLinksIndexed": 0,
+            "UnlinkedBrackets": 0,
+            "CandidateLinksForAbsenceVisited": 0
+          },
+          "core_issue_codes": [
+            "Q_FRAME_ENGINEERING_LIMIT",
+            "Q_VALUE_UNKNOWN"
+          ],
+          "selected_zone_count": 1,
+          "selected": [
+            "Z0"
+          ],
+          "orphan_count": 0,
+          "orphan_ids": [],
+          "literal_contiguous_orphan_ids_visible": 0,
+          "table_message_count": 3,
+          "table_messages_sha256": "9b5da48ee81e105c30ff34b502e6d647b6b34eb31ac9324e2089ff7030722c91",
+          "case_assertions_passed": true
+        }
+      ]
+    }
+  ]
+}

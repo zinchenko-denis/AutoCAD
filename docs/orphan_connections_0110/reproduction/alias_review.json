@@ -1,0 +1,102 @@
+{
+  "status": "PASS",
+  "origin": "accepted DTO trust-boundary case; ordinary producer does not create conflicting passport aliases",
+  "before_observation": {
+    "scope": "Synthetic validator-admissible alias control; not claimed reachable through normal producer or fresh CAD capture",
+    "same_source_run": "6579118d794a4986b4fadc57282e5620",
+    "first": {
+      "name": "unlinked_then_linked_alias",
+      "ok": true,
+      "issues": [
+        "Q_FRAME_ENGINEERING_LIMIT",
+        "Q_VALUE_UNKNOWN",
+        "Q_VALUE_UNKNOWN",
+        "Q_FRAME_ENGINEERING_LIMIT"
+      ],
+      "messages": [
+        "Монтажная принадлежность не определена: кронштейн 6579118d794a4986b4fadc57282e5620:brackets:0; зона «Z0». ID есть в проверенном составе, но отсутствует среди ссылок кандидатов опор этого паспорта. Наличие и тип крепления не определены."
+      ]
+    },
+    "second": {
+      "name": "linked_alias_then_unlinked",
+      "ok": true,
+      "issues": [
+        "Q_FRAME_ENGINEERING_LIMIT",
+        "Q_VALUE_UNKNOWN",
+        "Q_VALUE_UNKNOWN",
+        "Q_FRAME_ENGINEERING_LIMIT"
+      ],
+      "messages": []
+    }
+  },
+  "fixed_cases": [
+    {
+      "name": "distinct_passport_alias_unlinked_first",
+      "core_ok": true,
+      "eligible_brackets": 1,
+      "linked_brackets": 1,
+      "table_member_count": 2,
+      "missing_passport_text": false,
+      "source_unchanged": true,
+      "physical_elements": 3,
+      "counters": {
+        "PhysicalElementsVisited": 6,
+        "BracketZoneLinksVisited": 2,
+        "PassportScopesVisited": 2,
+        "EligibleBracketsVisited": 2,
+        "MembersIndexed": 2,
+        "SupportLinksIndexed": 0,
+        "UnlinkedBrackets": 0,
+        "CandidateLinksForAbsenceVisited": 2
+      },
+      "core_issue_codes": [
+        "Q_FRAME_ENGINEERING_LIMIT",
+        "Q_VALUE_UNKNOWN"
+      ],
+      "selected_zone_count": 1,
+      "selected": [
+        "Z0"
+      ],
+      "orphan_count": 0,
+      "orphan_ids": [],
+      "literal_contiguous_orphan_ids_visible": 0,
+      "table_message_count": 8,
+      "table_messages_sha256": "7bec665fb333191d37465dfe53b5e302738f701e5c1feaf6bfa6a5a7f58bef5d",
+      "case_assertions_passed": true
+    },
+    {
+      "name": "distinct_passport_alias_linked_first",
+      "core_ok": true,
+      "eligible_brackets": 1,
+      "linked_brackets": 1,
+      "table_member_count": 2,
+      "missing_passport_text": false,
+      "source_unchanged": true,
+      "physical_elements": 3,
+      "counters": {
+        "PhysicalElementsVisited": 6,
+        "BracketZoneLinksVisited": 2,
+        "PassportScopesVisited": 2,
+        "EligibleBracketsVisited": 2,
+        "MembersIndexed": 2,
+        "SupportLinksIndexed": 2,
+        "UnlinkedBrackets": 0,
+        "CandidateLinksForAbsenceVisited": 2
+      },
+      "core_issue_codes": [
+        "Q_FRAME_ENGINEERING_LIMIT",
+        "Q_VALUE_UNKNOWN"
+      ],
+      "selected_zone_count": 1,
+      "selected": [
+        "Z0"
+      ],
+      "orphan_count": 0,
+      "orphan_ids": [],
+      "literal_contiguous_orphan_ids_visible": 0,
+      "table_message_count": 9,
+      "table_messages_sha256": "e3519f5e0973946e45afecb9632130e0c2940a2d6fd7b353d3c854480d99e2bb",
+      "case_assertions_passed": true
+    }
+  ]
+}

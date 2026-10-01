@@ -1,0 +1,106 @@
+{
+  "status": "PASS",
+  "origin": "validator-admissible synthetic DTO, distinct from normal GUID producer",
+  "before_observation": {
+    "ok": true,
+    "scope": "Synthetic validator-admissible text length control, not normal producer identifiers",
+    "run_length": 13000,
+    "zone_length": 20000,
+    "max_characters": 33201,
+    "oversized": [
+      {
+        "row": 15,
+        "col": 0,
+        "length": 33201,
+        "orphan": true
+      }
+    ],
+    "orphan_count": 1,
+    "orphan_lengths": [
+      33201
+    ]
+  },
+  "fixed_cases": [
+    {
+      "name": "long_identity",
+      "core_ok": true,
+      "eligible_brackets": 1,
+      "linked_brackets": 0,
+      "table_member_count": 2,
+      "missing_passport_text": false,
+      "source_unchanged": true,
+      "physical_elements": 3,
+      "counters": {
+        "PhysicalElementsVisited": 3,
+        "BracketZoneLinksVisited": 1,
+        "PassportScopesVisited": 1,
+        "EligibleBracketsVisited": 1,
+        "MembersIndexed": 2,
+        "SupportLinksIndexed": 0,
+        "UnlinkedBrackets": 1,
+        "CandidateLinksForAbsenceVisited": 0
+      },
+      "core_issue_codes": [
+        "Q_FRAME_ENGINEERING_LIMIT",
+        "Q_VALUE_UNKNOWN"
+      ],
+      "selected_zone_count": 1,
+      "selected_zone_values_sha256": "5ac9d9caa92df51cb57b1a64b87b000fbf6dcb413a64547723ac7a5545b6610f",
+      "orphan_count": 1,
+      "orphan_ids_sha256": "9e101e09ea69c3eee2db22524a25ff9119ddc4dbe0d04cf44a022a46854cec9f",
+      "literal_contiguous_orphan_ids_visible": 0,
+      "table_message_count": 14,
+      "table_messages_sha256": "9d1935aafd037ccb5846591a513229882f844947adc2f9531ad6181f5048ecbe",
+      "case_assertions_passed": true
+    },
+    {
+      "name": "long_unicode_identity",
+      "core_ok": true,
+      "eligible_brackets": 1,
+      "linked_brackets": 0,
+      "table_member_count": 2,
+      "missing_passport_text": false,
+      "source_unchanged": true,
+      "physical_elements": 3,
+      "counters": {
+        "PhysicalElementsVisited": 3,
+        "BracketZoneLinksVisited": 1,
+        "PassportScopesVisited": 1,
+        "EligibleBracketsVisited": 1,
+        "MembersIndexed": 2,
+        "SupportLinksIndexed": 0,
+        "UnlinkedBrackets": 1,
+        "CandidateLinksForAbsenceVisited": 0
+      },
+      "core_issue_codes": [
+        "Q_FRAME_ENGINEERING_LIMIT",
+        "Q_VALUE_UNKNOWN"
+      ],
+      "selected_zone_count": 1,
+      "selected_zone_values_sha256": "af647a84bd9ec43409b71de7783c241fb47f45ec965b025febd79b3f1195aee8",
+      "orphan_count": 1,
+      "orphan_ids_sha256": "9e101e09ea69c3eee2db22524a25ff9119ddc4dbe0d04cf44a022a46854cec9f",
+      "literal_contiguous_orphan_ids_visible": 0,
+      "table_message_count": 14,
+      "table_messages_sha256": "c8483cf131596a6fe8f7de65524746a3b2c6c1cd27dffb4d43779940f7fecf24",
+      "case_assertions_passed": true
+    }
+  ],
+  "fixed_exports": [
+    {
+      "path": "minimal/scope/long_identity.xlsx",
+      "maximum_cell_characters": 20127,
+      "roundtrip_exact": true,
+      "sha256": "9b6f5347d3ae9101cdbc110641ddcad73c48b904ead455b15878568b953db192"
+    },
+    {
+      "path": "minimal/scope/long_unicode_identity.xlsx",
+      "maximum_cell_characters": 13206,
+      "roundtrip_exact": true,
+      "sha256": "1ac41b29af627ab1ae0289a7cbcdf19c3d47b606ec9e9e3a94019c97806f886e"
+    }
+  ],
+  "full_id_zone_reconstruction": "PASS; includes UTF-16 surrogate-pair boundaries and repeated chunks",
+  "new_messages_limit": 8000,
+  "excel_cell_limit": 32767
+}

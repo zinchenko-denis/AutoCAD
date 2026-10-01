@@ -1,0 +1,102 @@
+{
+  "alias_before": {
+    "scope": "Synthetic validator-admissible alias control; not claimed reachable through normal producer or fresh CAD capture",
+    "same_source_run": "6579118d794a4986b4fadc57282e5620",
+    "first": {
+      "name": "unlinked_then_linked_alias",
+      "ok": true,
+      "issues": [
+        "Q_FRAME_ENGINEERING_LIMIT",
+        "Q_VALUE_UNKNOWN",
+        "Q_VALUE_UNKNOWN",
+        "Q_FRAME_ENGINEERING_LIMIT"
+      ],
+      "messages": [
+        "Монтажная принадлежность не определена: кронштейн 6579118d794a4986b4fadc57282e5620:brackets:0; зона «Z0». ID есть в проверенном составе, но отсутствует среди ссылок кандидатов опор этого паспорта. Наличие и тип крепления не определены."
+      ]
+    },
+    "second": {
+      "name": "linked_alias_then_unlinked",
+      "ok": true,
+      "issues": [
+        "Q_FRAME_ENGINEERING_LIMIT",
+        "Q_VALUE_UNKNOWN",
+        "Q_VALUE_UNKNOWN",
+        "Q_FRAME_ENGINEERING_LIMIT"
+      ],
+      "messages": []
+    }
+  },
+  "alias_after": {
+    "scope": "Synthetic validator-admissible alias control; not claimed reachable through normal producer or fresh CAD capture",
+    "same_source_run": "6579118d794a4986b4fadc57282e5620",
+    "first": {
+      "name": "unlinked_then_linked_alias",
+      "ok": true,
+      "issues": [
+        "Q_FRAME_ENGINEERING_LIMIT",
+        "Q_VALUE_UNKNOWN",
+        "Q_VALUE_UNKNOWN",
+        "Q_FRAME_ENGINEERING_LIMIT"
+      ],
+      "messages": []
+    },
+    "second": {
+      "name": "linked_alias_then_unlinked",
+      "ok": true,
+      "issues": [
+        "Q_FRAME_ENGINEERING_LIMIT",
+        "Q_VALUE_UNKNOWN",
+        "Q_VALUE_UNKNOWN",
+        "Q_FRAME_ENGINEERING_LIMIT"
+      ],
+      "messages": []
+    }
+  },
+  "xlsx_baseline": {
+    "ok": true,
+    "scope": "Synthetic validator-admissible text length control, not normal producer identifiers",
+    "run_length": 13000,
+    "zone_length": 20000,
+    "max_characters": 20127,
+    "oversized": [],
+    "orphan_count": 0,
+    "orphan_lengths": []
+  },
+  "xlsx_before": {
+    "ok": true,
+    "scope": "Synthetic validator-admissible text length control, not normal producer identifiers",
+    "run_length": 13000,
+    "zone_length": 20000,
+    "max_characters": 33201,
+    "oversized": [
+      {
+        "row": 15,
+        "col": 0,
+        "length": 33201,
+        "orphan": true
+      }
+    ],
+    "orphan_count": 1,
+    "orphan_lengths": [
+      33201
+    ]
+  },
+  "xlsx_after": {
+    "status": "PASS",
+    "same_input_sha256": "6294294ebea6db9ad2f1c89c5ae108947bf5d20f34210a636ef7bb545ad11c4a",
+    "original_input_sha256": "6294294ebea6db9ad2f1c89c5ae108947bf5d20f34210a636ef7bb545ad11c4a",
+    "maximum_cell_characters": 20127,
+    "new_message_characters": [
+      245,
+      8000,
+      5081,
+      8000,
+      8000,
+      4078
+    ],
+    "full_id_and_zone_reconstructed": true,
+    "all_parts_in_sequence": true,
+    "xlsx_roundtrip_exact": true
+  }
+}

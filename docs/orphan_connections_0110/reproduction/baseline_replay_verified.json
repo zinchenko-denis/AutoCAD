@@ -1,0 +1,10 @@
+{
+  "status": "REPRODUCED",
+  "expected_source_head": "1a6066d541ed2f62ac40809e1a87e09e434ab591",
+  "source_hashes_match_recorded_before": true,
+  "engine_response_matches_recorded_before": true,
+  "orphan_count": 1,
+  "orphan_ids_shown_in_table": 0,
+  "original_probe_sha256": "606761e65f5c414c0e6d299de3df9b9ebd293bdb4be27574cbd8ba8af2f69cd3",
+  "live_autocad_checked": false
+}

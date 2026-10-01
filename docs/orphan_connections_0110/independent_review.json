@@ -1,0 +1,1566 @@
+{
+  "schema": "facade_independent_review/1",
+  "date": "2026-10-01",
+  "author": "independent_review",
+  "scope": "2В2 — отсутствие сохранённой кандидатной ссылки на физический generated bracket; ограниченная презентационная диагностика",
+  "baseline_commit": "1a6066d541ed2f62ac40809e1a87e09e434ab591",
+  "reviewed_head": "1a6066d541ed2f62ac40809e1a87e09e434ab591",
+  "verdict": "PASS_LOCAL; Windows native runtime for the new orphan fixture is pending; live AutoCAD untested",
+  "unresolved_product_blockers": [],
+  "reviewed_diff": {
+    "path": "docs/orphan_connections_0110/independent_reviewed_change.patch",
+    "sha256": "e1439d324ad7d07f214b3738302c1758a6fdf6a21fa31dacd48ec2923a318c50",
+    "tracked_paths": [
+      "Facades/src/AFacadesPlugin/ConnectionTableData.cs",
+      "tools/mounting_contract_0110/ConnectionUiProbe.cs",
+      "tools/mounting_contract_0110/test_ui.py",
+      ".github/workflows/check.yml"
+    ],
+    "new_paths": [
+      "tools/orphan_connections_0110/OrphanTableProbe.cs",
+      "tools/orphan_connections_0110/reproduce_gap.py"
+    ]
+  },
+  "source_sha256": {
+    "Facades/src/AFacadesPlugin/ConnectionTableData.cs": "04fb3ddfcaa568ca68703a32dc49ec08c1bd59d98d3766201b90c0920ffe26f9",
+    "tools/mounting_contract_0110/ConnectionUiProbe.cs": "0538e7b7b07c8f1b3357da7a4babc27756c5791206b5690e2a783d0b32f8be0d",
+    "tools/mounting_contract_0110/test_ui.py": "9c33775f57a4c2fa9d8766952dc171641e588be30e5d018791ebd00183deac16",
+    ".github/workflows/check.yml": "1e03e5b0c05196e07cfb7f447764ea4c062b3928200fc353d357f7362fa0f8dd",
+    "tools/orphan_connections_0110/OrphanTableProbe.cs": "6e1316e9553aba781f86136594f30f99d0391fddd149247b509d104bca124f1b",
+    "tools/orphan_connections_0110/reproduce_gap.py": "d22fedcd31a382599c096f4f9c8d3587959c178e621558958b39a613f9a05fd8",
+    "Common/FacadeQuantities.cs": "b092bf95f154d6aa8041936bffa79a82c613d7ac8f27fee9d1e6d7c0cde09f90",
+    "Common/FacadeQuantityStore.cs": "91b47821efb92614d99e3a3cda57290c0643a50abc120dc5b9dca30f2bdd0af4",
+    "Common/ManualQuantities.cs": "f73ec0d29da2dfe4a61aa496cda5e9ff25632a5dd26bf4d1e2ff85ed6dc3dcb8",
+    "Facades/src/AFacadesPlugin/FacadeQuantityTableCommand.cs": "198cb83d4fb7c99cc24da4fba81c6cf4c6c14d20d34b320b2da57b72f4fde922",
+    "Facades/src/AFacadesPlugin/QuantityTablePreview.cs": "3d80c7d79046e874be4e511dd16cacb5c4781912069ecb2886a213c7078d7bf0",
+    "AFrame/src/AFramePlugin/FrameQuantities.cs": "d34f7cf6219dbfec7c88796b12477bea9382d4cca2dc125e4ebd1a252b1cf791",
+    "AFrame/src/AFramePlugin/FrameForm.cs": "e81d2d073b595d8812208483b02a505a698b5173f7b1f8d728fd3ebbbfbd4e23",
+    "AFrame/src/AFramePlugin/FrameSettings.cs": "a44273b52d3ee92407d5dfc98315d6750d3aa57b7259cc2b98e4432757198cda",
+    "AFrame/engine/frame_plan.py": "5c4b4bbbc8258d62e965c24604906cd819b6a06a04643425ed1770b07c5d7105",
+    "AFrame/engine/frame_connections.py": "d4febc1ce6e147f1cbce29cb64690f2c3b592efe4e40b9c88da5c8a2dcc74985",
+    "tools/catalog_connections_0110/ConnectionTableProbe.cs": "a4302ceb0616e5f871f1fd1ea37baf587d9382e873d011c4ef6c53bf06dfb8fe",
+    "tools/catalog_connections_0110/test_connection_table.py": "eb7effa4ced1705191ce60d45cdfcbfc68d29cb0fc2a0ad0eb28c39d5cc063c5",
+    "docs/orphan_connections_0110/engineering_review.md": "6dc1542f481dea9d93ab6b39c9cfe6ca84d456852bb942ca6344f45abe33e9bb",
+    "docs/orphan_connections_0110/source_facts.json": "b2726014f225603caa1a619ee0bb72749c564cf9653488e299f24066113fcc90"
+  },
+  "source_hashes_match_all_executed_manifests": true,
+  "trust_boundary_review": [
+    {
+      "check": "Freshness/validation boundary",
+      "result": "PASS",
+      "finding": "Existing FacadeQuantityTableCommand.Read requires selection.Ok, rows, nonempty Fingerprint and result.ok before Build. Common reader and validation are unchanged. Direct DTO probes prove validation/presentation, not native CAD freshness."
+    },
+    {
+      "check": "Physical eligibility",
+      "result": "PASS",
+      "finding": "Exact role bracket and origin generated:ATFRAME:brackets; ID prefix belongs to passport.source_run_id. No use of report.run_id for physical ownership."
+    },
+    {
+      "check": "Canonical zone and selection",
+      "result": "PASS",
+      "finding": "Distinct nonempty zone_ids; fallback zone_id only when none. Exactly one canonical zone must belong to selected report/passport scope. A true multi-zone element is excluded; duplicate identical zone values remain one zone."
+    },
+    {
+      "check": "Retained and duplicate sources",
+      "result": "PASS",
+      "finding": "Only currently surviving physical elements enter eligibility. Repeated physical IDs emit one diagnostic. Retained report IDs may differ from source_run_id. All eligible selected candidate links are read before presentation member deduplication."
+    },
+    {
+      "check": "Missing/unsupported/manual sources",
+      "result": "PASS",
+      "finding": "Only schema aframe_connection_passport/1 with inventory_only contributes. Unavailable, absent legacy/manual passports, manual origin, foreign source run and unselected zones do not establish an absence claim. Unknown remains unknown."
+    },
+    {
+      "check": "Engineering and quantity invariance",
+      "result": "PASS",
+      "finding": "No support assignment, new rail row, fixed/sliding type, splice continuity, gravity distribution or strength is inferred. Source DTOs remain unchanged. Diagnostics do not remove physical quantities or pick catalogue products."
+    },
+    {
+      "check": "Complexity and CAD",
+      "result": "PASS",
+      "finding": "Additional element/run/zone indexes, passport-scope lookups and candidate HashSet are O(E + P_scope + L), plus O(T) emitted text. The common validator forbids repeated source-run passports within one report. Existing SortedSet/output sorting is unchanged; this is not a claim that the entire existing table pipeline is strictly O(n). No new CAD read, ModelSpace scan, geometry search or engine recalculation is added."
+    },
+    {
+      "check": "UI/workflow",
+      "result": "PASS_STATIC_AND_COMPILE",
+      "finding": "Product UI is unchanged. Existing shared fixture checks remain; actual producer orphan fixture adds default/small/large-font lifecycle, virtual grid, text/scroll, quantities and action checks. Workflow generates the fixture and collects real native screenshots. Native execution/visual review of the new fixture awaits Windows."
+    }
+  ],
+  "bugs_found_and_closed": [
+    {
+      "id": "alias_order_false_positive",
+      "severity": "blocked negative-evidence correctness before fix",
+      "scope": "Synthetic validator-admissible aliases; not claimed generated by normal producer or fresh CAD capture",
+      "before": "Same source_run, different passport_id: unlinked alias first gave one false orphan; reversed order gave none. Both core.ok=true.",
+      "fix": "Separate complete candidate-links HashSet populated before seenMembers presentation deduplication; shared 2В1 index unchanged.",
+      "after": "Independent original probe: both report orders core.ok=true, zero orphan messages.",
+      "evidence": "independent_controls.json",
+      "before_source_hash_note": "Original compiled executable/input/probe hashes are preserved; exact intermediate source hash was not recorded. Final audited source is hashed above."
+    },
+    {
+      "id": "new_orphan_xlsx_overflow",
+      "severity": "blocked new export before fix",
+      "scope": "Synthetic validator-admissible text lengths, not normal producer GUID sizes",
+      "recipe": "On original minimal producer report, replace source run with 13000 ASCII r characters and canonical zone with 20000 ASCII z characters; keep same actual DTO on baseline/before/after.",
+      "baseline_max_cell": 20127,
+      "before_new_orphan_cell": {
+        "cell": "A16",
+        "utf16_characters": 33201,
+        "only_oversized_cell": true
+      },
+      "before_product_sha256": "7c4a8168e51aeee5bce0cfa0b4559c0df327c38bc24b81ce8bf7f03fecc5d45d",
+      "fix": "Normal short warning unchanged. Long warning gets local record number, then numbered full ID/zone chunks <=8000 UTF-16 units; no truncation and no surrogate-pair split. Old exporter/SupportNote unchanged.",
+      "after": {
+        "status": "PASS",
+        "same_input_sha256": "6294294ebea6db9ad2f1c89c5ae108947bf5d20f34210a636ef7bb545ad11c4a",
+        "original_input_sha256": "6294294ebea6db9ad2f1c89c5ae108947bf5d20f34210a636ef7bb545ad11c4a",
+        "maximum_cell_characters": 20127,
+        "new_message_characters": [
+          245,
+          8000,
+          5081,
+          8000,
+          8000,
+          4078
+        ],
+        "full_id_and_zone_reconstructed": true,
+        "all_parts_in_sequence": true,
+        "xlsx_roundtrip_exact": true
+      },
+      "roundtrip_limit_note": "The pre-fix workbook roundtripped through openpyxl despite >32767; the explicit length assertion is required.",
+      "evidence": "independent_controls.json"
+    }
+  ],
+  "executed_checks": [
+    {
+      "command": "python tools/orphan_connections_0110/reproduce_gap.py --out /workspace/scratch/58a6cc5ac740/2v2_independent/final_orphan --expect fixed",
+      "exit_code": 0,
+      "status": "PASS",
+      "checks": 2577,
+      "xlsx_exports_and_exact_roundtrips": 72,
+      "maximum_export_cell_characters": 20127,
+      "actual_engine_response_modified": false,
+      "cases": [
+        {
+          "fixture": "minimal",
+          "name": "all",
+          "core_ok": true,
+          "orphans": 1,
+          "eligible": 1,
+          "source_unchanged": true,
+          "counters": {
+            "PhysicalElementsVisited": 3,
+            "BracketZoneLinksVisited": 1,
+            "PassportScopesVisited": 1,
+            "EligibleBracketsVisited": 1,
+            "MembersIndexed": 2,
+            "SupportLinksIndexed": 0,
+            "UnlinkedBrackets": 1,
+            "CandidateLinksForAbsenceVisited": 0
+          }
+        },
+        {
+          "fixture": "minimal",
+          "name": "selected_Z0",
+          "core_ok": true,
+          "orphans": 1,
+          "eligible": 1,
+          "source_unchanged": true,
+          "counters": {
+            "PhysicalElementsVisited": 3,
+            "BracketZoneLinksVisited": 1,
+            "PassportScopesVisited": 1,
+            "EligibleBracketsVisited": 1,
+            "MembersIndexed": 2,
+            "SupportLinksIndexed": 0,
+            "UnlinkedBrackets": 1,
+            "CandidateLinksForAbsenceVisited": 0
+          }
+        },
+        {
+          "fixture": "minimal",
+          "name": "retained_distinct_report_run",
+          "core_ok": true,
+          "orphans": 1,
+          "eligible": 1,
+          "source_unchanged": true,
+          "counters": {
+            "PhysicalElementsVisited": 3,
+            "BracketZoneLinksVisited": 1,
+            "PassportScopesVisited": 1,
+            "EligibleBracketsVisited": 1,
+            "MembersIndexed": 2,
+            "SupportLinksIndexed": 0,
+            "UnlinkedBrackets": 1,
+            "CandidateLinksForAbsenceVisited": 0
+          }
+        },
+        {
+          "fixture": "minimal",
+          "name": "retained_duplicate_reports",
+          "core_ok": true,
+          "orphans": 1,
+          "eligible": 1,
+          "source_unchanged": true,
+          "counters": {
+            "PhysicalElementsVisited": 6,
+            "BracketZoneLinksVisited": 2,
+            "PassportScopesVisited": 2,
+            "EligibleBracketsVisited": 2,
+            "MembersIndexed": 2,
+            "SupportLinksIndexed": 0,
+            "UnlinkedBrackets": 1,
+            "CandidateLinksForAbsenceVisited": 0
+          }
+        },
+        {
+          "fixture": "minimal",
+          "name": "retained_unlinked_elements_no_longer_present",
+          "core_ok": true,
+          "orphans": 0,
+          "eligible": 0,
+          "source_unchanged": true,
+          "counters": {
+            "PhysicalElementsVisited": 2,
+            "BracketZoneLinksVisited": 0,
+            "PassportScopesVisited": 1,
+            "EligibleBracketsVisited": 0,
+            "MembersIndexed": 2,
+            "SupportLinksIndexed": 0,
+            "UnlinkedBrackets": 0,
+            "CandidateLinksForAbsenceVisited": 0
+          }
+        },
+        {
+          "fixture": "minimal",
+          "name": "unavailable_passport_not_zero_relation",
+          "core_ok": true,
+          "orphans": 0,
+          "eligible": 0,
+          "source_unchanged": true,
+          "counters": {
+            "PhysicalElementsVisited": 3,
+            "BracketZoneLinksVisited": 1,
+            "PassportScopesVisited": 0,
+            "EligibleBracketsVisited": 0,
+            "MembersIndexed": 0,
+            "SupportLinksIndexed": 0,
+            "UnlinkedBrackets": 0,
+            "CandidateLinksForAbsenceVisited": 0
+          }
+        },
+        {
+          "fixture": "minimal",
+          "name": "legacy_absent_passport_not_zero_relation",
+          "core_ok": true,
+          "orphans": 0,
+          "eligible": 0,
+          "source_unchanged": true,
+          "counters": {
+            "PhysicalElementsVisited": 3,
+            "BracketZoneLinksVisited": 1,
+            "PassportScopesVisited": 0,
+            "EligibleBracketsVisited": 0,
+            "MembersIndexed": 0,
+            "SupportLinksIndexed": 0,
+            "UnlinkedBrackets": 0,
+            "CandidateLinksForAbsenceVisited": 0
+          }
+        },
+        {
+          "fixture": "minimal",
+          "name": "manual_registration_without_passport",
+          "core_ok": true,
+          "orphans": 0,
+          "eligible": 0,
+          "source_unchanged": true,
+          "counters": {
+            "PhysicalElementsVisited": 1,
+            "BracketZoneLinksVisited": 0,
+            "PassportScopesVisited": 0,
+            "EligibleBracketsVisited": 0,
+            "MembersIndexed": 0,
+            "SupportLinksIndexed": 0,
+            "UnlinkedBrackets": 0,
+            "CandidateLinksForAbsenceVisited": 0
+          }
+        },
+        {
+          "fixture": "minimal",
+          "name": "foreign_source_run",
+          "core_ok": true,
+          "orphans": 0,
+          "eligible": 0,
+          "source_unchanged": true,
+          "counters": {
+            "PhysicalElementsVisited": 3,
+            "BracketZoneLinksVisited": 1,
+            "PassportScopesVisited": 1,
+            "EligibleBracketsVisited": 0,
+            "MembersIndexed": 2,
+            "SupportLinksIndexed": 0,
+            "UnlinkedBrackets": 0,
+            "CandidateLinksForAbsenceVisited": 0
+          }
+        },
+        {
+          "fixture": "minimal",
+          "name": "manual_origin",
+          "core_ok": true,
+          "orphans": 0,
+          "eligible": 0,
+          "source_unchanged": true,
+          "counters": {
+            "PhysicalElementsVisited": 3,
+            "BracketZoneLinksVisited": 0,
+            "PassportScopesVisited": 1,
+            "EligibleBracketsVisited": 0,
+            "MembersIndexed": 2,
+            "SupportLinksIndexed": 0,
+            "UnlinkedBrackets": 0,
+            "CandidateLinksForAbsenceVisited": 0
+          }
+        },
+        {
+          "fixture": "minimal",
+          "name": "duplicate_zone_ids",
+          "core_ok": true,
+          "orphans": 1,
+          "eligible": 1,
+          "source_unchanged": true,
+          "counters": {
+            "PhysicalElementsVisited": 3,
+            "BracketZoneLinksVisited": 3,
+            "PassportScopesVisited": 1,
+            "EligibleBracketsVisited": 1,
+            "MembersIndexed": 2,
+            "SupportLinksIndexed": 0,
+            "UnlinkedBrackets": 1,
+            "CandidateLinksForAbsenceVisited": 0
+          }
+        },
+        {
+          "fixture": "minimal",
+          "name": "empty_zone_ids_fallback",
+          "core_ok": true,
+          "orphans": 1,
+          "eligible": 1,
+          "source_unchanged": true,
+          "counters": {
+            "PhysicalElementsVisited": 3,
+            "BracketZoneLinksVisited": 0,
+            "PassportScopesVisited": 1,
+            "EligibleBracketsVisited": 1,
+            "MembersIndexed": 2,
+            "SupportLinksIndexed": 0,
+            "UnlinkedBrackets": 1,
+            "CandidateLinksForAbsenceVisited": 0
+          }
+        },
+        {
+          "fixture": "minimal",
+          "name": "display_zone_disagrees",
+          "core_ok": true,
+          "orphans": 1,
+          "eligible": 1,
+          "source_unchanged": true,
+          "counters": {
+            "PhysicalElementsVisited": 3,
+            "BracketZoneLinksVisited": 1,
+            "PassportScopesVisited": 1,
+            "EligibleBracketsVisited": 1,
+            "MembersIndexed": 2,
+            "SupportLinksIndexed": 0,
+            "UnlinkedBrackets": 1,
+            "CandidateLinksForAbsenceVisited": 0
+          }
+        },
+        {
+          "fixture": "minimal",
+          "name": "unselected_zone",
+          "core_ok": true,
+          "orphans": 0,
+          "eligible": 0,
+          "source_unchanged": true,
+          "counters": {
+            "PhysicalElementsVisited": 3,
+            "BracketZoneLinksVisited": 1,
+            "PassportScopesVisited": 1,
+            "EligibleBracketsVisited": 0,
+            "MembersIndexed": 2,
+            "SupportLinksIndexed": 0,
+            "UnlinkedBrackets": 0,
+            "CandidateLinksForAbsenceVisited": 0
+          }
+        },
+        {
+          "fixture": "minimal",
+          "name": "multiple_canonical_zones",
+          "core_ok": true,
+          "orphans": 0,
+          "eligible": 0,
+          "source_unchanged": true,
+          "counters": {
+            "PhysicalElementsVisited": 3,
+            "BracketZoneLinksVisited": 2,
+            "PassportScopesVisited": 1,
+            "EligibleBracketsVisited": 0,
+            "MembersIndexed": 2,
+            "SupportLinksIndexed": 0,
+            "UnlinkedBrackets": 0,
+            "CandidateLinksForAbsenceVisited": 0
+          }
+        },
+        {
+          "fixture": "minimal",
+          "name": "distinct_passport_alias_unlinked_first",
+          "core_ok": true,
+          "orphans": 0,
+          "eligible": 1,
+          "source_unchanged": true,
+          "counters": {
+            "PhysicalElementsVisited": 6,
+            "BracketZoneLinksVisited": 2,
+            "PassportScopesVisited": 2,
+            "EligibleBracketsVisited": 2,
+            "MembersIndexed": 2,
+            "SupportLinksIndexed": 0,
+            "UnlinkedBrackets": 0,
+            "CandidateLinksForAbsenceVisited": 2
+          }
+        },
+        {
+          "fixture": "minimal",
+          "name": "distinct_passport_alias_linked_first",
+          "core_ok": true,
+          "orphans": 0,
+          "eligible": 1,
+          "source_unchanged": true,
+          "counters": {
+            "PhysicalElementsVisited": 6,
+            "BracketZoneLinksVisited": 2,
+            "PassportScopesVisited": 2,
+            "EligibleBracketsVisited": 2,
+            "MembersIndexed": 2,
+            "SupportLinksIndexed": 2,
+            "UnlinkedBrackets": 0,
+            "CandidateLinksForAbsenceVisited": 2
+          }
+        },
+        {
+          "fixture": "minimal",
+          "name": "scale_1",
+          "core_ok": true,
+          "orphans": 1,
+          "eligible": 1,
+          "source_unchanged": true,
+          "counters": {
+            "PhysicalElementsVisited": 3,
+            "BracketZoneLinksVisited": 1,
+            "PassportScopesVisited": 1,
+            "EligibleBracketsVisited": 1,
+            "MembersIndexed": 2,
+            "SupportLinksIndexed": 0,
+            "UnlinkedBrackets": 1,
+            "CandidateLinksForAbsenceVisited": 0
+          }
+        },
+        {
+          "fixture": "minimal",
+          "name": "scale_100",
+          "core_ok": true,
+          "orphans": 100,
+          "eligible": 100,
+          "source_unchanged": true,
+          "counters": {
+            "PhysicalElementsVisited": 300,
+            "BracketZoneLinksVisited": 100,
+            "PassportScopesVisited": 100,
+            "EligibleBracketsVisited": 100,
+            "MembersIndexed": 200,
+            "SupportLinksIndexed": 0,
+            "UnlinkedBrackets": 100,
+            "CandidateLinksForAbsenceVisited": 0
+          }
+        },
+        {
+          "fixture": "minimal",
+          "name": "scale_1000",
+          "core_ok": true,
+          "orphans": 1000,
+          "eligible": 1000,
+          "source_unchanged": true,
+          "counters": {
+            "PhysicalElementsVisited": 3000,
+            "BracketZoneLinksVisited": 1000,
+            "PassportScopesVisited": 1000,
+            "EligibleBracketsVisited": 1000,
+            "MembersIndexed": 2000,
+            "SupportLinksIndexed": 0,
+            "UnlinkedBrackets": 1000,
+            "CandidateLinksForAbsenceVisited": 0
+          }
+        },
+        {
+          "fixture": "minimal",
+          "name": "long_identity",
+          "core_ok": true,
+          "orphans": 1,
+          "eligible": 1,
+          "source_unchanged": true,
+          "counters": {
+            "PhysicalElementsVisited": 3,
+            "BracketZoneLinksVisited": 1,
+            "PassportScopesVisited": 1,
+            "EligibleBracketsVisited": 1,
+            "MembersIndexed": 2,
+            "SupportLinksIndexed": 0,
+            "UnlinkedBrackets": 1,
+            "CandidateLinksForAbsenceVisited": 0
+          }
+        },
+        {
+          "fixture": "minimal",
+          "name": "long_unicode_identity",
+          "core_ok": true,
+          "orphans": 1,
+          "eligible": 1,
+          "source_unchanged": true,
+          "counters": {
+            "PhysicalElementsVisited": 3,
+            "BracketZoneLinksVisited": 1,
+            "PassportScopesVisited": 1,
+            "EligibleBracketsVisited": 1,
+            "MembersIndexed": 2,
+            "SupportLinksIndexed": 0,
+            "UnlinkedBrackets": 1,
+            "CandidateLinksForAbsenceVisited": 0
+          }
+        },
+        {
+          "fixture": "two_same_coordinate_zones",
+          "name": "all",
+          "core_ok": true,
+          "orphans": 2,
+          "eligible": 2,
+          "source_unchanged": true,
+          "counters": {
+            "PhysicalElementsVisited": 6,
+            "BracketZoneLinksVisited": 2,
+            "PassportScopesVisited": 2,
+            "EligibleBracketsVisited": 2,
+            "MembersIndexed": 4,
+            "SupportLinksIndexed": 0,
+            "UnlinkedBrackets": 2,
+            "CandidateLinksForAbsenceVisited": 0
+          }
+        },
+        {
+          "fixture": "two_same_coordinate_zones",
+          "name": "selected_Z0",
+          "core_ok": true,
+          "orphans": 1,
+          "eligible": 1,
+          "source_unchanged": true,
+          "counters": {
+            "PhysicalElementsVisited": 6,
+            "BracketZoneLinksVisited": 2,
+            "PassportScopesVisited": 1,
+            "EligibleBracketsVisited": 1,
+            "MembersIndexed": 2,
+            "SupportLinksIndexed": 0,
+            "UnlinkedBrackets": 1,
+            "CandidateLinksForAbsenceVisited": 0
+          }
+        },
+        {
+          "fixture": "two_same_coordinate_zones",
+          "name": "selected_Z1",
+          "core_ok": true,
+          "orphans": 1,
+          "eligible": 1,
+          "source_unchanged": true,
+          "counters": {
+            "PhysicalElementsVisited": 6,
+            "BracketZoneLinksVisited": 2,
+            "PassportScopesVisited": 1,
+            "EligibleBracketsVisited": 1,
+            "MembersIndexed": 2,
+            "SupportLinksIndexed": 0,
+            "UnlinkedBrackets": 1,
+            "CandidateLinksForAbsenceVisited": 0
+          }
+        },
+        {
+          "fixture": "two_same_coordinate_zones",
+          "name": "retained_distinct_report_run",
+          "core_ok": true,
+          "orphans": 2,
+          "eligible": 2,
+          "source_unchanged": true,
+          "counters": {
+            "PhysicalElementsVisited": 6,
+            "BracketZoneLinksVisited": 2,
+            "PassportScopesVisited": 2,
+            "EligibleBracketsVisited": 2,
+            "MembersIndexed": 4,
+            "SupportLinksIndexed": 0,
+            "UnlinkedBrackets": 2,
+            "CandidateLinksForAbsenceVisited": 0
+          }
+        },
+        {
+          "fixture": "two_same_coordinate_zones",
+          "name": "retained_duplicate_reports",
+          "core_ok": true,
+          "orphans": 2,
+          "eligible": 2,
+          "source_unchanged": true,
+          "counters": {
+            "PhysicalElementsVisited": 12,
+            "BracketZoneLinksVisited": 4,
+            "PassportScopesVisited": 4,
+            "EligibleBracketsVisited": 4,
+            "MembersIndexed": 4,
+            "SupportLinksIndexed": 0,
+            "UnlinkedBrackets": 2,
+            "CandidateLinksForAbsenceVisited": 0
+          }
+        },
+        {
+          "fixture": "two_same_coordinate_zones",
+          "name": "retained_unlinked_elements_no_longer_present",
+          "core_ok": true,
+          "orphans": 0,
+          "eligible": 0,
+          "source_unchanged": true,
+          "counters": {
+            "PhysicalElementsVisited": 4,
+            "BracketZoneLinksVisited": 0,
+            "PassportScopesVisited": 2,
+            "EligibleBracketsVisited": 0,
+            "MembersIndexed": 4,
+            "SupportLinksIndexed": 0,
+            "UnlinkedBrackets": 0,
+            "CandidateLinksForAbsenceVisited": 0
+          }
+        },
+        {
+          "fixture": "two_same_coordinate_zones",
+          "name": "unavailable_passport_not_zero_relation",
+          "core_ok": true,
+          "orphans": 0,
+          "eligible": 0,
+          "source_unchanged": true,
+          "counters": {
+            "PhysicalElementsVisited": 6,
+            "BracketZoneLinksVisited": 2,
+            "PassportScopesVisited": 0,
+            "EligibleBracketsVisited": 0,
+            "MembersIndexed": 0,
+            "SupportLinksIndexed": 0,
+            "UnlinkedBrackets": 0,
+            "CandidateLinksForAbsenceVisited": 0
+          }
+        },
+        {
+          "fixture": "two_same_coordinate_zones",
+          "name": "legacy_absent_passport_not_zero_relation",
+          "core_ok": true,
+          "orphans": 0,
+          "eligible": 0,
+          "source_unchanged": true,
+          "counters": {
+            "PhysicalElementsVisited": 6,
+            "BracketZoneLinksVisited": 2,
+            "PassportScopesVisited": 0,
+            "EligibleBracketsVisited": 0,
+            "MembersIndexed": 0,
+            "SupportLinksIndexed": 0,
+            "UnlinkedBrackets": 0,
+            "CandidateLinksForAbsenceVisited": 0
+          }
+        },
+        {
+          "fixture": "two_same_coordinate_zones",
+          "name": "manual_registration_without_passport",
+          "core_ok": true,
+          "orphans": 0,
+          "eligible": 0,
+          "source_unchanged": true,
+          "counters": {
+            "PhysicalElementsVisited": 2,
+            "BracketZoneLinksVisited": 0,
+            "PassportScopesVisited": 0,
+            "EligibleBracketsVisited": 0,
+            "MembersIndexed": 0,
+            "SupportLinksIndexed": 0,
+            "UnlinkedBrackets": 0,
+            "CandidateLinksForAbsenceVisited": 0
+          }
+        },
+        {
+          "fixture": "two_same_coordinate_zones",
+          "name": "foreign_source_run",
+          "core_ok": true,
+          "orphans": 1,
+          "eligible": 1,
+          "source_unchanged": true,
+          "counters": {
+            "PhysicalElementsVisited": 6,
+            "BracketZoneLinksVisited": 2,
+            "PassportScopesVisited": 2,
+            "EligibleBracketsVisited": 1,
+            "MembersIndexed": 4,
+            "SupportLinksIndexed": 0,
+            "UnlinkedBrackets": 1,
+            "CandidateLinksForAbsenceVisited": 0
+          }
+        },
+        {
+          "fixture": "two_same_coordinate_zones",
+          "name": "manual_origin",
+          "core_ok": true,
+          "orphans": 1,
+          "eligible": 1,
+          "source_unchanged": true,
+          "counters": {
+            "PhysicalElementsVisited": 6,
+            "BracketZoneLinksVisited": 1,
+            "PassportScopesVisited": 2,
+            "EligibleBracketsVisited": 1,
+            "MembersIndexed": 4,
+            "SupportLinksIndexed": 0,
+            "UnlinkedBrackets": 1,
+            "CandidateLinksForAbsenceVisited": 0
+          }
+        },
+        {
+          "fixture": "two_same_coordinate_zones",
+          "name": "duplicate_zone_ids",
+          "core_ok": true,
+          "orphans": 2,
+          "eligible": 2,
+          "source_unchanged": true,
+          "counters": {
+            "PhysicalElementsVisited": 6,
+            "BracketZoneLinksVisited": 4,
+            "PassportScopesVisited": 2,
+            "EligibleBracketsVisited": 2,
+            "MembersIndexed": 4,
+            "SupportLinksIndexed": 0,
+            "UnlinkedBrackets": 2,
+            "CandidateLinksForAbsenceVisited": 0
+          }
+        },
+        {
+          "fixture": "two_same_coordinate_zones",
+          "name": "empty_zone_ids_fallback",
+          "core_ok": true,
+          "orphans": 2,
+          "eligible": 2,
+          "source_unchanged": true,
+          "counters": {
+            "PhysicalElementsVisited": 6,
+            "BracketZoneLinksVisited": 1,
+            "PassportScopesVisited": 2,
+            "EligibleBracketsVisited": 2,
+            "MembersIndexed": 4,
+            "SupportLinksIndexed": 0,
+            "UnlinkedBrackets": 2,
+            "CandidateLinksForAbsenceVisited": 0
+          }
+        },
+        {
+          "fixture": "two_same_coordinate_zones",
+          "name": "display_zone_disagrees",
+          "core_ok": true,
+          "orphans": 2,
+          "eligible": 2,
+          "source_unchanged": true,
+          "counters": {
+            "PhysicalElementsVisited": 6,
+            "BracketZoneLinksVisited": 2,
+            "PassportScopesVisited": 2,
+            "EligibleBracketsVisited": 2,
+            "MembersIndexed": 4,
+            "SupportLinksIndexed": 0,
+            "UnlinkedBrackets": 2,
+            "CandidateLinksForAbsenceVisited": 0
+          }
+        },
+        {
+          "fixture": "two_same_coordinate_zones",
+          "name": "unselected_zone",
+          "core_ok": true,
+          "orphans": 1,
+          "eligible": 1,
+          "source_unchanged": true,
+          "counters": {
+            "PhysicalElementsVisited": 6,
+            "BracketZoneLinksVisited": 2,
+            "PassportScopesVisited": 2,
+            "EligibleBracketsVisited": 1,
+            "MembersIndexed": 4,
+            "SupportLinksIndexed": 0,
+            "UnlinkedBrackets": 1,
+            "CandidateLinksForAbsenceVisited": 0
+          }
+        },
+        {
+          "fixture": "two_same_coordinate_zones",
+          "name": "multiple_canonical_zones",
+          "core_ok": true,
+          "orphans": 1,
+          "eligible": 1,
+          "source_unchanged": true,
+          "counters": {
+            "PhysicalElementsVisited": 6,
+            "BracketZoneLinksVisited": 3,
+            "PassportScopesVisited": 2,
+            "EligibleBracketsVisited": 1,
+            "MembersIndexed": 4,
+            "SupportLinksIndexed": 0,
+            "UnlinkedBrackets": 1,
+            "CandidateLinksForAbsenceVisited": 0
+          }
+        },
+        {
+          "fixture": "two_same_coordinate_zones",
+          "name": "distinct_passport_alias_unlinked_first",
+          "core_ok": true,
+          "orphans": 0,
+          "eligible": 2,
+          "source_unchanged": true,
+          "counters": {
+            "PhysicalElementsVisited": 12,
+            "BracketZoneLinksVisited": 4,
+            "PassportScopesVisited": 4,
+            "EligibleBracketsVisited": 4,
+            "MembersIndexed": 4,
+            "SupportLinksIndexed": 0,
+            "UnlinkedBrackets": 0,
+            "CandidateLinksForAbsenceVisited": 4
+          }
+        },
+        {
+          "fixture": "two_same_coordinate_zones",
+          "name": "distinct_passport_alias_linked_first",
+          "core_ok": true,
+          "orphans": 0,
+          "eligible": 2,
+          "source_unchanged": true,
+          "counters": {
+            "PhysicalElementsVisited": 12,
+            "BracketZoneLinksVisited": 4,
+            "PassportScopesVisited": 4,
+            "EligibleBracketsVisited": 4,
+            "MembersIndexed": 4,
+            "SupportLinksIndexed": 4,
+            "UnlinkedBrackets": 0,
+            "CandidateLinksForAbsenceVisited": 4
+          }
+        },
+        {
+          "fixture": "gap_zero",
+          "name": "all",
+          "core_ok": true,
+          "orphans": 0,
+          "eligible": 1,
+          "source_unchanged": true,
+          "counters": {
+            "PhysicalElementsVisited": 3,
+            "BracketZoneLinksVisited": 1,
+            "PassportScopesVisited": 1,
+            "EligibleBracketsVisited": 1,
+            "MembersIndexed": 2,
+            "SupportLinksIndexed": 2,
+            "UnlinkedBrackets": 0,
+            "CandidateLinksForAbsenceVisited": 2
+          }
+        },
+        {
+          "fixture": "gap_zero",
+          "name": "selected_Z0",
+          "core_ok": true,
+          "orphans": 0,
+          "eligible": 1,
+          "source_unchanged": true,
+          "counters": {
+            "PhysicalElementsVisited": 3,
+            "BracketZoneLinksVisited": 1,
+            "PassportScopesVisited": 1,
+            "EligibleBracketsVisited": 1,
+            "MembersIndexed": 2,
+            "SupportLinksIndexed": 2,
+            "UnlinkedBrackets": 0,
+            "CandidateLinksForAbsenceVisited": 2
+          }
+        },
+        {
+          "fixture": "gap_zero",
+          "name": "retained_distinct_report_run",
+          "core_ok": true,
+          "orphans": 0,
+          "eligible": 1,
+          "source_unchanged": true,
+          "counters": {
+            "PhysicalElementsVisited": 3,
+            "BracketZoneLinksVisited": 1,
+            "PassportScopesVisited": 1,
+            "EligibleBracketsVisited": 1,
+            "MembersIndexed": 2,
+            "SupportLinksIndexed": 2,
+            "UnlinkedBrackets": 0,
+            "CandidateLinksForAbsenceVisited": 2
+          }
+        },
+        {
+          "fixture": "gap_zero",
+          "name": "retained_duplicate_reports",
+          "core_ok": true,
+          "orphans": 0,
+          "eligible": 1,
+          "source_unchanged": true,
+          "counters": {
+            "PhysicalElementsVisited": 6,
+            "BracketZoneLinksVisited": 2,
+            "PassportScopesVisited": 2,
+            "EligibleBracketsVisited": 2,
+            "MembersIndexed": 2,
+            "SupportLinksIndexed": 2,
+            "UnlinkedBrackets": 0,
+            "CandidateLinksForAbsenceVisited": 4
+          }
+        },
+        {
+          "fixture": "gap_zero",
+          "name": "retained_unlinked_elements_no_longer_present",
+          "core_ok": true,
+          "orphans": 0,
+          "eligible": 1,
+          "source_unchanged": true,
+          "counters": {
+            "PhysicalElementsVisited": 3,
+            "BracketZoneLinksVisited": 1,
+            "PassportScopesVisited": 1,
+            "EligibleBracketsVisited": 1,
+            "MembersIndexed": 2,
+            "SupportLinksIndexed": 2,
+            "UnlinkedBrackets": 0,
+            "CandidateLinksForAbsenceVisited": 2
+          }
+        },
+        {
+          "fixture": "gap_zero",
+          "name": "unavailable_passport_not_zero_relation",
+          "core_ok": true,
+          "orphans": 0,
+          "eligible": 0,
+          "source_unchanged": true,
+          "counters": {
+            "PhysicalElementsVisited": 3,
+            "BracketZoneLinksVisited": 1,
+            "PassportScopesVisited": 0,
+            "EligibleBracketsVisited": 0,
+            "MembersIndexed": 0,
+            "SupportLinksIndexed": 0,
+            "UnlinkedBrackets": 0,
+            "CandidateLinksForAbsenceVisited": 0
+          }
+        },
+        {
+          "fixture": "gap_zero",
+          "name": "legacy_absent_passport_not_zero_relation",
+          "core_ok": true,
+          "orphans": 0,
+          "eligible": 0,
+          "source_unchanged": true,
+          "counters": {
+            "PhysicalElementsVisited": 3,
+            "BracketZoneLinksVisited": 1,
+            "PassportScopesVisited": 0,
+            "EligibleBracketsVisited": 0,
+            "MembersIndexed": 0,
+            "SupportLinksIndexed": 0,
+            "UnlinkedBrackets": 0,
+            "CandidateLinksForAbsenceVisited": 0
+          }
+        },
+        {
+          "fixture": "gap_zero",
+          "name": "manual_registration_without_passport",
+          "core_ok": true,
+          "orphans": 0,
+          "eligible": 0,
+          "source_unchanged": true,
+          "counters": {
+            "PhysicalElementsVisited": 1,
+            "BracketZoneLinksVisited": 0,
+            "PassportScopesVisited": 0,
+            "EligibleBracketsVisited": 0,
+            "MembersIndexed": 0,
+            "SupportLinksIndexed": 0,
+            "UnlinkedBrackets": 0,
+            "CandidateLinksForAbsenceVisited": 0
+          }
+        },
+        {
+          "fixture": "gap_one",
+          "name": "all",
+          "core_ok": true,
+          "orphans": 0,
+          "eligible": 1,
+          "source_unchanged": true,
+          "counters": {
+            "PhysicalElementsVisited": 3,
+            "BracketZoneLinksVisited": 1,
+            "PassportScopesVisited": 1,
+            "EligibleBracketsVisited": 1,
+            "MembersIndexed": 2,
+            "SupportLinksIndexed": 2,
+            "UnlinkedBrackets": 0,
+            "CandidateLinksForAbsenceVisited": 2
+          }
+        },
+        {
+          "fixture": "gap_one",
+          "name": "selected_Z0",
+          "core_ok": true,
+          "orphans": 0,
+          "eligible": 1,
+          "source_unchanged": true,
+          "counters": {
+            "PhysicalElementsVisited": 3,
+            "BracketZoneLinksVisited": 1,
+            "PassportScopesVisited": 1,
+            "EligibleBracketsVisited": 1,
+            "MembersIndexed": 2,
+            "SupportLinksIndexed": 2,
+            "UnlinkedBrackets": 0,
+            "CandidateLinksForAbsenceVisited": 2
+          }
+        },
+        {
+          "fixture": "gap_one",
+          "name": "retained_distinct_report_run",
+          "core_ok": true,
+          "orphans": 0,
+          "eligible": 1,
+          "source_unchanged": true,
+          "counters": {
+            "PhysicalElementsVisited": 3,
+            "BracketZoneLinksVisited": 1,
+            "PassportScopesVisited": 1,
+            "EligibleBracketsVisited": 1,
+            "MembersIndexed": 2,
+            "SupportLinksIndexed": 2,
+            "UnlinkedBrackets": 0,
+            "CandidateLinksForAbsenceVisited": 2
+          }
+        },
+        {
+          "fixture": "gap_one",
+          "name": "retained_duplicate_reports",
+          "core_ok": true,
+          "orphans": 0,
+          "eligible": 1,
+          "source_unchanged": true,
+          "counters": {
+            "PhysicalElementsVisited": 6,
+            "BracketZoneLinksVisited": 2,
+            "PassportScopesVisited": 2,
+            "EligibleBracketsVisited": 2,
+            "MembersIndexed": 2,
+            "SupportLinksIndexed": 2,
+            "UnlinkedBrackets": 0,
+            "CandidateLinksForAbsenceVisited": 4
+          }
+        },
+        {
+          "fixture": "gap_one",
+          "name": "retained_unlinked_elements_no_longer_present",
+          "core_ok": true,
+          "orphans": 0,
+          "eligible": 1,
+          "source_unchanged": true,
+          "counters": {
+            "PhysicalElementsVisited": 3,
+            "BracketZoneLinksVisited": 1,
+            "PassportScopesVisited": 1,
+            "EligibleBracketsVisited": 1,
+            "MembersIndexed": 2,
+            "SupportLinksIndexed": 2,
+            "UnlinkedBrackets": 0,
+            "CandidateLinksForAbsenceVisited": 2
+          }
+        },
+        {
+          "fixture": "gap_one",
+          "name": "unavailable_passport_not_zero_relation",
+          "core_ok": true,
+          "orphans": 0,
+          "eligible": 0,
+          "source_unchanged": true,
+          "counters": {
+            "PhysicalElementsVisited": 3,
+            "BracketZoneLinksVisited": 1,
+            "PassportScopesVisited": 0,
+            "EligibleBracketsVisited": 0,
+            "MembersIndexed": 0,
+            "SupportLinksIndexed": 0,
+            "UnlinkedBrackets": 0,
+            "CandidateLinksForAbsenceVisited": 0
+          }
+        },
+        {
+          "fixture": "gap_one",
+          "name": "legacy_absent_passport_not_zero_relation",
+          "core_ok": true,
+          "orphans": 0,
+          "eligible": 0,
+          "source_unchanged": true,
+          "counters": {
+            "PhysicalElementsVisited": 3,
+            "BracketZoneLinksVisited": 1,
+            "PassportScopesVisited": 0,
+            "EligibleBracketsVisited": 0,
+            "MembersIndexed": 0,
+            "SupportLinksIndexed": 0,
+            "UnlinkedBrackets": 0,
+            "CandidateLinksForAbsenceVisited": 0
+          }
+        },
+        {
+          "fixture": "gap_one",
+          "name": "manual_registration_without_passport",
+          "core_ok": true,
+          "orphans": 0,
+          "eligible": 0,
+          "source_unchanged": true,
+          "counters": {
+            "PhysicalElementsVisited": 1,
+            "BracketZoneLinksVisited": 0,
+            "PassportScopesVisited": 0,
+            "EligibleBracketsVisited": 0,
+            "MembersIndexed": 0,
+            "SupportLinksIndexed": 0,
+            "UnlinkedBrackets": 0,
+            "CandidateLinksForAbsenceVisited": 0
+          }
+        },
+        {
+          "fixture": "gap_one_plus",
+          "name": "all",
+          "core_ok": true,
+          "orphans": 1,
+          "eligible": 1,
+          "source_unchanged": true,
+          "counters": {
+            "PhysicalElementsVisited": 3,
+            "BracketZoneLinksVisited": 1,
+            "PassportScopesVisited": 1,
+            "EligibleBracketsVisited": 1,
+            "MembersIndexed": 2,
+            "SupportLinksIndexed": 0,
+            "UnlinkedBrackets": 1,
+            "CandidateLinksForAbsenceVisited": 0
+          }
+        },
+        {
+          "fixture": "gap_one_plus",
+          "name": "selected_Z0",
+          "core_ok": true,
+          "orphans": 1,
+          "eligible": 1,
+          "source_unchanged": true,
+          "counters": {
+            "PhysicalElementsVisited": 3,
+            "BracketZoneLinksVisited": 1,
+            "PassportScopesVisited": 1,
+            "EligibleBracketsVisited": 1,
+            "MembersIndexed": 2,
+            "SupportLinksIndexed": 0,
+            "UnlinkedBrackets": 1,
+            "CandidateLinksForAbsenceVisited": 0
+          }
+        },
+        {
+          "fixture": "gap_one_plus",
+          "name": "retained_distinct_report_run",
+          "core_ok": true,
+          "orphans": 1,
+          "eligible": 1,
+          "source_unchanged": true,
+          "counters": {
+            "PhysicalElementsVisited": 3,
+            "BracketZoneLinksVisited": 1,
+            "PassportScopesVisited": 1,
+            "EligibleBracketsVisited": 1,
+            "MembersIndexed": 2,
+            "SupportLinksIndexed": 0,
+            "UnlinkedBrackets": 1,
+            "CandidateLinksForAbsenceVisited": 0
+          }
+        },
+        {
+          "fixture": "gap_one_plus",
+          "name": "retained_duplicate_reports",
+          "core_ok": true,
+          "orphans": 1,
+          "eligible": 1,
+          "source_unchanged": true,
+          "counters": {
+            "PhysicalElementsVisited": 6,
+            "BracketZoneLinksVisited": 2,
+            "PassportScopesVisited": 2,
+            "EligibleBracketsVisited": 2,
+            "MembersIndexed": 2,
+            "SupportLinksIndexed": 0,
+            "UnlinkedBrackets": 1,
+            "CandidateLinksForAbsenceVisited": 0
+          }
+        },
+        {
+          "fixture": "gap_one_plus",
+          "name": "retained_unlinked_elements_no_longer_present",
+          "core_ok": true,
+          "orphans": 0,
+          "eligible": 0,
+          "source_unchanged": true,
+          "counters": {
+            "PhysicalElementsVisited": 2,
+            "BracketZoneLinksVisited": 0,
+            "PassportScopesVisited": 1,
+            "EligibleBracketsVisited": 0,
+            "MembersIndexed": 2,
+            "SupportLinksIndexed": 0,
+            "UnlinkedBrackets": 0,
+            "CandidateLinksForAbsenceVisited": 0
+          }
+        },
+        {
+          "fixture": "gap_one_plus",
+          "name": "unavailable_passport_not_zero_relation",
+          "core_ok": true,
+          "orphans": 0,
+          "eligible": 0,
+          "source_unchanged": true,
+          "counters": {
+            "PhysicalElementsVisited": 3,
+            "BracketZoneLinksVisited": 1,
+            "PassportScopesVisited": 0,
+            "EligibleBracketsVisited": 0,
+            "MembersIndexed": 0,
+            "SupportLinksIndexed": 0,
+            "UnlinkedBrackets": 0,
+            "CandidateLinksForAbsenceVisited": 0
+          }
+        },
+        {
+          "fixture": "gap_one_plus",
+          "name": "legacy_absent_passport_not_zero_relation",
+          "core_ok": true,
+          "orphans": 0,
+          "eligible": 0,
+          "source_unchanged": true,
+          "counters": {
+            "PhysicalElementsVisited": 3,
+            "BracketZoneLinksVisited": 1,
+            "PassportScopesVisited": 0,
+            "EligibleBracketsVisited": 0,
+            "MembersIndexed": 0,
+            "SupportLinksIndexed": 0,
+            "UnlinkedBrackets": 0,
+            "CandidateLinksForAbsenceVisited": 0
+          }
+        },
+        {
+          "fixture": "gap_one_plus",
+          "name": "manual_registration_without_passport",
+          "core_ok": true,
+          "orphans": 0,
+          "eligible": 0,
+          "source_unchanged": true,
+          "counters": {
+            "PhysicalElementsVisited": 1,
+            "BracketZoneLinksVisited": 0,
+            "PassportScopesVisited": 0,
+            "EligibleBracketsVisited": 0,
+            "MembersIndexed": 0,
+            "SupportLinksIndexed": 0,
+            "UnlinkedBrackets": 0,
+            "CandidateLinksForAbsenceVisited": 0
+          }
+        },
+        {
+          "fixture": "normal_positive_steps",
+          "name": "all",
+          "core_ok": true,
+          "orphans": 0,
+          "eligible": 6,
+          "source_unchanged": true,
+          "counters": {
+            "PhysicalElementsVisited": 8,
+            "BracketZoneLinksVisited": 6,
+            "PassportScopesVisited": 1,
+            "EligibleBracketsVisited": 6,
+            "MembersIndexed": 2,
+            "SupportLinksIndexed": 6,
+            "UnlinkedBrackets": 0,
+            "CandidateLinksForAbsenceVisited": 6
+          }
+        },
+        {
+          "fixture": "normal_positive_steps",
+          "name": "selected_Z0",
+          "core_ok": true,
+          "orphans": 0,
+          "eligible": 6,
+          "source_unchanged": true,
+          "counters": {
+            "PhysicalElementsVisited": 8,
+            "BracketZoneLinksVisited": 6,
+            "PassportScopesVisited": 1,
+            "EligibleBracketsVisited": 6,
+            "MembersIndexed": 2,
+            "SupportLinksIndexed": 6,
+            "UnlinkedBrackets": 0,
+            "CandidateLinksForAbsenceVisited": 6
+          }
+        },
+        {
+          "fixture": "normal_positive_steps",
+          "name": "retained_distinct_report_run",
+          "core_ok": true,
+          "orphans": 0,
+          "eligible": 6,
+          "source_unchanged": true,
+          "counters": {
+            "PhysicalElementsVisited": 8,
+            "BracketZoneLinksVisited": 6,
+            "PassportScopesVisited": 1,
+            "EligibleBracketsVisited": 6,
+            "MembersIndexed": 2,
+            "SupportLinksIndexed": 6,
+            "UnlinkedBrackets": 0,
+            "CandidateLinksForAbsenceVisited": 6
+          }
+        },
+        {
+          "fixture": "normal_positive_steps",
+          "name": "retained_duplicate_reports",
+          "core_ok": true,
+          "orphans": 0,
+          "eligible": 6,
+          "source_unchanged": true,
+          "counters": {
+            "PhysicalElementsVisited": 16,
+            "BracketZoneLinksVisited": 12,
+            "PassportScopesVisited": 2,
+            "EligibleBracketsVisited": 12,
+            "MembersIndexed": 2,
+            "SupportLinksIndexed": 6,
+            "UnlinkedBrackets": 0,
+            "CandidateLinksForAbsenceVisited": 12
+          }
+        },
+        {
+          "fixture": "normal_positive_steps",
+          "name": "retained_unlinked_elements_no_longer_present",
+          "core_ok": true,
+          "orphans": 0,
+          "eligible": 6,
+          "source_unchanged": true,
+          "counters": {
+            "PhysicalElementsVisited": 8,
+            "BracketZoneLinksVisited": 6,
+            "PassportScopesVisited": 1,
+            "EligibleBracketsVisited": 6,
+            "MembersIndexed": 2,
+            "SupportLinksIndexed": 6,
+            "UnlinkedBrackets": 0,
+            "CandidateLinksForAbsenceVisited": 6
+          }
+        },
+        {
+          "fixture": "normal_positive_steps",
+          "name": "unavailable_passport_not_zero_relation",
+          "core_ok": true,
+          "orphans": 0,
+          "eligible": 0,
+          "source_unchanged": true,
+          "counters": {
+            "PhysicalElementsVisited": 8,
+            "BracketZoneLinksVisited": 6,
+            "PassportScopesVisited": 0,
+            "EligibleBracketsVisited": 0,
+            "MembersIndexed": 0,
+            "SupportLinksIndexed": 0,
+            "UnlinkedBrackets": 0,
+            "CandidateLinksForAbsenceVisited": 0
+          }
+        },
+        {
+          "fixture": "normal_positive_steps",
+          "name": "legacy_absent_passport_not_zero_relation",
+          "core_ok": true,
+          "orphans": 0,
+          "eligible": 0,
+          "source_unchanged": true,
+          "counters": {
+            "PhysicalElementsVisited": 8,
+            "BracketZoneLinksVisited": 6,
+            "PassportScopesVisited": 0,
+            "EligibleBracketsVisited": 0,
+            "MembersIndexed": 0,
+            "SupportLinksIndexed": 0,
+            "UnlinkedBrackets": 0,
+            "CandidateLinksForAbsenceVisited": 0
+          }
+        },
+        {
+          "fixture": "normal_positive_steps",
+          "name": "manual_registration_without_passport",
+          "core_ok": true,
+          "orphans": 0,
+          "eligible": 0,
+          "source_unchanged": true,
+          "counters": {
+            "PhysicalElementsVisited": 6,
+            "BracketZoneLinksVisited": 0,
+            "PassportScopesVisited": 0,
+            "EligibleBracketsVisited": 0,
+            "MembersIndexed": 0,
+            "SupportLinksIndexed": 0,
+            "UnlinkedBrackets": 0,
+            "CandidateLinksForAbsenceVisited": 0
+          }
+        }
+      ]
+    },
+    {
+      "command": "python tools/catalog_connections_0110/test_connection_table.py --out /workspace/scratch/58a6cc5ac740/2v2_independent/final_shared",
+      "exit_code": 0,
+      "status": "PASS",
+      "legacy_csharp_checks": 35,
+      "real_engine_table_checks": 71,
+      "shared_candidate_checks": 8781,
+      "xlsx_checks": 50,
+      "actual_producer_generated_fresh": true
+    },
+    {
+      "command": "mcs/mono original independent AliasedInventoryProbe.cs against final Common/ConnectionTableData",
+      "exit_code": 0,
+      "status": "PASS",
+      "orders_checked": 2,
+      "false_orphans_after": 0
+    },
+    {
+      "command": "mcs/mono original LongOrphanProbe.cs on exact original fixture; openpyxl reconstructs full ID/zone, checks cell lengths and save/load equality",
+      "exit_code": 0,
+      "status": "PASS",
+      "source_input_sha256": "6294294ebea6db9ad2f1c89c5ae108947bf5d20f34210a636ef7bb545ad11c4a",
+      "source_input_same_as_before": true
+    },
+    {
+      "command": "python tools/mounting_contract_0110/test_ui.py --out /workspace/scratch/58a6cc5ac740/2v2_independent/final_ui --report /workspace/scratch/58a6cc5ac740/2v2_independent/final_shared/shared_support/fixture_report.json --orphan-report /workspace/scratch/58a6cc5ac740/2v2_independent/final_orphan/two_same_coordinate_zones/report.json",
+      "exit_code": 2,
+      "compilation": "PASS",
+      "runtime": "BLOCKED",
+      "reason": "Xvfb unavailable; compilation succeeded, no GUI execution claimed"
+    },
+    {
+      "command": "git diff --check",
+      "exit_code": 0,
+      "status": "PASS"
+    }
+  ],
+  "scratch_evidence_sha256": {
+    "/workspace/scratch/58a6cc5ac740/2v2_independent/AliasedInventoryProbe.cs": "399cdfa68edb6a578efb5dffdadf94a1d3bfaeaf6c05d948511bcea358600291",
+    "/workspace/scratch/58a6cc5ac740/2v2_independent/AliasedInventoryProbe.exe": "0d0e70fd1408866f7f8d279976772a25ff8f158bbeddd7545152eb1d912cf901",
+    "/workspace/scratch/58a6cc5ac740/2v2_independent/AliasedInventoryProbe_final.exe": "4e9cff01c13fce8316eeee4c86e050f7503e378f02b87f02f5b237acb9c38c4f",
+    "/workspace/scratch/58a6cc5ac740/2v2_independent/alias_observation.json": "8ff2892a11c368398b2aae17694c5ed7ee408ac370afd1622e2ed5a1fc4a449a",
+    "/workspace/scratch/58a6cc5ac740/2v2_independent/alias_final_observation.json": "066f429bda6eef17230bca794898bf6676a5212ddc2fe7bc7896bc8a2e4f1e6b",
+    "/workspace/scratch/58a6cc5ac740/2v2_independent/excel_boundary/LongOrphanProbe.cs": "d21652c2aadac2a7bff3023732f266cdbca81dcda1cc3296d8b64979ac656ace",
+    "/workspace/scratch/58a6cc5ac740/2v2_independent/excel_boundary/input.json": "6294294ebea6db9ad2f1c89c5ae108947bf5d20f34210a636ef7bb545ad11c4a",
+    "/workspace/scratch/58a6cc5ac740/2v2_independent/excel_boundary/before_hashes.json": "cf2db86c4c74f56624b147cb1a35b9174ff33a97bc526d3729e55c4a88de147e",
+    "/workspace/scratch/58a6cc5ac740/2v2_independent/excel_boundary/before_observation.json": "ff89229e928c17188cfb0ae16293cc817b8f2a27c4dc6007769264979fc19aed",
+    "/workspace/scratch/58a6cc5ac740/2v2_independent/excel_boundary/long.xlsx": "48449f5a6d487cb280d5ef86b421776d438aad2c847599094eef4edaed45e67e",
+    "/workspace/scratch/58a6cc5ac740/2v2_independent/excel_boundary/baseline/observation.json": "ede39cc4fc5a16a565324c24161b20c15fb97e1a503dbd714e115c6f0af4f23a",
+    "/workspace/scratch/58a6cc5ac740/2v2_independent/excel_boundary/baseline/long.xlsx": "338feee76dad7d24bf5fdecf8da69bc7dfcb7e6c9c6360db63c733a5b558e5ab",
+    "/workspace/scratch/58a6cc5ac740/2v2_independent/excel_boundary/fixed/observation.json": "cc8fcd407f120de820da64ff79ae034e8f17783f8d2af7a2de5ca99b2713d936",
+    "/workspace/scratch/58a6cc5ac740/2v2_independent/excel_boundary/fixed/long.xlsx": "63b03e1d5ff93920dd54289f12aae016ccd11ffd89ebdc38b576aa59bba824e5",
+    "/workspace/scratch/58a6cc5ac740/2v2_independent/excel_boundary/fixed/export_check.json": "9a66c81f78b3132482247c71d88119730c8922f7266548e54a3a77b9ce4ef794",
+    "/workspace/scratch/58a6cc5ac740/2v2_independent/final_orphan/manifest.json": "ee9a3aa3426df80fb6ebc4b56e1749a4425354d2d2b272028d78d8490afaa856",
+    "/workspace/scratch/58a6cc5ac740/2v2_independent/final_shared/manifest.json": "6f31541c001d30407bf875b4015e45680c4b4cf94bda03dfbe3e32573296f71f",
+    "/workspace/scratch/58a6cc5ac740/2v2_independent/final_ui/manifest.json": "e12b6f7f3168cb4e02153a2f3e915860a5521f901efc8db5a5f6de4b5bfd8616"
+  },
+  "durable_controls": {
+    "path": "docs/orphan_connections_0110/independent_controls.json",
+    "sha256": "8409870d23b0b862db19b5e46937a8688b020366d63ff46dcf8f4c56566774db"
+  },
+  "engineering_sources": {
+    "review_mode": "Inherited unchanged primary-source evidence; no new PDF review claimed in this increment",
+    "facts_file": "docs/orphan_connections_0110/source_facts.json",
+    "primary_sources": [
+      {
+        "source_id": "vector1_2015",
+        "private_repository": "zinchenko-denis/atspec-testdata",
+        "path": "docs/facades_atr/ATR_Vector1_3.15_KG_KP_2015.pdf",
+        "sha256": "7386f4152de455a5e2622704d51a98d8f05afd20050807f634eea4572de37142",
+        "locators": [
+          {
+            "pdf_page": 3,
+            "sheet": "2",
+            "fact": "Project-specific fixing scheme"
+          },
+          {
+            "pdf_page": 19,
+            "sheet": "4.1",
+            "fact": "Vertical detail U2/U, not full UK interface"
+          },
+          {
+            "pdf_page": 20,
+            "sheet": "4.2.1",
+            "fact": "Horizontal KR2-PP-UK-GP family topology"
+          }
+        ]
+      },
+      {
+        "source_id": "vector1_type1_reference_2026",
+        "private_repository": "zinchenko-denis/atspec-testdata",
+        "path": "docs/facades_calc/Static_VEKTOR1_tip1_monolit_KG_2026.pdf",
+        "sha256": "495f8fadf882dc6f6c3f2c023a08611035c5e916a3cc92ee4da675cb2a0f16d2",
+        "locators": [
+          {
+            "pdf_pages": [
+              3,
+              14
+            ],
+            "fact": "Different support symbols not mapped to real physical IDs"
+          },
+          {
+            "pdf_pages": [
+              6
+            ],
+            "fact": "Np=(q_cladding*b+q_rail)*L1; not automatically whole-L gravity at one fixed support"
+          },
+          {
+            "pdf_pages": [
+              12,
+              13
+            ],
+            "fact": "Two separate riveted interfaces include combined weight and wind in this reference calculation"
+          }
+        ]
+      }
+    ]
+  },
+  "limits": [
+    "Current ATFRAME UI supplies positive numeric steps. None/null reproduction exercises accepted legacy/API engine fallback; ordinary UI reachability is not claimed.",
+    "A missing candidate reference is not proof of absent real fastening, an excess bracket or a construction defect.",
+    "Full 2В, verified statics 3А and automatic bracket selection remain unconfirmed.",
+    "Windows native execution of the new orphan fixture and live AutoCAD are not marked PASS by this review."
+  ]
+}

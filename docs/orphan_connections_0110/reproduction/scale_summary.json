@@ -1,0 +1,111 @@
+{
+  "status": "PASS",
+  "source_raw_manifest_sha256": "8185e8462ecd858c417a2c40a69e9783d458fe02780b3a707f64749d163b5755",
+  "scale_origin": "synthetic validated DTOs with independent source-run passports; not live AutoCAD timing",
+  "cases": [
+    {
+      "name": "scale_1",
+      "core_ok": true,
+      "eligible_brackets": 1,
+      "linked_brackets": 0,
+      "table_member_count": 2,
+      "missing_passport_text": false,
+      "source_unchanged": true,
+      "physical_elements": 3,
+      "counters": {
+        "PhysicalElementsVisited": 3,
+        "BracketZoneLinksVisited": 1,
+        "PassportScopesVisited": 1,
+        "EligibleBracketsVisited": 1,
+        "MembersIndexed": 2,
+        "SupportLinksIndexed": 0,
+        "UnlinkedBrackets": 1,
+        "CandidateLinksForAbsenceVisited": 0
+      },
+      "core_issue_codes": [
+        "Q_FRAME_ENGINEERING_LIMIT",
+        "Q_VALUE_UNKNOWN"
+      ],
+      "selected_zone_count": 1,
+      "selected": [
+        "Z0"
+      ],
+      "orphan_count": 1,
+      "orphan_ids": [
+        "synthetic0:brackets:0"
+      ],
+      "literal_contiguous_orphan_ids_visible": 1,
+      "table_message_count": 9,
+      "table_messages_sha256": "7cebda67bad53dc6c09ba8de31e8a289ac86dd4a8e88f89bc48b27a5f1669f02",
+      "case_assertions_passed": true
+    },
+    {
+      "name": "scale_100",
+      "core_ok": true,
+      "eligible_brackets": 100,
+      "linked_brackets": 0,
+      "table_member_count": 200,
+      "missing_passport_text": false,
+      "source_unchanged": true,
+      "physical_elements": 300,
+      "counters": {
+        "PhysicalElementsVisited": 300,
+        "BracketZoneLinksVisited": 100,
+        "PassportScopesVisited": 100,
+        "EligibleBracketsVisited": 100,
+        "MembersIndexed": 200,
+        "SupportLinksIndexed": 0,
+        "UnlinkedBrackets": 100,
+        "CandidateLinksForAbsenceVisited": 0
+      },
+      "core_issue_codes": [
+        "Q_FRAME_ENGINEERING_LIMIT",
+        "Q_VALUE_UNKNOWN"
+      ],
+      "selected_zone_count": 1,
+      "selected": [
+        "Z0"
+      ],
+      "orphan_count": 100,
+      "orphan_ids_sha256": "f24d45447943027a361fe93e48423467dccccfdaaa4d5b7cca4c41093d5f430b",
+      "literal_contiguous_orphan_ids_visible": 100,
+      "table_message_count": 108,
+      "table_messages_sha256": "061edf02b7f645a052c74ef094f33959545537d102ed309c803fbbc2dce6248a",
+      "case_assertions_passed": true
+    },
+    {
+      "name": "scale_1000",
+      "core_ok": true,
+      "eligible_brackets": 1000,
+      "linked_brackets": 0,
+      "table_member_count": 2000,
+      "missing_passport_text": false,
+      "source_unchanged": true,
+      "physical_elements": 3000,
+      "counters": {
+        "PhysicalElementsVisited": 3000,
+        "BracketZoneLinksVisited": 1000,
+        "PassportScopesVisited": 1000,
+        "EligibleBracketsVisited": 1000,
+        "MembersIndexed": 2000,
+        "SupportLinksIndexed": 0,
+        "UnlinkedBrackets": 1000,
+        "CandidateLinksForAbsenceVisited": 0
+      },
+      "core_issue_codes": [
+        "Q_FRAME_ENGINEERING_LIMIT",
+        "Q_VALUE_UNKNOWN"
+      ],
+      "selected_zone_count": 1,
+      "selected": [
+        "Z0"
+      ],
+      "orphan_count": 1000,
+      "orphan_ids_sha256": "7a405362de6d5b7b81d653a65837374c3f3d5ad7151c858739eba420020d114f",
+      "literal_contiguous_orphan_ids_visible": 1000,
+      "table_message_count": 1008,
+      "table_messages_sha256": "91ebb86ebd31bb551b3c66795bdf82875a7af9508dbb4dbffbc350fbf0309081",
+      "case_assertions_passed": true
+    }
+  ]
+}

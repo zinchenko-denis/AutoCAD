@@ -218,7 +218,9 @@ jobs:
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           python tools/catalog_connections_0110/test_connection_table.py --out connection_table_results --report connection_store_results/independent_zones_report.json
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-          python tools/mounting_contract_0110/test_ui.py --out connection_ui_results --report connection_table_results/shared_support/fixture_report.json
+          python tools/orphan_connections_0110/reproduce_gap.py --out orphan_connection_results --expect fixed
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          python tools/mounting_contract_0110/test_ui.py --out connection_ui_results --report connection_table_results/shared_support/fixture_report.json --orphan-report orphan_connection_results/two_same_coordinate_zones/report.json
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           python tools/catalog_connections_0110/reproduce_topology_performance.py --out connection_performance_results
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
@@ -232,6 +234,7 @@ jobs:
           name: connection-table-ui
           path: |
             connection_table_results/
+            orphan_connection_results/
             connection_ui_results/
           if-no-files-found: warn
 

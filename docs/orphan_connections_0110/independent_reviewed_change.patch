@@ -1,0 +1,647 @@
+diff --git a/.github/workflows/check.yml b/.github/workflows/check.yml
+index fd0d144..1e64222 100644
+--- a/.github/workflows/check.yml
++++ b/.github/workflows/check.yml
+@@ -218,7 +218,9 @@ jobs:
+           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+           python tools/catalog_connections_0110/test_connection_table.py --out connection_table_results --report connection_store_results/independent_zones_report.json
+           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+-          python tools/mounting_contract_0110/test_ui.py --out connection_ui_results --report connection_table_results/shared_support/fixture_report.json
++          python tools/orphan_connections_0110/reproduce_gap.py --out orphan_connection_results --expect fixed
++          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
++          python tools/mounting_contract_0110/test_ui.py --out connection_ui_results --report connection_table_results/shared_support/fixture_report.json --orphan-report orphan_connection_results/two_same_coordinate_zones/report.json
+           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+           python tools/catalog_connections_0110/reproduce_topology_performance.py --out connection_performance_results
+           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+@@ -232,6 +234,7 @@ jobs:
+           name: connection-table-ui
+           path: |
+             connection_table_results/
++            orphan_connection_results/
+             connection_ui_results/
+           if-no-files-found: warn
+ 
+diff --git a/Facades/src/AFacadesPlugin/ConnectionTableData.cs b/Facades/src/AFacadesPlugin/ConnectionTableData.cs
+index 487ad48..0fadbe1 100644
+--- a/Facades/src/AFacadesPlugin/ConnectionTableData.cs
++++ b/Facades/src/AFacadesPlugin/ConnectionTableData.cs
+@@ -12,6 +12,12 @@ namespace AFacadesPlugin
+         internal int SupportLinksIndexed;
+         internal int SharedBrackets;
+         internal int SharedMemberLinks;
++        internal int PhysicalElementsVisited;
++        internal int BracketZoneLinksVisited;
++        internal int PassportScopesVisited;
++        internal int EligibleBracketsVisited;
++        internal int UnlinkedBrackets;
++        internal int CandidateLinksForAbsenceVisited;
+     }
+ 
+     // Read-only presentation of the stored, freshness-checked geometry snapshot.
+@@ -58,6 +64,9 @@ namespace AFacadesPlugin
+             var supportRails = new Dictionary<string, List<string>>(StringComparer.Ordinal);
+             var supportOrder = new List<string>();
+             var rowsByMember = new Dictionary<string, object[]>(StringComparer.Ordinal);
++            var eligibleBrackets = new Dictionary<string, string>(StringComparer.Ordinal);
++            var eligibleBracketOrder = new List<string>();
++            var candidateLinksForAbsence = new HashSet<string>(StringComparer.Ordinal);
+             foreach (var report in reports ?? new QuantityReport[0])
+             {
+                 if (report == null || report.kind != "frame" || !seenReports.Add(report)) continue;
+@@ -66,8 +75,14 @@ namespace AFacadesPlugin
+                 if (reportZones.Count == 0) continue;
+                 covered.UnionWith(reportZones);
+                 var elements = new Dictionary<string, QuantityElement>(StringComparer.Ordinal);
++                var bracketsByRun = new Dictionary<string, Dictionary<string, List<QuantityElement>>>(StringComparer.Ordinal);
+                 foreach (var element in report.elements ?? new List<QuantityElement>())
+-                    if (element != null && !string.IsNullOrEmpty(element.element_id)) elements[element.element_id] = element;
++                {
++                    if (diagnostics != null) diagnostics.PhysicalElementsVisited++;
++                    if (element == null || string.IsNullOrEmpty(element.element_id)) continue;
++                    elements[element.element_id] = element;
++                    IndexGeneratedBracket(element, bracketsByRun, diagnostics);
++                }
+                 var passportZones = new HashSet<string>(StringComparer.Ordinal);
+                 foreach (var passport in report.connection_passports ?? new List<QuantityConnectionPassport>())
+                 {
+@@ -91,6 +106,24 @@ namespace AFacadesPlugin
+                                 (string.IsNullOrWhiteSpace(passport.reason) ? "Эта схема не поддержана геометрическим паспортом." : passport.reason));
+                         continue;
+                     }
++                    // source_run_id belongs to the inventory, even when a later
++                    // clamps-only report retains it under a different report.run_id.
++                    Dictionary<string, List<QuantityElement>> bracketsByZone = null;
++                    if (!string.IsNullOrEmpty(passport.source_run_id))
++                        bracketsByRun.TryGetValue(passport.source_run_id, out bracketsByZone);
++                    foreach (string zone in selected)
++                    {
++                        if (diagnostics != null) diagnostics.PassportScopesVisited++;
++                        List<QuantityElement> brackets;
++                        if (bracketsByZone == null || !bracketsByZone.TryGetValue(zone, out brackets)) continue;
++                        foreach (var bracket in brackets)
++                        {
++                            if (diagnostics != null) diagnostics.EligibleBracketsVisited++;
++                            if (eligibleBrackets.ContainsKey(bracket.element_id)) continue;
++                            eligibleBrackets.Add(bracket.element_id, zone);
++                            eligibleBracketOrder.Add(bracket.element_id);
++                        }
++                    }
+                     data.Message(messageSet, "Геометрический паспорт: пресет Вектор-1, вертикальная схема, керамогранит. " +
+                         "Соответствие всей схемы типу 1 альбома не утверждается.");
+                     data.Message(messageSet, "Редакция справочного реестра: " + Value(passport.catalog_revision) + ".");
+@@ -111,6 +144,15 @@ namespace AFacadesPlugin
+                     {
+                         if (member == null || !selected.Contains(member.zone_id)) continue;
+                         memberZones.Add(member.zone_id);
++                        // Read every available selected inventory before row
++                        // deduplication. Distinct valid passport aliases may retain
++                        // different candidate links for the same physical member.
++                        foreach (var support in member.supports ?? new List<QuantityConnectionSupport>())
++                            foreach (string id in support.bracket_element_ids ?? new List<string>())
++                            {
++                                if (diagnostics != null) diagnostics.CandidateLinksForAbsenceVisited++;
++                                candidateLinksForAbsence.Add(id);
++                            }
+                         if (!seenMembers.Add(member.rail_element_id ?? "")) continue;
+                         QuantityElement element;
+                         elements.TryGetValue(member.rail_element_id ?? "", out element);
+@@ -163,6 +205,16 @@ namespace AFacadesPlugin
+             foreach (var zone in zones)
+                 if (!covered.Contains(zone)) data.Missing(rowsByZone, zone, "Паспорт не сформирован: нет подтверждённого источника геометрии соединений.");
+             data.AddSharedCandidateWarnings(supportRails, supportOrder, rowsByMember, messageSet, diagnostics);
++            // The difference is evaluated only after every selected passport copy
++            // has contributed its links. Missing/unavailable inventories never
++            // turn absent information into a zero relationship.
++            int unlinkedNumber = 0;
++            foreach (string id in eligibleBracketOrder)
++                if (!candidateLinksForAbsence.Contains(id))
++                {
++                    if (diagnostics != null) diagnostics.UnlinkedBrackets++;
++                    data.AddUnlinkedBracketMessage(id, eligibleBrackets[id], ++unlinkedNumber, messageSet);
++                }
+             foreach (var pair in rowsByZone) data.Members.AddRange(pair.Value);
+             if (data.Members.Count == 0)
+             {
+@@ -185,6 +237,63 @@ namespace AFacadesPlugin
+             return rows;
+         }
+ 
++        private void AddUnlinkedBracketMessage(string id, string zone, int number, HashSet<string> messageSet)
++        {
++            const string finding = "ID есть в проверенном составе, но отсутствует среди ссылок кандидатов опор этого паспорта. " +
++                "Наличие и тип крепления не определены.";
++            string message = "Монтажная принадлежность не определена: кронштейн " + id + "; зона «" + zone + "». " + finding;
++            if (message.Length <= SharedCandidateMessageLimit) { Message(messageSet, message); return; }
++            // Validator-admissible IDs/zones can be much longer than the normal
++            // producer GUIDs. A short operation-local number links lossless chunks
++            // without repeating the long identity in every output cell.
++            string label = "Запись " + number.ToString(CultureInfo.InvariantCulture);
++            Message(messageSet, "Монтажная принадлежность не определена: " + label + ". " + finding +
++                " Полные ID кронштейна и зона приведены в продолжениях этой записи.");
++            AddUnlinkedValue(label, "ID кронштейна", id, messageSet);
++            AddUnlinkedValue(label, "зона", zone, messageSet);
++        }
++
++        private void AddUnlinkedValue(string label, string field, string value, HashSet<string> messageSet)
++        {
++            int offset = 0, part = 0;
++            while (offset < value.Length)
++            {
++                string prefix = label + " — " + field + ", часть " + (++part).ToString(CultureInfo.InvariantCulture) + ": ";
++                int length = Math.Min(value.Length - offset, SharedCandidateMessageLimit - prefix.Length);
++                if (offset + length < value.Length && char.IsHighSurrogate(value[offset + length - 1]) &&
++                    char.IsLowSurrogate(value[offset + length])) length--;
++                Message(messageSet, prefix + value.Substring(offset, length));
++                offset += length;
++            }
++        }
++
++        private static void IndexGeneratedBracket(QuantityElement element,
++            Dictionary<string, Dictionary<string, List<QuantityElement>>> byRun, ConnectionTableDiagnostics diagnostics)
++        {
++            if (element.role != "bracket" || element.origin != "generated:ATFRAME:brackets") return;
++            int split = element.element_id.IndexOf(":brackets:", StringComparison.Ordinal);
++            if (split <= 0) return;
++            // Same zone semantics as the common validator: distinct nonempty
++            // zone_ids, falling back to zone_id only when that set is empty.
++            string zone = null;
++            foreach (string candidate in element.zone_ids ?? new List<string>())
++            {
++                if (diagnostics != null) diagnostics.BracketZoneLinksVisited++;
++                if (string.IsNullOrWhiteSpace(candidate)) continue;
++                if (zone != null && zone != candidate) return;
++                zone = candidate;
++            }
++            if (zone == null) zone = element.zone_id;
++            if (string.IsNullOrWhiteSpace(zone)) return;
++            string run = element.element_id.Substring(0, split);
++            Dictionary<string, List<QuantityElement>> byZone;
++            if (!byRun.TryGetValue(run, out byZone))
++                byRun.Add(run, byZone = new Dictionary<string, List<QuantityElement>>(StringComparer.Ordinal));
++            List<QuantityElement> values;
++            if (!byZone.TryGetValue(zone, out values)) byZone.Add(zone, values = new List<QuantityElement>());
++            values.Add(element);
++        }
++
+         private void AddSharedCandidateWarnings(Dictionary<string, List<string>> supportRails,
+             List<string> supportOrder, Dictionary<string, object[]> rowsByMember, HashSet<string> messageSet,
+             ConnectionTableDiagnostics diagnostics)
+diff --git a/tools/mounting_contract_0110/ConnectionUiProbe.cs b/tools/mounting_contract_0110/ConnectionUiProbe.cs
+index 0deee7e..9278567 100644
+--- a/tools/mounting_contract_0110/ConnectionUiProbe.cs
++++ b/tools/mounting_contract_0110/ConnectionUiProbe.cs
+@@ -14,6 +14,7 @@ using FacadeSafety;
+ internal static class ConnectionUiProbe
+ {
+     private const string Ambiguous = "Монтажная принадлежность не определена:";
++    private const string Unlinked = "ID есть в проверенном составе, но отсутствует среди ссылок кандидатов опор этого паспорта.";
+     private static readonly JavaScriptSerializer Json = new JavaScriptSerializer { MaxJsonLength = int.MaxValue };
+     private static readonly List<string> reasons = new List<string>(), images = new List<string>();
+     private static readonly List<object> layouts = new List<object>();
+@@ -128,6 +129,80 @@ internal static class ConnectionUiProbe
+         messages.Select(messages.Text.IndexOf(warnings[0], StringComparison.Ordinal), 0); messages.ScrollToCaret(); Application.DoEvents();
+         Shot(form, "connections_" + scenario + "_warnings");
+     }
++    private static object OrphanScenarios(string path)
++    {
++        // This fixture is an accepted engine request with None steps. It is not
++        // a claim that the current ATFRAME dialog lets a user enter those steps.
++        var report = Json.Deserialize<QuantityReport>(File.ReadAllText(path));
++        string sourceBefore = Json.Serialize(report);
++        var result = FacadeQuantitiesCore.BuildRows(new[] { report }, report.zone_ids, true, true);
++        if (!result.ok) throw new Exception("Actual orphan producer fixture rejected by quantity core: " + Json.Serialize(result.issues));
++        string quantitiesBefore = Json.Serialize(result);
++        var view = QuantityTableView.FromConnections(ConnectionTableData.Build(result, new[] { report }, report.zone_ids, null, true));
++        var members = report.connection_passports.SelectMany(p => p.members).ToList();
++        var referenced = new HashSet<string>(members.SelectMany(m => m.supports).SelectMany(s => s.bracket_element_ids), StringComparer.Ordinal);
++        var physicalBrackets = report.elements.Where(e => e.role == "bracket").ToList();
++        var unlinked = physicalBrackets.Where(e => !referenced.Contains(e.element_id)).ToList();
++        var warnings = view.Messages.Where(m => m.Contains(Unlinked)).ToList();
++        Check(report.zone_ids.Count == 2 && members.Count == 4 && physicalBrackets.Count == 2 && unlinked.Count == 2 &&
++            members.All(m => m.support_count == 0 && m.span_count == 0 && m.supports.Count == 0),
++            "Orphan fixture no longer has two independent zones, four unsupported rails and two physical unlinked brackets");
++        Check(warnings.Count == unlinked.Count, "Physical unlinked bracket warnings were omitted or duplicated");
++        foreach (var bracket in unlinked)
++        {
++            var addressed = warnings.Where(w => w.Contains("кронштейн " + bracket.element_id + "; зона «" + bracket.zone_id + "»")).ToList();
++            Check(addressed.Count == 1 && addressed[0].Contains("Наличие и тип крепления не определены."),
++                "Unlinked warning lost its exact physical ID/zone or asserted a mounting type: " + bracket.element_id);
++        }
++        Check(result.rows.Where(r => r.basis == "installed" && r.role == "bracket").Sum(r => r.quantity) == physicalBrackets.Count &&
++            result.rows.Where(r => r.basis == "installed" && r.role == "rail").Sum(r => r.quantity) == members.Count,
++            "Orphan diagnostics removed physical quantities or introduced a phantom rail");
++        foreach (string scenario in new[] { "default", "small", "large_font" })
++            using (var form = new QuantityTablePreview(view, "Кронштейн учтён в составе. Монтажная связь не определена."))
++            {
++                Show(form);
++                if (scenario == "small") form.Size = form.MinimumSize;
++                if (scenario == "large_font") form.Font = new Font("Segoe UI", 12f);
++                Application.DoEvents(); Layout(form, "orphan_" + scenario);
++                var grid = All(form).OfType<DataGridView>().Single();
++                var messages = All(form).OfType<TextBox>().Single(c => c.ReadOnly && c.Text.Contains(Unlinked));
++                Check(grid.VirtualMode && grid.ReadOnly && grid.ShowCellToolTips, "orphan_" + scenario + ": virtual read-only grid contract changed");
++                Check(grid.ColumnCount == 11 && grid.ColumnCount == view.Headers.Length && grid.RowCount == members.Count,
++                    "orphan_" + scenario + ": orphan warning introduced a new physical rail row or column");
++                foreach (string message in view.Messages)
++                    Check(messages.Text.Contains(message), "orphan_" + scenario + ": report message omitted");
++                for (int row = 0; row < grid.RowCount; row++)
++                {
++                    for (int col = 0; col < grid.ColumnCount; col++)
++                        Check(Convert.ToString(grid.Rows[row].Cells[col].Value) == CladdingTableData.Display(view.PreviewRows[row][col]),
++                            "orphan_" + scenario + ": visible rail value differs at " + row + "/" + col);
++                    string note = CladdingTableData.Display(view.PreviewRows[row][10]);
++                    Check(grid.Rows[row].Cells[10].ToolTipText == note, "orphan_" + scenario + ": full row note unavailable as tooltip");
++                    Check(!note.Contains(Unlinked) && unlinked.All(b => !note.Contains(b.element_id)),
++                        "orphan_" + scenario + ": unlinked bracket was assigned to a rail row");
++                    Check(Convert.ToString(grid.Rows[row].Cells[2].Value) == "0" && Convert.ToString(grid.Rows[row].Cells[3].Value) == "0" &&
++                        Convert.ToString(grid.Rows[row].Cells[5].Value) == "Опор-кандидатов нет" &&
++                        Convert.ToString(grid.Rows[row].Cells[6].Value) == "Опор-кандидатов нет",
++                        "orphan_" + scenario + ": unsupported rail quantities or free-length convention changed");
++                }
++                foreach (string warning in warnings) ScrollText(messages, warning, "orphan_" + scenario);
++                messages.Select(messages.TextLength, 0); messages.ScrollToCaret();
++                messages.Select(messages.Text.IndexOf(warnings[0], StringComparison.Ordinal), 0); messages.ScrollToCaret(); Application.DoEvents();
++                Shot(form, "connections_orphan_" + scenario + "_warnings");
++                var noteBox = All(form).OfType<TextBox>().Single(c => !c.ReadOnly);
++                noteBox.Text = "Проверить монтажную связь. =1+1";
++                Check(form.UserNote == noteBox.Text, "orphan_" + scenario + ": user note inaccessible");
++                var action = (Button)(scenario == "small" ? form.AcceptButton : form.CancelButton);
++                action.PerformClick(); Application.DoEvents();
++                Check(form.DialogResult == (scenario == "small" ? DialogResult.OK : DialogResult.Cancel),
++                    "orphan_" + scenario + ": footer action changed");
++            }
++        Check(Json.Serialize(report) == sourceBefore && Json.Serialize(result) == quantitiesBefore,
++            "Orphan preview changed source passports or physical quantities");
++        return new { physical_brackets = physicalBrackets.Count, physical_rail_rows = members.Count,
++            unlinked_brackets = unlinked.Count, addressed_messages = warnings.Count,
++            fixture_scope = "accepted engine None-steps request; current ATFRAME dialog enforces a positive step; not an ordinary UI input scenario" };
++    }
+     [STAThread]
+     public static int Main(string[] args)
+     {
+@@ -168,8 +243,14 @@ internal static class ConnectionUiProbe
+                     scenario + ": footer action did not return the expected result");
+             }
+         Check(Json.Serialize(report) == sourceBefore, "Read-only preview changed physical source passports");
++        int sharedFixtureChecks = checks, sharedFixtureFailures = failures;
++        string orphanPath = Environment.GetEnvironmentVariable("FACADE_CONNECTION_UI_ORPHAN_REPORT");
++        object orphanFixture = string.IsNullOrEmpty(orphanPath) ? null : OrphanScenarios(orphanPath);
+         var manifest = new { status = failures == 0 ? "PASS" : "FAIL", checks, failures, reasons, images, layouts,
+             shared_physical_brackets = shared.Count, physical_rail_rows = view.PreviewRows.Count,
++            shared_fixture_checks = sharedFixtureChecks, shared_fixture_failures = sharedFixtureFailures,
++            orphan_fixture_checks = checks - sharedFixtureChecks, orphan_fixture_failures = failures - sharedFixtureFailures,
++            orphan_fixture = orphanFixture,
+             runtime = Environment.OSVersion.ToString(), live_autocad_checked = false,
+             scope = "Actual QuantityTablePreview/View with real engine/producer fixture; native window, rows, warnings, scroll, tooltips, actions; no AutoCAD host" };
+         File.WriteAllText(Path.Combine(output, "ui_checks.json"), Json.Serialize(manifest));
+diff --git a/tools/mounting_contract_0110/test_ui.py b/tools/mounting_contract_0110/test_ui.py
+index 67d4b70..dcd5090 100644
+--- a/tools/mounting_contract_0110/test_ui.py
++++ b/tools/mounting_contract_0110/test_ui.py
+@@ -1,4 +1,4 @@
+-"""Real connection preview: shared physical bracket warnings and native layout.
++"""Real connection preview: shared and unlinked bracket warnings, native layout.
+ 
+ Consumes the fresh engine -> producer fixture emitted by test_connection_table.
+ No AutoCAD host is opened; lack of a native display remains BLOCKED.
+@@ -22,11 +22,19 @@ def main():
+     parser = argparse.ArgumentParser(description=__doc__)
+     parser.add_argument('--out', type=Path, required=True)
+     parser.add_argument('--report', type=Path, required=True)
++    parser.add_argument('--orphan-report', type=Path)
+     args = parser.parse_args()
+     report = args.report.resolve()
+     if not report.is_file():
+         parser.error('Fresh shared-support report is required: ' + str(report))
+     os.environ['FACADE_CONNECTION_UI_REPORT'] = str(report)
++    orphan_report = args.orphan_report.resolve() if args.orphan_report else None
++    if orphan_report is not None and not orphan_report.is_file():
++        parser.error('Fresh unlinked-bracket report is required: ' + str(orphan_report))
++    if orphan_report is not None:
++        os.environ['FACADE_CONNECTION_UI_ORPHAN_REPORT'] = str(orphan_report)
++    else:
++        os.environ.pop('FACADE_CONNECTION_UI_ORPHAN_REPORT', None)
+     sys.argv = [sys.argv[0], '--out', str(args.out)]
+     sources = [ROOT / 'Common/FacadeQuantities.cs']
+     sources += [ROOT / 'Facades/src/AFacadesPlugin' / name for name in (
+@@ -38,6 +46,8 @@ def main():
+     manifest = json.loads(manifest_path.read_text(encoding='utf-8'))
+     manifest['report_origin'] = 'shared_support_real_engine_to_actual_producer'
+     manifest['report_sha256'] = hashlib.sha256(report.read_bytes()).hexdigest()
++    manifest['orphan_report_sha256'] = hashlib.sha256(orphan_report.read_bytes()).hexdigest() if orphan_report else None
++    manifest['orphan_report_origin'] = 'actual_engine_request_none_steps_to_producer' if orphan_report else None
+     manifest_path.write_text(json.dumps(manifest, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
+     return result
+ 
+diff --git a/tools/orphan_connections_0110/OrphanTableProbe.cs b/tools/orphan_connections_0110/OrphanTableProbe.cs
+new file mode 100644
+index 0000000..d5b3d25
+--- /dev/null
++++ b/tools/orphan_connections_0110/OrphanTableProbe.cs
+@@ -0,0 +1,182 @@
++using System;
++using System.IO;
++using System.Linq;
++using System.Collections.Generic;
++using System.Web.Script.Serialization;
++using FacadeSafety;
++using AFacadesPlugin;
++internal static class OrphanTableProbe {
++ static readonly JavaScriptSerializer Json = new JavaScriptSerializer { MaxJsonLength=int.MaxValue };
++ static int checks;
++ static bool ExpectFixed;
++ static void Check(bool value,string reason) { checks++;if(!value)throw new Exception(reason); }
++ static T Clone<T>(T v) { return Json.Deserialize<T>(Json.Serialize(v)); }
++ static object Observe(string name, QuantityReport[] reports, string[] selected, string path) {
++  string before=Json.Serialize(reports);
++  var result=FacadeQuantitiesCore.BuildRows(reports,selected,true,true);
++  if(!result.ok) throw new Exception(name+": source invalid "+Json.Serialize(result.issues));
++  var diagnostics=new ConnectionTableDiagnostics();
++  var table=ConnectionTableData.Build(result,reports,selected,null,true,diagnostics);
++  var scope=new HashSet<string>(selected,StringComparer.Ordinal);
++  var eligible=new Dictionary<string,QuantityElement>(StringComparer.Ordinal);
++  var linked=new HashSet<string>(StringComparer.Ordinal);
++  foreach(var r in reports) foreach(var p in r.connection_passports ?? new List<QuantityConnectionPassport>()) {
++   if(p.schema!="aframe_connection_passport/1" || p.status!="inventory_only") continue;
++   var pZones=new HashSet<string>(p.zone_ids,StringComparer.Ordinal); pZones.IntersectWith(scope);
++   foreach(var m in p.members) if(pZones.Contains(m.zone_id)) foreach(var s in m.supports) foreach(var id in s.bracket_element_ids) linked.Add(id);
++   foreach(var e in r.elements) if(e.role=="bracket" && e.origin=="generated:ATFRAME:brackets" &&
++    e.element_id.StartsWith(p.source_run_id+":brackets:",StringComparison.Ordinal) &&
++    Zones(e).Count==1 && pZones.Contains(Zones(e).Single())) eligible[e.element_id]=e;
++  }
++  var orphans=eligible.Keys.Where(id=>!linked.Contains(id)).OrderBy(id=>id,StringComparer.Ordinal).ToArray();
++  string text=string.Join("\n",table.Rows("").Select(row=>string.Join(" | ",row.Select(v=>Convert.ToString(v)).ToArray())).ToArray());
++  var warnings=table.Messages.Where(m=>m.Contains("ID есть в проверенном составе, но отсутствует среди ссылок кандидатов опор этого паспорта.")).ToArray();
++  Check(warnings.Length==(ExpectFixed?orphans.Length:0),name+": missing, duplicate or false addressed orphan warning");
++  var continued=new Dictionary<string,string>(StringComparer.Ordinal);
++  foreach(string warning in warnings.Where(m=>m.StartsWith("Монтажная принадлежность не определена: Запись ",StringComparison.Ordinal))) {
++   string label=warning.Substring("Монтажная принадлежность не определена: ".Length).Split(new[]{". "},2,StringSplitOptions.None)[0];
++   string recoveredId=Recover(table.Messages,label,"ID кронштейна");
++   string recoveredZone=Recover(table.Messages,label,"зона");
++   Check(!continued.ContainsKey(recoveredId),name+": duplicate continued physical identity");continued.Add(recoveredId,recoveredZone);
++  }
++  foreach(string id in orphans) {
++   var matches=warnings.Where(m=>m.Contains("кронштейн "+id+"; зона «")).ToArray();
++   Check(matches.Length+(continued.ContainsKey(id)?1:0)==(ExpectFixed?1:0),name+": physical orphan ID absent or repeated");
++   if(ExpectFixed)Check(continued.ContainsKey(id)?continued[id]==Zones(eligible[id]).Single():matches[0].Contains("зона «"+Zones(eligible[id]).Single()+"»"),name+": orphan scope lost");
++  }
++  Check(warnings.All(m=>m.Length<=8000)&&table.Messages.Where(m=>m.StartsWith("Запись ",StringComparison.Ordinal)).All(m=>m.Length<=8000),name+": orphan warning cell unbounded");
++  Check(diagnostics.UnlinkedBrackets==(ExpectFixed?orphans.Length:0),name+": diagnostic counter mismatch");
++  Check(table.Members.Count(row=>Convert.ToString(row[10]).StartsWith("Элемент: ",StringComparison.Ordinal))==reports.SelectMany(r=>r.connection_passports??new List<QuantityConnectionPassport>())
++   .Where(p=>p.status=="inventory_only").SelectMany(p=>p.members).Where(m=>scope.Contains(m.zone_id))
++   .Select(m=>m.rail_element_id).Distinct().Count() || table.Members.All(row=>Convert.ToString(row[1])=="Паспорт не сформирован"),name+": physical member rows changed");
++  if(path!=null)using(var file=new QuantityXlsxFile(path,"Соединения",QuantityTableView.FromConnections(table).Rows(""))) { file.Publish();file.Complete(); }
++
++  if(before!=Json.Serialize(reports)) throw new Exception("source mutated");
++  return new {name,core_ok=result.ok,selected,eligible_brackets=eligible.Count,linked_brackets=linked.Count,orphan_ids=orphans,
++   orphan_ids_shown_in_table=orphans.Where(id=>text.Contains(id)).ToArray(),table_member_count=table.Members.Count,
++   missing_passport_text=text.Contains("Паспорт не сформирован"),source_unchanged=true,
++   physical_elements=reports.SelectMany(r=>r.elements).Select(e=>e.element_id).Distinct().Count(),
++   counters=new {diagnostics.PhysicalElementsVisited,diagnostics.BracketZoneLinksVisited,diagnostics.PassportScopesVisited,
++    diagnostics.EligibleBracketsVisited,diagnostics.MembersIndexed,diagnostics.SupportLinksIndexed,diagnostics.UnlinkedBrackets,diagnostics.CandidateLinksForAbsenceVisited},
++   table_messages=table.Messages.ToArray(),core_issue_codes=result.issues.Select(i=>i.code).Distinct().ToArray()};
++ }
++ static string Recover(List<string> messages,string label,string field) {
++  string prefix=label+" — "+field+", часть ";int next=1;var values=new List<string>();
++  foreach(string message in messages.Where(m=>m.StartsWith(prefix,StringComparison.Ordinal))) {
++   string tail=message.Substring(prefix.Length);int colon=tail.IndexOf(": ",StringComparison.Ordinal);
++   Check(colon>0&&tail.Substring(0,colon)==next.ToString(System.Globalization.CultureInfo.InvariantCulture),"Long identity chunk order/gap/repetition");
++   values.Add(tail.Substring(colon+2));next++;
++  }
++  Check(values.Count>0,"Long identity field missing");return string.Join("",values.ToArray());
++ }
++ static HashSet<string> Zones(QuantityElement e) {
++  var zones=new HashSet<string>((e.zone_ids??new List<string>()).Where(z=>!string.IsNullOrWhiteSpace(z)),StringComparer.Ordinal);
++  if(zones.Count==0&&!string.IsNullOrWhiteSpace(e.zone_id))zones.Add(e.zone_id);return zones;
++ }
++ static QuantityReport Scale(QuantityReport source,int count) {
++  var report=Clone(source);report.elements.Clear();report.connection_passports.Clear();report.estimates.Clear();report.cutting.Clear();
++  string original=source.connection_passports[0].source_run_id;
++  for(int i=0;i<count;i++) {
++   string run="synthetic"+i;var pass=Clone(source.connection_passports[0]);pass.source_run_id=run;pass.passport_id=run+":connections";
++   foreach(var m in pass.members) {
++    m.rail_element_id=m.rail_element_id.Replace(original+":",run+":");
++    foreach(var s in m.supports)s.bracket_element_ids=s.bracket_element_ids.Select(id=>id.Replace(original+":",run+":")).ToList();
++   }
++   foreach(var j in pass.joints) {j.first_rail_element_id=j.first_rail_element_id.Replace(original+":",run+":");j.second_rail_element_id=j.second_rail_element_id.Replace(original+":",run+":");}
++   report.connection_passports.Add(pass);
++   foreach(var initial in source.elements) {
++    var e=Clone(initial);e.element_id=e.element_id.Replace(original+":",run+":");
++    foreach(var cad in e.cad_entities)cad.handle="S"+i+"_"+cad.handle;
++    report.elements.Add(e);
++   }
++  }
++  return report;
++ }
++ static QuantityReport LongIdentity(QuantityReport source,bool unicode) {
++  var report=Clone(source);string old=report.connection_passports[0].source_run_id;
++  string run=new string('R',13000),zone=unicode?string.Concat(Enumerable.Repeat("\U0001F600",10000)):new string('Z',20000);
++  report.run_id=report.report_id=run;report.zone_ids=new List<string>{zone};report.estimates.Clear();report.cutting.Clear();
++  foreach(var p in report.connection_passports) {
++   p.source_run_id=run;p.passport_id=run+":connections";p.zone_ids=new List<string>{zone};
++   foreach(var m in p.members) {m.rail_element_id=m.rail_element_id.Replace(old+":",run+":");m.zone_id=zone;
++    foreach(var s in m.supports)s.bracket_element_ids=s.bracket_element_ids.Select(id=>id.Replace(old+":",run+":")).ToList();}
++   foreach(var j in p.joints) {j.first_rail_element_id=j.first_rail_element_id.Replace(old+":",run+":");j.second_rail_element_id=j.second_rail_element_id.Replace(old+":",run+":");}
++  }
++  foreach(var e in report.elements) {e.element_id=e.element_id.Replace(old+":",run+":");e.zone_id=zone;e.zone_ids=new List<string>{zone};}
++  return report;
++ }
++ static int Main(string[] args) {
++  ExpectFixed=args.Length<3||args[2]!="baseline";
++  var report=Json.Deserialize<QuantityReport>(File.ReadAllText(args[0]));
++  string dir=args[1];Directory.CreateDirectory(dir);var cases=new List<object>();
++  cases.Add(Observe("all",new[]{report},report.zone_ids.ToArray(),Path.Combine(dir,"all.xlsx")));
++  foreach(string z in report.zone_ids) cases.Add(Observe("selected_"+z,new[]{report},new[]{z},Path.Combine(dir,"selected_"+z+".xlsx")));
++  var retained=Clone(report);retained.report_id=retained.run_id="retained-report";
++  cases.Add(Observe("retained_distinct_report_run",new[]{retained},report.zone_ids.ToArray(),Path.Combine(dir,"retained.xlsx")));
++  cases.Add(Observe("retained_duplicate_reports",new[]{report,retained,report},report.zone_ids.ToArray(),Path.Combine(dir,"duplicates.xlsx")));
++  var removed=Clone(retained);var p=removed.connection_passports[0];
++  var linked=new HashSet<string>(p.members.SelectMany(m=>m.supports).SelectMany(s=>s.bracket_element_ids));
++  removed.elements.RemoveAll(e=>e.role=="bracket"&&!linked.Contains(e.element_id));
++  cases.Add(Observe("retained_unlinked_elements_no_longer_present",new[]{removed},removed.zone_ids.ToArray(),Path.Combine(dir,"retained_removed.xlsx")));
++  var unavailable=Clone(report);foreach(var pass in unavailable.connection_passports) {
++   pass.status="unavailable";pass.reason="Synthetic unsupported legacy source";pass.members.Clear();pass.joints.Clear();pass.summary=new QuantityConnectionSummary();
++  }
++  cases.Add(Observe("unavailable_passport_not_zero_relation",new[]{unavailable},report.zone_ids.ToArray(),Path.Combine(dir,"unavailable.xlsx")));
++  var legacy=Clone(report);legacy.connection_passports=null;
++  cases.Add(Observe("legacy_absent_passport_not_zero_relation",new[]{legacy},report.zone_ids.ToArray(),Path.Combine(dir,"legacy.xlsx")));
++  var manual=Clone(report);manual.connection_passports=null;manual.run_id=manual.report_id="manual-run";
++  manual.scope="manual_zone_contribution";manual.algorithm="manual-import/1";manual.estimates.Clear();manual.cutting.Clear();
++  manual.elements.RemoveAll(e=>e.role!="bracket");
++  for(int i=0;i<manual.elements.Count;i++) {manual.elements[i].origin="manual:fixture";manual.elements[i].element_id="manual:fixture:"+i;}
++  cases.Add(Observe("manual_registration_without_passport",new[]{manual},manual.zone_ids.ToArray(),Path.Combine(dir,"manual_without_passport.xlsx")));
++  if(args.Length<4||args[3]!="controls")foreach(string mutation in new[]{"foreign_source_run","manual_origin","duplicate_zone_ids","empty_zone_ids_fallback","display_zone_disagrees","unselected_zone","multiple_canonical_zones"}) {
++   var r=Clone(report);var bracket=r.elements.First(e=>e.role=="bracket");
++   if(mutation=="foreign_source_run")bracket.element_id="foreign:brackets:0";
++   if(mutation=="manual_origin") {bracket.origin="manual:fixture";bracket.element_id="manual:fixture";}
++   if(mutation=="duplicate_zone_ids")bracket.zone_ids=new List<string>{bracket.zone_id,bracket.zone_id," "};
++   if(mutation=="empty_zone_ids_fallback")bracket.zone_ids.Clear();
++   if(mutation=="display_zone_disagrees")bracket.zone_id="display-only-not-scope";
++   if(mutation=="unselected_zone") {r.zone_ids.Add("unselected");bracket.zone_id="unselected";bracket.zone_ids=new List<string>{"unselected"};}
++   if(mutation=="multiple_canonical_zones") {r.zone_ids.Add("other-zone");bracket.zone_ids.Add("other-zone");}
++   cases.Add(Observe(mutation,new[]{r},(mutation=="multiple_canonical_zones"?r.zone_ids:report.zone_ids).ToArray(),Path.Combine(dir,mutation+".xlsx")));
++  }
++  if(args.Length<4||args[3]!="controls") {
++   // Independent trust-boundary shape: the common core accepts distinct passport
++   // aliases of one source run. Negative evidence must consume all their links.
++   var noLinks=Clone(report);var linkedAlias=Clone(report);
++   linkedAlias.report_id=linkedAlias.run_id="alias-report";
++   var alias=linkedAlias.connection_passports[0];alias.passport_id+="-alias";
++   foreach(var member in alias.members) {
++    var rail=linkedAlias.elements.Single(e=>e.element_id==member.rail_element_id);
++    string bracket=linkedAlias.elements.First(e=>e.role=="bracket"&&Zones(e).Contains(member.zone_id)).element_id;
++    member.support_count=1;member.span_count=0;member.intervals_mm.Clear();
++    member.bottom_free_mm=member.top_free_mm=rail.length_mm.Value/2;
++    member.supports=new List<QuantityConnectionSupport>{new QuantityConnectionSupport{offset_mm=rail.length_mm.Value/2,bracket_element_ids=new List<string>{bracket}}};
++   }
++   alias.summary.support_positions=alias.members.Count;alias.summary.support_links=alias.members.Count;
++   File.WriteAllText(Path.Combine(dir,"alias_no_links_report.json"),Json.Serialize(noLinks));
++   File.WriteAllText(Path.Combine(dir,"alias_with_links_report.json"),Json.Serialize(linkedAlias));
++   cases.Add(Observe("distinct_passport_alias_unlinked_first",new[]{noLinks,linkedAlias},report.zone_ids.ToArray(),Path.Combine(dir,"alias_unlinked_first.xlsx")));
++   cases.Add(Observe("distinct_passport_alias_linked_first",new[]{linkedAlias,noLinks},report.zone_ids.ToArray(),Path.Combine(dir,"alias_linked_first.xlsx")));
++  }
++  var mismatch=Clone(report);mismatch.connection_passports[0].source_run_id="foreign";
++  var refused=FacadeQuantitiesCore.BuildRows(new[]{mismatch},null,true,true);
++  Check(!refused.ok&&refused.issues.Any(i=>i.code=="Q_CONNECTION_INVALID"),"Mismatched source run must fail common validation before table");
++  if(args.Length>3&&args[3]=="scale")foreach(int count in new[]{1,100,1000}) {
++   var scaled=Scale(report,count);var raw=Observe("scale_"+count,new[]{scaled},scaled.zone_ids.ToArray(),Path.Combine(dir,"scale_"+count+".xlsx"));
++   var obj=(Dictionary<string,object>)Json.DeserializeObject(Json.Serialize(raw));
++   var counters=(Dictionary<string,object>)obj["counters"];
++   Check(Convert.ToInt32(counters["PhysicalElementsVisited"])==3*count&&Convert.ToInt32(counters["PassportScopesVisited"])==count&&
++    Convert.ToInt32(counters["EligibleBracketsVisited"])==count&&Convert.ToInt32(counters["UnlinkedBrackets"])==count,
++    "Orphan lookup is not one pass over elements/passport scopes/eligible IDs");
++   cases.Add(raw);
++  }
++  if(args.Length>3&&args[3]=="scale")foreach(bool unicode in new[]{false,true}) {
++   var longReport=LongIdentity(report,unicode);string name=unicode?"long_unicode_identity":"long_identity";
++   File.WriteAllText(Path.Combine(dir,name+"_report.json"),Json.Serialize(longReport));
++   cases.Add(Observe(name,new[]{longReport},longReport.zone_ids.ToArray(),Path.Combine(dir,name+".xlsx")));
++  }
++  File.WriteAllText(Path.Combine(dir,"cases.json"),Json.Serialize(new {status=ExpectFixed?"PASS":"REPRODUCED",checks,cases,live_autocad_checked=false}));
++  Console.WriteLine("Scope cases observed: "+cases.Count);return 0;
++ }
++}
+diff --git a/tools/orphan_connections_0110/reproduce_gap.py b/tools/orphan_connections_0110/reproduce_gap.py
+new file mode 100644
+index 0000000..80c7186
+--- /dev/null
++++ b/tools/orphan_connections_0110/reproduce_gap.py
+@@ -0,0 +1,118 @@
++"""Actual engine -> producer -> validated table: physical brackets without candidate links.
++
++The null-step input exercises a supported legacy/API fallback. Current ATFRAME
++manual settings supply positive steps; UI reachability of this input is not claimed.
++Synthetic dimensions and the matching tolerance are not mounting design limits.
++"""
++import argparse
++import copy
++import hashlib
++import json
++from pathlib import Path
++import subprocess
++import sys
++
++ROOT = Path(__file__).resolve().parents[2]
++for name in ('AFrame/engine', 'tools/catalog_connections_0110', 'tools/quantities_3009'):
++    sys.path.insert(0, str(ROOT / name))
++import frame_engine
++from test_frame_solution_selection import example_selection
++from test_connection_store import compile_actual_producer
++from probe_runtime import command, compile_probe, available
++
++
++def main():
++    parser = argparse.ArgumentParser(description=__doc__)
++    parser.add_argument('--out', type=Path, required=True)
++    parser.add_argument('--expect', choices=('fixed',), default='fixed',
++        help='Before-state replay uses docs/orphan_connections_0110/reproduction/baseline_reproduce.py against the recorded source checkout')
++    args = parser.parse_args()
++    if not available():
++        print('BLOCKED: native .NET compiler/runtime unavailable')
++        return 2
++    out = args.out.resolve(); out.mkdir(parents=True, exist_ok=True)
++    base = {'op': 'frame', 'system': {'name': 'Вектор-1', 'rail_std': 1500, 'rail_gap': 10,
++        'bracket_step': None, 'bracket_step_corner': None}, 'sub_type': 'vertical',
++        'cladding': 'porcelain', 'parts': 'frame', 'solution_selection': example_selection(),
++        'floors_y': [1500], 'joints_x': [600], 'zones': [{'zone_id': 'Z0', 'zone': {
++            'contour': {'pts': [[0, 0], [1200, 0], [1200, 3000], [0, 3000]]}, 'openings': []}}]}
++    producer, producer_sources = compile_actual_producer(out / 'producer')
++    inputs = {}
++    for name, gap, steps, zones in (('minimal', 10, None, 1), ('two_same_coordinate_zones', 10, None, 2),
++            ('gap_zero', 0, None, 1), ('gap_one', 1, None, 1), ('gap_one_plus', 1.0002, None, 1),
++            ('normal_positive_steps', 10, 800, 1)):
++        req = copy.deepcopy(base)
++        req['system'].update(rail_gap=gap, bracket_step=steps, bracket_step_corner=steps)
++        if zones == 2:
++            req['zones'].append(copy.deepcopy(req['zones'][0])); req['zones'][1]['zone_id'] = 'Z1'
++        response = frame_engine.run(copy.deepcopy(req))
++        assert response['ok'], response
++        directory = out / name; directory.mkdir(exist_ok=True)
++        source = directory / 'input.json'
++        source.write_text(json.dumps({'request': req, 'response': response, 'mapping': {}}, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
++        produced_path = directory / 'producer_output.json'
++        subprocess.run(command(producer) + ['--produce', str(source), str(produced_path)], check=True)
++        produced = json.loads(produced_path.read_text(encoding='utf-8'))
++        assert produced['ok'], produced
++        report_path = directory / 'report.json'
++        report_path.write_text(json.dumps(produced['report'], ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
++        linked = {i for member in response['connection_passport']['members'] for support in member['supports'] for i in support['bracket_indices']}
++        orphan_indices = sorted(set(range(len(response['brackets']))) - linked)
++        expected = [] if name in ('gap_zero', 'gap_one', 'normal_positive_steps') else list(range(zones))
++        assert orphan_indices == expected, (name, orphan_indices)
++        inputs[name] = {'gap': gap, 'step': steps, 'zones': zones, 'rail_count': len(response['rails']),
++            'bracket_count': len(response['brackets']), 'orphan_indices': orphan_indices,
++            'report': str(report_path), 'input_sha256': hashlib.sha256(source.read_bytes()).hexdigest(),
++            'report_sha256': hashlib.sha256(report_path.read_bytes()).hexdigest()}
++    sources = [Path(__file__).with_name('OrphanTableProbe.cs'), ROOT / 'Common/FacadeQuantities.cs']
++    sources += [ROOT / 'Facades/src/AFacadesPlugin' / name for name in ('ConnectionTableData.cs',
++        'QuantityTableIdentity.cs', 'QuantityTableView.cs', 'QuantityTableView.Connections.cs',
++        'CladdingTableData.cs', 'FrameTableData.cs', 'QuantityXlsxFile.cs', 'XlsxWriter.cs')]
++    exe = out / 'OrphanTableProbe.exe'
++    compiled = compile_probe(sources, ['System.Web.Extensions', 'System.Xml', 'System.IO.Compression', 'System.IO.Compression.FileSystem'], exe)
++    (out / 'compile.log').write_text(compiled.stdout + compiled.stderr, encoding='utf-8')
++    if compiled.returncode:
++        print(compiled.stdout + compiled.stderr)
++        return 1
++    checks = 0; cases = []
++    for name in inputs:
++        mode = 'scale' if name == 'minimal' else 'full' if name == 'two_same_coordinate_zones' else 'controls'
++        run = subprocess.run(command(exe) + [inputs[name]['report'], str(out / name / 'scope'), args.expect, mode], text=True, capture_output=True)
++        (out / name / 'scope.log').write_text(run.stdout + run.stderr, encoding='utf-8')
++        assert run.returncode == 0, run.stdout + run.stderr
++        observed = json.loads((out / name / 'scope/cases.json').read_text(encoding='utf-8'))
++        checks += observed['checks']
++        cases.append({'fixture': name, **observed})
++    from openpyxl import load_workbook
++    exports = []
++    for path in sorted(out.glob('*/scope/*.xlsx')):
++        if path.name.endswith('_roundtrip.xlsx'):
++            continue
++        book = load_workbook(path)
++        values = {sheet.title: list(sheet.values) for sheet in book}
++        maximum = max((len(cell.value) for sheet in book for row in sheet for cell in row if isinstance(cell.value, str)), default=0)
++        assert maximum <= 32767, (path, maximum)
++        roundtrip = path.with_name(path.stem + '_roundtrip.xlsx')
++        book.save(roundtrip)
++        restored = load_workbook(roundtrip)
++        assert {sheet.title: list(sheet.values) for sheet in restored} == values, path
++        exports.append({'path': str(path.relative_to(out)), 'maximum_cell_characters': maximum,
++            'roundtrip_exact': True, 'sha256': hashlib.sha256(path.read_bytes()).hexdigest()})
++    dependencies = set(producer_sources + sources + [Path(__file__).resolve(), ROOT / 'tools/catalog_connections_0110/test_connection_store.py',
++        ROOT / 'tools/quantities_3009/probe_runtime.py', ROOT / 'AFrame/engine/systems.json'])
++    dependencies.update((ROOT / 'AFrame/engine').glob('*.py'))
++    manifest = {'status': 'PASS' if args.expect == 'fixed' else 'REPRODUCED', 'expected': args.expect,
++        'inputs': inputs, 'checks': checks, 'cases': cases, 'xlsx_exports': exports,
++        'response_was_modified': False,
++        'path': 'actual frame_engine -> actual FrameQuantities producer -> common validator -> table -> XLSX',
++        'scope_variants': 'retained/legacy/unavailable/alias/removed-element variants modify typed DTOs after the producer; source engine responses are unchanged',
++        'legacy_api_fallback_ui_reachability': 'not_asserted; current FrameSettings manual mode supplies positive steps',
++        'engineering_status': 'unchanged; mounting not confirmed', 'live_autocad_checked': False,
++        'source_sha256': {str(path.relative_to(ROOT)): hashlib.sha256(path.read_bytes()).hexdigest() for path in sorted(dependencies)}}
++    (out / 'manifest.json').write_text(json.dumps(manifest, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
++    print('Orphan connection checks:', checks, 'PASS; XLSX exports/roundtrips:', len(exports))
++    return 0
++
++
++if __name__ == '__main__':
++    raise SystemExit(main())

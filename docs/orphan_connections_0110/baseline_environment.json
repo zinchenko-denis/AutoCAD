@@ -1,0 +1,17 @@
+{
+  "schema": "facade_verification_environment/1",
+  "recorded_utc": "2026-10-01T16:11:52.982326+00:00",
+  "environment_script": "/workspace/scratch/ba306982747c/verification_deps/env.sh",
+  "environment_script_sha256": "005e6ab9c25c6c5b278b42514d64e02168754574d0fa8fedd7e78494d9891c8d",
+  "python": "3.12.14",
+  "python_executable": "/workspace/scratch/ba306982747c/verification_deps/venv/bin/python3",
+  "mono": "Mono JIT compiler version 6.8.0.105 (Debian 6.8.0.105+dfsg-3.6ubuntu2 Sun Mar 31 02:55:28 UTC 2024)",
+  "mcs": "Mono C# compiler version 6.8.0.105",
+  "shapely": "2.1.2",
+  "openpyxl": "3.1.5",
+  "references": "/workspace/scratch/ba306982747c/verification_deps/compile_refs",
+  "dependency_installations": false,
+  "network_used": "Read-only GitHub API for current CI214 status",
+  "gates_run": false,
+  "live_autocad_checked": false
+}

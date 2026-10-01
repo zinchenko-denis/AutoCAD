@@ -1,0 +1,280 @@
+{
+  "schema": "facade_unlinked_bracket_source_facts/1",
+  "date": "2026-10-01",
+  "baseline_commit": "1a6066d541ed2f62ac40809e1a87e09e434ab591",
+  "pilot": {
+    "system": "Vector-1",
+    "edition": 2015,
+    "type": 1,
+    "cladding": "porcelain",
+    "node": "4.2.1",
+    "families": [
+      "KR2",
+      "PP",
+      "UK",
+      "GP"
+    ]
+  },
+  "scope": {
+    "existing_sources_only": true,
+    "new_sources_used": false,
+    "new_mounting_rule_introduced": false,
+    "new_full_pdf_review_performed": false,
+    "product_implementation_tested_by_this_engineering_review": false
+  },
+  "source_review_inheritance": {
+    "mode": "Reuse prior primary-source review on the same source identities; not a new full revision",
+    "evidence": [
+      {
+        "path": "docs/mounting_contract_0110/source_facts.json",
+        "sha256": "5d43f128977f136bb6499dd99960f9b18dcc630323307b492fecc59917f2aba7"
+      },
+      {
+        "path": "docs/mounting_contract_0110/engineering_review.md",
+        "sha256": "33d189d0f627d41ae491a5a1444e96f4a5c36c8d6f45dbdaab19cf66d4c512a7"
+      },
+      {
+        "path": "docs/nominal_mounting_0110/source_facts.json",
+        "sha256": "29f0b877e2161988c0007a8153a2dfc1e1e5873f4f02bfedf60483ee6ca1c499"
+      }
+    ],
+    "primary_sources": [
+      {
+        "source_id": "vector1_2015",
+        "private_repository": "zinchenko-denis/atspec-testdata",
+        "path": "docs/facades_atr/ATR_Vector1_3.15_KG_KP_2015.pdf",
+        "sha256": "7386f4152de455a5e2622704d51a98d8f05afd20050807f634eea4572de37142",
+        "locators": [
+          {
+            "pdf_page": 3,
+            "sheet": "2",
+            "fact": "Project-specific fixing scheme"
+          },
+          {
+            "pdf_page": 19,
+            "sheet": "4.1",
+            "fact": "Vertical detail U2/U, not full UK interface"
+          },
+          {
+            "pdf_page": 20,
+            "sheet": "4.2.1",
+            "fact": "Horizontal KR2-PP-UK-GP family topology"
+          }
+        ]
+      },
+      {
+        "source_id": "vector1_type1_reference_2026",
+        "private_repository": "zinchenko-denis/atspec-testdata",
+        "path": "docs/facades_calc/Static_VEKTOR1_tip1_monolit_KG_2026.pdf",
+        "sha256": "495f8fadf882dc6f6c3f2c023a08611035c5e916a3cc92ee4da675cb2a0f16d2",
+        "locators": [
+          {
+            "pdf_pages": [
+              3,
+              14
+            ],
+            "fact": "Different support symbols not mapped to real physical IDs"
+          },
+          {
+            "pdf_pages": [
+              6
+            ],
+            "fact": "Np=(q_cladding*b+q_rail)*L1; not automatically whole-L gravity at one fixed support"
+          },
+          {
+            "pdf_pages": [
+              12,
+              13
+            ],
+            "fact": "Two separate riveted interfaces include combined weight and wind in this reference calculation"
+          }
+        ]
+      }
+    ]
+  },
+  "independent_reproduction": {
+    "level": "pure frame_connections.build_connection_passport on prepared arrays",
+    "not_tested_in_this_probe": [
+      "full frame_engine planner",
+      "FrameQuantities C# producer",
+      "quantity validator",
+      "table model",
+      "XLSX export",
+      "live AutoCAD"
+    ],
+    "request": {
+      "system": "Вектор-1",
+      "sub_type": "vertical",
+      "cladding": "porcelain"
+    },
+    "response_arrays": {
+      "rails": [
+        {
+          "x": 100.0,
+          "y0": 0.0,
+          "y1": 995.0,
+          "profile": "ГП-40-40-1,2"
+        },
+        {
+          "x": 100.0,
+          "y0": 1005.0,
+          "y1": 2000.0,
+          "profile": "ГП-40-40-1,2"
+        }
+      ],
+      "brackets": [
+        {
+          "x": 100.0,
+          "y": 1000.0,
+          "kind": "рядовой"
+        }
+      ]
+    },
+    "observed": {
+      "status": "inventory_only",
+      "members": 2,
+      "physical_brackets_in_input": 1,
+      "referenced_bracket_indices": [],
+      "unreferenced_bracket_indices": [
+        0
+      ],
+      "support_positions": 0,
+      "support_links": 0,
+      "issues": [
+        "CONNECTIONS_GEOMETRY_ONLY"
+      ]
+    },
+    "control_gap_zero": {
+      "status": "inventory_only",
+      "members": 2,
+      "physical_brackets_in_input": 1,
+      "referenced_bracket_indices": [
+        0
+      ],
+      "unreferenced_bracket_indices": [],
+      "support_positions": 2,
+      "support_links": 2
+    },
+    "unavailable_controls": [
+      "ortho scheme",
+      "no rails"
+    ],
+    "synthetic_dimensions_are_mounting_limits": false,
+    "meaning": "A physical input bracket is absent from candidate references; no proof of a missing actual fastening"
+  },
+  "separate_peer_reproduction": {
+    "owner": "contract_gap",
+    "evidence_read_by_this_reviewer": true,
+    "executed_by_this_reviewer": false,
+    "baseline_commit": "1a6066d541ed2f62ac40809e1a87e09e434ab591",
+    "path": "frame_engine -> FrameQuantities producer -> FacadeQuantitiesCore -> ConnectionTableData -> XLSX",
+    "fixture_kind": "accepted API/legacy fallback with null bracket steps, explicit historical pilot selection",
+    "inputs": {
+      "system": "Вектор-1",
+      "rail_std_mm": 1500,
+      "rail_gap_mm": 10,
+      "bracket_step": null,
+      "bracket_step_corner": null,
+      "floors_y_mm": [
+        1500
+      ],
+      "joints_x_mm": [
+        600
+      ],
+      "wall_mm": [
+        1200,
+        3000
+      ]
+    },
+    "observed": {
+      "ok": true,
+      "rail_intervals_mm": [
+        [
+          0,
+          1495
+        ],
+        [
+          1505,
+          3000
+        ]
+      ],
+      "bracket_y_mm": 1500,
+      "physical_brackets": 1,
+      "candidate_links": 0,
+      "orphan_ID_present_in_table": false,
+      "engine_response_modified": false
+    },
+    "standard_ui_null_step_reachability_asserted": false,
+    "normal_positive_steps_control": {
+      "bracket_step_mm": 800,
+      "physical_brackets": 6,
+      "unreferenced_brackets": 0
+    },
+    "evidence_hashes": {
+      "manifest.json": "2f994d31bb68de22562bfa5ae06ca117919b7443449c8f6991894e1269658618",
+      "minimal/input.json": "d8334ab80a1589db61798c477769aade7bc72a702a820056b77f807114803007",
+      "minimal/report.json": "a7bb7e8b069bcf37bf83ab7ea8697cf40c8f1216cd1e279076ebed2c82221012",
+      "minimal/scope/cases.json": "4b76ae53ffe267adf7698d644a4bc5e7068cd495c974ce3ba95bf244a9d51041",
+      "minimal/scope/all.xlsx": "928cbeca7a4015d8ece4bc1a6bd435e22fa498042c94c9229d66155aa027e021"
+    },
+    "publication_location": "See separate reproduction manifest stored with this iteration; hashes identify the reviewed peer outputs"
+  },
+  "allowed_diagnostic": {
+    "level": "physical ID absent among candidate support references in a validated passport",
+    "suggested_text": "Кронштейн <ID>: в проверенном геометрическом паспорте связь-кандидат с направляющей не найдена. Монтажная принадлежность не определена.",
+    "does_not_assert": [
+      "missing actual fastening",
+      "extra bracket",
+      "installation error",
+      "structural failure",
+      "mounting approval when warning absent"
+    ]
+  },
+  "eligibility_contract": {
+    "validated_result_required": true,
+    "passport_schema": "aframe_connection_passport/1",
+    "passport_status": "inventory_only",
+    "role": "bracket",
+    "origin": "generated:ATFRAME:brackets",
+    "ID_prefix": "passport.source_run_id + :brackets:",
+    "one_canonical_zone_required": true,
+    "canonical_zone_algorithm": "unique nonblank zone_ids; fallback to zone_id only if canonical set is empty",
+    "selected_zone_and_passport_scope_required": true,
+    "current_report_run_may_differ_from_source_run": true,
+    "deduplicate_retained_copies": true,
+    "manual_registration_legacy_unavailable_are_unknown_not_zero": true,
+    "manual_ATFRAME_step_mode_may_have_valid_passport": true,
+    "partial_nomenclature_is_not_absent_geometric_inventory": true
+  },
+  "computation_scope": {
+    "method": "set difference of eligible physical bracket IDs and candidate-reference IDs",
+    "new_geometric_search": false,
+    "new_CAD_reads": false,
+    "new_matching_tolerance": false,
+    "existing_MATCH_TOL_mm": 0.5,
+    "tolerance_meaning": "coordinate matching only, not mounting allowance",
+    "physical_counts_geometry_and_constraints_change": false
+  },
+  "continuing_refusal": {
+    "full_2V_confirmed": false,
+    "confirmed_3A_allowed": false,
+    "automatic_bracket_selection_allowed": false,
+    "mounting_status": "not_confirmed",
+    "physical_assignment": "not_asserted",
+    "why": [
+      "bracket-rail candidate is not a mapping of separate GP-UK and UK-KR2 mounting interfaces",
+      "fastener and hole arrangement not assigned to each physical connection",
+      "DOF constraints and stiffness not confirmed",
+      "weight tributary lengths and reactions not mapped to real supports",
+      "splice N/Q/M transmission and continuous calculation members not confirmed"
+    ],
+    "nominal_2B5_chain_retained": true,
+    "source_project_error_asserted": false
+  },
+  "public_provenance": {
+    "private_PDFs_copied": false,
+    "private_renders_copied": false,
+    "private_project_details_included": false
+  },
+  "validation_status": "ENGINEERING_DIAGNOSTIC_SCOPE_REVIEWED_IMPLEMENTATION_AND_CI_SEPARATE"
+}

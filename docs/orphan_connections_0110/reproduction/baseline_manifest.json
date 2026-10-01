@@ -1,0 +1,90 @@
+{
+  "status": "REPRODUCED",
+  "head": "1a6066d541ed2f62ac40809e1a87e09e434ab591",
+  "inputs": {
+    "minimal": {
+      "gap": 10,
+      "step": null,
+      "zones": 1,
+      "rail_count": 2,
+      "bracket_count": 1,
+      "orphan_indices": [
+        0
+      ],
+      "report": "/workspace/scratch/58a6cc5ac740/2v2_gap/minimal/report.json",
+      "source_sha256": "d8334ab80a1589db61798c477769aade7bc72a702a820056b77f807114803007"
+    },
+    "two_same_coordinate_zones": {
+      "gap": 10,
+      "step": null,
+      "zones": 2,
+      "rail_count": 4,
+      "bracket_count": 2,
+      "orphan_indices": [
+        0,
+        1
+      ],
+      "report": "/workspace/scratch/58a6cc5ac740/2v2_gap/two_same_coordinate_zones/report.json",
+      "source_sha256": "4ab8d9540313334742b6ea61869c46405fe690990b7afae0b7fcebf1c141ef84"
+    },
+    "gap_zero": {
+      "gap": 0,
+      "step": null,
+      "zones": 1,
+      "rail_count": 2,
+      "bracket_count": 1,
+      "orphan_indices": [],
+      "report": "/workspace/scratch/58a6cc5ac740/2v2_gap/gap_zero/report.json",
+      "source_sha256": "e52ae225c27da1a6d6247ae9ccd8725586090924c6427396b179573888053b33"
+    },
+    "gap_one": {
+      "gap": 1,
+      "step": null,
+      "zones": 1,
+      "rail_count": 2,
+      "bracket_count": 1,
+      "orphan_indices": [],
+      "report": "/workspace/scratch/58a6cc5ac740/2v2_gap/gap_one/report.json",
+      "source_sha256": "3cf08545645ee65c0bcc0fbb45e0b7d4aba139238e46f809e1ad3a3e9662d5f2"
+    },
+    "gap_one_plus": {
+      "gap": 1.0002,
+      "step": null,
+      "zones": 1,
+      "rail_count": 2,
+      "bracket_count": 1,
+      "orphan_indices": [
+        0
+      ],
+      "report": "/workspace/scratch/58a6cc5ac740/2v2_gap/gap_one_plus/report.json",
+      "source_sha256": "7d51b004b7046e99ce4800d17bed795010f78b61075ad7c29c85c43cc373c1b9"
+    },
+    "normal_positive_steps": {
+      "gap": 10,
+      "step": 800,
+      "zones": 1,
+      "rail_count": 2,
+      "bracket_count": 6,
+      "orphan_indices": [],
+      "report": "/workspace/scratch/58a6cc5ac740/2v2_gap/normal_positive_steps/report.json",
+      "source_sha256": "0bf3ebcf41ce201cb9f0d0c555907d04c1970ac35df45d984156353ad3897ae8"
+    }
+  },
+  "response_was_modified": false,
+  "path": "real frame_engine -> actual FrameQuantities producer -> FacadeQuantitiesCore validator -> ConnectionTableData -> XLSX",
+  "scope_variants": "retained/legacy/unavailable/removed-element variants mutate typed DTO after validated producer only, never engine response",
+  "source_sha256": {
+    "AFrame/src/AFramePlugin/FrameQuantities.cs": "d34f7cf6219dbfec7c88796b12477bea9382d4cca2dc125e4ebd1a252b1cf791",
+    "Common/FacadeQuantities.cs": "b092bf95f154d6aa8041936bffa79a82c613d7ac8f27fee9d1e6d7c0cde09f90",
+    "tools/catalog_connections_0110/ConnectionStoreProbe.cs": "fa9a6c335001d5700ae3cf32af25d7dea685a57bf4a96499352989a8b0e329ac",
+    "Facades/src/AFacadesPlugin/ConnectionTableData.cs": "c686399113c25df64575f031d2fad71c0702d2cea65011f68078ee51fc1d92e0",
+    "Facades/src/AFacadesPlugin/QuantityTableIdentity.cs": "82044b27845ff586b475040e4a968398c0325bdf8c6205cd6f5b226597810454",
+    "Facades/src/AFacadesPlugin/QuantityTableView.cs": "9656e74f8c3e4a932e4303e694a0690ddf2e14c308de64afa53bce9a8dc80480",
+    "Facades/src/AFacadesPlugin/QuantityTableView.Connections.cs": "1dbc4269e64eda11011c6ad63400870072ebe4d37ac7f959bf74e0d18438e8f8",
+    "Facades/src/AFacadesPlugin/CladdingTableData.cs": "8dec6b35b881f29b9da51d9e2c3769be360f53c6fac06670c2005a60e94405fa",
+    "Facades/src/AFacadesPlugin/FrameTableData.cs": "58de42f818cf70d470bb438b025cb6cb4c70391700d43eeeaee23042281f1ffc",
+    "Facades/src/AFacadesPlugin/QuantityXlsxFile.cs": "3c79e7a701ad6ba50bc81ce41cc88ba5d9c0c76c52e601115ccd3df460c3f75e",
+    "Facades/src/AFacadesPlugin/XlsxWriter.cs": "6c4ef614b5fde416fa91ce29adc0ebf99599bb21b285bd7d885bf00469c428fc"
+  },
+  "live_autocad_checked": false
+}

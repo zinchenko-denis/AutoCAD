@@ -12,6 +12,12 @@ namespace AFacadesPlugin
         internal int SupportLinksIndexed;
         internal int SharedBrackets;
         internal int SharedMemberLinks;
+        internal int PhysicalElementsVisited;
+        internal int BracketZoneLinksVisited;
+        internal int PassportScopesVisited;
+        internal int EligibleBracketsVisited;
+        internal int UnlinkedBrackets;
+        internal int CandidateLinksForAbsenceVisited;
     }
 
     // Read-only presentation of the stored, freshness-checked geometry snapshot.
@@ -58,6 +64,9 @@ namespace AFacadesPlugin
             var supportRails = new Dictionary<string, List<string>>(StringComparer.Ordinal);
             var supportOrder = new List<string>();
             var rowsByMember = new Dictionary<string, object[]>(StringComparer.Ordinal);
+            var eligibleBrackets = new Dictionary<string, string>(StringComparer.Ordinal);
+            var eligibleBracketOrder = new List<string>();
+            var candidateLinksForAbsence = new HashSet<string>(StringComparer.Ordinal);
             foreach (var report in reports ?? new QuantityReport[0])
             {
                 if (report == null || report.kind != "frame" || !seenReports.Add(report)) continue;
@@ -66,8 +75,14 @@ namespace AFacadesPlugin
                 if (reportZones.Count == 0) continue;
                 covered.UnionWith(reportZones);
                 var elements = new Dictionary<string, QuantityElement>(StringComparer.Ordinal);
+                var bracketsByRun = new Dictionary<string, Dictionary<string, List<QuantityElement>>>(StringComparer.Ordinal);
                 foreach (var element in report.elements ?? new List<QuantityElement>())
-                    if (element != null && !string.IsNullOrEmpty(element.element_id)) elements[element.element_id] = element;
+                {
+                    if (diagnostics != null) diagnostics.PhysicalElementsVisited++;
+                    if (element == null || string.IsNullOrEmpty(element.element_id)) continue;
+                    elements[element.element_id] = element;
+                    IndexGeneratedBracket(element, bracketsByRun, diagnostics);
+                }
                 var passportZones = new HashSet<string>(StringComparer.Ordinal);
                 foreach (var passport in report.connection_passports ?? new List<QuantityConnectionPassport>())
                 {
@@ -91,6 +106,24 @@ namespace AFacadesPlugin
                                 (string.IsNullOrWhiteSpace(passport.reason) ? "Эта схема не поддержана геометрическим паспортом." : passport.reason));
                         continue;
                     }
+                    // source_run_id belongs to the inventory, even when a later
+                    // clamps-only report retains it under a different report.run_id.
+                    Dictionary<string, List<QuantityElement>> bracketsByZone = null;
+                    if (!string.IsNullOrEmpty(passport.source_run_id))
+                        bracketsByRun.TryGetValue(passport.source_run_id, out bracketsByZone);
+                    foreach (string zone in selected)
+                    {
+                        if (diagnostics != null) diagnostics.PassportScopesVisited++;
+                        List<QuantityElement> brackets;
+                        if (bracketsByZone == null || !bracketsByZone.TryGetValue(zone, out brackets)) continue;
+                        foreach (var bracket in brackets)
+                        {
+                            if (diagnostics != null) diagnostics.EligibleBracketsVisited++;
+                            if (eligibleBrackets.ContainsKey(bracket.element_id)) continue;
+                            eligibleBrackets.Add(bracket.element_id, zone);
+                            eligibleBracketOrder.Add(bracket.element_id);
+                        }
+                    }
                     data.Message(messageSet, "Геометрический паспорт: пресет Вектор-1, вертикальная схема, керамогранит. " +
                         "Соответствие всей схемы типу 1 альбома не утверждается.");
                     data.Message(messageSet, "Редакция справочного реестра: " + Value(passport.catalog_revision) + ".");
@@ -111,6 +144,15 @@ namespace AFacadesPlugin
                     {
                         if (member == null || !selected.Contains(member.zone_id)) continue;
                         memberZones.Add(member.zone_id);
+                        // Read every available selected inventory before row
+                        // deduplication. Distinct valid passport aliases may retain
+                        // different candidate links for the same physical member.
+                        foreach (var support in member.supports ?? new List<QuantityConnectionSupport>())
+                            foreach (string id in support.bracket_element_ids ?? new List<string>())
+                            {
+                                if (diagnostics != null) diagnostics.CandidateLinksForAbsenceVisited++;
+                                candidateLinksForAbsence.Add(id);
+                            }
                         if (!seenMembers.Add(member.rail_element_id ?? "")) continue;
                         QuantityElement element;
                         elements.TryGetValue(member.rail_element_id ?? "", out element);
@@ -163,6 +205,16 @@ namespace AFacadesPlugin
             foreach (var zone in zones)
                 if (!covered.Contains(zone)) data.Missing(rowsByZone, zone, "Паспорт не сформирован: нет подтверждённого источника геометрии соединений.");
             data.AddSharedCandidateWarnings(supportRails, supportOrder, rowsByMember, messageSet, diagnostics);
+            // The difference is evaluated only after every selected passport copy
+            // has contributed its links. Missing/unavailable inventories never
+            // turn absent information into a zero relationship.
+            int unlinkedNumber = 0;
+            foreach (string id in eligibleBracketOrder)
+                if (!candidateLinksForAbsence.Contains(id))
+                {
+                    if (diagnostics != null) diagnostics.UnlinkedBrackets++;
+                    data.AddUnlinkedBracketMessage(id, eligibleBrackets[id], ++unlinkedNumber, messageSet);
+                }
             foreach (var pair in rowsByZone) data.Members.AddRange(pair.Value);
             if (data.Members.Count == 0)
             {
@@ -183,6 +235,63 @@ namespace AFacadesPlugin
             foreach (var message in Messages) rows.Add(new object[] { message });
             rows.Add(new object[] { "Примечание пользователя: " + (note ?? "") });
             return rows;
+        }
+
+        private void AddUnlinkedBracketMessage(string id, string zone, int number, HashSet<string> messageSet)
+        {
+            const string finding = "ID есть в проверенном составе, но отсутствует среди ссылок кандидатов опор этого паспорта. " +
+                "Наличие и тип крепления не определены.";
+            string message = "Монтажная принадлежность не определена: кронштейн " + id + "; зона «" + zone + "». " + finding;
+            if (message.Length <= SharedCandidateMessageLimit) { Message(messageSet, message); return; }
+            // Validator-admissible IDs/zones can be much longer than the normal
+            // producer GUIDs. A short operation-local number links lossless chunks
+            // without repeating the long identity in every output cell.
+            string label = "Запись " + number.ToString(CultureInfo.InvariantCulture);
+            Message(messageSet, "Монтажная принадлежность не определена: " + label + ". " + finding +
+                " Полные ID кронштейна и зона приведены в продолжениях этой записи.");
+            AddUnlinkedValue(label, "ID кронштейна", id, messageSet);
+            AddUnlinkedValue(label, "зона", zone, messageSet);
+        }
+
+        private void AddUnlinkedValue(string label, string field, string value, HashSet<string> messageSet)
+        {
+            int offset = 0, part = 0;
+            while (offset < value.Length)
+            {
+                string prefix = label + " — " + field + ", часть " + (++part).ToString(CultureInfo.InvariantCulture) + ": ";
+                int length = Math.Min(value.Length - offset, SharedCandidateMessageLimit - prefix.Length);
+                if (offset + length < value.Length && char.IsHighSurrogate(value[offset + length - 1]) &&
+                    char.IsLowSurrogate(value[offset + length])) length--;
+                Message(messageSet, prefix + value.Substring(offset, length));
+                offset += length;
+            }
+        }
+
+        private static void IndexGeneratedBracket(QuantityElement element,
+            Dictionary<string, Dictionary<string, List<QuantityElement>>> byRun, ConnectionTableDiagnostics diagnostics)
+        {
+            if (element.role != "bracket" || element.origin != "generated:ATFRAME:brackets") return;
+            int split = element.element_id.IndexOf(":brackets:", StringComparison.Ordinal);
+            if (split <= 0) return;
+            // Same zone semantics as the common validator: distinct nonempty
+            // zone_ids, falling back to zone_id only when that set is empty.
+            string zone = null;
+            foreach (string candidate in element.zone_ids ?? new List<string>())
+            {
+                if (diagnostics != null) diagnostics.BracketZoneLinksVisited++;
+                if (string.IsNullOrWhiteSpace(candidate)) continue;
+                if (zone != null && zone != candidate) return;
+                zone = candidate;
+            }
+            if (zone == null) zone = element.zone_id;
+            if (string.IsNullOrWhiteSpace(zone)) return;
+            string run = element.element_id.Substring(0, split);
+            Dictionary<string, List<QuantityElement>> byZone;
+            if (!byRun.TryGetValue(run, out byZone))
+                byRun.Add(run, byZone = new Dictionary<string, List<QuantityElement>>(StringComparer.Ordinal));
+            List<QuantityElement> values;
+            if (!byZone.TryGetValue(zone, out values)) byZone.Add(zone, values = new List<QuantityElement>());
+            values.Add(element);
         }
 
         private void AddSharedCandidateWarnings(Dictionary<string, List<string>> supportRails,
