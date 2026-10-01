@@ -1,0 +1,563 @@
+{
+  "schema": "facade_pilot_completion_source_facts/1",
+  "date": "2026-10-01",
+  "baseline_commit": "1535d67eed9224c498ecc0cd73a6b0889a3f76a2",
+  "pilot": {
+    "system": "Vector-1",
+    "edition": 2015,
+    "type": 1,
+    "cladding": "porcelain",
+    "node": "4.2.1",
+    "families": [
+      "KR2",
+      "PP",
+      "UK",
+      "GP"
+    ]
+  },
+  "review_scope": {
+    "new_sources_used": false,
+    "product_modified_by_reviewer": false,
+    "new_full_archive_revision": false,
+    "new_structural_rule": false,
+    "live_AutoCAD_checked": false
+  },
+  "hypotheses": [
+    {
+      "id": "declaration_implies_physical_assignment",
+      "statement": "Explicit historical KR2/UK/GP choice already determines actual physical components",
+      "result": "REFUTED",
+      "classification": "existing intended declaration-only boundary, not newly discovered regression",
+      "evidence": "own engine-only paired run and separately attributed peer full producer chain"
+    },
+    {
+      "id": "reference_marks_close_mounting_contract",
+      "statement": "Restricting selection to exact 2026 calculation designations closes mounting contract",
+      "result": "NOT_ESTABLISHED_SUFFICIENT_COUNTERGAPS_IDENTIFIED",
+      "reasons": [
+        "KR2-70 and UK-70-1.2 in PDF3 do not select catalogue L",
+        "Reference lever arms do not identify unique overlap/placement",
+        "Physical KR2-UK and UK-GP interfaces are not mapped to component IDs",
+        "Rivet calculations do not provide complete dimensioned installation and operating-motion rules",
+        "Support symbols and Np based on L1 do not determine actual constraint/reaction mapping"
+      ],
+      "source_project_error_asserted": false
+    }
+  ],
+  "own_paired_engine_probe": {
+    "level": "frame_engine.op_frame only",
+    "requests": {
+      "A": {
+        "system": {
+          "name": "Вектор-1",
+          "bracket_step": 800,
+          "bracket_step_corner": 600
+        },
+        "sub_type": "vertical",
+        "cladding": "porcelain",
+        "parts": "frame",
+        "exact_step": true,
+        "joints_x": [
+          300,
+          900
+        ],
+        "rows_y": [
+          600,
+          1200,
+          1800
+        ],
+        "op": "frame",
+        "zones": [
+          {
+            "zone_id": "zone_0",
+            "zone": {
+              "contour": {
+                "pts": [
+                  [
+                    0,
+                    0
+                  ],
+                  [
+                    1200,
+                    0
+                  ],
+                  [
+                    1200,
+                    2400
+                  ],
+                  [
+                    0,
+                    2400
+                  ]
+                ]
+              },
+              "openings": []
+            },
+            "joints_x": [
+              300,
+              900
+            ]
+          }
+        ],
+        "solution_selection": {
+          "schema": "aframe_solution_selection/1",
+          "catalog_id": "vector1_2015_type1_historical",
+          "catalog_revision": "6bb12795979248fd51f0d9384c8bb0f91b7c45165734ef2ce7d04fe2b6877c24",
+          "solution_id": "vector1_2015_type1_4_2_1",
+          "source_id": "vector1_2015",
+          "source_sha256": "7386f4152de455a5e2622704d51a98d8f05afd20050807f634eea4572de37142",
+          "node": {
+            "pdf_page": 20,
+            "sheet": "4.2.1"
+          },
+          "bracket": {
+            "family_id": "kr2",
+            "execution": "galvanized_painted",
+            "nominal_width_mm": 70,
+            "L_mm": 200
+          },
+          "extender": {
+            "family_id": "uk",
+            "execution": "galvanized_painted",
+            "nominal_width_mm": 70,
+            "L_mm": 100,
+            "thickness_mm": 1.2
+          },
+          "profile": {
+            "family_id": "gp",
+            "execution": "galvanized_painted",
+            "a_mm": 40,
+            "b_mm": 40,
+            "thickness_mm": 1.2,
+            "b_basis": "project_declared",
+            "thickness_basis": "project_declared"
+          },
+          "geometry": {
+            "cladding_front_offset_mm": null,
+            "cladding_offset_basis": "wall_structural_face_to_cladding_exterior",
+            "insulation_layers_mm": []
+          }
+        }
+      },
+      "B": {
+        "system": {
+          "name": "Вектор-1",
+          "bracket_step": 800,
+          "bracket_step_corner": 600
+        },
+        "sub_type": "vertical",
+        "cladding": "porcelain",
+        "parts": "frame",
+        "exact_step": true,
+        "joints_x": [
+          300,
+          900
+        ],
+        "rows_y": [
+          600,
+          1200,
+          1800
+        ],
+        "op": "frame",
+        "zones": [
+          {
+            "zone_id": "zone_0",
+            "zone": {
+              "contour": {
+                "pts": [
+                  [
+                    0,
+                    0
+                  ],
+                  [
+                    1200,
+                    0
+                  ],
+                  [
+                    1200,
+                    2400
+                  ],
+                  [
+                    0,
+                    2400
+                  ]
+                ]
+              },
+              "openings": []
+            },
+            "joints_x": [
+              300,
+              900
+            ]
+          }
+        ],
+        "solution_selection": {
+          "schema": "aframe_solution_selection/1",
+          "catalog_id": "vector1_2015_type1_historical",
+          "catalog_revision": "6bb12795979248fd51f0d9384c8bb0f91b7c45165734ef2ce7d04fe2b6877c24",
+          "solution_id": "vector1_2015_type1_4_2_1",
+          "source_id": "vector1_2015",
+          "source_sha256": "7386f4152de455a5e2622704d51a98d8f05afd20050807f634eea4572de37142",
+          "node": {
+            "pdf_page": 20,
+            "sheet": "4.2.1"
+          },
+          "bracket": {
+            "family_id": "kr2",
+            "execution": "galvanized_painted",
+            "nominal_width_mm": 70,
+            "L_mm": 300
+          },
+          "extender": {
+            "family_id": "uk",
+            "execution": "galvanized_painted",
+            "nominal_width_mm": 70,
+            "L_mm": 150,
+            "thickness_mm": 1.2
+          },
+          "profile": {
+            "family_id": "gp",
+            "execution": "galvanized_painted",
+            "a_mm": 60,
+            "b_mm": 50,
+            "thickness_mm": 1.5,
+            "b_basis": "project_declared",
+            "thickness_basis": "project_declared"
+          },
+          "geometry": {
+            "cladding_front_offset_mm": null,
+            "cladding_offset_basis": "wall_structural_face_to_cladding_exterior",
+            "insulation_layers_mm": []
+          }
+        }
+      }
+    },
+    "fixture_source": "AFrame/engine/test_frame_solution_selection.py",
+    "fixture_sha256": "79b853ab20b95d491fc3e76f667fc7fb7106afa6ace7b5ae9d1ede191f99aceb",
+    "observed": {
+      "ok": [
+        true,
+        true
+      ],
+      "equal_arrays": [
+        "rails",
+        "hrails",
+        "brackets",
+        "clamps",
+        "fittings"
+      ],
+      "counts_each": {
+        "rails": 2,
+        "brackets": 8,
+        "hrails": 0,
+        "clamps": 0,
+        "fittings": 0
+      },
+      "emitted_profile_both": "ГП-40-40-1,2",
+      "bracket_keys": [
+        "kind",
+        "x",
+        "y",
+        "zone"
+      ],
+      "physical_assignment_both": "not_asserted",
+      "physical_UK_in_arrays": false
+    },
+    "not_executed_in_this_probe": [
+      "C# producer",
+      "quantity validator",
+      "connection table",
+      "XLSX",
+      "AutoCAD"
+    ]
+  },
+  "peer_full_chain_probe": {
+    "owner": "contract_gap",
+    "executed_by_this_reviewer": false,
+    "manifest_read_by_this_reviewer": true,
+    "manifest_sha256": "dd87a8acf7f2fd04d70d6b436a10caca63efa56308c92b7363be9bdc83c798b9",
+    "manifest_status": "REPRODUCED_HONEST_LIMIT",
+    "path": "real frame_engine -> actual FrameQuantities -> common validator -> connection table",
+    "counts_each": {
+      "rails": 2,
+      "brackets": 6
+    },
+    "distinct_from_own_2_8_fixture": true,
+    "scenarios": [
+      "declared_40_40",
+      "declared_80_60_other_members",
+      "no_declaration"
+    ],
+    "all_physical_arrays_equal": true,
+    "all_connection_passports_equal": true,
+    "assigned_product_count_each": 0,
+    "extender_physical_count_each": 0,
+    "selections_retained_exactly": true,
+    "calculation_refusal": "E_SOLUTION_CALC_UNCONFIRMED",
+    "response_modified": false,
+    "cad_boundary": "existing producer probe doubles, not live AutoCAD",
+    "evidence_hashes": {
+      "manifest.json": "dd87a8acf7f2fd04d70d6b436a10caca63efa56308c92b7363be9bdc83c798b9",
+      "declared_40_40/input.json": "9a77822776301d0967e69de3011f617ef21d390760a603b9fcf800c3c5408b02",
+      "declared_80_60_other_members/input.json": "222afa59bb1251c49901053a6f50e894ab9406636a58fce947df27805443d9eb",
+      "no_declaration/input.json": "e3404f7be615c343156708062dd67d3e36064252ddde3b235b3f59b2100b2c92"
+    },
+    "evidence_stage": "intermediate research fixture; preserved, superseded as final acceptance evidence by stable_actual_settings_audit"
+  },
+  "primary_sources": [
+    {
+      "source_id": "vector1_2015",
+      "repository": "zinchenko-denis/atspec-testdata",
+      "path": "docs/facades_atr/ATR_Vector1_3.15_KG_KP_2015.pdf",
+      "sha256": "7386f4152de455a5e2622704d51a98d8f05afd20050807f634eea4572de37142",
+      "hash_recomputed_this_iteration": true,
+      "new_visual_pages": [
+        6,
+        8,
+        9
+      ],
+      "new_review_locators": [
+        {
+          "pdf_page": 6,
+          "sheet": "3.2.1",
+          "position": "2.2",
+          "finding": "KR2 multiple catalogue lengths; no complete dimensioned interface hole/working-travel rule on this sheet"
+        },
+        {
+          "pdf_page": 8,
+          "sheet": "3.3",
+          "position": "3.2",
+          "finding": "UK multiple catalogue lengths/thicknesses; no complete dimensioned interface hole/working-travel rule on this sheet"
+        },
+        {
+          "pdf_page": 9,
+          "sheet": "3.4",
+          "position": "4.4",
+          "finding": "GP a catalogue values; b/c depend on project and strength calculation"
+        }
+      ],
+      "inherited_visual_locators": [
+        {
+          "pdf_page": 3,
+          "sheet": "2"
+        },
+        {
+          "pdf_page": 19,
+          "sheet": "4.1"
+        },
+        {
+          "pdf_page": 20,
+          "sheet": "4.2.1"
+        }
+      ]
+    },
+    {
+      "source_id": "vector1_type1_reference_2026",
+      "repository": "zinchenko-denis/atspec-testdata",
+      "path": "docs/facades_calc/Static_VEKTOR1_tip1_monolit_KG_2026.pdf",
+      "sha256": "495f8fadf882dc6f6c3f2c023a08611035c5e916a3cc92ee4da675cb2a0f16d2",
+      "hash_recomputed_this_iteration": true,
+      "new_visual_pages": [],
+      "inherited_locators": [
+        {
+          "pdf_pages": [
+            3
+          ],
+          "finding": "KR2-70/UK-70-1.2 lack catalogue length L"
+        },
+        {
+          "pdf_pages": [
+            3,
+            14
+          ],
+          "finding": "support symbols not mapped to real interfaces"
+        },
+        {
+          "pdf_pages": [
+            6,
+            9
+          ],
+          "finding": "calculation lever arms, not unique assembly geometry"
+        },
+        {
+          "pdf_pages": [
+            6
+          ],
+          "finding": "Np uses L1 tributary length"
+        },
+        {
+          "pdf_pages": [
+            12,
+            13
+          ],
+          "finding": "two riveted interfaces checked under project assumptions, not a complete universal mounting rule"
+        }
+      ]
+    }
+  ],
+  "inherited_reviews": [
+    {
+      "path": "docs/mounting_contract_0110/source_facts.json",
+      "sha256": "5d43f128977f136bb6499dd99960f9b18dcc630323307b492fecc59917f2aba7"
+    },
+    {
+      "path": "docs/mounting_contract_0110/engineering_review.md",
+      "sha256": "33d189d0f627d41ae491a5a1444e96f4a5c36c8d6f45dbdaab19cf66d4c512a7"
+    },
+    {
+      "path": "docs/nominal_mounting_0110/source_facts.json",
+      "sha256": "29f0b877e2161988c0007a8153a2dfc1e1e5873f4f02bfedf60483ee6ca1c499"
+    }
+  ],
+  "engineering_milestone_closure_criteria": [
+    {
+      "topic": "physical_interface_identity",
+      "criterion": "Every physical part/connection maps to defined execution and source; KR2-UK and UK-GP endpoints including UK are identified",
+      "current_insufficiency": "Declared choice does not assign installed products; observed output has no UK physical component",
+      "status": "BLOCKED",
+      "is_new_DTO_field_requirement": false
+    },
+    {
+      "topic": "mounting_geometry",
+      "criterion": "Position and permitted extreme settings follow complete dimension chain without arbitrary h",
+      "current_insufficiency": "Nominal chain has unresolved h; cross-node min30 and calculation line85 do not close it",
+      "status": "BLOCKED",
+      "is_new_DTO_field_requirement": false
+    },
+    {
+      "topic": "holes_and_fasteners",
+      "criterion": "Both interfaces have established hole layout, fastener execution and grip package matching the adopted check",
+      "current_insufficiency": "Catalogue sketches and reference-project rivet count do not establish the complete assembly",
+      "status": "BLOCKED",
+      "is_new_DTO_field_requirement": false
+    },
+    {
+      "topic": "kinematics_and_temperature",
+      "criterion": "Restrained/released directions and rotations, working travel or other justified mechanical model map to every actual connection",
+      "current_insufficiency": "Different support symbols are not mapped; installation adjustment is not operating thermal movement",
+      "status": "BLOCKED",
+      "is_new_DTO_field_requirement": false
+    },
+    {
+      "topic": "gravity_and_wind_transfer",
+      "criterion": "Tributary regions and coherent reactions for both force groups map to real support/interface IDs",
+      "current_insufficiency": "Np on L1 and support symbols do not define full gravity distribution",
+      "status": "BLOCKED",
+      "is_new_DTO_field_requirement": false
+    },
+    {
+      "topic": "splice_continuity",
+      "criterion": "Actual splice N/Q/M transmission defines each continuous analysis member",
+      "current_insufficiency": "Adjacency, common support candidate and zero gap do not prove force/moment transfer",
+      "status": "BLOCKED",
+      "is_new_DTO_field_requirement": false
+    },
+    {
+      "topic": "calculation_applicability",
+      "criterion": "Materials/sections and actual supports, intervals and end regions are confirmed for adopted coefficients",
+      "current_insufficiency": "Matching names and geometric span class are not full engineering validation",
+      "status": "BLOCKED",
+      "is_new_DTO_field_requirement": false
+    }
+  ],
+  "possible_future_architecture": {
+    "name": "Project assembly passport separating declaration, physical composition and engineering approval",
+    "status": "candidate direction only",
+    "implementation_prescribed_this_iteration": false,
+    "consumer_proved": false,
+    "physical_mapping_proved": false,
+    "cannot_assign_by_itself": [
+      "UK count per bracket",
+      "fastener BOM",
+      "fixed/sliding",
+      "stiffness",
+      "current SKU",
+      "engineering PASS"
+    ]
+  },
+  "decision": {
+    "full_2V": "BLOCKED",
+    "confirmed_3A": "BLOCKED",
+    "mounting_status": "not_confirmed",
+    "automatic_bracket_selection_allowed": false,
+    "nominal_2B5_retained": true,
+    "actions_this_iteration": "completion plan and executable audit of existing boundary, not new product assignment"
+  },
+  "public_provenance": {
+    "private_PDFs_included": false,
+    "private_renders_included": false,
+    "private_project_identifiers_included": false
+  },
+  "validation_status": "ENGINEERING_REVIEW_STABLE_FINAL_ACTUAL_SETTINGS_AUDIT_READ_131_PASS_FULL_2V_3A_BLOCKED",
+  "stable_actual_settings_audit": {
+    "manifest": "docs/pilot_completion_0110/interface_audit/manifest.json",
+    "manifest_sha256": "7699153950442cbfb2f96aaf1570d79daec07e93f32d25c2131bcf54b74e1b88",
+    "manifest_read_by_engineering_reviewer": true,
+    "executed_by_engineering_reviewer": false,
+    "verification_status": "PASS",
+    "checks": 131,
+    "path": "actual FrameSettings.Validate / EngineParams / SysOverride -> frame_engine -> actual ValidateEngineReport -> actual FrameQuantities -> common core -> table",
+    "EngineParams_request_substituted": false,
+    "rail_std_added_to_request": false,
+    "response_modified": false,
+    "counts": {
+      "A": {
+        "rails": 1,
+        "brackets": 4,
+        "physical_elements": 5,
+        "candidate_pairs": 4,
+        "physical_extenders": 0,
+        "confirmed_typed_interfaces": 0
+      },
+      "B": {
+        "rails": 1,
+        "brackets": 4,
+        "physical_elements": 5,
+        "candidate_pairs": 4,
+        "physical_extenders": 0,
+        "confirmed_typed_interfaces": 0
+      },
+      "no_selection": {
+        "rails": 1,
+        "brackets": 4,
+        "physical_elements": 5,
+        "candidate_pairs": 0,
+        "physical_extenders": 0,
+        "confirmed_typed_interfaces": 0
+      }
+    },
+    "A_B_geometry_arrays_equal": true,
+    "A_B_geometric_passports_equal": true,
+    "A_B_producer_run_IDs_differ": true,
+    "physical_ID_equality_between_runs_asserted": false,
+    "no_selection_scope": "actual legacy Standart settings; no pilot candidate passport, no invented historical declaration",
+    "no_selection_differs_from_intermediate_peer_control": true,
+    "cad_identity": "explicit CAD doubles only; actual AutoCAD objects/WinForms clicks not exercised",
+    "full_acceptance_cycle": "NOT_RUN",
+    "live_autocad_checked": false,
+    "engineering_status": "BLOCKED",
+    "interpretation": "PASS verifies the existing honest boundary; not a confirmed mounting contract or finished pilot"
+  },
+  "three_fixture_separation": [
+    {
+      "id": "own_engine_only",
+      "rails": 2,
+      "brackets": 8,
+      "role": "initial independent engine-only evidence"
+    },
+    {
+      "id": "intermediate_peer_producer",
+      "rails": 2,
+      "brackets": 6,
+      "role": "research producer/core/table evidence; prepared geometry request"
+    },
+    {
+      "id": "stable_actual_settings",
+      "rails": 1,
+      "brackets": 4,
+      "candidate_pairs_A_B": 4,
+      "checks": 131,
+      "role": "final actual FrameSettings/EngineParams chain evidence; not live CAD"
+    }
+  ]
+}

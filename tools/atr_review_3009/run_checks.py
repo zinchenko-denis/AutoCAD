@@ -92,6 +92,8 @@ def main():
                                            '--out', str(out / 'catalog_tutorial_examples.json')]),
         ('solution_settings_contract', '.', ['tools/solution_catalog_0110/test_settings_contract.py',
                                              '--out', str(out / 'solution_settings_contract')]),
+        ('pilot_interface_contract', '.', ['tools/pilot_completion_0110/audit_interface_mapping.py',
+                                          '--out', str(out / 'pilot_interface_contract')]),
         ('project_parameters_core', '.', ['tools/project_params_0110/test_core.py',
                                          '--out', str(out / 'project_parameters_core')]),
         ('project_parameters_store', '.', ['tools/project_params_0110/test_store_contract.py',

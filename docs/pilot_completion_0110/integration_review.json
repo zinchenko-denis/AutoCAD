@@ -1,0 +1,68 @@
+{
+  "status": "PASS",
+  "date": "2026-10-01",
+  "base_commit": "1535d67eed9224c498ecc0cd73a6b0889a3f76a2",
+  "scope": "CI/mandatory-gate integration; no product, UI or engineering permission changes",
+  "python_syntax": "PASS",
+  "yaml_syntax": "PASS",
+  "mandatory_local_groups": {
+    "before": 55,
+    "after": 56,
+    "added": "pilot_interface_contract",
+    "previous_definitions_unchanged": true
+  },
+  "windows": {
+    "fresh_command": "python tools/pilot_completion_0110/audit_interface_mapping.py --out pilot_completion_contract_results",
+    "mandatory_step": true,
+    "exit_code_propagated": true,
+    "artifact_name": "pilot-completion-contract",
+    "artifact_path": "pilot_completion_contract_results/",
+    "upload_if": "always()",
+    "previous_steps_unchanged": true,
+    "actual_windows_execution": "pending publication/run; not claimed by this integration review"
+  },
+  "cli_contract": {
+    "requires": [
+      "same Mono/mcs or Windows dotnet/net48 as existing native probes"
+    ],
+    "outputs": [
+      "manifest.json",
+      "trace.json",
+      "settings_input.json",
+      "settings_output.json",
+      "cases/A/request.json",
+      "cases/A/response.json",
+      "cases/A/report.json",
+      "cases/A/table.json",
+      "cases/B/*",
+      "cases/no_selection/*",
+      "negative_controls.json",
+      "calc_refusal.json",
+      "build/"
+    ],
+    "exit_zero_meaning": "audit verification PASS; engineering assessment remains separately BLOCKED, full acceptance NOT_RUN"
+  },
+  "stable_local_audit_evidence_reviewed": {
+    "manifest_sha256": "7699153950442cbfb2f96aaf1570d79daec07e93f32d25c2131bcf54b74e1b88",
+    "verification_status": "PASS",
+    "checks": 131,
+    "engineering_status": "BLOCKED",
+    "full_acceptance_cycle": "NOT_RUN",
+    "source_hashes_verified": 34,
+    "generated_probe_source_separated": true,
+    "generated_probe_hash_verified": true
+  },
+  "resolved_integration_finding": "Generated FrameQuantitiesPure.cs is now always a generated artifact, never conditionally a Git source when --out is inside the repository. Explicit repository_sources makes local/CI binding consistent.",
+  "preserved_ui_source_sha256": {
+    "tools/mounting_contract_0110/ConnectionUiProbe.cs": "0538e7b7b07c8f1b3357da7a4babc27756c5791206b5690e2a783d0b32f8be0d",
+    "tools/mounting_contract_0110/test_ui.py": "9c33775f57a4c2fa9d8766952dc171641e588be30e5d018791ebd00183deac16"
+  },
+  "preserved_ui_scope": "existing 681 checks / 7 PNG are not edited or newly claimed as executed here",
+  "integration_source_sha256": {
+    ".github/workflows/check.yml": "1439d86c420080336412bd318a718aa399b818aa275df403007b9ec75fe7c38c",
+    "tools/atr_review_3009/run_checks.py": "e18f7f872316694ead927048b63473ce0fed952e97a76713bee86791827a8207",
+    "tools/pilot_completion_0110/audit_interface_mapping.py": "78a0724ccd0b5077c92e9aa8e577cf1e22cd0133d28704b2d329f156f4d9d19d",
+    "tools/pilot_completion_0110/InterfaceAuditProbe.cs": "e4eafe21cfeeeea73c41064c8b6a095117d3cf477796e13dd9aa1de3d3c470c4"
+  },
+  "live_autocad_checked": false
+}

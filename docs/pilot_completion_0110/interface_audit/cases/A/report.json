@@ -1,0 +1,531 @@
+{
+  "schema": "facade_quantities/1",
+  "report_id": "a736483ec963482fbf4c77694d2c9762",
+  "kind": "frame",
+  "document_id": "pilot-interface-audit-cad-doubles",
+  "scope": "whole_frame_run",
+  "run_id": "a736483ec963482fbf4c77694d2c9762",
+  "algorithm": "ATFRAME/facade_quantities/1",
+  "completeness": "partial",
+  "engineering_coverage": "geometry_only",
+  "zone_ids": [
+    "Z0"
+  ],
+  "source_revisions": {},
+  "parameters": {
+    "sub_type": "vertical",
+    "system": {
+      "name": "Вектор-1",
+      "bracket_step": 800,
+      "bracket_step_corner": 800
+    },
+    "rail_profile": null,
+    "nsp_type": null,
+    "cladding": "porcelain",
+    "exact_step": true,
+    "floor_step": 0,
+    "parts": "frame",
+    "solution_selection": {
+      "schema": "aframe_solution_selection/1",
+      "catalog_id": "vector1_2015_type1_historical",
+      "catalog_revision": "6bb12795979248fd51f0d9384c8bb0f91b7c45165734ef2ce7d04fe2b6877c24",
+      "solution_id": "vector1_2015_type1_4_2_1",
+      "source_id": "vector1_2015",
+      "source_sha256": "7386f4152de455a5e2622704d51a98d8f05afd20050807f634eea4572de37142",
+      "node": {
+        "pdf_page": 20,
+        "sheet": "4.2.1"
+      },
+      "bracket": {
+        "family_id": "kr2",
+        "execution": "galvanized_painted",
+        "nominal_width_mm": 70,
+        "L_mm": 200
+      },
+      "extender": {
+        "family_id": "uk",
+        "execution": "galvanized_painted",
+        "nominal_width_mm": 70,
+        "L_mm": 100,
+        "thickness_mm": 1.2
+      },
+      "profile": {
+        "family_id": "gp",
+        "execution": "galvanized_painted",
+        "a_mm": 40,
+        "b_mm": 40,
+        "thickness_mm": 1.2,
+        "b_basis": "project_declared",
+        "thickness_basis": "project_declared"
+      },
+      "geometry": {
+        "cladding_front_offset_mm": null,
+        "cladding_offset_basis": "wall_structural_face_to_cladding_exterior",
+        "insulation_layers_mm": []
+      }
+    },
+    "op": "frame",
+    "floors_y": [
+      1500
+    ],
+    "joints_x": [
+      600
+    ],
+    "coordinate_unit": "mm",
+    "length_basis": "engine_axis_segments_with_verified_drawing_identity",
+    "profile_source": "engine_or_user_label_not_catalogue_approval",
+    "fittings_scope": "conditional_symbols_not_confirmed_hardware_bom"
+  },
+  "engine_summary": {
+    "rails": 1,
+    "rails_lm": 3.0,
+    "hrails": 0,
+    "hrails_lm": 0.0,
+    "fittings": 0,
+    "rail_stock_est": 1,
+    "brackets_main": 0,
+    "brackets_row": 4,
+    "clamps_start": 0,
+    "clamps_row": 0,
+    "clamps_side": 0,
+    "clamps_combo": 0,
+    "zones": 1,
+    "parts": "frame",
+    "cladding": "porcelain",
+    "design_scope": {
+      "schema": "aframe_design_scope/1",
+      "per_zone": [
+        {
+          "zone_id": "Z0",
+          "scope": {
+            "schema": "aframe_layout_contract/1",
+            "registry_revision": "2026-09-30.static-1",
+            "registry_id": "legacy_vector1_project_a",
+            "requested_system_name": "Вектор-1",
+            "preset_provenance": "historical_project_preset",
+            "preset_overrides_present": true,
+            "manufacturer_id": null,
+            "series": null,
+            "album_edition": null,
+            "approved_node_id": null,
+            "identity_note": "Выбранный legacy пресет не задаёт утверждённую комбинацию производителя, серии, редакции и узла.",
+            "code_scheme": "vertical",
+            "album_type_candidates": [
+              "vector1_2015_type1",
+              "vector1_2015_type2",
+              "vector5_2017_type1",
+              "vector5_2017_type2"
+            ],
+            "album_correspondence": "partial",
+            "cladding": "porcelain",
+            "requested_parts": "frame",
+            "attachment_scope": "porcelain_clamps_geometry",
+            "calculation_requested": false,
+            "calculation_application": "limited_chain_with_geometric_screening",
+            "static_model_verification": "not_verified",
+            "manufacturer_compliance": "not_asserted",
+            "design_limits_from_preset": false,
+            "source_ids": [
+              "project_a_2018",
+              "german_frame_2026",
+              "vector1_2015",
+              "implementation_scope_2026",
+              "vector5_2017"
+            ],
+            "known_missing": [
+              "fixed_sliding_supports",
+              "thermal_movement_design",
+              "building_movement_joints",
+              "full_opening_corner_nodes",
+              "anchor_substrate_tests",
+              "complete_fastener_bom",
+              "other_porcelain_nodes",
+              "fire_opening_reinforcement",
+              "current_vector_album"
+            ],
+            "has_openings": false,
+            "scope": "partial_frame_layout",
+            "frame_geometry_requested": true,
+            "cladding_attachment_requested": false
+          }
+        }
+      ],
+      "manufacturer_compliance": "not_asserted"
+    },
+    "notes": [
+      "Z0: Результат ограничен геометрией выбранной схемы и выполненными расчётными проверками; полный комплект узлов АТР и соответствие системы производителя не подтверждаются.",
+      "Z0: Ручные шаги/исторический пресет не являются расчётными пределами и не подтверждают несущую способность нового объекта.",
+      "Решение: исторический АТР Вектор-1, 2015, узел 4.2.1. Выбор изделий заявлен пользователем; совместимость сборки и сечение ГП не проверены.",
+      "Геометрия использует существующий пресет Вектор-1 и заданные шаги. Каталожные размеры не изменяют геометрию, не назначают изделия деталям и не определяют расчётное плечо или длину кронштейна."
+    ],
+    "solution_report": {
+      "schema": "aframe_solution_report/1",
+      "status": "declared_selection",
+      "geometry_preset": "Вектор-1",
+      "geometry_effect": "existing_preset_only",
+      "catalogue_dimensions": "validated_against_historical_source",
+      "project_dimensions": "declared_not_verified",
+      "assembly_compatibility": "not_verified",
+      "calculation_binding": "not_confirmed",
+      "physical_assignment": "not_asserted",
+      "product_id": null,
+      "retention_validation": "not_applicable",
+      "limitations": [
+        "historical_source_only",
+        "project_profile_dimensions_unverified",
+        "assembly_not_verified",
+        "geometry_preset_not_catalogue_dimensions",
+        "offset_not_calculation_lever_arm",
+        "no_automatic_bracket_selection",
+        "no_installed_product_assignment",
+        "calculation_binding_unconfirmed"
+      ]
+    },
+    "geometry_basis": "frame_axes_and_conventional_symbols"
+  },
+  "elements": [
+    {
+      "element_id": "a736483ec963482fbf4c77694d2c9762:rails:0",
+      "zone_id": "Z0",
+      "zone_ids": [
+        "Z0"
+      ],
+      "role": "rail",
+      "product_id": null,
+      "identity_group": null,
+      "mark": "ГП-40-40-1,2",
+      "type": "направляющая",
+      "material": null,
+      "coating": null,
+      "system": "Вектор-1",
+      "color": null,
+      "orientation": "vertical",
+      "piece_kind": "segment",
+      "width_mm": null,
+      "height_mm": null,
+      "area_mm2": null,
+      "length_mm": 3000,
+      "shape_id": null,
+      "origin": "generated:ATFRAME:rails",
+      "rings": [],
+      "cad_entities": [
+        {
+          "handle": "1",
+          "role": "primary",
+          "fingerprint": "fixture:0"
+        }
+      ]
+    },
+    {
+      "element_id": "a736483ec963482fbf4c77694d2c9762:brackets:0",
+      "zone_id": "Z0",
+      "zone_ids": [
+        "Z0"
+      ],
+      "role": "bracket",
+      "product_id": null,
+      "identity_group": null,
+      "mark": null,
+      "type": "рядовой",
+      "material": null,
+      "coating": null,
+      "system": "Вектор-1",
+      "color": null,
+      "orientation": "horizontal",
+      "piece_kind": "symbol",
+      "width_mm": null,
+      "height_mm": null,
+      "area_mm2": null,
+      "length_mm": null,
+      "shape_id": null,
+      "origin": "generated:ATFRAME:brackets",
+      "rings": [],
+      "cad_entities": [
+        {
+          "handle": "2",
+          "role": "primary",
+          "fingerprint": "fixture:1"
+        }
+      ]
+    },
+    {
+      "element_id": "a736483ec963482fbf4c77694d2c9762:brackets:1",
+      "zone_id": "Z0",
+      "zone_ids": [
+        "Z0"
+      ],
+      "role": "bracket",
+      "product_id": null,
+      "identity_group": null,
+      "mark": null,
+      "type": "рядовой",
+      "material": null,
+      "coating": null,
+      "system": "Вектор-1",
+      "color": null,
+      "orientation": "horizontal",
+      "piece_kind": "symbol",
+      "width_mm": null,
+      "height_mm": null,
+      "area_mm2": null,
+      "length_mm": null,
+      "shape_id": null,
+      "origin": "generated:ATFRAME:brackets",
+      "rings": [],
+      "cad_entities": [
+        {
+          "handle": "3",
+          "role": "primary",
+          "fingerprint": "fixture:2"
+        }
+      ]
+    },
+    {
+      "element_id": "a736483ec963482fbf4c77694d2c9762:brackets:2",
+      "zone_id": "Z0",
+      "zone_ids": [
+        "Z0"
+      ],
+      "role": "bracket",
+      "product_id": null,
+      "identity_group": null,
+      "mark": null,
+      "type": "рядовой",
+      "material": null,
+      "coating": null,
+      "system": "Вектор-1",
+      "color": null,
+      "orientation": "horizontal",
+      "piece_kind": "symbol",
+      "width_mm": null,
+      "height_mm": null,
+      "area_mm2": null,
+      "length_mm": null,
+      "shape_id": null,
+      "origin": "generated:ATFRAME:brackets",
+      "rings": [],
+      "cad_entities": [
+        {
+          "handle": "4",
+          "role": "primary",
+          "fingerprint": "fixture:3"
+        }
+      ]
+    },
+    {
+      "element_id": "a736483ec963482fbf4c77694d2c9762:brackets:3",
+      "zone_id": "Z0",
+      "zone_ids": [
+        "Z0"
+      ],
+      "role": "bracket",
+      "product_id": null,
+      "identity_group": null,
+      "mark": null,
+      "type": "рядовой",
+      "material": null,
+      "coating": null,
+      "system": "Вектор-1",
+      "color": null,
+      "orientation": "horizontal",
+      "piece_kind": "symbol",
+      "width_mm": null,
+      "height_mm": null,
+      "area_mm2": null,
+      "length_mm": null,
+      "shape_id": null,
+      "origin": "generated:ATFRAME:brackets",
+      "rings": [],
+      "cad_entities": [
+        {
+          "handle": "5",
+          "role": "primary",
+          "fingerprint": "fixture:4"
+        }
+      ]
+    }
+  ],
+  "cutting": [],
+  "estimates": [
+    {
+      "group_id": "a736483ec963482fbf4c77694d2c9762:rail_stock_est",
+      "scope_zone_ids": [
+        "Z0"
+      ],
+      "parameters": {
+        "method": "sum_length_divided_by_stock_rounded_up",
+        "basis": "engine_summary_estimate_not_cutting_or_procurement",
+        "stock_length_mm": 6000
+      },
+      "rows": [
+        {
+          "basis": "estimate",
+          "zone_id": "Z0",
+          "zone_ids": [
+            "Z0"
+          ],
+          "role": "rail_stock_est",
+          "product_id": null,
+          "identity_group": null,
+          "mark": null,
+          "type": null,
+          "material": null,
+          "coating": null,
+          "system": "Вектор-1",
+          "color": null,
+          "orientation": null,
+          "piece_kind": null,
+          "width_mm": null,
+          "height_mm": null,
+          "shape_id": null,
+          "unit": "шт.",
+          "quantity": 1,
+          "area_m2": null,
+          "length_mm": 6000,
+          "total_length_m": null,
+          "element_ids": [],
+          "note": "Оценка по сумме длин; раскрой и закупка не рассчитаны."
+        }
+      ]
+    }
+  ],
+  "issues": [
+    {
+      "code": "Q_FRAME_ENGINEERING_LIMIT",
+      "message": "Ведомость учитывает построенные элементы. Полная статическая модель, неподвижные/подвижные соединения, стыки и комплектность узлов не подтверждены.",
+      "report_id": "a736483ec963482fbf4c77694d2c9762",
+      "element_id": null,
+      "element_ids": [],
+      "element_count": 0,
+      "severity": "warning"
+    }
+  ],
+  "connection_passports": [
+    {
+      "schema": "aframe_connection_passport/1",
+      "passport_id": "a736483ec963482fbf4c77694d2c9762:connections",
+      "source_run_id": "a736483ec963482fbf4c77694d2c9762",
+      "zone_ids": [
+        "Z0"
+      ],
+      "status": "inventory_only",
+      "reason": null,
+      "scheme": "vertical",
+      "catalog_revision": "f22c58b52010219ad5106e712ed87a5bd1c67730eaf3a67e6ecfa82ada6900fc",
+      "catalog_scope": "reference_project_only",
+      "sources": [
+        {
+          "source_id": "vector1_type1_reference_2026",
+          "sha256": "495f8fadf882dc6f6c3f2c023a08611035c5e916a3cc92ee4da675cb2a0f16d2",
+          "kind": "private_project_calculation",
+          "edition": "2026",
+          "locator": "PDF 3: обозначения элементов расчётного примера"
+        }
+      ],
+      "references": [
+        {
+          "reference_id": "calc_C.kr2_70",
+          "kind": "project_calculation_section",
+          "designation": "КР2-70",
+          "role": "bracket",
+          "source_id": "vector1_type1_reference_2026",
+          "pdf_pages": [
+            3
+          ],
+          "properties_status": "not_imported"
+        },
+        {
+          "reference_id": "calc_C.uk70_1_2",
+          "kind": "project_calculation_section",
+          "designation": "УК-70-1,2",
+          "role": "extender",
+          "source_id": "vector1_type1_reference_2026",
+          "pdf_pages": [
+            3
+          ],
+          "properties_status": "not_imported"
+        },
+        {
+          "reference_id": "calc_C.gp40_40_1_2",
+          "kind": "project_calculation_section",
+          "designation": "ГП-40-40-1,2",
+          "role": "rail",
+          "source_id": "vector1_type1_reference_2026",
+          "pdf_pages": [
+            3
+          ],
+          "properties_status": "not_imported"
+        }
+      ],
+      "members": [
+        {
+          "rail_element_id": "a736483ec963482fbf4c77694d2c9762:rails:0",
+          "zone_id": "Z0",
+          "support_count": 4,
+          "span_count": 3,
+          "intervals_mm": [
+            800,
+            800,
+            800
+          ],
+          "bottom_free_mm": 300,
+          "top_free_mm": 300,
+          "supports": [
+            {
+              "offset_mm": 300,
+              "bracket_element_ids": [
+                "a736483ec963482fbf4c77694d2c9762:brackets:0"
+              ]
+            },
+            {
+              "offset_mm": 1100,
+              "bracket_element_ids": [
+                "a736483ec963482fbf4c77694d2c9762:brackets:1"
+              ]
+            },
+            {
+              "offset_mm": 1900,
+              "bracket_element_ids": [
+                "a736483ec963482fbf4c77694d2c9762:brackets:2"
+              ]
+            },
+            {
+              "offset_mm": 2700,
+              "bracket_element_ids": [
+                "a736483ec963482fbf4c77694d2c9762:brackets:3"
+              ]
+            }
+          ],
+          "profile_match": {
+            "status": "matched_source_identity",
+            "reference_ids": [
+              "calc_C.gp40_40_1_2"
+            ]
+          }
+        }
+      ],
+      "joints": [],
+      "coverage": {
+        "fixed_sliding": "not_modeled",
+        "splice_continuity": "not_modeled",
+        "gravity_load_distribution": "not_verified",
+        "strength": "not_verified"
+      },
+      "summary": {
+        "members": 1,
+        "support_positions": 4,
+        "support_links": 4,
+        "geometric_joints": 0,
+        "matched_profile_references": 1,
+        "unresolved_profile_references": 0
+      },
+      "issues": [
+        {
+          "code": "CONNECTIONS_GEOMETRY_ONLY",
+          "message": "Пересечения — кандидаты опор. Закрепления, передача усилий и непрерывность через стыки не подтверждены.",
+          "count": 4
+        }
+      ]
+    }
+  ]
+}

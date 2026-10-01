@@ -249,6 +249,23 @@ jobs:
           python tools/solution_catalog_0110/test_solution_ui.py --out solution_ui_results
           exit $LASTEXITCODE
 
+      - name: Pilot mounting interface contract (trace verification, engineering remains blocked)
+        shell: pwsh
+        env:
+          PYTHONUTF8: "1"
+          PYTHONIOENCODING: "utf-8"
+        run: |
+          python tools/pilot_completion_0110/audit_interface_mapping.py --out pilot_completion_contract_results
+          exit $LASTEXITCODE
+
+      - name: Upload pilot mounting contract evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: pilot-completion-contract
+          path: pilot_completion_contract_results/
+          if-no-files-found: warn
+
       - name: Upload historical catalogue UI evidence
         if: always()
         uses: actions/upload-artifact@v4
