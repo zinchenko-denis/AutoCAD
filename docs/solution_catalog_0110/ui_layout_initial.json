@@ -1,0 +1,40 @@
+{
+  "status": "SUPERSEDED_PENDING_LAYOUT_FIX",
+  "commit": "44f747d8ebf0ea4e8947c1d7ef65cf108f29cd03",
+  "run_id": 36827058283,
+  "artifact_id": 11145842100,
+  "artifact_sha256": "4d37a1f025c38492d2efb1eab1045075fa07381818515d605f5781459d6b045f",
+  "native_ui": {
+    "status": "FAIL",
+    "checks": 664,
+    "failures": 1,
+    "reasons": [
+      "large_font: footer action inaccessible cancel_selection"
+    ],
+    "images": [
+      "solution_blank.png",
+      "solution_filled.png",
+      "solution_source.png",
+      "solution_readonly.png",
+      "solution_mismatch.png",
+      "solution_small.png",
+      "solution_small_source.png",
+      "solution_large_font.png",
+      "frame_main_before.png",
+      "frame_main_selected.png"
+    ],
+    "runtime": "Microsoft Windows NT 6.2.9200.0",
+    "live_autocad_checked": false,
+    "scope": "Actual WinForms dialogs, controls, modal apply/cancel, read-only mode, font scaling and bitmap rendering; no AutoCAD host"
+  },
+  "visual_findings": [
+    "At enlarged font, auto-sized single-column layout expands beyond the actual viewport; footer cancel action is inaccessible.",
+    "The spanning profile note needs a constrained width and enough height for wrapping."
+  ],
+  "core_windows_checks": {
+    "native": 44,
+    "pipeline": 23,
+    "status": "PASS"
+  },
+  "live_autocad_checked": false
+}

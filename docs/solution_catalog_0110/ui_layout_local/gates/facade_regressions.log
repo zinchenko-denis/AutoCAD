@@ -1,0 +1,17 @@
+test_clad_frontons: PASS
+test_domain_review: PASS
+test_frame_regressions: PASS
+test_facades_engine_edges: PASS
+test_supported_workflows: PASS
+test_facades_copy_handles: PASS
+test_facades_workstatement: PASS
+test_frame_rail_metadata: PASS
+test_frame_geometry_consumer: PASS
+test_zone_geometry: PASS
+test_zone_geometry_adapter: PASS
+test_clad_label_cleanup: PASS
+CladSafetyCheck_compile: PASS
+CladSafetyCheck: PASS
+FrameSettingsProbe_compile: PASS
+FrameSettingsProbe: PASS
+Logs: /workspace/scratch/ba306982747c/solution_ui_layout_validation/gates/regressions

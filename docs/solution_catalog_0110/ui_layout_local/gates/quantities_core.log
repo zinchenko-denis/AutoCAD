@@ -1,0 +1,38 @@
+PASS golden installed count and exact area
+PASS one holed physical piece despite outer inner fill warning
+PASS shape invariant to translation winding start and closure
+PASS holes sorted without losing relative positions
+PASS same bounding box different contour distinct
+PASS rotation and significant surface orientation distinct
+PASS material type color and mark never merge
+PASS unknown properties and area remain explicit nullable
+PASS unknown warnings aggregate while preserving every source element
+PASS duplicate selection and identical passport count once
+PASS JSON numeric parameter roundtrip preserves passport identity
+PASS identical repeated physical element count once
+PASS conflicting element identity refuses
+PASS conflicting repeated passport refuses
+PASS shared CAD object refuses
+PASS same coordinates separate real details still count twice
+PASS by-zone and whole-selection grouping
+PASS zone display separators cannot collide in group identity
+PASS installed zone subset excludes other pieces
+PASS shared merged-zone piece partial selection refuses
+PASS cutting isolated and full-scope selection required
+PASS cutting unknown or invalid count never becomes zero
+PASS cutting unknown type visible without internal group UUID
+PASS invalid unselected member cannot hide in subset
+PASS geometry and scalar tamper refuse
+PASS nan dimensions and unknown schema refuse
+PASS different documents and unknown selection refuse
+PASS source partial completeness is never promoted
+PASS geometry report never becomes engineering approval
+PASS rows deterministic after permutation and inputs immutable
+PASS typed JSON roundtrip preserves exact numeric values
+PASS bowtie outside hole touching hole and nested holes refuse
+PASS redundant collinear vertices preserve identity
+PASS compact passport retained only with verified shape identity
+PASS known zero run is complete data whereas null composition refuses
+PASS known empty zone selected from mixed successful run
+Quantities core: 36/36 PASS
+Quantities core: PASS report: /workspace/scratch/ba306982747c/solution_ui_layout_validation/gates/quantities_core/manifest.json

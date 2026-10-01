@@ -1,0 +1,40 @@
+PASS six physical roles: independent endpoint lengths, counts and no invented cladding geometry
+PASS helpers belong to one physical part and every link is checked
+PASS all catalog and geometric grouping dimensions remain distinct
+PASS length is actual installed length without rounding or stock substitution
+PASS missing linear length stays null and partial
+PASS known and unknown lengths cannot silently produce a complete total
+PASS missing catalog properties remain explicit and partial
+PASS unknown warnings aggregate with all physical source identities
+PASS nonpositive and nonfinite physical lengths refuse
+PASS unsupported role refuses instead of becoming a generic piece
+PASS frame passports reject invented cladding shape and area
+PASS same position or equal dimensions with different physical identities count twice
+PASS identical physical and report duplicates count once
+PASS reused physical identity with changed length coating or system refuses
+PASS reused report identity detects changed fingerprint and source revision
+PASS same CAD handle is rejected case insensitively
+PASS missing and malformed CAD links refuse
+PASS unselected physical members and their CAD links are still validated
+PASS zone selection and whole-selection grouping preserve exact provenance
+PASS shared physical part needs its whole scope
+PASS zone display separators cannot collide
+PASS estimates remain separate from installed counts and stock lengths
+PASS partial estimate group is omitted without blocking installed subset
+PASS frame estimate inclusion is independent of cladding cutting toggle
+PASS unselected estimate groups are omitted and separate complete groups survive
+PASS estimate numeric JSON roundtrip preserves duplicate identity
+PASS invalid estimate rows and invalid group scopes refuse
+PASS stock estimate contract rejects unsupported fitting procurement
+PASS unselected estimate data is validated before selection
+PASS source engineering limitations are retained without granting engineering approval
+PASS source partial status and explicit source issues are never promoted
+PASS verified zero is an empty installed result with explicit information
+PASS bad schema document scope and selection refuse
+PASS frame and cladding reports cannot be silently mixed
+PASS rows are deterministic and aggregation does not mutate passports
+PASS estimate row order remains deterministic when only total length differs
+PASS unique identities require no canonical duplicate keys
+PASS canonical identity work is triggered by a repeated identity only
+Frame core: 38/38 passed
+Frame quantities core: PASS report: /workspace/scratch/ba306982747c/solution_ui_layout_validation/gates/frame_quantities_core/manifest.json

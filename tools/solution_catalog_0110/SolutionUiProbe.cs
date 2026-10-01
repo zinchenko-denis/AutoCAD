@@ -13,6 +13,7 @@ internal static class SolutionUiProbe
     private static string output;
     private static readonly JavaScriptSerializer Json = new JavaScriptSerializer { MaxJsonLength = int.MaxValue };
     private static readonly List<string> images = new List<string>(), reasons = new List<string>();
+    private static readonly List<object> layouts = new List<object>();
     private static void Check(bool value, string reason)
     {
         checks++;
@@ -54,9 +55,17 @@ internal static class SolutionUiProbe
     }
     private static void Layout(Form form, string scenario)
     {
+        layouts.Add(new { scenario, window = form.Bounds.ToString(), client = form.ClientRectangle.ToString(),
+            screen = Screen.FromControl(form).WorkingArea.ToString(), font_points = form.Font.SizeInPoints,
+            controls = All(form).Where(c => c is TableLayoutPanel || (c is Button && c.Name.EndsWith("_selection")))
+                .Select(c => new { type = c.GetType().Name, c.Name, bounds = c.Bounds.ToString(),
+                    parent_client = c.Parent.ClientRectangle.ToString() }).ToArray() });
         foreach (var grid in All(form).OfType<TableLayoutPanel>())
         {
             var controls = grid.Controls.Cast<Control>().Where(c => c.Visible).ToList();
+            foreach (var control in controls)
+                Check(control.Left >= 0 && control.Top >= 0 && control.Right <= grid.ClientSize.Width && control.Bottom <= grid.ClientSize.Height,
+                    scenario + ": child exceeds table viewport " + control.Name + " " + control.Bounds + "/" + grid.ClientRectangle);
             for (int a = 0; a < controls.Count; ++a)
                 for (int b = a + 1; b < controls.Count; ++b)
                     Check(!controls[a].Bounds.IntersectsWith(controls[b].Bounds), scenario + ": overlapping siblings " + controls[a].Name + "/" + controls[b].Name);
@@ -70,6 +79,13 @@ internal static class SolutionUiProbe
         }
         var scroll = Find<Panel>(form, "solution_scroll");
         Check(scroll.AutoScroll, scenario + ": long content does not scroll");
+        Check(!scroll.HorizontalScroll.Visible, scenario + ": catalogue content exceeds available width");
+        foreach (var note in All(form).OfType<Label>().Where(c => c.Text.StartsWith("b и c обязательны") || c.Text.StartsWith("Пустое поле означает")))
+        {
+            int height = TextRenderer.MeasureText(note.Text, note.Font, new Size(note.Width, int.MaxValue),
+                TextFormatFlags.WordBreak | TextFormatFlags.TextBoxControl).Height;
+            Check(note.Height >= height, scenario + ": wrapped explanation is clipped " + note.Text);
+        }
         Check(Find<TextBox>(form, "source_summary").ReadOnly && Find<TextBox>(form, "source_summary").ScrollBars == ScrollBars.Vertical,
             scenario + ": provenance is editable or clipped without scrolling");
     }
@@ -203,7 +219,7 @@ internal static class SolutionUiProbe
             ((Button)main.CancelButton).PerformClick();
             Check(Json.Serialize(settings.ToDict()) == settingsBefore, "Main cancel mutated caller settings");
         }
-        var manifest = new { status = failures == 0 ? "PASS" : "FAIL", checks, failures, reasons, images,
+        var manifest = new { status = failures == 0 ? "PASS" : "FAIL", checks, failures, reasons, images, layouts,
             runtime = Environment.OSVersion.ToString(), live_autocad_checked = false,
             scope = "Actual WinForms dialogs, controls, modal apply/cancel, read-only mode, font scaling and bitmap rendering; no AutoCAD host" };
         File.WriteAllText(Path.Combine(output, "ui_checks.json"), Json.Serialize(manifest));

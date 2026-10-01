@@ -56,10 +56,15 @@ namespace AFramePlugin
 
             var layout = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 1, RowCount = 3,
                 Padding = new Padding(10) };
+            // An implicit AutoSize column can keep the pre-scale preferred width
+            // of a child after the font/window changes. The viewport must own
+            // the width; only the middle panel is allowed to scroll.
+            layout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
             layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 84));
             layout.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
             layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 94));
             var heading = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 1, RowCount = 2, Margin = Padding.Empty };
+            heading.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
             heading.RowStyles.Add(new RowStyle(SizeType.Absolute, 52));
             heading.RowStyles.Add(new RowStyle(SizeType.Absolute, 30));
             heading.Controls.Add(new Label { Dock = DockStyle.Fill, AutoSize = false,
@@ -112,6 +117,7 @@ namespace AFramePlugin
             _scroll.Controls.Add(content); layout.Controls.Add(_scroll, 0, 1);
 
             var footer = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 1, RowCount = 2, Margin = Padding.Empty };
+            footer.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
             footer.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
             footer.RowStyles.Add(new RowStyle(SizeType.Absolute, 38));
             _error.Name = "selection_error"; _error.Dock = DockStyle.Fill; _error.ReadOnly = true; _error.Multiline = true;
@@ -175,8 +181,20 @@ namespace AFramePlugin
         private static void Note(TableLayoutPanel grid, string text)
         {
             int row = grid.RowCount++;
+            grid.RowStyles.Add(new RowStyle(SizeType.AutoSize));
             var note = new Label { Text = text, AutoSize = true, Dock = DockStyle.Fill, Margin = new Padding(3, 7, 3, 3) };
             grid.Controls.Add(note, 0, row); grid.SetColumnSpan(note, 2);
+            // A label spanning percentage columns otherwise measures itself as
+            // one line before the final column width is known. Constrain its
+            // preferred width so AutoSize reserves every wrapped line.
+            EventHandler wrap = delegate
+            {
+                int width = Math.Max(1, grid.ClientSize.Width - grid.Padding.Horizontal - note.Margin.Horizontal);
+                if (note.MaximumSize.Width != width) note.MaximumSize = new Size(width, 0);
+            };
+            grid.ClientSizeChanged += wrap;
+            note.FontChanged += wrap;
+            wrap(null, EventArgs.Empty);
         }
         private void FillCatalog()
         {
