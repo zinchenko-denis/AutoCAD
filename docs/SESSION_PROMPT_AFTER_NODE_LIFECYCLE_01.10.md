@@ -5,7 +5,7 @@ Repo `zinchenko-denis/AutoCAD`, ветка `feat/auto-reactor`.
 Приватные существующие источники — `zinchenko-denis/atspec-testdata`.
 
 <!-- node-lifecycle-state:start -->
-Продолжение от `b2a6d09`. Локальные проверки и независимая ревизия завершены; новый Windows CI ожидается после публикации. Продуктовый код остаётся прежним (`b4bf289`); №218 проверял предшествующий стенд.
+Совместный стенд проверен на `cbaaa1f8048353e068045ba5dfffd53956ad462d`, Windows **[check №219](https://github.com/zinchenko-denis/AutoCAD/actions/runs/36917207283) — success**. Продуктовый код прежний, последний изменявший его коммит — `b4bf289`. Итоговый протокол — `docs/node_lifecycle_0110/github_publication.json`; итоговая передача сохраняется отдельным документационным коммитом.
 
 Ограниченный совместный проход выполнен:60/60, compile3/3, 5119 PASS;254 входа стабильны. Продукт не менялся. Полный этап5/host NOT_RUN,2В/3А BLOCKED. Текущий маршрут и правило остановки — CURRENT_MILESTONES.md; автоматической следующей серии adapters нет.
 <!-- node-lifecycle-state:end -->

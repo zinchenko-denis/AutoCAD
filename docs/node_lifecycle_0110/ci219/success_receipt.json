@@ -1,0 +1,287 @@
+{
+  "schema": "node_table_ci_success/1",
+  "status": "PASS",
+  "source_commit": "cbaaa1f8048353e068045ba5dfffd53956ad462d",
+  "source_tree": "637cc0b29f6407b6e79b3401a6d4d367bba5642d",
+  "run_id": 36917207283,
+  "run_number": 219,
+  "run_url": "https://github.com/zinchenko-denis/AutoCAD/actions/runs/36917207283",
+  "run_status": "completed",
+  "run_conclusion": "success",
+  "run_attempt": 1,
+  "created_at": "2026-10-01T19:50:10Z",
+  "updated_at": "2026-10-01T19:56:01Z",
+  "job": {
+    "id": 110553993934,
+    "name": "check",
+    "status": "completed",
+    "conclusion": "success",
+    "steps_total": 41,
+    "steps_success": 41,
+    "steps": [
+      {
+        "number": 1,
+        "name": "Set up job",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "number": 2,
+        "name": "Checkout",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "number": 3,
+        "name": "Setup .NET SDK",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "number": 4,
+        "name": "Build plugin DLL (compile check)",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "number": 5,
+        "name": "Build ABlockGen DLL (compile check)",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "number": 6,
+        "name": "Build AFacades DLL (compile check)",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "number": 7,
+        "name": "Build AClad DLL (compile check)",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "number": 8,
+        "name": "Build AFrame DLL (compile check)",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "number": 9,
+        "name": "Setup Python",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "number": 10,
+        "name": "Engine unit test",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "number": 11,
+        "name": "ABlockGen engine unit test",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "number": 12,
+        "name": "AFacades engine unit test",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "number": 13,
+        "name": "AClad engine unit test",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "number": 14,
+        "name": "AFrame engine unit test",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "number": 15,
+        "name": "Native zone geometry regressions (no AutoCAD host)",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "number": 16,
+        "name": "Native zone and layout adapters (CAD API doubles)",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "number": 17,
+        "name": "Cladding quantities (native core, real producers, XLSX, CAD API doubles)",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "number": 18,
+        "name": "Frame quantities (core, real producers, XLSX and bounded operation counts)",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "number": 19,
+        "name": "Manual facade quantities (actual mapper, CAD adapters and bounded work)",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "number": 20,
+        "name": "Facade connection passports (source identities, typed data, XLSX and indexed joins)",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "number": 21,
+        "name": "Upload connection table and native preview evidence",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "number": 22,
+        "name": "Historical facade catalogue (actual settings, engine and producer)",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "number": 23,
+        "name": "Pilot mounting interface contract (trace verification, engineering remains blocked)",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "number": 24,
+        "name": "Upload pilot mounting contract evidence",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "number": 25,
+        "name": "Limited pilot workflow and axis cancellation (explicit CAD doubles)",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "number": 26,
+        "name": "Upload limited pilot workflow evidence",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "number": 27,
+        "name": "Table command lifecycle (persistent pilot, explicit CAD doubles)",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "number": 28,
+        "name": "Upload table command lifecycle evidence",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "number": 29,
+        "name": "Pilot node and table lifecycle (same canonical sources, explicit CAD doubles)",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "number": 30,
+        "name": "Upload pilot node and table lifecycle evidence",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "number": 31,
+        "name": "Upload historical catalogue UI evidence",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "number": 32,
+        "name": "Upload solution settings contract evidence",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "number": 33,
+        "name": "Project and zone parameters (native contracts, CAD store and WinForms)",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "number": 34,
+        "name": "Upload project parameters evidence",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "number": 35,
+        "name": "Pilot node geometry and mounting readiness (core, CAD adapters and WinForms)",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "number": 36,
+        "name": "Upload pilot node geometry evidence",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "number": 37,
+        "name": "Facades quick gates (audits, contracts, synth)",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "number": 72,
+        "name": "Post Setup Python",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "number": 73,
+        "name": "Post Setup .NET SDK",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "number": 74,
+        "name": "Post Checkout",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "number": 75,
+        "name": "Complete job",
+        "status": "completed",
+        "conclusion": "success"
+      }
+    ]
+  },
+  "artifact_id": 11191285343,
+  "artifact_name": "pilot-node-table-lifecycle",
+  "artifact_review": "artifact_verification.json",
+  "artifact_review_sha256": "e8a3838a5fe952a1c74f5600c15ccc31cbafb4a46cd202ffd140f82ae34a6938",
+  "artifact_checks": 3983,
+  "lifecycle_checks": 5119,
+  "source_bindings": 81,
+  "generated_helpers": 4,
+  "outputs_bound": 106,
+  "issued_xlsx": 19,
+  "sentinel_xlsx": 10,
+  "raw_json_integrity": "raw_json_integrity.json",
+  "raw_json_integrity_sha256": "9d2f3374c8caa3d6a2dfdf2b0b9b4d06221fc2fed05e8694247f236eda012ddb",
+  "final_checked_utc": "2026-10-01T19:57:01.875385+00:00",
+  "engineering_assessment": "BLOCKED",
+  "full_host_P5": "NOT_RUN",
+  "live_autocad_checked": false
+}

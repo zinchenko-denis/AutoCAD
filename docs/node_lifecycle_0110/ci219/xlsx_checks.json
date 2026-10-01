@@ -1,0 +1,259 @@
+{
+  "status": "PASS",
+  "issued_files": [
+    {
+      "path": "initial/cladding.xlsx",
+      "sha256": "3334fe829fe7bde71fed869ec3c69c6c9fcdfb9109cfb9d9fe9c6edd3f75d90b",
+      "cells": 142,
+      "rows": 43,
+      "columns": 10,
+      "source": "base issued view"
+    },
+    {
+      "path": "initial/frame.xlsx",
+      "sha256": "0f0ca3d1920819e34cb49eb28549484c43ff4092cd48b6f3c7a85f7d4ad6f2f7",
+      "cells": 123,
+      "rows": 23,
+      "columns": 11,
+      "source": "base issued view"
+    },
+    {
+      "path": "initial/connections.xlsx",
+      "sha256": "71f5f79bc9c275995a5d71d057accee2e8ff563b4938beb729401048ce9613ee",
+      "cells": 46,
+      "rows": 16,
+      "columns": 11,
+      "source": "base issued view"
+    },
+    {
+      "path": "project_reissue/cladding.xlsx",
+      "sha256": "b16b684597b4ceaaa399074f6bb86d3cb3cf1d84d8d90132b968f6c0456e5889",
+      "cells": 142,
+      "rows": 43,
+      "columns": 10,
+      "source": "base issued view"
+    },
+    {
+      "path": "project_reissue/frame.xlsx",
+      "sha256": "a835b3b9ef15ec2a5c2586c7fdbe14fe2291ed6b6215f9e6cd771fdd6ca2e288",
+      "cells": 123,
+      "rows": 23,
+      "columns": 11,
+      "source": "base issued view"
+    },
+    {
+      "path": "project_reissue/connections.xlsx",
+      "sha256": "e7443afe928a5dabd5ed85f70117df6c7ab9a4084a754feb77f7214b6e680bb8",
+      "cells": 46,
+      "rows": 16,
+      "columns": 11,
+      "source": "base issued view"
+    },
+    {
+      "path": "zone_reissue/cladding.xlsx",
+      "sha256": "b16b684597b4ceaaa399074f6bb86d3cb3cf1d84d8d90132b968f6c0456e5889",
+      "cells": 142,
+      "rows": 43,
+      "columns": 10,
+      "source": "base issued view"
+    },
+    {
+      "path": "zone_reissue/frame.xlsx",
+      "sha256": "a835b3b9ef15ec2a5c2586c7fdbe14fe2291ed6b6215f9e6cd771fdd6ca2e288",
+      "cells": 123,
+      "rows": 23,
+      "columns": 11,
+      "source": "base issued view"
+    },
+    {
+      "path": "zone_reissue/connections.xlsx",
+      "sha256": "3246a52759e674d8c7a330dbee7c695af8ebcb0f2ee084b62275ab2df9940335",
+      "cells": 46,
+      "rows": 16,
+      "columns": 11,
+      "source": "base issued view"
+    },
+    {
+      "path": "table_command/excel_only.xlsx",
+      "sha256": "4b3f84e1161a7c4a0caf3f0df046e130aaa5fc010e4cd496c169fa0a2a86f550",
+      "cells": 123,
+      "rows": 23,
+      "columns": 11,
+      "source": "real command output"
+    },
+    {
+      "path": "table_command/initial_cladding.xlsx",
+      "sha256": "b9e32bdf0b274218d0f4b455fe71bf3f260a96939ce7e80aa147358cc4100c3b",
+      "cells": 46,
+      "rows": 10,
+      "columns": 10,
+      "source": "real command output"
+    },
+    {
+      "path": "table_command/initial_connections.xlsx",
+      "sha256": "914c76cb89d508a9224c811001f1aa028b534f11da0a10331806fd25ef3416f0",
+      "cells": 46,
+      "rows": 16,
+      "columns": 11,
+      "source": "real command output"
+    },
+    {
+      "path": "table_command/initial_frame.xlsx",
+      "sha256": "2bf8bbe8944ef27774f31c8b6435dbf93572ab3d2695fbbf9fe02e32f13ff2af",
+      "cells": 123,
+      "rows": 23,
+      "columns": 11,
+      "source": "real command output"
+    },
+    {
+      "path": "table_command/project_reissued_cladding.xlsx",
+      "sha256": "dc587e17707a555b578e2f32b18a77c37ba5f11b5d93ebbeedc466a1333d654c",
+      "cells": 46,
+      "rows": 10,
+      "columns": 10,
+      "source": "real command output"
+    },
+    {
+      "path": "table_command/project_reissued_connections.xlsx",
+      "sha256": "41d88c125e3e80d65128be931e6ba6c21eca86e5b417af631a1526d6e4572137",
+      "cells": 46,
+      "rows": 16,
+      "columns": 11,
+      "source": "real command output"
+    },
+    {
+      "path": "table_command/project_reissued_frame.xlsx",
+      "sha256": "4b3f84e1161a7c4a0caf3f0df046e130aaa5fc010e4cd496c169fa0a2a86f550",
+      "cells": 123,
+      "rows": 23,
+      "columns": 11,
+      "source": "real command output"
+    },
+    {
+      "path": "table_command/zone_reissued_cladding.xlsx",
+      "sha256": "dc587e17707a555b578e2f32b18a77c37ba5f11b5d93ebbeedc466a1333d654c",
+      "cells": 46,
+      "rows": 10,
+      "columns": 10,
+      "source": "real command output"
+    },
+    {
+      "path": "table_command/zone_reissued_connections.xlsx",
+      "sha256": "34268d289582b43d0ca06fd4e155e6295364692a2c273ca65f54ef5e5e425da7",
+      "cells": 46,
+      "rows": 16,
+      "columns": 11,
+      "source": "real command output"
+    },
+    {
+      "path": "table_command/zone_reissued_frame.xlsx",
+      "sha256": "4b3f84e1161a7c4a0caf3f0df046e130aaa5fc010e4cd496c169fa0a2a86f550",
+      "cells": 123,
+      "rows": 23,
+      "columns": 11,
+      "source": "real command output"
+    }
+  ],
+  "sentinels": [
+    {
+      "path": "table_command/cancel_point.xlsx",
+      "sha256": "2bf8bbe8944ef27774f31c8b6435dbf93572ab3d2695fbbf9fe02e32f13ff2af",
+      "original_path": "table_command/initial_frame.xlsx",
+      "original_sha256": "2bf8bbe8944ef27774f31c8b6435dbf93572ab3d2695fbbf9fe02e32f13ff2af",
+      "byte_match": true
+    },
+    {
+      "path": "table_command/cancel_preview.xlsx",
+      "sha256": "2bf8bbe8944ef27774f31c8b6435dbf93572ab3d2695fbbf9fe02e32f13ff2af",
+      "original_path": "table_command/initial_frame.xlsx",
+      "original_sha256": "2bf8bbe8944ef27774f31c8b6435dbf93572ab3d2695fbbf9fe02e32f13ff2af",
+      "byte_match": true
+    },
+    {
+      "path": "table_command/cancel_save_dialog.xlsx",
+      "sha256": "2bf8bbe8944ef27774f31c8b6435dbf93572ab3d2695fbbf9fe02e32f13ff2af",
+      "original_path": "table_command/initial_frame.xlsx",
+      "original_sha256": "2bf8bbe8944ef27774f31c8b6435dbf93572ab3d2695fbbf9fe02e32f13ff2af",
+      "byte_match": true
+    },
+    {
+      "path": "table_command/cancel_update_second_preview.xlsx",
+      "sha256": "2bf8bbe8944ef27774f31c8b6435dbf93572ab3d2695fbbf9fe02e32f13ff2af",
+      "original_path": "table_command/initial_frame.xlsx",
+      "original_sha256": "2bf8bbe8944ef27774f31c8b6435dbf93572ab3d2695fbbf9fe02e32f13ff2af",
+      "byte_match": true
+    },
+    {
+      "path": "table_command/late_project.xlsx",
+      "sha256": "2bf8bbe8944ef27774f31c8b6435dbf93572ab3d2695fbbf9fe02e32f13ff2af",
+      "original_path": "table_command/initial_frame.xlsx",
+      "original_sha256": "2bf8bbe8944ef27774f31c8b6435dbf93572ab3d2695fbbf9fe02e32f13ff2af",
+      "byte_match": true
+    },
+    {
+      "path": "table_command/late_target.xlsx",
+      "sha256": "2bf8bbe8944ef27774f31c8b6435dbf93572ab3d2695fbbf9fe02e32f13ff2af",
+      "original_path": "table_command/initial_frame.xlsx",
+      "original_sha256": "2bf8bbe8944ef27774f31c8b6435dbf93572ab3d2695fbbf9fe02e32f13ff2af",
+      "byte_match": true
+    },
+    {
+      "path": "table_command/late_ucs_fresh_read.xlsx",
+      "sha256": "2bf8bbe8944ef27774f31c8b6435dbf93572ab3d2695fbbf9fe02e32f13ff2af",
+      "original_path": "table_command/initial_frame.xlsx",
+      "original_sha256": "2bf8bbe8944ef27774f31c8b6435dbf93572ab3d2695fbbf9fe02e32f13ff2af",
+      "byte_match": true
+    },
+    {
+      "path": "table_command/late_ucs_lock.xlsx",
+      "sha256": "2bf8bbe8944ef27774f31c8b6435dbf93572ab3d2695fbbf9fe02e32f13ff2af",
+      "original_path": "table_command/initial_frame.xlsx",
+      "original_sha256": "2bf8bbe8944ef27774f31c8b6435dbf93572ab3d2695fbbf9fe02e32f13ff2af",
+      "byte_match": true
+    },
+    {
+      "path": "table_command/late_ucs_point.xlsx",
+      "sha256": "2bf8bbe8944ef27774f31c8b6435dbf93572ab3d2695fbbf9fe02e32f13ff2af",
+      "original_path": "table_command/initial_frame.xlsx",
+      "original_sha256": "2bf8bbe8944ef27774f31c8b6435dbf93572ab3d2695fbbf9fe02e32f13ff2af",
+      "byte_match": true
+    },
+    {
+      "path": "table_command/late_ucs_save_dialog.xlsx",
+      "sha256": "2bf8bbe8944ef27774f31c8b6435dbf93572ab3d2695fbbf9fe02e32f13ff2af",
+      "original_path": "table_command/initial_frame.xlsx",
+      "original_sha256": "2bf8bbe8944ef27774f31c8b6435dbf93572ab3d2695fbbf9fe02e32f13ff2af",
+      "byte_match": true
+    }
+  ],
+  "exact_issued_cells": 1701,
+  "oracle_totals": [
+    {
+      "epoch": "initial",
+      "tiles": 12,
+      "installed_tile_area_m2": 4.319999999999999,
+      "rails": 2,
+      "rail_length_m": 3.64,
+      "brackets": 6
+    },
+    {
+      "epoch": "project_reissue",
+      "tiles": 12,
+      "installed_tile_area_m2": 4.319999999999999,
+      "rails": 2,
+      "rail_length_m": 3.64,
+      "brackets": 6
+    },
+    {
+      "epoch": "zone_reissue",
+      "tiles": 12,
+      "installed_tile_area_m2": 4.319999999999999,
+      "rails": 2,
+      "rail_length_m": 3.64,
+      "brackets": 6
+    }
+  ],
+  "method": "Read-only ZIP/XML: exact values and all coordinates independently of CI openpyxl; no extra cells/formulas",
+  "visual_review": "NOT_RUN",
+  "native_excel": "NOT_RUN"
+}

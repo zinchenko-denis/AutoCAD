@@ -1,6 +1,6 @@
 {
   "schema": "node_lifecycle_verification/1",
-  "status": "LOCAL_PASS_WINDOWS_PENDING",
+  "status": "PASS",
   "baseline_commit": "b2a6d09bf3fcb3602ad2d782f564e0f4f4993280",
   "last_product_change_commit": "b4bf2897f6df85e4219c83ab64b39dd59d2d17d8",
   "recorded_utc": "2026-10-01T19:46:15.091337+00:00",
@@ -47,6 +47,38 @@
     "sensitivity.json": "8f3f362301a27ab57ce064817059b7ecd372655e5afd147c3dd58e0ee9b87c4d",
     "performance_counts.json": "4049fd2276831424b4beaf7b2b68831c22fabd6c12f82e39ba2b6ed460ec3c8a",
     "plan_audit.json": "9ccf30069fb3f7b3bb12284efd16d19761f26a05f1305ce8fc7d0c078ad93bcc",
-    "integration_review.json": "974e76391022e907a8bd85c640f27706551d9af25155811c29895344813a53ed"
-  }
+    "integration_review.json": "974e76391022e907a8bd85c640f27706551d9af25155811c29895344813a53ed",
+    "windows_check.json": "879cf48fa466b6c02948e882717ec03294b89fb16ca0580fb05a7afc5c34df6a",
+    "source_publication_integrity.json": "b39e9e0cbda6532142ab0087f6780b273bd634fcec3d8f94a8f578ee774d72b3",
+    "ci219/artifact_verification.json": "e8a3838a5fe952a1c74f5600c15ccc31cbafb4a46cd202ffd140f82ae34a6938",
+    "ci219/raw_json_integrity.json": "9d2f3374c8caa3d6a2dfdf2b0b9b4d06221fc2fed05e8694247f236eda012ddb",
+    "ci219/success_receipt.json": "e4999b8be9872f8af70cb723ca1e4492c5c522a33bc2d8818ba23b3898707c1e",
+    "ci219/source_bindings.json": "967a7f9dacd35f2884b6277a69477502fe97ad3d10fb32d7fbb21416b231d9a0",
+    "ci219/generated_source_checks.json": "111370219e8ef1ca2255d2a9ffe8e8a11bce850790c77d93ec9999d2f3479c73",
+    "ci219/output_hash_checks.json": "415424c578694489d15c8780c3518b89be45df3204c9112aa043dc25857d2f03",
+    "ci219/node_checks.json": "96c774e04f8c08b368b61595870b18181d8cc2ee252a656f20580e59c982ad89",
+    "ci219/xlsx_checks.json": "3bc0eb8f8c8a6901f9eb55213fd10fe12d89a90749144e0af4ee9386bb91633c",
+    "ci219/table_cells_coordinates_counters.json": "8bfb17f82443b0ee073b9e2b410bcde7d6cab39cf2cd46336146152d380ada36"
+  },
+  "source_commit": "cbaaa1f8048353e068045ba5dfffd53956ad462d",
+  "source_tree": "637cc0b29f6407b6e79b3401a6d4d367bba5642d",
+  "windows_check": {
+    "id": 36917207283,
+    "name": "check",
+    "head_branch": "feat/auto-reactor",
+    "head_sha": "cbaaa1f8048353e068045ba5dfffd53956ad462d",
+    "path": ".github/workflows/check.yml",
+    "run_number": 219,
+    "event": "push",
+    "status": "completed",
+    "conclusion": "success",
+    "run_attempt": 1,
+    "created_at": "2026-10-01T19:50:10Z",
+    "updated_at": "2026-10-01T19:56:01Z",
+    "html_url": "https://github.com/zinchenko-denis/AutoCAD/actions/runs/36917207283"
+  },
+  "windows_job_id": 110553993934,
+  "windows_steps_success": 41,
+  "windows_artifact_review_checks": 3983,
+  "final_recorded_utc": "2026-10-01T19:58:23.787011+00:00"
 }

@@ -1,0 +1,462 @@
+{
+  "status": "PASS",
+  "scope": "Actual unchanged command/store/renderer/guards on explicit property-level CAD doubles; no host or engineering approval",
+  "node_command_invocations": 15,
+  "node_native_checks": 183,
+  "node_python_checks": 50,
+  "source_revisions": [
+    1,
+    2,
+    3
+  ],
+  "final_project_revision": 3,
+  "final_n1_fresh": false,
+  "final_n2_fresh": false,
+  "command_cases": [
+    {
+      "name": "create_n1",
+      "fresh": null,
+      "counters": {
+        "get_object_read": 88,
+        "get_object_write": 2,
+        "dictionary_contains": 14,
+        "dictionary_get": 14,
+        "dictionary_set": 1,
+        "xrecord_data_get": 20,
+        "xrecord_data_set": 1,
+        "buffer_enumerations": 12,
+        "buffer_values": 44,
+        "buffer_text_chars": 9157,
+        "points_read": 8,
+        "bulges_read": 8,
+        "hatch_loops_read": 2,
+        "typed_values_allocated": 16,
+        "objects_created": 55,
+        "modelspace_visits": 0
+      },
+      "node_owner": "9C"
+    },
+    {
+      "name": "n1_initial_fresh",
+      "fresh": true,
+      "counters": {
+        "get_object_read": 72,
+        "get_object_write": 0,
+        "dictionary_contains": 8,
+        "dictionary_get": 8,
+        "dictionary_set": 0,
+        "xrecord_data_get": 11,
+        "xrecord_data_set": 0,
+        "buffer_enumerations": 7,
+        "buffer_values": 38,
+        "buffer_text_chars": 7685,
+        "points_read": 4,
+        "bulges_read": 4,
+        "hatch_loops_read": 1,
+        "typed_values_allocated": 0,
+        "objects_created": 0,
+        "modelspace_visits": 0
+      },
+      "node_owner": "9C"
+    },
+    {
+      "name": "n1_after_project_change",
+      "fresh": false,
+      "counters": {
+        "get_object_read": 72,
+        "get_object_write": 0,
+        "dictionary_contains": 8,
+        "dictionary_get": 8,
+        "dictionary_set": 0,
+        "xrecord_data_get": 11,
+        "xrecord_data_set": 0,
+        "buffer_enumerations": 7,
+        "buffer_values": 38,
+        "buffer_text_chars": 7685,
+        "points_read": 4,
+        "bulges_read": 4,
+        "hatch_loops_read": 1,
+        "typed_values_allocated": 0,
+        "objects_created": 0,
+        "modelspace_visits": 0
+      },
+      "node_owner": "9C"
+    },
+    {
+      "name": "cancel_dialog",
+      "fresh": null,
+      "counters": {
+        "get_object_read": 17,
+        "get_object_write": 0,
+        "dictionary_contains": 7,
+        "dictionary_get": 7,
+        "dictionary_set": 0,
+        "xrecord_data_get": 10,
+        "xrecord_data_set": 0,
+        "buffer_enumerations": 6,
+        "buffer_values": 22,
+        "buffer_text_chars": 4578,
+        "points_read": 4,
+        "bulges_read": 4,
+        "hatch_loops_read": 1,
+        "typed_values_allocated": 0,
+        "objects_created": 0,
+        "modelspace_visits": 0
+      },
+      "node_owner": null
+    },
+    {
+      "name": "cancel_dialog_n1_stale",
+      "fresh": false,
+      "counters": {
+        "get_object_read": 72,
+        "get_object_write": 0,
+        "dictionary_contains": 8,
+        "dictionary_get": 8,
+        "dictionary_set": 0,
+        "xrecord_data_get": 11,
+        "xrecord_data_set": 0,
+        "buffer_enumerations": 7,
+        "buffer_values": 38,
+        "buffer_text_chars": 7685,
+        "points_read": 4,
+        "bulges_read": 4,
+        "hatch_loops_read": 1,
+        "typed_values_allocated": 0,
+        "objects_created": 0,
+        "modelspace_visits": 0
+      },
+      "node_owner": "9C"
+    },
+    {
+      "name": "cancel_point",
+      "fresh": null,
+      "counters": {
+        "get_object_read": 17,
+        "get_object_write": 0,
+        "dictionary_contains": 7,
+        "dictionary_get": 7,
+        "dictionary_set": 0,
+        "xrecord_data_get": 10,
+        "xrecord_data_set": 0,
+        "buffer_enumerations": 6,
+        "buffer_values": 22,
+        "buffer_text_chars": 4578,
+        "points_read": 4,
+        "bulges_read": 4,
+        "hatch_loops_read": 1,
+        "typed_values_allocated": 0,
+        "objects_created": 0,
+        "modelspace_visits": 0
+      },
+      "node_owner": null
+    },
+    {
+      "name": "cancel_point_n1_stale",
+      "fresh": false,
+      "counters": {
+        "get_object_read": 72,
+        "get_object_write": 0,
+        "dictionary_contains": 8,
+        "dictionary_get": 8,
+        "dictionary_set": 0,
+        "xrecord_data_get": 11,
+        "xrecord_data_set": 0,
+        "buffer_enumerations": 7,
+        "buffer_values": 38,
+        "buffer_text_chars": 7685,
+        "points_read": 4,
+        "bulges_read": 4,
+        "hatch_loops_read": 1,
+        "typed_values_allocated": 0,
+        "objects_created": 0,
+        "modelspace_visits": 0
+      },
+      "node_owner": "9C"
+    },
+    {
+      "name": "refuse_ucs",
+      "fresh": null,
+      "counters": {
+        "get_object_read": 17,
+        "get_object_write": 0,
+        "dictionary_contains": 7,
+        "dictionary_get": 7,
+        "dictionary_set": 0,
+        "xrecord_data_get": 10,
+        "xrecord_data_set": 0,
+        "buffer_enumerations": 6,
+        "buffer_values": 22,
+        "buffer_text_chars": 4578,
+        "points_read": 4,
+        "bulges_read": 4,
+        "hatch_loops_read": 1,
+        "typed_values_allocated": 0,
+        "objects_created": 0,
+        "modelspace_visits": 0
+      },
+      "node_owner": null
+    },
+    {
+      "name": "refuse_ucs_n1_stale",
+      "fresh": false,
+      "counters": {
+        "get_object_read": 72,
+        "get_object_write": 0,
+        "dictionary_contains": 8,
+        "dictionary_get": 8,
+        "dictionary_set": 0,
+        "xrecord_data_get": 11,
+        "xrecord_data_set": 0,
+        "buffer_enumerations": 7,
+        "buffer_values": 38,
+        "buffer_text_chars": 7685,
+        "points_read": 4,
+        "bulges_read": 4,
+        "hatch_loops_read": 1,
+        "typed_values_allocated": 0,
+        "objects_created": 0,
+        "modelspace_visits": 0
+      },
+      "node_owner": "9C"
+    },
+    {
+      "name": "create_n2",
+      "fresh": null,
+      "counters": {
+        "get_object_read": 89,
+        "get_object_write": 2,
+        "dictionary_contains": 14,
+        "dictionary_get": 14,
+        "dictionary_set": 1,
+        "xrecord_data_get": 20,
+        "xrecord_data_set": 1,
+        "buffer_enumerations": 12,
+        "buffer_values": 44,
+        "buffer_text_chars": 9157,
+        "points_read": 8,
+        "bulges_read": 8,
+        "hatch_loops_read": 2,
+        "typed_values_allocated": 16,
+        "objects_created": 52,
+        "modelspace_visits": 0
+      },
+      "node_owner": "DF"
+    },
+    {
+      "name": "n2_fresh_at_issue",
+      "fresh": true,
+      "counters": {
+        "get_object_read": 72,
+        "get_object_write": 0,
+        "dictionary_contains": 8,
+        "dictionary_get": 8,
+        "dictionary_set": 0,
+        "xrecord_data_get": 11,
+        "xrecord_data_set": 0,
+        "buffer_enumerations": 7,
+        "buffer_values": 38,
+        "buffer_text_chars": 7685,
+        "points_read": 4,
+        "bulges_read": 4,
+        "hatch_loops_read": 1,
+        "typed_values_allocated": 0,
+        "objects_created": 0,
+        "modelspace_visits": 0
+      },
+      "node_owner": "DF"
+    },
+    {
+      "name": "n1_stale_after_n2",
+      "fresh": false,
+      "counters": {
+        "get_object_read": 72,
+        "get_object_write": 0,
+        "dictionary_contains": 8,
+        "dictionary_get": 8,
+        "dictionary_set": 0,
+        "xrecord_data_get": 11,
+        "xrecord_data_set": 0,
+        "buffer_enumerations": 7,
+        "buffer_values": 38,
+        "buffer_text_chars": 7685,
+        "points_read": 4,
+        "bulges_read": 4,
+        "hatch_loops_read": 1,
+        "typed_values_allocated": 0,
+        "objects_created": 0,
+        "modelspace_visits": 0
+      },
+      "node_owner": "9C"
+    },
+    {
+      "name": "n2_fresh_before_table_late_mutation",
+      "fresh": true,
+      "counters": {
+        "get_object_read": 72,
+        "get_object_write": 0,
+        "dictionary_contains": 8,
+        "dictionary_get": 8,
+        "dictionary_set": 0,
+        "xrecord_data_get": 11,
+        "xrecord_data_set": 0,
+        "buffer_enumerations": 7,
+        "buffer_values": 38,
+        "buffer_text_chars": 7685,
+        "points_read": 4,
+        "bulges_read": 4,
+        "hatch_loops_read": 1,
+        "typed_values_allocated": 0,
+        "objects_created": 0,
+        "modelspace_visits": 0
+      },
+      "node_owner": "DF"
+    },
+    {
+      "name": "n1_after_table_project_revision3",
+      "fresh": false,
+      "counters": {
+        "get_object_read": 72,
+        "get_object_write": 0,
+        "dictionary_contains": 8,
+        "dictionary_get": 8,
+        "dictionary_set": 0,
+        "xrecord_data_get": 11,
+        "xrecord_data_set": 0,
+        "buffer_enumerations": 7,
+        "buffer_values": 38,
+        "buffer_text_chars": 7685,
+        "points_read": 4,
+        "bulges_read": 4,
+        "hatch_loops_read": 1,
+        "typed_values_allocated": 0,
+        "objects_created": 0,
+        "modelspace_visits": 0
+      },
+      "node_owner": "9C"
+    },
+    {
+      "name": "n2_after_table_project_revision3",
+      "fresh": false,
+      "counters": {
+        "get_object_read": 72,
+        "get_object_write": 0,
+        "dictionary_contains": 8,
+        "dictionary_get": 8,
+        "dictionary_set": 0,
+        "xrecord_data_get": 11,
+        "xrecord_data_set": 0,
+        "buffer_enumerations": 7,
+        "buffer_values": 38,
+        "buffer_text_chars": 7685,
+        "points_read": 4,
+        "bulges_read": 4,
+        "hatch_loops_read": 1,
+        "typed_values_allocated": 0,
+        "objects_created": 0,
+        "modelspace_visits": 0
+      },
+      "node_owner": "DF"
+    }
+  ],
+  "quantity_exclusions": [
+    {
+      "stage": "initial",
+      "nodes": [
+        "9C"
+      ],
+      "frame_unaccounted": [
+        {
+          "handle": "9C",
+          "type": "BlockReference",
+          "layer": "0",
+          "reason": "Объект не зарегистрирован для ведомости. Используйте ATFTABLE → Ручные."
+        }
+      ],
+      "cladding_unaccounted": [
+        {
+          "handle": "9C",
+          "type": "BlockReference",
+          "layer": "0",
+          "reason": "Объект не зарегистрирован для ведомости. Используйте ATFTABLE → Ручные."
+        }
+      ]
+    },
+    {
+      "stage": "project_reissued",
+      "nodes": [
+        "9C",
+        "DF"
+      ],
+      "frame_unaccounted": [
+        {
+          "handle": "9C",
+          "type": "BlockReference",
+          "layer": "0",
+          "reason": "Объект не зарегистрирован для ведомости. Используйте ATFTABLE → Ручные."
+        },
+        {
+          "handle": "DF",
+          "type": "BlockReference",
+          "layer": "0",
+          "reason": "Объект не зарегистрирован для ведомости. Используйте ATFTABLE → Ручные."
+        }
+      ],
+      "cladding_unaccounted": [
+        {
+          "handle": "9C",
+          "type": "BlockReference",
+          "layer": "0",
+          "reason": "Объект не зарегистрирован для ведомости. Используйте ATFTABLE → Ручные."
+        },
+        {
+          "handle": "DF",
+          "type": "BlockReference",
+          "layer": "0",
+          "reason": "Объект не зарегистрирован для ведомости. Используйте ATFTABLE → Ручные."
+        }
+      ]
+    },
+    {
+      "stage": "final",
+      "nodes": [
+        "9C",
+        "DF"
+      ],
+      "frame_unaccounted": [
+        {
+          "handle": "9C",
+          "type": "BlockReference",
+          "layer": "0",
+          "reason": "Объект не зарегистрирован для ведомости. Используйте ATFTABLE → Ручные."
+        },
+        {
+          "handle": "DF",
+          "type": "BlockReference",
+          "layer": "0",
+          "reason": "Объект не зарегистрирован для ведомости. Используйте ATFTABLE → Ручные."
+        }
+      ],
+      "cladding_unaccounted": [
+        {
+          "handle": "9C",
+          "type": "BlockReference",
+          "layer": "0",
+          "reason": "Объект не зарегистрирован для ведомости. Используйте ATFTABLE → Ручные."
+        },
+        {
+          "handle": "DF",
+          "type": "BlockReference",
+          "layer": "0",
+          "reason": "Объект не зарегистрирован для ведомости. Используйте ATFTABLE → Ручные."
+        }
+      ]
+    }
+  ],
+  "local_clearance_mm": 20,
+  "mounting_status": "not_confirmed",
+  "automatic_bracket_selection_allowed": false,
+  "node_engine_calls": 0,
+  "node_modelspace_visits": 0,
+  "rollback_Undo_COPY_SaveAs_save_open": "NOT_RUN"
+}

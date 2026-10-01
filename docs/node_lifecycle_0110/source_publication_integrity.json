@@ -1,0 +1,1360 @@
+{
+  "schema": "node_source_publication_integrity/1",
+  "verification": "PASS",
+  "source_commit": "cbaaa1f8048353e068045ba5dfffd53956ad462d",
+  "source_tree": "637cc0b29f6407b6e79b3401a6d4d367bba5642d",
+  "baseline_commit": "b2a6d09bf3fcb3602ad2d782f564e0f4f4993280",
+  "last_product_change_commit": "b4bf2897f6df85e4219c83ab64b39dd59d2d17d8",
+  "changed_paths": 168,
+  "tested_inputs_verified": 254,
+  "product_changed_paths": [],
+  "protected_modules_changed": false,
+  "remote_update": "Verified parent immediately before force=false fast-forward; local fetched exact tree",
+  "handoff_review": "Independent milestone review PASS after two editorial corrections: completed current row; prior Table stage explicitly historical. No new functional milestone claimed.",
+  "files": [
+    {
+      "path": ".github/workflows/check.yml",
+      "size": 18344,
+      "sha": "812ac15e8a53d494fb929b3d7730b4f58b889014",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "AClad/docs/NEXT.md",
+      "size": 151508,
+      "sha": "9c9090d424c949e67edc9635adadc53a68332a65",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "AFrame/docs/NEXT.md",
+      "size": 210307,
+      "sha": "b9dba0311e98dec6abb4cab794ff637698f79283",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "CLAUDE.md",
+      "size": 26770,
+      "sha": "9cea75357b59356f11c4d3474ee2232149ad8fa2",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "Facades/docs/NEXT.md",
+      "size": 169667,
+      "sha": "384c1510164dcc9db587a547106d6e0c8b6b7922",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/CHRONOLOGY.md",
+      "size": 30661,
+      "sha": "9a3252390896838be7063fa976fb7401bbc359fd",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/CHRONOLOGY_INDEX.md",
+      "size": 160728,
+      "sha": "740982a686155006c32953a06c1c84d7f2cfc966",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/CURRENT_MILESTONES.md",
+      "size": 14223,
+      "sha": "53fbefe9b6398b8e12b729e44ea87beaf56fcaf8",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/FACADE_COMPLEX_ROADMAP_30.09.md",
+      "size": 78459,
+      "sha": "d2cb5ccfb687b9751c1c7a73c0ca96f595bd51cf",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/HANDOFF_NEXT_SESSION_30.09.md",
+      "size": 88448,
+      "sha": "ace49d30cfe838966b91289b31ed2833a6731415",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/NODE_TABLE_LIFECYCLE_01.10.md",
+      "size": 7789,
+      "sha": "cb812b167925345c7c2b32ad9db1bacf521145b1",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/PILOT_COMPLETION_PLAN_01.10.md",
+      "size": 27278,
+      "sha": "7392a7e41899e8ebff7187e3364e9b66d7eda5ef",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/SESSION_PROMPT_AFTER_NODE_LIFECYCLE_01.10.md",
+      "size": 11324,
+      "sha": "b1a85bc48ac301da6466d2b759327d5927e27484",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/node_lifecycle_0110/after/build/CladdingQuantitiesPure.cs",
+      "size": 12030,
+      "sha": "754838179479a79f4e31d603f7bc43d5b2ad7594",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": true
+    },
+    {
+      "path": "docs/node_lifecycle_0110/after/build/FrameQuantitiesPure.cs",
+      "size": 26674,
+      "sha": "c34f7407baf2e11cb48ab94013d6e2692d614e51",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": true
+    },
+    {
+      "path": "docs/node_lifecycle_0110/after/build/NodeFreshnessPredicate.cs",
+      "size": 1193,
+      "sha": "56ed19c16b9bb3a496a96bb91ffc4b848a47023e",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": true
+    },
+    {
+      "path": "docs/node_lifecycle_0110/after/build/ZoneMetadataHelpers.cs",
+      "size": 2383,
+      "sha": "1ca5ee0d8291bbcb63f1320501c47e1c12f01908",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": true
+    },
+    {
+      "path": "docs/node_lifecycle_0110/after/engine_ledger.json",
+      "size": 2560,
+      "sha": "6e95ad0dee1bc8e4bd81b8c2784c0fb9f11fee53",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/node_lifecycle_0110/after/engines/attile_П-1/request.json",
+      "size": 1489,
+      "sha": "36801dce0b6a3c9d0756ab7c01deb12ff11bcd9f",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": true
+    },
+    {
+      "path": "docs/node_lifecycle_0110/after/engines/attile_П-1/response.json",
+      "size": 5002,
+      "sha": "1aec5b5870ae664689d6fe63415ae7e038be81a8",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": true
+    },
+    {
+      "path": "docs/node_lifecycle_0110/after/engines/attile_П-2/request.json",
+      "size": 1480,
+      "sha": "17af8a960f8d700025803aa0abdd57aa504f1f6b",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": true
+    },
+    {
+      "path": "docs/node_lifecycle_0110/after/engines/attile_П-2/response.json",
+      "size": 4985,
+      "sha": "59c0cf61c3a7e3f6213eeb5398197d972d8b7211",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": true
+    },
+    {
+      "path": "docs/node_lifecycle_0110/after/engines/initial_frame_П-1/request.json",
+      "size": 2619,
+      "sha": "3ed6e80f3d1298481ff155ff35a8c32e1223776b",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": true
+    },
+    {
+      "path": "docs/node_lifecycle_0110/after/engines/initial_frame_П-1/response.json",
+      "size": 10618,
+      "sha": "c6d29d7e882f21e83f6784e72b179ddd2b33db39",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": true
+    },
+    {
+      "path": "docs/node_lifecycle_0110/after/engines/initial_frame_П-2/request.json",
+      "size": 2609,
+      "sha": "64a50d5e4a13f898736a103536ceefeb0736347e",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": true
+    },
+    {
+      "path": "docs/node_lifecycle_0110/after/engines/initial_frame_П-2/response.json",
+      "size": 10614,
+      "sha": "7c58c041b53bc87d0068b799d5194d6695605f50",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": true
+    },
+    {
+      "path": "docs/node_lifecycle_0110/after/engines/pending_before_project_change/request.json",
+      "size": 2619,
+      "sha": "3ed6e80f3d1298481ff155ff35a8c32e1223776b",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": true
+    },
+    {
+      "path": "docs/node_lifecycle_0110/after/engines/pending_before_project_change/response.json",
+      "size": 10618,
+      "sha": "c6d29d7e882f21e83f6784e72b179ddd2b33db39",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": true
+    },
+    {
+      "path": "docs/node_lifecycle_0110/after/engines/project_reissue_frame_П-1/request.json",
+      "size": 2619,
+      "sha": "3d8feaa2e7636677aaaa45b64252d5fc3b62041c",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": true
+    },
+    {
+      "path": "docs/node_lifecycle_0110/after/engines/project_reissue_frame_П-1/response.json",
+      "size": 10618,
+      "sha": "f60594684884ddf7e8b9fefed97342a0275eb6f5",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": true
+    },
+    {
+      "path": "docs/node_lifecycle_0110/after/engines/project_reissue_frame_П-2/request.json",
+      "size": 2609,
+      "sha": "529071e35b3ef4079d236a1d6003fd908fb35ce6",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": true
+    },
+    {
+      "path": "docs/node_lifecycle_0110/after/engines/project_reissue_frame_П-2/response.json",
+      "size": 10614,
+      "sha": "25a3c913ac2431515ea49014cad808b8dc1b563d",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": true
+    },
+    {
+      "path": "docs/node_lifecycle_0110/after/engines/zone_reissue_frame_П-1/request.json",
+      "size": 2619,
+      "sha": "d1cea6f33c2524c67d12616abb28c2672f2c0dd2",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": true
+    },
+    {
+      "path": "docs/node_lifecycle_0110/after/engines/zone_reissue_frame_П-1/response.json",
+      "size": 10618,
+      "sha": "cf6e195246e38fdde13ead427f64e66c26c35d47",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": true
+    },
+    {
+      "path": "docs/node_lifecycle_0110/after/engines/zones/request.json",
+      "size": 672,
+      "sha": "68c345b86bdc607e810975b97cbb75aa0126e268",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": true
+    },
+    {
+      "path": "docs/node_lifecycle_0110/after/engines/zones/response.json",
+      "size": 5255,
+      "sha": "b5629970139e81e7bf1c13df7952a08de900a0c3",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": true
+    },
+    {
+      "path": "docs/node_lifecycle_0110/after/evidence_index.json",
+      "size": 306,
+      "sha": "995945924aa924d24263c3f64b0cf1290e07a9ac",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/node_lifecycle_0110/after/initial/cladding.xlsx",
+      "size": 3518,
+      "sha": "945e1ca6721863bb28346a297756e001a20fbb71",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/node_lifecycle_0110/after/initial/cladding_rows.json",
+      "size": 5250,
+      "sha": "c0e85bd3dd79c2d13d6f77b4fe049298f5c67be1",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": true
+    },
+    {
+      "path": "docs/node_lifecycle_0110/after/initial/connections.xlsx",
+      "size": 3490,
+      "sha": "3e8c0683dcb4e8221828d497579662c9a8c5b494",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/node_lifecycle_0110/after/initial/connections_rows.json",
+      "size": 5491,
+      "sha": "ad51af172e69dff39bac66dfe2404b0a0b2c5a08",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/node_lifecycle_0110/after/initial/frame.xlsx",
+      "size": 3240,
+      "sha": "ee145a7576f845a5548e54f59bd73d2da4c982d3",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/node_lifecycle_0110/after/initial/frame_rows.json",
+      "size": 4592,
+      "sha": "f6c95cb00a7f6791cfaaee6d4fc2ee1c2b38ccd2",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": true
+    },
+    {
+      "path": "docs/node_lifecycle_0110/after/initial/quantities.json",
+      "size": 12286,
+      "sha": "38716bd10dd59de23d4f7a061664f9b0be537c75",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/node_lifecycle_0110/after/initial/П-1_cladding_report.json",
+      "size": 9167,
+      "sha": "01128c361e732f01a8304373e7ce88ec9299a75b",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/node_lifecycle_0110/after/initial/П-1_frame_report.json",
+      "size": 12721,
+      "sha": "dd42dd04ba696facaf80e4ff05d9090d34df418d",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/node_lifecycle_0110/after/initial/П-1_node.json",
+      "size": 22100,
+      "sha": "2f9b2b062f8e3433b91c596ba50accc9914dee63",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/node_lifecycle_0110/after/initial/П-2_cladding_report.json",
+      "size": 9137,
+      "sha": "4ccd9a683379ec64bcf3417b9ea214674d146364",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/node_lifecycle_0110/after/initial/П-2_frame_report.json",
+      "size": 12721,
+      "sha": "f985bff8e8d1d2c5aca0ec076b2e67c713579630",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/node_lifecycle_0110/after/initial/П-2_node.json",
+      "size": 22100,
+      "sha": "ceb44820c92fb8a4a82cac6b605d02d2656fc674",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/node_lifecycle_0110/after/ledger.json",
+      "size": 86228,
+      "sha": "fec1fee10ba63f1afce99fc9709a1073f200d956",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/node_lifecycle_0110/after/manifest.json",
+      "size": 22844,
+      "sha": "8e90103d18656160c8b3ce8dc2808a82b656a24e",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/node_lifecycle_0110/after/native_result.json",
+      "size": 7098,
+      "sha": "8893b88787847510e914c27de8fe0392a53c12b2",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": true
+    },
+    {
+      "path": "docs/node_lifecycle_0110/after/node_command/oracle_review.json",
+      "size": 3502,
+      "sha": "b84bb2c3df6740265f9aa08ea3caebca7ca5779e",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/node_lifecycle_0110/after/node_command/quantities_final.json",
+      "size": 6794,
+      "sha": "6d9d66e38bc2c98656c87d3fd6793433014ab3cd",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/node_lifecycle_0110/after/node_command/quantities_initial.json",
+      "size": 6411,
+      "sha": "6578ff4a96d71232b34c8a8d936e28e73e1ae006",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/node_lifecycle_0110/after/node_command/quantities_project_reissued.json",
+      "size": 6794,
+      "sha": "b8c9d537c5a69b63345a40e06f62753933695ae2",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/node_lifecycle_0110/after/node_command/result.json",
+      "size": 312579,
+      "sha": "df272170d421250529b97b92f2350bd3897e249c",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/node_lifecycle_0110/after/ownership.json",
+      "size": 301,
+      "sha": "fca37d43495b41466d0110e9a683393ba50b9b2c",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/node_lifecycle_0110/after/project_reissue/cladding.xlsx",
+      "size": 3518,
+      "sha": "4295368999c1bb7c0b4400d0a306e988ca56c30f",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/node_lifecycle_0110/after/project_reissue/cladding_rows.json",
+      "size": 5250,
+      "sha": "c0e85bd3dd79c2d13d6f77b4fe049298f5c67be1",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": true
+    },
+    {
+      "path": "docs/node_lifecycle_0110/after/project_reissue/connections.xlsx",
+      "size": 3491,
+      "sha": "f87cf9b4b375055034c3ad4f934a073e959464dd",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/node_lifecycle_0110/after/project_reissue/connections_rows.json",
+      "size": 5491,
+      "sha": "d67e5dfaef0baf28b6242212eaa8d9a5ff254fae",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/node_lifecycle_0110/after/project_reissue/frame.xlsx",
+      "size": 3240,
+      "sha": "33cc0f950003feca65e7846e9027e9a3c8507de5",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/node_lifecycle_0110/after/project_reissue/frame_rows.json",
+      "size": 4592,
+      "sha": "f6c95cb00a7f6791cfaaee6d4fc2ee1c2b38ccd2",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": true
+    },
+    {
+      "path": "docs/node_lifecycle_0110/after/project_reissue/quantities.json",
+      "size": 12286,
+      "sha": "d7f112af3703298c82e5afd9a207dde250d55114",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/node_lifecycle_0110/after/project_reissue/П-1_frame_report.json",
+      "size": 12721,
+      "sha": "0dae13c1ce0db1158b795d35f122e70770681875",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/node_lifecycle_0110/after/project_reissue/П-1_node.json",
+      "size": 22100,
+      "sha": "7a2b5c3d85842a37eb25261aa1d523fcf2b00bec",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/node_lifecycle_0110/after/project_reissue/П-2_frame_report.json",
+      "size": 12721,
+      "sha": "fec3c0bb3ec9f95bfe9e99723190e15ade4fa31b",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/node_lifecycle_0110/after/project_reissue/П-2_node.json",
+      "size": 22100,
+      "sha": "1623e4ab1543f2db78c10cdf9e75c27009805bf9",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/node_lifecycle_0110/after/selection.json",
+      "size": 1089,
+      "sha": "0afd0d53016c8ce68175e865faa4926b035343b5",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": true
+    },
+    {
+      "path": "docs/node_lifecycle_0110/after/table_command/cancel_point.xlsx",
+      "size": 3288,
+      "sha": "8ea5fe5510bab359fc202889b24b09cc5205ddde",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/node_lifecycle_0110/after/table_command/cancel_preview.xlsx",
+      "size": 3288,
+      "sha": "8ea5fe5510bab359fc202889b24b09cc5205ddde",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/node_lifecycle_0110/after/table_command/cancel_save_dialog.xlsx",
+      "size": 3288,
+      "sha": "8ea5fe5510bab359fc202889b24b09cc5205ddde",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/node_lifecycle_0110/after/table_command/cancel_update_second_preview.xlsx",
+      "size": 3288,
+      "sha": "8ea5fe5510bab359fc202889b24b09cc5205ddde",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/node_lifecycle_0110/after/table_command/excel_only.xlsx",
+      "size": 3288,
+      "sha": "fb5020437cfc136be83fd34726a83a7c1bc5baa6",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/node_lifecycle_0110/after/table_command/excel_only_rows.json",
+      "size": 4589,
+      "sha": "25b2de93635339971b5968a37efcfcac6115bba4",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": true
+    },
+    {
+      "path": "docs/node_lifecycle_0110/after/table_command/initial_cladding.xlsx",
+      "size": 2572,
+      "sha": "80c4a77ccfe2a11be68b7172b0187d2e8c4fef99",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/node_lifecycle_0110/after/table_command/initial_cladding_rows.json",
+      "size": 1663,
+      "sha": "5003456acfddd7713b8ea8c02088dbe32e09e985",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": true
+    },
+    {
+      "path": "docs/node_lifecycle_0110/after/table_command/initial_cladding_table.json",
+      "size": 6786,
+      "sha": "882e0e6bb81cc5403515c8bf64f54bacf50aa086",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/node_lifecycle_0110/after/table_command/initial_connections.xlsx",
+      "size": 3535,
+      "sha": "ccdb23cc2f0f1999bd36c3fc539bf753b8fcc0ef",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/node_lifecycle_0110/after/table_command/initial_connections_rows.json",
+      "size": 5488,
+      "sha": "f59da73f0b10a155a3119645f0b9018b1722d25e",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/node_lifecycle_0110/after/table_command/initial_connections_table.json",
+      "size": 18962,
+      "sha": "2b4e2f36971e68108f00f878b399acf5bb81ffce",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/node_lifecycle_0110/after/table_command/initial_frame.xlsx",
+      "size": 3288,
+      "sha": "8ea5fe5510bab359fc202889b24b09cc5205ddde",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/node_lifecycle_0110/after/table_command/initial_frame_rows.json",
+      "size": 4589,
+      "sha": "25b2de93635339971b5968a37efcfcac6115bba4",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": true
+    },
+    {
+      "path": "docs/node_lifecycle_0110/after/table_command/initial_frame_table.json",
+      "size": 16401,
+      "sha": "e24dfe3100acf8eabe0c3714e7eaac1c9b8eb383",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/node_lifecycle_0110/after/table_command/late_project.xlsx",
+      "size": 3288,
+      "sha": "8ea5fe5510bab359fc202889b24b09cc5205ddde",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/node_lifecycle_0110/after/table_command/late_target.xlsx",
+      "size": 3288,
+      "sha": "8ea5fe5510bab359fc202889b24b09cc5205ddde",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/node_lifecycle_0110/after/table_command/late_target_table.json",
+      "size": 16314,
+      "sha": "a1809ddc22b92ae44cbf7c26c34edfea692474ae",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/node_lifecycle_0110/after/table_command/late_ucs_fresh_read.xlsx",
+      "size": 3288,
+      "sha": "8ea5fe5510bab359fc202889b24b09cc5205ddde",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/node_lifecycle_0110/after/table_command/late_ucs_lock.xlsx",
+      "size": 3288,
+      "sha": "8ea5fe5510bab359fc202889b24b09cc5205ddde",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/node_lifecycle_0110/after/table_command/late_ucs_point.xlsx",
+      "size": 3288,
+      "sha": "8ea5fe5510bab359fc202889b24b09cc5205ddde",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/node_lifecycle_0110/after/table_command/late_ucs_save_dialog.xlsx",
+      "size": 3288,
+      "sha": "8ea5fe5510bab359fc202889b24b09cc5205ddde",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/node_lifecycle_0110/after/table_command/project_reissued_cladding.xlsx",
+      "size": 2572,
+      "sha": "4bd4d4a048ee759f25a14817bac4326cf48dbee7",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/node_lifecycle_0110/after/table_command/project_reissued_cladding_rows.json",
+      "size": 1663,
+      "sha": "5003456acfddd7713b8ea8c02088dbe32e09e985",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": true
+    },
+    {
+      "path": "docs/node_lifecycle_0110/after/table_command/project_reissued_cladding_table.json",
+      "size": 6786,
+      "sha": "882e0e6bb81cc5403515c8bf64f54bacf50aa086",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/node_lifecycle_0110/after/table_command/project_reissued_connections.xlsx",
+      "size": 3536,
+      "sha": "87ac12ba0ef0b0471694d74cf5e54161ac1e65e0",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/node_lifecycle_0110/after/table_command/project_reissued_connections_rows.json",
+      "size": 5488,
+      "sha": "e33849ba31458fd905ffa33bc3e731686ccdbb83",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/node_lifecycle_0110/after/table_command/project_reissued_connections_table.json",
+      "size": 18962,
+      "sha": "7d4c84057f44495aefb4515f77a62442c4a17af6",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/node_lifecycle_0110/after/table_command/project_reissued_frame.xlsx",
+      "size": 3288,
+      "sha": "fb5020437cfc136be83fd34726a83a7c1bc5baa6",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/node_lifecycle_0110/after/table_command/project_reissued_frame_rows.json",
+      "size": 4589,
+      "sha": "25b2de93635339971b5968a37efcfcac6115bba4",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": true
+    },
+    {
+      "path": "docs/node_lifecycle_0110/after/table_command/project_reissued_frame_table.json",
+      "size": 16401,
+      "sha": "2afbf0dd63bb95d26d6b17fdd08887e0d0ba2955",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/node_lifecycle_0110/after/table_command/result.json",
+      "size": 84599,
+      "sha": "42ff73c29d9d7d3ba5aa5c6e188cf95022d0976a",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/node_lifecycle_0110/after/table_command/xlsx_review.json",
+      "size": 348783,
+      "sha": "6c22fa660d7b2f8692f02e22920b69f456de4df0",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/node_lifecycle_0110/after/table_command/zone_reissued_cladding.xlsx",
+      "size": 2572,
+      "sha": "4bd4d4a048ee759f25a14817bac4326cf48dbee7",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/node_lifecycle_0110/after/table_command/zone_reissued_cladding_rows.json",
+      "size": 1663,
+      "sha": "5003456acfddd7713b8ea8c02088dbe32e09e985",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": true
+    },
+    {
+      "path": "docs/node_lifecycle_0110/after/table_command/zone_reissued_cladding_table.json",
+      "size": 6786,
+      "sha": "882e0e6bb81cc5403515c8bf64f54bacf50aa086",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/node_lifecycle_0110/after/table_command/zone_reissued_connections.xlsx",
+      "size": 3536,
+      "sha": "19c51bc185ca201840cb387e9370ee4d6a8a1745",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/node_lifecycle_0110/after/table_command/zone_reissued_connections_rows.json",
+      "size": 5488,
+      "sha": "01bb17f84f92108c231ef0ea8daa06907ff4bbd4",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/node_lifecycle_0110/after/table_command/zone_reissued_connections_table.json",
+      "size": 18962,
+      "sha": "0801af1c85448096c7e99eecc3e6f10d0274dda8",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/node_lifecycle_0110/after/table_command/zone_reissued_frame.xlsx",
+      "size": 3288,
+      "sha": "fb5020437cfc136be83fd34726a83a7c1bc5baa6",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/node_lifecycle_0110/after/table_command/zone_reissued_frame_rows.json",
+      "size": 4589,
+      "sha": "25b2de93635339971b5968a37efcfcac6115bba4",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": true
+    },
+    {
+      "path": "docs/node_lifecycle_0110/after/table_command/zone_reissued_frame_table.json",
+      "size": 16401,
+      "sha": "5311bac75e5de988dc80b3fbff218d7d66525167",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/node_lifecycle_0110/after/table_expect.json",
+      "size": 24,
+      "sha": "4ce8e5ac37b371335c4e59be269216176bb6e2b5",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": true
+    },
+    {
+      "path": "docs/node_lifecycle_0110/after/trace.json",
+      "size": 31763,
+      "sha": "2edcfc6a013d4f1d276987cec5f29e997400ed75",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/node_lifecycle_0110/after/xlsx_review.json",
+      "size": 1886,
+      "sha": "c38327e0609e297acb04a9e97efc898f79b52751",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/node_lifecycle_0110/after/zone_reissue/cladding.xlsx",
+      "size": 3518,
+      "sha": "4295368999c1bb7c0b4400d0a306e988ca56c30f",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/node_lifecycle_0110/after/zone_reissue/cladding_rows.json",
+      "size": 5250,
+      "sha": "c0e85bd3dd79c2d13d6f77b4fe049298f5c67be1",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": true
+    },
+    {
+      "path": "docs/node_lifecycle_0110/after/zone_reissue/connections.xlsx",
+      "size": 3491,
+      "sha": "cb7935a46c6555d5cf38ae6c5b0f1c8d42d7a737",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/node_lifecycle_0110/after/zone_reissue/connections_rows.json",
+      "size": 5491,
+      "sha": "01ce73cd770d2eaa495530baf8aad265e7a79a21",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/node_lifecycle_0110/after/zone_reissue/frame.xlsx",
+      "size": 3240,
+      "sha": "33cc0f950003feca65e7846e9027e9a3c8507de5",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/node_lifecycle_0110/after/zone_reissue/frame_rows.json",
+      "size": 4592,
+      "sha": "f6c95cb00a7f6791cfaaee6d4fc2ee1c2b38ccd2",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": true
+    },
+    {
+      "path": "docs/node_lifecycle_0110/after/zone_reissue/quantities.json",
+      "size": 12286,
+      "sha": "6a375d59e7504ab0a09375569be489ca2b51a598",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/node_lifecycle_0110/after/zone_reissue/П-1_frame_report.json",
+      "size": 12719,
+      "sha": "274f9abd68ed26dbea261d25042640d1cacac251",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/node_lifecycle_0110/after/zone_reissue/П-1_node.json",
+      "size": 22098,
+      "sha": "d5cb16c5ca718c176adff5245ab2460a04e826d5",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/node_lifecycle_0110/baseline_dependency_guard.json",
+      "size": 57479,
+      "sha": "fd0b6fb37173d1d29152068865af6f51fd3446b3",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/node_lifecycle_0110/baseline_environment.json",
+      "size": 691,
+      "sha": "a3434d8113c81c13c8f4b1fc9eed6911814f8ed4",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/node_lifecycle_0110/baseline_snapshot.json",
+      "size": 47602,
+      "sha": "9ca053dd5176bfffb64332992522b4a6415fe1a2",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/node_lifecycle_0110/before/QuantityCadDoubles.cs",
+      "size": 18537,
+      "sha": "3b8739e93dc800c1b4cba1b7ec0c864abd707d7e",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": true
+    },
+    {
+      "path": "docs/node_lifecycle_0110/before/ownership.json",
+      "size": 324,
+      "sha": "e1252793ef2afe6790c2bdc3471b48d60674e424",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/node_lifecycle_0110/checks_manifest.json",
+      "size": 28833,
+      "sha": "7241db05aca9f94898af57de78c4f625154fe79f",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/node_lifecycle_0110/compile_manifest.json",
+      "size": 10630,
+      "sha": "63e21b5deba0b648de1d7e081265bc2b6e434c6c",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": true
+    },
+    {
+      "path": "docs/node_lifecycle_0110/environment_summary.json",
+      "size": 1628,
+      "sha": "2ef663bb2ce213d26a12340bb0f5c025ea38b4bf",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/node_lifecycle_0110/facade_compile_warning.log",
+      "size": 191,
+      "sha": "5dde15fda96694eaf0fdb006423340bfc6229721",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": true
+    },
+    {
+      "path": "docs/node_lifecycle_0110/focused_gate_source_binding.json",
+      "size": 27140,
+      "sha": "7d921049704d4a0d3795ad6c4bfe11d23bea175f",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/node_lifecycle_0110/full_synth_revalidation.json",
+      "size": 10534,
+      "sha": "9a8509580eada44893e9a0292e05c60c2658e9f0",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/node_lifecycle_0110/gate_source_hashes.json",
+      "size": 42942,
+      "sha": "05ce142f793275fe9db5689c1f7b997049578fae",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/node_lifecycle_0110/guide_applicability.json",
+      "size": 16588,
+      "sha": "1734df75c82ceee702da2958488a1a2d73ef2b2a",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/node_lifecycle_0110/host_acceptance.md",
+      "size": 7841,
+      "sha": "262cb1266aa0886fcfe0dabbdf6dad9b1e84ce21",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/node_lifecycle_0110/independent_oracle.json",
+      "size": 2090,
+      "sha": "122beaf7778dbc4874d819e081916e09195d1554",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/node_lifecycle_0110/independent_ownership_receipt.json",
+      "size": 878,
+      "sha": "5e5689a7e5106370f3846e0af266e42aa2759acf",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/node_lifecycle_0110/independent_review.json",
+      "size": 22042,
+      "sha": "1159e8e05d332b8b80c2eb907f422812cc8a4127",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/node_lifecycle_0110/independent_review.md",
+      "size": 4343,
+      "sha": "105cb846315dd2d5e6085a9424fc4f70ce93c318",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/node_lifecycle_0110/independent_run_manifest.json",
+      "size": 22844,
+      "sha": "09711c0d6f27d87b0b63cb2a38ca708cc8f9cd51",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/node_lifecycle_0110/integration_review.json",
+      "size": 706,
+      "sha": "09066c67db85d5e16f9b970af86edb683ea9b17d",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/node_lifecycle_0110/limited_lifecycle_gate_manifest.json",
+      "size": 85678,
+      "sha": "80f17f5ba13dfaa961e7185f1937dd839f296516",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/node_lifecycle_0110/limited_pilot_acceptance.log",
+      "size": 74,
+      "sha": "a283a9f0e4f954e656a42f4da21b83ed44b0a3d4",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": true
+    },
+    {
+      "path": "docs/node_lifecycle_0110/local_gate_summary.json",
+      "size": 2174,
+      "sha": "5ccb14ec4451e825f4bb890e856790955c8e3ab4",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/node_lifecycle_0110/node_lifecycle_gate_manifest.json",
+      "size": 22845,
+      "sha": "7297db653aab53325f2b03db1dff0e4c2e3d1a98",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/node_lifecycle_0110/performance_counts.json",
+      "size": 16061,
+      "sha": "249511e0d92de518c6afb2dff45c2f183d035fa1",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/node_lifecycle_0110/pilot_node_table_lifecycle.log",
+      "size": 105,
+      "sha": "c53e48df14013ea7bf6fc549baf4299c0536961a",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/node_lifecycle_0110/plan_audit.json",
+      "size": 7771,
+      "sha": "dd8b54a067b047f6eaf8d0e5a45d41ebe6863d24",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/node_lifecycle_0110/plan_audit.md",
+      "size": 13733,
+      "sha": "d64efebd3c97166ff93d16213b22813535c0af2b",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/node_lifecycle_0110/project_parameters_store.log",
+      "size": 110,
+      "sha": "e91f865f7ce4210d6d74e5da71ff7554309756ad",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": true
+    },
+    {
+      "path": "docs/node_lifecycle_0110/reproduction_index.json",
+      "size": 918,
+      "sha": "be9bce8dfcf25e637b3a668de5b8d705c1f0e282",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/node_lifecycle_0110/sensitivity.json",
+      "size": 685,
+      "sha": "af8aee8aea1166191365168fa508da7488fa6099",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/node_lifecycle_0110/table_command_lifecycle.log",
+      "size": 70,
+      "sha": "94ea35c7ce703f6ebf8f02d0149c74ced4fc957a",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": true
+    },
+    {
+      "path": "docs/node_lifecycle_0110/table_lifecycle_gate_manifest.json",
+      "size": 21754,
+      "sha": "8a513851e1ebb1f3360c6c35815b7d979d6e3cdd",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/node_lifecycle_0110/verification_manifest.json",
+      "size": 3473,
+      "sha": "738e3b4082909996c11e234fa01653189261d187",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "tools/atr_review_3009/run_checks.py",
+      "size": 10865,
+      "sha": "45f06995adf71f7494ab582423e255ab97d2043a",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "tools/limited_pilot_0110/LimitedPilotProbe.cs",
+      "size": 26474,
+      "sha": "56cfa94dd1df81013b435d46fcebf2fca2cca8ea",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "tools/node_lifecycle_0110/NodeLifecycleDoubles.cs",
+      "size": 7272,
+      "sha": "0899ee768614b1b5fb03165ef61dd0d14527338f",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "tools/node_lifecycle_0110/NodeLifecycleProbe.cs",
+      "size": 11924,
+      "sha": "51b9b9b6a63a33ec48a03e05278f3cc408d8bff9",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "tools/node_lifecycle_0110/OwnershipProbe.cs",
+      "size": 1521,
+      "sha": "1a734fe23d18bbb21cfa9c1d282bcb46383be6b7",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "tools/node_lifecycle_0110/README.md",
+      "size": 5470,
+      "sha": "dd94ee4acfdcf8138c373337baaef93df0e02b10",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "tools/node_lifecycle_0110/run_lifecycle.py",
+      "size": 10502,
+      "sha": "0209b1a7ca018165d86082726de77f47dc05afd8",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "tools/quantities_3009/QuantityCadDoubles.cs",
+      "size": 19296,
+      "sha": "073b18db7d9102ac7add4a8a8ec58f97c577b31d",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "tools/table_lifecycle_0110/TableCommandDoubles.cs",
+      "size": 7440,
+      "sha": "883e0a3938961570b01bba40f650c7fefb24aeeb",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    }
+  ]
+}

@@ -1,0 +1,11 @@
+{
+  "status": "PASS",
+  "source_sha256": "57c18bc2870e6c521447f2bfebace688cfa9c8608add4f857319b7a2455131bf",
+  "observed": {
+    "model_count": 1,
+    "definition_count": 1,
+    "internal_primitive_leaked": false,
+    "reference_membership_count": 1,
+    "lazy_internal_primitive_leaked": false
+  }
+}

@@ -18,7 +18,7 @@ command/store/renderer, но подменяла проверку геометр�
 после изменения проекта.
 
 <!-- node-lifecycle-result:start -->
-Продолжение от `b2a6d09`. Локальные проверки и независимая ревизия завершены; новый Windows CI ожидается после публикации. Продуктовый код остаётся прежним (`b4bf289`); №218 проверял предшествующий стенд.
+Совместный стенд проверен на `cbaaa1f8048353e068045ba5dfffd53956ad462d`, Windows **[check №219](https://github.com/zinchenko-denis/AutoCAD/actions/runs/36917207283) — success**. Продуктовый код прежний, последний изменявший его коммит — `b4bf289`. Итоговый протокол — `docs/node_lifecycle_0110/github_publication.json`; итоговая передача сохраняется отдельным документационным коммитом.
 
 Локально60/60, compile3/3, общий сценарий5119 PASS; независимая ревизия PASS. Продукт неизменён. Итоговые доказательства — `node_lifecycle_0110/verification_manifest.json` и `github_publication.json`. Исторические PENDING snapshots описывают момент до CI.
 <!-- node-lifecycle-result:end -->
