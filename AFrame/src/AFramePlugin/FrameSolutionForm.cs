@@ -65,16 +65,18 @@ namespace AFramePlugin
         public HashSet<string> AcceptedOverridePaths { get { return new HashSet<string>(_pendingOverrides ?? CurrentOverrides(), StringComparer.Ordinal); } }
 
         // WinForms can retain the requested ClientSize when Windows has already
-        // limited the HWND to the monitor's maximum tracking size. That leaves
-        // managed layout/DrawToBitmap believing invisible space is available.
-        // Limit the request before the base class records its client-size cache.
+        // limited the HWND to the monitor or expanded it to MinimumSize. Clamp
+        // both bounds before the base class records its client-size cache, so
+        // layout and DrawToBitmap use exactly the visible native client area.
         protected override void SetClientSizeCore(int width, int height)
         {
             Rectangle work = Screen.FromPoint(Location).WorkingArea;
             FitMinimum(work.Size);
             Size border = SizeFromClientSize(Size.Empty);
-            base.SetClientSizeCore(Math.Min(width, Math.Max(1, work.Width - border.Width)),
-                Math.Min(height, Math.Max(1, work.Height - border.Height)));
+            int minWidth = Math.Max(1, MinimumSize.Width - border.Width),
+                minHeight = Math.Max(1, MinimumSize.Height - border.Height);
+            base.SetClientSizeCore(Math.Max(minWidth, Math.Min(width, Math.Max(1, work.Width - border.Width))),
+                Math.Max(minHeight, Math.Min(height, Math.Max(1, work.Height - border.Height))));
         }
 
         protected override void SetBoundsCore(int x, int y, int width, int height, BoundsSpecified specified)

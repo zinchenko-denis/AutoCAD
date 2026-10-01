@@ -1,0 +1,12 @@
+{
+  "status": "LOCAL_PASS_WINDOWS_PENDING",
+  "base_commit": "75eb369ac8231a1cf6311238ea12785a82abba43",
+  "mandatory_groups": 52,
+  "compile_plugins": 3,
+  "input_files_unchanged": 260,
+  "inputs": "ui_fix_input_sha256.json",
+  "gates": "ui_fix_gates_manifest.json",
+  "compile": "ui_fix_compile_manifest.json",
+  "original_regression_unchanged": true,
+  "live_autocad_checked": false
+}

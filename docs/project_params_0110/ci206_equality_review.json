@@ -24,7 +24,7 @@
     "old_comparison": "Json.Serialize(first) == Json.Serialize(second)",
     "present_before_2b2": true,
     "source_supported_risk": "Typed JSON serialization relies on reflection property enumeration order; equality must compare values independently of that order.",
-    "runtime_trigger_status": "candidate_only; exact original Windows CI trigger not proven",
+    "runtime_trigger_status": "Serializer property-order failure mechanism reproduced on Windows in run #207: 20/200 old string comparisons differed for semantically equal values. Exact pre-failure objects/GC moment from original #206 were not captured.",
     "primary_sources": [
       "https://learn.microsoft.com/en-us/dotnet/api/system.type.getproperties?view=net-10.0",
       "https://github.com/microsoft/referencesource/blob/main/System.Web.Extensions/Script/Serialization/JavaScriptSerializer.cs#L264",
@@ -66,7 +66,7 @@
     "observational_diagnostic_only": true,
     "live_autocad_checked": false
   },
-  "next_validation": "Run Windows CI for this new source; inspect serializer_equality_diagnostic.json and contracts_output.json. No legacy mismatch on Mono is not evidence of Windows property-order stability.",
+  "next_validation": "Windows equality regression gate is closed on 75eb369 by 47 native cases and 70 settings/engine/producer checks. Live AutoCAD remains a separate acceptance step.",
   "baseline_selection_source_sha256": "129f4f526e00b410433ab5c3e07f0df5e39449d68a880855c8ee66c4dc0a3e10",
   "fixed_source_sha256": {
     "AFrame/src/AFramePlugin/FrameSolutionSelection.cs": "cb25b6e890ce2f1e5ee458f1e378510d21f7205e529ee1894520ed686a3abd66",
@@ -86,6 +86,320 @@
     },
     "input_files_unchanged": 260,
     "input_manifest": "equality_fix_input_sha256.json",
-    "windows_ci": "PENDING"
+    "windows_ci": "PASS: run 36841004585 / #207, settings artifact independently reviewed"
+  },
+  "windows_validation": {
+    "product_commit": "75eb369ac8231a1cf6311238ea12785a82abba43",
+    "run_id": 36841004585,
+    "run_number": 207,
+    "url": "https://github.com/zinchenko-denis/AutoCAD/actions/runs/36841004585",
+    "status": "PASS",
+    "checks": 70,
+    "native_cases": 47,
+    "pipeline_checks": 23,
+    "artifact": {
+      "id": 11151706074,
+      "name": "ci207-solution-settings",
+      "zip_sha256": "5325561c090af8a692ed68ca93da8ca609333ca08f328f9194c32eae8be2958b",
+      "manifest_sha256": "8cd933d93d92b7b7996fc0dea42db5678b1643449f7b3b4ddef8ceaff1deedd3",
+      "diagnostic_sha256": "08c3589c3d5753509529bc99c8b3c90d952118bd2f58a74ba958706e6782c9d8",
+      "contracts_sha256": "dea9f8cdde479e033d32f342a824f4fcf772a8a9ad6449d18f0cf2f3386877a3"
+    },
+    "source_verification": {
+      "tools/solution_catalog_0110/test_settings_contract.py": {
+        "artifact_source_sha256": "d1c99718983bd5c6d4f4aff9c4c9337c0fac1060b522040fea43251d2ed00b07",
+        "match": "git_blob_with_LF_to_CRLF_checkout"
+      },
+      "tools/solution_catalog_0110/SettingsContractProbe.cs": {
+        "artifact_source_sha256": "328138dc1cbf308dafb9b72bfedd4971f2727098aa0254cfa892ca2cc4f416f7",
+        "match": "git_blob_with_LF_to_CRLF_checkout"
+      },
+      "AFrame/src/AFramePlugin/FrameSettings.cs": {
+        "artifact_source_sha256": "14fa9ad2c20caa2e4bd9931c25f24b7b6affd5ef30943410d551e556d28082e2",
+        "match": "git_blob_with_LF_to_CRLF_checkout"
+      },
+      "AFrame/src/AFramePlugin/FrameSolutionSelection.cs": {
+        "artifact_source_sha256": "a79f45984e52bcf023d3ac35a3cabdfc84fff77c07ac662e411cbaf8a8b032f7",
+        "match": "git_blob_with_LF_to_CRLF_checkout"
+      },
+      "AFrame/src/AFramePlugin/FrameProjectParameters.cs": {
+        "artifact_source_sha256": "916fbdc792a35ab023b7d586fd929da64675a79e3e2aa4202a206bcfeba77482",
+        "match": "git_blob_with_LF_to_CRLF_checkout"
+      },
+      "AFrame/src/AFramePlugin/FrameCommand.cs": {
+        "artifact_source_sha256": "77ab95312ff52c08f01952f62e10bad3718bd44c32f1f81f8c5029973ffcbc8d",
+        "match": "git_blob_with_LF_to_CRLF_checkout"
+      },
+      "AFrame/src/AFramePlugin/FrameQuantities.cs": {
+        "artifact_source_sha256": "1c1049382e171f79fa4866a555979eced505e28ebbe691d1822253a94192d36c",
+        "match": "git_blob_with_LF_to_CRLF_checkout"
+      },
+      "Common/FacadeQuantities.cs": {
+        "artifact_source_sha256": "9453f7fdd91aac9aeab389d3b0ccc9b1968c59c48dfbd04664cd8150b24af305",
+        "match": "git_blob_with_LF_to_CRLF_checkout"
+      },
+      "Common/catalogs/vector1_2015_type1_historical.json": {
+        "artifact_source_sha256": "750eb47d0ec22862267b960262ab591651ba0576c10328b85b5bde405f3ff0d7",
+        "match": "git_blob_with_LF_to_CRLF_checkout"
+      },
+      "AFrame/engine/analiz_klu_poligon.py": {
+        "artifact_source_sha256": "33935bb1083c334fc2e3318176b20855c06ca7c7573e2be169be00e53d0e385f",
+        "match": "git_blob_with_LF_to_CRLF_checkout"
+      },
+      "AFrame/engine/audit_frame.py": {
+        "artifact_source_sha256": "a1a42d5b3e49b085036ee212623de1f42e098d4c11a7158b6b2cd223725fab8f",
+        "match": "git_blob_with_LF_to_CRLF_checkout"
+      },
+      "AFrame/engine/dsverka_poligon.py": {
+        "artifact_source_sha256": "1ec28d3531cc2f0b16020961d87d441913fd7befe54a0d407a85e698267dee49",
+        "match": "git_blob_with_LF_to_CRLF_checkout"
+      },
+      "AFrame/engine/frame_calc.py": {
+        "artifact_source_sha256": "e85641d1e802660af062519cb88596caec154a6af9baada15bab95a3ddb222da",
+        "match": "git_blob_with_LF_to_CRLF_checkout"
+      },
+      "AFrame/engine/frame_catalog.py": {
+        "artifact_source_sha256": "be987c0ce8452eadbc5babf0dff28dfba895baf525eea2de5278262ec5af5698",
+        "match": "git_blob_with_LF_to_CRLF_checkout"
+      },
+      "AFrame/engine/frame_connections.py": {
+        "artifact_source_sha256": "2f570417d9ca5fda157423fb2ff14f813e7ccc4f067183b924fce75365f992b2",
+        "match": "git_blob_with_LF_to_CRLF_checkout"
+      },
+      "AFrame/engine/frame_engine.py": {
+        "artifact_source_sha256": "7d85bf5beda118f0750d926c16714282201a1f965e2c27cf93726126a66d6db3",
+        "match": "git_blob_with_LF_to_CRLF_checkout"
+      },
+      "AFrame/engine/frame_plan.py": {
+        "artifact_source_sha256": "36df2b6d2aeaa1dfceb0e31b167eb3cb392a734c2c6eb4aa43a40694531400ad",
+        "match": "git_blob_with_LF_to_CRLF_checkout"
+      },
+      "AFrame/engine/frame_rules.py": {
+        "artifact_source_sha256": "1383ac5badcb5ac07eab12def255b86d679966191acef250e2b09fa41757be5e",
+        "match": "git_blob_with_LF_to_CRLF_checkout"
+      },
+      "AFrame/engine/frame_solution_catalog.py": {
+        "artifact_source_sha256": "3649cb9bc72344c206efd5011e94efe51ef448ac295ff8d2fb0cbc6af53bb02f",
+        "match": "git_blob_with_LF_to_CRLF_checkout"
+      },
+      "AFrame/engine/frame_solution_selection.py": {
+        "artifact_source_sha256": "8d7665fd417caae469b7c50a4580fd2182cab2c73c61803b178e52a5e83ae36b",
+        "match": "git_blob_with_LF_to_CRLF_checkout"
+      },
+      "AFrame/engine/frame_spatial.py": {
+        "artifact_source_sha256": "7dc4113560b2baa8d5d786c596428f7a2731ad978c188bfea87aa86161bde2f6",
+        "match": "git_blob_with_LF_to_CRLF_checkout"
+      },
+      "AFrame/engine/frame_topology.py": {
+        "artifact_source_sha256": "711625511ff543363bf5738b9b924ee9fd2104c5d870bffc66097962c69f969c",
+        "match": "git_blob_with_LF_to_CRLF_checkout"
+      },
+      "AFrame/engine/test_frame_calc.py": {
+        "artifact_source_sha256": "5b8f2850515ea3c7528480f579a5495cbbd9432eb8e2075c99ade0a9726a185c",
+        "match": "git_blob_with_LF_to_CRLF_checkout"
+      },
+      "AFrame/engine/test_frame_connections.py": {
+        "artifact_source_sha256": "7796a9ee818f2f0a692d685555972ee8fdc34cefa73b3a5d9709ddf228404790",
+        "match": "git_blob_with_LF_to_CRLF_checkout"
+      },
+      "AFrame/engine/test_frame_engine.py": {
+        "artifact_source_sha256": "a137c20f943630a59f61aa4e6a7fa5288a58fc4c4f863d60c0e7dc9197859bfa",
+        "match": "git_blob_with_LF_to_CRLF_checkout"
+      },
+      "AFrame/engine/test_frame_plan.py": {
+        "artifact_source_sha256": "91fd40dff46ab004b00d6fdcd53aaf2f1358951ac1e05c71fafb45a70085ed85",
+        "match": "git_blob_with_LF_to_CRLF_checkout"
+      },
+      "AFrame/engine/test_frame_rules.py": {
+        "artifact_source_sha256": "df7b291c70df8ab489b74e6b5b8bc2e3da9963e44f718bd0e0b5556ae261b616",
+        "match": "git_blob_with_LF_to_CRLF_checkout"
+      },
+      "AFrame/engine/test_frame_solution_selection.py": {
+        "artifact_source_sha256": "7f53b246ff33174a7759d93bc9eca9525627f73faf70e179a8fad06ff4cb4abb",
+        "match": "git_blob_with_LF_to_CRLF_checkout"
+      },
+      "AFrame/engine/test_frame_topology.py": {
+        "artifact_source_sha256": "a3283a3509f6a5e6cb62fa3eb47bb63de7375592ad2955516e67e0f6b6d458f6",
+        "match": "git_blob_with_LF_to_CRLF_checkout"
+      },
+      "AFrame/engine/test_frame_topology_index.py": {
+        "artifact_source_sha256": "43898e957f3843c21d8e9239fd5baa29b8537af8e3fd15e8cb02ee0351da6c32",
+        "match": "git_blob_with_LF_to_CRLF_checkout"
+      }
+    },
+    "fresh_process_diagnostic": {
+      "comparisons": 200,
+      "legacy_string_mismatches": 20,
+      "first_mismatch": {
+        "iteration": 0,
+        "semantic_equal": true,
+        "first_property_order": [
+          "schema",
+          "catalog_id",
+          "catalog_revision",
+          "solution_id",
+          "source_id",
+          "source_sha256",
+          "node",
+          "pdf_page",
+          "sheet",
+          "bracket",
+          "family_id",
+          "execution",
+          "nominal_width_mm",
+          "L_mm",
+          "extender",
+          "family_id",
+          "execution",
+          "nominal_width_mm",
+          "L_mm",
+          "thickness_mm",
+          "profile",
+          "family_id",
+          "execution",
+          "a_mm",
+          "b_mm",
+          "thickness_mm",
+          "b_basis",
+          "thickness_basis",
+          "geometry",
+          "cladding_front_offset_mm",
+          "cladding_offset_basis",
+          "insulation_layers_mm"
+        ],
+        "second_property_order": [
+          "geometry",
+          "cladding_front_offset_mm",
+          "cladding_offset_basis",
+          "insulation_layers_mm",
+          "schema",
+          "catalog_id",
+          "catalog_revision",
+          "solution_id",
+          "source_id",
+          "source_sha256",
+          "node",
+          "pdf_page",
+          "sheet",
+          "bracket",
+          "family_id",
+          "execution",
+          "nominal_width_mm",
+          "L_mm",
+          "extender",
+          "family_id",
+          "execution",
+          "nominal_width_mm",
+          "L_mm",
+          "thickness_mm",
+          "profile",
+          "family_id",
+          "execution",
+          "a_mm",
+          "b_mm",
+          "thickness_mm",
+          "b_basis",
+          "thickness_basis"
+        ],
+        "first_values": {
+          "schema": "aframe_solution_selection/1",
+          "catalog_id": "vector1_2015_type1_historical",
+          "catalog_revision": "6bb12795979248fd51f0d9384c8bb0f91b7c45165734ef2ce7d04fe2b6877c24",
+          "solution_id": "vector1_2015_type1_4_2_1",
+          "source_id": "vector1_2015",
+          "source_sha256": "7386f4152de455a5e2622704d51a98d8f05afd20050807f634eea4572de37142",
+          "node": {
+            "pdf_page": 20,
+            "sheet": "4.2.1"
+          },
+          "bracket": {
+            "family_id": "kr2",
+            "execution": null,
+            "nominal_width_mm": 0,
+            "L_mm": 0
+          },
+          "extender": {
+            "family_id": "uk",
+            "execution": null,
+            "nominal_width_mm": 0,
+            "L_mm": 0,
+            "thickness_mm": 0
+          },
+          "profile": {
+            "family_id": "gp",
+            "execution": null,
+            "a_mm": 0,
+            "b_mm": null,
+            "thickness_mm": null,
+            "b_basis": "project_declared",
+            "thickness_basis": "project_declared"
+          },
+          "geometry": {
+            "cladding_front_offset_mm": null,
+            "cladding_offset_basis": "wall_structural_face_to_cladding_exterior",
+            "insulation_layers_mm": []
+          }
+        },
+        "second_values": {
+          "schema": "aframe_solution_selection/1",
+          "catalog_id": "vector1_2015_type1_historical",
+          "catalog_revision": "6bb12795979248fd51f0d9384c8bb0f91b7c45165734ef2ce7d04fe2b6877c24",
+          "solution_id": "vector1_2015_type1_4_2_1",
+          "source_id": "vector1_2015",
+          "source_sha256": "7386f4152de455a5e2622704d51a98d8f05afd20050807f634eea4572de37142",
+          "node": {
+            "pdf_page": 20,
+            "sheet": "4.2.1"
+          },
+          "bracket": {
+            "family_id": "kr2",
+            "execution": null,
+            "nominal_width_mm": 0,
+            "L_mm": 0
+          },
+          "extender": {
+            "family_id": "uk",
+            "execution": null,
+            "nominal_width_mm": 0,
+            "L_mm": 0,
+            "thickness_mm": 0
+          },
+          "profile": {
+            "family_id": "gp",
+            "execution": null,
+            "a_mm": 0,
+            "b_mm": null,
+            "thickness_mm": null,
+            "b_basis": "project_declared",
+            "thickness_basis": "project_declared"
+          },
+          "geometry": {
+            "cladding_front_offset_mm": null,
+            "cladding_offset_basis": "wall_structural_face_to_cladding_exterior",
+            "insulation_layers_mm": []
+          }
+        }
+      },
+      "interpretation": "Observational only; no mismatch does not establish serializer-order stability on another runtime."
+    },
+    "contract_loop_diagnostic": {
+      "comparisons": 1000,
+      "legacy_string_mismatches": 0,
+      "first_mismatch": null,
+      "interpretation": "Observational only; no mismatch does not establish serializer-order stability on another runtime."
+    },
+    "previously_failing_cases": [
+      {
+        "name": "selection-context operation scaling 1000",
+        "status": "PASS"
+      },
+      {
+        "name": "same-root alias canonical comparisons scale linearly 100",
+        "status": "PASS"
+      }
+    ],
+    "observation": "First differing JSON starts with schema then ends with geometry; second starts with geometry. Structured values are equal. Direct field equality returns true. This reproduces the invalid inference from string inequality to changed selection.",
+    "diagnostic_scope": "Fresh-process observation uses incomplete CreateDefault DTO only to inspect serialization order; it is not an approved or valid engineering selection. The 1000-comparison loop uses validated selections and had 0 observed old-string mismatches.",
+    "live_autocad_checked": false
   }
 }

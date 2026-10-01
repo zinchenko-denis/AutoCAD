@@ -1,5 +1,5 @@
 {
-  "status": "SOURCE_PUBLISHED_WINDOWS_CI_NOT_STARTED",
+  "status": "SOURCE_PUBLISHED_WINDOWS_UI_FAILURE_FIX_PENDING",
   "repository": "zinchenko-denis/AutoCAD",
   "branch": "feat/auto-reactor",
   "base_commit": "375f082887a052bcba3d0379bd4946ef39b25604",
@@ -8,18 +8,19 @@
   "remote_verified_by": "API ref plus git fetch and exact staged tree equality",
   "observed_at_utc": "2026-10-01T08:20:42.344871+00:00",
   "github_actions": {
-    "head_sha": "b1b4230a4cfb5f53bc6e31f63254cc9dc80789f6",
-    "workflow_runs_total_count": 0,
-    "check_runs_total_count": 0,
-    "check_suites_total_count": 0,
-    "conclusion": null,
-    "status": "NOT_STARTED",
-    "cause": "not established; this is not evidence of an authorization failure",
-    "available_connector_gap": "workflow_dispatch is not exposed; rerunning an old run would test the old SHA",
-    "next_action": "Run check on feat/auto-reactor via authorized UI or exposed workflow_dispatch, then inspect all old10+new11 WinForms PNGs; do not mark 2B2 fully verified before this"
+    "head_sha": "75eb369ac8231a1cf6311238ea12785a82abba43",
+    "run_id": 36841004585,
+    "run_number": 207,
+    "event": "push",
+    "status": "completed",
+    "conclusion": "failure",
+    "reason": "zone_small native/cached client size mismatch; 1730 native UI checks, one failure",
+    "equality_regression": "70 PASS; prior JSON order defect reproduced independently on Windows",
+    "next_action": "publish minimum-client-size fix after local gates, require green Windows CI and all21 PNG review before node geometry"
   },
   "main_commit_unchanged": "e2a4e4df69a1936664c76c44cacff311ad44b07d",
   "release_published": false,
   "live_autocad_checked": false,
-  "installer": "build-104 still contains stage2A only"
+  "installer": "build-104 still contains stage2A only",
+  "equality_fix_commit": "75eb369ac8231a1cf6311238ea12785a82abba43"
 }

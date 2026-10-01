@@ -1,0 +1,123 @@
+{
+  "status": "FAIL",
+  "checks": 1730,
+  "failures": 1,
+  "reasons": [
+    "zone_small: native/cached client size mismatch"
+  ],
+  "images": [
+    "project_filled.png",
+    "project_review.png",
+    "zone_overrides.png",
+    "zone_review.png",
+    "zone_detach_review.png",
+    "zone_small.png",
+    "zone_large_font.png",
+    "zone_large_font_review.png",
+    "bound_group_origins.png",
+    "bound_group_large_font.png",
+    "bound_atframe.png"
+  ],
+  "layouts": [
+    {
+      "scenario": "project_filled",
+      "window": "{X=10,Y=10,Width=916,Height=689}",
+      "native_client": "{X=18,Y=41,Width=900,Height=650}",
+      "cached_client": "{X=0,Y=0,Width=900,Height=650}",
+      "screen": "{X=0,Y=0,Width=1024,Height=728}",
+      "font_points": 9,
+      "minimum_size": "{Width=760, Height=530}"
+    },
+    {
+      "scenario": "project_review",
+      "window": "{X=10,Y=10,Width=916,Height=689}",
+      "native_client": "{X=18,Y=41,Width=900,Height=650}",
+      "cached_client": "{X=0,Y=0,Width=900,Height=650}",
+      "screen": "{X=0,Y=0,Width=1024,Height=728}",
+      "font_points": 9,
+      "minimum_size": "{Width=760, Height=530}"
+    },
+    {
+      "scenario": "zone_overrides",
+      "window": "{X=10,Y=10,Width=916,Height=689}",
+      "native_client": "{X=18,Y=41,Width=900,Height=650}",
+      "cached_client": "{X=0,Y=0,Width=900,Height=650}",
+      "screen": "{X=0,Y=0,Width=1024,Height=728}",
+      "font_points": 9,
+      "minimum_size": "{Width=760, Height=530}"
+    },
+    {
+      "scenario": "zone_review",
+      "window": "{X=10,Y=10,Width=916,Height=689}",
+      "native_client": "{X=18,Y=41,Width=900,Height=650}",
+      "cached_client": "{X=0,Y=0,Width=900,Height=650}",
+      "screen": "{X=0,Y=0,Width=1024,Height=728}",
+      "font_points": 9,
+      "minimum_size": "{Width=760, Height=530}"
+    },
+    {
+      "scenario": "zone_detach_review",
+      "window": "{X=10,Y=10,Width=916,Height=689}",
+      "native_client": "{X=18,Y=41,Width=900,Height=650}",
+      "cached_client": "{X=0,Y=0,Width=900,Height=650}",
+      "screen": "{X=0,Y=0,Width=1024,Height=728}",
+      "font_points": 9,
+      "minimum_size": "{Width=760, Height=530}"
+    },
+    {
+      "scenario": "zone_small",
+      "window": "{X=10,Y=10,Width=760,Height=530}",
+      "native_client": "{X=18,Y=41,Width=744,Height=491}",
+      "cached_client": "{X=0,Y=0,Width=620,Height=420}",
+      "screen": "{X=0,Y=0,Width=1024,Height=728}",
+      "font_points": 9,
+      "minimum_size": "{Width=760, Height=530}"
+    },
+    {
+      "scenario": "zone_large_font",
+      "window": "{X=0,Y=0,Width=1024,Height=728}",
+      "native_client": "{X=8,Y=31,Width=1008,Height=689}",
+      "cached_client": "{X=0,Y=0,Width=1008,Height=689}",
+      "screen": "{X=0,Y=0,Width=1024,Height=728}",
+      "font_points": 12,
+      "minimum_size": "{Width=973, Height=726}"
+    },
+    {
+      "scenario": "zone_large_font_review",
+      "window": "{X=0,Y=0,Width=1024,Height=728}",
+      "native_client": "{X=8,Y=31,Width=1008,Height=689}",
+      "cached_client": "{X=0,Y=0,Width=1008,Height=689}",
+      "screen": "{X=0,Y=0,Width=1024,Height=728}",
+      "font_points": 12,
+      "minimum_size": "{Width=973, Height=726}"
+    },
+    {
+      "scenario": "bound_group_origins",
+      "window": "{X=10,Y=10,Width=916,Height=689}",
+      "native_client": "{X=18,Y=41,Width=900,Height=650}",
+      "cached_client": "{X=0,Y=0,Width=900,Height=650}",
+      "screen": "{X=0,Y=0,Width=1024,Height=728}",
+      "font_points": 9,
+      "minimum_size": "{Width=760, Height=530}"
+    },
+    {
+      "scenario": "bound_group_large_font",
+      "window": "{X=0,Y=0,Width=1024,Height=728}",
+      "native_client": "{X=8,Y=31,Width=1008,Height=689}",
+      "cached_client": "{X=0,Y=0,Width=1008,Height=689}",
+      "screen": "{X=0,Y=0,Width=1024,Height=728}",
+      "font_points": 12,
+      "minimum_size": "{Width=973, Height=726}"
+    },
+    {
+      "scenario": "bound_atframe",
+      "window": "{X=0,Y=39,Width=916,Height=689}",
+      "native_client": "{X=8,Y=70,Width=900,Height=650}",
+      "cached_client": "{X=0,Y=0,Width=900,Height=650}",
+      "screen": "{X=0,Y=0,Width=1024,Height=728}",
+      "font_points": 9,
+      "minimum_size": "{Width=760, Height=530}"
+    }
+  ],
+  "live_autocad_checked": false
+}

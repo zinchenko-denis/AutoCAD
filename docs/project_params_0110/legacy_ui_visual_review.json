@@ -1,0 +1,175 @@
+{
+  "schema": "legacy_solution_ui_visual_review/1",
+  "date": "2026-10-01",
+  "status": "PASS",
+  "blocking_findings": [],
+  "product_commit": "75eb369ac8231a1cf6311238ea12785a82abba43",
+  "run_id": 36841004585,
+  "run_number": 207,
+  "run_url": "https://github.com/zinchenko-denis/AutoCAD/actions/runs/36841004585",
+  "artifact": {
+    "id": 11151523484,
+    "name": "ci207-solution-ui",
+    "zip_sha256": "3f54051a101bee5d8da5374d96949baa0adb2381e8aecc66f0ca6e60b49613e3",
+    "manifest_sha256": "57fb1c01f5e73b493c61565ddbc1cf7c48701a6412f7d6a9bcf5a275b68c6624"
+  },
+  "native_ui_checks": {
+    "status": "PASS",
+    "checks": 919,
+    "failures": 0,
+    "runtime": "Microsoft Windows NT 6.2.9200.0"
+  },
+  "source_verification": {
+    "tools/solution_catalog_0110/SolutionUiProbe.cs": {
+      "artifact_source_sha256": "3b8a205c4b6fe20b6b71d72129779c6bc5a0cf5b3f83edbe807a66db1a3aea71",
+      "match": "git_blob_with_LF_to_CRLF_checkout"
+    },
+    "AFrame/src/AFramePlugin/FrameForm.cs": {
+      "artifact_source_sha256": "6c17649902a4af49ead0fb412d878e726b856fd977503ee47afa4564a21b54db",
+      "match": "git_blob_with_LF_to_CRLF_checkout"
+    },
+    "AFrame/src/AFramePlugin/FrameSettings.cs": {
+      "artifact_source_sha256": "14fa9ad2c20caa2e4bd9931c25f24b7b6affd5ef30943410d551e556d28082e2",
+      "match": "git_blob_with_LF_to_CRLF_checkout"
+    },
+    "AFrame/src/AFramePlugin/FrameSolutionSelection.cs": {
+      "artifact_source_sha256": "a79f45984e52bcf023d3ac35a3cabdfc84fff77c07ac662e411cbaf8a8b032f7",
+      "match": "git_blob_with_LF_to_CRLF_checkout"
+    },
+    "AFrame/src/AFramePlugin/FrameSolutionForm.cs": {
+      "artifact_source_sha256": "924a1352e059e7db78bf2f2723de09791063e31ad6b5dbe4556eeb163e1abe9e",
+      "match": "git_blob_with_LF_to_CRLF_checkout"
+    },
+    "AFrame/src/AFramePlugin/FrameProjectParameters.cs": {
+      "artifact_source_sha256": "916fbdc792a35ab023b7d586fd929da64675a79e3e2aa4202a206bcfeba77482",
+      "match": "git_blob_with_LF_to_CRLF_checkout"
+    },
+    "AFrame/src/AFramePlugin/FrameProjectForms.cs": {
+      "artifact_source_sha256": "a57f2ea8b38c548f2463b5b6dc320d84593dc9a277a9a86646e07b09d72314ed",
+      "match": "git_blob_with_LF_to_CRLF_checkout"
+    },
+    "tools/solution_catalog_0110/test_solution_ui.py": {
+      "artifact_source_sha256": "40613dc2b78aec4649218e31689ee3feba1569f5ffec76322ea99ec7219672d1",
+      "match": "git_blob_with_LF_to_CRLF_checkout"
+    }
+  },
+  "images": [
+    {
+      "file": "frame_main_before.png",
+      "status": "PASS",
+      "sha256": "4ac9745e227e590a09a0360d73cb4f0ed774345b1f64902c677070acd299f1bf",
+      "pixels": [
+        876,
+        753
+      ],
+      "individually_viewed_original_png": true,
+      "observation": "Все группы и нижние кнопки доступны; запрет неподтверждённого ГП-60-40 виден справа."
+    },
+    {
+      "file": "frame_main_selected.png",
+      "status": "PASS",
+      "sha256": "3f4e52d9fd625d309adca666ef0ca24a18064239c4430120cd6a4bae1b917526",
+      "pixels": [
+        876,
+        753
+      ],
+      "individually_viewed_original_png": true,
+      "observation": "Профиль обозначен как заданный в каталоге; запрет расчёта явного исторического выбора виден; кнопки не перекрыты."
+    },
+    {
+      "file": "solution_blank.png",
+      "status": "PASS",
+      "sha256": "70b06a76ef4bc47c6e738e5075727ad65d745d7423a5ca282170e23d82f923b7",
+      "pixels": [
+        916,
+        689
+      ],
+      "individually_viewed_original_png": true,
+      "observation": "Решение и исполнения не назначены; пустые проектные поля и сообщение об отсутствии выбора видны; Apply/Cancel/Clear доступны."
+    },
+    {
+      "file": "solution_filled.png",
+      "status": "PASS",
+      "sha256": "00d58cb783b66938e053ffa2aaa85f6e4ce0d0c5c626c52f9c325c0d11399f05",
+      "pixels": [
+        916,
+        689
+      ],
+      "individually_viewed_original_png": true,
+      "observation": "Введённые размеры и разные исполнения сохранены; обязательные b/c и пояснение о непроверенном сечении видны; кнопки доступны."
+    },
+    {
+      "file": "solution_source.png",
+      "status": "PASS",
+      "sha256": "5397b1c4900cfaf522c8de9ae6329b5a91b6c243e73145c7dedb01fcbe29abb7",
+      "pixels": [
+        916,
+        689
+      ],
+      "individually_viewed_original_png": true,
+      "observation": "При прокрутке полностью виден источник, SHA-256, редакция, точный узел и ограничения; минимум 30 мм не перенесён на УК."
+    },
+    {
+      "file": "solution_readonly.png",
+      "status": "PASS",
+      "sha256": "a41cba327b7a433b81f7c6bdc19b42c532f3c2f5fbca9938562682db8fb0fbc6",
+      "pixels": [
+        916,
+        689
+      ],
+      "individually_viewed_original_png": true,
+      "observation": "Режим только кляммеры явно обозначен; выборы и Apply/Clear выключены, кнопка Закрыть доступна."
+    },
+    {
+      "file": "solution_mismatch.png",
+      "status": "PASS",
+      "sha256": "3e3339c533d6555e7c82484d2c60ae27b87d19d2fb533c2bf1546d6ab552c062",
+      "pixels": [
+        916,
+        689
+      ],
+      "individually_viewed_original_png": true,
+      "observation": "Старая редакция и требование повторного выбора показаны красным текстом; недействительная идентичность не представлена подтверждённой."
+    },
+    {
+      "file": "solution_small.png",
+      "status": "PASS",
+      "sha256": "2ee75f717faaee508aae5fbdcd04717f87c02a7883bd3439f778be04081023a3",
+      "pixels": [
+        760,
+        530
+      ],
+      "individually_viewed_original_png": true,
+      "observation": "Минимальное окно сохраняет видимые основные поля и нижние действия; остальное находится в вертикально прокручиваемой области."
+    },
+    {
+      "file": "solution_small_source.png",
+      "status": "PASS",
+      "sha256": "24a34e4bcc0e2ba381ded8f6f314c3d4f21ac61799b1e40842684e371096150a",
+      "pixels": [
+        760,
+        530
+      ],
+      "individually_viewed_original_png": true,
+      "observation": "Источник доступен через прокрутку; его длинный текст имеет отдельную полосу прокрутки; Apply/Cancel/Clear остаются видимыми."
+    },
+    {
+      "file": "solution_large_font.png",
+      "status": "PASS",
+      "sha256": "cb394ca856a01b05d90dfa74253955302ae9d32c6475fecf69f1b4b0a7a6c6d7",
+      "pixels": [
+        1024,
+        728
+      ],
+      "individually_viewed_original_png": true,
+      "observation": "При 12 pt окно укладывается в рабочую область 1024×728; нижние действия полностью видимы; длинные подписи перенесены, содержимое прокручивается."
+    }
+  ],
+  "layout_observations": [
+    "Закрытые ComboBox сокращают длинные названия исполнений до ширины поля; полные исполнения видны в источнике. Это не утрата значения.",
+    "При малом окне и увеличенном шрифте часть содержимого ожидаемо вне текущего viewport, с доступной вертикальной прокруткой; нижняя панель действий не уходит за границы окна."
+  ],
+  "scope": "Независимый просмотр всех 10 оригинальных PNG текущего Windows artifact с проверкой manifest, исходников и архивных байтов; не повторное использование старых снимков.",
+  "live_autocad_checked": false,
+  "new_project_zone_ui_review": "Отдельный artifact и отдельная ревизия; этот документ относится к прежним окнам каталога/ATFRAME."
+}

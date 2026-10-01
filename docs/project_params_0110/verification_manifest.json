@@ -1,5 +1,5 @@
 {
-  "status": "LOCAL_PASS_WINDOWS_CI_NOT_STARTED",
+  "status": "LOCAL_PASS_WINDOWS_UI_FAILURE_FIX_PENDING",
   "date_utc": "2026-10-01",
   "branch": "feat/auto-reactor",
   "base_commit": "375f082887a052bcba3d0379bd4946ef39b25604",
@@ -44,10 +44,16 @@
       "manifest": "manual_examples.json"
     },
     "windows_ui": {
-      "status": "NOT_STARTED",
-      "required": "Actual Windows WinForms plus visual review of old10 and new11 PNGs",
-      "head_sha": "b1b4230a4cfb5f53bc6e31f63254cc9dc80789f6",
-      "reason": "No run/check suite observed after API branch publication; workflow_dispatch unavailable through connected tools"
+      "status": "FAIL",
+      "head_sha": "75eb369ac8231a1cf6311238ea12785a82abba43",
+      "run_id": 36841004585,
+      "legacy_checks": 919,
+      "legacy_png_reviewed": 10,
+      "project_checks": 1730,
+      "project_failures": 1,
+      "project_png_reviewed": 11,
+      "reason": "zone_small native/cached client size mismatch",
+      "evidence": "ui_visual_review_ci207.json"
     }
   },
   "performance": {

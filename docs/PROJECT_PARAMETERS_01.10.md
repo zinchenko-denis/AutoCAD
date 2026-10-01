@@ -2,7 +2,7 @@
 
 Дата: 01.10.2026. Заказчик — Денис Зинченко; инженерная проверка — Герман.
 
-**Статус: 2Б2 реализован и опубликован в исходниках `b1b4230`; локальные проверки PASS, Windows CI ещё не стартовал.** Протокол — [verification_manifest.json](project_params_0110/verification_manifest.json), состояние GitHub — [github_publication.json](project_params_0110/github_publication.json). Проверку окон и живую приёмку AutoCAD не считать выполненными. В build-104 этот этап не входит.
+**Статус: 2Б2 реализован; Windows №207 закрыл сравнение и контракты, но выявил один дефект минимального размера окна. Исправление требует повторного CI.** Протокол — [verification_manifest.json](project_params_0110/verification_manifest.json), история — [GITHUB_FAILURES_01.10.md](GITHUB_FAILURES_01.10.md). Общую проверку окон и живой AutoCAD пока не считать завершёнными. В build-104 этот этап не входит.
 
 ## Один сквозной пилот
 
