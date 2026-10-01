@@ -457,6 +457,8 @@ namespace AFramePlugin
                             "\nТочка на оси стойки (Enter — дальше): ")
                         { AllowNone = true };
                         var pjv = ed.GetPoint(pjo);
+                        if (pjv.Status == PromptStatus.Cancel)
+                        { ed.WriteMessage("\nATFRAME отменено. Прежняя подсистема сохранена."); return; }
                         if (pjv.Status != PromptStatus.OK) break;
                         joints.Add(pjv.Value.X);
                         ed.WriteMessage("\n  ось X = " +

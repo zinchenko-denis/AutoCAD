@@ -1,0 +1,274 @@
+{
+  "schema": "limited_pilot_independent_oracle/1",
+  "date": "2026-10-01",
+  "source_sha": "b64eb0aedccb41ba5cb1e253c9eddf69142284b3",
+  "status": {
+    "independent_arithmetic": "PASS",
+    "exploratory_engine_coordinate_comparison": "PASS",
+    "independent_visual_geometry_review": "PASS",
+    "stable_chain": "AWAIT_STABLE_REVIEW",
+    "live_autocad": "NOT_RUN",
+    "mounting_admission": "BLOCKED",
+    "calculation_3A": "BLOCKED"
+  },
+  "scope": "New synthetic two-zone input from existing tile module and bridge tests; quantities and local-clearance arithmetic only; no physical product assignment.",
+  "geometry_origin": {
+    "exact_old_fixture": false,
+    "module_sources": [
+      "AClad/engine/test_cladding_plan.py:C1-C3",
+      "AClad/engine/test_tile_pattern.py:T27"
+    ],
+    "new_albums": false
+  },
+  "zones": [
+    {
+      "source_contour_id": "1",
+      "position": "left",
+      "bbox_mm": [
+        0,
+        0,
+        1210,
+        1820
+      ],
+      "recon_zone_id": "П-2"
+    },
+    {
+      "source_contour_id": "2",
+      "position": "right",
+      "bbox_mm": [
+        2410,
+        0,
+        3620,
+        1820
+      ],
+      "recon_zone_id": "П-1"
+    }
+  ],
+  "zone_matching": "source outer_contour_id/outer_id plus vertices/bbox; never array index; live identifiers must be recorded",
+  "inputs": {
+    "tile_mm": [
+      600,
+      600
+    ],
+    "joint_mm": [
+      10,
+      10
+    ],
+    "bond": "none",
+    "anchor": "L/B bbox",
+    "gap_around": false,
+    "merge_touching": false,
+    "frame": "vertical/porcelain/frame/manual",
+    "bracket_step_mm": 800,
+    "bracket_start_offset_mm": 300,
+    "floor_marks": [],
+    "explicit_rail_std": false
+  },
+  "expected": {
+    "zone_count": 2,
+    "zone_area_each_m2": 2.2022,
+    "zone_area_total_m2": 4.4044,
+    "zone_perimeter_each_m": 6.06,
+    "openings": 0,
+    "tile_whole_each": 6,
+    "tile_whole_total": 12,
+    "tile_cut_total": 0,
+    "tile_area_each_m2": 2.16,
+    "tile_area_total_m2": 4.32,
+    "joint_area_total_m2": 0.0844,
+    "tile_waste_area_m2": 0,
+    "tile_blanks_without_reserve": 12,
+    "tile_origins_local_mm": [
+      [
+        0,
+        0
+      ],
+      [
+        0,
+        610
+      ],
+      [
+        0,
+        1220
+      ],
+      [
+        610,
+        0
+      ],
+      [
+        610,
+        610
+      ],
+      [
+        610,
+        1220
+      ]
+    ],
+    "vertical_joint_axes_mm": [
+      605,
+      3015
+    ],
+    "horizontal_joint_axes_mm": [
+      605,
+      1215
+    ],
+    "rails": [
+      {
+        "x_mm": 605,
+        "y0_mm": 0,
+        "y1_mm": 1820
+      },
+      {
+        "x_mm": 3015,
+        "y0_mm": 0,
+        "y1_mm": 1820
+      }
+    ],
+    "rail_count": 2,
+    "rail_length_total_m": 3.64,
+    "brackets": [
+      {
+        "x_mm": 605,
+        "y_mm": 300
+      },
+      {
+        "x_mm": 605,
+        "y_mm": 1100
+      },
+      {
+        "x_mm": 605,
+        "y_mm": 1520
+      },
+      {
+        "x_mm": 3015,
+        "y_mm": 300
+      },
+      {
+        "x_mm": 3015,
+        "y_mm": 1100
+      },
+      {
+        "x_mm": 3015,
+        "y_mm": 1520
+      }
+    ],
+    "bracket_count": 6,
+    "candidate_pairs": 6,
+    "intervals_per_rail_mm": [
+      800,
+      420
+    ],
+    "free_ends_per_rail_mm": [
+      300,
+      300
+    ],
+    "geometric_splices": 0,
+    "horizontal_rails": 0,
+    "clamps": 0,
+    "fittings": 0
+  },
+  "formulas": {
+    "wall_width": "2*600+10=1210",
+    "wall_height": "3*600+2*10=1820",
+    "zone_area_m2": "1210*1820/1e6=2.2022",
+    "tiles_per_zone": "2*3=6",
+    "joint_area_per_zone_m2": "(10*1820+2*10*1210-2*10*10)/1e6=.0422",
+    "rail_length_total_m": "2*1820/1000=3.64",
+    "bracket_y_mm": "300;300+800=1100;1820-300=1520",
+    "clearance_mm": "170-(100+50)=20",
+    "rejected_clearance_mm": "169.999-150=19.999<20"
+  },
+  "node_expectations": {
+    "basis": "Existing guide chapter13 and inherited PDF20 node4.2.1 review; no new full PDF review",
+    "insulation_layers_mm": [
+      100,
+      50
+    ],
+    "explicit_surface": "outer insulation boundary",
+    "surface_x_mm": 150,
+    "gp_near_x_mm": 170,
+    "clearance_mm": 20,
+    "front_initial_mm": 230,
+    "front_project_changed_mm": 240,
+    "front_right_override_mm": 260,
+    "quantities_and_clearance_unchanged": true,
+    "recon_engine_node_stage_executed": false,
+    "recon_selection_geometry": {
+      "cladding_front_offset_mm": null,
+      "insulation_layers_mm": []
+    }
+  },
+  "engineering_limits": {
+    "physical_assignment": "not_asserted",
+    "product_id": null,
+    "physical_extender_representation": "absent; not a zero-installed-extenders engineering claim",
+    "typed_interfaces": "not_confirmed",
+    "fixed_sliding": "not_modeled",
+    "gravity": "not_verified",
+    "splice_continuity": "not_modeled",
+    "nominal_uk_heel_mm": "2+200+100-h=302-h; h not confirmed"
+  },
+  "files_reviewed": [
+    {
+      "path": "AClad/engine/test_cladding_plan.py",
+      "sha256": "4461dea9f1f00e926d52f3d0b64562a281f036b8baed4dba8656c3d89314f97a"
+    },
+    {
+      "path": "AClad/engine/test_tile_pattern.py",
+      "sha256": "d489eae004c47dde8fc3f32108e5721c6e050387dd8e8539b3e01f37f9e640c3"
+    },
+    {
+      "path": "AFrame/engine/frame_plan.py",
+      "sha256": "5c4b4bbbc8258d62e965c24604906cd819b6a06a04643425ed1770b07c5d7105"
+    },
+    {
+      "path": "AFrame/engine/systems.json",
+      "sha256": "e9ee0a4cf0c535473dd9931f9b2a3d86dd1d932fe18f84682ef3fd221fbc03c3"
+    },
+    {
+      "path": "AFrame/src/AFramePlugin/FrameSettings.cs",
+      "sha256": "a44273b52d3ee92407d5dfc98315d6750d3aa57b7259cc2b98e4432757198cda"
+    },
+    {
+      "path": "docs/facades_beginner_3009/manual_content.md",
+      "sha256": "350868b2e597b78de4dc5070073eeb36632285972f0db002ce51d66c3cdffe50"
+    },
+    {
+      "path": "docs/PILOT_COMPLETION_PLAN_01.10.md",
+      "sha256": "efaea9d45c4ec3c4ea79ee5dadb5cb43ff67f4f073d731f4fa5e9709db561411"
+    }
+  ],
+  "exploratory_recon_files": [
+    {
+      "path": "/workspace/scratch/58a6cc5ac740/p1p5_recon/attile_request.json",
+      "sha256": "09c02bcb347b82da3b10dc305c4f668b7f497fb20a50334f5217e4bee3b95395"
+    },
+    {
+      "path": "/workspace/scratch/58a6cc5ac740/p1p5_recon/attile_response.json",
+      "sha256": "9f2e68a4c6730004784c452de3df40d8b9aa6acad151378e0092dc7ac7ff377d"
+    },
+    {
+      "path": "/workspace/scratch/58a6cc5ac740/p1p5_recon/frame_request.json",
+      "sha256": "4b28fe566bc58757023d36021daf06670f25e6a5ddab54aa8b70e84f75dd6fde"
+    },
+    {
+      "path": "/workspace/scratch/58a6cc5ac740/p1p5_recon/frame_response.json",
+      "sha256": "589418f6abda03c078bcf1c6bdc04882a222d3fa45ae9a084edd89a84805f4d1"
+    },
+    {
+      "path": "/workspace/scratch/58a6cc5ac740/p1p5_recon/zone_request.json",
+      "sha256": "1a92d468eaa72b644805e848c9944cd93e7037306699ba402dcc3b8db84ed359"
+    },
+    {
+      "path": "/workspace/scratch/58a6cc5ac740/p1p5_recon/zone_response.json",
+      "sha256": "f019d8ef4682d1e58f1efaf6126bdfc376c75adabef8872759ff939fea877a2a"
+    }
+  ],
+  "inherited_private_source": {
+    "public_original_included": false,
+    "id": "vector1_2015",
+    "sha256": "7386f4152de455a5e2622704d51a98d8f05afd20050807f634eea4572de37142",
+    "locator": "PDF20, node4.2.1",
+    "review_scope": "Inherited confirmed local20 rule; no new full source review"
+  }
+}

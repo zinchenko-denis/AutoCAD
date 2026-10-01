@@ -1,0 +1,135 @@
+{
+  "schema": "frame_axis_cancel_regression/1",
+  "verification": {
+    "status": "PASS",
+    "expected_behavior": "fixed",
+    "checks": 33,
+    "assertions": [
+      "unchanged axis block and actual settings compile",
+      "actual no-layout settings validate and roundtrip",
+      "normal manual800 point axes are used",
+      "all prompt scenarios execute",
+      "axis continuation matches fixed: point_cancel",
+      "exact requested prompt sequence consumed: point_cancel",
+      "Enter is explicitly enabled: point_cancel",
+      "accepted axis values retained only as local input: point_cancel",
+      "harness calls EngineParams only after continuation: point_cancel",
+      "cancellation is explicitly reported: point_cancel",
+      "axis continuation matches fixed: point_none",
+      "exact requested prompt sequence consumed: point_none",
+      "Enter is explicitly enabled: point_none",
+      "accepted axis values retained only as local input: point_none",
+      "harness calls EngineParams only after continuation: point_none",
+      "actual frame-only continuation clears rows before payload: point_none",
+      "actual EngineParams preserves positive manual steps: point_none",
+      "actual engine succeeds without input mutation: point_none",
+      "continued engine creates one rail and four bracket symbols: point_none",
+      "engine does not grant physical or engineering assignment: point_none",
+      "axis continuation matches fixed: initial_cancel",
+      "exact requested prompt sequence consumed: initial_cancel",
+      "Enter is explicitly enabled: initial_cancel",
+      "accepted axis values retained only as local input: initial_cancel",
+      "harness calls EngineParams only after continuation: initial_cancel",
+      "cancellation is explicitly reported: initial_cancel",
+      "axis continuation matches fixed: empty_none",
+      "exact requested prompt sequence consumed: empty_none",
+      "Enter is explicitly enabled: empty_none",
+      "accepted axis values retained only as local input: empty_none",
+      "harness calls EngineParams only after continuation: empty_none",
+      "source unchanged during extraction and execution",
+      "actual RunCore returns from axes before engine and CAD prewrite; source structure checked"
+    ]
+  },
+  "defect_reproduced": false,
+  "engineering_assessment": "BLOCKED",
+  "live_autocad_checked": false,
+  "full_command_execution": "NOT_RUN",
+  "cad_transaction_rollback": "NOT_RUN",
+  "scope": "Exact no-layout axis segment plus actual FrameSettings with prompt doubles; real engine invoked by harness only for continued cases.",
+  "source_control_flow": {
+    "axis_start": 431,
+    "axis_end_exclusive": 498,
+    "frame_rows_clear": 595,
+    "source_capture": 687,
+    "engine_call": 704,
+    "cad_write_lock": 760,
+    "fresh_guard": 764
+  },
+  "command_source": {
+    "path": "/workspace/scratch/ba306982747c/AutoCAD-complex/AFrame/src/AFramePlugin/FrameCommand.cs",
+    "sha256": "45e4643209439ec2eae0abd0367dc2fb84930cb54e9c5298171cafeea93a30d4"
+  },
+  "generated_probe_source": {
+    "path": "build/AxisCancelExtracted.cs",
+    "sha256": "bac65ac2964fb1419d07926f0fb6fe21e6afccc5619df8aa62eaa39aadd5b732"
+  },
+  "actual_segment_sha256": "3c6fec3c1cfaf351b3e9a48db37c87aef18de9bb6f95638b0a4afd3ac1d430c9",
+  "continuation_rows_segment_sha256": "66a6d650786fe21eb2f8ee18b4e129eec6d6f88ad78a13620cad5d4bac0ff875",
+  "source_sha256": {
+    "AFrame/engine/analiz_klu_poligon.py": "903a3080c4b01dea51e936560adba060f12f172fe13887bd2785456881f5fa27",
+    "AFrame/engine/audit_frame.py": "7ce9adac3adddcb7619b88d789b78f4b811f9c890e9fd9b08f884b32ee4e2d48",
+    "AFrame/engine/dsverka_poligon.py": "a971bd36882c6663c0fcbc466de5e288d9aa1f4d1f6d55e5eb462ae5d635a1ec",
+    "AFrame/engine/frame_calc.py": "abe20fd3c0de0937ba0636914f083f7c48a7a65b3b4c85f05673278a95e1da88",
+    "AFrame/engine/frame_catalog.py": "947a0277f3a6202dff365c1de6e86c5832dbc2c97e2a810b99d500a5d6f6b163",
+    "AFrame/engine/frame_connections.py": "d4febc1ce6e147f1cbce29cb64690f2c3b592efe4e40b9c88da5c8a2dcc74985",
+    "AFrame/engine/frame_engine.py": "b4acaaa98f48f91e0019b04231bb2ca361059e8d6a4e587cdbb64eb432790529",
+    "AFrame/engine/frame_plan.py": "5c4b4bbbc8258d62e965c24604906cd819b6a06a04643425ed1770b07c5d7105",
+    "AFrame/engine/frame_rules.py": "511ec4ec48331034257859ccac70ef028a8c4b398acd7d5b238d778e3c63ea6f",
+    "AFrame/engine/frame_solution_catalog.py": "56e674855cc01e19bf2a0723dff1f3454497a99aef56f3de1b5bbf75c0d44764",
+    "AFrame/engine/frame_solution_selection.py": "6490da6ced48715c4dce5ca357e0f54be9c035dd7bb6fc8d86b684f1d15f6aee",
+    "AFrame/engine/frame_spatial.py": "003efc0e73b344d50d4465d2bc1bfc87f8ca149c7d443a1e7d9061e6dbfd6cec",
+    "AFrame/engine/frame_topology.py": "2455ab874309d1382591800acce35dd3bde04ea3be6519f8b1de89dd5514f5d5",
+    "AFrame/engine/systems.json": "e9ee0a4cf0c535473dd9931f9b2a3d86dd1d932fe18f84682ef3fd221fbc03c3",
+    "AFrame/engine/test_frame_calc.py": "f72160fe7a3483c35a6c0d7ef669a612e6e44defb95c33916a850c2a605d5239",
+    "AFrame/engine/test_frame_connections.py": "21f2c64b59b1a1f052eadcf1c69d1aa8f0e0e60ad42182f793ac914a16971353",
+    "AFrame/engine/test_frame_engine.py": "3d32ffb69a6e9bc5d229ed11201e7e09500b5f193859b6a2cbab190c73679270",
+    "AFrame/engine/test_frame_plan.py": "fa35454f0a80362fc17441d078feaaf18bcb271a84e599de82517329005708a6",
+    "AFrame/engine/test_frame_rules.py": "0f629daa13207e436eb5e425e1f4e3d7189d205ffc6956bceca0427eb237b26e",
+    "AFrame/engine/test_frame_solution_selection.py": "79b853ab20b95d491fc3e76f667fc7fb7106afa6ace7b5ae9d1ede191f99aceb",
+    "AFrame/engine/test_frame_topology.py": "88f59edd4e8543ec3c444eb3557dbe7a10b922318362ca82360675da1c11586c",
+    "AFrame/engine/test_frame_topology_index.py": "d8e139847c458cdf87fddf24b7c790e15e479ff4c2bbbd3a4848757e6560a1a7",
+    "AFrame/src/AFramePlugin/FrameProjectParameters.cs": "612c46eabcb1c7c80c86e5a3e0fed2153a809b8f2b1734b1e9b596e2e26ec7f1",
+    "AFrame/src/AFramePlugin/FrameSettings.cs": "a44273b52d3ee92407d5dfc98315d6750d3aa57b7259cc2b98e4432757198cda",
+    "AFrame/src/AFramePlugin/FrameSolutionSelection.cs": "cb25b6e890ce2f1e5ee458f1e378510d21f7205e529ee1894520ed686a3abd66",
+    "tools/limited_pilot_0110/AxisCancelProbe.cs": "0f5371c971452102dbe5a6b1ed72c421519f9fe6a671bcd0bbfe207883e12e97",
+    "tools/limited_pilot_0110/test_axis_cancel.py": "b1ce48f0247d29c3b96c6db0c08ab986330a4ab22c589d8dbea35719dae8b405",
+    "tools/quantities_3009/probe_runtime.py": "2d37fb13990a1b24129dfe79a81ce138875e3c86ef3211d1a3a4f9ec40d150e5",
+    "AFrame/src/AFramePlugin/FrameCommand.cs": "45e4643209439ec2eae0abd0367dc2fb84930cb54e9c5298171cafeea93a30d4"
+  },
+  "artifact_sha256": {
+    "input.json": "45efe6278caee73adbfcad1599bad252c0312dcbb105799fc732224ccab5a710",
+    "native_output.json": "cfed385620d3253798cfac26a0c7b29dd8ab76395b0c771e8d00556d93b3139e",
+    "point_none/request.json": "878aeeffda7033a8dbf93f098217f4d154754b06336a4ec2f5e9f1decaadeec8",
+    "point_none/response.json": "7951c377bfabfa0b9752eeb84c88002b29eaca5266b76a4a2f07e70a68136a02"
+  },
+  "counts": {
+    "point_cancel": {
+      "continued": false,
+      "axis_count": 1,
+      "real_engine_invoked_by_harness": false,
+      "rails": 0,
+      "brackets": 0
+    },
+    "point_none": {
+      "continued": true,
+      "axis_count": 1,
+      "real_engine_invoked_by_harness": true,
+      "rails": 1,
+      "brackets": 4
+    },
+    "initial_cancel": {
+      "continued": false,
+      "axis_count": 0,
+      "real_engine_invoked_by_harness": false,
+      "rails": 0,
+      "brackets": 0
+    },
+    "empty_none": {
+      "continued": false,
+      "axis_count": 0,
+      "real_engine_invoked_by_harness": false,
+      "rails": 0,
+      "brackets": 0
+    }
+  }
+}

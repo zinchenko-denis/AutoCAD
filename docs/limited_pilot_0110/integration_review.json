@@ -1,0 +1,36 @@
+{
+  "status": "PASS",
+  "baseline": "b64eb0aedccb41ba5cb1e253c9eddf69142284b3",
+  "previous_groups": 56,
+  "current_groups": 58,
+  "previous_jobs_unchanged": true,
+  "added_jobs": [
+    [
+      "limited_pilot_acceptance",
+      ".",
+      [
+        "tools/limited_pilot_0110/run_acceptance.py",
+        "--out",
+        "/OUT/limited_pilot_acceptance"
+      ]
+    ],
+    [
+      "frame_axis_cancel",
+      ".",
+      [
+        "tools/limited_pilot_0110/test_axis_cancel.py",
+        "--out",
+        "/OUT/frame_axis_cancel"
+      ]
+    ]
+  ],
+  "prior_workflow_steps_unchanged": true,
+  "artifact": "limited-pilot-acceptance",
+  "step_timeout_minutes": 5,
+  "new_tool_execution": "PASS_IN_MANDATORY_58",
+  "source_sha256": {
+    "tools/atr_review_3009/run_checks.py": "11ef45f0f335c0efaa91d0714aa06d7fb652461e9df0b96028a7669f6913ace8",
+    ".github/workflows/check.yml": "c10c1ba0bd54145bf24d6b44f0a2dce7c81ea35bd30acf418fcaade6eeffb22e"
+  },
+  "local_gate_summary": "local_gate_summary.json"
+}

@@ -266,6 +266,26 @@ jobs:
           path: pilot_completion_contract_results/
           if-no-files-found: warn
 
+      - name: Limited pilot workflow and axis cancellation (explicit CAD doubles)
+        timeout-minutes: 5
+        shell: pwsh
+        env:
+          PYTHONUTF8: "1"
+          PYTHONIOENCODING: "utf-8"
+        run: |
+          python tools/limited_pilot_0110/test_axis_cancel.py --out limited_pilot_results/axis_cancel
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          python tools/limited_pilot_0110/run_acceptance.py --out limited_pilot_results/workflow
+          exit $LASTEXITCODE
+
+      - name: Upload limited pilot workflow evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: limited-pilot-acceptance
+          path: limited_pilot_results/
+          if-no-files-found: warn
+
       - name: Upload historical catalogue UI evidence
         if: always()
         uses: actions/upload-artifact@v4

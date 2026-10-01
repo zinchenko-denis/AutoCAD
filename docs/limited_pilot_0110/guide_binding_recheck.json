@@ -1,0 +1,17 @@
+{
+  "verification": "PASS",
+  "protocol": "docs/limited_pilot_0110/guide_applicability.json",
+  "protocol_sha256": "0200acc9816f0cb318edbc0d414a1b0ec39093bea6d55afddb70d20d46d113fd",
+  "manual_files_verified": 3,
+  "product_inputs_verified": 111,
+  "reviewed_product_changes": [
+    {
+      "path": "AFrame/src/AFramePlugin/FrameCommand.cs",
+      "baseline_sha256": "944d50dc7db753b931437691ca116a5cb6b07f6e84a7507265936b535274ad80",
+      "reviewed_sha256": "45e4643209439ec2eae0abd0367dc2fb84930cb54e9c5298171cafeea93a30d4"
+    }
+  ],
+  "tutorial_assets_verified": 14,
+  "docx_rebuilt": false,
+  "new_visual_review_claimed": false
+}

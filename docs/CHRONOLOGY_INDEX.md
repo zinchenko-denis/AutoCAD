@@ -1,5 +1,9 @@
 # Указатель хронологии (генерируется: `tools/make_chronology.py`)
 
+<!-- limited-pilot-index:start -->
+Текущее продолжение01.10: [ограниченный проход П1/П5](LIMITED_PILOT_ACCEPTANCE_01.10.md), [протоколы](limited_pilot_0110/), [промт](SESSION_PROMPT_AFTER_LIMITED_PILOT_01.10.md). Исходники подготовлены от `b64eb0aedccb41ba5cb1e253c9eddf69142284b3`; локальные проверки и независимая ревизия завершены. Новый Windows check ожидается после публикации: прежний №216 не является проверкой этого изменения.
+<!-- limited-pilot-index:end -->
+
 <!-- pilot-completion-index:start -->
 Актуальное продолжение 01.10 (`1fb6762`, Windows check №216 success): [план завершения и аудит 2В3](PILOT_COMPLETION_PLAN_01.10.md), [доказательства](pilot_completion_0110/), [промт](SESSION_PROMPT_AFTER_2V3_01.10.md). Продукт `129513f` не меняется; проверка аудита PASS не означает инженерный допуск или полный приёмочный проход.
 <!-- pilot-completion-index:end -->

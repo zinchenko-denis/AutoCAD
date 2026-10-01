@@ -1,0 +1,16 @@
+{
+  "baseline_git_commit": "b64eb0aedccb41ba5cb1e253c9eddf69142284b3",
+  "baseline_repository_path": "AFrame/src/AFramePlugin/FrameCommand.cs",
+  "baseline_sha256": "944d50dc7db753b931437691ca116a5cb6b07f6e84a7507265936b535274ad80",
+  "baseline_saved_bytes_equal_git_show": true,
+  "after_source_sha256": "45e4643209439ec2eae0abd0367dc2fb84930cb54e9c5298171cafeea93a30d4",
+  "expect_fixed_rejects_original": true,
+  "exit_code": 1,
+  "observed_assertion": "axis continuation matches fixed: point_cancel",
+  "stderr": "Traceback (most recent call last):\n  File \"/workspace/scratch/ba306982747c/AutoCAD-complex/tools/limited_pilot_0110/test_axis_cancel.py\", line 170, in <module>\n    raise SystemExit(main())\n                     ^^^^^^\n  File \"/workspace/scratch/ba306982747c/AutoCAD-complex/tools/limited_pilot_0110/test_axis_cancel.py\", line 115, in main\n    need(result['continued'] == expected_continued, 'axis continuation matches ' + args.expect + ': ' + name)\n  File \"/workspace/scratch/ba306982747c/AutoCAD-complex/tools/limited_pilot_0110/test_axis_cancel.py\", line 96, in need\n    raise AssertionError(reason)\nAssertionError: axis continuation matches fixed: point_cancel\n",
+  "tool_sha256": {
+    "tools/limited_pilot_0110/test_axis_cancel.py": "b1ce48f0247d29c3b96c6db0c08ab986330a4ab22c589d8dbea35719dae8b405",
+    "tools/limited_pilot_0110/AxisCancelProbe.cs": "0f5371c971452102dbe5a6b1ed72c421519f9fe6a671bcd0bbfe207883e12e97"
+  },
+  "scope": "Native extracted axis and frame-only row-cleanup segments with prompt doubles; not full FrameCommand/AutoCAD/transaction rollback."
+}

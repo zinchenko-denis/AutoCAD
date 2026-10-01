@@ -1,0 +1,85 @@
+{
+  "tile": {
+    "w": 600,
+    "h": 600
+  },
+  "gap": {
+    "v": 10,
+    "h": 10
+  },
+  "axis": "rows",
+  "bond": {
+    "kind": "none",
+    "dir": "+",
+    "units": "frac"
+  },
+  "anchor": {
+    "h": "L",
+    "v": "B",
+    "center": "tile",
+    "ref": "bbox"
+  },
+  "gap_around": false,
+  "shaped": "keep",
+  "min_piece": 10,
+  "warn_cut": 30,
+  "kerf": 3,
+  "merge_touching": false,
+  "op": "tile_pattern",
+  "types": [
+    "Керамогранит 600×600"
+  ],
+  "zones": [
+    {
+      "zone_id": "П-2",
+      "zone": {
+        "schema": "facade_zone/1",
+        "id": "П-2",
+        "name": "Керамогранит 600×600",
+        "cladding": "Керамогранит 600×600",
+        "system": null,
+        "units": "mm",
+        "outer": {
+          "pts": [
+            [
+              0.0,
+              0.0
+            ],
+            [
+              1210.0,
+              0.0
+            ],
+            [
+              1210.0,
+              1820.0
+            ],
+            [
+              0.0,
+              1820.0
+            ]
+          ],
+          "bulges": [
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ]
+        },
+        "openings": [],
+        "source": {
+          "method": "manual",
+          "tool": "ATFZONE"
+        },
+        "meta": {
+          "outer_contour_id": "1",
+          "bbox": [
+            0.0,
+            0.0,
+            1210.0,
+            1820.0
+          ]
+        }
+      }
+    }
+  ]
+}

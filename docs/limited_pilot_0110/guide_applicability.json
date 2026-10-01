@@ -1,0 +1,78 @@
+{
+  "schema": "facade_guide_applicability/2",
+  "status": "UNCHANGED_GUIDE_APPLIES_AFTER_REVIEWED_AXIS_CANCEL_FIX",
+  "checked_utc": "2026-10-01T17:52:10.800055+00:00",
+  "baseline_checkpoint": "b64eb0aedccb41ba5cb1e253c9eddf69142284b3",
+  "previous_applicability": "docs/pilot_completion_0110/guide_applicability.json",
+  "previous_applicability_sha256": "f0e948e3f10402398662cacf34324a332076ba741de5796e37d340cfea75ba8b",
+  "previous_product_commit": "129513f6fb5ae646c1b733bbf9e03ad36060cbfc",
+  "publication_binding": "Root will record the new published product commit and CI in the separate final receipt; this review identifies the working-tree source by SHA256.",
+  "manual_files_sha256": {
+    "docs/facades_beginner_3009/Facades_Beginner_Manual_30.09.docx": "93f89325d1d944dd3e8279cc1afb95d9cb6983a6c7a26eb2f91c890c19435f8d",
+    "docs/facades_beginner_3009/manual_content.md": "350868b2e597b78de4dc5070073eeb36632285972f0db002ce51d66c3cdffe50",
+    "docs/facades_beginner_3009/build_manual.py": "8ab05d1afdf7ae240fe38f91aed7e0667a7977d2a772187ca2c29448c175fb1d"
+  },
+  "manual_files_match_baseline": true,
+  "product_input_files_checked": 111,
+  "unchanged_product_input_count": 110,
+  "product_source_changes": [
+    {
+      "path": "AFrame/src/AFramePlugin/FrameCommand.cs",
+      "baseline_sha256": "944d50dc7db753b931437691ca116a5cb6b07f6e84a7507265936b535274ad80",
+      "reviewed_sha256": "45e4643209439ec2eae0abd0367dc2fb84930cb54e9c5298171cafeea93a30d4"
+    }
+  ],
+  "remaining_product_inputs": "The other 110 named product inputs exactly match product_source_sha256 in the previous applicability receipt. This is not a claim that all product inputs are unchanged.",
+  "tutorial_assets_checked": 14,
+  "tutorial_assets_match_previous_receipt": true,
+  "prior_final_qa": "docs/facades_beginner_3009/FINAL_QA.json",
+  "prior_final_qa_sha256": "432d8d1db33c987ba74986f0ed67108e3b9368503f0e54cae71bc972c207f8ca",
+  "prior_qa_unchanged": true,
+  "source_commit_file": "docs/facades_beginner_3009/SOURCE_COMMIT.json",
+  "source_commit_sha256": "acf3f1ef363d4953b0a707e377958816972f219d37e5cc8196a5cf0eef301148",
+  "source_commit_not_modified": true,
+  "textual_review": {
+    "reviewer": "manual_update",
+    "result": "PASS",
+    "method": "Read-only review of current manual Markdown, extracted DOCX text, final FrameCommand.cs diff, manual dependency hashes and the separate human acceptance route.",
+    "section_3": {
+      "source": "docs/facades_beginner_3009/manual_content.md:75",
+      "finding": "Esc cancels the current request; Enter confirms input/default or completes a list. The fix enforces this already stated general cancellation contract."
+    },
+    "section_10_5": {
+      "source": "docs/facades_beginner_3009/manual_content.md:473",
+      "docx_exact_text_present": true,
+      "existing_text": "В ATFRAME при вводе внешних углов и отметок перекрытий Enter завершает список и продолжает работу, а Esc отменяет команду до расчёта и замены прежних объектов.",
+      "finding": "The paragraph explicitly covers external corners and floor levels, whose behavior is unchanged. Manual axis-points were not separately described, and no text promises continuation after Esc. The fixed axis branch is consistent with the general cancellation guidance."
+    },
+    "changed_behavior": "Previously OK followed by Cancel in the manual-axis loop broke out with the selected axis still present, allowing engine execution and replacement. The two-line guard now writes the preserved-subsystem message and returns on PromptStatus.Cancel before calculation/replacement. Enter remains list completion via the existing non-OK break.",
+    "unchanged_forms": true,
+    "manual_change_required": false,
+    "why_no_rebuild": "The DOCX, Markdown and builder bytes are unchanged and the documented behavior remains correct after the product fix. The new narrow command regression is described in the separate human route.",
+    "human_route": "docs/limited_pilot_0110/human_acceptance.md",
+    "human_route_reviewed_sha256": "caea51a69c96170b199a6003798409f07831cb140557d453337d51c1539c21c1",
+    "human_route_findings": [
+      "The new 1210x1820 porcelain pilot is separate from the existing 6000x6000 concrete tutorial; 12 tiles / 2 rails / 6 brackets do not replace the manual tutorial counts.",
+      "Project inheritance, per-zone override, stale snapshots and local 20 mm clearance agree with chapter 13; changes do not establish mounting suitability.",
+      "The main ATTILE route already supplies axes. The separate axis regression selects a closed source polyline without ATTILE, so joints.Count is zero; the old ATFRAME settings and handles do not restore ATTILE axes. A point followed by Enter creates the baseline, then point followed by Esc tests cancellation on the same contour.",
+      "The named DWG is saved before ATFZONE. SaveAs and delivery retain and verify the corresponding _fzones.json; Undo alone is not presented as proof of synchronization."
+    ]
+  },
+  "docx_rebuilt": false,
+  "new_render_claimed": false,
+  "new_visual_review_claimed": false,
+  "new_tutorial_replay_run": false,
+  "new_product_tests_run_by_this_review": false,
+  "existing_document_counts": {
+    "pages": 52,
+    "chapters": 20,
+    "figures": 10,
+    "dxf_files": 4
+  },
+  "verification_status": "PASS",
+  "scope": "Textual applicability and dependency review only. The separate product audit owns runtime evidence. Prior visual QA is retained; no new visual or live CAD claim is made.",
+  "engineering_assessment": "BLOCKED",
+  "full_acceptance_cycle": "NOT_RUN",
+  "live_autocad_checked": false,
+  "release_published": false
+}
