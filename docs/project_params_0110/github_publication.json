@@ -1,8 +1,25 @@
 {
-  "status": "PENDING",
+  "status": "SOURCE_PUBLISHED_WINDOWS_CI_NOT_STARTED",
+  "repository": "zinchenko-denis/AutoCAD",
   "branch": "feat/auto-reactor",
   "base_commit": "375f082887a052bcba3d0379bd4946ef39b25604",
-  "main_changed": false,
+  "product_commit": "b1b4230a4cfb5f53bc6e31f63254cc9dc80789f6",
+  "product_tree": "23d7595f7afb3b500d051ac948028c3a41abe5e6",
+  "remote_verified_by": "API ref plus git fetch and exact staged tree equality",
+  "observed_at_utc": "2026-10-01T08:20:42.344871+00:00",
+  "github_actions": {
+    "head_sha": "b1b4230a4cfb5f53bc6e31f63254cc9dc80789f6",
+    "workflow_runs_total_count": 0,
+    "check_runs_total_count": 0,
+    "check_suites_total_count": 0,
+    "conclusion": null,
+    "status": "NOT_STARTED",
+    "cause": "not established; this is not evidence of an authorization failure",
+    "available_connector_gap": "workflow_dispatch is not exposed; rerunning an old run would test the old SHA",
+    "next_action": "Run check on feat/auto-reactor via authorized UI or exposed workflow_dispatch, then inspect all old10+new11 WinForms PNGs; do not mark 2B2 fully verified before this"
+  },
+  "main_commit_unchanged": "e2a4e4df69a1936664c76c44cacff311ad44b07d",
   "release_published": false,
-  "live_autocad_checked": false
+  "live_autocad_checked": false,
+  "installer": "build-104 still contains stage2A only"
 }

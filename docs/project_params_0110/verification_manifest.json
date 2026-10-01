@@ -1,5 +1,5 @@
 {
-  "status": "LOCAL_PASS_WINDOWS_CI_PENDING",
+  "status": "LOCAL_PASS_WINDOWS_CI_NOT_STARTED",
   "date_utc": "2026-10-01",
   "branch": "feat/auto-reactor",
   "base_commit": "375f082887a052bcba3d0379bd4946ef39b25604",
@@ -44,8 +44,10 @@
       "manifest": "manual_examples.json"
     },
     "windows_ui": {
-      "status": "PENDING",
-      "required": "Actual Windows WinForms and visual review of old 10 + new 11 images"
+      "status": "NOT_STARTED",
+      "required": "Actual Windows WinForms plus visual review of old10 and new11 PNGs",
+      "head_sha": "b1b4230a4cfb5f53bc6e31f63254cc9dc80789f6",
+      "reason": "No run/check suite observed after API branch publication; workflow_dispatch unavailable through connected tools"
     }
   },
   "performance": {
@@ -109,5 +111,7 @@
   },
   "live_autocad_checked": false,
   "release_published": false,
-  "prior_release": "build-104, stage2A only"
+  "prior_release": "build-104, stage2A only",
+  "product_commit": "b1b4230a4cfb5f53bc6e31f63254cc9dc80789f6",
+  "product_tree": "23d7595f7afb3b500d051ac948028c3a41abe5e6"
 }
