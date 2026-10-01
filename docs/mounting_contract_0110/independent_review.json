@@ -1,0 +1,513 @@
+{
+  "schema": "facade_mounting_contract_independent_review/1",
+  "reviewer": "independent_review subagent; product code not authored by reviewer",
+  "reviewed_at_utc": "2026-10-01T15:31:23.035217+00:00",
+  "base_commit": "51f6b7fb5f3d3ee9e989a8fec0f0548c1304bf32",
+  "status": "LOCAL_CODE_AND_EXPORT_PASS_WINDOWS_UI_PENDING",
+  "source_sha256": {
+    "Facades/src/AFacadesPlugin/ConnectionTableData.cs": "c686399113c25df64575f031d2fad71c0702d2cea65011f68078ee51fc1d92e0",
+    "Common/FacadeQuantities.cs": "b092bf95f154d6aa8041936bffa79a82c613d7ac8f27fee9d1e6d7c0cde09f90",
+    "AFrame/src/AFramePlugin/FrameQuantities.cs": "d34f7cf6219dbfec7c88796b12477bea9382d4cca2dc125e4ebd1a252b1cf791",
+    "Facades/src/AFacadesPlugin/FacadeQuantityTableCommand.cs": "198cb83d4fb7c99cc24da4fba81c6cf4c6c14d20d34b320b2da57b72f4fde922",
+    "Facades/src/AFacadesPlugin/QuantityTablePreview.cs": "7e8998347dae61a9389783f481986fe84944f879464f79560585b95db5096116",
+    "Facades/src/AFacadesPlugin/QuantityTableView.Connections.cs": "1dbc4269e64eda11011c6ad63400870072ebe4d37ac7f959bf74e0d18438e8f8",
+    "Facades/src/AFacadesPlugin/XlsxWriter.cs": "6c4ef614b5fde416fa91ce29adc0ebf99599bb21b285bd7d885bf00469c428fc",
+    "tools/catalog_connections_0110/ConnectionTableProbe.cs": "a4302ceb0616e5f871f1fd1ea37baf587d9382e873d011c4ef6c53bf06dfb8fe",
+    "tools/catalog_connections_0110/test_connection_table.py": "eb7effa4ced1705191ce60d45cdfcbfc68d29cb0fc2a0ad0eb28c39d5cc063c5",
+    "tools/catalog_connections_0110/ConnectionStoreProbe.cs": "fa9a6c335001d5700ae3cf32af25d7dea685a57bf4a96499352989a8b0e329ac",
+    "tools/mounting_contract_0110/reproduce_gap.py": "da8686d7de5aab38850167e4113922f707833ca6428c760ca1d0bb6fb441fb9c",
+    "tools/mounting_contract_0110/ConnectionUiProbe.cs": "fa77698e5358211c6dd90fe680276563ffb003ec345658790a02fb2008098516",
+    "tools/mounting_contract_0110/test_ui.py": "407dc3e664dbd8f5243ff38d65c41044bf3f84b6e3c7032099ccf58c71784f53",
+    ".github/workflows/check.yml": "aa2a537e56b082f3ea347116e240f3af56e62a97dbd66297f59aedf2a0ece466",
+    "AFrame/engine/frame_connections.py": "d4febc1ce6e147f1cbce29cb64690f2c3b592efe4e40b9c88da5c8a2dcc74985",
+    "AFrame/engine/frame_topology.py": "2455ab874309d1382591800acce35dd3bde04ea3be6519f8b1de89dd5514f5d5",
+    "AFrame/engine/frame_engine.py": "b4acaaa98f48f91e0019b04231bb2ca361059e8d6a4e587cdbb64eb432790529",
+    "AFrame/src/AFramePlugin/FrameMountingAssessment.cs": "647be5999387b05fed54a0394164e40cb0eaef30d2d058164a61824ecf028b20",
+    "docs/MOUNTING_CONTRACT_01.10.md": "95e550b8aba6d9d9aba6a998aecb9176d529f3e1b79806187cb95f76acd1108f",
+    "docs/mounting_contract_0110/engineering_review.md": "33d189d0f627d41ae491a5a1444e96f4a5c36c8d6f45dbdaab19cf66d4c512a7",
+    "docs/mounting_contract_0110/source_facts.json": "5d43f128977f136bb6499dd99960f9b18dcc630323307b492fecc59917f2aba7"
+  },
+  "scope": "Read-only diagnostics in ConnectionTableData and related regression/UI CI probes. No engineering rule or CAD model introduced.",
+  "findings": [
+    {
+      "id": "R1",
+      "severity_before_fix": "blocking",
+      "status": "resolved",
+      "case": "one physical bracket candidate of1000 rails",
+      "before": {
+        "max_cell_characters": 44107,
+        "cell": "A1014",
+        "product_sha256": "a81f3c2b22f76cc842e955994295708544ce7d391223ac8393a3c29b3bf81e75"
+      },
+      "after": {
+        "file": "fanout_1000.xlsx",
+        "sha256": "a32efd45e4441247ea7336562f09bbcf9b3f30e81a8c6155bc621c98c447e144",
+        "max_cell_characters": 7996,
+        "constraint_unknown_preserved": true,
+        "warnings_in_constraint": 0,
+        "warnings_in_note": 1000,
+        "roundtrip_exact": true,
+        "chunk_count": 6,
+        "peer_ids": 1000,
+        "unique_peer_ids": 1000,
+        "max_shared_message_characters": 7996
+      }
+    },
+    {
+      "id": "R2",
+      "severity_before_fix": "blocking",
+      "status": "resolved",
+      "case": "two rails with320 shared bracket IDs in separate support positions",
+      "before": {
+        "status": "REPRODUCED",
+        "scenario": "Two rails /320 shared physical bracket IDs",
+        "source_report": "shared_many_brackets.json",
+        "source_report_sha256": "cff6760a1f5893d5e4bf940790adcf807f60a4050c137b9bddc8b0d29fa8bfb9",
+        "actual_quantity_core_validation": "PASS",
+        "actual_table_checks": 648,
+        "cells": [
+          {
+            "coordinate": "K6",
+            "before_added_warning_chars": 17761,
+            "after_added_warning_chars": 32819
+          },
+          {
+            "coordinate": "K7",
+            "before_added_warning_chars": 17761,
+            "after_added_warning_chars": 32819
+          }
+        ],
+        "source_sha256": {
+          "Facades/src/AFacadesPlugin/ConnectionTableData.cs": "0f80b58b6989514a3972c4c564f240d1284c155bce57db693f508dd3b85091a8",
+          "Common/FacadeQuantities.cs": "b092bf95f154d6aa8041936bffa79a82c613d7ac8f27fee9d1e6d7c0cde09f90",
+          "tools/catalog_connections_0110/ConnectionTableProbe.cs": "704f00f657bcb11585ee0fc6ceb2d686b434cb5940b7fd7eeb5b7c9c6b633cca"
+        },
+        "engineering_meaning": "Synthetic valid DTO stress. No permissible support pitch asserted."
+      },
+      "after": {
+        "file": "shared_many_brackets_fixed.xlsx",
+        "sha256": "063cedd7bda6af8f97370285aabe04c46c062453ed939bd16449439a923445dd",
+        "max_cell_characters": 17916,
+        "member_note_characters": [
+          17916,
+          17916
+        ],
+        "constraint_unknown_preserved": true,
+        "warnings_in_constraint": 0,
+        "warnings_in_note": 2,
+        "roundtrip_exact": true
+      }
+    },
+    {
+      "id": "R2_boundary",
+      "status": "PASS",
+      "case": "near-full previously valid member note",
+      "after": {
+        "file": "many_brackets_near_limit.xlsx",
+        "sha256": "df55542e7d82b593f5e64bbad0ef8889dfaa8d44a0881a3a946bdf4a5c8d1233",
+        "max_cell_characters": 32698,
+        "member_note_characters": [
+          32698,
+          32698
+        ],
+        "constraint_unknown_preserved": true,
+        "warnings_in_constraint": 2,
+        "warnings_in_note": 0,
+        "roundtrip_exact": true
+      }
+    }
+  ],
+  "executed_checks": [
+    {
+      "command": "python3 tools/catalog_connections_0110/test_connection_table.py --out <independent>/final_table",
+      "status": "PASS",
+      "legacy_csharp_checks": 35,
+      "real_engine_csharp_checks": 71,
+      "shared_candidate_checks": 8781,
+      "xlsx_checks": 50,
+      "real_members_checked": 12,
+      "manifest_sha256": "68b07f295fbc78c9f8a34c4a4f3472e07149ef78a3926ff40a7d6bfada754f9b"
+    },
+    {
+      "command": "python3 tools/catalog_connections_0110/test_connection_store.py --out <independent>/store",
+      "status": "PASS",
+      "pure_checks": 34,
+      "producer_store_checks": 244,
+      "manifest_sha256": "eb22f372dbcb265358884bb197210b2d0ff5950dc7f4aeed8d1806c9251e2074"
+    },
+    {
+      "command": "python3 AFrame/engine/test_frame_solution_selection.py",
+      "status": "PASS",
+      "tests": 18
+    },
+    {
+      "command": "python3 AFrame/engine/test_frame_connections.py",
+      "status": "PASS",
+      "tests": 14
+    },
+    {
+      "command": "mono <final>/ConnectionTableProbe.exe --report <unchanged320fixture> <fixed.xlsx>",
+      "status": "PASS",
+      "checks": 648,
+      "input_sha256": "cff6760a1f5893d5e4bf940790adcf807f60a4050c137b9bddc8b0d29fa8bfb9"
+    },
+    {
+      "command": "Independent openpyxl parse, explicit ID set comparison and save/load equality for1000rail,320bracket andnear-limit XLSX",
+      "status": "PASS",
+      "evidence": {
+        "many_brackets_same_fixture": {
+          "file": "shared_many_brackets_fixed.xlsx",
+          "sha256": "063cedd7bda6af8f97370285aabe04c46c062453ed939bd16449439a923445dd",
+          "max_cell_characters": 17916,
+          "member_note_characters": [
+            17916,
+            17916
+          ],
+          "constraint_unknown_preserved": true,
+          "warnings_in_constraint": 0,
+          "warnings_in_note": 2,
+          "roundtrip_exact": true
+        },
+        "many_brackets_near_limit": {
+          "file": "many_brackets_near_limit.xlsx",
+          "sha256": "df55542e7d82b593f5e64bbad0ef8889dfaa8d44a0881a3a946bdf4a5c8d1233",
+          "max_cell_characters": 32698,
+          "member_note_characters": [
+            32698,
+            32698
+          ],
+          "constraint_unknown_preserved": true,
+          "warnings_in_constraint": 2,
+          "warnings_in_note": 0,
+          "roundtrip_exact": true
+        },
+        "fanout1000": {
+          "file": "fanout_1000.xlsx",
+          "sha256": "a32efd45e4441247ea7336562f09bbcf9b3f30e81a8c6155bc621c98c447e144",
+          "max_cell_characters": 7996,
+          "constraint_unknown_preserved": true,
+          "warnings_in_constraint": 0,
+          "warnings_in_note": 1000,
+          "roundtrip_exact": true,
+          "chunk_count": 6,
+          "peer_ids": 1000,
+          "unique_peer_ids": 1000,
+          "max_shared_message_characters": 7996
+        },
+        "status": "PASS"
+      }
+    },
+    {
+      "command": "one-off bracket kind label invariance probe",
+      "status": "PASS",
+      "evidence": "label_invariance.json",
+      "persistent_regression_test_added": false
+    },
+    {
+      "command": "python3 tools/mounting_contract_0110/test_ui.py --out <independent>/final_ui --report <fresh producer fixture>",
+      "compilation": "PASS",
+      "runtime": "BLOCKED",
+      "reason": "Xvfb unavailable; compilation succeeded, no GUI execution claimed",
+      "manifest_sha256": "243e8a009a9df89dbf41cc5143c8f575000f778aeb8b29a868446029eda7ca55"
+    },
+    {
+      "command": "git diff --check",
+      "status": "PASS"
+    }
+  ],
+  "source_review": {
+    "new_sources_used": false,
+    "pixel_dimensions_used": false,
+    "originals_sha256_recomputed": {
+      "vector1.pdf": "7386f4152de455a5e2622704d51a98d8f05afd20050807f634eea4572de37142",
+      "monolit.pdf": "495f8fadf882dc6f6c3f2c023a08611035c5e916a3cc92ee4da675cb2a0f16d2"
+    },
+    "images_personally_reviewed": {
+      "vector1.pdf": [
+        19,
+        20
+      ],
+      "monolit.pdf": [
+        3,
+        6,
+        12,
+        13
+      ]
+    },
+    "conclusions": "Documented evidence suffices for geometric ID ambiguity only. U2/U vs UK scope, L1 tributary gravity formula and combined loads at both riveted interfaces confirmed. No closed physical DOF/gravity/splice mapping established.",
+    "source_project_invalidity_asserted": false
+  },
+  "semantic_invariants": {
+    "unique_selected_physical_member_index": true,
+    "retained_reports_do_not_multiply_links": true,
+    "same_coordinate_distinct_bracket_ids_not_merged": true,
+    "same_source_run_and_zone_validated_by_common_core": true,
+    "source_dto_immutable": true,
+    "new_cad_reads_or_rebuilds": false,
+    "new_support_force_or_fixed_sliding_assignment": false,
+    "automatic_selection_enabled": false,
+    "engineering_checkbox_added": false,
+    "additional_index_and_output_complexity": "O(selected members + selected support links + emitted characters); hash indexing with bounded chunks, no pairwise all-members search",
+    "bounded_row_fallback_preserves_unknown_restraint": true
+  },
+  "table_test_manifest": {
+    "status": "PASS",
+    "xlsx_checks": 50,
+    "real_members_checked": 12,
+    "shared_candidate_checks": 8781,
+    "shared_candidate_cases": [
+      {
+        "name": "actual_engine_all_zones",
+        "members": 4,
+        "links": 16,
+        "shared_brackets": 4,
+        "shared_member_links": 8,
+        "messages": 4,
+        "warning_characters": 3546,
+        "max_shared_message_characters": 301,
+        "members_indexed": 4,
+        "links_indexed": 16
+      },
+      {
+        "name": "actual_engine_selected_Z0",
+        "members": 2,
+        "links": 8,
+        "shared_brackets": 2,
+        "shared_member_links": 4,
+        "messages": 2,
+        "warning_characters": 1772,
+        "max_shared_message_characters": 301,
+        "members_indexed": 2,
+        "links_indexed": 8
+      },
+      {
+        "name": "actual_engine_selected_Z1",
+        "members": 2,
+        "links": 8,
+        "shared_brackets": 2,
+        "shared_member_links": 4,
+        "messages": 2,
+        "warning_characters": 1774,
+        "max_shared_message_characters": 301,
+        "members_indexed": 2,
+        "links_indexed": 8
+      },
+      {
+        "name": "retained_duplicate_passports",
+        "members": 4,
+        "links": 16,
+        "shared_brackets": 4,
+        "shared_member_links": 8,
+        "messages": 4,
+        "warning_characters": 3546,
+        "max_shared_message_characters": 301,
+        "members_indexed": 4,
+        "links_indexed": 16
+      },
+      {
+        "name": "retained_selected_Z0",
+        "members": 2,
+        "links": 8,
+        "shared_brackets": 2,
+        "shared_member_links": 4,
+        "messages": 2,
+        "warning_characters": 1772,
+        "max_shared_message_characters": 301,
+        "members_indexed": 2,
+        "links_indexed": 8
+      },
+      {
+        "name": "retained_selected_Z1",
+        "members": 2,
+        "links": 8,
+        "shared_brackets": 2,
+        "shared_member_links": 4,
+        "messages": 2,
+        "warning_characters": 1774,
+        "max_shared_message_characters": 301,
+        "members_indexed": 2,
+        "links_indexed": 8
+      },
+      {
+        "name": "synthetic_single_bracket_fanout_1",
+        "members": 1,
+        "links": 1,
+        "shared_brackets": 0,
+        "shared_member_links": 0,
+        "messages": 0,
+        "warning_characters": 282,
+        "max_shared_message_characters": 0,
+        "members_indexed": 1,
+        "links_indexed": 1
+      },
+      {
+        "name": "synthetic_single_bracket_fanout_100",
+        "members": 100,
+        "links": 100,
+        "shared_brackets": 1,
+        "shared_member_links": 100,
+        "messages": 1,
+        "warning_characters": 48097,
+        "max_shared_message_characters": 4507,
+        "members_indexed": 100,
+        "links_indexed": 100
+      },
+      {
+        "name": "synthetic_single_bracket_fanout_1000",
+        "members": 1000,
+        "links": 1000,
+        "shared_brackets": 1,
+        "shared_member_links": 1000,
+        "messages": 6,
+        "warning_characters": 482037,
+        "max_shared_message_characters": 7996,
+        "members_indexed": 1000,
+        "links_indexed": 1000
+      },
+      {
+        "name": "synthetic_two_members_320_shared_brackets",
+        "members": 2,
+        "links": 640,
+        "shared_brackets": 320,
+        "shared_member_links": 640,
+        "messages": 320,
+        "warning_characters": 127494,
+        "max_shared_message_characters": 303,
+        "members_indexed": 2,
+        "links_indexed": 640
+      },
+      {
+        "name": "synthetic_nearly_full_legacy_note",
+        "members": 2,
+        "links": 1386,
+        "shared_brackets": 693,
+        "shared_member_links": 1386,
+        "messages": 693,
+        "warning_characters": 275265,
+        "max_shared_message_characters": 303,
+        "members_indexed": 2,
+        "links_indexed": 1386
+      },
+      {
+        "name": "distinct_ids_at_same_positions",
+        "members": 4,
+        "links": 16,
+        "shared_brackets": 0,
+        "shared_member_links": 0,
+        "messages": 0,
+        "warning_characters": 1734,
+        "max_shared_message_characters": 0,
+        "members_indexed": 4,
+        "links_indexed": 16
+      }
+    ],
+    "shared_fixture_sha256": "5bdc628bed199f304cb2e70a67b91ed6d01770dd6d47e0c3d3fa5909046b1829",
+    "report_origin": "fresh_real_engine_to_actual_producer",
+    "report_sha256": "6ab95637034651bcc2a65cac474065aec15d673ecc5c5a124158d72fc4e6b8b2",
+    "live_autocad_checked": false,
+    "source_sha256": {
+      "tools/catalog_connections_0110/ConnectionTableProbe.cs": "a4302ceb0616e5f871f1fd1ea37baf587d9382e873d011c4ef6c53bf06dfb8fe",
+      "Common/FacadeQuantities.cs": "b092bf95f154d6aa8041936bffa79a82c613d7ac8f27fee9d1e6d7c0cde09f90",
+      "Facades/src/AFacadesPlugin/ConnectionTableData.cs": "c686399113c25df64575f031d2fad71c0702d2cea65011f68078ee51fc1d92e0",
+      "Facades/src/AFacadesPlugin/QuantityTableIdentity.cs": "82044b27845ff586b475040e4a968398c0325bdf8c6205cd6f5b226597810454",
+      "Facades/src/AFacadesPlugin/QuantityTableView.cs": "9656e74f8c3e4a932e4303e694a0690ddf2e14c308de64afa53bce9a8dc80480",
+      "Facades/src/AFacadesPlugin/QuantityTableView.Connections.cs": "1dbc4269e64eda11011c6ad63400870072ebe4d37ac7f959bf74e0d18438e8f8",
+      "Facades/src/AFacadesPlugin/CladdingTableData.cs": "8dec6b35b881f29b9da51d9e2c3769be360f53c6fac06670c2005a60e94405fa",
+      "Facades/src/AFacadesPlugin/FrameTableData.cs": "58de42f818cf70d470bb438b025cb6cb4c70391700d43eeeaee23042281f1ffc",
+      "Facades/src/AFacadesPlugin/QuantityXlsxFile.cs": "3c79e7a701ad6ba50bc81ce41cc88ba5d9c0c76c52e601115ccd3df460c3f75e",
+      "Facades/src/AFacadesPlugin/XlsxWriter.cs": "6c4ef614b5fde416fa91ce29adc0ebf99599bb21b285bd7d885bf00469c428fc",
+      "tools/mounting_contract_0110/reproduce_gap.py": "da8686d7de5aab38850167e4113922f707833ca6428c760ca1d0bb6fb441fb9c",
+      "AFrame/src/AFramePlugin/FrameQuantities.cs": "d34f7cf6219dbfec7c88796b12477bea9382d4cca2dc125e4ebd1a252b1cf791",
+      "tools/catalog_connections_0110/test_connection_store.py": "9aaee54e4c8a540f345efb64b0cf924a1956790d9e7ac08705b28df9f290ff0e",
+      "tools/catalog_connections_0110/ConnectionStoreProbe.cs": "fa9a6c335001d5700ae3cf32af25d7dea685a57bf4a96499352989a8b0e329ac",
+      "tools/frame_quantities_3009/engine_oracles.py": "85cf377f1e1076fbeea96160d4bec2070e72fe1eb160d51b710c5f925027a50b",
+      "AFrame/engine/test_frame_topology_index.py": "d8e139847c458cdf87fddf24b7c790e15e479ff4c2bbbd3a4848757e6560a1a7",
+      "AFrame/engine/test_frame_connections.py": "21f2c64b59b1a1f052eadcf1c69d1aa8f0e0e60ad42182f793ac914a16971353",
+      "AFrame/engine/frame_engine.py": "b4acaaa98f48f91e0019b04231bb2ca361059e8d6a4e587cdbb64eb432790529",
+      "AFrame/engine/frame_plan.py": "5c4b4bbbc8258d62e965c24604906cd819b6a06a04643425ed1770b07c5d7105",
+      "AFrame/engine/test_frame_engine.py": "3d32ffb69a6e9bc5d229ed11201e7e09500b5f193859b6a2cbab190c73679270",
+      "AFrame/engine/frame_solution_selection.py": "6490da6ced48715c4dce5ca357e0f54be9c035dd7bb6fc8d86b684f1d15f6aee",
+      "AFrame/engine/test_frame_solution_selection.py": "79b853ab20b95d491fc3e76f667fc7fb7106afa6ace7b5ae9d1ede191f99aceb",
+      "AFrame/engine/frame_catalog.py": "947a0277f3a6202dff365c1de6e86c5832dbc2c97e2a810b99d500a5d6f6b163",
+      "AFrame/engine/test_frame_plan.py": "fa35454f0a80362fc17441d078feaaf18bcb271a84e599de82517329005708a6",
+      "AFrame/engine/test_frame_rules.py": "0f629daa13207e436eb5e425e1f4e3d7189d205ffc6956bceca0427eb237b26e",
+      "AFrame/engine/frame_topology.py": "2455ab874309d1382591800acce35dd3bde04ea3be6519f8b1de89dd5514f5d5",
+      "AFrame/engine/frame_connections.py": "d4febc1ce6e147f1cbce29cb64690f2c3b592efe4e40b9c88da5c8a2dcc74985",
+      "AFrame/engine/frame_spatial.py": "003efc0e73b344d50d4465d2bc1bfc87f8ca149c7d443a1e7d9061e6dbfd6cec",
+      "AFrame/engine/frame_solution_catalog.py": "56e674855cc01e19bf2a0723dff1f3454497a99aef56f3de1b5bbf75c0d44764",
+      "AFrame/engine/dsverka_poligon.py": "a971bd36882c6663c0fcbc466de5e288d9aa1f4d1f6d55e5eb462ae5d635a1ec",
+      "AFrame/engine/analiz_klu_poligon.py": "903a3080c4b01dea51e936560adba060f12f172fe13887bd2785456881f5fa27",
+      "AFrame/engine/audit_frame.py": "7ce9adac3adddcb7619b88d789b78f4b811f9c890e9fd9b08f884b32ee4e2d48",
+      "AFrame/engine/test_frame_calc.py": "f72160fe7a3483c35a6c0d7ef669a612e6e44defb95c33916a850c2a605d5239",
+      "AFrame/engine/frame_rules.py": "511ec4ec48331034257859ccac70ef028a8c4b398acd7d5b238d778e3c63ea6f",
+      "AFrame/engine/frame_calc.py": "abe20fd3c0de0937ba0636914f083f7c48a7a65b3b4c85f05673278a95e1da88",
+      "AFrame/engine/test_frame_topology.py": "88f59edd4e8543ec3c444eb3557dbe7a10b922318362ca82360675da1c11586c",
+      "AFrame/engine/systems.json": "e9ee0a4cf0c535473dd9931f9b2a3d86dd1d932fe18f84682ef3fd221fbc03c3",
+      "tools/catalog_connections_0110/test_connection_table.py": "eb7effa4ced1705191ce60d45cdfcbfc68d29cb0fc2a0ad0eb28c39d5cc063c5"
+    }
+  },
+  "store_test_manifest": {
+    "status": "PASS",
+    "producer_checks": 210,
+    "core_checks": 34,
+    "checks": 244,
+    "live_autocad_checked": false,
+    "source_sha256": {
+      "AFrame/src/AFramePlugin/FrameQuantities.cs": "d34f7cf6219dbfec7c88796b12477bea9382d4cca2dc125e4ebd1a252b1cf791",
+      "Common/FacadeQuantities.cs": "b092bf95f154d6aa8041936bffa79a82c613d7ac8f27fee9d1e6d7c0cde09f90",
+      "tools/catalog_connections_0110/ConnectionStoreProbe.cs": "fa9a6c335001d5700ae3cf32af25d7dea685a57bf4a96499352989a8b0e329ac",
+      "tools/catalog_connections_0110/test_connection_store.py": "9aaee54e4c8a540f345efb64b0cf924a1956790d9e7ac08705b28df9f290ff0e",
+      "AFrame/engine/test_frame_topology_index.py": "d8e139847c458cdf87fddf24b7c790e15e479ff4c2bbbd3a4848757e6560a1a7",
+      "AFrame/engine/test_frame_connections.py": "21f2c64b59b1a1f052eadcf1c69d1aa8f0e0e60ad42182f793ac914a16971353",
+      "AFrame/engine/frame_engine.py": "b4acaaa98f48f91e0019b04231bb2ca361059e8d6a4e587cdbb64eb432790529",
+      "AFrame/engine/frame_plan.py": "5c4b4bbbc8258d62e965c24604906cd819b6a06a04643425ed1770b07c5d7105",
+      "AFrame/engine/test_frame_engine.py": "3d32ffb69a6e9bc5d229ed11201e7e09500b5f193859b6a2cbab190c73679270",
+      "AFrame/engine/frame_solution_selection.py": "6490da6ced48715c4dce5ca357e0f54be9c035dd7bb6fc8d86b684f1d15f6aee",
+      "AFrame/engine/test_frame_solution_selection.py": "79b853ab20b95d491fc3e76f667fc7fb7106afa6ace7b5ae9d1ede191f99aceb",
+      "AFrame/engine/frame_catalog.py": "947a0277f3a6202dff365c1de6e86c5832dbc2c97e2a810b99d500a5d6f6b163",
+      "AFrame/engine/test_frame_plan.py": "fa35454f0a80362fc17441d078feaaf18bcb271a84e599de82517329005708a6",
+      "AFrame/engine/test_frame_rules.py": "0f629daa13207e436eb5e425e1f4e3d7189d205ffc6956bceca0427eb237b26e",
+      "AFrame/engine/frame_topology.py": "2455ab874309d1382591800acce35dd3bde04ea3be6519f8b1de89dd5514f5d5",
+      "AFrame/engine/frame_connections.py": "d4febc1ce6e147f1cbce29cb64690f2c3b592efe4e40b9c88da5c8a2dcc74985",
+      "AFrame/engine/frame_spatial.py": "003efc0e73b344d50d4465d2bc1bfc87f8ca149c7d443a1e7d9061e6dbfd6cec",
+      "AFrame/engine/frame_solution_catalog.py": "56e674855cc01e19bf2a0723dff1f3454497a99aef56f3de1b5bbf75c0d44764",
+      "AFrame/engine/dsverka_poligon.py": "a971bd36882c6663c0fcbc466de5e288d9aa1f4d1f6d55e5eb462ae5d635a1ec",
+      "AFrame/engine/analiz_klu_poligon.py": "903a3080c4b01dea51e936560adba060f12f172fe13887bd2785456881f5fa27",
+      "AFrame/engine/audit_frame.py": "7ce9adac3adddcb7619b88d789b78f4b811f9c890e9fd9b08f884b32ee4e2d48",
+      "AFrame/engine/test_frame_calc.py": "f72160fe7a3483c35a6c0d7ef669a612e6e44defb95c33916a850c2a605d5239",
+      "AFrame/engine/frame_rules.py": "511ec4ec48331034257859ccac70ef028a8c4b398acd7d5b238d778e3c63ea6f",
+      "AFrame/engine/frame_calc.py": "abe20fd3c0de0937ba0636914f083f7c48a7a65b3b4c85f05673278a95e1da88",
+      "AFrame/engine/test_frame_topology.py": "88f59edd4e8543ec3c444eb3557dbe7a10b922318362ca82360675da1c11586c"
+    }
+  },
+  "ui_compile_blocked_manifest": {
+    "status": "BLOCKED",
+    "live_autocad_checked": false,
+    "source_sha256": {
+      "tools/mounting_contract_0110/ConnectionUiProbe.cs": "fa77698e5358211c6dd90fe680276563ffb003ec345658790a02fb2008098516",
+      "Common/FacadeQuantities.cs": "b092bf95f154d6aa8041936bffa79a82c613d7ac8f27fee9d1e6d7c0cde09f90",
+      "Facades/src/AFacadesPlugin/ConnectionTableData.cs": "c686399113c25df64575f031d2fad71c0702d2cea65011f68078ee51fc1d92e0",
+      "Facades/src/AFacadesPlugin/QuantityTableView.cs": "9656e74f8c3e4a932e4303e694a0690ddf2e14c308de64afa53bce9a8dc80480",
+      "Facades/src/AFacadesPlugin/QuantityTableView.Connections.cs": "1dbc4269e64eda11011c6ad63400870072ebe4d37ac7f959bf74e0d18438e8f8",
+      "Facades/src/AFacadesPlugin/QuantityTablePreview.cs": "7e8998347dae61a9389783f481986fe84944f879464f79560585b95db5096116",
+      "Facades/src/AFacadesPlugin/CladdingTableData.cs": "8dec6b35b881f29b9da51d9e2c3769be360f53c6fac06670c2005a60e94405fa",
+      "Facades/src/AFacadesPlugin/FrameTableData.cs": "58de42f818cf70d470bb438b025cb6cb4c70391700d43eeeaee23042281f1ffc",
+      "tools/solution_catalog_0110/test_solution_ui.py": "ae96cd84df7a148b665acd28eacdf737a0d5eed30c47e829c0f48abee04facc5",
+      "tools/mounting_contract_0110/test_ui.py": "407dc3e664dbd8f5243ff38d65c41044bf3f84b6e3c7032099ccf58c71784f53"
+    },
+    "reason": "Xvfb unavailable; compilation succeeded, no GUI execution claimed",
+    "report_origin": "shared_support_real_engine_to_actual_producer",
+    "report_sha256": "5bdc628bed199f304cb2e70a67b91ed6d01770dd6d47e0c3d3fa5909046b1829"
+  },
+  "remaining_gates": {
+    "windows_native_ui": "pending; must inspect actual evidence before overall publication verification",
+    "full_root_gate_suite": "separate root verification; not claimed by this subagent",
+    "live_autocad": "not checked"
+  },
+  "public_scope": {
+    "private_originals_or_renders_included": false,
+    "installation_release_created": false,
+    "main_modified": false,
+    "reviewer_commits_created": false
+  }
+}

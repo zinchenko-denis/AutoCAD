@@ -1,0 +1,60 @@
+{
+  "status": "LOCAL_PASS_WINDOWS_CI_PENDING",
+  "date_utc": "2026-10-01",
+  "branch": "feat/auto-reactor",
+  "base_commit": "51f6b7fb5f3d3ee9e989a8fec0f0548c1304bf32",
+  "prior_checkpoint": "689b149d087846aaedc5b814b0178bef1b84061f",
+  "product_commit": null,
+  "scope": "2В1: addressed ambiguity of a shared physical bracket candidate in connection table; no restraints, gravity distribution, splice continuity or automatic selection assigned",
+  "input_sha256_file": "input_sha256.json",
+  "input_files_count": 254,
+  "checks": {
+    "baseline_local_groups": 55,
+    "same_fixture_before_after": "reproduction/before_manifest.json + reproduction/after_manifest.json",
+    "table_shared_candidate_checks": 8781,
+    "table_xlsx_checks": 50,
+    "full_synth_runs": 8,
+    "local_gates": "55/55 PASS",
+    "facade_compile": "PASS 3/3",
+    "independent_review": "PASS; no blocking local findings",
+    "native_connection_ui": "Linux compile PASS, runtime BLOCKED by unavailable display; Windows pending",
+    "local_elapsed_seconds": 218.187,
+    "full_synth_dependency_files_unchanged": 44,
+    "final_gate_source_files_unchanged": 236
+  },
+  "performance": {
+    "strategy": "one index over selected deduplicated physical support links; peer list once per shared bracket, split at ID boundaries; bounded count per member",
+    "new_cad_reads": 0,
+    "modelspace_scan_added": false,
+    "runtime_pdf_network_python_added": false,
+    "live_timing_measured": false
+  },
+  "reports": [
+    "baseline_checks_manifest.json",
+    "baseline_compile_manifest.json",
+    "checks_manifest.json",
+    "compile_manifest.json",
+    "full_synth_manifest.json",
+    "table_manifest.json",
+    "xlsx_boundary_review.json",
+    "independent_review.json",
+    "source_facts.json",
+    "manual_review.json",
+    "manual_examples.json"
+  ],
+  "boundaries": {
+    "mounting_status": "not_confirmed",
+    "automatic_bracket_selection_allowed": false,
+    "full_2v_complete": false,
+    "confirmed_3a_open": false,
+    "source_pdf_added": false,
+    "physical_schema_changed": false,
+    "atfnode_planes_2_changed": false
+  },
+  "live_autocad_checked": false,
+  "release_published": false,
+  "prior_release": "build-104",
+  "main_changed": false,
+  "protected_modules_changed": false,
+  "final_report_hashes_match_worktree": true
+}

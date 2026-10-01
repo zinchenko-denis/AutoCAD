@@ -1,0 +1,348 @@
+{
+  "schema": "facade_mounting_contract_source_facts/1",
+  "date": "2026-10-01",
+  "baseline_commit": "51f6b7fb5f3d3ee9e989a8fec0f0548c1304bf32",
+  "purpose": "Primary-source sufficiency review for 2V; geometric diagnostics do not certify the mounting contract",
+  "pilot": {
+    "system": "Vector-1",
+    "edition": 2015,
+    "type": 1,
+    "cladding": "porcelain",
+    "node": "4.2.1",
+    "families": [
+      "KR2",
+      "PP",
+      "UK",
+      "GP"
+    ]
+  },
+  "scope": {
+    "existing_sources_only": true,
+    "external_sources_used": false,
+    "pixel_measurements_used": false,
+    "source_project_error_asserted": false,
+    "full_engineering_contract_confirmed": false
+  },
+  "primary_sources": [
+    {
+      "source_id": "vector1_2015",
+      "private_repository": "zinchenko-denis/atspec-testdata",
+      "path": "docs/facades_atr/ATR_Vector1_3.15_KG_KP_2015.pdf",
+      "sha256": "7386f4152de455a5e2622704d51a98d8f05afd20050807f634eea4572de37142",
+      "sha256_recomputed": true,
+      "page_count": 109,
+      "visual_review_pages": [
+        3,
+        18,
+        19,
+        20
+      ],
+      "text_review_pages": [
+        3,
+        18,
+        19,
+        20,
+        21,
+        22
+      ],
+      "search_only_all_pages": true
+    },
+    {
+      "source_id": "vector1_type1_reference_2026",
+      "private_repository": "zinchenko-denis/atspec-testdata",
+      "path": "docs/facades_calc/Static_VEKTOR1_tip1_monolit_KG_2026.pdf",
+      "sha256": "495f8fadf882dc6f6c3f2c023a08611035c5e916a3cc92ee4da675cb2a0f16d2",
+      "sha256_recomputed": true,
+      "page_count": 15,
+      "visual_review_pages": [
+        3,
+        6,
+        10,
+        12,
+        13,
+        14
+      ],
+      "text_review_pages": [
+        3,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14
+      ]
+    }
+  ],
+  "direct_facts": [
+    {
+      "id": "project_scoped_fixing",
+      "source_id": "vector1_2015",
+      "pdf_pages": [
+        3
+      ],
+      "sheets": [
+        "2"
+      ],
+      "classification": "explicit_source_statement",
+      "finding": "Member selection and fixing schemes are determined per project."
+    },
+    {
+      "id": "type1_variants",
+      "source_id": "vector1_2015",
+      "pdf_pages": [
+        18
+      ],
+      "sheets": [
+        "4"
+      ],
+      "classification": "explicit_source_statement",
+      "finding": "The type1 section illustrates one of its possible variants, not a complete universally interchangeable assembly."
+    },
+    {
+      "id": "pilot_component_topology",
+      "source_id": "vector1_2015",
+      "pdf_pages": [
+        20
+      ],
+      "sheets": [
+        "4.2.1"
+      ],
+      "classification": "illustrated_component_topology",
+      "finding": "Horizontal section shows KR2, PP, UK, GP, anchor and riveted links; no complete DOF/working-travel contract follows."
+    },
+    {
+      "id": "vertical_section_scope_control",
+      "source_id": "vector1_2015",
+      "pdf_pages": [
+        19
+      ],
+      "sheets": [
+        "4.1"
+      ],
+      "classification": "explicit_position_identification",
+      "finding": "Vertical section specifies extender plates U2/U, positions3.1/3.3, not UK position3.2. It cannot silently supply the full vertical UK connection detail."
+    },
+    {
+      "id": "different_support_symbols",
+      "source_id": "vector1_type1_reference_2026",
+      "pdf_pages": [
+        3,
+        14
+      ],
+      "sections": [
+        "3",
+        "11"
+      ],
+      "classification": "observed_calculation_idealization",
+      "finding": "Continuous member diagrams have different upper and intermediate support symbols; no one-to-one mapping to each real KR2-UK-GP connection is established."
+    },
+    {
+      "id": "gravity_load_length_L1",
+      "source_id": "vector1_type1_reference_2026",
+      "pdf_pages": [
+        6
+      ],
+      "sections": [
+        "5"
+      ],
+      "classification": "explicit_formula",
+      "expression": "Np=(q_cladding*b+q_rail)*L1",
+      "finding": "L1 is used as tributary length. The formula does not automatically become total-member gravity at one chosen support."
+    },
+    {
+      "id": "wind_support_reaction",
+      "source_id": "vector1_type1_reference_2026",
+      "pdf_pages": [
+        6
+      ],
+      "sections": [
+        "5"
+      ],
+      "classification": "explicit_formula",
+      "expression": "Nv=Wp*L1*b*k_nonuniformity",
+      "finding": "Reference calculation includes wind transfer; stiffness and permissible displacement of each real support remain unidentified."
+    },
+    {
+      "id": "both_riveted_interfaces_transfer_combined_force_in_reference",
+      "source_id": "vector1_type1_reference_2026",
+      "pdf_pages": [
+        12,
+        13
+      ],
+      "sections": [
+        "9",
+        "10"
+      ],
+      "classification": "explicit_calculation_scope",
+      "interfaces": [
+        "KR2-UK",
+        "UK-GP"
+      ],
+      "finding": "Both reference checks use Np and Nv together for shear/bearing; their fastener assumptions are project-scoped, not a universal mounting BOM."
+    },
+    {
+      "id": "span_label_coefficient_ambiguity",
+      "source_id": "vector1_type1_reference_2026",
+      "pdf_pages": [
+        10,
+        11
+      ],
+      "sections": [
+        "8.1",
+        "8.2"
+      ],
+      "classification": "source_attribution_ambiguity_previously_recorded",
+      "finding": "Page10 names two-span while using0.100/0.00675; page11 names three-span with the same coefficients. This is not an unambiguous geometry-to-coefficient rule or a newly proved project-calculation failure."
+    }
+  ],
+  "hypotheses_not_promoted_to_rules": [
+    {
+      "hypothesis": "One top support carries the entire member gravity while every other support is vertically sliding",
+      "status": "not_established_for_real_connections",
+      "why": "Support-symbol meaning, actual connection mapping and complete gravity tributary lengths are not supplied as a closed contract."
+    },
+    {
+      "hypothesis": "Every bracket carries an independent L1 tributary gravity strip",
+      "status": "not_established_for_real_connections",
+      "why": "The formula uses L1 but does not close real support kinematics and reaction distribution."
+    },
+    {
+      "hypothesis": "A rivet implies perfectly rigid restraint in every translational and rotational direction",
+      "status": "not_established",
+      "why": "Fastener presence alone does not provide the complete connection constitutive model."
+    }
+  ],
+  "dof_review": {
+    "coordinate_scope": "review-local only; not a change to planner coordinates",
+    "axes": {
+      "X": "outward normal from wall",
+      "Y": "horizontal in facade plane",
+      "Z": "upward"
+    },
+    "translation_X": "not_confirmed",
+    "translation_Y": "not_confirmed",
+    "translation_Z": "not_confirmed",
+    "rotation_X": "not_confirmed",
+    "rotation_Y": "not_confirmed",
+    "rotation_Z": "not_confirmed",
+    "thermal_working_travel": "not_confirmed",
+    "pre_fastening_adjustment_equals_thermal_travel": false
+  },
+  "remaining_unknowns": [
+    "Real connection assembly assigned to each physical support ID",
+    "Relative DOF restraints and stiffness at KR2-UK and UK-GP",
+    "Gravity tributary lengths and reaction distribution",
+    "Actual GP splice and transmission of N/Q/M",
+    "Continuous calculation segment mapped to physical member IDs",
+    "Coefficient applicability to actual support count, unequal intervals and free ends",
+    "Previously unresolved full overlap, travel, hole arrangement and assembly fit"
+  ],
+  "baseline_observation": {
+    "manual_fixture": "test_frame_solution_selection.engine_request(1) plus example_selection()",
+    "ok": true,
+    "rail_count": 2,
+    "bracket_count": 8,
+    "first_member_support_count": 4,
+    "first_member_span_count": 3,
+    "first_member_intervals_mm": [
+      600,
+      600,
+      600
+    ],
+    "passport_status": "inventory_only",
+    "coverage": {
+      "fixed_sliding": "not_modeled",
+      "splice_continuity": "not_modeled",
+      "gravity_load_distribution": "not_verified",
+      "strength": "not_verified"
+    },
+    "explicit_selection_with_calc_refusal": "E_SOLUTION_CALC_UNCONFIRMED",
+    "mounting_contract_field_present": false,
+    "meaning": "Existing safe geometric inventory is not an actual connection contract"
+  },
+  "chosen_increment_review": {
+    "kind": "Shared physical bracket ID candidate diagnostic across separate GP members",
+    "basis": "Existing physical identity references; no new engineering properties",
+    "does_not_mean": [
+      "Joint confirmed",
+      "Moment continuity confirmed",
+      "Two rails merged",
+      "Shared support prohibited",
+      "Fixed/sliding assigned"
+    ],
+    "requirements": [
+      "Preserve member/bracket IDs and source snapshot/zone boundaries",
+      "Different bracket IDs at same coordinates remain different",
+      "Use linear indexing of existing links without new CAD reads"
+    ],
+    "implementation_verified_by_this_source_review": false
+  },
+  "engineering_decision": {
+    "confirmed_3A_allowed": false,
+    "automatic_bracket_selection_allowed": false,
+    "mounting_status": "not_confirmed",
+    "reason": "No closed mapping physical member -> actual connection -> restrained DOFs -> tributary load -> continuous calculation segment",
+    "user_checkbox_can_close_unknowns": false,
+    "source_project_invalidity_asserted": false
+  },
+  "public_provenance": {
+    "private_originals_included": false,
+    "private_renders_included": false,
+    "private_project_identifiers_included": false,
+    "publication_content": "short findings, hashes, locators and our reasoning only"
+  },
+  "validation_status": "SOURCE_REVIEW_COMPLETE_PRODUCT_TESTS_SEPARATE",
+  "baseline_shared_id_probe": {
+    "entrypoint": "frame_connections.build_connection_passport",
+    "request": {
+      "system": "Вектор-1",
+      "sub_type": "vertical",
+      "cladding": "porcelain"
+    },
+    "response": {
+      "rails": [
+        {
+          "x": 100.0,
+          "y0": 0.0,
+          "y1": 1000.0,
+          "profile": "ГП-40-40-1,2"
+        },
+        {
+          "x": 100.0,
+          "y0": 1000.0,
+          "y1": 2000.0,
+          "profile": "ГП-40-40-1,2"
+        }
+      ],
+      "brackets": [
+        {
+          "x": 100.0,
+          "y": 1000.0,
+          "kind": "рядовой"
+        }
+      ]
+    },
+    "observed": {
+      "status": "inventory_only",
+      "rail0_support_bracket_indices": [
+        0
+      ],
+      "rail1_support_bracket_indices": [
+        0
+      ],
+      "support_positions": 2,
+      "support_links": 2,
+      "physical_brackets_in_input": 1,
+      "joint_gap_mm": 0.0,
+      "joint_status": "geometric_adjacency_only",
+      "issues": [
+        "CONNECTIONS_GEOMETRY_ONLY"
+      ]
+    },
+    "conclusion": "Same physical bracket reference appears on both separate members without a specific shared-candidate diagnostic; no duplicate installed bracket or real connection is proved."
+  }
+}

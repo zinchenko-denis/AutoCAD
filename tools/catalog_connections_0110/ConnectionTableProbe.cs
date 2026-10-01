@@ -69,10 +69,219 @@ internal static class ConnectionTableProbe
         Console.WriteLine("Connection real-engine table checks: " + checks);
         return 0;
     }
+    private const string SharedPrefix = "Монтажная принадлежность не определена: кронштейн ";
+    private const string MemberShared = "Монтажная принадлежность не определена: общих кандидатов-кронштейнов — ";
+    private static T Clone<T>(T value) { return Json.Deserialize<T>(Json.Serialize(value)); }
+    private static Dictionary<string, HashSet<string>> SharedOracle(IEnumerable<QuantityReport> reports, ISet<string> selected)
+    {
+        var links = new Dictionary<string, HashSet<string>>(StringComparer.Ordinal);
+        foreach (var report in reports)
+            foreach (var passport in report.connection_passports)
+                foreach (var member in passport.members)
+                {
+                    if (!selected.Contains(member.zone_id)) continue;
+                    foreach (var support in member.supports)
+                        foreach (string id in support.bracket_element_ids)
+                        {
+                            HashSet<string> members;
+                            if (!links.TryGetValue(id, out members)) links[id] = members = new HashSet<string>(StringComparer.Ordinal);
+                            members.Add(member.rail_element_id);
+                        }
+                }
+        return links.Where(p => p.Value.Count > 1).ToDictionary(p => p.Key, p => p.Value, StringComparer.Ordinal);
+    }
+    private static object CheckSharedCase(string name, QuantityReport[] reports, string[] selected, string output = null)
+    {
+        string before = Json.Serialize(reports);
+        var result = FacadeQuantitiesCore.BuildRows(reports, selected, true, true);
+        Check(result.ok, name + ": source rejected: " + Json.Serialize(result.issues));
+        var diagnostics = new ConnectionTableDiagnostics();
+        var data = ConnectionTableData.Build(result, reports, selected, null, true, diagnostics);
+        var selectedSet = new HashSet<string>(selected, StringComparer.Ordinal);
+        var expected = SharedOracle(reports, selectedSet);
+        var messages = data.Messages.Where(m => m.StartsWith(SharedPrefix, StringComparison.Ordinal)).ToList();
+        var expectedMembers = reports.SelectMany(r => r.connection_passports).SelectMany(p => p.members)
+            .Where(m => selectedSet.Contains(m.zone_id)).GroupBy(m => m.rail_element_id).Select(g => g.First()).ToList();
+        var rows = data.Members.ToDictionary(row => Convert.ToString(row[10]).Split(new[] { ". " }, 2, StringSplitOptions.None)[0].Substring("Элемент: ".Length),
+            row => row, StringComparer.Ordinal);
+        Check(rows.Count == expectedMembers.Count, name + ": duplicated/lost member");
+        Check(messages.All(message => message.Length <= ConnectionTableData.SharedCandidateMessageLimit),
+            name + ": shared message exceeds output chunk limit");
+        Check(expected.Count > 0 || messages.Count == 0, name + ": false shared bracket warning");
+        // Independent expected fanout comes from physical IDs; no coordinates or labels.
+        foreach (var pair in expected)
+        {
+            var matching = messages.Where(m => m.StartsWith(SharedPrefix + pair.Key + " —", StringComparison.Ordinal)).ToList();
+            Check(matching.Count > 0 && matching[0].Contains(" — геометрический кандидат для направляющих "),
+                name + ": shared bracket first message absent");
+            Check(matching.Skip(1).All(message => message.Contains(" — продолжение списка направляющих ")),
+                name + ": continuation lost its bracket identity/context");
+            var ids = matching.SelectMany(message => message.Split(new[] {
+                " — геометрический кандидат для направляющих ", " — продолжение списка направляющих " }, StringSplitOptions.None)[1]
+                .Split(new[] { ". Совпадение" }, StringSplitOptions.None)[0].Split(new[] { ", " }, StringSplitOptions.None)).ToArray();
+            Check(new HashSet<string>(ids, StringComparer.Ordinal).SetEquals(pair.Value) && ids.Length == pair.Value.Count,
+                name + ": incorrect/repeated physical peer IDs across chunks");
+        }
+        int links = 0;
+        foreach (var member in expectedMembers)
+        {
+            var row = rows[member.rail_element_id];
+            var expectedBrackets = member.supports.SelectMany(support => support.bracket_element_ids).Where(expected.ContainsKey).ToList();
+            string text = Convert.ToString(row[10]) + Convert.ToString(row[7]);
+            Check(text.Contains(MemberShared) == (expectedBrackets.Count > 0), name + ": missing or false member warning");
+            if (expectedBrackets.Count > 0)
+            {
+                string actual = text.Split(new[] { MemberShared }, StringSplitOptions.None)[1]
+                    .Split(new[] { ". Общие" }, StringSplitOptions.None)[0];
+                Check(actual == expectedBrackets.Count.ToString(CultureInfo.InvariantCulture),
+                    name + ": member warning lost the shared candidate count");
+                Check(text.Split(new[] { MemberShared }, StringSplitOptions.None).Length == 2,
+                    name + ": member warning duplicated across cells");
+            }
+            Check(Convert.ToInt32(row[2]) == member.support_count && Convert.ToInt32(row[3]) == member.span_count,
+                name + ": candidate/interval count changed");
+            Check(Convert.ToString(row[7]).StartsWith("Не определено: неподвижное / подвижное", StringComparison.Ordinal) && Convert.ToString(row[8]).Contains("Непрерывность не подтверждена"),
+                name + ": geometry promoted to engineering model");
+            links += member.supports.Sum(support => support.bracket_element_ids.Count);
+        }
+        Check(diagnostics.MembersIndexed == expectedMembers.Count && diagnostics.SupportLinksIndexed == links &&
+            diagnostics.SharedBrackets == expected.Count && diagnostics.SharedMemberLinks == expected.Sum(p => p.Value.Count),
+            name + ": additional index revisited retained members or became nonlinear");
+        Check(before == Json.Serialize(reports), name + ": source DTO mutated");
+        if (output != null) Export(output, data);
+        return new { name, members = expectedMembers.Count, links, shared_brackets = expected.Count,
+            shared_member_links = diagnostics.SharedMemberLinks, messages = messages.Count,
+            warning_characters = messages.Sum(m => m.Length) + data.Members.Sum(r => Convert.ToString(r[10]).Length),
+            max_shared_message_characters = messages.Count == 0 ? 0 : messages.Max(m => m.Length),
+            members_indexed = diagnostics.MembersIndexed, links_indexed = diagnostics.SupportLinksIndexed };
+    }
+    private static QuantityReport Fanout(QuantityReport source, int count)
+    {
+        // Synthetic validated DTO stress case, separate from the real engine fixture.
+        var report = Clone(source);
+        var passport = report.connection_passports[0];
+        string zone = passport.members[0].zone_id;
+        var originalRail = report.elements.First(e => e.element_id == passport.members[0].rail_element_id);
+        string bracketId = passport.members[0].supports[0].bracket_element_ids[0];
+        var bracket = report.elements.First(e => e.element_id == bracketId);
+        var originalMember = passport.members[0];
+        report.zone_ids = passport.zone_ids = new List<string> { zone };
+        report.elements = new List<QuantityElement> { bracket };
+        report.estimates.Clear(); report.cutting.Clear();
+        passport.members = new List<QuantityConnectionMember>();
+        passport.joints.Clear();
+        for (int i = 0; i < count; i++)
+        {
+            var rail = Clone(originalRail);
+            rail.element_id = passport.source_run_id + ":rails:" + i;
+            rail.cad_entities = new List<QuantityCadEntity> { new QuantityCadEntity { handle = "FAN" + i, role = "primary", fingerprint = "synthetic:" + i } };
+            report.elements.Add(rail);
+            var member = Clone(originalMember);
+            member.rail_element_id = rail.element_id;
+            member.support_count = 1; member.span_count = 0; member.intervals_mm.Clear();
+            member.bottom_free_mm = member.top_free_mm = rail.length_mm.Value / 2;
+            member.supports = new List<QuantityConnectionSupport> { new QuantityConnectionSupport {
+                offset_mm = rail.length_mm.Value / 2, bracket_element_ids = new List<string> { bracketId } } };
+            passport.members.Add(member);
+        }
+        passport.summary = new QuantityConnectionSummary { members = count, support_positions = count,
+            support_links = count, matched_profile_references = count };
+        return report;
+    }
+    private static QuantityReport ManyBrackets(QuantityReport source, int count)
+    {
+        // Opposite stress axis: many shared bracket IDs on just two physical rails.
+        var report = Fanout(source, 2);
+        var passport = report.connection_passports[0];
+        var original = report.elements.First(e => e.role == "bracket");
+        report.elements.Remove(original);
+        var ids = new List<string>();
+        for (int i = 0; i < count; i++)
+        {
+            var bracket = Clone(original);
+            bracket.element_id = passport.source_run_id + ":brackets:" + i;
+            bracket.cad_entities = new List<QuantityCadEntity> { new QuantityCadEntity {
+                handle = "MANY" + i, role = "primary", fingerprint = "synthetic:" + i } };
+            report.elements.Add(bracket); ids.Add(bracket.element_id);
+        }
+        foreach (var member in passport.members)
+            member.supports[0].bracket_element_ids = new List<string>(ids);
+        passport.summary.support_links = count * 2;
+        return report;
+    }
+    private static int SharedReport(string reportPath, string outPath)
+    {
+        Directory.CreateDirectory(outPath);
+        var report = Json.Deserialize<QuantityReport>(File.ReadAllText(reportPath));
+        var cases = new List<object>();
+        cases.Add(CheckSharedCase("actual_engine_all_zones", new[] { report }, report.zone_ids.ToArray(), Path.Combine(outPath, "shared_support.xlsx")));
+        foreach (string zone in report.zone_ids)
+            cases.Add(CheckSharedCase("actual_engine_selected_" + zone, new[] { report }, new[] { zone }));
+        var retained = Clone(report); retained.run_id = retained.report_id = "retained-report";
+        cases.Add(CheckSharedCase("retained_duplicate_passports", new[] { report, retained, report }, report.zone_ids.ToArray()));
+        foreach (string zone in report.zone_ids)
+            cases.Add(CheckSharedCase("retained_selected_" + zone, new[] { retained, report }, new[] { zone }));
+        foreach (int count in new[] { 1, 100, 1000 })
+        {
+            var fanout = Fanout(report, count);
+            cases.Add(CheckSharedCase("synthetic_single_bracket_fanout_" + count, new[] { fanout }, fanout.zone_ids.ToArray(),
+                Path.Combine(outPath, "fanout_" + count + ".xlsx")));
+        }
+        var many = ManyBrackets(report, 320);
+        cases.Add(CheckSharedCase("synthetic_two_members_320_shared_brackets", new[] { many }, many.zone_ids.ToArray(),
+            Path.Combine(outPath, "many_brackets_320.xlsx")));
+        // Locate the boundary using the original note, independent of the new
+        // warning. The added text must never overflow a previously valid cell.
+        var originalNote = typeof(ConnectionTableData).GetMethod("SupportNote", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
+        var noteMember = Clone(many.connection_passports[0].members[0]);
+        noteMember.supports[0].bracket_element_ids.Clear();
+        int baselineLength = ("Элемент: " + noteMember.rail_element_id + ". " + (string)originalNote.Invoke(null, new object[] { noteMember })).Length;
+        int nearCount = 0;
+        while (baselineLength <= 32680)
+        {
+            string id = many.connection_passports[0].source_run_id + ":brackets:" + nearCount;
+            baselineLength += id.Length + (nearCount == 0 ? 0 : 2);
+            nearCount++;
+        }
+        var near = ManyBrackets(report, nearCount);
+        noteMember = near.connection_passports[0].members[0];
+        Check(baselineLength == ("Элемент: " + noteMember.rail_element_id + ". " + (string)originalNote.Invoke(null, new object[] { noteMember })).Length &&
+            baselineLength <= 32767, "Boundary fixture already exceeds legacy XLSX limit or independent note-length accounting disagrees");
+        cases.Add(CheckSharedCase("synthetic_nearly_full_legacy_note", new[] { near }, near.zone_ids.ToArray(),
+            Path.Combine(outPath, "many_brackets_near_limit.xlsx")));
+        // Distinct physical bracket IDs at one position in the real fixture do not
+        // become the same identity. Separate the peer IDs while preserving offsets.
+        var separate = Clone(report);
+        foreach (var passport in separate.connection_passports)
+        {
+            var bracketById = separate.elements.Where(e => e.role == "bracket").ToDictionary(e => e.element_id);
+            int next = bracketById.Count;
+            var seen = new HashSet<string>(StringComparer.Ordinal);
+            foreach (var member in passport.members)
+                foreach (var support in member.supports)
+                    for (int i = 0; i < support.bracket_element_ids.Count; i++)
+                    {
+                        string id = support.bracket_element_ids[i];
+                        if (seen.Add(id)) continue;
+                        var other = Clone(bracketById[id]);
+                        other.element_id = passport.source_run_id + ":brackets:" + next++;
+                        other.cad_entities = new List<QuantityCadEntity> { new QuantityCadEntity {
+                            handle = "DISTINCT" + next, role = "primary", fingerprint = "synthetic:" + next } };
+                        separate.elements.Add(other);
+                        support.bracket_element_ids[i] = other.element_id;
+                    }
+        }
+        cases.Add(CheckSharedCase("distinct_ids_at_same_positions", new[] { separate }, separate.zone_ids.ToArray()));
+        File.WriteAllText(Path.Combine(outPath, "shared_cases.json"), Json.Serialize(new { status = "PASS", checks,
+            cases, live_autocad_checked = false, scale_origin = "synthetic validated DTO; main fixture is actual engine/producer" }));
+        Console.WriteLine("Shared candidate table checks: " + checks + " PASS");
+        return 0;
+    }
     public static int Main(string[] args)
     {
         CultureInfo.CurrentCulture = CultureInfo.GetCultureInfo("ru-RU");
         if (args[0] == "--report") return RealReport(args[1], args[2]);
+        if (args[0] == "--shared-report") return SharedReport(args[1], args[2]);
         var result = new QuantityResult { ok = true, completeness = "partial" };
         var first = Report("physical-1", "А", 3);
         first.connection_passports[0].joints.Add(new QuantityConnectionJoint { first_rail_element_id = "physical-1:rail",

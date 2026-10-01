@@ -1,0 +1,42 @@
+{
+  "status": "PASS",
+  "expected": "fixed",
+  "physical_members": 4,
+  "shared_brackets": {
+    "85839f5aa832430d82bdb0423fa2471e:brackets:2": [
+      "85839f5aa832430d82bdb0423fa2471e:rails:0",
+      "85839f5aa832430d82bdb0423fa2471e:rails:1"
+    ],
+    "85839f5aa832430d82bdb0423fa2471e:brackets:3": [
+      "85839f5aa832430d82bdb0423fa2471e:rails:0",
+      "85839f5aa832430d82bdb0423fa2471e:rails:1"
+    ],
+    "85839f5aa832430d82bdb0423fa2471e:brackets:8": [
+      "85839f5aa832430d82bdb0423fa2471e:rails:2",
+      "85839f5aa832430d82bdb0423fa2471e:rails:3"
+    ],
+    "85839f5aa832430d82bdb0423fa2471e:brackets:9": [
+      "85839f5aa832430d82bdb0423fa2471e:rails:2",
+      "85839f5aa832430d82bdb0423fa2471e:rails:3"
+    ]
+  },
+  "addressed_messages": 4,
+  "flagged_members": 4,
+  "report_path": "/workspace/scratch/58a6cc5ac740/2v_gap/baseline/shared_support/fixture_report.json",
+  "report_sha256": "4b9182f3dba56d83727f1c5cd594122d370ffda5915b7b7ce9e33d15d89fe96e",
+  "path": "actual frame_engine -> actual FrameQuantities producer -> common validation -> table -> XLSX",
+  "engineering_result": "mounting_not_confirmed; fixed/sliding and continuity not inferred",
+  "live_autocad_checked": false,
+  "source_sha256": {
+    "tools/catalog_connections_0110/ConnectionTableProbe.cs": "c96ddb187d952d02d921397122f600b4d575876b2000b4abaa9e657eb82aeed1",
+    "Common/FacadeQuantities.cs": "b092bf95f154d6aa8041936bffa79a82c613d7ac8f27fee9d1e6d7c0cde09f90",
+    "Facades/src/AFacadesPlugin/ConnectionTableData.cs": "a81f3c2b22f76cc842e955994295708544ce7d391223ac8393a3c29b3bf81e75",
+    "Facades/src/AFacadesPlugin/QuantityTableIdentity.cs": "82044b27845ff586b475040e4a968398c0325bdf8c6205cd6f5b226597810454",
+    "Facades/src/AFacadesPlugin/QuantityTableView.cs": "9656e74f8c3e4a932e4303e694a0690ddf2e14c308de64afa53bce9a8dc80480",
+    "Facades/src/AFacadesPlugin/QuantityTableView.Connections.cs": "1dbc4269e64eda11011c6ad63400870072ebe4d37ac7f959bf74e0d18438e8f8",
+    "Facades/src/AFacadesPlugin/CladdingTableData.cs": "8dec6b35b881f29b9da51d9e2c3769be360f53c6fac06670c2005a60e94405fa",
+    "Facades/src/AFacadesPlugin/FrameTableData.cs": "58de42f818cf70d470bb438b025cb6cb4c70391700d43eeeaee23042281f1ffc",
+    "Facades/src/AFacadesPlugin/QuantityXlsxFile.cs": "3c79e7a701ad6ba50bc81ce41cc88ba5d9c0c76c52e601115ccd3df460c3f75e",
+    "Facades/src/AFacadesPlugin/XlsxWriter.cs": "6c4ef614b5fde416fa91ce29adc0ebf99599bb21b285bd7d885bf00469c428fc"
+  }
+}

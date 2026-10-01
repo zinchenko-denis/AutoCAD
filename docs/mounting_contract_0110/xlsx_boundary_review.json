@@ -1,0 +1,121 @@
+{
+  "status": "PASS",
+  "review_findings_fixed": [
+    {
+      "finding": "shared peer list exceeds XLSX text cell limit",
+      "before": {
+        "status": "REPRODUCED",
+        "overlong_cells": [
+          {
+            "sheet": "Соединения",
+            "cell": "A1014",
+            "length": 44107
+          }
+        ],
+        "limit": 32767,
+        "source_sha256": "a81f3c2b22f76cc842e955994295708544ce7d391223ac8393a3c29b3bf81e75",
+        "xlsx_sha256": "62d70770b01431dc6d10ce60d1d1f59ffcc22cfb9c6a452467709ebb813a0119"
+      },
+      "fix": "Chunk complete rail IDs into <=8000-character shared warnings. Continuations identify the same bracket; each rail ID occurs once across chunks."
+    },
+    {
+      "finding": "per-member repeated shared bracket list exceeds XLSX text cell limit",
+      "before": {
+        "status": "REPRODUCED",
+        "scenario": "Two rails /320 shared physical bracket IDs",
+        "source_report": "shared_many_brackets.json",
+        "source_report_sha256": "cff6760a1f5893d5e4bf940790adcf807f60a4050c137b9bddc8b0d29fa8bfb9",
+        "actual_quantity_core_validation": "PASS",
+        "actual_table_checks": 648,
+        "cells": [
+          {
+            "coordinate": "K6",
+            "before_added_warning_chars": 17761,
+            "after_added_warning_chars": 32819
+          },
+          {
+            "coordinate": "K7",
+            "before_added_warning_chars": 17761,
+            "after_added_warning_chars": 32819
+          }
+        ],
+        "source_sha256": {
+          "Facades/src/AFacadesPlugin/ConnectionTableData.cs": "0f80b58b6989514a3972c4c564f240d1284c155bce57db693f508dd3b85091a8",
+          "Common/FacadeQuantities.cs": "b092bf95f154d6aa8041936bffa79a82c613d7ac8f27fee9d1e6d7c0cde09f90",
+          "tools/catalog_connections_0110/ConnectionTableProbe.cs": "704f00f657bcb11585ee0fc6ceb2d686b434cb5940b7fd7eeb5b7c9c6b633cca"
+        },
+        "engineering_meaning": "Synthetic valid DTO stress. No permissible support pitch asserted."
+      },
+      "fix": "Append only count and report locator. If old note plus the bounded warning would exceed32767, append it after the unchanged constraint text. No truncation of old SupportNote."
+    }
+  ],
+  "fixed_exports": {
+    "fanout_1000": {
+      "xlsx_sha256": "03e8996068fac14a2a7eb56d86bcc1377aea4694dfedb478e3546cd36f5e7b27",
+      "maximum_cell_characters": 7996,
+      "maximum_cell_sheet": "Соединения",
+      "maximum_cell": "A1018",
+      "exact_openpyxl_roundtrip": true,
+      "member_count": 1000,
+      "member_note_characters": {
+        "maximum": 437
+      },
+      "member_warnings_in_notes": 1000,
+      "member_warnings_in_constraints": 0,
+      "shared_warning_messages": 6
+    },
+    "many_brackets_320": {
+      "xlsx_sha256": "1ff9e9cd4f5259990164ae55c54fe7d5bd3571f28039667c54a03c3391295fa4",
+      "maximum_cell_characters": 15322,
+      "maximum_cell_sheet": "Соединения",
+      "maximum_cell": "K7",
+      "exact_openpyxl_roundtrip": true,
+      "member_count": 2,
+      "member_note_characters": [
+        15322,
+        15322
+      ],
+      "member_warnings_in_notes": 2,
+      "member_warnings_in_constraints": 0,
+      "shared_warning_messages": 320
+    },
+    "many_brackets_near_limit": {
+      "xlsx_sha256": "c46a5a7772375de83cf9c18002827a9fd7da75ea2c2c3b48f3bd6437c615251d",
+      "maximum_cell_characters": 32698,
+      "maximum_cell_sheet": "Соединения",
+      "maximum_cell": "K7",
+      "exact_openpyxl_roundtrip": true,
+      "member_count": 2,
+      "member_note_characters": [
+        32698,
+        32698
+      ],
+      "member_warnings_in_notes": 0,
+      "member_warnings_in_constraints": 2,
+      "shared_warning_messages": 693
+    },
+    "independent_many_brackets_320": {
+      "xlsx_sha256": "5bcd0d3fd2c53de7eee509e8a2e93825d5d2bb0627c11fff2c50229c24a83fab",
+      "maximum_cell_characters": 17916,
+      "maximum_cell_sheet": "Соединения",
+      "maximum_cell": "K7",
+      "exact_openpyxl_roundtrip": true,
+      "member_count": 2,
+      "member_note_characters": [
+        17916,
+        17916
+      ],
+      "member_warnings_in_notes": 2,
+      "member_warnings_in_constraints": 0,
+      "shared_warning_messages": 320
+    }
+  },
+  "new_engineering_properties": false,
+  "live_autocad_checked": false,
+  "source_sha256": {
+    "Facades/src/AFacadesPlugin/ConnectionTableData.cs": "c686399113c25df64575f031d2fad71c0702d2cea65011f68078ee51fc1d92e0",
+    "tools/catalog_connections_0110/ConnectionTableProbe.cs": "a4302ceb0616e5f871f1fd1ea37baf587d9382e873d011c4ef6c53bf06dfb8fe",
+    "tools/catalog_connections_0110/test_connection_table.py": "eb7effa4ced1705191ce60d45cdfcbfc68d29cb0fc2a0ad0eb28c39d5cc063c5",
+    "tools/mounting_contract_0110/reproduce_gap.py": "da8686d7de5aab38850167e4113922f707833ca6428c760ca1d0bb6fb441fb9c"
+  }
+}

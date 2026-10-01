@@ -218,10 +218,22 @@ jobs:
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           python tools/catalog_connections_0110/test_connection_table.py --out connection_table_results --report connection_store_results/independent_zones_report.json
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          python tools/mounting_contract_0110/test_ui.py --out connection_ui_results --report connection_table_results/shared_support/fixture_report.json
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           python tools/catalog_connections_0110/reproduce_topology_performance.py --out connection_performance_results
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           python docs/facades_beginner_3009/replay_examples.py --out connection_tutorial_results.json
           exit $LASTEXITCODE
+
+      - name: Upload connection table and native preview evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: connection-table-ui
+          path: |
+            connection_table_results/
+            connection_ui_results/
+          if-no-files-found: warn
 
       - name: Historical facade catalogue (actual settings, engine and producer)
         shell: pwsh

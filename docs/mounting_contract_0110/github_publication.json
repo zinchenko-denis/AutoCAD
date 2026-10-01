@@ -1,0 +1,12 @@
+{
+  "status": "PREPARING_SOURCE_PUBLICATION",
+  "repository": "zinchenko-denis/AutoCAD",
+  "branch": "feat/auto-reactor",
+  "base_commit": "51f6b7fb5f3d3ee9e989a8fec0f0548c1304bf32",
+  "product_commit": null,
+  "github_actions": null,
+  "main_verified_sha": "e2a4e4df69a1936664c76c44cacff311ad44b07d",
+  "main_changed": false,
+  "release_published": false,
+  "live_autocad_checked": false
+}

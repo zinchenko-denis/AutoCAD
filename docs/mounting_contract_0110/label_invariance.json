@@ -1,0 +1,219 @@
+{
+  "status": "PASS",
+  "kind": "independent_one_off_label_invariance_probe",
+  "base_commit": "51f6b7fb5f3d3ee9e989a8fec0f0548c1304bf32",
+  "request": {
+    "op": "frame",
+    "system": "Вектор-1",
+    "sub_type": "vertical",
+    "parts": "frame",
+    "cladding": "porcelain",
+    "corners_x": [],
+    "contours": [
+      {
+        "id": "A",
+        "pts": [
+          [
+            0,
+            0
+          ],
+          [
+            1200,
+            0
+          ],
+          [
+            1200,
+            3000
+          ],
+          [
+            0,
+            3000
+          ]
+        ]
+      }
+    ],
+    "joints_x": [
+      300,
+      900
+    ]
+  },
+  "response_before": {
+    "rails": [
+      {
+        "x": 0,
+        "y0": 0,
+        "y1": 3000,
+        "kind": "направляющая",
+        "profile": "ГП-40-40-1,2"
+      }
+    ],
+    "brackets": [
+      {
+        "x": 0,
+        "y": 0,
+        "kind": "рядовой"
+      },
+      {
+        "x": 0,
+        "y": 1500,
+        "kind": "рядовой"
+      },
+      {
+        "x": 0,
+        "y": 3000,
+        "kind": "рядовой"
+      }
+    ]
+  },
+  "response_after": {
+    "rails": [
+      {
+        "x": 0,
+        "y0": 0,
+        "y1": 3000,
+        "kind": "направляющая",
+        "profile": "ГП-40-40-1,2"
+      }
+    ],
+    "brackets": [
+      {
+        "x": 0,
+        "y": 0,
+        "kind": "несущий"
+      },
+      {
+        "x": 0,
+        "y": 1500,
+        "kind": "несущий"
+      },
+      {
+        "x": 0,
+        "y": 3000,
+        "kind": "несущий"
+      }
+    ]
+  },
+  "entire_connection_passport_equal": true,
+  "passport": {
+    "schema": "aframe_connection_passport/1",
+    "status": "inventory_only",
+    "reason": null,
+    "scheme": "vertical",
+    "catalog_revision": "f22c58b52010219ad5106e712ed87a5bd1c67730eaf3a67e6ecfa82ada6900fc",
+    "catalog_scope": "reference_project_only",
+    "sources": [
+      {
+        "source_id": "vector1_type1_reference_2026",
+        "sha256": "495f8fadf882dc6f6c3f2c023a08611035c5e916a3cc92ee4da675cb2a0f16d2",
+        "kind": "private_project_calculation",
+        "edition": "2026",
+        "locator": "PDF 3: обозначения элементов расчётного примера"
+      }
+    ],
+    "references": [
+      {
+        "reference_id": "calc_C.kr2_70",
+        "kind": "project_calculation_section",
+        "designation": "КР2-70",
+        "role": "bracket",
+        "source_id": "vector1_type1_reference_2026",
+        "pdf_pages": [
+          3
+        ],
+        "properties_status": "not_imported"
+      },
+      {
+        "reference_id": "calc_C.uk70_1_2",
+        "kind": "project_calculation_section",
+        "designation": "УК-70-1,2",
+        "role": "extender",
+        "source_id": "vector1_type1_reference_2026",
+        "pdf_pages": [
+          3
+        ],
+        "properties_status": "not_imported"
+      },
+      {
+        "reference_id": "calc_C.gp40_40_1_2",
+        "kind": "project_calculation_section",
+        "designation": "ГП-40-40-1,2",
+        "role": "rail",
+        "source_id": "vector1_type1_reference_2026",
+        "pdf_pages": [
+          3
+        ],
+        "properties_status": "not_imported"
+      }
+    ],
+    "members": [
+      {
+        "rail_index": 0,
+        "zone_id": "",
+        "support_count": 3,
+        "span_count": 2,
+        "intervals_mm": [
+          1500.0,
+          1500.0
+        ],
+        "bottom_free_mm": 0.0,
+        "top_free_mm": 0.0,
+        "supports": [
+          {
+            "offset_mm": 0.0,
+            "bracket_indices": [
+              0
+            ]
+          },
+          {
+            "offset_mm": 1500.0,
+            "bracket_indices": [
+              1
+            ]
+          },
+          {
+            "offset_mm": 3000.0,
+            "bracket_indices": [
+              2
+            ]
+          }
+        ],
+        "profile_match": {
+          "status": "matched_source_identity",
+          "reference_ids": [
+            "calc_C.gp40_40_1_2"
+          ]
+        }
+      }
+    ],
+    "joints": [],
+    "coverage": {
+      "fixed_sliding": "not_modeled",
+      "splice_continuity": "not_modeled",
+      "gravity_load_distribution": "not_verified",
+      "strength": "not_verified"
+    },
+    "summary": {
+      "members": 1,
+      "support_positions": 3,
+      "support_links": 3,
+      "geometric_joints": 0,
+      "matched_profile_references": 1,
+      "unresolved_profile_references": 0
+    },
+    "issues": [
+      {
+        "code": "CONNECTIONS_GEOMETRY_ONLY",
+        "count": 3,
+        "message": "Пересечения — кандидаты опор. Закрепления, передача усилий и непрерывность через стыки не подтверждены."
+      }
+    ]
+  },
+  "scope": "Python pure geometric passport; not actual CAD or engineering model confirmation",
+  "source_sha256": {
+    "AFrame/engine/frame_connections.py": "d4febc1ce6e147f1cbce29cb64690f2c3b592efe4e40b9c88da5c8a2dcc74985",
+    "AFrame/engine/frame_topology.py": "2455ab874309d1382591800acce35dd3bde04ea3be6519f8b1de89dd5514f5d5",
+    "AFrame/engine/frame_catalog.py": "947a0277f3a6202dff365c1de6e86c5832dbc2c97e2a810b99d500a5d6f6b163",
+    "AFrame/engine/test_frame_connections.py": "21f2c64b59b1a1f052eadcf1c69d1aa8f0e0e60ad42182f793ac914a16971353",
+    "AFrame/engine/test_frame_topology.py": "88f59edd4e8543ec3c444eb3557dbe7a10b922318362ca82360675da1c11586c"
+  }
+}

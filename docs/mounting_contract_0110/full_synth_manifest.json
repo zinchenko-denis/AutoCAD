@@ -1,0 +1,498 @@
+{
+  "schema": "facade_full_synth/1",
+  "base_commit": "51f6b7fb5f3d3ee9e989a8fec0f0548c1304bf32",
+  "started_utc": "2026-10-01T15:11:34.492792+00:00",
+  "scope": "Full existing synthetic facade suites; no native AutoCAD run. Product edits outside the hashed test dependencies may proceed concurrently.",
+  "timing_policy": "Eight runs sequentially; measured wall time is observational.",
+  "python_executable": "/workspace/scratch/ba306982747c/verification_deps/venv/bin/python3",
+  "source_sha256_before": {
+    "AClad/engine/audit_clad.py": "881ae022233fbc6ff178d2ea2f4842eb4cf7547a8cb33a8a29e69c435aad8a92",
+    "AClad/engine/clad_engine.py": "cf7e3739c74517a6d4483572d19330901b11d6ef8f3eb4e95c42104645257e1e",
+    "AClad/engine/cladding_plan.py": "0eb923685b4a1319a31f8eb17bfe25059aaee22b8c7b85d40982b812af5e2e8e",
+    "AClad/engine/polygon_clip.py": "06bf6d81181d8f0732827a53169cbc5c8aa4f5615e7cc5ed5306b2ac4ae4c60f",
+    "AClad/engine/test_clad_engine.py": "7f4133e8cb1c5e139752ad16c8a26777ee691940169c8eb2c13f5b5f1972569b",
+    "AClad/engine/test_cladding_plan.py": "4461dea9f1f00e926d52f3d0b64562a281f036b8baed4dba8656c3d89314f97a",
+    "AClad/engine/test_tile_pattern.py": "d489eae004c47dde8fc3f32108e5721c6e050387dd8e8539b3e01f37f9e640c3",
+    "AClad/engine/tile_pattern.py": "3af9df2b123585ce33d0b8a616956c0c0ef5ba7a822acb6fa06555ace81eafce",
+    "AClad/tools/attile_synth.py": "85d734564895b88cbeb53f892e87b360db1063a36d01fdd624a923034c3b09a0",
+    "AFrame/engine/analiz_klu_poligon.py": "903a3080c4b01dea51e936560adba060f12f172fe13887bd2785456881f5fa27",
+    "AFrame/engine/audit_frame.py": "7ce9adac3adddcb7619b88d789b78f4b811f9c890e9fd9b08f884b32ee4e2d48",
+    "AFrame/engine/dsverka_poligon.py": "a971bd36882c6663c0fcbc466de5e288d9aa1f4d1f6d55e5eb462ae5d635a1ec",
+    "AFrame/engine/frame_calc.py": "abe20fd3c0de0937ba0636914f083f7c48a7a65b3b4c85f05673278a95e1da88",
+    "AFrame/engine/frame_catalog.py": "947a0277f3a6202dff365c1de6e86c5832dbc2c97e2a810b99d500a5d6f6b163",
+    "AFrame/engine/frame_connections.py": "d4febc1ce6e147f1cbce29cb64690f2c3b592efe4e40b9c88da5c8a2dcc74985",
+    "AFrame/engine/frame_engine.py": "b4acaaa98f48f91e0019b04231bb2ca361059e8d6a4e587cdbb64eb432790529",
+    "AFrame/engine/frame_plan.py": "5c4b4bbbc8258d62e965c24604906cd819b6a06a04643425ed1770b07c5d7105",
+    "AFrame/engine/frame_rules.py": "511ec4ec48331034257859ccac70ef028a8c4b398acd7d5b238d778e3c63ea6f",
+    "AFrame/engine/frame_solution_catalog.py": "56e674855cc01e19bf2a0723dff1f3454497a99aef56f3de1b5bbf75c0d44764",
+    "AFrame/engine/frame_solution_selection.py": "6490da6ced48715c4dce5ca357e0f54be9c035dd7bb6fc8d86b684f1d15f6aee",
+    "AFrame/engine/frame_spatial.py": "003efc0e73b344d50d4465d2bc1bfc87f8ca149c7d443a1e7d9061e6dbfd6cec",
+    "AFrame/engine/frame_topology.py": "2455ab874309d1382591800acce35dd3bde04ea3be6519f8b1de89dd5514f5d5",
+    "AFrame/engine/test_frame_calc.py": "f72160fe7a3483c35a6c0d7ef669a612e6e44defb95c33916a850c2a605d5239",
+    "AFrame/engine/test_frame_connections.py": "21f2c64b59b1a1f052eadcf1c69d1aa8f0e0e60ad42182f793ac914a16971353",
+    "AFrame/engine/test_frame_engine.py": "3d32ffb69a6e9bc5d229ed11201e7e09500b5f193859b6a2cbab190c73679270",
+    "AFrame/engine/test_frame_plan.py": "fa35454f0a80362fc17441d078feaaf18bcb271a84e599de82517329005708a6",
+    "AFrame/engine/test_frame_rules.py": "0f629daa13207e436eb5e425e1f4e3d7189d205ffc6956bceca0427eb237b26e",
+    "AFrame/engine/test_frame_solution_selection.py": "79b853ab20b95d491fc3e76f667fc7fb7106afa6ace7b5ae9d1ede191f99aceb",
+    "AFrame/engine/test_frame_topology.py": "88f59edd4e8543ec3c444eb3557dbe7a10b922318362ca82360675da1c11586c",
+    "AFrame/engine/test_frame_topology_index.py": "d8e139847c458cdf87fddf24b7c790e15e479ff4c2bbbd3a4848757e6560a1a7",
+    "AFrame/src/AFramePlugin/FrameProjectParameters.cs": "612c46eabcb1c7c80c86e5a3e0fed2153a809b8f2b1734b1e9b596e2e26ec7f1",
+    "AFrame/src/AFramePlugin/FrameSettings.cs": "a44273b52d3ee92407d5dfc98315d6750d3aa57b7259cc2b98e4432757198cda",
+    "AFrame/src/AFramePlugin/FrameSolutionSelection.cs": "cb25b6e890ce2f1e5ee458f1e378510d21f7205e529ee1894520ed686a3abd66",
+    "AFrame/tools/frame_synth.py": "fb0507eefce7efdd8293bb895b6159eeca3c28643709e679a2d7f9f4c767c013",
+    "AFrame/tools/roles/RolesDump.cs": "e9c9ab08adcc6e98969b8b23306cb56815a29921efe838cdc1ca9f461a63a280",
+    "Facades/engine/facade_zones.py": "a6d93dfc7b9e399be3dab4bb2a624c714b12fe79236503fe54c105122bfeea01",
+    "Facades/engine/facades_engine.py": "f0046539d586d75f0d3042b83b7e155f06762f84869721544cd6542fa27ad306",
+    "Facades/engine/test_facade_zones.py": "8465ae98a8b412db6e6f7b23242a34dada7475450b47294fb22785a02b47caf4",
+    "Facades/engine/test_facades_engine.py": "ce0f692df8747f5666aea690c6e346b79a7a4a65d54f8a48161c6af6a353d509",
+    "Facades/tools/zones_synth.py": "f8374fd437b8929af49b1d7cee6f68f2e0586d86579a7ec8539fe6961ba35131",
+    "tools/roles_synth.py": "ec12f51b944c51102baff9b211de8213a849ac9d87d873aab25866dd2dcbc4aa"
+  },
+  "results": [
+    {
+      "name": "zones",
+      "command": [
+        "/workspace/scratch/ba306982747c/verification_deps/venv/bin/python3",
+        "Facades/tools/zones_synth.py",
+        "--dump",
+        "/workspace/scratch/58a6cc5ac740/2v_full_synth/zones"
+      ],
+      "cwd": "/workspace/scratch/ba306982747c/AutoCAD-complex",
+      "started_utc": "2026-10-01T15:11:34.495045+00:00",
+      "seconds": 107.273,
+      "returncode": 0,
+      "log_file": "zones.log",
+      "log_sha256": "5f60779f9aa4511b5bd0be844428adb71c94f661b8bd4454a3ed9fcb30548f0e",
+      "source_dependency_changes": [],
+      "counts": {
+        "zone_scenarios": 840,
+        "zone_openings": 2419
+      },
+      "results": {},
+      "summary_lines": [
+        "ЗОНЫ: сценариев 840 (+плохие входы и CLI), проёмов 2419, время 107.2 с"
+      ],
+      "informational_lines": [
+        "[INFO] дуги: расхождение отлив/откос на проём с дугой — медиана 0.5 мм, макс 0.8 мм (проёмов с дугой 716)"
+      ]
+    },
+    {
+      "name": "tile",
+      "command": [
+        "/workspace/scratch/ba306982747c/verification_deps/venv/bin/python3",
+        "AClad/tools/attile_synth.py",
+        "--dump",
+        "/workspace/scratch/58a6cc5ac740/2v_full_synth/tile"
+      ],
+      "cwd": "/workspace/scratch/ba306982747c/AutoCAD-complex",
+      "started_utc": "2026-10-01T15:13:21.773489+00:00",
+      "seconds": 75.785,
+      "returncode": 0,
+      "log_file": "tile.log",
+      "log_sha256": "be91520d4c2e9124b3f26e6a0818c999e0ba3e6e237d43ffcf97b510e0c0f4c3",
+      "source_dependency_changes": [],
+      "counts": {
+        "cladding_scenarios": 741,
+        "cladding_pieces": 376086,
+        "cladding_failures": 0
+      },
+      "results": {},
+      "summary_lines": [
+        "сценариев: 741, кусков всего: 376086, провалов: 0, время 75.6 с; самые долгие: grid-16 0.07с/7812, facade-41 0.05с/8711, facade-11 0.05с/10555"
+      ],
+      "informational_lines": []
+    },
+    {
+      "name": "frame_2909",
+      "command": [
+        "/workspace/scratch/ba306982747c/verification_deps/venv/bin/python3",
+        "AFrame/tools/frame_synth.py",
+        "--seed",
+        "2909",
+        "--dump",
+        "/workspace/scratch/58a6cc5ac740/2v_full_synth/frame_2909"
+      ],
+      "cwd": "/workspace/scratch/ba306982747c/AutoCAD-complex",
+      "started_utc": "2026-10-01T15:14:37.561837+00:00",
+      "seconds": 43.048,
+      "returncode": 0,
+      "log_file": "frame_2909.log",
+      "log_sha256": "039718e699e75287d38fd6099192ea71d3cbcf7726adeddf1fff63db74a9ea84",
+      "source_dependency_changes": [],
+      "counts": {
+        "frame_placement_scenarios": 600,
+        "frame_placement_elements": 222603,
+        "frame_tile_scenarios": 360,
+        "tile_built": 286,
+        "tile_safe_refusals": 74,
+        "calculation_violations": 0,
+        "static_contract_violations": 0
+      },
+      "results": {
+        "safe_refusal/interfloor/model_unconfirmed": 1,
+        "safe_refusal/ortho/insufficient_supports": 2,
+        "safe_refusal/ortho/single_span_unsupported": 1,
+        "safe_refusal/ortho/span_class_mismatch": 1,
+        "safe_refusal/vertical/insufficient_supports": 2,
+        "safe_refusal/vertical/single_span_unsupported": 1,
+        "safe_refusal/vertical/span_class_mismatch": 1,
+        "successful_calc/ortho": 2,
+        "successful_calc/vertical": 2,
+        "successful_clamps/interfloor": 1,
+        "successful_manual/interfloor": 1
+      },
+      "summary_lines": [
+        "РАССТАНОВКА: сценариев 600, элементов 222603, время 15.3 с",
+        "ПЛИТКА: сценариев 360, нарушений нет",
+        "РАСЧЁТ: нарушений 0",
+        "СТАТИЧЕСКИЙ КОНТРАКТ: нарушений 0"
+      ],
+      "informational_lines": [
+        "[INFO] K6 ветер B при h=2 м 42.4 кг/м² против h=5 м 55.1 (-23%): нижней отсечки высоты нет"
+      ]
+    },
+    {
+      "name": "frame_77",
+      "command": [
+        "/workspace/scratch/ba306982747c/verification_deps/venv/bin/python3",
+        "AFrame/tools/frame_synth.py",
+        "--seed",
+        "77",
+        "--dump",
+        "/workspace/scratch/58a6cc5ac740/2v_full_synth/frame_77"
+      ],
+      "cwd": "/workspace/scratch/ba306982747c/AutoCAD-complex",
+      "started_utc": "2026-10-01T15:15:20.612540+00:00",
+      "seconds": 43.031,
+      "returncode": 0,
+      "log_file": "frame_77.log",
+      "log_sha256": "ce907b98ed0b4a7eccd65d990d1fb76c58f1d4017830c47312cc2e01e77e9e2a",
+      "source_dependency_changes": [],
+      "counts": {
+        "frame_placement_scenarios": 600,
+        "frame_placement_elements": 230667,
+        "frame_tile_scenarios": 360,
+        "tile_built": 283,
+        "tile_safe_refusals": 77,
+        "calculation_violations": 0,
+        "static_contract_violations": 0
+      },
+      "results": {
+        "safe_refusal/interfloor/model_unconfirmed": 1,
+        "safe_refusal/ortho/insufficient_supports": 2,
+        "safe_refusal/ortho/single_span_unsupported": 1,
+        "safe_refusal/ortho/span_class_mismatch": 1,
+        "safe_refusal/vertical/insufficient_supports": 2,
+        "safe_refusal/vertical/single_span_unsupported": 1,
+        "safe_refusal/vertical/span_class_mismatch": 1,
+        "successful_calc/ortho": 2,
+        "successful_calc/vertical": 2,
+        "successful_clamps/interfloor": 1,
+        "successful_manual/interfloor": 1
+      },
+      "summary_lines": [
+        "РАССТАНОВКА: сценариев 600, элементов 230667, время 16.0 с",
+        "ПЛИТКА: сценариев 360, нарушений нет",
+        "РАСЧЁТ: нарушений 0",
+        "СТАТИЧЕСКИЙ КОНТРАКТ: нарушений 0"
+      ],
+      "informational_lines": [
+        "[INFO] K6 ветер B при h=2 м 42.4 кг/м² против h=5 м 55.1 (-23%): нижней отсечки высоты нет"
+      ]
+    },
+    {
+      "name": "frame_5",
+      "command": [
+        "/workspace/scratch/ba306982747c/verification_deps/venv/bin/python3",
+        "AFrame/tools/frame_synth.py",
+        "--seed",
+        "5",
+        "--dump",
+        "/workspace/scratch/58a6cc5ac740/2v_full_synth/frame_5"
+      ],
+      "cwd": "/workspace/scratch/ba306982747c/AutoCAD-complex",
+      "started_utc": "2026-10-01T15:16:03.647103+00:00",
+      "seconds": 43.164,
+      "returncode": 0,
+      "log_file": "frame_5.log",
+      "log_sha256": "9d16ce015b276c6bf3ff511ea257a4b8c04b7e1bca0817297a668a7049b2b24e",
+      "source_dependency_changes": [],
+      "counts": {
+        "frame_placement_scenarios": 600,
+        "frame_placement_elements": 214720,
+        "frame_tile_scenarios": 360,
+        "tile_built": 284,
+        "tile_safe_refusals": 76,
+        "calculation_violations": 0,
+        "static_contract_violations": 0
+      },
+      "results": {
+        "safe_refusal/interfloor/model_unconfirmed": 1,
+        "safe_refusal/ortho/insufficient_supports": 2,
+        "safe_refusal/ortho/single_span_unsupported": 1,
+        "safe_refusal/ortho/span_class_mismatch": 1,
+        "safe_refusal/vertical/insufficient_supports": 2,
+        "safe_refusal/vertical/single_span_unsupported": 1,
+        "safe_refusal/vertical/span_class_mismatch": 1,
+        "successful_calc/ortho": 2,
+        "successful_calc/vertical": 2,
+        "successful_clamps/interfloor": 1,
+        "successful_manual/interfloor": 1
+      },
+      "summary_lines": [
+        "РАССТАНОВКА: сценариев 600, элементов 214720, время 16.3 с",
+        "ПЛИТКА: сценариев 360, нарушений нет",
+        "РАСЧЁТ: нарушений 0",
+        "СТАТИЧЕСКИЙ КОНТРАКТ: нарушений 0"
+      ],
+      "informational_lines": [
+        "[INFO] K6 ветер B при h=2 м 42.4 кг/м² против h=5 м 55.1 (-23%): нижней отсечки высоты нет"
+      ]
+    },
+    {
+      "name": "roles_2909",
+      "command": [
+        "/workspace/scratch/ba306982747c/verification_deps/venv/bin/python3",
+        "tools/roles_synth.py",
+        "--seed",
+        "2909",
+        "--dump",
+        "/workspace/scratch/58a6cc5ac740/2v_full_synth/roles_2909"
+      ],
+      "cwd": "/workspace/scratch/ba306982747c/AutoCAD-complex",
+      "started_utc": "2026-10-01T15:16:46.814840+00:00",
+      "seconds": 13.184,
+      "returncode": 0,
+      "log_file": "roles_2909.log",
+      "log_sha256": "8a31b72897cdc89f3e42be6b8be2c44987f9f27e720ac6e969a7b56455e3efc9",
+      "source_dependency_changes": [],
+      "counts": {
+        "roles": 21,
+        "role_facades": 168
+      },
+      "results": {
+        "control/safe_refusal/interfloor/model_unconfirmed": 1,
+        "control/safe_refusal/ortho/insufficient_supports": 2,
+        "control/safe_refusal/ortho/single_span_unsupported": 1,
+        "control/safe_refusal/ortho/span_class_mismatch": 1,
+        "control/safe_refusal/vertical/insufficient_supports": 2,
+        "control/safe_refusal/vertical/single_span_unsupported": 1,
+        "control/safe_refusal/vertical/span_class_mismatch": 1,
+        "control/successful_calc/ortho": 2,
+        "control/successful_calc/vertical": 2,
+        "control/successful_clamps/interfloor": 1,
+        "control/successful_manual/interfloor": 1,
+        "expected_ui_refusal/interfloor_model_unconfirmed": 3,
+        "safe_refusal/E_CALC_TOPOLOGY_UNSUPPORTED": 121,
+        "safe_refusal/E_UNSUPPORTED_SHINA": 21,
+        "safe_refusal/full_for_clamps/E_CALC_TOPOLOGY_UNSUPPORTED": 12,
+        "successful_frame_results": 62
+      },
+      "summary_lines": [
+        "РОЛИ: ролей 21, фасадов 168, время 13.0 с"
+      ],
+      "informational_lines": [
+        "[INFO] безопасный отказ: бетон: межэтажная без отметок (шаг этажа 3000) — ручной проектный режим / E_UNSUPPORTED_SHINA: 2",
+        "[INFO] безопасный отказ: бетон: межэтажная по отметкам — ручной проектный режим / E_UNSUPPORTED_SHINA: 2",
+        "[INFO] безопасный отказ: керамогранит без раскладки: оси шагом 608, швы 605 / E_CALC_TOPOLOGY_UNSUPPORTED: 12",
+        "[INFO] безопасный отказ: керамогранит по умолчанию / E_CALC_TOPOLOGY_UNSUPPORTED: 12",
+        "[INFO] безопасный отказ: керамогранит: ортогональная, только подсистема / E_CALC_TOPOLOGY_UNSUPPORTED: 12",
+        "[INFO] безопасный отказ: керамогранит: отметки перекрытий и углы по краям / E_CALC_TOPOLOGY_UNSUPPORTED: 12",
+        "[INFO] безопасный отказ: клинкер без раскладки ATTILE (ряды шагом 88) / E_CALC_TOPOLOGY_UNSUPPORTED: 8",
+        "[INFO] безопасный отказ: клинкер без раскладки ATTILE (ряды шагом 88) / E_UNSUPPORTED_SHINA: 4",
+        "[INFO] безопасный отказ: клинкер: вертикальная по расчёту, углы, угловой шаг 400, марка / E_CALC_TOPOLOGY_UNSUPPORTED: 8",
+        "[INFO] безопасный отказ: клинкер: вертикальная по расчёту, углы, угловой шаг 400, марка / E_UNSUPPORTED_SHINA: 4",
+        "[INFO] безопасный отказ: клинкер: межэтажная, окна с узкими простенками (уже шага) — ручной проектный режим / E_UNSUPPORTED_SHINA: 3",
+        "[INFO] безопасный отказ: клинкер: ортогональная вручную 600/400, хлыст 3 м / E_UNSUPPORTED_SHINA: 3",
+        "[INFO] безопасный отказ: переделщик: керамогранит → клинкер → бетон → снова клинкер / E_CALC_TOPOLOGY_UNSUPPORTED: 45",
+        "[INFO] безопасный отказ: переделщик: керамогранит → клинкер → бетон → снова клинкер / E_UNSUPPORTED_SHINA: 3",
+        "[INFO] безопасный отказ: сметчик: витражи, двери, парапет; керамогранит / E_CALC_TOPOLOGY_UNSUPPORTED: 12"
+      ]
+    },
+    {
+      "name": "roles_77",
+      "command": [
+        "/workspace/scratch/ba306982747c/verification_deps/venv/bin/python3",
+        "tools/roles_synth.py",
+        "--seed",
+        "77",
+        "--dump",
+        "/workspace/scratch/58a6cc5ac740/2v_full_synth/roles_77"
+      ],
+      "cwd": "/workspace/scratch/ba306982747c/AutoCAD-complex",
+      "started_utc": "2026-10-01T15:17:00.003684+00:00",
+      "seconds": 11.361,
+      "returncode": 0,
+      "log_file": "roles_77.log",
+      "log_sha256": "022e475430da4f5b5042f6332b60a9d5bb3c94e1e9d8d6087b7007b469721e56",
+      "source_dependency_changes": [],
+      "counts": {
+        "roles": 21,
+        "role_facades": 168
+      },
+      "results": {
+        "control/safe_refusal/interfloor/model_unconfirmed": 1,
+        "control/safe_refusal/ortho/insufficient_supports": 2,
+        "control/safe_refusal/ortho/single_span_unsupported": 1,
+        "control/safe_refusal/ortho/span_class_mismatch": 1,
+        "control/safe_refusal/vertical/insufficient_supports": 2,
+        "control/safe_refusal/vertical/single_span_unsupported": 1,
+        "control/safe_refusal/vertical/span_class_mismatch": 1,
+        "control/successful_calc/ortho": 2,
+        "control/successful_calc/vertical": 2,
+        "control/successful_clamps/interfloor": 1,
+        "control/successful_manual/interfloor": 1,
+        "expected_ui_refusal/interfloor_model_unconfirmed": 3,
+        "safe_refusal/E_CALC_TOPOLOGY_UNSUPPORTED": 122,
+        "safe_refusal/E_UNSUPPORTED_SHINA": 20,
+        "safe_refusal/full_for_clamps/E_CALC_TOPOLOGY_UNSUPPORTED": 12,
+        "successful_frame_results": 62
+      },
+      "summary_lines": [
+        "РОЛИ: ролей 21, фасадов 168, время 11.2 с"
+      ],
+      "informational_lines": [
+        "[INFO] безопасный отказ: бетон: межэтажная без отметок (шаг этажа 3000) — ручной проектный режим / E_UNSUPPORTED_SHINA: 3",
+        "[INFO] безопасный отказ: керамогранит без раскладки: оси шагом 608, швы 605 / E_CALC_TOPOLOGY_UNSUPPORTED: 12",
+        "[INFO] безопасный отказ: керамогранит по умолчанию / E_CALC_TOPOLOGY_UNSUPPORTED: 12",
+        "[INFO] безопасный отказ: керамогранит: ортогональная, только подсистема / E_CALC_TOPOLOGY_UNSUPPORTED: 12",
+        "[INFO] безопасный отказ: керамогранит: отметки перекрытий и углы по краям / E_CALC_TOPOLOGY_UNSUPPORTED: 12",
+        "[INFO] безопасный отказ: клинкер без раскладки ATTILE (ряды шагом 88) / E_CALC_TOPOLOGY_UNSUPPORTED: 10",
+        "[INFO] безопасный отказ: клинкер без раскладки ATTILE (ряды шагом 88) / E_UNSUPPORTED_SHINA: 2",
+        "[INFO] безопасный отказ: клинкер: вертикальная по расчёту, углы, угловой шаг 400, марка / E_CALC_TOPOLOGY_UNSUPPORTED: 10",
+        "[INFO] безопасный отказ: клинкер: вертикальная по расчёту, углы, угловой шаг 400, марка / E_UNSUPPORTED_SHINA: 2",
+        "[INFO] безопасный отказ: клинкер: межэтажная, окна с узкими простенками (уже шага) — ручной проектный режим / E_UNSUPPORTED_SHINA: 1",
+        "[INFO] безопасный отказ: клинкер: ортогональная вручную 600/400, хлыст 3 м / E_UNSUPPORTED_SHINA: 6",
+        "[INFO] безопасный отказ: переделщик: керамогранит → клинкер → бетон → снова клинкер / E_CALC_TOPOLOGY_UNSUPPORTED: 42",
+        "[INFO] безопасный отказ: переделщик: керамогранит → клинкер → бетон → снова клинкер / E_UNSUPPORTED_SHINA: 6",
+        "[INFO] безопасный отказ: сметчик: витражи, двери, парапет; керамогранит / E_CALC_TOPOLOGY_UNSUPPORTED: 12"
+      ]
+    },
+    {
+      "name": "roles_5",
+      "command": [
+        "/workspace/scratch/ba306982747c/verification_deps/venv/bin/python3",
+        "tools/roles_synth.py",
+        "--seed",
+        "5",
+        "--dump",
+        "/workspace/scratch/58a6cc5ac740/2v_full_synth/roles_5"
+      ],
+      "cwd": "/workspace/scratch/ba306982747c/AutoCAD-complex",
+      "started_utc": "2026-10-01T15:17:11.368165+00:00",
+      "seconds": 12.49,
+      "returncode": 0,
+      "log_file": "roles_5.log",
+      "log_sha256": "c66a636eacfb8505e1bb069bf30be0cdbda82bd67640306616066c9bc7b2d548",
+      "source_dependency_changes": [],
+      "counts": {
+        "roles": 21,
+        "role_facades": 168
+      },
+      "results": {
+        "control/safe_refusal/interfloor/model_unconfirmed": 1,
+        "control/safe_refusal/ortho/insufficient_supports": 2,
+        "control/safe_refusal/ortho/single_span_unsupported": 1,
+        "control/safe_refusal/ortho/span_class_mismatch": 1,
+        "control/safe_refusal/vertical/insufficient_supports": 2,
+        "control/safe_refusal/vertical/single_span_unsupported": 1,
+        "control/safe_refusal/vertical/span_class_mismatch": 1,
+        "control/successful_calc/ortho": 2,
+        "control/successful_calc/vertical": 2,
+        "control/successful_clamps/interfloor": 1,
+        "control/successful_manual/interfloor": 1,
+        "expected_ui_refusal/interfloor_model_unconfirmed": 3,
+        "safe_refusal/E_CALC_TOPOLOGY_UNSUPPORTED": 118,
+        "safe_refusal/E_UNSUPPORTED_SHINA": 19,
+        "safe_refusal/full_for_clamps/E_CALC_TOPOLOGY_UNSUPPORTED": 12,
+        "successful_frame_results": 67
+      },
+      "summary_lines": [
+        "РОЛИ: ролей 21, фасадов 168, время 12.3 с"
+      ],
+      "informational_lines": [
+        "[INFO] безопасный отказ: бетон: межэтажная по отметкам — ручной проектный режим / E_UNSUPPORTED_SHINA: 1",
+        "[INFO] безопасный отказ: керамогранит без раскладки: оси шагом 608, швы 605 / E_CALC_TOPOLOGY_UNSUPPORTED: 12",
+        "[INFO] безопасный отказ: керамогранит по умолчанию / E_CALC_TOPOLOGY_UNSUPPORTED: 12",
+        "[INFO] безопасный отказ: керамогранит: ортогональная, только подсистема / E_CALC_TOPOLOGY_UNSUPPORTED: 12",
+        "[INFO] безопасный отказ: керамогранит: отметки перекрытий и углы по краям / E_CALC_TOPOLOGY_UNSUPPORTED: 12",
+        "[INFO] безопасный отказ: клинкер без раскладки ATTILE (ряды шагом 88) / E_CALC_TOPOLOGY_UNSUPPORTED: 7",
+        "[INFO] безопасный отказ: клинкер без раскладки ATTILE (ряды шагом 88) / E_UNSUPPORTED_SHINA: 5",
+        "[INFO] безопасный отказ: клинкер: вертикальная по расчёту, углы, угловой шаг 400, марка / E_CALC_TOPOLOGY_UNSUPPORTED: 9",
+        "[INFO] безопасный отказ: клинкер: вертикальная по расчёту, углы, угловой шаг 400, марка / E_UNSUPPORTED_SHINA: 3",
+        "[INFO] безопасный отказ: клинкер: межэтажная, окна с узкими простенками (уже шага) — ручной проектный режим / E_UNSUPPORTED_SHINA: 2",
+        "[INFO] безопасный отказ: клинкер: ортогональная вручную 600/400, хлыст 3 м / E_UNSUPPORTED_SHINA: 2",
+        "[INFO] безопасный отказ: переделщик: керамогранит → клинкер → бетон → снова клинкер / E_CALC_TOPOLOGY_UNSUPPORTED: 42",
+        "[INFO] безопасный отказ: переделщик: керамогранит → клинкер → бетон → снова клинкер / E_UNSUPPORTED_SHINA: 6",
+        "[INFO] безопасный отказ: сметчик: витражи, двери, парапет; керамогранит / E_CALC_TOPOLOGY_UNSUPPORTED: 12"
+      ]
+    }
+  ],
+  "status": "passed",
+  "live_autocad_checked": false,
+  "source_sha256_after": {
+    "AClad/engine/audit_clad.py": "881ae022233fbc6ff178d2ea2f4842eb4cf7547a8cb33a8a29e69c435aad8a92",
+    "AClad/engine/clad_engine.py": "cf7e3739c74517a6d4483572d19330901b11d6ef8f3eb4e95c42104645257e1e",
+    "AClad/engine/cladding_plan.py": "0eb923685b4a1319a31f8eb17bfe25059aaee22b8c7b85d40982b812af5e2e8e",
+    "AClad/engine/polygon_clip.py": "06bf6d81181d8f0732827a53169cbc5c8aa4f5615e7cc5ed5306b2ac4ae4c60f",
+    "AClad/engine/test_clad_engine.py": "7f4133e8cb1c5e139752ad16c8a26777ee691940169c8eb2c13f5b5f1972569b",
+    "AClad/engine/test_cladding_plan.py": "4461dea9f1f00e926d52f3d0b64562a281f036b8baed4dba8656c3d89314f97a",
+    "AClad/engine/test_tile_pattern.py": "d489eae004c47dde8fc3f32108e5721c6e050387dd8e8539b3e01f37f9e640c3",
+    "AClad/engine/tile_pattern.py": "3af9df2b123585ce33d0b8a616956c0c0ef5ba7a822acb6fa06555ace81eafce",
+    "AClad/tools/attile_synth.py": "85d734564895b88cbeb53f892e87b360db1063a36d01fdd624a923034c3b09a0",
+    "AFrame/engine/analiz_klu_poligon.py": "903a3080c4b01dea51e936560adba060f12f172fe13887bd2785456881f5fa27",
+    "AFrame/engine/audit_frame.py": "7ce9adac3adddcb7619b88d789b78f4b811f9c890e9fd9b08f884b32ee4e2d48",
+    "AFrame/engine/dsverka_poligon.py": "a971bd36882c6663c0fcbc466de5e288d9aa1f4d1f6d55e5eb462ae5d635a1ec",
+    "AFrame/engine/frame_calc.py": "abe20fd3c0de0937ba0636914f083f7c48a7a65b3b4c85f05673278a95e1da88",
+    "AFrame/engine/frame_catalog.py": "947a0277f3a6202dff365c1de6e86c5832dbc2c97e2a810b99d500a5d6f6b163",
+    "AFrame/engine/frame_connections.py": "d4febc1ce6e147f1cbce29cb64690f2c3b592efe4e40b9c88da5c8a2dcc74985",
+    "AFrame/engine/frame_engine.py": "b4acaaa98f48f91e0019b04231bb2ca361059e8d6a4e587cdbb64eb432790529",
+    "AFrame/engine/frame_plan.py": "5c4b4bbbc8258d62e965c24604906cd819b6a06a04643425ed1770b07c5d7105",
+    "AFrame/engine/frame_rules.py": "511ec4ec48331034257859ccac70ef028a8c4b398acd7d5b238d778e3c63ea6f",
+    "AFrame/engine/frame_solution_catalog.py": "56e674855cc01e19bf2a0723dff1f3454497a99aef56f3de1b5bbf75c0d44764",
+    "AFrame/engine/frame_solution_selection.py": "6490da6ced48715c4dce5ca357e0f54be9c035dd7bb6fc8d86b684f1d15f6aee",
+    "AFrame/engine/frame_spatial.py": "003efc0e73b344d50d4465d2bc1bfc87f8ca149c7d443a1e7d9061e6dbfd6cec",
+    "AFrame/engine/frame_topology.py": "2455ab874309d1382591800acce35dd3bde04ea3be6519f8b1de89dd5514f5d5",
+    "AFrame/engine/test_frame_calc.py": "f72160fe7a3483c35a6c0d7ef669a612e6e44defb95c33916a850c2a605d5239",
+    "AFrame/engine/test_frame_connections.py": "21f2c64b59b1a1f052eadcf1c69d1aa8f0e0e60ad42182f793ac914a16971353",
+    "AFrame/engine/test_frame_engine.py": "3d32ffb69a6e9bc5d229ed11201e7e09500b5f193859b6a2cbab190c73679270",
+    "AFrame/engine/test_frame_plan.py": "fa35454f0a80362fc17441d078feaaf18bcb271a84e599de82517329005708a6",
+    "AFrame/engine/test_frame_rules.py": "0f629daa13207e436eb5e425e1f4e3d7189d205ffc6956bceca0427eb237b26e",
+    "AFrame/engine/test_frame_solution_selection.py": "79b853ab20b95d491fc3e76f667fc7fb7106afa6ace7b5ae9d1ede191f99aceb",
+    "AFrame/engine/test_frame_topology.py": "88f59edd4e8543ec3c444eb3557dbe7a10b922318362ca82360675da1c11586c",
+    "AFrame/engine/test_frame_topology_index.py": "d8e139847c458cdf87fddf24b7c790e15e479ff4c2bbbd3a4848757e6560a1a7",
+    "AFrame/src/AFramePlugin/FrameProjectParameters.cs": "612c46eabcb1c7c80c86e5a3e0fed2153a809b8f2b1734b1e9b596e2e26ec7f1",
+    "AFrame/src/AFramePlugin/FrameSettings.cs": "a44273b52d3ee92407d5dfc98315d6750d3aa57b7259cc2b98e4432757198cda",
+    "AFrame/src/AFramePlugin/FrameSolutionSelection.cs": "cb25b6e890ce2f1e5ee458f1e378510d21f7205e529ee1894520ed686a3abd66",
+    "AFrame/tools/frame_synth.py": "fb0507eefce7efdd8293bb895b6159eeca3c28643709e679a2d7f9f4c767c013",
+    "AFrame/tools/roles/RolesDump.cs": "e9c9ab08adcc6e98969b8b23306cb56815a29921efe838cdc1ca9f461a63a280",
+    "Facades/engine/facade_zones.py": "a6d93dfc7b9e399be3dab4bb2a624c714b12fe79236503fe54c105122bfeea01",
+    "Facades/engine/facades_engine.py": "f0046539d586d75f0d3042b83b7e155f06762f84869721544cd6542fa27ad306",
+    "Facades/engine/test_facade_zones.py": "8465ae98a8b412db6e6f7b23242a34dada7475450b47294fb22785a02b47caf4",
+    "Facades/engine/test_facades_engine.py": "ce0f692df8747f5666aea690c6e346b79a7a4a65d54f8a48161c6af6a353d509",
+    "Facades/tools/zones_synth.py": "f8374fd437b8929af49b1d7cee6f68f2e0586d86579a7ec8539fe6961ba35131",
+    "tools/roles_synth.py": "ec12f51b944c51102baff9b211de8213a849ac9d87d873aab25866dd2dcbc4aa"
+  },
+  "source_dependency_changes": [],
+  "finished_utc": "2026-10-01T15:17:23.861610+00:00",
+  "elapsed_seconds": 349.371,
+  "additional_data_dependencies": {
+    "before_method": "Data dependencies: source-before values from completed clean baseline; checked again while zones runs, before frame/roles consume them.",
+    "before_confirmation_utc": "2026-10-01T15:12:39.299616+00:00",
+    "source_sha256_before": {
+      "AFrame/engine/assembly_catalog.json": "a202410e6c9872b73cf9f06183c6fc22b22280fb0dcbfb68e71561117d65456e",
+      "AFrame/engine/systems.json": "e9ee0a4cf0c535473dd9931f9b2a3d86dd1d932fe18f84682ef3fd221fbc03c3",
+      "Common/catalogs/vector1_2015_type1_historical.json": "4df8a3d9925595aa2d3d90af63d73be6bf1f68169685e3dc77ee19632023ca26"
+    },
+    "source_sha256_after": {
+      "AFrame/engine/assembly_catalog.json": "a202410e6c9872b73cf9f06183c6fc22b22280fb0dcbfb68e71561117d65456e",
+      "AFrame/engine/systems.json": "e9ee0a4cf0c535473dd9931f9b2a3d86dd1d932fe18f84682ef3fd221fbc03c3",
+      "Common/catalogs/vector1_2015_type1_historical.json": "4df8a3d9925595aa2d3d90af63d73be6bf1f68169685e3dc77ee19632023ca26"
+    },
+    "source_dependency_changes": []
+  },
+  "runner_sha256": {
+    "run_full.py": "cab60440c39a0cc16216280fdee5fe8478d8569718df805d7116755b1b859947",
+    "finalize_manifest.py": "f594fe76d60065aeebd7dc2e4f86d3f62a4081a904489a173ba25c699a921ef7"
+  }
+}

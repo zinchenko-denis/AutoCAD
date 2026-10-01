@@ -5,11 +5,23 @@ using FacadeSafety;
 
 namespace AFacadesPlugin
 {
+    // Work counters for the pure shared-candidate pass; never engineering data.
+    internal sealed class ConnectionTableDiagnostics
+    {
+        internal int MembersIndexed;
+        internal int SupportLinksIndexed;
+        internal int SharedBrackets;
+        internal int SharedMemberLinks;
+    }
+
     // Read-only presentation of the stored, freshness-checked geometry snapshot.
     // No CAD access, candidate search, catalogue choice or engineering inference.
     internal sealed class ConnectionTableData
     {
         internal const string Title = "Паспорт соединений — геометрия схемы";
+        // Output chunk size, not an engineering threshold. Keep generated physical
+        // IDs intact and messages well within the XLSX 32767-character cell limit.
+        internal const int SharedCandidateMessageLimit = 8000;
         internal static readonly string[] Headers = { "Зона", "Элемент / марка", "Кандидаты опор, поз.",
             "Интервалы, шт.", "Интервалы, мм", "Свободный участок в начале, мм", "Свободный участок в конце, мм",
             "Закрепление", "Соседние куски / непрерывность", "Справочная идентификация", "Примечание" };
@@ -23,7 +35,7 @@ namespace AFacadesPlugin
         private bool missingPassports;
 
         internal static ConnectionTableData Build(QuantityResult result, IEnumerable<QuantityReport> reports,
-            IEnumerable<string> zoneIds, IEnumerable<string> warnings, bool byZone)
+            IEnumerable<string> zoneIds, IEnumerable<string> warnings, bool byZone, ConnectionTableDiagnostics diagnostics = null)
         {
             if (result == null || !result.ok) throw new InvalidOperationException("Нельзя вывести неподтверждённый источник паспорта.");
             var data = new ConnectionTableData { Complete = result.completeness == "complete" };
@@ -41,6 +53,11 @@ namespace AFacadesPlugin
             var seenPassportZones = new Dictionary<string, HashSet<string>>(StringComparer.Ordinal);
             var seenReports = new HashSet<QuantityReport>();
             var covered = new HashSet<string>(StringComparer.Ordinal);
+            // Only selected, deduplicated physical members enter this index.
+            // Retained passport copies cannot create a second link for one rail.
+            var supportRails = new Dictionary<string, List<string>>(StringComparer.Ordinal);
+            var supportOrder = new List<string>();
+            var rowsByMember = new Dictionary<string, object[]>(StringComparer.Ordinal);
             foreach (var report in reports ?? new QuantityReport[0])
             {
                 if (report == null || report.kind != "frame" || !seenReports.Add(report)) continue;
@@ -107,14 +124,29 @@ namespace AFacadesPlugin
                         if (element != null)
                             foreach (var entity in element.cad_entities ?? new List<QuantityCadEntity>())
                                 if (entity != null && !string.IsNullOrWhiteSpace(entity.handle)) handles.Add(entity.handle);
-                        AddRow(rowsByZone, member.zone_id, new object[] { member.zone_id,
+                        var memberRow = new object[] { member.zone_id,
                             mark + (handles.Count == 0 ? "" : " / CAD " + string.Join(", ", handles.ToArray())),
                             member.support_count, member.span_count, intervals.Count == 0 ? "—" : string.Join("; ", intervals.ToArray()),
                             member.support_count == 0 ? (object)"Опор-кандидатов нет" : member.bottom_free_mm,
                             member.support_count == 0 ? (object)"Опор-кандидатов нет" : member.top_free_mm,
                             "Не определено: неподвижное / подвижное",
                             jointText + ". Непрерывность не подтверждена", Match(member.profile_match, references, sources),
-                            "Элемент: " + (member.rail_element_id ?? "идентификатор не указан") + ". " + SupportNote(member) });
+                            "Элемент: " + (member.rail_element_id ?? "идентификатор не указан") + ". " + SupportNote(member) };
+                        AddRow(rowsByZone, member.zone_id, memberRow);
+                        rowsByMember.Add(member.rail_element_id, memberRow);
+                        if (diagnostics != null) diagnostics.MembersIndexed++;
+                        foreach (var support in member.supports ?? new List<QuantityConnectionSupport>())
+                            foreach (string bracketId in support.bracket_element_ids ?? new List<string>())
+                            {
+                                if (diagnostics != null) diagnostics.SupportLinksIndexed++;
+                                List<string> linkedRails;
+                                if (!supportRails.TryGetValue(bracketId, out linkedRails))
+                                {
+                                    supportRails.Add(bracketId, linkedRails = new List<string>());
+                                    supportOrder.Add(bracketId);
+                                }
+                                linkedRails.Add(member.rail_element_id);
+                            }
                     }
                     foreach (var zone in selected)
                         if (earlierZones.Add(zone) && !memberZones.Contains(zone))
@@ -130,6 +162,7 @@ namespace AFacadesPlugin
             }
             foreach (var zone in zones)
                 if (!covered.Contains(zone)) data.Missing(rowsByZone, zone, "Паспорт не сформирован: нет подтверждённого источника геометрии соединений.");
+            data.AddSharedCandidateWarnings(supportRails, supportOrder, rowsByMember, messageSet, diagnostics);
             foreach (var pair in rowsByZone) data.Members.AddRange(pair.Value);
             if (data.Members.Count == 0)
             {
@@ -150,6 +183,64 @@ namespace AFacadesPlugin
             foreach (var message in Messages) rows.Add(new object[] { message });
             rows.Add(new object[] { "Примечание пользователя: " + (note ?? "") });
             return rows;
+        }
+
+        private void AddSharedCandidateWarnings(Dictionary<string, List<string>> supportRails,
+            List<string> supportOrder, Dictionary<string, object[]> rowsByMember, HashSet<string> messageSet,
+            ConnectionTableDiagnostics diagnostics)
+        {
+            var sharedByMember = new Dictionary<string, int>(StringComparer.Ordinal);
+            foreach (string bracketId in supportOrder)
+            {
+                var railIds = supportRails[bracketId];
+                if (railIds.Count < 2) continue;
+                if (diagnostics != null) diagnostics.SharedBrackets++;
+                // Peer IDs appear once per shared bracket, never once per peer.
+                AddSharedCandidateMessages(bracketId, railIds, messageSet);
+                foreach (string railId in railIds)
+                {
+                    if (diagnostics != null) diagnostics.SharedMemberLinks++;
+                    int count;
+                    sharedByMember.TryGetValue(railId, out count);
+                    sharedByMember[railId] = count + 1;
+                }
+            }
+            foreach (var pair in sharedByMember)
+            {
+                string warning = " Монтажная принадлежность не определена: общих кандидатов-кронштейнов — " +
+                    pair.Value.ToString(CultureInfo.InvariantCulture) +
+                    ". Общие кандидаты и связанные направляющие перечислены в предупреждениях отчёта.";
+                var row = rowsByMember[pair.Key];
+                // Do not duplicate the physical-ID list already in SupportNote and
+                // the addressed messages. An almost full existing note stays intact;
+                // its bounded warning remains visible in the short constraint cell.
+                int column = Convert.ToString(row[10], CultureInfo.InvariantCulture).Length + warning.Length <= 32767 ? 10 : 7;
+                row[column] += warning;
+            }
+        }
+
+        private void AddSharedCandidateMessages(string bracketId, List<string> railIds, HashSet<string> messageSet)
+        {
+            string beginning = "Монтажная принадлежность не определена: кронштейн " + bracketId;
+            string prefix = beginning + " — геометрический кандидат для направляющих ";
+            const string suffix = ". Совпадение положения не определяет крепление, передачу усилий или непрерывность.";
+            var chunk = new List<string>();
+            int length = prefix.Length + suffix.Length;
+            foreach (string railId in railIds)
+            {
+                int added = railId.Length + (chunk.Count == 0 ? 0 : 2);
+                if (chunk.Count > 0 && length + added > SharedCandidateMessageLimit)
+                {
+                    Message(messageSet, prefix + string.Join(", ", chunk.ToArray()) + suffix);
+                    prefix = beginning + " — продолжение списка направляющих ";
+                    chunk.Clear();
+                    length = prefix.Length + suffix.Length;
+                    added = railId.Length;
+                }
+                chunk.Add(railId);
+                length += added;
+            }
+            if (chunk.Count > 0) Message(messageSet, prefix + string.Join(", ", chunk.ToArray()) + suffix);
         }
 
         private void Missing(SortedDictionary<string, List<object[]>> rows, string zone, string reason)
