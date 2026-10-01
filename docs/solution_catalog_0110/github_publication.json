@@ -1,12 +1,77 @@
 {
-  "status": "READY_FOR_SOURCE_PUBLICATION",
+  "status": "PUBLISHED_CI_VERIFIED",
   "repository": "zinchenko-denis/AutoCAD",
   "branch": "feat/auto-reactor",
   "base_commit": "87e67632e9901ea03586fec10b60c293a8fbe306",
-  "product_commit": null,
-  "check": null,
+  "core_product_commit": "5bd1da76648ffea6e543821d342275998cd71ca3",
+  "full_local_baseline_commit": "5bd1da76648ffea6e543821d342275998cd71ca3",
+  "runtime_product_commit": "84120347be0360d79fcbe6757a170d6411c08a3a",
+  "product_commit": "84120347be0360d79fcbe6757a170d6411c08a3a",
+  "product_tree": "76603ee9ac2a7dde524ec2aaaa666b9431fa086d",
+  "check": {
+    "workflow": "check",
+    "run_id": 36829687132,
+    "head_sha": "84120347be0360d79fcbe6757a170d6411c08a3a",
+    "status": "completed",
+    "conclusion": "success",
+    "url": "https://github.com/zinchenko-denis/AutoCAD/actions/runs/36829687132"
+  },
+  "earlier_checks": [
+    {
+      "kind": "test_portability",
+      "run_id": 36826757005,
+      "commit": "5bd1da76648ffea6e543821d342275998cd71ca3",
+      "reason": "Exact generated JSON test did not account for Git CRLF checkout on Windows; product compilation succeeded."
+    },
+    {
+      "kind": "native_ui_layout",
+      "commit": "44f747d8ebf0ea4e8947c1d7ef65cf108f29cd03",
+      "run_id": 36827058283,
+      "artifact_id": 11145842100,
+      "receipt": "ui_layout_initial.json",
+      "reasons": [
+        "large_font: footer action inaccessible cancel_selection"
+      ]
+    },
+    {
+      "kind": "native_ui_visual",
+      "commit": "c6f362a3d364776512cb130d17cedb91ffe221ab",
+      "run_id": 36828441822,
+      "artifact_id": 11146201476,
+      "artifact_sha256": "2e5f02d28b288cd06f4b8030cf11f4bee9550bbad720d845f0e4d66de9bb2513",
+      "automated_status": "PASS",
+      "automated_checks": 894,
+      "visual_status": "FAIL",
+      "receipt": "ui_visual_review_c6f362a.json",
+      "findings": [
+        {
+          "id": "UI-VIS-02",
+          "severity": "blocking",
+          "image": "solution_large_font.png",
+          "observed": "Right-hand content is clipped; footer actions have no readable labels or usable visible button area.",
+          "reported_window": "{X=10,Y=10,Width=1044,Height=788}",
+          "reported_client": "{X=0,Y=0,Width=1100,Height=800}",
+          "reported_screen": "{X=0,Y=0,Width=1024,Height=728}",
+          "font_points": 12,
+          "explanation": "The manifest reports a 1100x800 client for a 1044x788 outer window and 1024x728 screen. Those inconsistent visible-size bases allowed the automated rectangle checks to pass while the captured result is clipped.",
+          "required_followup": "Constrain/reconcile actual window, client and rendered viewport after font scaling; validate footer controls against the actual visible form/screen rectangle and rerun native Windows UI plus independent review of every new PNG."
+        }
+      ]
+    }
+  ],
+  "observed_ci_metadata": "github_ci_observed.json",
+  "committed_inputs_match_final_receipts": true,
+  "working_tree_inputs_match_final_commit": true,
+  "local_index_matches_product_tree_before_finalization": true,
+  "main_sha": "e2a4e4df69a1936664c76c44cacff311ad44b07d",
   "main_modified": false,
+  "ATableSpec_ABlockGen_source_modified": false,
   "live_autocad_checked": false,
   "release_published": false,
-  "private_originals_or_tokens_published": false
+  "prior_installer_release": {
+    "tag": "build-104",
+    "stage": "2A",
+    "receipt": "../release_0110/receipt.json"
+  },
+  "receipt_commit_note": "A subsequent documentation-only commit records these receipts; it does not change the verified product."
 }

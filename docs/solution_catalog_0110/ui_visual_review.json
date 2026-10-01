@@ -1,0 +1,112 @@
+{
+  "schema": "facade_solution_ui_visual_review/1",
+  "status": "PASS",
+  "reviewed_at_utc": "2026-10-01T07:28:37.745671+00:00",
+  "reviewer": "catalog_manual",
+  "method": "Every one of the ten original PNGs opened separately with view_image(detail=original); no contact-sheet-only review.",
+  "commit": "84120347be0360d79fcbe6757a170d6411c08a3a",
+  "run_id": 36829687132,
+  "artifact_id": 11146098464,
+  "artifact_sha256": "7c3c7a4727f7c01a47d12fe8a3993c35f74c993ec15dad02607b6b616a6c2a7d",
+  "manifest_sha256": "e511102841880163f67cba63e64bae0d7840be1d8c96144358402e75c47799d5",
+  "reviewed_images": [
+    "frame_main_before.png",
+    "frame_main_selected.png",
+    "solution_blank.png",
+    "solution_filled.png",
+    "solution_large_font.png",
+    "solution_mismatch.png",
+    "solution_readonly.png",
+    "solution_small.png",
+    "solution_small_source.png",
+    "solution_source.png"
+  ],
+  "reviewed_sha256": {
+    "frame_main_before.png": "4ac9745e227e590a09a0360d73cb4f0ed774345b1f64902c677070acd299f1bf",
+    "frame_main_selected.png": "3f4e52d9fd625d309adca666ef0ca24a18064239c4430120cd6a4bae1b917526",
+    "solution_blank.png": "70b06a76ef4bc47c6e738e5075727ad65d745d7423a5ca282170e23d82f923b7",
+    "solution_filled.png": "00d58cb783b66938e053ffa2aaa85f6e4ce0d0c5c626c52f9c325c0d11399f05",
+    "solution_large_font.png": "cb394ca856a01b05d90dfa74253955302ae9d32c6475fecf69f1b4b0a7a6c6d7",
+    "solution_mismatch.png": "3e3339c533d6555e7c82484d2c60ae27b87d19d2fb533c2bf1546d6ab552c062",
+    "solution_readonly.png": "a41cba327b7a433b81f7c6bdc19b42c532f3c2f5fbca9938562682db8fb0fbc6",
+    "solution_small.png": "2ee75f717faaee508aae5fbdcd04717f87c02a7883bd3439f778be04081023a3",
+    "solution_small_source.png": "24a34e4bcc0e2ba381ded8f6f314c3d4f21ac61799b1e40842684e371096150a",
+    "solution_source.png": "5397b1c4900cfaf522c8de9ae6329b5a91b6c243e73145c7dedb01fcbe29abb7"
+  },
+  "per_image": [
+    {
+      "image": "frame_main_before.png",
+      "status": "PASS_BITMAP",
+      "observations": "All main-dialog sections, legacy profile and bottom actions are visible; existing unconfirmed-section refusal is readable."
+    },
+    {
+      "image": "frame_main_selected.png",
+      "status": "PASS_BITMAP",
+      "observations": "Legacy profile is visibly disabled after explicit catalogue selection; catalogue calculation refusal and bottom actions are readable."
+    },
+    {
+      "image": "solution_blank.png",
+      "status": "PASS_BITMAP",
+      "observations": "Empty choices remain explicit; both field columns, explanatory text and footer actions are visible."
+    },
+    {
+      "image": "solution_filled.png",
+      "status": "PASS_BITMAP",
+      "observations": "Both field columns and all footer actions are visible; long execution labels are abbreviated within combo boxes and repeated in full in the source pane."
+    },
+    {
+      "image": "solution_large_font.png",
+      "status": "PASS_BITMAP",
+      "observations": "The complete 1024x728 window is visible. Both columns fit horizontally; all three footer actions and their labels are fully visible. Long content has a visible vertical scrollbar, and the red explanation wraps within its area."
+    },
+    {
+      "image": "solution_mismatch.png",
+      "status": "PASS_BITMAP",
+      "observations": "Catalogue-revision mismatch and required explicit reselection are readable; footer actions remain visible."
+    },
+    {
+      "image": "solution_readonly.png",
+      "status": "PASS_BITMAP",
+      "observations": "Read-only explanation is visible, apply and clear actions are disabled, and Close remains visible."
+    },
+    {
+      "image": "solution_small.png",
+      "status": "PASS_BITMAP",
+      "observations": "At 760x530, the content has a visible vertical scrollbar and all three footer actions remain fully visible."
+    },
+    {
+      "image": "solution_small_source.png",
+      "status": "PASS_BITMAP",
+      "observations": "The scrolled narrow-window source pane is readable with its own scrollbar; fixed footer actions remain visible."
+    },
+    {
+      "image": "solution_source.png",
+      "status": "PASS_BITMAP",
+      "observations": "Scrolled source pane displays provenance, full execution names and engineering limitations; fixed footer actions remain visible."
+    }
+  ],
+  "automated_result": {
+    "status": "PASS",
+    "checks": 919,
+    "failures": 0,
+    "not_sufficient_for_visual_acceptance": true
+  },
+  "findings": [],
+  "fixed_findings": [
+    {
+      "id": "UI-VIS-02",
+      "historical_review": "ui_visual_review_c6f362a.json",
+      "image": "solution_large_font.png",
+      "resolution": "Right-side controls and footer are now fully visible. Managed and native client dimensions agree at 1008x689; the 1024x728 outer window fits the reported 1024x728 working screen. Content extending vertically is reachable through the visible scrollbar.",
+      "reported_window": "{X=0,Y=0,Width=1024,Height=728}",
+      "reported_client": "{X=0,Y=0,Width=1008,Height=689}",
+      "native_window": "{X=0,Y=0,Width=1024,Height=728}",
+      "native_client": "{X=8,Y=31,Width=1008,Height=689}",
+      "reported_screen": "{X=0,Y=0,Width=1024,Height=728}",
+      "font_points": 12
+    }
+  ],
+  "live_autocad_checked": false,
+  "release_published": false,
+  "acceptance_boundary": "Native WinForms bitmap review of these ten captured scenarios only. No AutoCAD host, native DWG transactions, Undo, save/reopen or engineering approval."
+}

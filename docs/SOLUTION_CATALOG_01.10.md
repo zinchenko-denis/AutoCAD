@@ -233,3 +233,7 @@ vertical/ortho не подтверждена. Тип 5 и NordFOX не реал�
 Итоговые команды, хеши и оговорки —
 [verification_manifest.json](solution_catalog_0110/verification_manifest.json),
 публикация/CI — [github_publication.json](solution_catalog_0110/github_publication.json).
+
+<!-- solution-2b1-publication:start -->
+Проверенные исходники — **`84120347be0360d79fcbe6757a170d6411c08a3a`**, GitHub Actions `check` [36829687132](https://github.com/zinchenko-denis/AutoCAD/actions/runs/36829687132) — **success**. Основной код 2Б1 — `5bd1da7`; `44f747d` исправил переносимость теста CRLF/LF; `c6f362a` исправил первую проблему верстки, но независимый просмотр нашёл обрезание окна. Финальный `8412034` исправляет видимую область после масштабирования. Повторены 49/49 групп и компиляция 3/3. Восемь полных синтетик/ролей переиспользованы после точной сверки неизменных зависимостей; контракт 67 случаев и независимая сверка C#/Python 91 сохранены с исходной привязкой. Настоящие окна WinForms проверены в новом Windows CI и по всем десяти PNG; это не живая проверка AutoCAD. Последующее подтверждение меняет только документацию.
+<!-- solution-2b1-publication:end -->

@@ -1,0 +1,467 @@
+{
+  "status": "PASS",
+  "live_autocad_checked": false,
+  "source_sha256": {
+    "tools\\solution_catalog_0110\\SolutionUiProbe.cs": "3b8a205c4b6fe20b6b71d72129779c6bc5a0cf5b3f83edbe807a66db1a3aea71",
+    "AFrame\\src\\AFramePlugin\\FrameForm.cs": "9dccc67a0917906fb2e596cb29917733ec20ed0bbdbed32a98f69fe287502c03",
+    "AFrame\\src\\AFramePlugin\\FrameSettings.cs": "aed6df305bb08d553af4a8bf37212d318c9b3f5abc6e16834c005af23bc95b2b",
+    "AFrame\\src\\AFramePlugin\\FrameSolutionSelection.cs": "904914cc5aa3916d923fd9a2619b7fd4ad34c14b57174e7ddc8caa2ed3f5fada",
+    "AFrame\\src\\AFramePlugin\\FrameSolutionForm.cs": "63803ca72759af1d222bf693bebb94ca1afdc323177e3c80842f76492e078f57",
+    "tools\\solution_catalog_0110\\test_solution_ui.py": "7190b94679fac0404133ac20a48031bbc4c5eb2f376df4c097b73111bad4311e"
+  },
+  "ui": {
+    "status": "PASS",
+    "checks": 919,
+    "failures": 0,
+    "reasons": [],
+    "images": [
+      "solution_blank.png",
+      "solution_filled.png",
+      "solution_source.png",
+      "solution_readonly.png",
+      "solution_mismatch.png",
+      "solution_small.png",
+      "solution_small_source.png",
+      "solution_large_font.png",
+      "frame_main_before.png",
+      "frame_main_selected.png"
+    ],
+    "layouts": [
+      {
+        "scenario": "blank",
+        "window": "{X=10,Y=10,Width=916,Height=689}",
+        "client": "{X=0,Y=0,Width=900,Height=650}",
+        "native_window": "{X=10,Y=10,Width=916,Height=689}",
+        "native_client": "{X=18,Y=41,Width=900,Height=650}",
+        "screen": "{X=0,Y=0,Width=1024,Height=728}",
+        "font_points": 9,
+        "minimum_size": "{Width=760, Height=530}",
+        "controls": [
+          {
+            "type": "TableLayoutPanel",
+            "Name": "",
+            "bounds": "{X=0,Y=0,Width=900,Height=650}",
+            "parent_client": "{X=0,Y=0,Width=900,Height=650}"
+          },
+          {
+            "type": "TableLayoutPanel",
+            "Name": "",
+            "bounds": "{X=10,Y=10,Width=880,Height=84}",
+            "parent_client": "{X=0,Y=0,Width=900,Height=650}"
+          },
+          {
+            "type": "TableLayoutPanel",
+            "Name": "",
+            "bounds": "{X=0,Y=0,Width=863,Height=614}",
+            "parent_client": "{X=0,Y=0,Width=863,Height=448}"
+          },
+          {
+            "type": "TableLayoutPanel",
+            "Name": "",
+            "bounds": "{X=8,Y=36,Width=405,Height=116}",
+            "parent_client": "{X=0,Y=0,Width=421,Height=160}"
+          },
+          {
+            "type": "TableLayoutPanel",
+            "Name": "",
+            "bounds": "{X=8,Y=36,Width=406,Height=116}",
+            "parent_client": "{X=0,Y=0,Width=422,Height=160}"
+          },
+          {
+            "type": "TableLayoutPanel",
+            "Name": "",
+            "bounds": "{X=8,Y=36,Width=405,Height=160}",
+            "parent_client": "{X=0,Y=0,Width=421,Height=204}"
+          },
+          {
+            "type": "TableLayoutPanel",
+            "Name": "",
+            "bounds": "{X=8,Y=36,Width=406,Height=160}",
+            "parent_client": "{X=0,Y=0,Width=422,Height=204}"
+          },
+          {
+            "type": "TableLayoutPanel",
+            "Name": "",
+            "bounds": "{X=8,Y=36,Width=833,Height=182}",
+            "parent_client": "{X=0,Y=0,Width=849,Height=226}"
+          },
+          {
+            "type": "TableLayoutPanel",
+            "Name": "",
+            "bounds": "{X=10,Y=546,Width=880,Height=94}",
+            "parent_client": "{X=0,Y=0,Width=900,Height=650}"
+          },
+          {
+            "type": "Button",
+            "Name": "cancel_selection",
+            "bounds": "{X=776,Y=3,Width=95,Height=30}",
+            "parent_client": "{X=0,Y=0,Width=874,Height=32}"
+          },
+          {
+            "type": "Button",
+            "Name": "apply_selection",
+            "bounds": "{X=625,Y=3,Width=145,Height=30}",
+            "parent_client": "{X=0,Y=0,Width=874,Height=32}"
+          },
+          {
+            "type": "Button",
+            "Name": "clear_selection",
+            "bounds": "{X=444,Y=3,Width=175,Height=30}",
+            "parent_client": "{X=0,Y=0,Width=874,Height=32}"
+          }
+        ]
+      },
+      {
+        "scenario": "filled",
+        "window": "{X=10,Y=10,Width=916,Height=689}",
+        "client": "{X=0,Y=0,Width=900,Height=650}",
+        "native_window": "{X=10,Y=10,Width=916,Height=689}",
+        "native_client": "{X=18,Y=41,Width=900,Height=650}",
+        "screen": "{X=0,Y=0,Width=1024,Height=728}",
+        "font_points": 9,
+        "minimum_size": "{Width=760, Height=530}",
+        "controls": [
+          {
+            "type": "TableLayoutPanel",
+            "Name": "",
+            "bounds": "{X=0,Y=0,Width=900,Height=650}",
+            "parent_client": "{X=0,Y=0,Width=900,Height=650}"
+          },
+          {
+            "type": "TableLayoutPanel",
+            "Name": "",
+            "bounds": "{X=10,Y=10,Width=880,Height=84}",
+            "parent_client": "{X=0,Y=0,Width=900,Height=650}"
+          },
+          {
+            "type": "TableLayoutPanel",
+            "Name": "",
+            "bounds": "{X=0,Y=0,Width=863,Height=614}",
+            "parent_client": "{X=0,Y=0,Width=863,Height=448}"
+          },
+          {
+            "type": "TableLayoutPanel",
+            "Name": "",
+            "bounds": "{X=8,Y=36,Width=405,Height=116}",
+            "parent_client": "{X=0,Y=0,Width=421,Height=160}"
+          },
+          {
+            "type": "TableLayoutPanel",
+            "Name": "",
+            "bounds": "{X=8,Y=36,Width=406,Height=116}",
+            "parent_client": "{X=0,Y=0,Width=422,Height=160}"
+          },
+          {
+            "type": "TableLayoutPanel",
+            "Name": "",
+            "bounds": "{X=8,Y=36,Width=405,Height=160}",
+            "parent_client": "{X=0,Y=0,Width=421,Height=204}"
+          },
+          {
+            "type": "TableLayoutPanel",
+            "Name": "",
+            "bounds": "{X=8,Y=36,Width=406,Height=160}",
+            "parent_client": "{X=0,Y=0,Width=422,Height=204}"
+          },
+          {
+            "type": "TableLayoutPanel",
+            "Name": "",
+            "bounds": "{X=8,Y=36,Width=833,Height=182}",
+            "parent_client": "{X=0,Y=0,Width=849,Height=226}"
+          },
+          {
+            "type": "TableLayoutPanel",
+            "Name": "",
+            "bounds": "{X=10,Y=546,Width=880,Height=94}",
+            "parent_client": "{X=0,Y=0,Width=900,Height=650}"
+          },
+          {
+            "type": "Button",
+            "Name": "cancel_selection",
+            "bounds": "{X=776,Y=3,Width=95,Height=30}",
+            "parent_client": "{X=0,Y=0,Width=874,Height=32}"
+          },
+          {
+            "type": "Button",
+            "Name": "apply_selection",
+            "bounds": "{X=625,Y=3,Width=145,Height=30}",
+            "parent_client": "{X=0,Y=0,Width=874,Height=32}"
+          },
+          {
+            "type": "Button",
+            "Name": "clear_selection",
+            "bounds": "{X=444,Y=3,Width=175,Height=30}",
+            "parent_client": "{X=0,Y=0,Width=874,Height=32}"
+          }
+        ]
+      },
+      {
+        "scenario": "readonly",
+        "window": "{X=10,Y=10,Width=916,Height=689}",
+        "client": "{X=0,Y=0,Width=900,Height=650}",
+        "native_window": "{X=10,Y=10,Width=916,Height=689}",
+        "native_client": "{X=18,Y=41,Width=900,Height=650}",
+        "screen": "{X=0,Y=0,Width=1024,Height=728}",
+        "font_points": 9,
+        "minimum_size": "{Width=760, Height=530}",
+        "controls": [
+          {
+            "type": "TableLayoutPanel",
+            "Name": "",
+            "bounds": "{X=0,Y=0,Width=900,Height=650}",
+            "parent_client": "{X=0,Y=0,Width=900,Height=650}"
+          },
+          {
+            "type": "TableLayoutPanel",
+            "Name": "",
+            "bounds": "{X=10,Y=10,Width=880,Height=84}",
+            "parent_client": "{X=0,Y=0,Width=900,Height=650}"
+          },
+          {
+            "type": "TableLayoutPanel",
+            "Name": "",
+            "bounds": "{X=0,Y=0,Width=863,Height=614}",
+            "parent_client": "{X=0,Y=0,Width=863,Height=448}"
+          },
+          {
+            "type": "TableLayoutPanel",
+            "Name": "",
+            "bounds": "{X=8,Y=36,Width=405,Height=116}",
+            "parent_client": "{X=0,Y=0,Width=421,Height=160}"
+          },
+          {
+            "type": "TableLayoutPanel",
+            "Name": "",
+            "bounds": "{X=8,Y=36,Width=406,Height=116}",
+            "parent_client": "{X=0,Y=0,Width=422,Height=160}"
+          },
+          {
+            "type": "TableLayoutPanel",
+            "Name": "",
+            "bounds": "{X=8,Y=36,Width=405,Height=160}",
+            "parent_client": "{X=0,Y=0,Width=421,Height=204}"
+          },
+          {
+            "type": "TableLayoutPanel",
+            "Name": "",
+            "bounds": "{X=8,Y=36,Width=406,Height=160}",
+            "parent_client": "{X=0,Y=0,Width=422,Height=204}"
+          },
+          {
+            "type": "TableLayoutPanel",
+            "Name": "",
+            "bounds": "{X=8,Y=36,Width=833,Height=182}",
+            "parent_client": "{X=0,Y=0,Width=849,Height=226}"
+          },
+          {
+            "type": "TableLayoutPanel",
+            "Name": "",
+            "bounds": "{X=10,Y=546,Width=880,Height=94}",
+            "parent_client": "{X=0,Y=0,Width=900,Height=650}"
+          },
+          {
+            "type": "Button",
+            "Name": "cancel_selection",
+            "bounds": "{X=776,Y=3,Width=95,Height=30}",
+            "parent_client": "{X=0,Y=0,Width=874,Height=32}"
+          },
+          {
+            "type": "Button",
+            "Name": "apply_selection",
+            "bounds": "{X=625,Y=3,Width=145,Height=30}",
+            "parent_client": "{X=0,Y=0,Width=874,Height=32}"
+          },
+          {
+            "type": "Button",
+            "Name": "clear_selection",
+            "bounds": "{X=444,Y=3,Width=175,Height=30}",
+            "parent_client": "{X=0,Y=0,Width=874,Height=32}"
+          }
+        ]
+      },
+      {
+        "scenario": "small",
+        "window": "{X=10,Y=10,Width=760,Height=530}",
+        "client": "{X=0,Y=0,Width=744,Height=491}",
+        "native_window": "{X=10,Y=10,Width=760,Height=530}",
+        "native_client": "{X=18,Y=41,Width=744,Height=491}",
+        "screen": "{X=0,Y=0,Width=1024,Height=728}",
+        "font_points": 9,
+        "minimum_size": "{Width=760, Height=530}",
+        "controls": [
+          {
+            "type": "TableLayoutPanel",
+            "Name": "",
+            "bounds": "{X=0,Y=0,Width=744,Height=491}",
+            "parent_client": "{X=0,Y=0,Width=744,Height=491}"
+          },
+          {
+            "type": "TableLayoutPanel",
+            "Name": "",
+            "bounds": "{X=10,Y=10,Width=724,Height=84}",
+            "parent_client": "{X=0,Y=0,Width=744,Height=491}"
+          },
+          {
+            "type": "TableLayoutPanel",
+            "Name": "",
+            "bounds": "{X=0,Y=0,Width=707,Height=614}",
+            "parent_client": "{X=0,Y=0,Width=707,Height=289}"
+          },
+          {
+            "type": "TableLayoutPanel",
+            "Name": "",
+            "bounds": "{X=8,Y=36,Width=327,Height=116}",
+            "parent_client": "{X=0,Y=0,Width=343,Height=160}"
+          },
+          {
+            "type": "TableLayoutPanel",
+            "Name": "",
+            "bounds": "{X=8,Y=36,Width=328,Height=116}",
+            "parent_client": "{X=0,Y=0,Width=344,Height=160}"
+          },
+          {
+            "type": "TableLayoutPanel",
+            "Name": "",
+            "bounds": "{X=8,Y=36,Width=327,Height=160}",
+            "parent_client": "{X=0,Y=0,Width=343,Height=204}"
+          },
+          {
+            "type": "TableLayoutPanel",
+            "Name": "",
+            "bounds": "{X=8,Y=36,Width=328,Height=160}",
+            "parent_client": "{X=0,Y=0,Width=344,Height=204}"
+          },
+          {
+            "type": "TableLayoutPanel",
+            "Name": "",
+            "bounds": "{X=8,Y=36,Width=677,Height=182}",
+            "parent_client": "{X=0,Y=0,Width=693,Height=226}"
+          },
+          {
+            "type": "TableLayoutPanel",
+            "Name": "",
+            "bounds": "{X=10,Y=387,Width=724,Height=94}",
+            "parent_client": "{X=0,Y=0,Width=744,Height=491}"
+          },
+          {
+            "type": "Button",
+            "Name": "cancel_selection",
+            "bounds": "{X=620,Y=3,Width=95,Height=30}",
+            "parent_client": "{X=0,Y=0,Width=718,Height=32}"
+          },
+          {
+            "type": "Button",
+            "Name": "apply_selection",
+            "bounds": "{X=469,Y=3,Width=145,Height=30}",
+            "parent_client": "{X=0,Y=0,Width=718,Height=32}"
+          },
+          {
+            "type": "Button",
+            "Name": "clear_selection",
+            "bounds": "{X=288,Y=3,Width=175,Height=30}",
+            "parent_client": "{X=0,Y=0,Width=718,Height=32}"
+          }
+        ]
+      },
+      {
+        "scenario": "large_font",
+        "window": "{X=0,Y=0,Width=1024,Height=728}",
+        "client": "{X=0,Y=0,Width=1008,Height=689}",
+        "native_window": "{X=0,Y=0,Width=1024,Height=728}",
+        "native_client": "{X=8,Y=31,Width=1008,Height=689}",
+        "screen": "{X=0,Y=0,Width=1024,Height=728}",
+        "font_points": 12,
+        "minimum_size": "{Width=973, Height=726}",
+        "controls": [
+          {
+            "type": "TableLayoutPanel",
+            "Name": "",
+            "bounds": "{X=0,Y=0,Width=1008,Height=689}",
+            "parent_client": "{X=0,Y=0,Width=1008,Height=689}"
+          },
+          {
+            "type": "TableLayoutPanel",
+            "Name": "",
+            "bounds": "{X=13,Y=14,Width=982,Height=118}",
+            "parent_client": "{X=0,Y=0,Width=1008,Height=689}"
+          },
+          {
+            "type": "TableLayoutPanel",
+            "Name": "",
+            "bounds": "{X=0,Y=0,Width=965,Height=845}",
+            "parent_client": "{X=0,Y=0,Width=965,Height=405}"
+          },
+          {
+            "type": "TableLayoutPanel",
+            "Name": "",
+            "bounds": "{X=10,Y=50,Width=449,Height=160}",
+            "parent_client": "{X=0,Y=0,Width=469,Height=221}"
+          },
+          {
+            "type": "TableLayoutPanel",
+            "Name": "",
+            "bounds": "{X=10,Y=50,Width=450,Height=160}",
+            "parent_client": "{X=0,Y=0,Width=470,Height=221}"
+          },
+          {
+            "type": "TableLayoutPanel",
+            "Name": "",
+            "bounds": "{X=10,Y=50,Width=449,Height=216}",
+            "parent_client": "{X=0,Y=0,Width=469,Height=277}"
+          },
+          {
+            "type": "TableLayoutPanel",
+            "Name": "",
+            "bounds": "{X=10,Y=50,Width=450,Height=216}",
+            "parent_client": "{X=0,Y=0,Width=470,Height=277}"
+          },
+          {
+            "type": "TableLayoutPanel",
+            "Name": "",
+            "bounds": "{X=10,Y=50,Width=927,Height=253}",
+            "parent_client": "{X=0,Y=0,Width=947,Height=314}"
+          },
+          {
+            "type": "TableLayoutPanel",
+            "Name": "",
+            "bounds": "{X=13,Y=543,Width=982,Height=132}",
+            "parent_client": "{X=0,Y=0,Width=1008,Height=689}"
+          },
+          {
+            "type": "Button",
+            "Name": "cancel_selection",
+            "bounds": "{X=848,Y=4,Width=122,Height=42}",
+            "parent_client": "{X=0,Y=0,Width=974,Height=45}"
+          },
+          {
+            "type": "Button",
+            "Name": "apply_selection",
+            "bounds": "{X=654,Y=4,Width=186,Height=42}",
+            "parent_client": "{X=0,Y=0,Width=974,Height=45}"
+          },
+          {
+            "type": "Button",
+            "Name": "clear_selection",
+            "bounds": "{X=421,Y=4,Width=225,Height=42}",
+            "parent_client": "{X=0,Y=0,Width=974,Height=45}"
+          }
+        ]
+      }
+    ],
+    "runtime": "Microsoft Windows NT 6.2.9200.0",
+    "live_autocad_checked": false,
+    "scope": "Actual WinForms dialogs, controls, modal apply/cancel, read-only mode, font scaling and bitmap rendering; no AutoCAD host"
+  },
+  "rendered_sha256": {
+    "frame_main_before.png": "4ac9745e227e590a09a0360d73cb4f0ed774345b1f64902c677070acd299f1bf",
+    "frame_main_selected.png": "3f4e52d9fd625d309adca666ef0ca24a18064239c4430120cd6a4bae1b917526",
+    "solution_blank.png": "70b06a76ef4bc47c6e738e5075727ad65d745d7423a5ca282170e23d82f923b7",
+    "solution_filled.png": "00d58cb783b66938e053ffa2aaa85f6e4ce0d0c5c626c52f9c325c0d11399f05",
+    "solution_large_font.png": "cb394ca856a01b05d90dfa74253955302ae9d32c6475fecf69f1b4b0a7a6c6d7",
+    "solution_mismatch.png": "3e3339c533d6555e7c82484d2c60ae27b87d19d2fb533c2bf1546d6ab552c062",
+    "solution_readonly.png": "a41cba327b7a433b81f7c6bdc19b42c532f3c2f5fbca9938562682db8fb0fbc6",
+    "solution_small.png": "2ee75f717faaee508aae5fbdcd04717f87c02a7883bd3439f778be04081023a3",
+    "solution_small_source.png": "24a34e4bcc0e2ba381ded8f6f314c3d4f21ac61799b1e40842684e371096150a",
+    "solution_source.png": "5397b1c4900cfaf522c8de9ae6329b5a91b6c243e73145c7dedb01fcbe29abb7"
+  }
+}

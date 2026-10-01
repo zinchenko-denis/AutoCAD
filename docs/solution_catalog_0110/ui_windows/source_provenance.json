@@ -1,0 +1,54 @@
+{
+  "status": "PASS",
+  "commit": "84120347be0360d79fcbe6757a170d6411c08a3a",
+  "run_id": 36829687132,
+  "artifact_id": 11146098464,
+  "artifact_sha256": "7c3c7a4727f7c01a47d12fe8a3993c35f74c993ec15dad02607b6b616a6c2a7d",
+  "artifact_metadata_evidence_sha256": "66890330b26c0c5489fd18550a84d29d89a699e71966bebbeb0086f5d5576799",
+  "sources": [
+    {
+      "path": "AFrame/src/AFramePlugin/FrameForm.cs",
+      "checkout_sha256": "9dccc67a0917906fb2e596cb29917733ec20ed0bbdbed32a98f69fe287502c03",
+      "committed_sha256": "eb2f9ac9ba5a9a4577d99bc7db1a2e28ef8540e04c1129463c33d0279cb3181c",
+      "repository_sha256": "eb2f9ac9ba5a9a4577d99bc7db1a2e28ef8540e04c1129463c33d0279cb3181c",
+      "comparison": "git_crlf_checkout_only"
+    },
+    {
+      "path": "AFrame/src/AFramePlugin/FrameSettings.cs",
+      "checkout_sha256": "aed6df305bb08d553af4a8bf37212d318c9b3f5abc6e16834c005af23bc95b2b",
+      "committed_sha256": "f76eb206dcbc97977015865ec88edaaf9311c1769573f801e839f21ed4fb95c4",
+      "repository_sha256": "f76eb206dcbc97977015865ec88edaaf9311c1769573f801e839f21ed4fb95c4",
+      "comparison": "git_crlf_checkout_only"
+    },
+    {
+      "path": "AFrame/src/AFramePlugin/FrameSolutionForm.cs",
+      "checkout_sha256": "63803ca72759af1d222bf693bebb94ca1afdc323177e3c80842f76492e078f57",
+      "committed_sha256": "41d988f2368ef508678ed6963f5ea7e0a268a49f81eb0248750f6479308f5aad",
+      "repository_sha256": "41d988f2368ef508678ed6963f5ea7e0a268a49f81eb0248750f6479308f5aad",
+      "comparison": "git_crlf_checkout_only"
+    },
+    {
+      "path": "AFrame/src/AFramePlugin/FrameSolutionSelection.cs",
+      "checkout_sha256": "904914cc5aa3916d923fd9a2619b7fd4ad34c14b57174e7ddc8caa2ed3f5fada",
+      "committed_sha256": "59e20979aff3c3628c44d44715bb275069672f35bacd1ee454fb759e596f804a",
+      "repository_sha256": "59e20979aff3c3628c44d44715bb275069672f35bacd1ee454fb759e596f804a",
+      "comparison": "git_crlf_checkout_only"
+    },
+    {
+      "path": "tools/solution_catalog_0110/SolutionUiProbe.cs",
+      "checkout_sha256": "3b8a205c4b6fe20b6b71d72129779c6bc5a0cf5b3f83edbe807a66db1a3aea71",
+      "committed_sha256": "dfb6e30dc76869b703d3dc8ae13c136bb2373a76d8fd489193bdcc612af8a809",
+      "repository_sha256": "dfb6e30dc76869b703d3dc8ae13c136bb2373a76d8fd489193bdcc612af8a809",
+      "comparison": "git_crlf_checkout_only"
+    },
+    {
+      "path": "tools/solution_catalog_0110/test_solution_ui.py",
+      "checkout_sha256": "7190b94679fac0404133ac20a48031bbc4c5eb2f376df4c097b73111bad4311e",
+      "committed_sha256": "10017015ddb6ba11312df95f4169dea44c7ca28fce6ecb7292118d2eacbc9136",
+      "repository_sha256": "10017015ddb6ba11312df95f4169dea44c7ca28fce6ecb7292118d2eacbc9136",
+      "comparison": "git_crlf_checkout_only"
+    }
+  ],
+  "source_comparison": "Committed tree bytes; exact or only Git CRLF/LF conversion in Windows checkout",
+  "live_autocad_checked": false
+}
