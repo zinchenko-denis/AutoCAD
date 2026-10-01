@@ -1,5 +1,9 @@
 # Указатель хронологии (генерируется: `tools/make_chronology.py`)
 
+<!-- table-lifecycle-index:start -->
+Текущее продолжение 01.10: [командный цикл ведомостей](TABLE_COMMAND_LIFECYCLE_01.10.md), [протоколы](table_lifecycle_0110/), [промт](SESSION_PROMPT_AFTER_TABLE_LIFECYCLE_01.10.md). Продолжение от `16c7307ce42715721ee7835d2dc90955e2229781`: локальные проверки и независимая ревизия завершены. Новый Windows CI ожидается после публикации; прежний №217 не относится к новым исходникам.
+<!-- table-lifecycle-index:end -->
+
 <!-- limited-pilot-index:start -->
 Текущее продолжение01.10: [ограниченный проход П1/П5](LIMITED_PILOT_ACCEPTANCE_01.10.md), [протоколы](limited_pilot_0110/), [промт](SESSION_PROMPT_AFTER_LIMITED_PILOT_01.10.md). Проверенный продукт и стенд **`4edc342f3a8cd6a7cde196d37a440fc6e134972d`**, Windows **[check №217](https://github.com/zinchenko-denis/AutoCAD/actions/runs/36905143903) — success**. Архив нового сценария, входные хеши и результаты сверены с Git; подробности — `docs/limited_pilot_0110/github_publication.json`. Последующий коммит передачи меняет только документацию.
 <!-- limited-pilot-index:end -->

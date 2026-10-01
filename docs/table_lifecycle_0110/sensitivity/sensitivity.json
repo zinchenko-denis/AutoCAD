@@ -1,0 +1,19 @@
+{
+  "status": "PASS",
+  "expected_failure": true,
+  "returncode": 1,
+  "exact_failure_assertion": "actual new table UCS placement matches expected fixed",
+  "old_command_sha256": "198cb83d4fb7c99cc24da4fba81c6cf4c6c14d20d34b320b2da57b72f4fde922",
+  "runner_sha256": "1ebb6ccc34bbcdc20c19267e07a2c8018a605b92c16304cf561bae163c965d72",
+  "probe_sha256": "28bf62ea19572b9586b7d2caa914c7262bb028007979fc09adfcd8c9e54d9eb2",
+  "command": [
+    "python",
+    "tools/table_lifecycle_0110/run_lifecycle.py",
+    "--out",
+    "/workspace/scratch/58a6cc5ac740/table_lifecycle/sensitivity_verified",
+    "--command-source",
+    "/workspace/scratch/58a6cc5ac740/table_lifecycle/before_first/command_source.cs",
+    "--expect",
+    "fixed"
+  ]
+}

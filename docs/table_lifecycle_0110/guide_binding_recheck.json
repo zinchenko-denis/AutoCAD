@@ -1,0 +1,17 @@
+{
+  "verification": "PASS",
+  "protocol": "docs/table_lifecycle_0110/guide_applicability.json",
+  "protocol_sha256": "585895b3ed899d3cf6f88bd5d5b63e38ace4518b7f947b11add631eb3d7d9217",
+  "manual_files_verified": 3,
+  "product_inputs_verified": 111,
+  "reviewed_product_changes": [
+    {
+      "path": "Facades/src/AFacadesPlugin/FacadeQuantityTableCommand.cs",
+      "baseline_sha256": "198cb83d4fb7c99cc24da4fba81c6cf4c6c14d20d34b320b2da57b72f4fde922",
+      "reviewed_sha256": "08ba2ef01f32293956380d2c4842d46ff1dae2b7aa860df7ed0c7d4435f85e38"
+    }
+  ],
+  "tutorial_assets_verified": 14,
+  "docx_rebuilt": false,
+  "new_visual_review_claimed": false
+}

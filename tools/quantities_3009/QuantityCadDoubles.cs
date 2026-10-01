@@ -36,7 +36,7 @@ namespace Autodesk.AutoCAD.Geometry
         public Point2d(double x, double y) { X = x; Y = y; }
         public double GetDistanceTo(Point2d p) { return Math.Sqrt((X-p.X)*(X-p.X)+(Y-p.Y)*(Y-p.Y)); }
     }
-    public struct Point3d
+    public partial struct Point3d
     {
         public double X, Y, Z;
         public Point3d(double x, double y, double z) { X=x; Y=y; Z=z; }
@@ -45,7 +45,7 @@ namespace Autodesk.AutoCAD.Geometry
     }
     // Explicit planar affine transform for the manual-import fixture geometry.
     // No dynamic-block evaluation or AutoCAD regeneration is simulated.
-    public struct Matrix3d
+    public partial struct Matrix3d
     {
         private readonly Point3d position, origin;
         private readonly Scale3d scale;
@@ -154,7 +154,7 @@ namespace Autodesk.AutoCAD.DatabaseServices
         public Autodesk.AutoCAD.Colors.Color Color = new Autodesk.AutoCAD.Colors.Color();
         public void CreateExtensionDictionary() { ExtensionDictionary = Database.Add(new DBDictionary()).ObjectId; }
     }
-    public class Database
+    public partial class Database
     {
         public Guid FingerprintGuid = Guid.NewGuid();
         private ObjectId namedObjectsDictionaryId, blockTableId;
@@ -240,11 +240,12 @@ namespace Autodesk.AutoCAD.DatabaseServices
         IEnumerator IEnumerable.GetEnumerator() { return GetEnumerator(); }
         public void Dispose() { }
     }
-    public class Xrecord : DBObject { private ResultBuffer data;
-        public ResultBuffer Data { get { CadCounters.XrecordReads++; return data; } set { CadCounters.XrecordWrites++; data=value; } }
+    public partial class Xrecord : DBObject { private ResultBuffer data;
+        partial void AfterRead();
+        public ResultBuffer Data { get { CadCounters.XrecordReads++; AfterRead(); return data; } set { CadCounters.XrecordWrites++; data=value; } }
         public bool XlateReferences; }
     public class LayerTableRecord : DBObject { public Autodesk.AutoCAD.Colors.Color Color = new Autodesk.AutoCAD.Colors.Color(); }
-    public class Table : Entity { }
+    public partial class Table : Entity { }
     public class Line : Entity { public Point3d StartPoint, EndPoint; public double Thickness; public Vector3d Normal = Vector3d.ZAxis; }
     public class Circle : Entity { public Point3d Center; public double Radius, Thickness; public Vector3d Normal = Vector3d.ZAxis; }
     public class Arc : Entity { public Point3d Center; public double Radius, StartAngle, EndAngle, Thickness; public Vector3d Normal = Vector3d.ZAxis; }
@@ -267,7 +268,7 @@ namespace Autodesk.AutoCAD.DatabaseServices
         public string Name;
         public Point3d Origin;
         public readonly List<ObjectId> Children = new List<ObjectId>();
-        public ObjectId AppendEntity(Entity entity) { Database.Add(entity); Children.Add(entity.ObjectId); return entity.ObjectId; }
+        public ObjectId AppendEntity(Entity entity) { Database.Add(entity); if (!Children.Contains(entity.ObjectId)) Children.Add(entity.ObjectId); return entity.ObjectId; }
         public IEnumerator<ObjectId> GetEnumerator() {
             foreach(var child in Children) { if (Name == ModelSpace) CadCounters.ModelSpaceVisits++; yield return child; }
         }

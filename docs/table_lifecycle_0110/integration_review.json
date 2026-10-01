@@ -1,0 +1,18 @@
+{
+  "schema": "table_lifecycle_integration_review/1",
+  "baseline": "16c7307ce42715721ee7835d2dc90955e2229781",
+  "status": "PASS",
+  "previous_mandatory_groups": 58,
+  "current_mandatory_groups": 59,
+  "previous_jobs_unchanged": true,
+  "prior_workflow_steps_unchanged": true,
+  "new_group": "table_command_lifecycle",
+  "new_ci_artifact": "table-command-lifecycle",
+  "step_timeout_minutes": 5,
+  "execution": "PASS_59_OF_59_AND_COMPILE_3_OF_3",
+  "source_sha256": {
+    "tools/atr_review_3009/run_checks.py": "60ba027c9172ebf0e136159263fb83f46c6281f4798a73312e96af0e2105966d",
+    ".github/workflows/check.yml": "fbf9cc99981a40ce157b9a533032a666b22afdf4b172ebcb0eafb8df8c62ac09"
+  },
+  "source_files_stable": 249
+}

@@ -1,0 +1,259 @@
+{
+  "ok": true,
+  "pieces": [
+    {
+      "i": -1,
+      "j": 0,
+      "type": "Керамогранит 600×600",
+      "full": true,
+      "x": 610.0,
+      "y": 0.0,
+      "w": 600.0,
+      "h": 600.0,
+      "rect": true,
+      "tiny": false,
+      "area": 360000.0,
+      "small": false,
+      "zone": "П-2"
+    },
+    {
+      "i": 0,
+      "j": 0,
+      "type": "Керамогранит 600×600",
+      "full": true,
+      "x": 0.0,
+      "y": 0.0,
+      "w": 600.0,
+      "h": 600.0,
+      "rect": true,
+      "tiny": false,
+      "area": 360000.0,
+      "small": false,
+      "zone": "П-2"
+    },
+    {
+      "i": -1,
+      "j": 1,
+      "type": "Керамогранит 600×600",
+      "full": true,
+      "x": 610.0,
+      "y": 610.0,
+      "w": 600.0,
+      "h": 600.0,
+      "rect": true,
+      "tiny": false,
+      "area": 360000.0,
+      "small": false,
+      "zone": "П-2"
+    },
+    {
+      "i": 0,
+      "j": 1,
+      "type": "Керамогранит 600×600",
+      "full": true,
+      "x": 0.0,
+      "y": 610.0,
+      "w": 600.0,
+      "h": 600.0,
+      "rect": true,
+      "tiny": false,
+      "area": 360000.0,
+      "small": false,
+      "zone": "П-2"
+    },
+    {
+      "i": -1,
+      "j": 2,
+      "type": "Керамогранит 600×600",
+      "full": true,
+      "x": 610.0,
+      "y": 1220.0,
+      "w": 600.0,
+      "h": 600.0,
+      "rect": true,
+      "tiny": false,
+      "area": 360000.0,
+      "small": false,
+      "zone": "П-2"
+    },
+    {
+      "i": 0,
+      "j": 2,
+      "type": "Керамогранит 600×600",
+      "full": true,
+      "x": 0.0,
+      "y": 1220.0,
+      "w": 600.0,
+      "h": 600.0,
+      "rect": true,
+      "tiny": false,
+      "area": 360000.0,
+      "small": false,
+      "zone": "П-2"
+    }
+  ],
+  "per_zone": [
+    {
+      "zone_id": "П-2",
+      "members": [
+        "П-2"
+      ],
+      "datum": {
+        "x": 600.0,
+        "y": 0.0
+      },
+      "origin": {
+        "x": 0.0,
+        "y": 0.0
+      },
+      "area_zone": 2202200.0,
+      "area_tiles": 2160000.0,
+      "full": 6,
+      "cut": 0,
+      "tiny": 0,
+      "small": 0,
+      "trimmed": {
+        "count": 0,
+        "area": 0.0
+      },
+      "absorbed": {
+        "count": 0,
+        "area": 0.0
+      },
+      "blanks_cut": 0,
+      "by_type": {
+        "Керамогранит 600×600": {
+          "full": 6,
+          "cut": 0,
+          "tiny": 0,
+          "half": 0,
+          "area": 2160000.0,
+          "area_cut": 0.0,
+          "kinds": {},
+          "small": 0,
+          "blanks_cut": 0,
+          "blanks_by_kind": {
+            "по ширине": 0,
+            "по высоте": 0,
+            "фигурные": 0
+          },
+          "tiles_total": 6,
+          "area_blanks": 2160000.0,
+          "waste_area": 0.0
+        }
+      },
+      "joints_x": [
+        605.0
+      ],
+      "rows_y": [
+        605.0,
+        1215.0
+      ],
+      "forced": null
+    }
+  ],
+  "summary": {
+    "zones": 1,
+    "full": 6,
+    "cut": 0,
+    "tiny": 0,
+    "small": 0,
+    "absorbed": {
+      "count": 0,
+      "area": 0.0
+    },
+    "trimmed": {
+      "count": 0,
+      "area": 0.0
+    },
+    "blanks_cut": 0,
+    "tiles_total": 6,
+    "tiles_by_area": 6,
+    "waste_area": 0.0,
+    "area_zones": 2202200.0,
+    "area_tiles": 2160000.0,
+    "by_type": {
+      "Керамогранит 600×600": {
+        "full": 6,
+        "cut": 0,
+        "tiny": 0,
+        "half": 0,
+        "area": 2160000.0,
+        "area_cut": 0.0,
+        "kinds": {},
+        "blanks_cut": 0,
+        "blanks_by_kind": {
+          "по ширине": 0,
+          "по высоте": 0,
+          "фигурные": 0
+        },
+        "small": 0,
+        "tiles_total": 6,
+        "area_blanks": 2160000.0,
+        "waste_area": 0.0,
+        "waste_pct": 0.0,
+        "tiles_by_area": 6,
+        "blanks": 6
+      }
+    },
+    "tile": {
+      "w": 600.0,
+      "h": 600.0
+    },
+    "gap": {
+      "v": 10.0,
+      "h": 10.0
+    },
+    "module": {
+      "x": 610.0,
+      "y": 610.0
+    },
+    "half_w": null,
+    "kerf": 3.0,
+    "min_piece": 10.0,
+    "tiny_mode": "absorb",
+    "datum_mode": "bbox",
+    "pattern": {
+      "rows": [
+        [
+          "Керамогранит 600×600"
+        ],
+        [
+          "Керамогранит 600×600"
+        ]
+      ],
+      "row_shifts": [
+        0.0
+      ]
+    },
+    "axis": "rows",
+    "bond": {
+      "kind": "none",
+      "dir": "+",
+      "units": "frac",
+      "period": 1,
+      "shifts": [
+        0.0
+      ],
+      "phases": [
+        0.0
+      ],
+      "module": 610.0,
+      "text": "без смещения — швы в линию (шов в шов)"
+    },
+    "anchor": {
+      "h": "L",
+      "v": "B",
+      "center": "tile",
+      "ref": "bbox"
+    },
+    "gap_around": false,
+    "shaped": "keep",
+    "warn_cut": 30.0,
+    "joint_axes_per_module": 1,
+    "blanks": 6,
+    "area_blanks": 2160000.0,
+    "waste_pct": 0.0
+  },
+  "notes": []
+}

@@ -1,0 +1,10 @@
+{
+  "status": "PASS",
+  "checks": 1275,
+  "source_hashes_match_current": true,
+  "saved_subset": [
+    "base_1275_manifest.json"
+  ],
+  "not_copied": "Repeated base run artifacts remain outside this receipt; the full same-base payload is bound in before/ and after/. This is a compatibility receipt, not a complete second artifact bundle.",
+  "manifest_sha256": "12f71b982243adbac45b0e0c084e50f0db1956b66e374c304cacbd83344647b5"
+}

@@ -1,0 +1,17 @@
+{
+  "schema": "table_command_lifecycle_oracle/1",
+  "baseline_commit": "16c7307ce42715721ee7835d2dc90955e2229781",
+  "scope": "Same two-zone managed pilot; independent position arithmetic and quantity expectations. No live AutoCAD claim.",
+  "coordinate_formula": "WCS=(ox+x*cos(a)-y*sin(a), oy+x*sin(a)+y*cos(a), oz+z), unit scale",
+  "position_cases": [
+    {"name": "identity", "origin": [0,0,0], "rotation_degrees": 0, "picked_ucs": [3,4,0], "expected_wcs": [3,4,0]},
+    {"name": "translated", "origin": [100,200,0], "rotation_degrees": 0, "picked_ucs": [3,4,0], "expected_wcs": [103,204,0]},
+    {"name": "translated_rotated", "origin": [100,200,0], "rotation_degrees": 90, "picked_ucs": [3,4,0], "expected_wcs": [96,203,0]}
+  ],
+  "existing_table": {"position_basis": "WCS", "update_retransforms_position": false, "update_requests_new_point": false},
+  "quantity_expected": {"zones": 2, "tiles": 12, "installed_tile_area_m2": 4.32, "rails": 2, "rail_length_m": 3.64, "brackets": 6, "candidate_support_links": 6},
+  "new_table_refusals": ["Cancel during point prompt", "UCS changes during point prompt", "UCS changes after point before first CAD write", "Sources change after preview"],
+  "update_refusals": ["Cancel second preview", "Saved target identity metadata changes after preview", "Wrong view or kind of target", "Sources change after preview"],
+  "engineering": {"physical_assignment": "not_asserted", "mounting": "not_confirmed", "automatic_bracket_selection_allowed": false, "full_2V": "BLOCKED", "calculation_3A": "BLOCKED"},
+  "native_host": {"DWG_save_reopen": "NOT_RUN", "native_COPY_SaveAs": "NOT_RUN", "CAD_rollback_Undo": "NOT_RUN", "UCS_DUCS": "NOT_RUN"}
+}

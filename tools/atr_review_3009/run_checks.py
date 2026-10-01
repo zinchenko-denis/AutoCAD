@@ -98,6 +98,8 @@ def main():
                                           '--out', str(out / 'limited_pilot_acceptance')]),
         ('frame_axis_cancel', '.', ['tools/limited_pilot_0110/test_axis_cancel.py',
                                    '--out', str(out / 'frame_axis_cancel')]),
+        ('table_command_lifecycle', '.', ['tools/table_lifecycle_0110/run_lifecycle.py',
+                                         '--out', str(out / 'table_command_lifecycle')]),
         ('project_parameters_core', '.', ['tools/project_params_0110/test_core.py',
                                          '--out', str(out / 'project_parameters_core')]),
         ('project_parameters_store', '.', ['tools/project_params_0110/test_store_contract.py',

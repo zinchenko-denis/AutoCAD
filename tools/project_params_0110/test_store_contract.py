@@ -43,9 +43,9 @@ def run_quantity_contract(out, local, production):
     assert original_doubles.count(counters) == 1
     adapted = original_doubles.replace(counters, counters + '\n    public static Autodesk.AutoCAD.DatabaseServices.ObjectId WatchedXrecord;\n    public static int WatchedXrecordReads;')
     adapted = adapted.replace('public static void Reset() {', 'public static void Reset() {\n        WatchedXrecordReads = 0;')
-    getter = 'get { CadCounters.XrecordReads++; return data; }'
+    getter = 'get { CadCounters.XrecordReads++; AfterRead(); return data; }'
     assert adapted.count(getter) == 1
-    adapted = adapted.replace(getter, 'get { CadCounters.XrecordReads++; if (ObjectId == CadCounters.WatchedXrecord) CadCounters.WatchedXrecordReads++; return data; }')
+    adapted = adapted.replace(getter, 'get { CadCounters.XrecordReads++; AfterRead(); if (ObjectId == CadCounters.WatchedXrecord) CadCounters.WatchedXrecordReads++; return data; }')
     doubles = out / 'QuantityCadDoublesWatched.cs'; doubles.write_text(adapted, encoding='utf-8')
     helper_text = (ROOT / 'tools/quantities_3009/QuantityStoreCheck.cs').read_text(encoding='utf-8')
     fixture_source = helper_text[:helper_text.index('    private static void Shift(')] + '\n}\n'

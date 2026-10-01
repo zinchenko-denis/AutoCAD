@@ -1,0 +1,134 @@
+{
+  "status": "PASS",
+  "scope": "Same synthetic managed inputs; actual command counters captured before any test inspection. Live AutoCAD speed not measured.",
+  "source_objects_and_scans_unchanged": true,
+  "text_volume_note": "Run GUIDs differ; compressed persisted reports have slightly different text volume. These differences are retained, not normalized away.",
+  "cases": [
+    {
+      "case": "initial_cladding",
+      "before_editor_ucs_reads": 0,
+      "after_editor_ucs_reads": 3,
+      "source_get_object_reads": 250,
+      "modelspace_visits": 52,
+      "all_non_text_volume_counters_equal": true,
+      "differences": {
+        "buffer_text_chars": {
+          "before": 39150,
+          "after": 39142
+        }
+      }
+    },
+    {
+      "case": "initial_frame",
+      "before_editor_ucs_reads": 0,
+      "after_editor_ucs_reads": 3,
+      "source_get_object_reads": 228,
+      "modelspace_visits": 54,
+      "all_non_text_volume_counters_equal": true,
+      "differences": {
+        "buffer_text_chars": {
+          "before": 57952,
+          "after": 57992
+        }
+      }
+    },
+    {
+      "case": "initial_connections",
+      "before_editor_ucs_reads": 0,
+      "after_editor_ucs_reads": 3,
+      "source_get_object_reads": 232,
+      "modelspace_visits": 56,
+      "all_non_text_volume_counters_equal": true,
+      "differences": {
+        "buffer_text_chars": {
+          "before": 57952,
+          "after": 57992
+        }
+      }
+    },
+    {
+      "case": "project_reissued_cladding",
+      "before_editor_ucs_reads": 0,
+      "after_editor_ucs_reads": 0,
+      "source_get_object_reads": 275,
+      "modelspace_visits": 78,
+      "all_non_text_volume_counters_equal": true,
+      "differences": {
+        "buffer_text_chars": {
+          "before": 42068,
+          "after": 42060
+        }
+      }
+    },
+    {
+      "case": "project_reissued_frame",
+      "before_editor_ucs_reads": 0,
+      "after_editor_ucs_reads": 0,
+      "source_get_object_reads": 249,
+      "modelspace_visits": 78,
+      "all_non_text_volume_counters_equal": true,
+      "differences": {
+        "buffer_text_chars": {
+          "before": 64262,
+          "after": 64246
+        }
+      }
+    },
+    {
+      "case": "project_reissued_connections",
+      "before_editor_ucs_reads": 0,
+      "after_editor_ucs_reads": 0,
+      "source_get_object_reads": 249,
+      "modelspace_visits": 78,
+      "all_non_text_volume_counters_equal": true,
+      "differences": {
+        "buffer_text_chars": {
+          "before": 65680,
+          "after": 65664
+        }
+      }
+    },
+    {
+      "case": "zone_reissued_cladding",
+      "before_editor_ucs_reads": 0,
+      "after_editor_ucs_reads": 0,
+      "source_get_object_reads": 275,
+      "modelspace_visits": 86,
+      "all_non_text_volume_counters_equal": true,
+      "differences": {
+        "buffer_text_chars": {
+          "before": 42068,
+          "after": 42060
+        }
+      }
+    },
+    {
+      "case": "zone_reissued_frame",
+      "before_editor_ucs_reads": 0,
+      "after_editor_ucs_reads": 0,
+      "source_get_object_reads": 249,
+      "modelspace_visits": 86,
+      "all_non_text_volume_counters_equal": true,
+      "differences": {
+        "buffer_text_chars": {
+          "before": 64400,
+          "after": 64360
+        }
+      }
+    },
+    {
+      "case": "zone_reissued_connections",
+      "before_editor_ucs_reads": 0,
+      "after_editor_ucs_reads": 0,
+      "source_get_object_reads": 249,
+      "modelspace_visits": 86,
+      "all_non_text_volume_counters_equal": true,
+      "differences": {
+        "buffer_text_chars": {
+          "before": 65818,
+          "after": 65778
+        }
+      }
+    }
+  ]
+}

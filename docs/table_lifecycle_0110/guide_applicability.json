@@ -1,0 +1,124 @@
+{
+  "schema": "facade_guide_applicability/3",
+  "status": "UNCHANGED_GUIDE_APPLIES_AFTER_REVIEWED_TABLE_UCS_FIX",
+  "checked_utc": "2026-10-01T18:43:10.734607+00:00",
+  "baseline_checkpoint": "16c7307ce42715721ee7835d2dc90955e2229781",
+  "previous_applicability": "docs/limited_pilot_0110/guide_applicability.json",
+  "previous_applicability_sha256": "0200acc9816f0cb318edbc0d414a1b0ec39093bea6d55afddb70d20d46d113fd",
+  "original_111_input_manifest": "docs/pilot_completion_0110/guide_applicability.json",
+  "original_111_input_manifest_sha256": "f0e948e3f10402398662cacf34324a332076ba741de5796e37d340cfea75ba8b",
+  "baseline_resolution": "Start with the original 111 product hashes and apply the reviewed FrameCommand.cs replacement recorded by limited_pilot_0110/guide_applicability.json. All 111 resolved hashes were checked against Git commit 16c7307 before comparison with the current product.",
+  "inherited_product_source_changes": [
+    {
+      "path": "AFrame/src/AFramePlugin/FrameCommand.cs",
+      "baseline_sha256": "944d50dc7db753b931437691ca116a5cb6b07f6e84a7507265936b535274ad80",
+      "reviewed_sha256": "45e4643209439ec2eae0abd0367dc2fb84930cb54e9c5298171cafeea93a30d4"
+    }
+  ],
+  "manual_files_sha256": {
+    "docs/facades_beginner_3009/Facades_Beginner_Manual_30.09.docx": "93f89325d1d944dd3e8279cc1afb95d9cb6983a6c7a26eb2f91c890c19435f8d",
+    "docs/facades_beginner_3009/manual_content.md": "350868b2e597b78de4dc5070073eeb36632285972f0db002ce51d66c3cdffe50",
+    "docs/facades_beginner_3009/build_manual.py": "8ab05d1afdf7ae240fe38f91aed7e0667a7977d2a772187ca2c29448c175fb1d"
+  },
+  "manual_files_match_baseline": true,
+  "product_input_files_checked": 111,
+  "unchanged_product_input_count": 110,
+  "product_source_changes": [
+    {
+      "path": "Facades/src/AFacadesPlugin/FacadeQuantityTableCommand.cs",
+      "baseline_sha256": "198cb83d4fb7c99cc24da4fba81c6cf4c6c14d20d34b320b2da57b72f4fde922",
+      "reviewed_sha256": "08ba2ef01f32293956380d2c4842d46ff1dae2b7aa860df7ed0c7d4435f85e38"
+    }
+  ],
+  "product_source_state": "Current FacadeQuantityTableCommand.cs was reported STABLE by root and its full +15/-1 diff was read. Product source binding is by SHA256; final publication/CI binding belongs to root.",
+  "unchanged_input_statement": "The other 110 product hashes match the resolved 16c7307 baseline, including the already fixed FrameCommand.cs (45e4643209439ec2eae0abd0367dc2fb84930cb54e9c5298171cafeea93a30d4). The original 111-file snapshot has two cumulative product differences; this receipt does not call all 111 inputs unchanged.",
+  "test_adapter_scope": "Changes under tools/ (quantity doubles, limited-pilot hooks and lifecycle probes) are outside the 111 product-input manifest and were still being stabilized. No readiness, test result or source-stability claim for those files is made by this receipt.",
+  "tutorial_assets_checked": 14,
+  "tutorial_assets_match_original_manifest": true,
+  "prior_final_qa": "docs/facades_beginner_3009/FINAL_QA.json",
+  "prior_final_qa_sha256": "432d8d1db33c987ba74986f0ed67108e3b9368503f0e54cae71bc972c207f8ca",
+  "prior_qa_unchanged": true,
+  "source_commit_file": "docs/facades_beginner_3009/SOURCE_COMMIT.json",
+  "source_commit_sha256": "acf3f1ef363d4953b0a707e377958816972f219d37e5cc8196a5cf0eef301148",
+  "source_commit_not_modified": true,
+  "textual_review": {
+    "reviewer": "manual_update",
+    "result": "PASS",
+    "method": "Read-only review of the current product diff, related command branches, manual Markdown and extracted DOCX text, quantity contracts, API basis and separate human route; byte comparison of manual files/assets and the resolved product dependency set.",
+    "manual_change_required": false,
+    "section_3": {
+      "source": "docs/facades_beginner_3009/manual_content.md:65",
+      "finding": "The tutorial defines one model unit as one millimetre and explicitly uses World UCS at line 69. The fix does not change that tutorial or its expected coordinates."
+    },
+    "sections_8_3_to_8_6": {
+      "sources": [
+        "docs/facades_beginner_3009/manual_content.md:298",
+        "docs/facades_beginner_3009/manual_content.md:313",
+        "docs/facades_beginner_3009/manual_content.md:329",
+        "docs/facades_beginner_3009/manual_content.md:344"
+      ],
+      "finding": "New tables use the picked insertion point; updates affect the existing table at the same place without another copy. No table rotation/normal contract relative to UCS is stated. The corrected new-point conversion implements the existing picked-point expectation; update Position is already world-space and remains unassigned during Fill."
+    },
+    "section_8_9": {
+      "source": "docs/facades_beginner_3009/manual_content.md:397",
+      "finding": "The connection view uses the same create/update route; the correction does not change its geometric-candidate quantities or engineering limitations."
+    },
+    "section_16": {
+      "source": "docs/facades_beginner_3009/manual_content.md:784",
+      "finding": "Table text height is explicitly in model units. At the documented millimetre scale, the prompt value remains millimetres. The UCS conversion introduces neither text scaling nor paper-space size semantics."
+    },
+    "node_ucs_text": {
+      "source": "docs/facades_beginner_3009/manual_content.md:640",
+      "finding": "The existing explicit UCS-to-world and changed-UCS rejection paragraph describes ATFNODE only. It is not used as an assertion that the former ATFTABLE code already handled rotated/translated UCS."
+    },
+    "quantity_contracts": [
+      "docs/CLADDING_QUANTITIES_30.09.md:17",
+      "docs/CLADDING_QUANTITIES_30.09.md:21",
+      "docs/FRAME_QUANTITIES_30.09.md:16",
+      "docs/CATALOG_CONNECTIONS_01.10.md"
+    ],
+    "changed_behavior": "Only a new DWG table captures CurrentUserCoordinateSystem immediately before GetPoint, rejects a changed matrix after successful input, transforms the point once, and checks the matrix again just before Table creation/Append after the repeated source read. The existing update and XLSX-only branches do not receive this guard.",
+    "orientation_and_height": "No new table orientation/normal behavior is introduced. Existing-table Position/orientation remain untouched; height and width calculations are unchanged.",
+    "api_basis": "docs/table_lifecycle_0110/api_coordinate_basis.md",
+    "api_basis_sha256": "f233cf999cc55ba3b2e6e51ac4c2632f749d8b8c5a1487e96975c6a98e083559",
+    "coordinate_oracle": {
+      "ucs_origin_world": [
+        100,
+        200,
+        0
+      ],
+      "rotation_z_degrees": 90,
+      "ucs_pick": [
+        3,
+        4,
+        0
+      ],
+      "expected_world": [
+        96,
+        203,
+        0
+      ]
+    },
+    "human_route": "docs/table_lifecycle_0110/human_route.md",
+    "human_route_sha256": "f0ee14d40d771b5604253cf685fed7ec56700f9db593fb9ad9b196cfa4a6edc2",
+    "human_route_scope": "The same two-wall fixture, each of the three quantity views, one coordinate oracle, new/update, cancellation and real-host-only changed-UCS checks. Inaccessible late UCS changes stay NOT_RUN; an instrumented hook does not count as human acceptance."
+  },
+  "docx_rebuilt": false,
+  "new_render_claimed": false,
+  "new_visual_review_claimed": false,
+  "new_tutorial_replay_run": false,
+  "new_product_tests_run_by_this_review": false,
+  "existing_document_counts": {
+    "pages": 52,
+    "chapters": 20,
+    "figures": 10,
+    "dxf_files": 4
+  },
+  "verification_status": "PASS",
+  "scope": "Textual applicability and product dependency review only. Prior visual QA is retained; runtime adapter verification belongs to separate lifecycle receipts. No native AutoCAD/layout/rollback or new UI-screenshot acceptance is asserted.",
+  "engineering_assessment": "BLOCKED",
+  "full_acceptance_cycle": "NOT_RUN",
+  "live_autocad_checked": false,
+  "release_published": false,
+  "publication_binding_owner": "root after final code review and CI"
+}

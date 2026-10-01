@@ -1,0 +1,65 @@
+{
+  "schema": "table_coordinate_api_basis/1",
+  "review_date": "2026-10-01",
+  "source_commit": "16c7307ce42715721ee7835d2dc90955e2229781",
+  "api_family": "Autodesk AutoCAD managed .NET",
+  "documentation_version": "2026",
+  "status": "PRIMARY_API_BASIS_VERIFIED",
+  "sources": [
+    {
+      "title": "Define a User Coordinate System (.NET)",
+      "url": "https://help.autodesk.com/cloudhelp/2026/ENU/OARX-DevGuide-Managed/files/GUID-096085E3-5AD5-4454-BF10-C9177FDB5979.htm",
+      "section": "C# example, viewed lines 78-105",
+      "paraphrase": "The managed example takes GetPoint.Value as a current-UCS point and explicitly transforms it to WCS.",
+      "distinction": "The VBA/ActiveX Utility.GetPoint example on the same page uses a different API. Its WCS input contract is not applied to Editor.GetPoint."
+    },
+    {
+      "title": "Editor.GetPoint(PromptPointOptions)",
+      "url": "https://help.autodesk.com/cloudhelp/2026/ENU/OARX-ManagedRefGuide/files/OARX-ManagedRefGuide-Autodesk_AutoCAD_EditorInput_Editor_GetPoint_PromptPointOptions.html",
+      "paraphrase": "The method reference describes point input but does not specify the coordinate system."
+    },
+    {
+      "title": "PromptPointResult.Value",
+      "url": "https://help.autodesk.com/cloudhelp/2026/ENU/OARX-ManagedRefGuide/files/OARX-ManagedRefGuide-Autodesk_AutoCAD_EditorInput_PromptPointResult_Value.html",
+      "paraphrase": "The property exposes the entered Point3d; its short description does not specify UCS or WCS."
+    },
+    {
+      "title": "Editor.CurrentUserCoordinateSystem",
+      "url": "https://help.autodesk.com/cloudhelp/2026/ENU/OARX-ManagedRefGuide/files/OARX-ManagedRefGuide-Autodesk_AutoCAD_EditorInput_Editor_CurrentUserCoordinateSystem.html",
+      "paraphrase": "The current user coordinate system is exposed as Matrix3d."
+    },
+    {
+      "title": "Table Class",
+      "url": "https://help.autodesk.com/cloudhelp/2026/ENU/OARX-ManagedRefGuide/files/OARX-ManagedRefGuide-Autodesk_AutoCAD_DatabaseServices_Table.html",
+      "paraphrase": "The documented class hierarchy makes Table a subclass of BlockReference."
+    },
+    {
+      "title": "BlockReference.Position",
+      "url": "https://help.autodesk.com/cloudhelp/2026/ENU/OARX-ManagedRefGuide/files/OARX-ManagedRefGuide-Autodesk_AutoCAD_DatabaseServices_BlockReference_Position.html",
+      "paraphrase": "The inherited insertion-position property is explicitly expressed in WCS."
+    }
+  ],
+  "known_point_oracle": {
+    "ucs_origin_in_wcs": [100, 200, 0],
+    "rotation_about_z_degrees": 90,
+    "scale": [1, 1, 1],
+    "picked_point_in_ucs": [3, 4, 0],
+    "expected_new_table_position_in_wcs": [96, 203, 0],
+    "formula": "(100 - 4, 200 + 3, 0)",
+    "unconverted_position": [3, 4, 0],
+    "identity_ucs_control": "picked point remains unchanged"
+  },
+  "scope": {
+    "new_dwg_table": "Capture UCS before GetPoint; reject changes after the pick and before the first write; transform exactly once.",
+    "existing_table_update": "Existing Position is already WCS; never transform it again.",
+    "xlsx_only": "No insertion point or new UCS dependency.",
+    "orientation": "No new table-orientation contract introduced.",
+    "unchanged_ucs_policy": "Project defensive policy, not a claimed Autodesk-mandated rejection algorithm.",
+    "product_reference": "AFrame/src/AFramePlugin/FrameNodeCommand.cs:75-89 and VerifyEnvironment",
+    "prior_document": "docs/node_geometry_0110/cad_integration_preflight.md"
+  },
+  "runtime_reproduction": "Separate evidence required; this file is API analysis only",
+  "live_autocad_checked": false,
+  "native_ucs_ducs": "NOT_RUN",
+  "engineering_assessment": "BLOCKED"
+}

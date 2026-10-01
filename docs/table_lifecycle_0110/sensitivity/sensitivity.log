@@ -1,0 +1,15 @@
+Traceback (most recent call last):
+  File "/workspace/scratch/ba306982747c/AutoCAD-complex/tools/table_lifecycle_0110/run_lifecycle.py", line 138, in <module>
+    if __name__=='__main__':raise SystemExit(main())
+                                             ^^^^^^
+  File "/workspace/scratch/ba306982747c/AutoCAD-complex/tools/table_lifecycle_0110/run_lifecycle.py", line 109, in main
+    tick=time.perf_counter();observations=pilot.execute(exe,out/'selection.json',out);duration=time.perf_counter()-tick
+                                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/scratch/ba306982747c/AutoCAD-complex/tools/limited_pilot_0110/run_acceptance.py", line 149, in execute
+    raise RuntimeError(message['error'])
+RuntimeError: System.InvalidOperationException: actual new table UCS placement matches expected fixed
+  at LimitedPilotProbe.TableNeed (System.Boolean value, System.String message) [0x00006] in <87faea26c88e4055b99fe018083b76c9>:0 
+  at LimitedPilotProbe.Create (System.String key) [0x00160] in <87faea26c88e4055b99fe018083b76c9>:0 
+  at LimitedPilotProbe.CommandCheckpoint (System.String stage) [0x00080] in <87faea26c88e4055b99fe018083b76c9>:0 
+  at LimitedPilotProbe.Run (AFramePlugin.FrameSolutionSelection selection) [0x00068] in <87faea26c88e4055b99fe018083b76c9>:0 
+  at LimitedPilotProbe.Main (System.String[] args) [0x00040] in <87faea26c88e4055b99fe018083b76c9>:0 

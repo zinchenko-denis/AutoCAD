@@ -15,7 +15,7 @@ using ProjectStore = FacadeSafety.FacadeProjectParameterStore;
 
 // One persistent managed CAD-double database. Engines run in Python via JSON
 // lines, between source capture and consumption. No native DWG file is created.
-internal static class LimitedPilotProbe
+internal static partial class LimitedPilotProbe
 {
     static readonly JavaScriptSerializer Json = new JavaScriptSerializer { MaxJsonLength = int.MaxValue };
     static readonly Database Db = new Database();
@@ -23,6 +23,7 @@ internal static class LimitedPilotProbe
     static readonly List<string> Checks = new List<string>();
     static readonly List<Zone> Zones = new List<Zone>();
     static string Output;
+    static partial void CommandCheckpoint(string stage);
     sealed class Zone
     {
         internal string Id, Fingerprint;
@@ -310,10 +311,10 @@ internal static class LimitedPilotProbe
     {
         CreateZones(selection);
         foreach (var z in Zones) { Tile(z); GenerateFrame(z, "initial"); }
-        Observe("initial_fresh"); Export("initial");
+        Observe("initial_fresh"); Export("initial"); CommandCheckpoint("initial");
         var pending = PrepareFrame(Zones[0], "pending_before_project_change");
         var pendingResponse = Engine("pending_before_project_change", "frame", pending.Request);
-        ChangeProject(240); Observe("project_changed_before_reissue");
+        ChangeProject(240); Observe("project_changed_before_reissue"); CommandCheckpoint("project_changed");
         Need(Zones.All(z => !FrameFresh(z) && !NodeFresh(z)), "project change invalidates both old frames and node source predicates");
         using (var tr = new Transaction(Db))
         {
@@ -326,10 +327,10 @@ internal static class LimitedPilotProbe
         }
         foreach (var z in Zones) GenerateFrame(z, "project_reissue");
         Need(Zones.All(z => FrameFresh(z) && NodeFresh(z)), "new source captures and new engine runs reissue both zones");
-        Observe("project_reissued"); Export("project_reissue");
+        Observe("project_reissued"); Export("project_reissue"); CommandCheckpoint("project_reissued");
         var target = Zones.Single(z => z.Outer.GetPoint2dAt(0).X > 0); var other = Zones.Single(z => z != target);
         string unaffectedRun = other.Frame.run_id, unaffectedNode = other.Node.SnapshotDigest;
-        ChangeZone(target, 260); Observe("zone_override_before_reissue");
+        ChangeZone(target, 260); Observe("zone_override_before_reissue"); CommandCheckpoint("zone_changed");
         Need(!FrameFresh(target) && !NodeFresh(target) && FrameFresh(other) && NodeFresh(other), "local override invalidates only its independent frame/node scope");
         GenerateFrame(target, "zone_reissue");
         Need(other.Frame.run_id == unaffectedRun && other.Node.SnapshotDigest == unaffectedNode, "unaffected zone retains exact run IDs and node snapshot");
@@ -341,6 +342,7 @@ internal static class LimitedPilotProbe
             Need(FrameParameterResolver.ValidateGroup(mixed, new string[0]) != null, "actual resolver refuses combined mixed final selections");
             Need(Zones.All(z => FacadeQuantityStore.ReadCladding(tr, Db, new[] { z.Hatch.ObjectId }).Ok), "project and zone declaration changes preserve independent ATTILE quantities");
         }
+        CommandCheckpoint("final");
         Save("ledger", Ledger);
         Save("native_result", new { verification = "PASS", checks = Checks.Count, assertions = Checks,
             database_scope = "one persistent managed CAD-double Database", engineering = "BLOCKED",

@@ -286,6 +286,24 @@ jobs:
           path: limited_pilot_results/
           if-no-files-found: warn
 
+      - name: Table command lifecycle (persistent pilot, explicit CAD doubles)
+        timeout-minutes: 5
+        shell: pwsh
+        env:
+          PYTHONUTF8: "1"
+          PYTHONIOENCODING: "utf-8"
+        run: |
+          python tools/table_lifecycle_0110/run_lifecycle.py --out table_lifecycle_results
+          exit $LASTEXITCODE
+
+      - name: Upload table command lifecycle evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: table-command-lifecycle
+          path: table_lifecycle_results/
+          if-no-files-found: warn
+
       - name: Upload historical catalogue UI evidence
         if: always()
         uses: actions/upload-artifact@v4

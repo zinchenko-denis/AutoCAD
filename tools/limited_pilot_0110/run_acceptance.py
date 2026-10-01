@@ -59,7 +59,7 @@ def bounded_engine(engine, request):
     return value
 
 
-def compile_native(build):
+def compile_native(build, extra_sources=(), extra_generated=(), extra_references=()):
     generated = []
     originals = []
     for name, module in (('CladdingQuantities', 'AClad'), ('FrameQuantities', 'AFrame')):
@@ -108,7 +108,8 @@ internal static bool Check(Current current,Saved saved) { try {
     sources += [ROOT / 'AClad/src/ACladPlugin/BondSettings.cs',
         ROOT / 'tools/quantities_3009/QuantityCadDoubles.cs', Path(__file__).with_name('LimitedPilotProbe.cs')]
     exe = build / 'LimitedPilotProbe.exe'
-    compiled = compile_probe(sources + generated, ['System.Web.Extensions', 'System.IO.Compression', 'System.IO.Compression.FileSystem'], exe)
+    sources += list(extra_sources); generated += list(extra_generated)
+    compiled = compile_probe(sources + generated, ['System.Web.Extensions', 'System.IO.Compression', 'System.IO.Compression.FileSystem'] + list(extra_references), exe)
     (build / 'compile.log').write_text(compiled.stdout + compiled.stderr, encoding='utf-8')
     if compiled.returncode:
         print(compiled.stdout + compiled.stderr)

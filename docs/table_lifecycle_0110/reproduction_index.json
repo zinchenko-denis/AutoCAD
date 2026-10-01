@@ -1,0 +1,33 @@
+{
+  "status": "PASS",
+  "files": {
+    "REPRODUCTION.md": {
+      "bytes": 6346,
+      "sha256": "29a0732ea434d5657da4fb34d7e435950c41a096d1dd8292e7937f6ed0ab0a53"
+    },
+    "base_1275_manifest.json": {
+      "bytes": 85678,
+      "sha256": "12f71b982243adbac45b0e0c084e50f0db1956b66e374c304cacbd83344647b5"
+    },
+    "base_1275_receipt.json": {
+      "bytes": 431,
+      "sha256": "5b958bf695e5b02a846d2e6dc48566bd440884ff5bb5ddda1b3ea1c61d2d7557"
+    },
+    "performance_counts.json": {
+      "bytes": 3681,
+      "sha256": "c46b3a7530873628286ae1d54a6633b7f3b6d39ea61b18788f9d985d552449a8"
+    },
+    "sensitivity/command_source.cs": {
+      "bytes": 22926,
+      "sha256": "198cb83d4fb7c99cc24da4fba81c6cf4c6c14d20d34b320b2da57b72f4fde922"
+    },
+    "sensitivity/sensitivity.json": {
+      "bytes": 733,
+      "sha256": "7b3cb156b60d07ea15d5d74d44f69bd434b7c8e9d17bb2023bc77203496bd694"
+    },
+    "sensitivity/sensitivity.log": {
+      "bytes": 1428,
+      "sha256": "d7ef9939fe74e9be6e19e4e4c80b066a08d800a9366b4826dbf33922f9a28dbf"
+    }
+  }
+}
