@@ -61,6 +61,19 @@ class RailCuttingTests(unittest.TestCase):
             self.assertEqual(tail, [(8700, 10345), (10355, 12000)])
             self.assertTrue(any("Перераспределены" in n for n in result["notes"]))
 
+    def test_legacy_null_step_refuses_missing_supports_without_claiming_short_piece(self):
+        result = frame_plan(dict(system=dict(name="Вектор-1", rail_std=1500, rail_gap=10,
+            bracket_step=None, bracket_step_corner=None), sub_type="vertical", parts="frame",
+            contours=[dict(outer=rect(0, 0, 1200, 3000))], joints_x=[600], floors_y=[1500]))
+        self.assertFalse(result["ok"])
+        self.assertEqual(result["error_code"], "E_UNSUPPORTED_RAIL")
+        self.assertEqual([m["support_count"] for m in result["unsupported"]], [0, 0])
+        self.assertEqual([m["length"] for m in result["unsupported"]], [1495, 1495])
+        self.assertIn("X=600.0", result["error"])
+        self.assertIn("проверьте шаг", result["error"])
+        self.assertNotIn("слишком короток", result["error"])
+        self.assertFalse(any(result.get(k) for k in ("rails", "hrails", "brackets", "clamps")))
+
     def test_zero_gap_keeps_two_physical_pieces(self):
         self.assertEqual(_rail_cuts(0, 3300, 3000, 0, 300), [(0, 1650), (1650, 3300)])
         self.assertEqual(_rail_cuts(0, 500, 3000, 10, 300), [(0, 500)])

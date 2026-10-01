@@ -2573,14 +2573,16 @@ def _frame_plan(req):
                         bracket_start_offset=start_off) for m in members if m["support_count"] < 2]
         if missing:
             first = missing[0]
+            remedy = ("При заданных отступах от торцов исходный участок слишком короток; "
+                      "требуется изменение границ/стыков или отдельное решение крепления. "
+                      if first["length"] <= 2 * start_off + EPS else
+                      "На участке не назначены две опоры; проверьте шаг и положение кронштейнов. ")
             return {"ok": False, "error_code": "E_UNSUPPORTED_RAIL",
                     "error": "Подсистема не построена: %d направляющих имеют менее двух опор. "
                              "Первая: X=%.1f, Y=%.1f…%.1f мм, длина %.1f мм, опор %d. "
-                             "При заданных отступах от торцов исходный участок слишком короток; "
-                             "требуется изменение границ/стыков или отдельное решение крепления. "
-                             "Прежняя подсистема сохранена." %
+                             "%sПрежняя подсистема сохранена." %
                              (len(missing), first["x"], first["y0"], first["y1"],
-                              first["length"], first["support_count"]),
+                              first["length"], first["support_count"], remedy),
                     "unsupported": missing, "unsupported_counts": {"rail_pieces": len(missing)},
                     "notes": notes}
 

@@ -121,6 +121,8 @@ def main():
         ('catalog_connection_table', '.', ['tools/catalog_connections_0110/test_connection_table.py',
                                           '--out', str(out / 'catalog_connection_table'),
                                           '--report', str(out / 'catalog_connection_store/independent_zones_report.json')]),
+        ('orphan_connection_legacy', '.', ['tools/orphan_connections_0110/reproduce_gap.py',
+                                         '--out', str(out / 'orphan_connection_legacy'), '--expect', 'fixed']),
         ('catalog_topology_performance', '.', ['tools/catalog_connections_0110/reproduce_topology_performance.py',
                                              '--out', str(out / 'catalog_topology_performance')]),
     ])

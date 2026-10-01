@@ -1,6 +1,7 @@
 """Real connection preview: shared and unlinked bracket warnings, native layout.
 
-Consumes the fresh engine -> producer fixture emitted by test_connection_table.
+Consumes the fresh shared-support engine -> producer fixture, plus an optional
+archived-response variant -> current producer fixture for old orphan reports.
 No AutoCAD host is opened; lack of a native display remains BLOCKED.
 """
 import argparse
@@ -30,7 +31,7 @@ def main():
     os.environ['FACADE_CONNECTION_UI_REPORT'] = str(report)
     orphan_report = args.orphan_report.resolve() if args.orphan_report else None
     if orphan_report is not None and not orphan_report.is_file():
-        parser.error('Fresh unlinked-bracket report is required: ' + str(orphan_report))
+        parser.error('Unlinked-bracket compatibility report is required: ' + str(orphan_report))
     if orphan_report is not None:
         os.environ['FACADE_CONNECTION_UI_ORPHAN_REPORT'] = str(orphan_report)
     else:
@@ -47,7 +48,7 @@ def main():
     manifest['report_origin'] = 'shared_support_real_engine_to_actual_producer'
     manifest['report_sha256'] = hashlib.sha256(report.read_bytes()).hexdigest()
     manifest['orphan_report_sha256'] = hashlib.sha256(orphan_report.read_bytes()).hexdigest() if orphan_report else None
-    manifest['orphan_report_origin'] = 'actual_engine_request_none_steps_to_producer' if orphan_report else None
+    manifest['orphan_report_origin'] = 'explicit_archived_response_variant_to_current_producer' if orphan_report else None
     manifest_path.write_text(json.dumps(manifest, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
     return result
 
