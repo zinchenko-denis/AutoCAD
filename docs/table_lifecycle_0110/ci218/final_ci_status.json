@@ -1,0 +1,473 @@
+{
+  "verification": "PASS",
+  "run": {
+    "id": 36911126842,
+    "name": "check",
+    "node_id": "WFR_kwLOS8odpc8AAAAImBMZOg",
+    "head_branch": "feat/auto-reactor",
+    "head_sha": "b4bf2897f6df85e4219c83ab64b39dd59d2d17d8",
+    "path": ".github/workflows/check.yml",
+    "display_title": "нвф (01.10): исправить координаты ведомостей и проверить командный ци…",
+    "run_number": 218,
+    "event": "push",
+    "status": "completed",
+    "conclusion": "success",
+    "workflow_id": 297881262,
+    "check_suite_id": 99980168887,
+    "check_suite_node_id": "CS_kwDOS8odpc8AAAAXR0hOtw",
+    "url": "https://api.github.com/repos/zinchenko-denis/AutoCAD/actions/runs/36911126842",
+    "html_url": "https://github.com/zinchenko-denis/AutoCAD/actions/runs/36911126842",
+    "pull_requests": [],
+    "created_at": "2026-10-01T19:00:45Z",
+    "updated_at": "2026-10-01T19:08:11Z",
+    "actor": {
+      "login": "zinchenko-denis",
+      "id": 232226943,
+      "node_id": "U_kgDODdeAfw",
+      "avatar_url": "https://avatars.githubusercontent.com/u/232226943?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/zinchenko-denis",
+      "html_url": "https://github.com/zinchenko-denis",
+      "followers_url": "https://api.github.com/users/zinchenko-denis/followers",
+      "following_url": "https://api.github.com/users/zinchenko-denis/following{/other_user}",
+      "gists_url": "https://api.github.com/users/zinchenko-denis/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/zinchenko-denis/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/zinchenko-denis/subscriptions",
+      "organizations_url": "https://api.github.com/users/zinchenko-denis/orgs",
+      "repos_url": "https://api.github.com/users/zinchenko-denis/repos",
+      "events_url": "https://api.github.com/users/zinchenko-denis/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/zinchenko-denis/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "run_attempt": 1,
+    "referenced_workflows": [],
+    "run_started_at": "2026-10-01T19:00:45Z",
+    "triggering_actor": {
+      "login": "zinchenko-denis",
+      "id": 232226943,
+      "node_id": "U_kgDODdeAfw",
+      "avatar_url": "https://avatars.githubusercontent.com/u/232226943?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/zinchenko-denis",
+      "html_url": "https://github.com/zinchenko-denis",
+      "followers_url": "https://api.github.com/users/zinchenko-denis/followers",
+      "following_url": "https://api.github.com/users/zinchenko-denis/following{/other_user}",
+      "gists_url": "https://api.github.com/users/zinchenko-denis/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/zinchenko-denis/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/zinchenko-denis/subscriptions",
+      "organizations_url": "https://api.github.com/users/zinchenko-denis/orgs",
+      "repos_url": "https://api.github.com/users/zinchenko-denis/repos",
+      "events_url": "https://api.github.com/users/zinchenko-denis/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/zinchenko-denis/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "jobs_url": "https://api.github.com/repos/zinchenko-denis/AutoCAD/actions/runs/36911126842/jobs",
+    "logs_url": "https://api.github.com/repos/zinchenko-denis/AutoCAD/actions/runs/36911126842/logs",
+    "check_suite_url": "https://api.github.com/repos/zinchenko-denis/AutoCAD/check-suites/99980168887",
+    "artifacts_url": "https://api.github.com/repos/zinchenko-denis/AutoCAD/actions/runs/36911126842/artifacts",
+    "cancel_url": "https://api.github.com/repos/zinchenko-denis/AutoCAD/actions/runs/36911126842/cancel",
+    "rerun_url": "https://api.github.com/repos/zinchenko-denis/AutoCAD/actions/runs/36911126842/rerun",
+    "previous_attempt_url": null,
+    "workflow_url": "https://api.github.com/repos/zinchenko-denis/AutoCAD/actions/workflows/297881262",
+    "head_commit": {
+      "id": "b4bf2897f6df85e4219c83ab64b39dd59d2d17d8",
+      "tree_id": "d508ca8ef5b86388d1793ff1816e4526ff1abe5a",
+      "message": "нвф (01.10): исправить координаты ведомостей и проверить командный цикл пилота\n\nВоспроизведена вставка точки ПСК напрямую в МСК. Новая таблица преобразует точку один раз и отказывает при смене ПСК до записи; обновление сохраняет прежнюю позицию.\n\nНастоящая ветвь команды связана с общей базой пилота: 4886 проверок, 19 выдач XLSX; общий набор 59/59, компиляция 3/3, независимая ревизия PASS. Новых обходов ModelSpace нет.\n\nМонтаж 2В/3А и автоподбор BLOCKED; полный П5 и живой AutoCAD NOT_RUN. Windows CI ожидается на этом SHA; следующая передача сохранит его фактический результат. Без установочного выпуска.",
+      "timestamp": "2026-10-01T19:00:26Z",
+      "author": {
+        "name": "zinchenko-denis",
+        "email": "zinchenko.d.d.77@gmail.com"
+      },
+      "committer": {
+        "name": "zinchenko-denis",
+        "email": "zinchenko.d.d.77@gmail.com"
+      }
+    },
+    "repository": {
+      "id": 1271537061,
+      "node_id": "R_kgDOS8odpQ",
+      "name": "AutoCAD",
+      "full_name": "zinchenko-denis/AutoCAD",
+      "private": false,
+      "owner": {
+        "login": "zinchenko-denis",
+        "id": 232226943,
+        "node_id": "U_kgDODdeAfw",
+        "avatar_url": "https://avatars.githubusercontent.com/u/232226943?v=4",
+        "gravatar_id": "",
+        "url": "https://api.github.com/users/zinchenko-denis",
+        "html_url": "https://github.com/zinchenko-denis",
+        "followers_url": "https://api.github.com/users/zinchenko-denis/followers",
+        "following_url": "https://api.github.com/users/zinchenko-denis/following{/other_user}",
+        "gists_url": "https://api.github.com/users/zinchenko-denis/gists{/gist_id}",
+        "starred_url": "https://api.github.com/users/zinchenko-denis/starred{/owner}{/repo}",
+        "subscriptions_url": "https://api.github.com/users/zinchenko-denis/subscriptions",
+        "organizations_url": "https://api.github.com/users/zinchenko-denis/orgs",
+        "repos_url": "https://api.github.com/users/zinchenko-denis/repos",
+        "events_url": "https://api.github.com/users/zinchenko-denis/events{/privacy}",
+        "received_events_url": "https://api.github.com/users/zinchenko-denis/received_events",
+        "type": "User",
+        "user_view_type": "public",
+        "site_admin": false
+      },
+      "html_url": "https://github.com/zinchenko-denis/AutoCAD",
+      "description": "Надстройки и автоматизация AutoCAD",
+      "fork": false,
+      "url": "https://api.github.com/repos/zinchenko-denis/AutoCAD",
+      "forks_url": "https://api.github.com/repos/zinchenko-denis/AutoCAD/forks",
+      "keys_url": "https://api.github.com/repos/zinchenko-denis/AutoCAD/keys{/key_id}",
+      "collaborators_url": "https://api.github.com/repos/zinchenko-denis/AutoCAD/collaborators{/collaborator}",
+      "teams_url": "https://api.github.com/repos/zinchenko-denis/AutoCAD/teams",
+      "hooks_url": "https://api.github.com/repos/zinchenko-denis/AutoCAD/hooks",
+      "issue_events_url": "https://api.github.com/repos/zinchenko-denis/AutoCAD/issues/events{/number}",
+      "events_url": "https://api.github.com/repos/zinchenko-denis/AutoCAD/events",
+      "assignees_url": "https://api.github.com/repos/zinchenko-denis/AutoCAD/assignees{/user}",
+      "branches_url": "https://api.github.com/repos/zinchenko-denis/AutoCAD/branches{/branch}",
+      "tags_url": "https://api.github.com/repos/zinchenko-denis/AutoCAD/tags",
+      "blobs_url": "https://api.github.com/repos/zinchenko-denis/AutoCAD/git/blobs{/sha}",
+      "git_tags_url": "https://api.github.com/repos/zinchenko-denis/AutoCAD/git/tags{/sha}",
+      "git_refs_url": "https://api.github.com/repos/zinchenko-denis/AutoCAD/git/refs{/sha}",
+      "trees_url": "https://api.github.com/repos/zinchenko-denis/AutoCAD/git/trees{/sha}",
+      "statuses_url": "https://api.github.com/repos/zinchenko-denis/AutoCAD/statuses/{sha}",
+      "languages_url": "https://api.github.com/repos/zinchenko-denis/AutoCAD/languages",
+      "stargazers_url": "https://api.github.com/repos/zinchenko-denis/AutoCAD/stargazers",
+      "contributors_url": "https://api.github.com/repos/zinchenko-denis/AutoCAD/contributors",
+      "subscribers_url": "https://api.github.com/repos/zinchenko-denis/AutoCAD/subscribers",
+      "subscription_url": "https://api.github.com/repos/zinchenko-denis/AutoCAD/subscription",
+      "commits_url": "https://api.github.com/repos/zinchenko-denis/AutoCAD/commits{/sha}",
+      "git_commits_url": "https://api.github.com/repos/zinchenko-denis/AutoCAD/git/commits{/sha}",
+      "comments_url": "https://api.github.com/repos/zinchenko-denis/AutoCAD/comments{/number}",
+      "issue_comment_url": "https://api.github.com/repos/zinchenko-denis/AutoCAD/issues/comments{/number}",
+      "contents_url": "https://api.github.com/repos/zinchenko-denis/AutoCAD/contents/{+path}",
+      "compare_url": "https://api.github.com/repos/zinchenko-denis/AutoCAD/compare/{base}...{head}",
+      "merges_url": "https://api.github.com/repos/zinchenko-denis/AutoCAD/merges",
+      "archive_url": "https://api.github.com/repos/zinchenko-denis/AutoCAD/{archive_format}{/ref}",
+      "downloads_url": "https://api.github.com/repos/zinchenko-denis/AutoCAD/downloads",
+      "issues_url": "https://api.github.com/repos/zinchenko-denis/AutoCAD/issues{/number}",
+      "pulls_url": "https://api.github.com/repos/zinchenko-denis/AutoCAD/pulls{/number}",
+      "milestones_url": "https://api.github.com/repos/zinchenko-denis/AutoCAD/milestones{/number}",
+      "notifications_url": "https://api.github.com/repos/zinchenko-denis/AutoCAD/notifications{?since,all,participating}",
+      "labels_url": "https://api.github.com/repos/zinchenko-denis/AutoCAD/labels{/name}",
+      "releases_url": "https://api.github.com/repos/zinchenko-denis/AutoCAD/releases{/id}",
+      "deployments_url": "https://api.github.com/repos/zinchenko-denis/AutoCAD/deployments"
+    },
+    "head_repository": {
+      "id": 1271537061,
+      "node_id": "R_kgDOS8odpQ",
+      "name": "AutoCAD",
+      "full_name": "zinchenko-denis/AutoCAD",
+      "private": false,
+      "owner": {
+        "login": "zinchenko-denis",
+        "id": 232226943,
+        "node_id": "U_kgDODdeAfw",
+        "avatar_url": "https://avatars.githubusercontent.com/u/232226943?v=4",
+        "gravatar_id": "",
+        "url": "https://api.github.com/users/zinchenko-denis",
+        "html_url": "https://github.com/zinchenko-denis",
+        "followers_url": "https://api.github.com/users/zinchenko-denis/followers",
+        "following_url": "https://api.github.com/users/zinchenko-denis/following{/other_user}",
+        "gists_url": "https://api.github.com/users/zinchenko-denis/gists{/gist_id}",
+        "starred_url": "https://api.github.com/users/zinchenko-denis/starred{/owner}{/repo}",
+        "subscriptions_url": "https://api.github.com/users/zinchenko-denis/subscriptions",
+        "organizations_url": "https://api.github.com/users/zinchenko-denis/orgs",
+        "repos_url": "https://api.github.com/users/zinchenko-denis/repos",
+        "events_url": "https://api.github.com/users/zinchenko-denis/events{/privacy}",
+        "received_events_url": "https://api.github.com/users/zinchenko-denis/received_events",
+        "type": "User",
+        "user_view_type": "public",
+        "site_admin": false
+      },
+      "html_url": "https://github.com/zinchenko-denis/AutoCAD",
+      "description": "Надстройки и автоматизация AutoCAD",
+      "fork": false,
+      "url": "https://api.github.com/repos/zinchenko-denis/AutoCAD",
+      "forks_url": "https://api.github.com/repos/zinchenko-denis/AutoCAD/forks",
+      "keys_url": "https://api.github.com/repos/zinchenko-denis/AutoCAD/keys{/key_id}",
+      "collaborators_url": "https://api.github.com/repos/zinchenko-denis/AutoCAD/collaborators{/collaborator}",
+      "teams_url": "https://api.github.com/repos/zinchenko-denis/AutoCAD/teams",
+      "hooks_url": "https://api.github.com/repos/zinchenko-denis/AutoCAD/hooks",
+      "issue_events_url": "https://api.github.com/repos/zinchenko-denis/AutoCAD/issues/events{/number}",
+      "events_url": "https://api.github.com/repos/zinchenko-denis/AutoCAD/events",
+      "assignees_url": "https://api.github.com/repos/zinchenko-denis/AutoCAD/assignees{/user}",
+      "branches_url": "https://api.github.com/repos/zinchenko-denis/AutoCAD/branches{/branch}",
+      "tags_url": "https://api.github.com/repos/zinchenko-denis/AutoCAD/tags",
+      "blobs_url": "https://api.github.com/repos/zinchenko-denis/AutoCAD/git/blobs{/sha}",
+      "git_tags_url": "https://api.github.com/repos/zinchenko-denis/AutoCAD/git/tags{/sha}",
+      "git_refs_url": "https://api.github.com/repos/zinchenko-denis/AutoCAD/git/refs{/sha}",
+      "trees_url": "https://api.github.com/repos/zinchenko-denis/AutoCAD/git/trees{/sha}",
+      "statuses_url": "https://api.github.com/repos/zinchenko-denis/AutoCAD/statuses/{sha}",
+      "languages_url": "https://api.github.com/repos/zinchenko-denis/AutoCAD/languages",
+      "stargazers_url": "https://api.github.com/repos/zinchenko-denis/AutoCAD/stargazers",
+      "contributors_url": "https://api.github.com/repos/zinchenko-denis/AutoCAD/contributors",
+      "subscribers_url": "https://api.github.com/repos/zinchenko-denis/AutoCAD/subscribers",
+      "subscription_url": "https://api.github.com/repos/zinchenko-denis/AutoCAD/subscription",
+      "commits_url": "https://api.github.com/repos/zinchenko-denis/AutoCAD/commits{/sha}",
+      "git_commits_url": "https://api.github.com/repos/zinchenko-denis/AutoCAD/git/commits{/sha}",
+      "comments_url": "https://api.github.com/repos/zinchenko-denis/AutoCAD/comments{/number}",
+      "issue_comment_url": "https://api.github.com/repos/zinchenko-denis/AutoCAD/issues/comments{/number}",
+      "contents_url": "https://api.github.com/repos/zinchenko-denis/AutoCAD/contents/{+path}",
+      "compare_url": "https://api.github.com/repos/zinchenko-denis/AutoCAD/compare/{base}...{head}",
+      "merges_url": "https://api.github.com/repos/zinchenko-denis/AutoCAD/merges",
+      "archive_url": "https://api.github.com/repos/zinchenko-denis/AutoCAD/{archive_format}{/ref}",
+      "downloads_url": "https://api.github.com/repos/zinchenko-denis/AutoCAD/downloads",
+      "issues_url": "https://api.github.com/repos/zinchenko-denis/AutoCAD/issues{/number}",
+      "pulls_url": "https://api.github.com/repos/zinchenko-denis/AutoCAD/pulls{/number}",
+      "milestones_url": "https://api.github.com/repos/zinchenko-denis/AutoCAD/milestones{/number}",
+      "notifications_url": "https://api.github.com/repos/zinchenko-denis/AutoCAD/notifications{?since,all,participating}",
+      "labels_url": "https://api.github.com/repos/zinchenko-denis/AutoCAD/labels{/name}",
+      "releases_url": "https://api.github.com/repos/zinchenko-denis/AutoCAD/releases{/id}",
+      "deployments_url": "https://api.github.com/repos/zinchenko-denis/AutoCAD/deployments"
+    }
+  },
+  "jobs": [
+    {
+      "id": 110533737762,
+      "name": "check",
+      "status": "completed",
+      "conclusion": "success",
+      "run_id": 36911126842,
+      "logs_url": null,
+      "steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 1
+        },
+        {
+          "name": "Checkout",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 2
+        },
+        {
+          "name": "Setup .NET SDK",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 3
+        },
+        {
+          "name": "Build plugin DLL (compile check)",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 4
+        },
+        {
+          "name": "Build ABlockGen DLL (compile check)",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 5
+        },
+        {
+          "name": "Build AFacades DLL (compile check)",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 6
+        },
+        {
+          "name": "Build AClad DLL (compile check)",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 7
+        },
+        {
+          "name": "Build AFrame DLL (compile check)",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 8
+        },
+        {
+          "name": "Setup Python",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 9
+        },
+        {
+          "name": "Engine unit test",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 10
+        },
+        {
+          "name": "ABlockGen engine unit test",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 11
+        },
+        {
+          "name": "AFacades engine unit test",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 12
+        },
+        {
+          "name": "AClad engine unit test",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 13
+        },
+        {
+          "name": "AFrame engine unit test",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 14
+        },
+        {
+          "name": "Native zone geometry regressions (no AutoCAD host)",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 15
+        },
+        {
+          "name": "Native zone and layout adapters (CAD API doubles)",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 16
+        },
+        {
+          "name": "Cladding quantities (native core, real producers, XLSX, CAD API doubles)",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 17
+        },
+        {
+          "name": "Frame quantities (core, real producers, XLSX and bounded operation counts)",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 18
+        },
+        {
+          "name": "Manual facade quantities (actual mapper, CAD adapters and bounded work)",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 19
+        },
+        {
+          "name": "Facade connection passports (source identities, typed data, XLSX and indexed joins)",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 20
+        },
+        {
+          "name": "Upload connection table and native preview evidence",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 21
+        },
+        {
+          "name": "Historical facade catalogue (actual settings, engine and producer)",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 22
+        },
+        {
+          "name": "Pilot mounting interface contract (trace verification, engineering remains blocked)",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 23
+        },
+        {
+          "name": "Upload pilot mounting contract evidence",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 24
+        },
+        {
+          "name": "Limited pilot workflow and axis cancellation (explicit CAD doubles)",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 25
+        },
+        {
+          "name": "Upload limited pilot workflow evidence",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 26
+        },
+        {
+          "name": "Table command lifecycle (persistent pilot, explicit CAD doubles)",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 27
+        },
+        {
+          "name": "Upload table command lifecycle evidence",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 28
+        },
+        {
+          "name": "Upload historical catalogue UI evidence",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 29
+        },
+        {
+          "name": "Upload solution settings contract evidence",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 30
+        },
+        {
+          "name": "Project and zone parameters (native contracts, CAD store and WinForms)",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 31
+        },
+        {
+          "name": "Upload project parameters evidence",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 32
+        },
+        {
+          "name": "Pilot node geometry and mounting readiness (core, CAD adapters and WinForms)",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 33
+        },
+        {
+          "name": "Upload pilot node geometry evidence",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 34
+        },
+        {
+          "name": "Facades quick gates (audits, contracts, synth)",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 35
+        },
+        {
+          "name": "Post Setup Python",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 68
+        },
+        {
+          "name": "Post Setup .NET SDK",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 69
+        },
+        {
+          "name": "Post Checkout",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 70
+        },
+        {
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 71
+        }
+      ]
+    }
+  ]
+}

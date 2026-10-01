@@ -1,0 +1,251 @@
+{
+  "ok": true,
+  "zones": [
+    {
+      "zone_id": "П-1",
+      "cladding": "Керамогранит 600×600",
+      "outer_id": "2",
+      "outer_ids": [
+        "2"
+      ],
+      "opening_ids": [],
+      "opening_kinds": {},
+      "lines": [],
+      "label_pt": [
+        3620.0,
+        1820.0
+      ],
+      "bbox": [
+        2410.0,
+        0.0,
+        3620.0,
+        1820.0
+      ],
+      "report": {
+        "schema": "facade_zone_report/1",
+        "zone_id": "П-1",
+        "name": "Керамогранит 600×600",
+        "facade": "",
+        "floors": "",
+        "system": null,
+        "area_outer_m2": 2.2022,
+        "openings_total_m2": 0.0,
+        "area_net_m2": 2.2022,
+        "perimeter_outer_m": 6.06,
+        "openings_count": 0,
+        "openings": [],
+        "openings_perimeter_total_m": 0.0,
+        "sills_total_m": 0.0,
+        "jambs_total_m": 0.0,
+        "on_boundary_total_m": 0.0,
+        "window_count": 0,
+        "window_area_m2": 0.0,
+        "vitrage_count": 0,
+        "vitrage_area_m2": 0.0,
+        "door_count": 0,
+        "door_area_m2": 0.0,
+        "window_sills_m": 0.0,
+        "window_slopes_m": 0.0,
+        "door_slopes_m": 0.0,
+        "vitrage_side_m": 0.0,
+        "vitrage_top_m": 0.0,
+        "vitrage_bottom_m": 0.0,
+        "warnings": []
+      },
+      "dims": [
+        {
+          "height": {
+            "x": 2410.0,
+            "y0": 0.0,
+            "y1": 1820.0
+          },
+          "bottom": null
+        }
+      ]
+    },
+    {
+      "zone_id": "П-2",
+      "cladding": "Керамогранит 600×600",
+      "outer_id": "1",
+      "outer_ids": [
+        "1"
+      ],
+      "opening_ids": [],
+      "opening_kinds": {},
+      "lines": [],
+      "label_pt": [
+        1210.0,
+        1820.0
+      ],
+      "bbox": [
+        0.0,
+        0.0,
+        1210.0,
+        1820.0
+      ],
+      "report": {
+        "schema": "facade_zone_report/1",
+        "zone_id": "П-2",
+        "name": "Керамогранит 600×600",
+        "facade": "",
+        "floors": "",
+        "system": null,
+        "area_outer_m2": 2.2022,
+        "openings_total_m2": 0.0,
+        "area_net_m2": 2.2022,
+        "perimeter_outer_m": 6.06,
+        "openings_count": 0,
+        "openings": [],
+        "openings_perimeter_total_m": 0.0,
+        "sills_total_m": 0.0,
+        "jambs_total_m": 0.0,
+        "on_boundary_total_m": 0.0,
+        "window_count": 0,
+        "window_area_m2": 0.0,
+        "vitrage_count": 0,
+        "vitrage_area_m2": 0.0,
+        "door_count": 0,
+        "door_area_m2": 0.0,
+        "window_sills_m": 0.0,
+        "window_slopes_m": 0.0,
+        "door_slopes_m": 0.0,
+        "vitrage_side_m": 0.0,
+        "vitrage_top_m": 0.0,
+        "vitrage_bottom_m": 0.0,
+        "warnings": []
+      },
+      "dims": [
+        {
+          "height": {
+            "x": 0.0,
+            "y0": 0.0,
+            "y1": 1820.0
+          },
+          "bottom": null
+        }
+      ]
+    }
+  ],
+  "zones_full": [
+    {
+      "schema": "facade_zone/1",
+      "id": "П-1",
+      "name": "Керамогранит 600×600",
+      "cladding": "Керамогранит 600×600",
+      "system": null,
+      "units": "mm",
+      "outer": {
+        "pts": [
+          [
+            2410.0,
+            0.0
+          ],
+          [
+            3620.0,
+            0.0
+          ],
+          [
+            3620.0,
+            1820.0
+          ],
+          [
+            2410.0,
+            1820.0
+          ]
+        ],
+        "bulges": [
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      "openings": [],
+      "source": {
+        "method": "manual",
+        "tool": "ATFZONE"
+      },
+      "meta": {
+        "outer_contour_id": "2",
+        "bbox": [
+          2410.0,
+          0.0,
+          3620.0,
+          1820.0
+        ]
+      }
+    },
+    {
+      "schema": "facade_zone/1",
+      "id": "П-2",
+      "name": "Керамогранит 600×600",
+      "cladding": "Керамогранит 600×600",
+      "system": null,
+      "units": "mm",
+      "outer": {
+        "pts": [
+          [
+            0.0,
+            0.0
+          ],
+          [
+            1210.0,
+            0.0
+          ],
+          [
+            1210.0,
+            1820.0
+          ],
+          [
+            0.0,
+            1820.0
+          ]
+        ],
+        "bulges": [
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      "openings": [],
+      "source": {
+        "method": "manual",
+        "tool": "ATFZONE"
+      },
+      "meta": {
+        "outer_contour_id": "1",
+        "bbox": [
+          0.0,
+          0.0,
+          1210.0,
+          1820.0
+        ]
+      }
+    }
+  ],
+  "parapets": [],
+  "failed": [],
+  "issues": [],
+  "summary": {
+    "count": 2,
+    "area_net_total_m2": 4.4044,
+    "sills_total_m": 0.0,
+    "jambs_total_m": 0.0,
+    "openings_total": 0,
+    "parapets_count": 0,
+    "parapets_top_m": 0,
+    "window_count": 0,
+    "window_area_m2": 0,
+    "vitrage_count": 0,
+    "vitrage_area_m2": 0,
+    "door_count": 0,
+    "door_area_m2": 0,
+    "window_sills_m": 0,
+    "window_slopes_m": 0,
+    "door_slopes_m": 0,
+    "vitrage_side_m": 0,
+    "vitrage_top_m": 0,
+    "vitrage_bottom_m": 0
+  }
+}

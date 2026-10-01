@@ -1,0 +1,2161 @@
+{
+  "schema": "table_source_publication_integrity/1",
+  "verification": "PASS",
+  "source_commit": "b4bf2897f6df85e4219c83ab64b39dd59d2d17d8",
+  "source_tree": "d508ca8ef5b86388d1793ff1816e4526ff1abe5a",
+  "baseline_commit": "16c7307ce42715721ee7835d2dc90955e2229781",
+  "changed_paths": 268,
+  "tested_inputs_verified": 249,
+  "product_changed_paths": [
+    "Facades/src/AFacadesPlugin/FacadeQuantityTableCommand.cs"
+  ],
+  "protected_modules_changed": false,
+  "remote_update": "Verified parent immediately before force=false fast-forward; local fetched and fast-forwarded to exact tree",
+  "handoff_document_review": "Independent read-only PASS after generation; no factual conflicts or blockers",
+  "source_files": [
+    {
+      "path": ".github/workflows/check.yml",
+      "size": 17741,
+      "sha": "ac279cc0a2e952df28ee65238848ac13bee56b09",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "AClad/docs/NEXT.md",
+      "size": 147074,
+      "sha": "cd2356435ca6dae70cb302afa6cb76f5c979f494",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "AFrame/docs/NEXT.md",
+      "size": 205873,
+      "sha": "2030d85ed276670014f6de5c8e4bd58ecf24036f",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "CLAUDE.md",
+      "size": 25369,
+      "sha": "b4d45be788480c6b82bc64d9ddae8b39fc650698",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "Facades/docs/NEXT.md",
+      "size": 165233,
+      "sha": "3100d6ae5bd375be6a63a541f3880b32b801e869",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "Facades/src/AFacadesPlugin/FacadeQuantityTableCommand.cs",
+      "size": 23853,
+      "sha": "e812ee6460df71d7e7483d3042d8121f7b7da7bf",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/CHRONOLOGY.md",
+      "size": 29260,
+      "sha": "0d919c8f763035d9149154b1a363e1a0b3c53997",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/CHRONOLOGY_INDEX.md",
+      "size": 159898,
+      "sha": "9f5a891b4f969cb7ca2254232d295f58a12ceb1c",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/FACADE_COMPLEX_ROADMAP_30.09.md",
+      "size": 77294,
+      "sha": "f7c57bd4c43f3cfdd4e31b4cf7c934e16ff6880e",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/HANDOFF_NEXT_SESSION_30.09.md",
+      "size": 84014,
+      "sha": "3805cb70085b2f321e39b23b47400539fc6d6b30",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/PILOT_COMPLETION_PLAN_01.10.md",
+      "size": 25979,
+      "sha": "ddab39ab9f937b15ad721e3f09ca9356ebbd1c64",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/SESSION_PROMPT_AFTER_TABLE_LIFECYCLE_01.10.md",
+      "size": 13257,
+      "sha": "36eda56b3038ab3c6d6ad7ee0ad7c1c1b069af51",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/TABLE_COMMAND_LIFECYCLE_01.10.md",
+      "size": 8291,
+      "sha": "3390a23ac6b2415edbd6d8e15c71b55f71cb3b47",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/table_lifecycle_0110/REPRODUCTION.md",
+      "size": 6346,
+      "sha": "69995a9c8c4da0dc210a91f9b339573c892ebf44",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/table_lifecycle_0110/after/build/CladdingQuantitiesPure.cs",
+      "size": 12030,
+      "sha": "754838179479a79f4e31d603f7bc43d5b2ad7594",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/table_lifecycle_0110/after/build/FrameQuantitiesPure.cs",
+      "size": 26674,
+      "sha": "c34f7407baf2e11cb48ab94013d6e2692d614e51",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/table_lifecycle_0110/after/build/NodeFreshnessPredicate.cs",
+      "size": 1193,
+      "sha": "56ed19c16b9bb3a496a96bb91ffc4b848a47023e",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/table_lifecycle_0110/after/build/ZoneMetadataHelpers.cs",
+      "size": 2383,
+      "sha": "1ca5ee0d8291bbcb63f1320501c47e1c12f01908",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/table_lifecycle_0110/after/command_source.cs",
+      "size": 23853,
+      "sha": "e812ee6460df71d7e7483d3042d8121f7b7da7bf",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/table_lifecycle_0110/after/engine_ledger.json",
+      "size": 2561,
+      "sha": "c559e97cd6bad842172e69af8a909d867b28d319",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/table_lifecycle_0110/after/engines/attile_П-1/request.json",
+      "size": 1489,
+      "sha": "36801dce0b6a3c9d0756ab7c01deb12ff11bcd9f",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": true
+    },
+    {
+      "path": "docs/table_lifecycle_0110/after/engines/attile_П-1/response.json",
+      "size": 5002,
+      "sha": "1aec5b5870ae664689d6fe63415ae7e038be81a8",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": true
+    },
+    {
+      "path": "docs/table_lifecycle_0110/after/engines/attile_П-2/request.json",
+      "size": 1480,
+      "sha": "17af8a960f8d700025803aa0abdd57aa504f1f6b",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": true
+    },
+    {
+      "path": "docs/table_lifecycle_0110/after/engines/attile_П-2/response.json",
+      "size": 4985,
+      "sha": "59c0cf61c3a7e3f6213eeb5398197d972d8b7211",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": true
+    },
+    {
+      "path": "docs/table_lifecycle_0110/after/engines/initial_frame_П-1/request.json",
+      "size": 2619,
+      "sha": "3ed6e80f3d1298481ff155ff35a8c32e1223776b",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": true
+    },
+    {
+      "path": "docs/table_lifecycle_0110/after/engines/initial_frame_П-1/response.json",
+      "size": 10618,
+      "sha": "c6d29d7e882f21e83f6784e72b179ddd2b33db39",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": true
+    },
+    {
+      "path": "docs/table_lifecycle_0110/after/engines/initial_frame_П-2/request.json",
+      "size": 2609,
+      "sha": "64a50d5e4a13f898736a103536ceefeb0736347e",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": true
+    },
+    {
+      "path": "docs/table_lifecycle_0110/after/engines/initial_frame_П-2/response.json",
+      "size": 10614,
+      "sha": "7c58c041b53bc87d0068b799d5194d6695605f50",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": true
+    },
+    {
+      "path": "docs/table_lifecycle_0110/after/engines/pending_before_project_change/request.json",
+      "size": 2619,
+      "sha": "3ed6e80f3d1298481ff155ff35a8c32e1223776b",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": true
+    },
+    {
+      "path": "docs/table_lifecycle_0110/after/engines/pending_before_project_change/response.json",
+      "size": 10618,
+      "sha": "c6d29d7e882f21e83f6784e72b179ddd2b33db39",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": true
+    },
+    {
+      "path": "docs/table_lifecycle_0110/after/engines/project_reissue_frame_П-1/request.json",
+      "size": 2619,
+      "sha": "3d8feaa2e7636677aaaa45b64252d5fc3b62041c",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": true
+    },
+    {
+      "path": "docs/table_lifecycle_0110/after/engines/project_reissue_frame_П-1/response.json",
+      "size": 10618,
+      "sha": "f60594684884ddf7e8b9fefed97342a0275eb6f5",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": true
+    },
+    {
+      "path": "docs/table_lifecycle_0110/after/engines/project_reissue_frame_П-2/request.json",
+      "size": 2609,
+      "sha": "529071e35b3ef4079d236a1d6003fd908fb35ce6",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": true
+    },
+    {
+      "path": "docs/table_lifecycle_0110/after/engines/project_reissue_frame_П-2/response.json",
+      "size": 10614,
+      "sha": "25a3c913ac2431515ea49014cad808b8dc1b563d",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": true
+    },
+    {
+      "path": "docs/table_lifecycle_0110/after/engines/zone_reissue_frame_П-1/request.json",
+      "size": 2619,
+      "sha": "d1cea6f33c2524c67d12616abb28c2672f2c0dd2",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": true
+    },
+    {
+      "path": "docs/table_lifecycle_0110/after/engines/zone_reissue_frame_П-1/response.json",
+      "size": 10618,
+      "sha": "cf6e195246e38fdde13ead427f64e66c26c35d47",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": true
+    },
+    {
+      "path": "docs/table_lifecycle_0110/after/engines/zones/request.json",
+      "size": 672,
+      "sha": "68c345b86bdc607e810975b97cbb75aa0126e268",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": true
+    },
+    {
+      "path": "docs/table_lifecycle_0110/after/engines/zones/response.json",
+      "size": 5255,
+      "sha": "b5629970139e81e7bf1c13df7952a08de900a0c3",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": true
+    },
+    {
+      "path": "docs/table_lifecycle_0110/after/evidence_index.json",
+      "size": 16746,
+      "sha": "6acaab348c16e8d2db4028c478f47c5963a7802e",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/table_lifecycle_0110/after/initial/cladding.xlsx",
+      "size": 3518,
+      "sha": "da7891b74b98cae959a3ba6bd58cf538ca893e03",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/table_lifecycle_0110/after/initial/cladding_rows.json",
+      "size": 5250,
+      "sha": "c0e85bd3dd79c2d13d6f77b4fe049298f5c67be1",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": true
+    },
+    {
+      "path": "docs/table_lifecycle_0110/after/initial/connections.xlsx",
+      "size": 3488,
+      "sha": "533ddeea04d15bad7236a1b5e4dc9694597ae695",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/table_lifecycle_0110/after/initial/connections_rows.json",
+      "size": 5491,
+      "sha": "8fb95655b4ba6294b68037db7c7f8beebdfd3bb9",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/table_lifecycle_0110/after/initial/frame.xlsx",
+      "size": 3240,
+      "sha": "825911a00450169be534e318d57aec62d3f32ddb",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/table_lifecycle_0110/after/initial/frame_rows.json",
+      "size": 4592,
+      "sha": "f6c95cb00a7f6791cfaaee6d4fc2ee1c2b38ccd2",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": true
+    },
+    {
+      "path": "docs/table_lifecycle_0110/after/initial/quantities.json",
+      "size": 12286,
+      "sha": "2bc676e31ec5d7ded875038f99a3c5f54e94d781",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/table_lifecycle_0110/after/initial/П-1_cladding_report.json",
+      "size": 9167,
+      "sha": "74702705e857b974443756d41d87025640bc9691",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/table_lifecycle_0110/after/initial/П-1_frame_report.json",
+      "size": 12721,
+      "sha": "4661f66dbf5bf7d98493d45ae840cd62eeefff39",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/table_lifecycle_0110/after/initial/П-1_node.json",
+      "size": 22100,
+      "sha": "6fa880785b8187fd5a968aca35536d2f84941b15",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/table_lifecycle_0110/after/initial/П-2_cladding_report.json",
+      "size": 9137,
+      "sha": "589fb9139b6bd8477e922c61450c618e2baa5876",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/table_lifecycle_0110/after/initial/П-2_frame_report.json",
+      "size": 12721,
+      "sha": "d21a145594f8ce1446a63bff109dc897c9b06dec",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/table_lifecycle_0110/after/initial/П-2_node.json",
+      "size": 22100,
+      "sha": "859f1b93f98d088ee7a70f6f9d7a7992347bea0b",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/table_lifecycle_0110/after/ledger.json",
+      "size": 86228,
+      "sha": "67ba913ceb9c49c70813135925845da7990e3a76",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/table_lifecycle_0110/after/manifest.json",
+      "size": 21753,
+      "sha": "4a2896923dfe9381ed2b4c86f0cdbf87570a471c",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/table_lifecycle_0110/after/native_result.json",
+      "size": 7098,
+      "sha": "8893b88787847510e914c27de8fe0392a53c12b2",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": true
+    },
+    {
+      "path": "docs/table_lifecycle_0110/after/project_reissue/cladding.xlsx",
+      "size": 3518,
+      "sha": "da7891b74b98cae959a3ba6bd58cf538ca893e03",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/table_lifecycle_0110/after/project_reissue/cladding_rows.json",
+      "size": 5250,
+      "sha": "c0e85bd3dd79c2d13d6f77b4fe049298f5c67be1",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": true
+    },
+    {
+      "path": "docs/table_lifecycle_0110/after/project_reissue/connections.xlsx",
+      "size": 3490,
+      "sha": "a18b02850bf278c63c1438bfb0f0182adb2a58dc",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/table_lifecycle_0110/after/project_reissue/connections_rows.json",
+      "size": 5491,
+      "sha": "c2a9a028cfd5a7353d66bce18d052cfdd4468f6b",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/table_lifecycle_0110/after/project_reissue/frame.xlsx",
+      "size": 3240,
+      "sha": "825911a00450169be534e318d57aec62d3f32ddb",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/table_lifecycle_0110/after/project_reissue/frame_rows.json",
+      "size": 4592,
+      "sha": "f6c95cb00a7f6791cfaaee6d4fc2ee1c2b38ccd2",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": true
+    },
+    {
+      "path": "docs/table_lifecycle_0110/after/project_reissue/quantities.json",
+      "size": 12286,
+      "sha": "647f49804148d2c02667e128184cd585095979f3",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/table_lifecycle_0110/after/project_reissue/П-1_frame_report.json",
+      "size": 12721,
+      "sha": "a5fb4a277accf905e70a5b49cb0e037a13c44971",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/table_lifecycle_0110/after/project_reissue/П-1_node.json",
+      "size": 22100,
+      "sha": "27c3b049519d2d100ab36393eb7c081f068effbc",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/table_lifecycle_0110/after/project_reissue/П-2_frame_report.json",
+      "size": 12721,
+      "sha": "c62b2a52e3b5418039a99d01d5e509a4e2fd6d9f",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/table_lifecycle_0110/after/project_reissue/П-2_node.json",
+      "size": 22100,
+      "sha": "93513f62d7d6fac357cdf2c8c0fa64f642e102d3",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/table_lifecycle_0110/after/selection.json",
+      "size": 1089,
+      "sha": "0afd0d53016c8ce68175e865faa4926b035343b5",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": true
+    },
+    {
+      "path": "docs/table_lifecycle_0110/after/table_command/cancel_point.xlsx",
+      "size": 3288,
+      "sha": "fcb1c1696460084bd36ddca6f5c690472aad101a",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/table_lifecycle_0110/after/table_command/cancel_preview.xlsx",
+      "size": 3288,
+      "sha": "fcb1c1696460084bd36ddca6f5c690472aad101a",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/table_lifecycle_0110/after/table_command/cancel_save_dialog.xlsx",
+      "size": 3288,
+      "sha": "fcb1c1696460084bd36ddca6f5c690472aad101a",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/table_lifecycle_0110/after/table_command/cancel_update_second_preview.xlsx",
+      "size": 3288,
+      "sha": "fcb1c1696460084bd36ddca6f5c690472aad101a",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/table_lifecycle_0110/after/table_command/excel_only.xlsx",
+      "size": 3288,
+      "sha": "4e42044276fdd93bd6049edfae5979311cd1a652",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/table_lifecycle_0110/after/table_command/excel_only_rows.json",
+      "size": 4589,
+      "sha": "25b2de93635339971b5968a37efcfcac6115bba4",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/table_lifecycle_0110/after/table_command/initial_cladding.xlsx",
+      "size": 2572,
+      "sha": "dd0d1307cd2829bd8d115c4a346165ab6f401623",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/table_lifecycle_0110/after/table_command/initial_cladding_rows.json",
+      "size": 1663,
+      "sha": "5003456acfddd7713b8ea8c02088dbe32e09e985",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/table_lifecycle_0110/after/table_command/initial_cladding_table.json",
+      "size": 6786,
+      "sha": "90b8dceff0881e6cb14e59156cf72716735ab510",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/table_lifecycle_0110/after/table_command/initial_connections.xlsx",
+      "size": 3533,
+      "sha": "baa3af148da423987a41f4a60d5cab76d444a58e",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/table_lifecycle_0110/after/table_command/initial_connections_rows.json",
+      "size": 5488,
+      "sha": "682a728227d8b595ee21ee719d052fdc296cd6be",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/table_lifecycle_0110/after/table_command/initial_connections_table.json",
+      "size": 18962,
+      "sha": "f98a9745cc66d372637b4a2300bb24d5760eed3d",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/table_lifecycle_0110/after/table_command/initial_frame.xlsx",
+      "size": 3288,
+      "sha": "fcb1c1696460084bd36ddca6f5c690472aad101a",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/table_lifecycle_0110/after/table_command/initial_frame_rows.json",
+      "size": 4589,
+      "sha": "25b2de93635339971b5968a37efcfcac6115bba4",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/table_lifecycle_0110/after/table_command/initial_frame_table.json",
+      "size": 16401,
+      "sha": "c996b65c000e79d0ea394a39bf116960cbc4a5c9",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/table_lifecycle_0110/after/table_command/late_project.xlsx",
+      "size": 3288,
+      "sha": "fcb1c1696460084bd36ddca6f5c690472aad101a",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/table_lifecycle_0110/after/table_command/late_target.xlsx",
+      "size": 3288,
+      "sha": "fcb1c1696460084bd36ddca6f5c690472aad101a",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/table_lifecycle_0110/after/table_command/late_target_table.json",
+      "size": 16314,
+      "sha": "e05de0c83c1fbe406f2ed2139075d5c54fc23e96",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/table_lifecycle_0110/after/table_command/late_ucs_fresh_read.xlsx",
+      "size": 3288,
+      "sha": "fcb1c1696460084bd36ddca6f5c690472aad101a",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/table_lifecycle_0110/after/table_command/late_ucs_lock.xlsx",
+      "size": 3288,
+      "sha": "fcb1c1696460084bd36ddca6f5c690472aad101a",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/table_lifecycle_0110/after/table_command/late_ucs_point.xlsx",
+      "size": 3288,
+      "sha": "fcb1c1696460084bd36ddca6f5c690472aad101a",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/table_lifecycle_0110/after/table_command/late_ucs_save_dialog.xlsx",
+      "size": 3288,
+      "sha": "fcb1c1696460084bd36ddca6f5c690472aad101a",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/table_lifecycle_0110/after/table_command/project_reissued_cladding.xlsx",
+      "size": 2572,
+      "sha": "dd0d1307cd2829bd8d115c4a346165ab6f401623",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/table_lifecycle_0110/after/table_command/project_reissued_cladding_rows.json",
+      "size": 1663,
+      "sha": "5003456acfddd7713b8ea8c02088dbe32e09e985",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/table_lifecycle_0110/after/table_command/project_reissued_cladding_table.json",
+      "size": 6786,
+      "sha": "90b8dceff0881e6cb14e59156cf72716735ab510",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/table_lifecycle_0110/after/table_command/project_reissued_connections.xlsx",
+      "size": 3535,
+      "sha": "b3b88b5ebbfe55deef4e7934869816ebd64287d5",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/table_lifecycle_0110/after/table_command/project_reissued_connections_rows.json",
+      "size": 5488,
+      "sha": "1984b674c5ec3c3170e7a9695941cb3aa2382cfa",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/table_lifecycle_0110/after/table_command/project_reissued_connections_table.json",
+      "size": 18962,
+      "sha": "eec5ba41e4abd19b285849d2c14932b8d159832f",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/table_lifecycle_0110/after/table_command/project_reissued_frame.xlsx",
+      "size": 3288,
+      "sha": "fcb1c1696460084bd36ddca6f5c690472aad101a",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/table_lifecycle_0110/after/table_command/project_reissued_frame_rows.json",
+      "size": 4589,
+      "sha": "25b2de93635339971b5968a37efcfcac6115bba4",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/table_lifecycle_0110/after/table_command/project_reissued_frame_table.json",
+      "size": 16401,
+      "sha": "67868b9814cdfff76c4f9a46bde70feae19329ad",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/table_lifecycle_0110/after/table_command/result.json",
+      "size": 84678,
+      "sha": "23b6d50940398e13e498ab5d73e52d7014b63856",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/table_lifecycle_0110/after/table_command/xlsx_review.json",
+      "size": 348783,
+      "sha": "93c970c438d62f3db769734e9f4d023c7c789486",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/table_lifecycle_0110/after/table_command/zone_reissued_cladding.xlsx",
+      "size": 2572,
+      "sha": "a000335acffbdded598b0ee9230a5ef2c5fead86",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/table_lifecycle_0110/after/table_command/zone_reissued_cladding_rows.json",
+      "size": 1663,
+      "sha": "5003456acfddd7713b8ea8c02088dbe32e09e985",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/table_lifecycle_0110/after/table_command/zone_reissued_cladding_table.json",
+      "size": 6786,
+      "sha": "90b8dceff0881e6cb14e59156cf72716735ab510",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/table_lifecycle_0110/after/table_command/zone_reissued_connections.xlsx",
+      "size": 3536,
+      "sha": "220ddf385f29fed0b539c4722e59d7fec504767a",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/table_lifecycle_0110/after/table_command/zone_reissued_connections_rows.json",
+      "size": 5488,
+      "sha": "899ae5cdbe7b2e054007ae949c0043baa9a2bd17",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/table_lifecycle_0110/after/table_command/zone_reissued_connections_table.json",
+      "size": 18962,
+      "sha": "c72c08892de692ec5ad218d7d63ea28b702f12ca",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/table_lifecycle_0110/after/table_command/zone_reissued_frame.xlsx",
+      "size": 3288,
+      "sha": "4e42044276fdd93bd6049edfae5979311cd1a652",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/table_lifecycle_0110/after/table_command/zone_reissued_frame_rows.json",
+      "size": 4589,
+      "sha": "25b2de93635339971b5968a37efcfcac6115bba4",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/table_lifecycle_0110/after/table_command/zone_reissued_frame_table.json",
+      "size": 16401,
+      "sha": "32a07cc759a1e604c656d427c16dd00bc41effa2",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/table_lifecycle_0110/after/table_expect.json",
+      "size": 24,
+      "sha": "4ce8e5ac37b371335c4e59be269216176bb6e2b5",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/table_lifecycle_0110/after/trace.json",
+      "size": 31763,
+      "sha": "86e433ae70ea1426f85ba35a411eed3747b29001",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/table_lifecycle_0110/after/xlsx_review.json",
+      "size": 1886,
+      "sha": "69dee2247786b2677f4ea1e7e74aa9e38105abb0",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/table_lifecycle_0110/after/zone_reissue/cladding.xlsx",
+      "size": 3518,
+      "sha": "b96ffe3ccbdf18308bf87660d66654672f859fea",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/table_lifecycle_0110/after/zone_reissue/cladding_rows.json",
+      "size": 5250,
+      "sha": "c0e85bd3dd79c2d13d6f77b4fe049298f5c67be1",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": true
+    },
+    {
+      "path": "docs/table_lifecycle_0110/after/zone_reissue/connections.xlsx",
+      "size": 3491,
+      "sha": "78c3652075cec6a1a3a9551e9e512901d70d2699",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/table_lifecycle_0110/after/zone_reissue/connections_rows.json",
+      "size": 5491,
+      "sha": "f8bf5a2fda31acdbed9e1fd596b60993b49dfe70",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/table_lifecycle_0110/after/zone_reissue/frame.xlsx",
+      "size": 3240,
+      "sha": "ed2bf40a8e0ff6785463ed329eea92b9a5185e1f",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/table_lifecycle_0110/after/zone_reissue/frame_rows.json",
+      "size": 4592,
+      "sha": "f6c95cb00a7f6791cfaaee6d4fc2ee1c2b38ccd2",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": true
+    },
+    {
+      "path": "docs/table_lifecycle_0110/after/zone_reissue/quantities.json",
+      "size": 12286,
+      "sha": "8f2214dd4a34ef3445809bb588dd3f0ab8008d19",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/table_lifecycle_0110/after/zone_reissue/П-1_frame_report.json",
+      "size": 12719,
+      "sha": "9c494c005eff580d9f774e86f694d8cff09c2e39",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/table_lifecycle_0110/after/zone_reissue/П-1_node.json",
+      "size": 22098,
+      "sha": "6e60948f834236ba50fa648e2d0a5c417b261913",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/table_lifecycle_0110/api_coordinate_basis.json",
+      "size": 3678,
+      "sha": "bea65c1fa8601b7a5692a1cb563a64bfad7d363a",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/table_lifecycle_0110/api_coordinate_basis.md",
+      "size": 5499,
+      "sha": "21abbf9e7c0cbeab669acc12e93f53895e1066e3",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/table_lifecycle_0110/base_1275_manifest.json",
+      "size": 85678,
+      "sha": "5754746e40ebbec1c456ce58f897226427fba2a8",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/table_lifecycle_0110/base_1275_receipt.json",
+      "size": 431,
+      "sha": "3f4de67fb87839dc80be36f3cb3404baf244b7c5",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/table_lifecycle_0110/baseline_ci217_live.json",
+      "size": 607,
+      "sha": "d06120a55bdf47a1e2d62a8bbb815c58cd5be15e",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/table_lifecycle_0110/baseline_dependency_guard.json",
+      "size": 85629,
+      "sha": "34eccb7e22a0ec7b04d9a4b38577d45b56746910",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/table_lifecycle_0110/baseline_environment.json",
+      "size": 812,
+      "sha": "34075d4317eeffd96bb070002d11e41fddbe90f5",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/table_lifecycle_0110/baseline_snapshot.json",
+      "size": 64498,
+      "sha": "d9a45d6e69d769a6976cfd0ce4884c7e62944d63",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/table_lifecycle_0110/before/build/CladdingQuantitiesPure.cs",
+      "size": 12030,
+      "sha": "754838179479a79f4e31d603f7bc43d5b2ad7594",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/table_lifecycle_0110/before/build/FrameQuantitiesPure.cs",
+      "size": 26674,
+      "sha": "c34f7407baf2e11cb48ab94013d6e2692d614e51",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/table_lifecycle_0110/before/build/NodeFreshnessPredicate.cs",
+      "size": 1193,
+      "sha": "56ed19c16b9bb3a496a96bb91ffc4b848a47023e",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/table_lifecycle_0110/before/build/ZoneMetadataHelpers.cs",
+      "size": 2383,
+      "sha": "1ca5ee0d8291bbcb63f1320501c47e1c12f01908",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/table_lifecycle_0110/before/command_source.cs",
+      "size": 22926,
+      "sha": "2b63d691c3a0ce241b62c3739685906beb068ce6",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": true
+    },
+    {
+      "path": "docs/table_lifecycle_0110/before/engine_ledger.json",
+      "size": 2561,
+      "sha": "66ef3138e3fe9c42319f1a50559fe2240dbcdf52",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/table_lifecycle_0110/before/engines/attile_П-1/request.json",
+      "size": 1489,
+      "sha": "36801dce0b6a3c9d0756ab7c01deb12ff11bcd9f",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": true
+    },
+    {
+      "path": "docs/table_lifecycle_0110/before/engines/attile_П-1/response.json",
+      "size": 5002,
+      "sha": "1aec5b5870ae664689d6fe63415ae7e038be81a8",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": true
+    },
+    {
+      "path": "docs/table_lifecycle_0110/before/engines/attile_П-2/request.json",
+      "size": 1480,
+      "sha": "17af8a960f8d700025803aa0abdd57aa504f1f6b",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": true
+    },
+    {
+      "path": "docs/table_lifecycle_0110/before/engines/attile_П-2/response.json",
+      "size": 4985,
+      "sha": "59c0cf61c3a7e3f6213eeb5398197d972d8b7211",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": true
+    },
+    {
+      "path": "docs/table_lifecycle_0110/before/engines/initial_frame_П-1/request.json",
+      "size": 2619,
+      "sha": "3ed6e80f3d1298481ff155ff35a8c32e1223776b",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": true
+    },
+    {
+      "path": "docs/table_lifecycle_0110/before/engines/initial_frame_П-1/response.json",
+      "size": 10618,
+      "sha": "c6d29d7e882f21e83f6784e72b179ddd2b33db39",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": true
+    },
+    {
+      "path": "docs/table_lifecycle_0110/before/engines/initial_frame_П-2/request.json",
+      "size": 2609,
+      "sha": "64a50d5e4a13f898736a103536ceefeb0736347e",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": true
+    },
+    {
+      "path": "docs/table_lifecycle_0110/before/engines/initial_frame_П-2/response.json",
+      "size": 10614,
+      "sha": "7c58c041b53bc87d0068b799d5194d6695605f50",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": true
+    },
+    {
+      "path": "docs/table_lifecycle_0110/before/engines/pending_before_project_change/request.json",
+      "size": 2619,
+      "sha": "3ed6e80f3d1298481ff155ff35a8c32e1223776b",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": true
+    },
+    {
+      "path": "docs/table_lifecycle_0110/before/engines/pending_before_project_change/response.json",
+      "size": 10618,
+      "sha": "c6d29d7e882f21e83f6784e72b179ddd2b33db39",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": true
+    },
+    {
+      "path": "docs/table_lifecycle_0110/before/engines/project_reissue_frame_П-1/request.json",
+      "size": 2619,
+      "sha": "3d8feaa2e7636677aaaa45b64252d5fc3b62041c",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": true
+    },
+    {
+      "path": "docs/table_lifecycle_0110/before/engines/project_reissue_frame_П-1/response.json",
+      "size": 10618,
+      "sha": "f60594684884ddf7e8b9fefed97342a0275eb6f5",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": true
+    },
+    {
+      "path": "docs/table_lifecycle_0110/before/engines/project_reissue_frame_П-2/request.json",
+      "size": 2609,
+      "sha": "529071e35b3ef4079d236a1d6003fd908fb35ce6",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": true
+    },
+    {
+      "path": "docs/table_lifecycle_0110/before/engines/project_reissue_frame_П-2/response.json",
+      "size": 10614,
+      "sha": "25a3c913ac2431515ea49014cad808b8dc1b563d",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": true
+    },
+    {
+      "path": "docs/table_lifecycle_0110/before/engines/zone_reissue_frame_П-1/request.json",
+      "size": 2619,
+      "sha": "d1cea6f33c2524c67d12616abb28c2672f2c0dd2",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": true
+    },
+    {
+      "path": "docs/table_lifecycle_0110/before/engines/zone_reissue_frame_П-1/response.json",
+      "size": 10618,
+      "sha": "cf6e195246e38fdde13ead427f64e66c26c35d47",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": true
+    },
+    {
+      "path": "docs/table_lifecycle_0110/before/engines/zones/request.json",
+      "size": 672,
+      "sha": "68c345b86bdc607e810975b97cbb75aa0126e268",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": true
+    },
+    {
+      "path": "docs/table_lifecycle_0110/before/engines/zones/response.json",
+      "size": 5255,
+      "sha": "b5629970139e81e7bf1c13df7952a08de900a0c3",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": true
+    },
+    {
+      "path": "docs/table_lifecycle_0110/before/evidence_index.json",
+      "size": 16142,
+      "sha": "51f380a78bb73ec44be265bfa5c481736a7605d8",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/table_lifecycle_0110/before/initial/cladding.xlsx",
+      "size": 3518,
+      "sha": "480f28f27310b5dfa86cd34f1356798f87749111",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/table_lifecycle_0110/before/initial/cladding_rows.json",
+      "size": 5250,
+      "sha": "c0e85bd3dd79c2d13d6f77b4fe049298f5c67be1",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": true
+    },
+    {
+      "path": "docs/table_lifecycle_0110/before/initial/connections.xlsx",
+      "size": 3490,
+      "sha": "b972772a57c2250ec5b4041f2ee899a089cc9b47",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/table_lifecycle_0110/before/initial/connections_rows.json",
+      "size": 5491,
+      "sha": "5fec67db86a8acadfae10f1bfdc1069f86ceb93c",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/table_lifecycle_0110/before/initial/frame.xlsx",
+      "size": 3240,
+      "sha": "6a85c8361215c0a2c9d8f94a0a2b06cff9d22583",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/table_lifecycle_0110/before/initial/frame_rows.json",
+      "size": 4592,
+      "sha": "f6c95cb00a7f6791cfaaee6d4fc2ee1c2b38ccd2",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": true
+    },
+    {
+      "path": "docs/table_lifecycle_0110/before/initial/quantities.json",
+      "size": 12286,
+      "sha": "6b59d9b43d206a09ceb1cc607311586e06bbc2fb",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/table_lifecycle_0110/before/initial/П-1_cladding_report.json",
+      "size": 9167,
+      "sha": "affccec93cc478dc459187648ef84a01e6741dbf",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/table_lifecycle_0110/before/initial/П-1_frame_report.json",
+      "size": 12721,
+      "sha": "94d4c44d998484fc7b731572e0e3b5c276ae54cc",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/table_lifecycle_0110/before/initial/П-1_node.json",
+      "size": 22100,
+      "sha": "0dd95b5f1596395af2e393096f6b58f44155b447",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/table_lifecycle_0110/before/initial/П-2_cladding_report.json",
+      "size": 9137,
+      "sha": "0bdfca6eab99b5155b732e30fa28d1b634b1c98c",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/table_lifecycle_0110/before/initial/П-2_frame_report.json",
+      "size": 12721,
+      "sha": "fbc951455fd748666add92a6f23f846fa5eb01bb",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/table_lifecycle_0110/before/initial/П-2_node.json",
+      "size": 22100,
+      "sha": "7eb0bd3cd7415f2c02c8f88c1747adf3591348f1",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/table_lifecycle_0110/before/ledger.json",
+      "size": 86239,
+      "sha": "35620592497b746a212649a653197b4b79811e56",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/table_lifecycle_0110/before/manifest.json",
+      "size": 21237,
+      "sha": "20525b77b627306eb2966adbdfc88ba40c697fdb",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/table_lifecycle_0110/before/native_result.json",
+      "size": 7098,
+      "sha": "8893b88787847510e914c27de8fe0392a53c12b2",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": true
+    },
+    {
+      "path": "docs/table_lifecycle_0110/before/project_reissue/cladding.xlsx",
+      "size": 3518,
+      "sha": "4d2bb229e0380351fa894380965fabc75172261f",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/table_lifecycle_0110/before/project_reissue/cladding_rows.json",
+      "size": 5250,
+      "sha": "c0e85bd3dd79c2d13d6f77b4fe049298f5c67be1",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": true
+    },
+    {
+      "path": "docs/table_lifecycle_0110/before/project_reissue/connections.xlsx",
+      "size": 3492,
+      "sha": "98a7555db60c0c93f6a5a928f6cb35e70ebf6fd8",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/table_lifecycle_0110/before/project_reissue/connections_rows.json",
+      "size": 5491,
+      "sha": "fe133af98c44aaf4dcd8e95d53be0b8400ed96d6",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/table_lifecycle_0110/before/project_reissue/frame.xlsx",
+      "size": 3240,
+      "sha": "9d7097e675c56684d99da2e1704ce84cf5b46d63",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/table_lifecycle_0110/before/project_reissue/frame_rows.json",
+      "size": 4592,
+      "sha": "f6c95cb00a7f6791cfaaee6d4fc2ee1c2b38ccd2",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": true
+    },
+    {
+      "path": "docs/table_lifecycle_0110/before/project_reissue/quantities.json",
+      "size": 12286,
+      "sha": "f5b882ca0866d80c67eb7902ee3149bf6c4711bf",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/table_lifecycle_0110/before/project_reissue/П-1_frame_report.json",
+      "size": 12721,
+      "sha": "847ca3e40e6324f2afddc217ddd9acf038cb7951",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/table_lifecycle_0110/before/project_reissue/П-1_node.json",
+      "size": 22100,
+      "sha": "ae0b5ae25f3056e9df26b944fd4bd659be683ee7",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/table_lifecycle_0110/before/project_reissue/П-2_frame_report.json",
+      "size": 12721,
+      "sha": "4b8ac3c7dd389da631758f3a81f1e166018be7fc",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/table_lifecycle_0110/before/project_reissue/П-2_node.json",
+      "size": 22100,
+      "sha": "049fe8afe1285686ef5352b5b6c181a1914b1a5c",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/table_lifecycle_0110/before/selection.json",
+      "size": 1089,
+      "sha": "0afd0d53016c8ce68175e865faa4926b035343b5",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": true
+    },
+    {
+      "path": "docs/table_lifecycle_0110/before/table_command/cancel_point.xlsx",
+      "size": 3288,
+      "sha": "3cc64be9324ea0da9e54711adbd30cc01f98c128",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/table_lifecycle_0110/before/table_command/cancel_preview.xlsx",
+      "size": 3288,
+      "sha": "3cc64be9324ea0da9e54711adbd30cc01f98c128",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/table_lifecycle_0110/before/table_command/cancel_save_dialog.xlsx",
+      "size": 3288,
+      "sha": "3cc64be9324ea0da9e54711adbd30cc01f98c128",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/table_lifecycle_0110/before/table_command/cancel_update_second_preview.xlsx",
+      "size": 3288,
+      "sha": "3cc64be9324ea0da9e54711adbd30cc01f98c128",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/table_lifecycle_0110/before/table_command/excel_only.xlsx",
+      "size": 3288,
+      "sha": "83820b550b7f1012df5f49832a6fd4b784cc37aa",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/table_lifecycle_0110/before/table_command/excel_only_rows.json",
+      "size": 4589,
+      "sha": "25b2de93635339971b5968a37efcfcac6115bba4",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/table_lifecycle_0110/before/table_command/initial_cladding.xlsx",
+      "size": 2572,
+      "sha": "241fcbf294b0fd84547903c10619da0b9ae7e764",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/table_lifecycle_0110/before/table_command/initial_cladding_rows.json",
+      "size": 1663,
+      "sha": "5003456acfddd7713b8ea8c02088dbe32e09e985",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/table_lifecycle_0110/before/table_command/initial_cladding_table.json",
+      "size": 6780,
+      "sha": "14163f40d87bb2574bfc04591c1cef63bbddff59",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/table_lifecycle_0110/before/table_command/initial_connections.xlsx",
+      "size": 3535,
+      "sha": "d8dd0e64bc4137b91b73d5f80a95c49769c342b8",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/table_lifecycle_0110/before/table_command/initial_connections_rows.json",
+      "size": 5488,
+      "sha": "698f9767019ee8ac316179de45be83116aa33eeb",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/table_lifecycle_0110/before/table_command/initial_connections_table.json",
+      "size": 18956,
+      "sha": "e3b19b643a0635f7816f29b95ce3970ebc29a42f",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/table_lifecycle_0110/before/table_command/initial_frame.xlsx",
+      "size": 3288,
+      "sha": "3cc64be9324ea0da9e54711adbd30cc01f98c128",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/table_lifecycle_0110/before/table_command/initial_frame_rows.json",
+      "size": 4589,
+      "sha": "25b2de93635339971b5968a37efcfcac6115bba4",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/table_lifecycle_0110/before/table_command/initial_frame_table.json",
+      "size": 16395,
+      "sha": "e8526c581f2fb388260301b7bd64cea6bea66950",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/table_lifecycle_0110/before/table_command/late_project.xlsx",
+      "size": 3288,
+      "sha": "3cc64be9324ea0da9e54711adbd30cc01f98c128",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/table_lifecycle_0110/before/table_command/late_target.xlsx",
+      "size": 3288,
+      "sha": "3cc64be9324ea0da9e54711adbd30cc01f98c128",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/table_lifecycle_0110/before/table_command/late_target_table.json",
+      "size": 16308,
+      "sha": "21d039cf90818e5ad5c79ed2621cb98009bf638f",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/table_lifecycle_0110/before/table_command/project_reissued_cladding.xlsx",
+      "size": 2572,
+      "sha": "41eaa0adbcb6a0ff4ab4dd4f62a8e476095ac5c2",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/table_lifecycle_0110/before/table_command/project_reissued_cladding_rows.json",
+      "size": 1663,
+      "sha": "5003456acfddd7713b8ea8c02088dbe32e09e985",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/table_lifecycle_0110/before/table_command/project_reissued_cladding_table.json",
+      "size": 6780,
+      "sha": "14163f40d87bb2574bfc04591c1cef63bbddff59",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/table_lifecycle_0110/before/table_command/project_reissued_connections.xlsx",
+      "size": 3537,
+      "sha": "c16013a625d6954fe5f6e74dc3dcdc1b54e9ecac",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/table_lifecycle_0110/before/table_command/project_reissued_connections_rows.json",
+      "size": 5488,
+      "sha": "6d136b1a8de34dcbb3a64fec5e00848b3a18a116",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/table_lifecycle_0110/before/table_command/project_reissued_connections_table.json",
+      "size": 18956,
+      "sha": "723ee28ec2602263c2479fb494dfa6902288a063",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/table_lifecycle_0110/before/table_command/project_reissued_frame.xlsx",
+      "size": 3288,
+      "sha": "83820b550b7f1012df5f49832a6fd4b784cc37aa",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/table_lifecycle_0110/before/table_command/project_reissued_frame_rows.json",
+      "size": 4589,
+      "sha": "25b2de93635339971b5968a37efcfcac6115bba4",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/table_lifecycle_0110/before/table_command/project_reissued_frame_table.json",
+      "size": 16395,
+      "sha": "560701cad381970452c6a9eff9c2d37039f2b7b3",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/table_lifecycle_0110/before/table_command/result.json",
+      "size": 78876,
+      "sha": "46bf9b63894306ddd8ecd2cc4033b1c373008644",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/table_lifecycle_0110/before/table_command/xlsx_review.json",
+      "size": 348783,
+      "sha": "e98667c88bcf955250d2104f2559b52a0647556b",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/table_lifecycle_0110/before/table_command/zone_reissued_cladding.xlsx",
+      "size": 2572,
+      "sha": "41eaa0adbcb6a0ff4ab4dd4f62a8e476095ac5c2",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/table_lifecycle_0110/before/table_command/zone_reissued_cladding_rows.json",
+      "size": 1663,
+      "sha": "5003456acfddd7713b8ea8c02088dbe32e09e985",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/table_lifecycle_0110/before/table_command/zone_reissued_cladding_table.json",
+      "size": 6780,
+      "sha": "14163f40d87bb2574bfc04591c1cef63bbddff59",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/table_lifecycle_0110/before/table_command/zone_reissued_connections.xlsx",
+      "size": 3536,
+      "sha": "0255535acd2d397f2d476c207ec51a963227ef60",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/table_lifecycle_0110/before/table_command/zone_reissued_connections_rows.json",
+      "size": 5488,
+      "sha": "5d3c31bdcfa69960278c624925b4f038ffc18dec",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/table_lifecycle_0110/before/table_command/zone_reissued_connections_table.json",
+      "size": 18956,
+      "sha": "a37de979c207f784264dbc23ba317b6a845d5752",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/table_lifecycle_0110/before/table_command/zone_reissued_frame.xlsx",
+      "size": 3288,
+      "sha": "83820b550b7f1012df5f49832a6fd4b784cc37aa",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/table_lifecycle_0110/before/table_command/zone_reissued_frame_rows.json",
+      "size": 4589,
+      "sha": "25b2de93635339971b5968a37efcfcac6115bba4",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/table_lifecycle_0110/before/table_command/zone_reissued_frame_table.json",
+      "size": 16395,
+      "sha": "0a0efed8081c151bca88cc89b761cead4eb710ae",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/table_lifecycle_0110/before/table_expect.json",
+      "size": 27,
+      "sha": "b24409c069c5415aadf4ae1ddc472a69e801f31d",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/table_lifecycle_0110/before/trace.json",
+      "size": 31763,
+      "sha": "8470ebdfcf7a562c1a0f7b4956afc65974946fed",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/table_lifecycle_0110/before/xlsx_review.json",
+      "size": 1886,
+      "sha": "3b4443a5308ce0acfa9487df3ddcf99f40b5a638",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/table_lifecycle_0110/before/zone_reissue/cladding.xlsx",
+      "size": 3518,
+      "sha": "4d2bb229e0380351fa894380965fabc75172261f",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/table_lifecycle_0110/before/zone_reissue/cladding_rows.json",
+      "size": 5250,
+      "sha": "c0e85bd3dd79c2d13d6f77b4fe049298f5c67be1",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": true
+    },
+    {
+      "path": "docs/table_lifecycle_0110/before/zone_reissue/connections.xlsx",
+      "size": 3492,
+      "sha": "e4777689f000db8ba1a606f983322ff0f4d56d3b",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/table_lifecycle_0110/before/zone_reissue/connections_rows.json",
+      "size": 5491,
+      "sha": "19e38b9fbb22b85b5be4415d3084986ea59f3f59",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/table_lifecycle_0110/before/zone_reissue/frame.xlsx",
+      "size": 3240,
+      "sha": "9d7097e675c56684d99da2e1704ce84cf5b46d63",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/table_lifecycle_0110/before/zone_reissue/frame_rows.json",
+      "size": 4592,
+      "sha": "f6c95cb00a7f6791cfaaee6d4fc2ee1c2b38ccd2",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": true
+    },
+    {
+      "path": "docs/table_lifecycle_0110/before/zone_reissue/quantities.json",
+      "size": 12286,
+      "sha": "731497516b2b3dc24aa5cf2b81242bc89b5b48b0",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/table_lifecycle_0110/before/zone_reissue/П-1_frame_report.json",
+      "size": 12719,
+      "sha": "198147cd2efbeff07729ecc7c0534ed4b76d118e",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/table_lifecycle_0110/before/zone_reissue/П-1_node.json",
+      "size": 22098,
+      "sha": "c5114ff8711f322b2e3d22ae0b7156a115ec6a40",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/table_lifecycle_0110/checks_manifest.json",
+      "size": 28869,
+      "sha": "20abf6b726d28200bf5a643bb6e1711d8cce20c7",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/table_lifecycle_0110/compile_manifest.json",
+      "size": 10630,
+      "sha": "63e21b5deba0b648de1d7e081265bc2b6e434c6c",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/table_lifecycle_0110/environment_summary.json",
+      "size": 1646,
+      "sha": "9125f7bcb106af82d9b786f7b366ef6444119a11",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/table_lifecycle_0110/facade_compile_warning.log",
+      "size": 191,
+      "sha": "5dde15fda96694eaf0fdb006423340bfc6229721",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": true
+    },
+    {
+      "path": "docs/table_lifecycle_0110/focused_gate_source_binding.json",
+      "size": 16663,
+      "sha": "36431c4879e0342d6ea141d066d461b747526a4b",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/table_lifecycle_0110/full_synth_revalidation.json",
+      "size": 10498,
+      "sha": "7a20eb8c0cafb94d8913f42c3310c4d4aebd3399",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/table_lifecycle_0110/gate_source_hashes.json",
+      "size": 30155,
+      "sha": "140f4c54a0da46265b93e3b36dedcd28c1f1e8e2",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/table_lifecycle_0110/guide_applicability.json",
+      "size": 7953,
+      "sha": "ad8dc30ce74a79481a88de112a08c475b8a96ac6",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/table_lifecycle_0110/guide_binding_recheck.json",
+      "size": 655,
+      "sha": "795ef2723828cd85957c712413968e6759fee768",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/table_lifecycle_0110/human_route.md",
+      "size": 9909,
+      "sha": "e190da03e797f9354f5d0a3ede77168a7cc903c2",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/table_lifecycle_0110/independent_oracle.json",
+      "size": 1683,
+      "sha": "af4e407388c09b578048525a83acf2617f4c76cd",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/table_lifecycle_0110/independent_review.json",
+      "size": 20506,
+      "sha": "641d67d780316828bb54f4303367ddf400278240",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/table_lifecycle_0110/independent_review.md",
+      "size": 7992,
+      "sha": "7d774d9ee1490220b22a06f09f9cb26748d58244",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/table_lifecycle_0110/independent_saved_evidence_checks.json",
+      "size": 81388,
+      "sha": "da066012fce6ab760510bee1c8d128625ec99f7c",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/table_lifecycle_0110/integration_review.json",
+      "size": 718,
+      "sha": "d8ac669fcba89da8275d741e3590109fe0d24741",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/table_lifecycle_0110/limited_acceptance_gate_manifest.json",
+      "size": 85678,
+      "sha": "d032b2ae0d7d03c7e83852998472f39ab6815569",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/table_lifecycle_0110/local_gate_summary.json",
+      "size": 2159,
+      "sha": "c860fedfd5c59c70432e9e9d6b93a432571a6482",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/table_lifecycle_0110/next_node_gap.md",
+      "size": 4747,
+      "sha": "0c2e84e1d67d41f8d378606b113877f5ef7d4a32",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/table_lifecycle_0110/performance_counts.json",
+      "size": 3681,
+      "sha": "8172f9f7f4992f072d83c3cf02a3415b4b5138f2",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/table_lifecycle_0110/project_parameters_store.log",
+      "size": 110,
+      "sha": "e91f865f7ce4210d6d74e5da71ff7554309756ad",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/table_lifecycle_0110/reproduction_index.json",
+      "size": 1054,
+      "sha": "82a3c7d322ff855c7031e9bea0e5db849f551d57",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/table_lifecycle_0110/sensitivity/command_source.cs",
+      "size": 22926,
+      "sha": "2b63d691c3a0ce241b62c3739685906beb068ce6",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": true
+    },
+    {
+      "path": "docs/table_lifecycle_0110/sensitivity/sensitivity.json",
+      "size": 733,
+      "sha": "61db659f19e90ce4b161aa7de9441910034209b1",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/table_lifecycle_0110/sensitivity/sensitivity.log",
+      "size": 1428,
+      "sha": "00c948ebf7db0eeaaef21755d3f6026f63a44505",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/table_lifecycle_0110/table_command_lifecycle.log",
+      "size": 70,
+      "sha": "94ea35c7ce703f6ebf8f02d0149c74ced4fc957a",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/table_lifecycle_0110/table_lifecycle_gate_manifest.json",
+      "size": 21754,
+      "sha": "73f3802a3879a7f7c5212e4611271ccfbc7323d8",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "docs/table_lifecycle_0110/verification_manifest.json",
+      "size": 3093,
+      "sha": "c5f58820beb5a689c90813c150d6e31abe6c1ac3",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "tools/atr_review_3009/run_checks.py",
+      "size": 10679,
+      "sha": "5b895490c124b3408ca8e52a9b2e98042c141802",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "tools/limited_pilot_0110/LimitedPilotProbe.cs",
+      "size": 26228,
+      "sha": "d0b6f8adaa5544098d6bd2766d12d75fb279fd73",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "tools/limited_pilot_0110/run_acceptance.py",
+      "size": 23538,
+      "sha": "a6ecf93f2edb748b9283d6af4df157df62a06464",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "tools/project_params_0110/test_store_contract.py",
+      "size": 7275,
+      "sha": "f0360df2b69b0d229522e43c352dd275e6be8937",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "tools/quantities_3009/QuantityCadDoubles.cs",
+      "size": 18537,
+      "sha": "3b8739e93dc800c1b4cba1b7ec0c864abd707d7e",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "tools/table_lifecycle_0110/README.md",
+      "size": 4930,
+      "sha": "1e44c34a6193a147a706a08f25bf20351e5d3642",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "tools/table_lifecycle_0110/TableCommandDoubles.cs",
+      "size": 7416,
+      "sha": "d5edd901322890d5c6fe6bf17cf4818f3df317cf",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "tools/table_lifecycle_0110/TableLifecycleProbe.cs",
+      "size": 17401,
+      "sha": "73beff22718ee3c30d334145311906b4cfeb3355",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    },
+    {
+      "path": "tools/table_lifecycle_0110/run_lifecycle.py",
+      "size": 11042,
+      "sha": "ff846965dc7bdc25a6cf2a158f3a3b55f888dfe9",
+      "mode": "100644",
+      "type": "blob",
+      "existing_in_parent_history": false
+    }
+  ]
+}

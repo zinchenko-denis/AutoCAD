@@ -1,0 +1,450 @@
+{
+  "git_commit": "b4bf2897f6df85e4219c83ab64b39dd59d2d17d8",
+  "allowed_conversion": "Exact Git bytes or LF→CRLF only",
+  "sources": {
+    "AClad/engine/audit_clad.py": {
+      "ci_sha256": "d0980f634894e07acfb1dd70cc01589dd45f5d7b362586d455dbeeff0daa9b6e",
+      "git_exact": "881ae022233fbc6ff178d2ea2f4842eb4cf7547a8cb33a8a29e69c435aad8a92",
+      "git_LF_to_CRLF": "d0980f634894e07acfb1dd70cc01589dd45f5d7b362586d455dbeeff0daa9b6e",
+      "accepted_variant": "git_LF_to_CRLF"
+    },
+    "AClad/engine/clad_engine.py": {
+      "ci_sha256": "ca4d00ffa43e9e5700f4c281d0c10ffd0b2e5cfc9c852a6fba73071fd4b22da3",
+      "git_exact": "cf7e3739c74517a6d4483572d19330901b11d6ef8f3eb4e95c42104645257e1e",
+      "git_LF_to_CRLF": "ca4d00ffa43e9e5700f4c281d0c10ffd0b2e5cfc9c852a6fba73071fd4b22da3",
+      "accepted_variant": "git_LF_to_CRLF"
+    },
+    "AClad/engine/cladding_plan.py": {
+      "ci_sha256": "f33ee25ff9a1ed74676d681d0ff15ca6864c8b7a46e4683825552bb741b73a6e",
+      "git_exact": "0eb923685b4a1319a31f8eb17bfe25059aaee22b8c7b85d40982b812af5e2e8e",
+      "git_LF_to_CRLF": "f33ee25ff9a1ed74676d681d0ff15ca6864c8b7a46e4683825552bb741b73a6e",
+      "accepted_variant": "git_LF_to_CRLF"
+    },
+    "AClad/engine/polygon_clip.py": {
+      "ci_sha256": "a1c7cb2a8066bdf69af351fa16584e438b012854ee9bcc4d946f11fde42a7cc4",
+      "git_exact": "06bf6d81181d8f0732827a53169cbc5c8aa4f5615e7cc5ed5306b2ac4ae4c60f",
+      "git_LF_to_CRLF": "a1c7cb2a8066bdf69af351fa16584e438b012854ee9bcc4d946f11fde42a7cc4",
+      "accepted_variant": "git_LF_to_CRLF"
+    },
+    "AClad/engine/test_clad_engine.py": {
+      "ci_sha256": "faf9f879c2e6e6ca21960109f9d2d0fcac47052f68c96f528fbbe280dbfb50a3",
+      "git_exact": "7f4133e8cb1c5e139752ad16c8a26777ee691940169c8eb2c13f5b5f1972569b",
+      "git_LF_to_CRLF": "faf9f879c2e6e6ca21960109f9d2d0fcac47052f68c96f528fbbe280dbfb50a3",
+      "accepted_variant": "git_LF_to_CRLF"
+    },
+    "AClad/engine/test_cladding_plan.py": {
+      "ci_sha256": "215c2e5e78aa9576641dc4ccdad341f27f7c715b8a88b0f22fdadd54a150d66b",
+      "git_exact": "4461dea9f1f00e926d52f3d0b64562a281f036b8baed4dba8656c3d89314f97a",
+      "git_LF_to_CRLF": "215c2e5e78aa9576641dc4ccdad341f27f7c715b8a88b0f22fdadd54a150d66b",
+      "accepted_variant": "git_LF_to_CRLF"
+    },
+    "AClad/engine/test_tile_pattern.py": {
+      "ci_sha256": "3ce0b022f1dd93a0079b91dd5687d9197e03fe7e0ecd83bfaf059ce79aef6a0a",
+      "git_exact": "d489eae004c47dde8fc3f32108e5721c6e050387dd8e8539b3e01f37f9e640c3",
+      "git_LF_to_CRLF": "3ce0b022f1dd93a0079b91dd5687d9197e03fe7e0ecd83bfaf059ce79aef6a0a",
+      "accepted_variant": "git_LF_to_CRLF"
+    },
+    "AClad/engine/tile_pattern.py": {
+      "ci_sha256": "c6fbc0e9d945ca34ea887571e64cb36be2eaaeb114501a390ac6e1eb1e75dff4",
+      "git_exact": "3af9df2b123585ce33d0b8a616956c0c0ef5ba7a822acb6fa06555ace81eafce",
+      "git_LF_to_CRLF": "c6fbc0e9d945ca34ea887571e64cb36be2eaaeb114501a390ac6e1eb1e75dff4",
+      "accepted_variant": "git_LF_to_CRLF"
+    },
+    "AClad/src/ACladPlugin/BondSettings.cs": {
+      "ci_sha256": "758b71c0e40094bea20fcf1f88607720bd86140f56ac89085dd98f32af6f6263",
+      "git_exact": "c30e687bfee933011fb98b1587bb4a1603d2425055a0046c61a33a28713aa914",
+      "git_LF_to_CRLF": "758b71c0e40094bea20fcf1f88607720bd86140f56ac89085dd98f32af6f6263",
+      "accepted_variant": "git_LF_to_CRLF"
+    },
+    "AClad/src/ACladPlugin/CladdingQuantities.cs": {
+      "ci_sha256": "2a26b4adba0503d71ca4c0addfb544016de2f49f37aecea22681193efaadee1e",
+      "git_exact": "e1c49a0ca2833bbc96cd93fd723cfd49c84a53a1c57a0a72f35c2fdad240e3a9",
+      "git_LF_to_CRLF": "2a26b4adba0503d71ca4c0addfb544016de2f49f37aecea22681193efaadee1e",
+      "accepted_variant": "git_LF_to_CRLF"
+    },
+    "AFrame/engine/analiz_klu_poligon.py": {
+      "ci_sha256": "33935bb1083c334fc2e3318176b20855c06ca7c7573e2be169be00e53d0e385f",
+      "git_exact": "903a3080c4b01dea51e936560adba060f12f172fe13887bd2785456881f5fa27",
+      "git_LF_to_CRLF": "33935bb1083c334fc2e3318176b20855c06ca7c7573e2be169be00e53d0e385f",
+      "accepted_variant": "git_LF_to_CRLF"
+    },
+    "AFrame/engine/assembly_catalog.json": {
+      "ci_sha256": "52a8219f6c24ebe5199931f398ffa104bb603237267a4bd8193f7af01922d729",
+      "git_exact": "a202410e6c9872b73cf9f06183c6fc22b22280fb0dcbfb68e71561117d65456e",
+      "git_LF_to_CRLF": "52a8219f6c24ebe5199931f398ffa104bb603237267a4bd8193f7af01922d729",
+      "accepted_variant": "git_LF_to_CRLF"
+    },
+    "AFrame/engine/audit_frame.py": {
+      "ci_sha256": "a1a42d5b3e49b085036ee212623de1f42e098d4c11a7158b6b2cd223725fab8f",
+      "git_exact": "7ce9adac3adddcb7619b88d789b78f4b811f9c890e9fd9b08f884b32ee4e2d48",
+      "git_LF_to_CRLF": "a1a42d5b3e49b085036ee212623de1f42e098d4c11a7158b6b2cd223725fab8f",
+      "accepted_variant": "git_LF_to_CRLF"
+    },
+    "AFrame/engine/dsverka_poligon.py": {
+      "ci_sha256": "1ec28d3531cc2f0b16020961d87d441913fd7befe54a0d407a85e698267dee49",
+      "git_exact": "a971bd36882c6663c0fcbc466de5e288d9aa1f4d1f6d55e5eb462ae5d635a1ec",
+      "git_LF_to_CRLF": "1ec28d3531cc2f0b16020961d87d441913fd7befe54a0d407a85e698267dee49",
+      "accepted_variant": "git_LF_to_CRLF"
+    },
+    "AFrame/engine/frame_calc.py": {
+      "ci_sha256": "e85641d1e802660af062519cb88596caec154a6af9baada15bab95a3ddb222da",
+      "git_exact": "abe20fd3c0de0937ba0636914f083f7c48a7a65b3b4c85f05673278a95e1da88",
+      "git_LF_to_CRLF": "e85641d1e802660af062519cb88596caec154a6af9baada15bab95a3ddb222da",
+      "accepted_variant": "git_LF_to_CRLF"
+    },
+    "AFrame/engine/frame_catalog.py": {
+      "ci_sha256": "be987c0ce8452eadbc5babf0dff28dfba895baf525eea2de5278262ec5af5698",
+      "git_exact": "947a0277f3a6202dff365c1de6e86c5832dbc2c97e2a810b99d500a5d6f6b163",
+      "git_LF_to_CRLF": "be987c0ce8452eadbc5babf0dff28dfba895baf525eea2de5278262ec5af5698",
+      "accepted_variant": "git_LF_to_CRLF"
+    },
+    "AFrame/engine/frame_connections.py": {
+      "ci_sha256": "2f570417d9ca5fda157423fb2ff14f813e7ccc4f067183b924fce75365f992b2",
+      "git_exact": "d4febc1ce6e147f1cbce29cb64690f2c3b592efe4e40b9c88da5c8a2dcc74985",
+      "git_LF_to_CRLF": "2f570417d9ca5fda157423fb2ff14f813e7ccc4f067183b924fce75365f992b2",
+      "accepted_variant": "git_LF_to_CRLF"
+    },
+    "AFrame/engine/frame_engine.py": {
+      "ci_sha256": "7d85bf5beda118f0750d926c16714282201a1f965e2c27cf93726126a66d6db3",
+      "git_exact": "b4acaaa98f48f91e0019b04231bb2ca361059e8d6a4e587cdbb64eb432790529",
+      "git_LF_to_CRLF": "7d85bf5beda118f0750d926c16714282201a1f965e2c27cf93726126a66d6db3",
+      "accepted_variant": "git_LF_to_CRLF"
+    },
+    "AFrame/engine/frame_plan.py": {
+      "ci_sha256": "36df2b6d2aeaa1dfceb0e31b167eb3cb392a734c2c6eb4aa43a40694531400ad",
+      "git_exact": "5c4b4bbbc8258d62e965c24604906cd819b6a06a04643425ed1770b07c5d7105",
+      "git_LF_to_CRLF": "36df2b6d2aeaa1dfceb0e31b167eb3cb392a734c2c6eb4aa43a40694531400ad",
+      "accepted_variant": "git_LF_to_CRLF"
+    },
+    "AFrame/engine/frame_rules.py": {
+      "ci_sha256": "1383ac5badcb5ac07eab12def255b86d679966191acef250e2b09fa41757be5e",
+      "git_exact": "511ec4ec48331034257859ccac70ef028a8c4b398acd7d5b238d778e3c63ea6f",
+      "git_LF_to_CRLF": "1383ac5badcb5ac07eab12def255b86d679966191acef250e2b09fa41757be5e",
+      "accepted_variant": "git_LF_to_CRLF"
+    },
+    "AFrame/engine/frame_solution_catalog.py": {
+      "ci_sha256": "3649cb9bc72344c206efd5011e94efe51ef448ac295ff8d2fb0cbc6af53bb02f",
+      "git_exact": "56e674855cc01e19bf2a0723dff1f3454497a99aef56f3de1b5bbf75c0d44764",
+      "git_LF_to_CRLF": "3649cb9bc72344c206efd5011e94efe51ef448ac295ff8d2fb0cbc6af53bb02f",
+      "accepted_variant": "git_LF_to_CRLF"
+    },
+    "AFrame/engine/frame_solution_selection.py": {
+      "ci_sha256": "8d7665fd417caae469b7c50a4580fd2182cab2c73c61803b178e52a5e83ae36b",
+      "git_exact": "6490da6ced48715c4dce5ca357e0f54be9c035dd7bb6fc8d86b684f1d15f6aee",
+      "git_LF_to_CRLF": "8d7665fd417caae469b7c50a4580fd2182cab2c73c61803b178e52a5e83ae36b",
+      "accepted_variant": "git_LF_to_CRLF"
+    },
+    "AFrame/engine/frame_spatial.py": {
+      "ci_sha256": "7dc4113560b2baa8d5d786c596428f7a2731ad978c188bfea87aa86161bde2f6",
+      "git_exact": "003efc0e73b344d50d4465d2bc1bfc87f8ca149c7d443a1e7d9061e6dbfd6cec",
+      "git_LF_to_CRLF": "7dc4113560b2baa8d5d786c596428f7a2731ad978c188bfea87aa86161bde2f6",
+      "accepted_variant": "git_LF_to_CRLF"
+    },
+    "AFrame/engine/frame_topology.py": {
+      "ci_sha256": "711625511ff543363bf5738b9b924ee9fd2104c5d870bffc66097962c69f969c",
+      "git_exact": "2455ab874309d1382591800acce35dd3bde04ea3be6519f8b1de89dd5514f5d5",
+      "git_LF_to_CRLF": "711625511ff543363bf5738b9b924ee9fd2104c5d870bffc66097962c69f969c",
+      "accepted_variant": "git_LF_to_CRLF"
+    },
+    "AFrame/engine/systems.json": {
+      "ci_sha256": "881cce9e53278755266ca2441e4891ae71196524dde63634e9742e6e072236ca",
+      "git_exact": "e9ee0a4cf0c535473dd9931f9b2a3d86dd1d932fe18f84682ef3fd221fbc03c3",
+      "git_LF_to_CRLF": "881cce9e53278755266ca2441e4891ae71196524dde63634e9742e6e072236ca",
+      "accepted_variant": "git_LF_to_CRLF"
+    },
+    "AFrame/engine/test_frame_calc.py": {
+      "ci_sha256": "5b8f2850515ea3c7528480f579a5495cbbd9432eb8e2075c99ade0a9726a185c",
+      "git_exact": "f72160fe7a3483c35a6c0d7ef669a612e6e44defb95c33916a850c2a605d5239",
+      "git_LF_to_CRLF": "5b8f2850515ea3c7528480f579a5495cbbd9432eb8e2075c99ade0a9726a185c",
+      "accepted_variant": "git_LF_to_CRLF"
+    },
+    "AFrame/engine/test_frame_connections.py": {
+      "ci_sha256": "7796a9ee818f2f0a692d685555972ee8fdc34cefa73b3a5d9709ddf228404790",
+      "git_exact": "21f2c64b59b1a1f052eadcf1c69d1aa8f0e0e60ad42182f793ac914a16971353",
+      "git_LF_to_CRLF": "7796a9ee818f2f0a692d685555972ee8fdc34cefa73b3a5d9709ddf228404790",
+      "accepted_variant": "git_LF_to_CRLF"
+    },
+    "AFrame/engine/test_frame_engine.py": {
+      "ci_sha256": "a137c20f943630a59f61aa4e6a7fa5288a58fc4c4f863d60c0e7dc9197859bfa",
+      "git_exact": "3d32ffb69a6e9bc5d229ed11201e7e09500b5f193859b6a2cbab190c73679270",
+      "git_LF_to_CRLF": "a137c20f943630a59f61aa4e6a7fa5288a58fc4c4f863d60c0e7dc9197859bfa",
+      "accepted_variant": "git_LF_to_CRLF"
+    },
+    "AFrame/engine/test_frame_plan.py": {
+      "ci_sha256": "91fd40dff46ab004b00d6fdcd53aaf2f1358951ac1e05c71fafb45a70085ed85",
+      "git_exact": "fa35454f0a80362fc17441d078feaaf18bcb271a84e599de82517329005708a6",
+      "git_LF_to_CRLF": "91fd40dff46ab004b00d6fdcd53aaf2f1358951ac1e05c71fafb45a70085ed85",
+      "accepted_variant": "git_LF_to_CRLF"
+    },
+    "AFrame/engine/test_frame_rules.py": {
+      "ci_sha256": "df7b291c70df8ab489b74e6b5b8bc2e3da9963e44f718bd0e0b5556ae261b616",
+      "git_exact": "0f629daa13207e436eb5e425e1f4e3d7189d205ffc6956bceca0427eb237b26e",
+      "git_LF_to_CRLF": "df7b291c70df8ab489b74e6b5b8bc2e3da9963e44f718bd0e0b5556ae261b616",
+      "accepted_variant": "git_LF_to_CRLF"
+    },
+    "AFrame/engine/test_frame_solution_selection.py": {
+      "ci_sha256": "7f53b246ff33174a7759d93bc9eca9525627f73faf70e179a8fad06ff4cb4abb",
+      "git_exact": "79b853ab20b95d491fc3e76f667fc7fb7106afa6ace7b5ae9d1ede191f99aceb",
+      "git_LF_to_CRLF": "7f53b246ff33174a7759d93bc9eca9525627f73faf70e179a8fad06ff4cb4abb",
+      "accepted_variant": "git_LF_to_CRLF"
+    },
+    "AFrame/engine/test_frame_topology.py": {
+      "ci_sha256": "a3283a3509f6a5e6cb62fa3eb47bb63de7375592ad2955516e67e0f6b6d458f6",
+      "git_exact": "88f59edd4e8543ec3c444eb3557dbe7a10b922318362ca82360675da1c11586c",
+      "git_LF_to_CRLF": "a3283a3509f6a5e6cb62fa3eb47bb63de7375592ad2955516e67e0f6b6d458f6",
+      "accepted_variant": "git_LF_to_CRLF"
+    },
+    "AFrame/engine/test_frame_topology_index.py": {
+      "ci_sha256": "43898e957f3843c21d8e9239fd5baa29b8537af8e3fd15e8cb02ee0351da6c32",
+      "git_exact": "d8e139847c458cdf87fddf24b7c790e15e479ff4c2bbbd3a4848757e6560a1a7",
+      "git_LF_to_CRLF": "43898e957f3843c21d8e9239fd5baa29b8537af8e3fd15e8cb02ee0351da6c32",
+      "accepted_variant": "git_LF_to_CRLF"
+    },
+    "AFrame/src/AFramePlugin/FrameMountingAssessment.cs": {
+      "ci_sha256": "c74a5d5b61c1aa9dae7c254bd61db0c34133b7c0e6e0b7537bf3f395b8028b71",
+      "git_exact": "647be5999387b05fed54a0394164e40cb0eaef30d2d058164a61824ecf028b20",
+      "git_LF_to_CRLF": "c74a5d5b61c1aa9dae7c254bd61db0c34133b7c0e6e0b7537bf3f395b8028b71",
+      "accepted_variant": "git_LF_to_CRLF"
+    },
+    "AFrame/src/AFramePlugin/FrameNodeCommand.cs": {
+      "ci_sha256": "6e8cf8d2ce6e5ebae6dad1297894b8c2b40ba7907399c5f95a6ef54daa86ba43",
+      "git_exact": "d36b97c1ff93fe1d749ab0c140f198441b48b5e82305c1254d5cadafac390a22",
+      "git_LF_to_CRLF": "6e8cf8d2ce6e5ebae6dad1297894b8c2b40ba7907399c5f95a6ef54daa86ba43",
+      "accepted_variant": "git_LF_to_CRLF"
+    },
+    "AFrame/src/AFramePlugin/FrameNodeDrawing.cs": {
+      "ci_sha256": "77368b90639258c0c7753780f07d8194d81780e5e30983b72573a26d0f788d9a",
+      "git_exact": "42d24cf17582e84da1293a26ff059a0c49ec37f9c1063f3eaa72835bf5e62b88",
+      "git_LF_to_CRLF": "77368b90639258c0c7753780f07d8194d81780e5e30983b72573a26d0f788d9a",
+      "accepted_variant": "git_LF_to_CRLF"
+    },
+    "AFrame/src/AFramePlugin/FrameNodeGeometry.cs": {
+      "ci_sha256": "3aceaab1eec32cf3a7476dea9f37d67423c81d0446593a83a1b1369cb5530b93",
+      "git_exact": "50f1f3d869ae141c9cb38f0efd867b28dfa24afc746002faa70740579fc24d37",
+      "git_LF_to_CRLF": "3aceaab1eec32cf3a7476dea9f37d67423c81d0446593a83a1b1369cb5530b93",
+      "accepted_variant": "git_LF_to_CRLF"
+    },
+    "AFrame/src/AFramePlugin/FrameProjectParameters.cs": {
+      "ci_sha256": "916fbdc792a35ab023b7d586fd929da64675a79e3e2aa4202a206bcfeba77482",
+      "git_exact": "612c46eabcb1c7c80c86e5a3e0fed2153a809b8f2b1734b1e9b596e2e26ec7f1",
+      "git_LF_to_CRLF": "916fbdc792a35ab023b7d586fd929da64675a79e3e2aa4202a206bcfeba77482",
+      "accepted_variant": "git_LF_to_CRLF"
+    },
+    "AFrame/src/AFramePlugin/FrameQuantities.cs": {
+      "ci_sha256": "1c1049382e171f79fa4866a555979eced505e28ebbe691d1822253a94192d36c",
+      "git_exact": "d34f7cf6219dbfec7c88796b12477bea9382d4cca2dc125e4ebd1a252b1cf791",
+      "git_LF_to_CRLF": "1c1049382e171f79fa4866a555979eced505e28ebbe691d1822253a94192d36c",
+      "accepted_variant": "git_LF_to_CRLF"
+    },
+    "AFrame/src/AFramePlugin/FrameSettings.cs": {
+      "ci_sha256": "14fa9ad2c20caa2e4bd9931c25f24b7b6affd5ef30943410d551e556d28082e2",
+      "git_exact": "a44273b52d3ee92407d5dfc98315d6750d3aa57b7259cc2b98e4432757198cda",
+      "git_LF_to_CRLF": "14fa9ad2c20caa2e4bd9931c25f24b7b6affd5ef30943410d551e556d28082e2",
+      "accepted_variant": "git_LF_to_CRLF"
+    },
+    "AFrame/src/AFramePlugin/FrameSolutionSelection.cs": {
+      "ci_sha256": "a79f45984e52bcf023d3ac35a3cabdfc84fff77c07ac662e411cbaf8a8b032f7",
+      "git_exact": "cb25b6e890ce2f1e5ee458f1e378510d21f7205e529ee1894520ed686a3abd66",
+      "git_LF_to_CRLF": "a79f45984e52bcf023d3ac35a3cabdfc84fff77c07ac662e411cbaf8a8b032f7",
+      "accepted_variant": "git_LF_to_CRLF"
+    },
+    "Common/FacadeProjectParameterStore.cs": {
+      "ci_sha256": "6278d9e9d12444fdda61b70b910f6516d866c0041ada1f1f90ad49ed8bfe20c2",
+      "git_exact": "71c1c2283e260514ee633c525fb8174b0e155b8e595c6433c021dcec847b948e",
+      "git_LF_to_CRLF": "6278d9e9d12444fdda61b70b910f6516d866c0041ada1f1f90ad49ed8bfe20c2",
+      "accepted_variant": "git_LF_to_CRLF"
+    },
+    "Common/FacadeQuantities.cs": {
+      "ci_sha256": "9453f7fdd91aac9aeab389d3b0ccc9b1968c59c48dfbd04664cd8150b24af305",
+      "git_exact": "b092bf95f154d6aa8041936bffa79a82c613d7ac8f27fee9d1e6d7c0cde09f90",
+      "git_LF_to_CRLF": "9453f7fdd91aac9aeab389d3b0ccc9b1968c59c48dfbd04664cd8150b24af305",
+      "accepted_variant": "git_LF_to_CRLF"
+    },
+    "Common/FacadeQuantityStore.cs": {
+      "ci_sha256": "4adb2edeaf52958e06fda83529a6edc6b672a9fb0cfc329e2cc5c6b629bd3ec4",
+      "git_exact": "91b47821efb92614d99e3a3cda57290c0643a50abc120dc5b9dca30f2bdd0af4",
+      "git_LF_to_CRLF": "4adb2edeaf52958e06fda83529a6edc6b672a9fb0cfc329e2cc5c6b629bd3ec4",
+      "accepted_variant": "git_LF_to_CRLF"
+    },
+    "Common/FacadeQuantityStore.Frame.cs": {
+      "ci_sha256": "a4f2aa29a264a534e06a4e5ab5cfec291f503c8bc586d22da6106400a223ab8a",
+      "git_exact": "25d92ebc92bb2a9ef8e0c346be403eba6b18bf80338da1f38dfcd9551216ebf3",
+      "git_LF_to_CRLF": "a4f2aa29a264a534e06a4e5ab5cfec291f503c8bc586d22da6106400a223ab8a",
+      "accepted_variant": "git_LF_to_CRLF"
+    },
+    "Common/FacadeQuantityStore.Manual.cs": {
+      "ci_sha256": "0a228ef4f498b8064806b3c19f2f837e34e9eda2ff4de29dc47462f71f289994",
+      "git_exact": "3ce4bafdc88bf783237ced8f39a435a264f265d32977c01df8b828a16a1442bb",
+      "git_LF_to_CRLF": "0a228ef4f498b8064806b3c19f2f837e34e9eda2ff4de29dc47462f71f289994",
+      "accepted_variant": "git_LF_to_CRLF"
+    },
+    "Common/GeometryFingerprint.cs": {
+      "ci_sha256": "726c44b190b72dd73a7f89374c577c6d60615458e601e52f9e147cf6089cc84c",
+      "git_exact": "24114ef7a18a56415313b009d7819c94190efa5ea517df2081d1f51951819332",
+      "git_LF_to_CRLF": "726c44b190b72dd73a7f89374c577c6d60615458e601e52f9e147cf6089cc84c",
+      "accepted_variant": "git_LF_to_CRLF"
+    },
+    "Common/LayoutGeometryGuard.cs": {
+      "ci_sha256": "53f4151911effc493abb22b3b525256aad5ff1032ae896b18c742737ae47c402",
+      "git_exact": "b582662e3557d023b8a318cf3fc59175616b0ac4f8bdbba0eccf4c2c960338da",
+      "git_LF_to_CRLF": "53f4151911effc493abb22b3b525256aad5ff1032ae896b18c742737ae47c402",
+      "accepted_variant": "git_LF_to_CRLF"
+    },
+    "Common/ManualQuantities.cs": {
+      "ci_sha256": "8e97a24b3e710e39c2a9ad49ec94dad6f6408664874275f0053f034842762f49",
+      "git_exact": "f73ec0d29da2dfe4a61aa496cda5e9ff25632a5dd26bf4d1e2ff85ed6dc3dcb8",
+      "git_LF_to_CRLF": "8e97a24b3e710e39c2a9ad49ec94dad6f6408664874275f0053f034842762f49",
+      "accepted_variant": "git_LF_to_CRLF"
+    },
+    "Common/ManualQuantityGeometry.cs": {
+      "ci_sha256": "4fc91d0bc6a3412ecffd3cf5472f2051a7d88b3711edd374f81a2955726e841b",
+      "git_exact": "07b975b09199d87405fce4757c959d00293e4fdf4b003572f80a30f240812693",
+      "git_LF_to_CRLF": "4fc91d0bc6a3412ecffd3cf5472f2051a7d88b3711edd374f81a2955726e841b",
+      "accepted_variant": "git_LF_to_CRLF"
+    },
+    "Common/ZoneGeometryGuard.cs": {
+      "ci_sha256": "0871ab6bc97ffc5ad162422c7e3360b0b23b836aed167e00807519a9b3d87116",
+      "git_exact": "daf06e2822a4d9ef2be818df1bf904779fa202adb1e5bce7fc0ba49c084970b8",
+      "git_LF_to_CRLF": "0871ab6bc97ffc5ad162422c7e3360b0b23b836aed167e00807519a9b3d87116",
+      "accepted_variant": "git_LF_to_CRLF"
+    },
+    "docs/limited_pilot_0110/independent_oracle.json": {
+      "ci_sha256": "7c0dbb686e7b7947d733524012e4c7f153152016b71a12e71f1c1edf23137cd8",
+      "git_exact": "c283170f4bcfb328ad8fd3be8e50d5200fa4fe74acf1e9e6487c2e425e2e60d1",
+      "git_LF_to_CRLF": "7c0dbb686e7b7947d733524012e4c7f153152016b71a12e71f1c1edf23137cd8",
+      "accepted_variant": "git_LF_to_CRLF"
+    },
+    "docs/table_lifecycle_0110/independent_oracle.json": {
+      "ci_sha256": "bc9907129356c00e66a5ba5be4feeb4c3460253054da4da295aa31b61980fa64",
+      "git_exact": "a8d60f52742e7fdcd0059653b7bdcf295a50e602e7dede5f6478cc7b0b88796e",
+      "git_LF_to_CRLF": "bc9907129356c00e66a5ba5be4feeb4c3460253054da4da295aa31b61980fa64",
+      "accepted_variant": "git_LF_to_CRLF"
+    },
+    "Facades/engine/facade_zones.py": {
+      "ci_sha256": "832a5bbf012e310f70ed830c843285457fc614e44f11c0261c2c2d9c103ee0ec",
+      "git_exact": "a6d93dfc7b9e399be3dab4bb2a624c714b12fe79236503fe54c105122bfeea01",
+      "git_LF_to_CRLF": "832a5bbf012e310f70ed830c843285457fc614e44f11c0261c2c2d9c103ee0ec",
+      "accepted_variant": "git_LF_to_CRLF"
+    },
+    "Facades/engine/facades_engine.py": {
+      "ci_sha256": "c7af789c1d1495e1452f6f7ecf5f6d8d6379412def8510773825725bc93576dd",
+      "git_exact": "f0046539d586d75f0d3042b83b7e155f06762f84869721544cd6542fa27ad306",
+      "git_LF_to_CRLF": "c7af789c1d1495e1452f6f7ecf5f6d8d6379412def8510773825725bc93576dd",
+      "accepted_variant": "git_LF_to_CRLF"
+    },
+    "Facades/engine/test_facade_zones.py": {
+      "ci_sha256": "ed9f4d74079c1a28faaca0ca07a2ef5de6482400604565d79d221ec432f75957",
+      "git_exact": "8465ae98a8b412db6e6f7b23242a34dada7475450b47294fb22785a02b47caf4",
+      "git_LF_to_CRLF": "ed9f4d74079c1a28faaca0ca07a2ef5de6482400604565d79d221ec432f75957",
+      "accepted_variant": "git_LF_to_CRLF"
+    },
+    "Facades/engine/test_facades_engine.py": {
+      "ci_sha256": "c0a87014a5df37dc3da90a9c4ae0b1c7521fbd72a71a6aaa9d11a591b80fe0d5",
+      "git_exact": "ce0f692df8747f5666aea690c6e346b79a7a4a65d54f8a48161c6af6a353d509",
+      "git_LF_to_CRLF": "c0a87014a5df37dc3da90a9c4ae0b1c7521fbd72a71a6aaa9d11a591b80fe0d5",
+      "accepted_variant": "git_LF_to_CRLF"
+    },
+    "Facades/src/AFacadesPlugin/CladdingTableData.cs": {
+      "ci_sha256": "fac718cf658527499f115b04892fb0b90d87e6c05255b6044097f5fec06a6915",
+      "git_exact": "8dec6b35b881f29b9da51d9e2c3769be360f53c6fac06670c2005a60e94405fa",
+      "git_LF_to_CRLF": "fac718cf658527499f115b04892fb0b90d87e6c05255b6044097f5fec06a6915",
+      "accepted_variant": "git_LF_to_CRLF"
+    },
+    "Facades/src/AFacadesPlugin/ConnectionTableData.cs": {
+      "ci_sha256": "5f734a8cc6a2461b46c14b4f7005d9d571f9109b6ffeb9966458b0a9e8a99119",
+      "git_exact": "04fb3ddfcaa568ca68703a32dc49ec08c1bd59d98d3766201b90c0920ffe26f9",
+      "git_LF_to_CRLF": "5f734a8cc6a2461b46c14b4f7005d9d571f9109b6ffeb9966458b0a9e8a99119",
+      "accepted_variant": "git_LF_to_CRLF"
+    },
+    "Facades/src/AFacadesPlugin/FacadeQuantityTableCommand.cs": {
+      "ci_sha256": "0d966ca0f37f98460ea5977e69035c87bf8d03949800a81809a1f89dde79f8bc",
+      "git_exact": "08ba2ef01f32293956380d2c4842d46ff1dae2b7aa860df7ed0c7d4435f85e38",
+      "git_LF_to_CRLF": "0d966ca0f37f98460ea5977e69035c87bf8d03949800a81809a1f89dde79f8bc",
+      "accepted_variant": "git_LF_to_CRLF"
+    },
+    "Facades/src/AFacadesPlugin/FrameTableData.cs": {
+      "ci_sha256": "bb39d1b962f97322875fd821dd7e665213ed1241f657d3151ab22af913b946d6",
+      "git_exact": "58de42f818cf70d470bb438b025cb6cb4c70391700d43eeeaee23042281f1ffc",
+      "git_LF_to_CRLF": "bb39d1b962f97322875fd821dd7e665213ed1241f657d3151ab22af913b946d6",
+      "accepted_variant": "git_LF_to_CRLF"
+    },
+    "Facades/src/AFacadesPlugin/QuantityTableIdentity.cs": {
+      "ci_sha256": "1a60c139e9273b313f13865776d072818ce191007cfc499df61bfb415f53866f",
+      "git_exact": "82044b27845ff586b475040e4a968398c0325bdf8c6205cd6f5b226597810454",
+      "git_LF_to_CRLF": "1a60c139e9273b313f13865776d072818ce191007cfc499df61bfb415f53866f",
+      "accepted_variant": "git_LF_to_CRLF"
+    },
+    "Facades/src/AFacadesPlugin/QuantityTableView.Connections.cs": {
+      "ci_sha256": "a7e4a878fbc78ee26d14a284fffbbcd5f858fb6036cfa5e83586a5902edd5474",
+      "git_exact": "1dbc4269e64eda11011c6ad63400870072ebe4d37ac7f959bf74e0d18438e8f8",
+      "git_LF_to_CRLF": "a7e4a878fbc78ee26d14a284fffbbcd5f858fb6036cfa5e83586a5902edd5474",
+      "accepted_variant": "git_LF_to_CRLF"
+    },
+    "Facades/src/AFacadesPlugin/QuantityTableView.cs": {
+      "ci_sha256": "215f6452a984220bd47380954874a3f8d24056842c93d3bd30440fbc89540b76",
+      "git_exact": "9656e74f8c3e4a932e4303e694a0690ddf2e14c308de64afa53bce9a8dc80480",
+      "git_LF_to_CRLF": "215f6452a984220bd47380954874a3f8d24056842c93d3bd30440fbc89540b76",
+      "accepted_variant": "git_LF_to_CRLF"
+    },
+    "Facades/src/AFacadesPlugin/QuantityXlsxFile.cs": {
+      "ci_sha256": "4ad07b90ec833cfbc0d96750d68a09daabe67cfcc5b44db00aa8f0b696a094a8",
+      "git_exact": "3c79e7a701ad6ba50bc81ce41cc88ba5d9c0c76c52e601115ccd3df460c3f75e",
+      "git_LF_to_CRLF": "4ad07b90ec833cfbc0d96750d68a09daabe67cfcc5b44db00aa8f0b696a094a8",
+      "accepted_variant": "git_LF_to_CRLF"
+    },
+    "Facades/src/AFacadesPlugin/XlsxWriter.cs": {
+      "ci_sha256": "4896a4ac083e5c53c15d11b52b301046c3bc44b08835040b51a4b70bb4e4c9e6",
+      "git_exact": "6c4ef614b5fde416fa91ce29adc0ebf99599bb21b285bd7d885bf00469c428fc",
+      "git_LF_to_CRLF": "4896a4ac083e5c53c15d11b52b301046c3bc44b08835040b51a4b70bb4e4c9e6",
+      "accepted_variant": "git_LF_to_CRLF"
+    },
+    "Facades/src/AFacadesPlugin/ZoneCommand.cs": {
+      "ci_sha256": "1c4065beb461b691b2f4878565c41adab68ed85be732b8520cf85a7fd8dd0431",
+      "git_exact": "f4eee2cf9e1b3b4fcca7b34ac9d7d8c4a0d48ea2d6c543a5c7eee176f96bbdbb",
+      "git_LF_to_CRLF": "1c4065beb461b691b2f4878565c41adab68ed85be732b8520cf85a7fd8dd0431",
+      "accepted_variant": "git_LF_to_CRLF"
+    },
+    "tools/limited_pilot_0110/LimitedPilotProbe.cs": {
+      "ci_sha256": "072fbe14460f021d26375676a196b1af18b972a872037a2db6177be3f3ca412d",
+      "git_exact": "42781596d9d0de80f0fa2fac0427ebd9ee00247898e1786dd1767e3b544f09b5",
+      "git_LF_to_CRLF": "072fbe14460f021d26375676a196b1af18b972a872037a2db6177be3f3ca412d",
+      "accepted_variant": "git_LF_to_CRLF"
+    },
+    "tools/limited_pilot_0110/run_acceptance.py": {
+      "ci_sha256": "cb3fe8b73c055c4ab19a382bc23426571594c7a9b5de7ab7d76ef22f2fba61c4",
+      "git_exact": "c7312dec0cdb2e2eba7620892133a50ead7c166e6af61c2aa75bc18626fe391f",
+      "git_LF_to_CRLF": "cb3fe8b73c055c4ab19a382bc23426571594c7a9b5de7ab7d76ef22f2fba61c4",
+      "accepted_variant": "git_LF_to_CRLF"
+    },
+    "tools/quantities_3009/probe_runtime.py": {
+      "ci_sha256": "6a493fbf8816c34d925b9b8576f9fc6e0aa11e27925492a8aa18a27eae1825a8",
+      "git_exact": "2d37fb13990a1b24129dfe79a81ce138875e3c86ef3211d1a3a4f9ec40d150e5",
+      "git_LF_to_CRLF": "6a493fbf8816c34d925b9b8576f9fc6e0aa11e27925492a8aa18a27eae1825a8",
+      "accepted_variant": "git_LF_to_CRLF"
+    },
+    "tools/quantities_3009/QuantityCadDoubles.cs": {
+      "ci_sha256": "18b18dd61eae0ad0495045c342fa9f02ff560710b81657266b9bb589fef50408",
+      "git_exact": "ffb9bb0f4f0b22c909b6c3e5eb4c03891c538064fd08e644844e1899903fbc3b",
+      "git_LF_to_CRLF": "18b18dd61eae0ad0495045c342fa9f02ff560710b81657266b9bb589fef50408",
+      "accepted_variant": "git_LF_to_CRLF"
+    },
+    "tools/table_lifecycle_0110/run_lifecycle.py": {
+      "ci_sha256": "317184f997ae2d65ee46d88b1955097ddddef7a07b1efdf138bac51634b198ef",
+      "git_exact": "1ebb6ccc34bbcdc20c19267e07a2c8018a605b92c16304cf561bae163c965d72",
+      "git_LF_to_CRLF": "317184f997ae2d65ee46d88b1955097ddddef7a07b1efdf138bac51634b198ef",
+      "accepted_variant": "git_LF_to_CRLF"
+    },
+    "tools/table_lifecycle_0110/TableCommandDoubles.cs": {
+      "ci_sha256": "530ddee52704aac29cbbbcfe2b7634cf0aeb0ea518a20e19ad4294fac2662b7f",
+      "git_exact": "5f19b992e25e492e0f0507cfcf0c261fffc69b87066b256899449d9a3296c582",
+      "git_LF_to_CRLF": "530ddee52704aac29cbbbcfe2b7634cf0aeb0ea518a20e19ad4294fac2662b7f",
+      "accepted_variant": "git_LF_to_CRLF"
+    },
+    "tools/table_lifecycle_0110/TableLifecycleProbe.cs": {
+      "ci_sha256": "4717ae34ce09d2c0f038b11453080b308d6abc600c13eb3d718df10ef479c45d",
+      "git_exact": "28bf62ea19572b9586b7d2caa914c7262bb028007979fc09adfcd8c9e54d9eb2",
+      "git_LF_to_CRLF": "4717ae34ce09d2c0f038b11453080b308d6abc600c13eb3d718df10ef479c45d",
+      "accepted_variant": "git_LF_to_CRLF"
+    }
+  }
+}

@@ -1,0 +1,65 @@
+[
+  {
+    "tag": "zones",
+    "engine": "zones",
+    "seconds": 0.0007855999999719643,
+    "request_sha256": "c1bae458f69902f148bc63072b7930227fdaa840b43f52a9ec84fb28434f18d9",
+    "response_sha256": "e2ab301ac8d47e99f205b4dd192af2ca163bb26c1c498543101877d087fd8ccc"
+  },
+  {
+    "tag": "attile_П-1",
+    "engine": "cladding",
+    "seconds": 0.002209399999969719,
+    "request_sha256": "9496c39a95ab97d8c0575b945924c8e7821893a4f8800bb444531265e74b85cc",
+    "response_sha256": "23072a837c1d0cba1635c8112299eb6e30dfa9c6c51ed48bee0e3bdfd6c69f31"
+  },
+  {
+    "tag": "initial_frame_П-1",
+    "engine": "frame",
+    "seconds": 0.0014343999999937296,
+    "request_sha256": "40515d429c9e81fb5c8ba7fea58f00e00b9c984b57eee59e3f1e8268e26e48b0",
+    "response_sha256": "e19f9aed55f76e94a7efd880d2cadf78b13f1547c214d7eab93c37a11ad6853a"
+  },
+  {
+    "tag": "attile_П-2",
+    "engine": "cladding",
+    "seconds": 0.0007570999999870764,
+    "request_sha256": "8a2ca839c0c7ad80b2cb06288495bc5319aaf277e97dee7bc45ec95987fc9f4b",
+    "response_sha256": "09344703ad6a80a1783c3a3bea2345eb68933c524ca2e4bd76de08c117a87898"
+  },
+  {
+    "tag": "initial_frame_П-2",
+    "engine": "frame",
+    "seconds": 0.0013542000000370535,
+    "request_sha256": "a1c92417609e6f12c12c490ee17341b0527703f2f68687cfd1aa08dc13ed722a",
+    "response_sha256": "9e6ca16bea092866c1806f6835c14763a19bb9f1bdeb28629baa8077bb527e80"
+  },
+  {
+    "tag": "pending_before_project_change",
+    "engine": "frame",
+    "seconds": 0.001269600000000537,
+    "request_sha256": "40515d429c9e81fb5c8ba7fea58f00e00b9c984b57eee59e3f1e8268e26e48b0",
+    "response_sha256": "e19f9aed55f76e94a7efd880d2cadf78b13f1547c214d7eab93c37a11ad6853a"
+  },
+  {
+    "tag": "project_reissue_frame_П-1",
+    "engine": "frame",
+    "seconds": 0.001280199999996512,
+    "request_sha256": "2814caba338776f85dba4ccc598aeb6b7f137c91516c77aae8a1cd6d3b1cc397",
+    "response_sha256": "e7b536a630406ac996be86348ecd141fc98c1d56d762f9c323197ea71d4d6a9d"
+  },
+  {
+    "tag": "project_reissue_frame_П-2",
+    "engine": "frame",
+    "seconds": 0.0012136000000282365,
+    "request_sha256": "7fa1824868bfeeaf9389bac0b278c3775dd9c9f8c4692cf231ac72b2fcf5e788",
+    "response_sha256": "a76528c82c2c9b3264b61ff6572ed2513f8bf28303b3dd424dfe8cabc770653a"
+  },
+  {
+    "tag": "zone_reissue_frame_П-1",
+    "engine": "frame",
+    "seconds": 0.0013533999999708612,
+    "request_sha256": "13d51d09a8a0f77627ea033327c47f0d817cae87df54989cebb161c5c8d0285f",
+    "response_sha256": "2f52e3bf98fa0a191dd03e1d2c6c4d89f46fc04fef26541e2d7393fadf5a5cab"
+  }
+]
