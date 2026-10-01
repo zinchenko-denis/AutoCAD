@@ -1,0 +1,46 @@
+2026-10-01T16:37:12.9446818Z Prepare all required actions
+2026-10-01T16:37:25.9796815Z Switched to a new branch 'feat/auto-reactor'
+2026-10-01T16:37:26.0681154Z with:
+2026-10-01T16:37:26.0681315Z   dotnet-version: 8.0.x
+2026-10-01T16:37:26.0681500Z   cache: false
+2026-10-01T16:37:26.0681651Z ##[endgroup]
+2026-10-01T16:38:19.3144681Z ##[group]Run cd Facades/engine
+2026-10-01T16:38:20.6703553Z [36;1mpython test_frame_connections.py[0m
+2026-10-01T16:38:40.9935799Z CladdingTable XLSX checks: 14; PASS
+2026-10-01T16:38:51.2943462Z Frame table XLSX checks: 11 PASS
+2026-10-01T16:39:07.0936814Z PASS duplicate_attribute_tags_are_ambiguous
+2026-10-01T16:39:07.0956813Z PASS legacy_mark_only_generated_owner_manual_selection_refuses_precisely
+2026-10-01T16:39:14.0612018Z Independent XLSX checks: 15 PASS
+2026-10-01T16:39:14.1178149Z ##[group]Run python tools/catalog_connections_0110/test_connection_store.py --out connection_store_results
+2026-10-01T16:39:14.1178813Z [36;1mpython tools/catalog_connections_0110/test_connection_store.py --out connection_store_results[0m
+2026-10-01T16:39:14.1179895Z [36;1mpython tools/catalog_connections_0110/test_clamps_manual_boundary.py --out connection_clamps_boundary_results[0m
+2026-10-01T16:39:14.1180891Z [36;1mpython tools/catalog_connections_0110/test_connection_table.py --out connection_table_results --report connection_store_results/independent_zones_report.json[0m
+2026-10-01T16:39:14.1181858Z [36;1mpython tools/orphan_connections_0110/reproduce_gap.py --out orphan_connection_results --expect fixed[0m
+2026-10-01T16:39:14.1182962Z [36;1mpython tools/mounting_contract_0110/test_ui.py --out connection_ui_results --report connection_table_results/shared_support/fixture_report.json --orphan-report orphan_connection_results/two_same_coordinate_zones/report.json[0m
+2026-10-01T16:39:14.1184418Z [36;1mpython tools/catalog_connections_0110/reproduce_topology_performance.py --out connection_performance_results[0m
+2026-10-01T16:39:14.1185220Z [36;1mpython docs/facades_beginner_3009/replay_examples.py --out connection_tutorial_results.json[0m
+2026-10-01T16:39:17.0363013Z Connection store pure checks: 34 PASS
+2026-10-01T16:39:17.8273577Z Connection producer/store checks: 244 PASS
+2026-10-01T16:39:20.6078287Z Connection table C# checks: 35
+2026-10-01T16:39:20.8771783Z Connection real-engine table checks: 25
+2026-10-01T16:39:23.4713936Z Connection table XLSX checks: 42 PASS; real engine members: 4
+2026-10-01T16:39:31.5582517Z Orphan connection checks: 2577 PASS; XLSX exports/roundtrips: 72
+2026-10-01T16:39:34.3164154Z Connection actual WinForms: 681 checks, 0 failures; 7 images
+2026-10-01T16:39:34.3164536Z ConnectionUiProbe: PASS 
+2026-10-01T16:40:42.2632004Z PASS: connection_performance_results\topology_performance.json
+2026-10-01T16:40:42.5209015Z   name: connection-table-ui
+2026-10-01T16:40:42.5209328Z   path: connection_table_results/
+orphan_connection_results/
+connection_ui_results/
+2026-10-01T16:40:44.4316967Z Artifact connection-table-ui.zip successfully finalized. Artifact ID 11179105215
+2026-10-01T16:40:44.4317680Z Artifact connection-table-ui has been successfully uploaded! Final size is 2095070 bytes. Artifact ID is 11179105215
+2026-10-01T16:40:50.7171222Z Solution actual WinForms: 919 checks, 0 failures; 10 images
+2026-10-01T16:40:53.2414681Z [36;1mpython tools/project_params_0110/test_core.py --out project_parameters_core_results[0m
+2026-10-01T16:40:55.9574154Z Project parameters core: 145 checks; 0 failures
+2026-10-01T16:41:03.4168154Z Project parameter commands: 33 checks, 0 failures
+2026-10-01T16:41:08.7907045Z Project UI: 1730 checks, 0 failures
+2026-10-01T16:41:12.3734191Z Node core: 1260 checks, 0 failures
+2026-10-01T16:41:13.9612657Z Mounting assessment core: 351 checks; 0 failures.
+2026-10-01T16:41:18.9211705Z Node CAD: 36 checks, 0 failures
+2026-10-01T16:41:22.4455529Z Node UI: 535 checks, 0 failures
+2026-10-01T16:41:23.7468132Z Uploaded bytes 1484207

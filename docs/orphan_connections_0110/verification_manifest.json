@@ -1,9 +1,9 @@
 {
-  "status": "LOCAL_PASS_PUBLICATION_AND_WINDOWS_PENDING",
+  "status": "LOCAL_AND_WINDOWS_CI_UI_PASS",
   "date": "2026-10-01",
   "branch": "feat/auto-reactor",
   "base_commit": "1a6066d541ed2f62ac40809e1a87e09e434ab591",
-  "product_commit": null,
+  "product_commit": "129513f6fb5ae646c1b733bbf9e03ad36060cbfc",
   "scope": "2В2: physical generated bracket has no candidate support reference in a validated available selected inventory; no actual fixing inferred",
   "input_sha256_file": "input_sha256.json",
   "input_files_count": 260,
@@ -19,7 +19,15 @@
     "full_synth_dependencies_unchanged": 44,
     "manual_pages": 52,
     "manual_example_replays": 5,
-    "native_windows_ui": "pending; previous shared348/4PNG preserved and three new orphan scenarios added"
+    "native_windows_ui": "681 PASS / 0 failures; seven affected PNG personally reviewed by root and connection_ui",
+    "windows_check": "215 success",
+    "windows_run_id": 36893345054,
+    "windows_orphan_checks": 2577,
+    "windows_xlsx_roundtrips": 72,
+    "windows_prior_table_xlsx_checks": 42,
+    "windows_prior_table_real_members": 4,
+    "windows_artifact_hash_entries_verified": 85,
+    "windows_artifact_unique_source_paths": 45
   },
   "performance": {
     "additional_indexes": "O(elements + passport scope references + candidate links + emitted text); existing whole-table sorting unchanged",
@@ -60,11 +68,14 @@
     "baseline_snapshot.json",
     "checks_manifest.json",
     "ci214_live.json",
+    "ci215_jobs.json",
+    "ci215_run.json",
     "compile_manifest.json",
     "engineering_review.md",
     "environment_summary.json",
     "full_synth_revalidation.json",
     "gate_source_hashes.json",
+    "github_publication.json",
     "independent_controls.json",
     "independent_review.json",
     "independent_review.md",
@@ -85,7 +96,15 @@
     "reproduction/fixed_minimal_report.json",
     "reproduction/scale_summary.json",
     "reproduction/xlsx_boundary_review.json",
+    "root_ui_visual_review_ci215.json",
     "source_facts.json",
-    "targeted_source_binding.json"
-  ]
+    "targeted_source_binding.json",
+    "ui_ci215/connection_table_manifest.json",
+    "ui_ci215/connection_ui_manifest.json",
+    "ui_ci215/orphan_connection_manifest.json",
+    "ui_ci215/ui_checks.json",
+    "ui_visual_review_ci215.json"
+  ],
+  "validated_commit": "129513f6fb5ae646c1b733bbf9e03ad36060cbfc",
+  "final_input_hashes_verified": true
 }

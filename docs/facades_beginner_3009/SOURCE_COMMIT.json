@@ -1,5 +1,5 @@
 {
-  "product_commit": null,
+  "product_commit": "129513f6fb5ae646c1b733bbf9e03ad36060cbfc",
   "illustration_product_commit": "8360c238f342d82c1dd83c63789729506c34df18",
   "illustration_source_manifest": "assets/source_manifest.json",
   "illustration_engine_hashes_match_current": false,
@@ -31,7 +31,7 @@
   "illustration_geometry_matches_current": true,
   "provenance_note": "Guide 2В2: bracket ID present in verified physical inventory but absent from candidate support references; exact ID and zone, unchanged quantities and unknown actual attachment. Valid retained passports are eligible. 52 pages, 10 illustrations, 4 DXF; 5 tutorial replays PASS. Full mounting contract and live AutoCAD not confirmed.",
   "product_base_commit": "1a6066d541ed2f62ac40809e1a87e09e434ab591",
-  "product_source_state": "Final local55/55, compile3/3, focused2577/72 and independent review PASS; source publication and new Windows CI pending",
+  "product_source_state": "Published 129513f; Windows check 215 success; UI 681/681 and all seven affected PNG personally reviewed; local 55/55, compile 3/3, focused 2577/72 and independent review PASS",
   "validated_commit": "b35a5149adfcd42907d4974ac61ef997fd279a59",
   "prior_product_commit": "546fcd335512f51c177974b69016a398c0dc2f3a",
   "product_source_sha256": {

@@ -1,0 +1,64 @@
+{
+  "status": "PASS",
+  "reviewer": "root",
+  "product_commit": "129513f6fb5ae646c1b733bbf9e03ad36060cbfc",
+  "windows_run_number": 215,
+  "windows_run_id": 36893345054,
+  "method": "Personally viewed all seven downloaded native WinForms PNG with view_image; separately read HWND/WorkingArea records and UI check results",
+  "ui_checks": 681,
+  "failures": 0,
+  "images_viewed": {
+    "connections_default_columns.png": "e89bb415b4d915bb0d93af9f8e9dcdfa5163a06d8c7de9af7580bbeaa1aa3ddc",
+    "connections_default_warnings.png": "e7ff1041cfe6ee597ed70db09089e87d9ee826c42ac59684f32ee24730661d3f",
+    "connections_small_warnings.png": "a4f30b0021f6652f5ee0a632c8868de23859113f47df74fc6e97b17b550083a6",
+    "connections_large_font_warnings.png": "c7e8541eebf3089f0f15ac455566efb5fd2ba2c8e2cea8aa6d969ce02d8f2b39",
+    "connections_orphan_default_warnings.png": "8a087d60e27a9d944d2bb489bcea476260f3b3c06933a95e9f709fb80a7487cb",
+    "connections_orphan_small_warnings.png": "290a94d91a346f2ecfcbf75cc27196ab4a36a9a515a3e79b668a86a9d7c64db9",
+    "connections_orphan_large_font_warnings.png": "c8054ed6f51b886848aa1c26e0ee923ab7605539475258229b51cddd604d1ace"
+  },
+  "findings": [
+    "Orphan warning visibly includes two distinct physical bracket IDs and their zones; each zone retains two rail rows and no fictitious row is added.",
+    "Ordinary, 880x620 and 12 pt states keep action buttons, editable note and scrolling controls visible; normal and 12 pt windows fit 1024x728 native WorkingArea.",
+    "Long grid text remains horizontally scrollable with complete tooltips checked by the native probe; warning text has vertical scrolling and start/end reachability checks.",
+    "The four prior shared-candidate images retain separate rail rows and addressed shared warnings."
+  ],
+  "native_layouts": [
+    {
+      "scenario": "default",
+      "native_window": "{X=0,Y=0,Width=1024,Height=728}",
+      "working_area": "{X=0,Y=0,Width=1024,Height=728}",
+      "font_points": 9
+    },
+    {
+      "scenario": "small",
+      "native_window": "{X=0,Y=0,Width=880,Height=620}",
+      "working_area": "{X=0,Y=0,Width=1024,Height=728}",
+      "font_points": 9
+    },
+    {
+      "scenario": "large_font",
+      "native_window": "{X=0,Y=0,Width=1024,Height=728}",
+      "working_area": "{X=0,Y=0,Width=1024,Height=728}",
+      "font_points": 12
+    },
+    {
+      "scenario": "orphan_default",
+      "native_window": "{X=0,Y=0,Width=1024,Height=728}",
+      "working_area": "{X=0,Y=0,Width=1024,Height=728}",
+      "font_points": 9
+    },
+    {
+      "scenario": "orphan_small",
+      "native_window": "{X=0,Y=0,Width=880,Height=620}",
+      "working_area": "{X=0,Y=0,Width=1024,Height=728}",
+      "font_points": 9
+    },
+    {
+      "scenario": "orphan_large_font",
+      "native_window": "{X=0,Y=0,Width=1024,Height=728}",
+      "working_area": "{X=0,Y=0,Width=1024,Height=728}",
+      "font_points": 12
+    }
+  ],
+  "limits": "Bitmap review supplemented by native HWND metrics; no live AutoCAD/DWG test, mounting approval or installer publication."
+}
