@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Drawing;
 using System.IO;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Web.Script.Serialization;
 using System.Windows.Forms;
 using AFramePlugin;
@@ -14,6 +15,36 @@ internal static class SolutionUiProbe
     private static readonly JavaScriptSerializer Json = new JavaScriptSerializer { MaxJsonLength = int.MaxValue };
     private static readonly List<string> images = new List<string>(), reasons = new List<string>();
     private static readonly List<object> layouts = new List<object>();
+    [StructLayout(LayoutKind.Sequential)]
+    private struct NativeRect
+    {
+        internal int Left, Top, Right, Bottom;
+        internal Rectangle Rectangle { get { return Rectangle.FromLTRB(Left, Top, Right, Bottom); } }
+    }
+    [StructLayout(LayoutKind.Sequential)]
+    private struct NativePoint { internal int X, Y; }
+    [DllImport("user32.dll", SetLastError = true)]
+    private static extern bool GetClientRect(IntPtr window, out NativeRect rect);
+    [DllImport("user32.dll", SetLastError = true)]
+    private static extern bool GetWindowRect(IntPtr window, out NativeRect rect);
+    [DllImport("user32.dll", SetLastError = true)]
+    private static extern bool ClientToScreen(IntPtr window, ref NativePoint point);
+    private static Rectangle NativeWindow(Control control)
+    {
+        if (Environment.OSVersion.Platform != PlatformID.Win32NT)
+            return control is Form ? control.Bounds : control.RectangleToScreen(control.ClientRectangle);
+        NativeRect rect;
+        if (!GetWindowRect(control.Handle, out rect)) throw new Exception("GetWindowRect failed: " + Marshal.GetLastWin32Error());
+        return rect.Rectangle;
+    }
+    private static Rectangle NativeClient(Form form)
+    {
+        if (Environment.OSVersion.Platform != PlatformID.Win32NT) return form.RectangleToScreen(form.ClientRectangle);
+        NativeRect rect; var origin = new NativePoint();
+        if (!GetClientRect(form.Handle, out rect) || !ClientToScreen(form.Handle, ref origin))
+            throw new Exception("Native client query failed: " + Marshal.GetLastWin32Error());
+        return new Rectangle(origin.X, origin.Y, rect.Right - rect.Left, rect.Bottom - rect.Top);
+    }
     private static void Check(bool value, string reason)
     {
         checks++;
@@ -55,8 +86,12 @@ internal static class SolutionUiProbe
     }
     private static void Layout(Form form, string scenario)
     {
+        Rectangle nativeWindow = NativeWindow(form), nativeClient = NativeClient(form), work = Screen.FromControl(form).WorkingArea;
+        Check(nativeClient.Size == form.ClientSize, scenario + ": cached client size differs from native HWND " + form.ClientSize + "/" + nativeClient.Size);
+        Check(work.Contains(nativeWindow), scenario + ": native window exceeds monitor working area " + nativeWindow + "/" + work);
         layouts.Add(new { scenario, window = form.Bounds.ToString(), client = form.ClientRectangle.ToString(),
-            screen = Screen.FromControl(form).WorkingArea.ToString(), font_points = form.Font.SizeInPoints,
+            native_window = nativeWindow.ToString(), native_client = nativeClient.ToString(),
+            screen = work.ToString(), font_points = form.Font.SizeInPoints, minimum_size = form.MinimumSize.ToString(),
             controls = All(form).Where(c => c is TableLayoutPanel || (c is Button && c.Name.EndsWith("_selection")))
                 .Select(c => new { type = c.GetType().Name, c.Name, bounds = c.Bounds.ToString(),
                     parent_client = c.Parent.ClientRectangle.ToString() }).ToArray() });
@@ -72,6 +107,9 @@ internal static class SolutionUiProbe
         }
         foreach (var button in All(form).OfType<Button>().Where(c => c.Visible && c.Name.EndsWith("_selection")))
         {
+            Rectangle nativeButton = NativeWindow(button);
+            Check(nativeClient.Contains(nativeButton) && work.Contains(nativeButton),
+                scenario + ": footer action outside native visible area " + button.Name + " " + nativeButton + "/" + nativeClient);
             Point top = form.PointToClient(button.PointToScreen(Point.Empty));
             Check(top.X >= 0 && top.Y >= 0 && top.X + button.Width <= form.ClientSize.Width && top.Y + button.Height <= form.ClientSize.Height,
                 scenario + ": footer action inaccessible " + button.Name);

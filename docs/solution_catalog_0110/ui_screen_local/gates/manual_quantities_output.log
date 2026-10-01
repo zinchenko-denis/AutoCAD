@@ -1,0 +1,14 @@
+PASS initial inventory preserves every selected object without claiming quantities
+PASS evaluated inventory retains accepted unknown unsupported and generated conflict reasons
+PASS manual mark punctuation and source layer survive presentation
+PASS repeated selected handle remains visible while physical preview counts once
+PASS block label and piece-only dimensions do not invent profile length
+PASS mixed generated and manual quantities include three physical pieces without excluded objects
+PASS unaccounted appendix is structured and repeat rendering cannot append it twice
+PASS cladding export contains the same typed quantities and unaccounted appendix
+PASS unknown-only refusal has no invented subtotal or accepted zero
+PASS known empty valid scope remains distinct from unknown-only refusal
+PASS frame appendix preserves exact metres and keeps unknown symbols out of length totals
+Manual output: 11/11 PASS
+Independent XLSX checks: 15 PASS
+Manual output: PASS report: /workspace/scratch/ba306982747c/solution_ui_screen_validation/gates/manual_quantities_output/manifest.json

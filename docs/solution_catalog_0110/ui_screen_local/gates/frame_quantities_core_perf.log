@@ -1,0 +1,3 @@
+PASS 10000 physical elements; full/subset core seconds: 0.085636, 0.025489
+PASS 50000 physical elements; full/subset core seconds: 0.327266, 0.149890
+Frame quantities operation counts: PASS report: /workspace/scratch/ba306982747c/solution_ui_screen_validation/gates/frame_quantities_core_perf/manifest.json

@@ -1,0 +1,3 @@
+Connection table C# checks: 35
+Connection real-engine table checks: 25
+Connection table XLSX checks: 16 PASS; real engine members: 4

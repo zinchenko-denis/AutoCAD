@@ -1,0 +1,12 @@
+Counting dictionaries: 100 rails, full equality confirmed
+Counting dictionaries: 500 rails, full equality confirmed
+Counting dictionaries: 1000 rails, full equality confirmed
+Normal dictionaries: separate_axes, 1000 rails; brute-force control
+Normal dictionaries: separate_axes, 1000 rails; indexed control
+Normal dictionaries: separate_axes, 10000 rails; brute-force control
+Normal dictionaries: separate_axes, 10000 rails; indexed control
+Normal dictionaries: tall_same_axis_stack, 1000 rails; brute-force control
+Normal dictionaries: tall_same_axis_stack, 1000 rails; indexed control
+Normal dictionaries: tall_same_axis_stack, 10000 rails; brute-force control
+Normal dictionaries: tall_same_axis_stack, 10000 rails; indexed control
+PASS: /workspace/scratch/ba306982747c/solution_ui_screen_validation/gates/catalog_topology_performance/topology_performance.json
