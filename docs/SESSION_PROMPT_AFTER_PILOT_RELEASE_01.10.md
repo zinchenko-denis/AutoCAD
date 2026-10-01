@@ -26,6 +26,7 @@
 - Окончательные статусы, SHA скачанных архивов и наличие новых команд — `docs/pilot_release_0110/publication_evidence.json`, `bundle_receipt.json`, `release_extension_receipt.json` и `handoff_receipt.json`.
 - Выпуск запущен штатно через `workflow_dispatch` на рабочей ветке; `main` и `build-trigger` для этого не менялись.
 - Обычный workflow пересобирает пять бандлов. Исходники ATableSpec/ABlockGen не менялись; для фасадного пилота инженер устанавливает только AFacades, AClad и AFrame одной сборки. Не обещать побайтового равенства защищённых бинарных архивов с build-104.
+- Коммит передачи комплекта: `4cafef122d950fe48e315f0b4e162c241ed9f83e`; Windows check №221 (`36923962635`) — success. Итог — `docs/pilot_release_0110/repository_publication.json`. Содержащий эту запись последующий документный коммит сохраняет квитанцию.
 - Последующий коммит инструкции не входит в собранную DLL: различай SHA выпуска и SHA передачи.
 
 Сначала проверь фактическую удалённую ветку и локальные изменения. Не

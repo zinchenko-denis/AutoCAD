@@ -48,6 +48,7 @@ XLSX, заполненный протокол, F2/снимки и минимал
 - `local_verification.json` — необходимые локальные проверки и неизменность продуктовых исходников.
 - `delivery_manifest.json` — состав передаваемого архива и инструкции.
 - `handoff_receipt.json` — итог публикации и границы подтверждения.
+- `repository_publication.json` — коммит передачи `4cafef1` и успешный Windows check №221; сборка №105 по-прежнему соответствует `c400983`.
 
 Текущий план: [CURRENT_MILESTONES.md](../CURRENT_MILESTONES.md).
 Полное продолжение: [SESSION_PROMPT_AFTER_PILOT_RELEASE_01.10.md](../SESSION_PROMPT_AFTER_PILOT_RELEASE_01.10.md).

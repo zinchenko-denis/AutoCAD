@@ -52,5 +52,21 @@
     "delivery_publication.json": "96fd506f608e712fa5a59ba9bcfc57f95a051b872a33a8453d4211f412c5f47a",
     "manual_source_sha256.json": "026ad137412c7d34ba9e264c0f0ff1267e8cabe3dad38861ca3c888e635d3cc2"
   },
-  "repository_publication": "This containing commit publishes the release materials. Final branch/check receipt follows without changing released binaries."
+  "repository_publication": {
+    "commit": "4cafef122d950fe48e315f0b4e162c241ed9f83e",
+    "windows_check": {
+      "id": 36923962635,
+      "run_number": 221,
+      "head_sha": "4cafef122d950fe48e315f0b4e162c241ed9f83e",
+      "head_branch": "feat/auto-reactor",
+      "status": "completed",
+      "conclusion": "success",
+      "html_url": "https://github.com/zinchenko-denis/AutoCAD/actions/runs/36923962635",
+      "created_at": "2026-10-01T20:45:55Z",
+      "updated_at": "2026-10-01T20:53:00Z",
+      "successful_steps": 41
+    },
+    "receipt": "repository_publication.json",
+    "containing_receipt_commit_changes_product": false
+  }
 }
