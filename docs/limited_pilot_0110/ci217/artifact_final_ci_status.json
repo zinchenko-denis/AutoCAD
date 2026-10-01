@@ -1,0 +1,239 @@
+{
+  "repository": "zinchenko-denis/AutoCAD",
+  "run_id": 36905143903,
+  "run_number": 217,
+  "head_sha": "4edc342f3a8cd6a7cde196d37a440fc6e134972d",
+  "head_branch": "feat/auto-reactor",
+  "run_url": "https://github.com/zinchenko-denis/AutoCAD/actions/runs/36905143903",
+  "status": "completed",
+  "conclusion": "success",
+  "updated_at": "2026-10-01T18:19:28Z",
+  "run_attempt": 1,
+  "job_id": 110513685671,
+  "job_status": "completed",
+  "job_conclusion": "success",
+  "steps": [
+    {
+      "name": "Set up job",
+      "status": "completed",
+      "conclusion": "success",
+      "number": 1
+    },
+    {
+      "name": "Checkout",
+      "status": "completed",
+      "conclusion": "success",
+      "number": 2
+    },
+    {
+      "name": "Setup .NET SDK",
+      "status": "completed",
+      "conclusion": "success",
+      "number": 3
+    },
+    {
+      "name": "Build plugin DLL (compile check)",
+      "status": "completed",
+      "conclusion": "success",
+      "number": 4
+    },
+    {
+      "name": "Build ABlockGen DLL (compile check)",
+      "status": "completed",
+      "conclusion": "success",
+      "number": 5
+    },
+    {
+      "name": "Build AFacades DLL (compile check)",
+      "status": "completed",
+      "conclusion": "success",
+      "number": 6
+    },
+    {
+      "name": "Build AClad DLL (compile check)",
+      "status": "completed",
+      "conclusion": "success",
+      "number": 7
+    },
+    {
+      "name": "Build AFrame DLL (compile check)",
+      "status": "completed",
+      "conclusion": "success",
+      "number": 8
+    },
+    {
+      "name": "Setup Python",
+      "status": "completed",
+      "conclusion": "success",
+      "number": 9
+    },
+    {
+      "name": "Engine unit test",
+      "status": "completed",
+      "conclusion": "success",
+      "number": 10
+    },
+    {
+      "name": "ABlockGen engine unit test",
+      "status": "completed",
+      "conclusion": "success",
+      "number": 11
+    },
+    {
+      "name": "AFacades engine unit test",
+      "status": "completed",
+      "conclusion": "success",
+      "number": 12
+    },
+    {
+      "name": "AClad engine unit test",
+      "status": "completed",
+      "conclusion": "success",
+      "number": 13
+    },
+    {
+      "name": "AFrame engine unit test",
+      "status": "completed",
+      "conclusion": "success",
+      "number": 14
+    },
+    {
+      "name": "Native zone geometry regressions (no AutoCAD host)",
+      "status": "completed",
+      "conclusion": "success",
+      "number": 15
+    },
+    {
+      "name": "Native zone and layout adapters (CAD API doubles)",
+      "status": "completed",
+      "conclusion": "success",
+      "number": 16
+    },
+    {
+      "name": "Cladding quantities (native core, real producers, XLSX, CAD API doubles)",
+      "status": "completed",
+      "conclusion": "success",
+      "number": 17
+    },
+    {
+      "name": "Frame quantities (core, real producers, XLSX and bounded operation counts)",
+      "status": "completed",
+      "conclusion": "success",
+      "number": 18
+    },
+    {
+      "name": "Manual facade quantities (actual mapper, CAD adapters and bounded work)",
+      "status": "completed",
+      "conclusion": "success",
+      "number": 19
+    },
+    {
+      "name": "Facade connection passports (source identities, typed data, XLSX and indexed joins)",
+      "status": "completed",
+      "conclusion": "success",
+      "number": 20
+    },
+    {
+      "name": "Upload connection table and native preview evidence",
+      "status": "completed",
+      "conclusion": "success",
+      "number": 21
+    },
+    {
+      "name": "Historical facade catalogue (actual settings, engine and producer)",
+      "status": "completed",
+      "conclusion": "success",
+      "number": 22
+    },
+    {
+      "name": "Pilot mounting interface contract (trace verification, engineering remains blocked)",
+      "status": "completed",
+      "conclusion": "success",
+      "number": 23
+    },
+    {
+      "name": "Upload pilot mounting contract evidence",
+      "status": "completed",
+      "conclusion": "success",
+      "number": 24
+    },
+    {
+      "name": "Limited pilot workflow and axis cancellation (explicit CAD doubles)",
+      "status": "completed",
+      "conclusion": "success",
+      "number": 25
+    },
+    {
+      "name": "Upload limited pilot workflow evidence",
+      "status": "completed",
+      "conclusion": "success",
+      "number": 26
+    },
+    {
+      "name": "Upload historical catalogue UI evidence",
+      "status": "completed",
+      "conclusion": "success",
+      "number": 27
+    },
+    {
+      "name": "Upload solution settings contract evidence",
+      "status": "completed",
+      "conclusion": "success",
+      "number": 28
+    },
+    {
+      "name": "Project and zone parameters (native contracts, CAD store and WinForms)",
+      "status": "completed",
+      "conclusion": "success",
+      "number": 29
+    },
+    {
+      "name": "Upload project parameters evidence",
+      "status": "completed",
+      "conclusion": "success",
+      "number": 30
+    },
+    {
+      "name": "Pilot node geometry and mounting readiness (core, CAD adapters and WinForms)",
+      "status": "completed",
+      "conclusion": "success",
+      "number": 31
+    },
+    {
+      "name": "Upload pilot node geometry evidence",
+      "status": "completed",
+      "conclusion": "success",
+      "number": 32
+    },
+    {
+      "name": "Facades quick gates (audits, contracts, synth)",
+      "status": "completed",
+      "conclusion": "success",
+      "number": 33
+    },
+    {
+      "name": "Post Setup Python",
+      "status": "completed",
+      "conclusion": "success",
+      "number": 64
+    },
+    {
+      "name": "Post Setup .NET SDK",
+      "status": "completed",
+      "conclusion": "success",
+      "number": 65
+    },
+    {
+      "name": "Post Checkout",
+      "status": "completed",
+      "conclusion": "success",
+      "number": 66
+    },
+    {
+      "name": "Complete job",
+      "status": "completed",
+      "conclusion": "success",
+      "number": 67
+    }
+  ]
+}

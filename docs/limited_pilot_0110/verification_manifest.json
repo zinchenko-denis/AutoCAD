@@ -1,14 +1,28 @@
 {
   "schema": "limited_pilot_verification/1",
   "base_commit": "b64eb0aedccb41ba5cb1e253c9eddf69142284b3",
-  "verification": "PASS_LOCAL",
+  "verification": "PASS",
   "engineering_assessment": "BLOCKED",
   "full_P5": "NOT_RUN",
   "full_2V": "BLOCKED",
   "calculation_3A": "BLOCKED",
   "full_command_execution": "NOT_RUN",
   "cad_transaction_rollback": "NOT_RUN",
-  "windows_check": "PENDING_NEW_SOURCE_COMMIT",
+  "windows_check": {
+    "id": 36905143903,
+    "name": "check",
+    "head_branch": "feat/auto-reactor",
+    "head_sha": "4edc342f3a8cd6a7cde196d37a440fc6e134972d",
+    "path": ".github/workflows/check.yml",
+    "run_number": 217,
+    "event": "push",
+    "status": "completed",
+    "conclusion": "success",
+    "run_attempt": 1,
+    "created_at": "2026-10-01T18:12:46Z",
+    "updated_at": "2026-10-01T18:19:28Z",
+    "html_url": "https://github.com/zinchenko-denis/AutoCAD/actions/runs/36905143903"
+  },
   "local_gates": {
     "schema": "limited_pilot_local_gate_summary/1",
     "verification": "PASS",
@@ -203,5 +217,12 @@
     "workflow/zone_reissue/quantities.json": "c3949edfb311a37ef3f204d8e5b53ce9a0d9f54eeece9044205aac6c4fcd6bf6",
     "workflow/zone_reissue/П-1_frame_report.json": "7a286bcd841968edad7b3c60701615415f2be64826f6244c56f7a9782ed8877f",
     "workflow/zone_reissue/П-1_node.json": "a6da13d1366c6ac10d34db1b0e7e253bc03ba198b36ebcb2a7a57d9d9e3432d0"
-  }
+  },
+  "source_commit": "4edc342f3a8cd6a7cde196d37a440fc6e134972d",
+  "source_tree": "fb5e3d542615427826a266b0760984fc5e67caea",
+  "artifact_receipt": "ci217/artifact_verification.json",
+  "artifact_receipt_sha256": "4ed2c578a42f2901782e7d54efeabb9d0de79568c9010bee7537c2030ca17936",
+  "after_ci_tested_sources_verified": 245,
+  "after_ci_original_evidence_verified": 101,
+  "snapshot_note": "Local summaries/independent runs contain their original PENDING Windows status. This final receipt records the exact successful Windows run; original artifacts are not rewritten."
 }

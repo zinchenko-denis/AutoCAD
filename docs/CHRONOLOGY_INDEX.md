@@ -1,7 +1,7 @@
 # Указатель хронологии (генерируется: `tools/make_chronology.py`)
 
 <!-- limited-pilot-index:start -->
-Текущее продолжение01.10: [ограниченный проход П1/П5](LIMITED_PILOT_ACCEPTANCE_01.10.md), [протоколы](limited_pilot_0110/), [промт](SESSION_PROMPT_AFTER_LIMITED_PILOT_01.10.md). Исходники подготовлены от `b64eb0aedccb41ba5cb1e253c9eddf69142284b3`; локальные проверки и независимая ревизия завершены. Новый Windows check ожидается после публикации: прежний №216 не является проверкой этого изменения.
+Текущее продолжение01.10: [ограниченный проход П1/П5](LIMITED_PILOT_ACCEPTANCE_01.10.md), [протоколы](limited_pilot_0110/), [промт](SESSION_PROMPT_AFTER_LIMITED_PILOT_01.10.md). Проверенный продукт и стенд **`4edc342f3a8cd6a7cde196d37a440fc6e134972d`**, Windows **[check №217](https://github.com/zinchenko-denis/AutoCAD/actions/runs/36905143903) — success**. Архив нового сценария, входные хеши и результаты сверены с Git; подробности — `docs/limited_pilot_0110/github_publication.json`. Последующий коммит передачи меняет только документацию.
 <!-- limited-pilot-index:end -->
 
 <!-- pilot-completion-index:start -->

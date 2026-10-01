@@ -1,0 +1,125 @@
+{
+  "status": "PASS",
+  "method": "Read-only ZIP/XML parsing independently of CI openpyxl check; every cell/value/address and no extra cells",
+  "files": [
+    {
+      "path": "workflow/initial/cladding.xlsx",
+      "sha256": "5d87fc265e944578353789f02203c76b10766ca834494e354bd250b233fcc7b0",
+      "rows": 43,
+      "columns": 10,
+      "exact_cells": 142,
+      "model_sha256": "da01ed7bdcf0291f76a891ac6a1dff8c0b786fe7acc7ae7f9fc7a02b5142e0b5",
+      "xml_cell_match": true,
+      "visual_review": "NOT_RUN (no workbook view change requested)"
+    },
+    {
+      "path": "workflow/initial/frame.xlsx",
+      "sha256": "c5f8f68f8f2cccf967c2c0957e40ae4d9487e6c258826bfda8f44be9271848ed",
+      "rows": 23,
+      "columns": 11,
+      "exact_cells": 123,
+      "model_sha256": "78137e2589870ae9fc3fcee7d0e1112d05c8fca2cc1640955e8b66d9504adaad",
+      "xml_cell_match": true,
+      "visual_review": "NOT_RUN (no workbook view change requested)"
+    },
+    {
+      "path": "workflow/initial/connections.xlsx",
+      "sha256": "44e408d67691d4167c4d1e733cc9f72b5a158ed119f31307ec75be56af97bb92",
+      "rows": 16,
+      "columns": 11,
+      "exact_cells": 46,
+      "model_sha256": "ae2340856110c91e8c3a1792429ea142f2925235435d09ad21f7051446e04c5f",
+      "xml_cell_match": true,
+      "visual_review": "NOT_RUN (no workbook view change requested)"
+    },
+    {
+      "path": "workflow/project_reissue/cladding.xlsx",
+      "sha256": "5d87fc265e944578353789f02203c76b10766ca834494e354bd250b233fcc7b0",
+      "rows": 43,
+      "columns": 10,
+      "exact_cells": 142,
+      "model_sha256": "da01ed7bdcf0291f76a891ac6a1dff8c0b786fe7acc7ae7f9fc7a02b5142e0b5",
+      "xml_cell_match": true,
+      "visual_review": "NOT_RUN (no workbook view change requested)"
+    },
+    {
+      "path": "workflow/project_reissue/frame.xlsx",
+      "sha256": "c5f8f68f8f2cccf967c2c0957e40ae4d9487e6c258826bfda8f44be9271848ed",
+      "rows": 23,
+      "columns": 11,
+      "exact_cells": 123,
+      "model_sha256": "78137e2589870ae9fc3fcee7d0e1112d05c8fca2cc1640955e8b66d9504adaad",
+      "xml_cell_match": true,
+      "visual_review": "NOT_RUN (no workbook view change requested)"
+    },
+    {
+      "path": "workflow/project_reissue/connections.xlsx",
+      "sha256": "911a30ae4ccbdb11735df48ea4ff30ceaa1d317611cc90c3a73e6c17c73ac970",
+      "rows": 16,
+      "columns": 11,
+      "exact_cells": 46,
+      "model_sha256": "668a6dfca3c9bf2ddf07c75249c03525f0a5559259014e1d1259355c4ae415fc",
+      "xml_cell_match": true,
+      "visual_review": "NOT_RUN (no workbook view change requested)"
+    },
+    {
+      "path": "workflow/zone_reissue/cladding.xlsx",
+      "sha256": "5d87fc265e944578353789f02203c76b10766ca834494e354bd250b233fcc7b0",
+      "rows": 43,
+      "columns": 10,
+      "exact_cells": 142,
+      "model_sha256": "da01ed7bdcf0291f76a891ac6a1dff8c0b786fe7acc7ae7f9fc7a02b5142e0b5",
+      "xml_cell_match": true,
+      "visual_review": "NOT_RUN (no workbook view change requested)"
+    },
+    {
+      "path": "workflow/zone_reissue/frame.xlsx",
+      "sha256": "c5f8f68f8f2cccf967c2c0957e40ae4d9487e6c258826bfda8f44be9271848ed",
+      "rows": 23,
+      "columns": 11,
+      "exact_cells": 123,
+      "model_sha256": "78137e2589870ae9fc3fcee7d0e1112d05c8fca2cc1640955e8b66d9504adaad",
+      "xml_cell_match": true,
+      "visual_review": "NOT_RUN (no workbook view change requested)"
+    },
+    {
+      "path": "workflow/zone_reissue/connections.xlsx",
+      "sha256": "75f9721c5047c5bb2bd1e18f9f46748e5989ca7b34e7f04e57edd5cd0bfbe32e",
+      "rows": 16,
+      "columns": 11,
+      "exact_cells": 46,
+      "model_sha256": "7a679208167afb60985a9e807675d5e53871ac35b3949a211d104719ade1ba46",
+      "xml_cell_match": true,
+      "visual_review": "NOT_RUN (no workbook view change requested)"
+    }
+  ],
+  "cells": 933,
+  "oracle_totals": [
+    {
+      "epoch": "initial",
+      "tiles": 12,
+      "tile_area_m2": 4.319999999999999,
+      "rails": 2,
+      "rail_length_m": 3.64,
+      "brackets": 6
+    },
+    {
+      "epoch": "project_reissue",
+      "tiles": 12,
+      "tile_area_m2": 4.319999999999999,
+      "rails": 2,
+      "rail_length_m": 3.64,
+      "brackets": 6
+    },
+    {
+      "epoch": "zone_reissue",
+      "tiles": 12,
+      "tile_area_m2": 4.319999999999999,
+      "rails": 2,
+      "rail_length_m": 3.64,
+      "brackets": 6
+    }
+  ],
+  "visual_review": "NOT_RUN",
+  "native_excel": "NOT_RUN"
+}

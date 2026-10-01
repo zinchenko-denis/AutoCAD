@@ -1,0 +1,30 @@
+{
+  "axis_cancel/build/AxisCancelExtracted.cs": {
+    "manifest_sha256": "483176c3437731041a82992071a27bc9c33cfbc7930bca3de4ef9eee6aa191db",
+    "actual_sha256": "483176c3437731041a82992071a27bc9c33cfbc7930bca3de4ef9eee6aa191db",
+    "derived_from_git_LF_sha256": "bac65ac2964fb1419d07926f0fb6fe21e6afccc5619df8aa62eaa39aadd5b732",
+    "derived_from_git_CRLF_sha256": "483176c3437731041a82992071a27bc9c33cfbc7930bca3de4ef9eee6aa191db",
+    "accepted_variant": "git_LF_to_CRLF"
+  },
+  "workflow/build/CladdingQuantitiesPure.cs": {
+    "manifest_sha256": "ff764dd840ea20fac00a0c257dab453b9fd10b8321c36c21f266774826ab6f14",
+    "actual_sha256": "ff764dd840ea20fac00a0c257dab453b9fd10b8321c36c21f266774826ab6f14",
+    "derived_from_git_LF_sha256": "e39307fa2771174de24b9790762c0b77fd58437e1285a98c04f88d5242bb3f0d",
+    "derived_from_git_CRLF_sha256": "ff764dd840ea20fac00a0c257dab453b9fd10b8321c36c21f266774826ab6f14",
+    "accepted_variant": "git_LF_to_CRLF"
+  },
+  "workflow/build/FrameQuantitiesPure.cs": {
+    "manifest_sha256": "6d4795400b06d2a144ebeae522f103b4d21af8d5b9674b1f56a4eef679ad2894",
+    "actual_sha256": "6d4795400b06d2a144ebeae522f103b4d21af8d5b9674b1f56a4eef679ad2894",
+    "derived_from_git_LF_sha256": "533d0ed610be409b2a9696fb08578986b9588b90937d76f51eca132e5594337b",
+    "derived_from_git_CRLF_sha256": "6d4795400b06d2a144ebeae522f103b4d21af8d5b9674b1f56a4eef679ad2894",
+    "accepted_variant": "git_LF_to_CRLF"
+  },
+  "workflow/build/NodeFreshnessPredicate.cs": {
+    "manifest_sha256": "4170059bbbe7395061441338e3cf0da052e9de9bd348311fb7f39448369b741f",
+    "actual_sha256": "4170059bbbe7395061441338e3cf0da052e9de9bd348311fb7f39448369b741f",
+    "derived_from_git_LF_sha256": "f4e8414e3903c1737ca78171c686713c19e278ac5f77ff6a1ee025eabee8eaaf",
+    "derived_from_git_CRLF_sha256": "4170059bbbe7395061441338e3cf0da052e9de9bd348311fb7f39448369b741f",
+    "accepted_variant": "git_LF_to_CRLF"
+  }
+}

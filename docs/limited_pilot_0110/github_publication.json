@@ -1,0 +1,155 @@
+{
+  "schema": "limited_pilot_publication/1",
+  "baseline_checkpoint": "b64eb0aedccb41ba5cb1e253c9eddf69142284b3",
+  "source_commit": "4edc342f3a8cd6a7cde196d37a440fc6e134972d",
+  "source_tree": "fb5e3d542615427826a266b0760984fc5e67caea",
+  "branch": "feat/auto-reactor",
+  "publication_method": "GitHub API blobs/tree/commit, immediate parent verification, force=false; local fast-forward",
+  "windows_check": {
+    "id": 36905143903,
+    "name": "check",
+    "head_branch": "feat/auto-reactor",
+    "head_sha": "4edc342f3a8cd6a7cde196d37a440fc6e134972d",
+    "path": ".github/workflows/check.yml",
+    "run_number": 217,
+    "event": "push",
+    "status": "completed",
+    "conclusion": "success",
+    "run_attempt": 1,
+    "created_at": "2026-10-01T18:12:46Z",
+    "updated_at": "2026-10-01T18:19:28Z",
+    "html_url": "https://github.com/zinchenko-denis/AutoCAD/actions/runs/36905143903"
+  },
+  "job_id": 110513685671,
+  "artifact_receipt": "ci217/artifact_verification.json",
+  "artifact_receipt_sha256": "4ed2c578a42f2901782e7d54efeabb9d0de79568c9010bee7537c2030ca17936",
+  "verification_manifest_sha256": "6c207c08dd7db2d3fdbb80113fd32e4804671c93f7ad406516f863cb97115fcd",
+  "separate_outcomes": {
+    "verification": "PASS",
+    "engineering_assessment": "BLOCKED",
+    "full_P5": "NOT_RUN",
+    "full_2V": "BLOCKED",
+    "calculation_3A": "BLOCKED",
+    "live_autocad": "NOT_RUN"
+  },
+  "local": {
+    "mandatory_groups_passed": 58,
+    "compile_plugins_passed": 3,
+    "workflow_checks": 1275,
+    "engine_invocations": 9,
+    "xlsx_files": 9,
+    "axis_fixed_checks": 33,
+    "axis_original_broken_checks": 38,
+    "independent_workflow_evidence_checks": 337,
+    "independent_axis_evidence_checks": 95,
+    "independent_oracle_final_checks": 151,
+    "stable_source_files": 245,
+    "reused_full_synth_runs": 8,
+    "revalidated_synth_dependencies": 44
+  },
+  "product_code_changes": [
+    "AFrame/src/AFramePlugin/FrameCommand.cs"
+  ],
+  "product_change": "Two-line Cancel return before source capture, engine calculation and CAD prewrite. Enter list-completion unchanged.",
+  "performance": {
+    "added_cad_reads": 0,
+    "added_modelspace_scans": 0,
+    "workflow_stage_counters": [
+      {
+        "stage": "read_tables_xlsx",
+        "tag": "initial",
+        "milliseconds": 59.287400000000005,
+        "counters": {
+          "get_object_read": 237,
+          "get_object_write": 0,
+          "dictionary_contains": 142,
+          "dictionary_get": 68,
+          "dictionary_set": 0,
+          "xrecord_data_get": 123,
+          "xrecord_data_set": 0,
+          "buffer_enumerations": 63,
+          "buffer_values": 239,
+          "buffer_text_chars": 48547,
+          "points_read": 64,
+          "bulges_read": 64,
+          "hatch_loops_read": 4,
+          "typed_values_allocated": 0,
+          "objects_created": 0,
+          "modelspace_visits": 52
+        }
+      },
+      {
+        "stage": "read_tables_xlsx",
+        "tag": "project_reissue",
+        "milliseconds": 20.4591,
+        "counters": {
+          "get_object_read": 237,
+          "get_object_write": 0,
+          "dictionary_contains": 142,
+          "dictionary_get": 68,
+          "dictionary_set": 0,
+          "xrecord_data_get": 123,
+          "xrecord_data_set": 0,
+          "buffer_enumerations": 63,
+          "buffer_values": 239,
+          "buffer_text_chars": 48551,
+          "points_read": 64,
+          "bulges_read": 64,
+          "hatch_loops_read": 4,
+          "typed_values_allocated": 0,
+          "objects_created": 0,
+          "modelspace_visits": 68
+        }
+      },
+      {
+        "stage": "read_tables_xlsx",
+        "tag": "zone_reissue",
+        "milliseconds": 20.3111,
+        "counters": {
+          "get_object_read": 237,
+          "get_object_write": 0,
+          "dictionary_contains": 142,
+          "dictionary_get": 68,
+          "dictionary_set": 0,
+          "xrecord_data_get": 123,
+          "xrecord_data_set": 0,
+          "buffer_enumerations": 63,
+          "buffer_values": 239,
+          "buffer_text_chars": 48620,
+          "points_read": 64,
+          "bulges_read": 64,
+          "hatch_loops_read": 4,
+          "typed_values_allocated": 0,
+          "objects_created": 0,
+          "modelspace_visits": 76
+        }
+      }
+    ],
+    "scope": "Small managed test fixture only; elapsed times are not live AutoCAD benchmarks. ModelSpace visits include erased doubles retained in the persistent DB."
+  },
+  "main_checked_unchanged": "e2a4e4df69a1936664c76c44cacff311ad44b07d",
+  "protected_modules_changed": false,
+  "guide_rebuilt": false,
+  "guide_protocol": "guide_applicability.json",
+  "guide_protocol_sha256": "0200acc9816f0cb318edbc0d414a1b0ec39093bea6d55afddb70d20d46d113fd",
+  "guide_binding": "111 product inputs reviewed:110 unchanged; FrameCommand Cancel control flow changed and manual applicability reviewed. Prior SOURCE_COMMIT/FINAL_QA remain historical.",
+  "new_ui_visual_review_claimed": false,
+  "ui_applicability": "No WinForms source changed. New behavior is a command-line cancellation branch; targeted native extracted regression and full compile verified. Prior681/7 form review remains bound to129513f/CI215.",
+  "live_autocad_checked": false,
+  "installer_created": false,
+  "following_handoff_commit": "Documentation only; identify by containing Git commit, not self-referential hash.",
+  "snapshot_note": "Earlier local/independent PENDING fields are historical snapshots before publication; final run is recorded here.",
+  "next_step": "Reproduce the remaining node/table command lifecycle gap on this same limited fixture; use existing probes and retain explicit native-host NOT_RUN. Engineering M2-M7 need evidence before2V/3A can open.",
+  "handoff_review": {
+    "verdict": "PASS_AFTER_DOCUMENTATION_CORRECTION",
+    "finding": "Separate programmatic axis test1200x3000/1rail4brackets from human-route1210x1820. Corrected in continuation prompt; runtime inputs unchanged."
+  },
+  "windows_artifact_review": {
+    "checks": 1205,
+    "unique_source_files": 71,
+    "json_outputs": 52,
+    "generated_sources": 4,
+    "xlsx_files": 9,
+    "xlsx_cells": 933
+  }
+}
