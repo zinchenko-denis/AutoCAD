@@ -109,7 +109,37 @@ namespace AFramePlugin
         public static bool Same(FrameSolutionSelection first, FrameSolutionSelection second)
         {
             if (first == null || second == null) return first == null && second == null;
-            return Json.Serialize(first) == Json.Serialize(second);
+            // Identity is the exact value contract, independent of reflection
+            // property order or JSON formatting. This equality check performs
+            // no serialization or allocations.
+            return first.schema == second.schema && first.catalog_id == second.catalog_id &&
+                first.catalog_revision == second.catalog_revision && first.solution_id == second.solution_id &&
+                first.source_id == second.source_id && first.source_sha256 == second.source_sha256 &&
+                SameNode(first.node, second.node) && SameBracket(first.bracket, second.bracket) &&
+                SameExtender(first.extender, second.extender) && SameProfile(first.profile, second.profile) &&
+                SameGeometry(first.geometry, second.geometry);
+        }
+        private static bool SameNode(FrameSolutionNode a, FrameSolutionNode b)
+        { return a == null || b == null ? a == null && b == null : a.pdf_page == b.pdf_page && a.sheet == b.sheet; }
+        private static bool SameBracket(FrameSolutionBracket a, FrameSolutionBracket b)
+        { return a == null || b == null ? a == null && b == null : a.family_id == b.family_id && a.execution == b.execution &&
+            a.nominal_width_mm == b.nominal_width_mm && a.L_mm == b.L_mm; }
+        private static bool SameExtender(FrameSolutionExtender a, FrameSolutionExtender b)
+        { return a == null || b == null ? a == null && b == null : a.family_id == b.family_id && a.execution == b.execution &&
+            a.nominal_width_mm == b.nominal_width_mm && a.L_mm == b.L_mm && a.thickness_mm == b.thickness_mm; }
+        private static bool SameProfile(FrameSolutionProfile a, FrameSolutionProfile b)
+        { return a == null || b == null ? a == null && b == null : a.family_id == b.family_id && a.execution == b.execution &&
+            a.a_mm == b.a_mm && a.b_mm == b.b_mm && a.thickness_mm == b.thickness_mm &&
+            a.b_basis == b.b_basis && a.thickness_basis == b.thickness_basis; }
+        private static bool SameGeometry(FrameSolutionGeometry a, FrameSolutionGeometry b)
+        {
+            if (a == null || b == null) return a == null && b == null;
+            if (a.cladding_front_offset_mm != b.cladding_front_offset_mm || a.cladding_offset_basis != b.cladding_offset_basis) return false;
+            var first = a.insulation_layers_mm; var second = b.insulation_layers_mm;
+            if (first == null || second == null) return first == null && second == null;
+            if (first.Count != second.Count) return false;
+            for (int i = 0; i < first.Count; i++) if (first[i] != second[i]) return false;
+            return true;
         }
         public string Validate()
         {

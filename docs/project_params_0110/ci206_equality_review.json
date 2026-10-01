@@ -1,0 +1,91 @@
+{
+  "schema": "ci_equality_review/1",
+  "date": "2026-10-01",
+  "baseline_commit": "6bd91ead2c03e0f7220cc2db02ce2d6c88148774",
+  "observed_ci": {
+    "run_id": 36839324289,
+    "run_number": 206,
+    "job_id": 110294346647,
+    "result": "failure",
+    "url": "https://github.com/zinchenko-denis/AutoCAD/actions/runs/36839324289/job/110294346647",
+    "reported_failing_cases": [
+      {
+        "name": "selection-context operation scaling 1000",
+        "reason": "Выбранные зоны имеют разные каталожные решения либо смешивают новый/старый каркас с явным выбором. Выберите однородную группу зон."
+      },
+      {
+        "name": "same-root alias canonical comparisons scale linearly 100",
+        "reason": "Метки одной зоны содержат разные явные выборы решения. Проверьте исходные метки."
+      }
+    ],
+    "before_failure_serialized_values_captured": false
+  },
+  "source_findings": {
+    "old_comparison": "Json.Serialize(first) == Json.Serialize(second)",
+    "present_before_2b2": true,
+    "source_supported_risk": "Typed JSON serialization relies on reflection property enumeration order; equality must compare values independently of that order.",
+    "runtime_trigger_status": "candidate_only; exact original Windows CI trigger not proven",
+    "primary_sources": [
+      "https://learn.microsoft.com/en-us/dotnet/api/system.type.getproperties?view=net-10.0",
+      "https://github.com/microsoft/referencesource/blob/main/System.Web.Extensions/Script/Serialization/JavaScriptSerializer.cs#L264",
+      "https://github.com/microsoft/referencesource/blob/main/System.Web.Extensions/Script/Serialization/ObjectConverter.cs#L52",
+      "https://github.com/microsoft/referencesource/blob/main/mscorlib/system/rttype.cs#L502"
+    ]
+  },
+  "fix": {
+    "behavior": "Exact field comparisons for all selection scalars, nested DTOs, nullable values and ordered insulation layer values; no serializer dependency in Same.",
+    "numeric_tolerance_added": false,
+    "old_negative_tests_retained": true,
+    "engineering_limits_changed": false,
+    "new_regressions": [
+      "every scalar discovered independently by reflection",
+      "every nested null pair and one-sided null",
+      "nullable scalar clear",
+      "one ULP numeric differences",
+      "insulation order/count/null vs empty",
+      "1000 equivalent declarations with reversed dictionary insertion order and forced collection"
+    ]
+  },
+  "local_validation": {
+    "platform": "Mono",
+    "status": "PASS",
+    "checks": 70,
+    "native_cases": 47,
+    "fresh_process_diagnostic": {
+      "comparisons": 200,
+      "legacy_string_mismatches": 0,
+      "first_mismatch": null,
+      "interpretation": "Observational only; no mismatch does not establish serializer-order stability on another runtime."
+    },
+    "contract_loop_diagnostic": {
+      "comparisons": 1000,
+      "legacy_string_mismatches": 0,
+      "first_mismatch": null,
+      "interpretation": "Observational only; no mismatch does not establish serializer-order stability on another runtime."
+    },
+    "observational_diagnostic_only": true,
+    "live_autocad_checked": false
+  },
+  "next_validation": "Run Windows CI for this new source; inspect serializer_equality_diagnostic.json and contracts_output.json. No legacy mismatch on Mono is not evidence of Windows property-order stability.",
+  "baseline_selection_source_sha256": "129f4f526e00b410433ab5c3e07f0df5e39449d68a880855c8ee66c4dc0a3e10",
+  "fixed_source_sha256": {
+    "AFrame/src/AFramePlugin/FrameSolutionSelection.cs": "cb25b6e890ce2f1e5ee458f1e378510d21f7205e529ee1894520ed686a3abd66",
+    "tools/solution_catalog_0110/SettingsContractProbe.cs": "b3fc108f5465ac55a84d31433b7f2ae199e6609e43c53a4fa51d4932dbaf71a5",
+    "tools/solution_catalog_0110/test_settings_contract.py": "876a9e4bcd11b65ca09dfa671f25643700e08d414cd4b93ee2f974d781605b93"
+  },
+  "local_full_validation": {
+    "mandatory_groups": {
+      "passed": 52,
+      "total": 52,
+      "manifest": "equality_fix_gates_manifest.json"
+    },
+    "compile": {
+      "passed": 3,
+      "total": 3,
+      "manifest": "equality_fix_compile_manifest.json"
+    },
+    "input_files_unchanged": 260,
+    "input_manifest": "equality_fix_input_sha256.json",
+    "windows_ci": "PENDING"
+  }
+}

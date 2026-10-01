@@ -12,14 +12,82 @@ internal static class SettingsContractProbe
     static readonly JavaScriptSerializer Json = new JavaScriptSerializer { MaxJsonLength = int.MaxValue };
     static readonly List<object> Cases = new List<object>();
     static int Failed;
+    static int LegacyEqualityComparisons, LegacyEqualityMismatches;
+    static object FirstLegacyEqualityMismatch;
     static void Need(bool value, string message) { if (!value) throw new Exception(message); }
     static void Check(string name, Action action) { try { action(); Cases.Add(new { name, status = "PASS" }); } catch (Exception e) { Failed++; Cases.Add(new { name, status = "FAIL", reason = e.Message }); Console.WriteLine("FAIL " + name + ": " + e.Message); } }
     static void Refuses(Action action) { bool refused = false; try { action(); } catch (FrameSolutionSelectionException) { refused = true; } Need(refused, "expected exact source-selection refusal"); }
     static Dictionary<string, object> Dict(object value) { return (Dictionary<string, object>)value; }
     static FrameSettings Settings(FrameSolutionSelection selection) { return new FrameSettings { Steps = "manual", Profile = "ГП-60-40", SolutionSelection = selection }; }
+    static object ReflectCopy(object value)
+    {
+        if (value == null || value is string || value.GetType().IsValueType) return value;
+        var layers = value as List<double>; if (layers != null) return new List<double>(layers);
+        var result = Activator.CreateInstance(value.GetType());
+        foreach (var property in value.GetType().GetProperties()) property.SetValue(result, ReflectCopy(property.GetValue(value, null)), null);
+        return result;
+    }
+    static IEnumerable<string> ScalarPaths(Type type, string prefix = "")
+    {
+        foreach (var property in type.GetProperties())
+        {
+            string path = prefix + property.Name;
+            if (property.PropertyType == typeof(List<double>)) continue;
+            if (property.PropertyType.Namespace == typeof(FrameSolutionSelection).Namespace)
+                foreach (string child in ScalarPaths(property.PropertyType, path + ".")) yield return child;
+            else yield return path;
+        }
+    }
+    static void ChangeScalar(FrameSolutionSelection selected, string path)
+    {
+        string[] parts = path.Split('.'); object parent = selected;
+        foreach (string part in parts.Take(parts.Length - 1)) parent = parent.GetType().GetProperty(part).GetValue(parent, null);
+        var leaf = parent.GetType().GetProperty(parts[parts.Length - 1]); object value = leaf.GetValue(parent, null);
+        object changed;
+        if (leaf.PropertyType == typeof(string)) changed = (string)value + "_changed";
+        else if (leaf.PropertyType == typeof(int)) changed = (int)value + 1;
+        else if (value == null) changed = 1.0;
+        else if (value is double) changed = BitConverter.Int64BitsToDouble(BitConverter.DoubleToInt64Bits((double)value) + 1);
+        else throw new Exception("Uncovered equality field type: " + path);
+        leaf.SetValue(parent, changed, null);
+    }
+    static object ReverseKeys(object value)
+    {
+        var map = value as Dictionary<string, object>;
+        if (map == null) return value;
+        return map.Reverse().ToDictionary(p => p.Key, p => ReverseKeys(p.Value));
+    }
+    static string[] SerializedPropertyOrder(string json)
+    {
+        return System.Text.RegularExpressions.Regex.Matches(json, "\"([^\"]+)\"\\s*:").Cast<System.Text.RegularExpressions.Match>().Select(m => m.Groups[1].Value).ToArray();
+    }
+    static void ObserveLegacyEquality(FrameSolutionSelection first, FrameSolutionSelection second, int iteration)
+    {
+        string a = Json.Serialize(first), b = Json.Serialize(second); LegacyEqualityComparisons++;
+        if (a == b) return;
+        LegacyEqualityMismatches++;
+        if (FirstLegacyEqualityMismatch == null) FirstLegacyEqualityMismatch = new {
+            iteration, semantic_equal = FrameSolutionSelection.Same(first, second),
+            first_property_order = SerializedPropertyOrder(a), second_property_order = SerializedPropertyOrder(b),
+            first_values = first.ToDict(), second_values = second.ToDict() };
+    }
+    static object EqualityDiagnostic()
+    { return new { comparisons = LegacyEqualityComparisons, legacy_string_mismatches = LegacyEqualityMismatches,
+        first_mismatch = FirstLegacyEqualityMismatch, interpretation = "Observational only; no mismatch does not establish serializer-order stability on another runtime." }; }
     public static int Main(string[] args)
     {
         var input = args.Length > 2 ? Dict(Json.DeserializeObject(File.ReadAllText(args[1]))) : null;
+        // Fresh process: probe the old comparison before typed deserialization
+        // has fully warmed Reflection's property cache. It is diagnostic only.
+        if (args[0] == "--equality-diagnostic") {
+            var sample = FrameSolutionSelection.CreateDefault();
+            for (int i = 0; i < 200; i++) {
+                if (i % 10 == 0) { GC.Collect(); GC.WaitForPendingFinalizers(); GC.Collect(); }
+                var keep = typeof(FrameSolutionSelection).GetProperty(i % 2 == 0 ? "geometry" : "source_id");
+                ObserveLegacyEquality(sample, sample, i); GC.KeepAlive(keep);
+            }
+            File.WriteAllText(args[1], Json.Serialize(EqualityDiagnostic())); return 0;
+        }
         if (args[0] == "--catalog") { File.WriteAllText(args[1], Json.Serialize(FrameSolutionSelection.CatalogSnapshot())); return 0; }
         if (args[0] == "--settings") {
             try {
@@ -42,6 +110,47 @@ internal static class SettingsContractProbe
         }
         var selected = FrameSolutionSelection.FromDict(input["selection"]);
         var selectedSettings = Settings(selected).ToDict();
+        Check("exact selection equality covers every scalar and nested nullable field", delegate {
+            var baseline = (FrameSolutionSelection)ReflectCopy(selected);
+            baseline.geometry.cladding_front_offset_mm = 230; baseline.geometry.insulation_layers_mm = new List<double> { 100, 50 };
+            Need(FrameSolutionSelection.Same(baseline, (FrameSolutionSelection)ReflectCopy(baseline)), "detached equal declaration differs");
+            Need(FrameSolutionSelection.Same(null, null) && !FrameSolutionSelection.Same(null, baseline) && !FrameSolutionSelection.Same(baseline, null), "top-level null identity changed");
+            foreach (string path in ScalarPaths(typeof(FrameSolutionSelection))) {
+                var changed = (FrameSolutionSelection)ReflectCopy(baseline); ChangeScalar(changed, path);
+                Need(!FrameSolutionSelection.Same(baseline, changed) && !FrameSolutionSelection.Same(changed, baseline), "scalar change ignored: " + path);
+            }
+            foreach (string nested in new[] { "node", "bracket", "extender", "profile", "geometry" }) {
+                var first = (FrameSolutionSelection)ReflectCopy(baseline); var second = (FrameSolutionSelection)ReflectCopy(baseline);
+                var property = typeof(FrameSolutionSelection).GetProperty(nested); property.SetValue(first, null, null);
+                Need(!FrameSolutionSelection.Same(first, second) && !FrameSolutionSelection.Same(second, first), "missing nested value ignored: " + nested);
+                property.SetValue(second, null, null); Need(FrameSolutionSelection.Same(first, second), "matching null structure differs: " + nested);
+            }
+            foreach (string path in new[] { "profile.b_mm", "profile.thickness_mm", "geometry.cladding_front_offset_mm" }) {
+                var changed = (FrameSolutionSelection)ReflectCopy(baseline); var parts = path.Split('.');
+                object parent = changed.GetType().GetProperty(parts[0]).GetValue(changed, null); parent.GetType().GetProperty(parts[1]).SetValue(parent, null, null);
+                Need(!FrameSolutionSelection.Same(baseline, changed), "nullable scalar clear ignored: " + path);
+            }
+        });
+        Check("selection equality preserves layer order/count/null and exact numeric values", delegate {
+            var baseline = (FrameSolutionSelection)ReflectCopy(selected); baseline.geometry.insulation_layers_mm = new List<double> { 100, 50 };
+            foreach (Action<List<double>> change in new Action<List<double>>[] { v => v.Reverse(), v => v.Add(25), v => v.RemoveAt(0),
+                v => v[0] = BitConverter.Int64BitsToDouble(BitConverter.DoubleToInt64Bits(v[0]) + 1) }) {
+                var altered = (FrameSolutionSelection)ReflectCopy(baseline); change(altered.geometry.insulation_layers_mm);
+                Need(!FrameSolutionSelection.Same(baseline, altered), "layer change ignored");
+            }
+            var missing = (FrameSolutionSelection)ReflectCopy(baseline); missing.geometry.insulation_layers_mm = null;
+            var empty = (FrameSolutionSelection)ReflectCopy(baseline); empty.geometry.insulation_layers_mm = new List<double>();
+            Need(!FrameSolutionSelection.Same(missing, empty) && !FrameSolutionSelection.Same(empty, missing), "null and empty layer lists conflated");
+            Need(FrameSolutionSelection.Same(missing, (FrameSolutionSelection)ReflectCopy(missing)), "matching absent layers differ");
+        });
+        Check("selection equality survives dictionary order and forced collections", delegate {
+            for (int i = 0; i < 1000; i++) {
+                var restored = FrameSolutionSelection.FromDict(i % 2 == 0 ? selected.ToDict() : ReverseKeys(selected.ToDict()));
+                if (i % 100 == 0) { GC.Collect(); GC.WaitForPendingFinalizers(); GC.Collect(); }
+                ObserveLegacyEquality(selected, restored, i);
+                Need(FrameSolutionSelection.Same(selected, restored) && FrameSolutionSelection.Same(restored, selected), "equal declaration differs after collection at " + i);
+            }
+        });
         Check("legacy null payload and preset behavior unchanged", delegate {
             var s = new FrameSettings { Steps = "manual", Profile = "ГП-60-40" }; var d = s.EngineParams(0);
             Need(s.SolutionSelection == null && !d.ContainsKey("solution_selection") && (string)Dict(d["system"])["name"] == "Standart" && (string)d["rail_profile"] == "ГП-60-40", "legacy manual behavior changed");
@@ -249,7 +358,8 @@ internal static class SettingsContractProbe
                 resolve_observations = resolved.Observations, elapsed_ms = watch.Elapsed.TotalMilliseconds,
                 cad_calls = 0, modelspace_scans = 0 });
         }); }
-        File.WriteAllText(args[2], Json.Serialize(new { status = Failed == 0 ? "PASS" : "FAIL", checks = Cases.Count, cases = Cases, performance, live_autocad_checked = false }));
+        File.WriteAllText(args[2], Json.Serialize(new { status = Failed == 0 ? "PASS" : "FAIL", checks = Cases.Count, cases = Cases, performance,
+            equality_diagnostic = EqualityDiagnostic(), live_autocad_checked = false }));
         Console.WriteLine("Solution settings/guard native checks: " + Cases.Count + (Failed == 0 ? " PASS" : " FAIL"));
         return Failed == 0 ? 0 : 1;
     }

@@ -100,6 +100,8 @@ def main():
         print('BLOCKED: native .NET compiler/runtime unavailable'); return 2
     out = (args.out or Path(tempfile.mkdtemp(prefix='solution_settings_'))).resolve(); out.mkdir(parents=True, exist_ok=True)
     executable = compile_actual_settings(out)
+    equality_diagnostic = out / 'serializer_equality_diagnostic.json'
+    subprocess.run(command(executable) + ['--equality-diagnostic', str(equality_diagnostic)], check=True)
     def run(mode, name, payload):
         infile, outfile = out / (name + '_input.json'), out / (name + '_output.json')
         infile.write_text(json.dumps(payload, ensure_ascii=False, allow_nan=False), encoding='utf-8')
@@ -161,6 +163,8 @@ def main():
     files += [ROOT/'Common/FacadeQuantities.cs',ROOT/'Common/catalogs/vector1_2015_type1_historical.json'] + list((ROOT/'AFrame/engine').glob('*.py'))
     manifest={'status':'PASS','checks':checks+native['checks'],'native_checks':native['checks'],'pipeline_checks':checks,
               'live_autocad_checked':False,'performance':native['performance'],
+              'equality_diagnostic_fresh_process':json.loads(equality_diagnostic.read_text(encoding='utf-8')),
+              'equality_diagnostic_contract_loop':native['equality_diagnostic'],
               'scope':'Actual native settings, selected-owner metadata/freshness guard, real engine and actual quantity producer; CAD objects doubled',
               'source_sha256':{str(p.relative_to(ROOT)):hashlib.sha256(p.read_bytes()).hexdigest() for p in files}}
     (out/'manifest.json').write_text(json.dumps(manifest,ensure_ascii=False,indent=2)+'\n',encoding='utf-8')

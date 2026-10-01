@@ -1,0 +1,26 @@
+{
+  "status": "FAIL",
+  "run_id": 36839324289,
+  "run_number": 206,
+  "head_sha": "6bd91ead2c03e0f7220cc2db02ce2d6c88148774",
+  "event": "workflow_dispatch",
+  "branch": "feat/auto-reactor",
+  "job_id": 110294346647,
+  "failing_step": "Historical facade catalogue (actual settings, engine and producer)",
+  "native_checks_total": 44,
+  "failures": [
+    {
+      "case": "selection-context operation scaling 1000",
+      "message": "Выбранные зоны имеют разные каталожные решения либо смешивают новый/старый каркас с явным выбором. Выберите однородную группу зон."
+    },
+    {
+      "case": "same-root alias canonical comparisons scale linearly 100",
+      "message": "Метки одной зоны содержат разные явные выборы решения. Проверьте исходные метки."
+    }
+  ],
+  "ui_checks": "NOT_REACHED",
+  "ui_artifacts": 0,
+  "compile_facade_plugins": "3/3 PASS",
+  "cause_status": "under investigation; repeated identical settings rejected on Windows, local Mono gate passed",
+  "authorization_failure": false
+}

@@ -242,6 +242,18 @@ jobs:
           path: solution_ui_results/
           if-no-files-found: warn
 
+      - name: Upload solution settings contract evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: solution-settings-contract
+          path: |
+            solution_settings_results/*_output.json
+            solution_settings_results/serializer_equality_diagnostic.json
+            solution_settings_results/manifest.json
+            solution_settings_results/compile.log
+          if-no-files-found: warn
+
       - name: Project and zone parameters (native contracts, CAD store and WinForms)
         shell: pwsh
         env:
