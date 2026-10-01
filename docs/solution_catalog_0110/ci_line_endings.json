@@ -1,0 +1,27 @@
+{
+  "status": "PASS",
+  "kind": "test_portability_only",
+  "failed_ci": {
+    "run_id": 36826757005,
+    "commit": "5bd1da76648ffea6e543821d342275998cd71ca3",
+    "reason": "Exact generated JSON test did not account for Git CRLF checkout on Windows; product compilation succeeded."
+  },
+  "changed_file": "AFrame/engine/test_frame_solution_selection.py",
+  "before_sha256": "4a04f7ffeb7833c98d0b95abc6011e5109dad767c751161da6cbaf23255224de",
+  "after_sha256": "79b853ab20b95d491fc3e76f667fc7fb7106afa6ace7b5ae9d1ede191f99aceb",
+  "accepted_normalization": "CRLF to LF only; all canonical JSON content bytes still compared",
+  "runtime_product_changed": false,
+  "checks": [
+    {
+      "environment": "normal LF checkout",
+      "test_methods": 18,
+      "status": "PASS"
+    },
+    {
+      "environment": "isolated CRLF JSON checkout replica",
+      "test_methods": 18,
+      "status": "PASS"
+    }
+  ],
+  "live_autocad_checked": false
+}

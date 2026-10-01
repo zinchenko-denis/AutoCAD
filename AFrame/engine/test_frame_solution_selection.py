@@ -50,7 +50,10 @@ def engine_request(count=2):
 class Catalogue(unittest.TestCase):
     def test_generated_export_and_csharp_snapshot_match(self):
         path = ROOT / "Common/catalogs/vector1_2015_type1_historical.json"
-        self.assertEqual(path.read_bytes(), catalog.export_text().encode("utf-8"))
+        # Git's Windows checkout may use CRLF. Only that line-ending conversion
+        # is accepted; every byte of the canonical JSON content still matches.
+        self.assertEqual(path.read_bytes().replace(b"\r\n", b"\n"),
+                         catalog.export_text().encode("utf-8"))
         cs = (ROOT / "AFrame/src/AFramePlugin/FrameSolutionSelection.cs").read_text(encoding="utf-8")
         found = re.search(r'private const string CatalogJson = @"((?:""|[^"])*)";', cs)
         self.assertIsNotNone(found, "C# embedded catalogue snapshot must be generated")
