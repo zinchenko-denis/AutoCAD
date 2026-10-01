@@ -165,6 +165,7 @@ namespace AFramePlugin
         {
             if (_loading) return;
             _reviewedInput = null; _acceptedInput = null; _geometry = null;
+            _review.Clear();
             _review.Visible = false; _editor.Visible = true;
             _check.Visible = true; _back.Visible = false; _insert.Enabled = false;
             _status.ForeColor = SystemColors.ControlText;
@@ -185,9 +186,10 @@ namespace AFramePlugin
             try
             {
                 var input = ReadInput(); var result = FrameNodeGeometry.Evaluate(_selection, input);
+                var mounting = FrameMountingAssessment.Evaluate(_selection, result);
                 _reviewedInput = input; _geometry = result;
                 // Native multiline TextBox requires CRLF; the numerical core remains platform-neutral.
-                _review.Text = (ProjectText() + "\r\n\r\n" + result.ReviewText())
+                _review.Text = (ProjectText() + "\r\n\r\n" + result.ReviewText() + "\r\n" + mounting.ReviewText())
                     .Replace("\r\n", "\n").Replace("\r", "\n").Replace("\n", "\r\n");
                 _scroll.AutoScrollPosition = Point.Empty; _editor.Visible = false; _review.Visible = true; _review.BringToFront();
                 _review.Select(0, 0);

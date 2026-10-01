@@ -281,13 +281,15 @@ jobs:
             project_parameters_ui_results/
           if-no-files-found: warn
 
-      - name: Pilot node geometry (exact core, actual CAD adapters and WinForms)
+      - name: Pilot node geometry and mounting readiness (core, CAD adapters and WinForms)
         shell: pwsh
         env:
           PYTHONUTF8: "1"
           PYTHONIOENCODING: "utf-8"
         run: |
           python tools/node_geometry_0110/test_core.py --out node_geometry_core_results
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          python tools/mounting_assessment_0110/test_core.py --out mounting_assessment_core_results
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           python tools/node_geometry_0110/test_node_cad.py --out node_geometry_cad_results
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
@@ -301,6 +303,7 @@ jobs:
           name: node-geometry
           path: |
             node_geometry_core_results/
+            mounting_assessment_core_results/
             node_geometry_cad_results/
             node_geometry_ui_results/
           if-no-files-found: warn

@@ -51,6 +51,31 @@ internal static class NodeUiProbe
     private static void Surface(Form form, int index) { Find<ComboBox>(form, "clearance_surface").SelectedIndex = index; }
     private static void Profile(Form form, string value) { Find<TextBox>(form, "profile_near_x").Text = value; }
     private static string Review(Form form) { return Find<TextBox>(form, "node_review").Text; }
+    private static void MountingReview(FrameNodeForm form, FrameSolutionSelection selection)
+    {
+        var expected = FrameMountingAssessment.Evaluate(selection, form.Geometry);
+        var box = Find<TextBox>(form, "node_review");
+        string normalized = expected.ReviewText().Replace("\r\n", "\n").Replace("\r", "\n").Replace("\n", "\r\n");
+        Check(box.Text.EndsWith(normalized, StringComparison.Ordinal), "Native review omitted or changed the mounting report for the current selection");
+        Check(box.Lines.Any(line => line.StartsWith("Монтажная пригодность: не подтверждена.")), "Native review merges or hides separate mounting status line");
+        Check(expected.Dependencies.Count == 7 && expected.DeclaredMembers.Count == 3 && !expected.AutomaticBracketSelectionAllowed,
+            "Mounting review lost its seven data requests/three declared members or allowed automatic selection");
+        Check(box.Lines.Any(line => line.StartsWith("КР2: ") && line.Contains("лист 3.2.1, PDF 6")) &&
+            box.Lines.Any(line => line.StartsWith("УК: ") && line.Contains("лист 3.3, PDF 8")) &&
+            box.Lines.Any(line => line.StartsWith("ГП: ") && line.Contains("лист 3.4, PDF 9")), "Declared members lost their individual source locators");
+    }
+    private static void ScrollReviewTo(FrameNodeForm form, string text)
+    {
+        var box = Find<TextBox>(form, "node_review"); int index = box.Text.IndexOf(text, StringComparison.Ordinal);
+        Check(index >= 0 && box.Visible && box.ReadOnly && box.ScrollBars == ScrollBars.Vertical, "Mounting section is not available for read-only vertical review: " + text);
+        if (index < 0) return;
+        // Visit the end first, then return to the requested section. This makes
+        // its beginning visible without relying on Windows-only scroll messages.
+        box.Focus(); box.Select(box.TextLength, 0); box.ScrollToCaret();
+        box.Select(index, 0); box.ScrollToCaret(); Application.DoEvents();
+        Point position = box.GetPositionFromCharIndex(index);
+        Check(position.Y >= 0 && position.Y + box.Font.Height <= box.ClientSize.Height, "Mounting section start cannot be scrolled into view: " + text);
+    }
     private static object Numeric(double? value)
     { return value.HasValue ? new { roundtrip = value.Value.ToString("R", CultureInfo.InvariantCulture),
         ieee754_hex = BitConverter.DoubleToInt64Bits(value.Value).ToString("X16", CultureInfo.InvariantCulture) } : null; }
@@ -98,12 +123,12 @@ internal static class NodeUiProbe
         images.Add(name + ".png");
     }
     // Explicit synthetic input, not recommended dimensions for a real project.
-    private static FrameParameterResolution Fixture(double[] layers, double? cladding)
+    private static FrameParameterResolution Fixture(double[] layers, double? cladding, int bracketLength = 200, int extenderLength = 100)
     {
         var selection = FrameSolutionSelection.CreateDefault();
         selection.bracket.execution = selection.extender.execution = selection.profile.execution = "galvanized_painted";
         selection.bracket.nominal_width_mm = selection.extender.nominal_width_mm = 70;
-        selection.bracket.L_mm = 200; selection.extender.L_mm = 100; selection.extender.thickness_mm = 1.2;
+        selection.bracket.L_mm = bracketLength; selection.extender.L_mm = extenderLength; selection.extender.thickness_mm = 1.2;
         selection.profile.a_mm = 40; selection.profile.b_mm = 47.5; selection.profile.thickness_mm = 1.5;
         selection.geometry.cladding_front_offset_mm = cladding; selection.geometry.insulation_layers_mm = new List<double>(layers);
         var project = FrameProjectParameters.CreateNext(null, selection, "11111111111111111111111111111111");
@@ -130,6 +155,7 @@ internal static class NodeUiProbe
             Click(form, "check_node");
             Check(form.Geometry != null && form.Geometry.ClearanceStatus == "not_evaluated" && form.Geometry.CanInsert, "Known planes with unknown local inputs did not produce partial scheme");
             Check(Review(form).Contains("Проверка локального просвета не выполнена"), "Partial preview lacks permanent incomplete disclosure");
+            MountingReview(form, standard.Selection);
             Layout(form, "node_partial"); Click(form, "insert_node");
             Check(form.DialogResult == DialogResult.OK && form.Result.profile_near_face_x_mm == null && form.Result.clearance_surface.kind == FrameNodeClearanceSurface.Unknown, "Partial input changed or failed explicit acceptance");
             var detached = form.Result; detached.profile_near_face_x_mm = 999;
@@ -144,14 +170,20 @@ internal static class NodeUiProbe
             Check(reviewLines.Any(line => line.StartsWith("Размерная схема Вектор-1 ") && !line.Contains("Основание x")), "Native review merges the source and coordinate basis lines");
             Check(reviewLines.Any(line => line.StartsWith("Основание x = 0;") && !line.Contains("Слой утеплителя")), "Native review merges the coordinate basis and first layer lines");
             Check(reviewLines.Any(line => line == "Слой утеплителя 1: 100 мм."), "Native review lacks a separate first layer line");
+            MountingReview(form, standard.Selection);
             Layout(form, "node_valid");
+            ScrollReviewTo(form, "Монтажная проверка выбранного решения"); Layout(form, "node_mounting_members");
+            ScrollReviewTo(form, "1. Основание — монтажная база КР2."); Layout(form, "node_mounting_requirements");
             Profile(form, "169,999"); // A real field edit must invalidate even while preview is displayed.
             Check(form.Geometry == null && !Find<Button>(form, "insert_node").Enabled && !Find<TextBox>(form, "node_review").Visible, "Input edit reused a previously valid preview");
+            Check(Review(form) == "", "Input edit retained a stale hidden mounting report");
             Click(form, "check_node");
             Check(form.Geometry.GapText == "19.999" && form.Geometry.ClearanceStatus == "fail" && !form.Geometry.CanInsert, "Sub-minimum gap not rejected precisely");
+            MountingReview(form, standard.Selection);
+            Check(Review(form).Contains("Размерная схема отклонена. Монтажная диагностика не разрешает её вставку."), "Mounting report overrode a rejected local scheme");
             Layout(form, "node_rejected"); Click(form, "insert_node");
             Check(form.DialogResult != DialogResult.OK && form.Result == null, "Rejected preview inserted");
-            Click(form, "back_node"); Check(Find<TextBox>(form, "profile_near_x").Text == "169,999", "Back discarded user input");
+            Click(form, "back_node"); Check(Find<TextBox>(form, "profile_near_x").Text == "169,999" && Review(form) == "", "Back discarded user input or retained stale mounting report");
             double nextDown = BitConverter.Int64BitsToDouble(BitConverter.DoubleToInt64Bits(170.0) - 1);
             Profile(form, nextDown.ToString("R", CultureInfo.InvariantCulture)); Click(form, "check_node");
             Check(form.Geometry.GapText == "19.99999999999997" && Review(form).Contains("19.99999999999997"), "NextDown gap rounded to20 in review");
@@ -180,8 +212,12 @@ internal static class NodeUiProbe
             Profile(form, "170"); Surface(form, 2); Click(form, "check_node");
             Check(form.Geometry == null && Find<TextBox>(form, "node_status").Text.Contains("мембраны"), "Selected membrane accepts missing coordinate");
             Surface(form, 1); form.ClientSize = new Size(620, 420); Layout(form, "node_small");
+            Click(form, "check_node"); ScrollReviewTo(form, "1. Основание — монтажная база КР2.");
+            Layout(form, "node_mounting_small"); Click(form, "back_node");
             form.Font = new Font("Segoe UI", 12f); form.ClientSize = new Size(1100, 800); Layout(form, "node_large_font");
-            Click(form, "check_node"); Layout(form, "node_large_font_review"); Click(form, "cancel_node");
+            Click(form, "check_node"); Layout(form, "node_large_font_review");
+            ScrollReviewTo(form, "7. Допустимые сочетания изделий."); Layout(form, "node_mounting_tail_large_font");
+            Click(form, "cancel_node"); Check(form.Result == null, "Mounting review cancellation retained accepted input");
         }
         using (var form = Form(Fixture(new[] { 150.0, 50.0 }, 180)))
         {
@@ -199,6 +235,24 @@ internal static class NodeUiProbe
         {
             Show(form); Profile(form, "182.29"); Surface(form, 1); Click(form, "check_node");
             Check(form.Geometry.GapText == "20" && form.Geometry.CanInsert, "Decimal layer case rounded below min20"); Click(form, "cancel_node");
+        }
+        foreach (int bracketLength in new[] { 50, 350 })
+        {
+            int extenderLength = bracketLength == 50 ? 100 : 150;
+            var choice = Fixture(new[] { 100.0, 50.0 }, 230, bracketLength, extenderLength);
+            using (var form = Form(choice))
+            {
+                Show(form); Profile(form, "170"); Surface(form, 1); Click(form, "check_node");
+                MountingReview(form, choice.Selection);
+                Check(form.Geometry.ClearanceStatus == "pass" && Find<Button>(form, "insert_node").Enabled &&
+                    Review(form).Contains("Монтажная пригодность: не подтверждена."), "Declared catalogue length changed local clearance or became mounting approval");
+                Check(Review(form).Contains("Длина L: " + bracketLength + " мм") && Review(form).Contains("Длина L: " + extenderLength + " мм"),
+                    "Mounting review displayed a different selection's lengths");
+                Profile(form, "invalid"); Click(form, "check_node");
+                Check(form.Geometry == null && form.Result == null && Review(form) == "" && !Find<Button>(form, "insert_node").Enabled,
+                    "Invalid input retained the former catalogue selection report");
+                Click(form, "cancel_node");
+            }
         }
         var initial = FrameNodeGeometryInput.CreateDefault(); initial.profile_near_face_x_mm = 170; initial.clearance_surface.kind = FrameNodeClearanceSurface.Layers;
         using (var form = new FrameNodeForm(standard.Selection, standard.Context, initial))

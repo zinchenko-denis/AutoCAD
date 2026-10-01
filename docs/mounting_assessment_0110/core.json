@@ -1,0 +1,722 @@
+{
+  "status": "PASS",
+  "checks": 173,
+  "failed": 0,
+  "cases": [
+    {
+      "name": "reviewer: five valid catalogue selections never imply mounting compatibility",
+      "status": "PASS"
+    },
+    {
+      "name": "novice: partial and rejected geometry retain their independent insertion boundary",
+      "status": "PASS"
+    },
+    {
+      "name": "strict source and selection match, including declarations irrelevant to min20",
+      "status": "PASS"
+    },
+    {
+      "name": "independent source locators and precise unconfirmed dependencies",
+      "status": "PASS"
+    },
+    {
+      "name": "immutable report survives caller mutation and shares no mutable selection",
+      "status": "PASS"
+    },
+    {
+      "name": "project profile values stay declared or unknown without a new numeric envelope",
+      "status": "PASS"
+    },
+    {
+      "name": "existing exact local numeric fixtures survive assessment unchanged",
+      "status": "PASS"
+    },
+    {
+      "name": "repeat calls stable across cultures and bounded to selected input",
+      "status": "PASS"
+    },
+    {
+      "name": "published exact numeric statuses preserved",
+      "status": "PASS"
+    },
+    {
+      "name": "published node input/result digests preserved",
+      "status": "PASS"
+    }
+  ],
+  "baseline": [
+    {
+      "case_id": "declared_reference",
+      "bracket": {
+        "family_id": "kr2",
+        "execution": "galvanized_painted",
+        "nominal_width_mm": 70,
+        "L_mm": 200
+      },
+      "extender": {
+        "family_id": "uk",
+        "execution": "galvanized_painted",
+        "nominal_width_mm": 70,
+        "L_mm": 100,
+        "thickness_mm": 1.2
+      },
+      "profile": {
+        "family_id": "gp",
+        "execution": "galvanized_painted",
+        "a_mm": 40,
+        "b_mm": 40,
+        "thickness_mm": 1.2,
+        "b_basis": "project_declared",
+        "thickness_basis": "project_declared"
+      },
+      "local_status": "clearance_pass",
+      "gap_text": "20",
+      "can_insert": true,
+      "geometry_missing": [],
+      "mounting_status": "not_confirmed",
+      "automatic_selection": false,
+      "dependencies": [
+        "wall_to_kr2_datum",
+        "kr2_length_datums",
+        "kr2_uk_engagement",
+        "kr2_uk_connection",
+        "uk_gp_datum",
+        "gp_to_cladding",
+        "assembly_scope"
+      ]
+    },
+    {
+      "case_id": "short_bracket",
+      "bracket": {
+        "family_id": "kr2",
+        "execution": "galvanized_painted",
+        "nominal_width_mm": 70,
+        "L_mm": 50
+      },
+      "extender": {
+        "family_id": "uk",
+        "execution": "galvanized_painted",
+        "nominal_width_mm": 70,
+        "L_mm": 100,
+        "thickness_mm": 1.2
+      },
+      "profile": {
+        "family_id": "gp",
+        "execution": "galvanized_painted",
+        "a_mm": 40,
+        "b_mm": 40,
+        "thickness_mm": 1.2,
+        "b_basis": "project_declared",
+        "thickness_basis": "project_declared"
+      },
+      "local_status": "clearance_pass",
+      "gap_text": "20",
+      "can_insert": true,
+      "geometry_missing": [],
+      "mounting_status": "not_confirmed",
+      "automatic_selection": false,
+      "dependencies": [
+        "wall_to_kr2_datum",
+        "kr2_length_datums",
+        "kr2_uk_engagement",
+        "kr2_uk_connection",
+        "uk_gp_datum",
+        "gp_to_cladding",
+        "assembly_scope"
+      ]
+    },
+    {
+      "case_id": "long_bracket",
+      "bracket": {
+        "family_id": "kr2",
+        "execution": "galvanized_painted",
+        "nominal_width_mm": 70,
+        "L_mm": 350
+      },
+      "extender": {
+        "family_id": "uk",
+        "execution": "galvanized_painted",
+        "nominal_width_mm": 70,
+        "L_mm": 150,
+        "thickness_mm": 1.2
+      },
+      "profile": {
+        "family_id": "gp",
+        "execution": "galvanized_painted",
+        "a_mm": 40,
+        "b_mm": 40,
+        "thickness_mm": 1.2,
+        "b_basis": "project_declared",
+        "thickness_basis": "project_declared"
+      },
+      "local_status": "clearance_pass",
+      "gap_text": "20",
+      "can_insert": true,
+      "geometry_missing": [],
+      "mounting_status": "not_confirmed",
+      "automatic_selection": false,
+      "dependencies": [
+        "wall_to_kr2_datum",
+        "kr2_length_datums",
+        "kr2_uk_engagement",
+        "kr2_uk_connection",
+        "uk_gp_datum",
+        "gp_to_cladding",
+        "assembly_scope"
+      ]
+    },
+    {
+      "case_id": "different_nominal_widths",
+      "bracket": {
+        "family_id": "kr2",
+        "execution": "galvanized_painted",
+        "nominal_width_mm": 50,
+        "L_mm": 200
+      },
+      "extender": {
+        "family_id": "uk",
+        "execution": "galvanized_painted",
+        "nominal_width_mm": 85,
+        "L_mm": 100,
+        "thickness_mm": 1.2
+      },
+      "profile": {
+        "family_id": "gp",
+        "execution": "galvanized_painted",
+        "a_mm": 40,
+        "b_mm": 40,
+        "thickness_mm": 1.2,
+        "b_basis": "project_declared",
+        "thickness_basis": "project_declared"
+      },
+      "local_status": "clearance_pass",
+      "gap_text": "20",
+      "can_insert": true,
+      "geometry_missing": [],
+      "mounting_status": "not_confirmed",
+      "automatic_selection": false,
+      "dependencies": [
+        "wall_to_kr2_datum",
+        "kr2_length_datums",
+        "kr2_uk_engagement",
+        "kr2_uk_connection",
+        "uk_gp_datum",
+        "gp_to_cladding",
+        "assembly_scope"
+      ]
+    },
+    {
+      "case_id": "mixed_executions",
+      "bracket": {
+        "family_id": "kr2",
+        "execution": "galvanized_painted",
+        "nominal_width_mm": 70,
+        "L_mm": 200
+      },
+      "extender": {
+        "family_id": "uk",
+        "execution": "corrosion_resistant",
+        "nominal_width_mm": 70,
+        "L_mm": 100,
+        "thickness_mm": 1.2
+      },
+      "profile": {
+        "family_id": "gp",
+        "execution": "galvanized_painted",
+        "a_mm": 40,
+        "b_mm": 40,
+        "thickness_mm": 1.2,
+        "b_basis": "project_declared",
+        "thickness_basis": "project_declared"
+      },
+      "local_status": "clearance_pass",
+      "gap_text": "20",
+      "can_insert": true,
+      "geometry_missing": [],
+      "mounting_status": "not_confirmed",
+      "automatic_selection": false,
+      "dependencies": [
+        "wall_to_kr2_datum",
+        "kr2_length_datums",
+        "kr2_uk_engagement",
+        "kr2_uk_connection",
+        "uk_gp_datum",
+        "gp_to_cladding",
+        "assembly_scope"
+      ]
+    }
+  ],
+  "numeric": [
+    {
+      "name": "decimal_108_95_53_34",
+      "gap_text": "20",
+      "clearance_status": "pass",
+      "can_insert": true,
+      "input_digest": "d18121198a8160ffea235c08af3bbbf5bd38576675a4e901ba5481fc001f6624",
+      "result_digest": "067db65559340db4528003020cd65fa738c0da7dcef4e3ac479e7400fb7ecb0b"
+    },
+    {
+      "name": "decimal_85_03_37_89",
+      "gap_text": "20",
+      "clearance_status": "pass",
+      "can_insert": true,
+      "input_digest": "bba34ad92030e50a4cf48ec29cb117f3b6a0eeaa388308ae01274e130d1b1d6e",
+      "result_digest": "2e8e6f7e104decd2288f27071f664ed9444773941380f74c1584dfabcaf48c6d"
+    },
+    {
+      "name": "decimal_85_37_64",
+      "gap_text": "20",
+      "clearance_status": "pass",
+      "can_insert": true,
+      "input_digest": "b12618021252a98baf6e9f08745f1d4fa817c7562276086d11d8505b100ba9d1",
+      "result_digest": "8d1d5f00023a48371686cc6528dab1449456929cd9193aa1793ae5d4ca41669f"
+    },
+    {
+      "name": "next_down_170",
+      "gap_text": "19.99999999999997",
+      "clearance_status": "fail",
+      "can_insert": false,
+      "input_digest": "49c708b305d3ca009b3d4aab376b2876f3d7d47d45590af0f8daeb99a5acb256",
+      "result_digest": "ca47f7c416b9b6e5c4062e52b05630933239d5007116b9e0cc2ecc13c42331f9"
+    },
+    {
+      "name": "exact_170",
+      "gap_text": "20",
+      "clearance_status": "pass",
+      "can_insert": true,
+      "input_digest": "7ba277a136920b5a44eb2e569758b2ebbb7ff346e94c9fb504f643e7784361de",
+      "result_digest": "3c8c2b8a73f059c910e26b50325ab8f27311e5f369be7cd7a0b749c97cae62c5"
+    },
+    {
+      "name": "next_up_170",
+      "gap_text": "20.00000000000003",
+      "clearance_status": "pass",
+      "can_insert": true,
+      "input_digest": "21658ff2459a05c285f44ad31b6bc4d0f358ab9758443cbc41366365ab6f7c09",
+      "result_digest": "f768fa336dc766b4f52a35fcb155363a31b03208b539c17fabeb32e2c46ae710"
+    },
+    {
+      "name": "gap_19_999",
+      "gap_text": "19.999",
+      "clearance_status": "fail",
+      "can_insert": false,
+      "input_digest": "e70f532f3753be7cb16fa20ac7055bf571da0b03d6d12edbb1766f693a16bff2",
+      "result_digest": "e3364cb5f35976f2cf0cb49d629a84372d01df80fcc1b4fffdcb99ac0e2b85eb"
+    },
+    {
+      "name": "gap_20_001",
+      "gap_text": "20.001",
+      "clearance_status": "pass",
+      "can_insert": true,
+      "input_digest": "0efb04aed721c66a7a463fe1fd85f2c1567b7b6e76a3f47d13192c4671f306d3",
+      "result_digest": "dda4ad56ae5d5b503208ca0b8e17128a9c2324c4baeaacd01f223739ddc6e436"
+    },
+    {
+      "name": "next_up_479_82",
+      "gap_text": "20.00000000000005",
+      "clearance_status": "pass",
+      "can_insert": true,
+      "input_digest": "27c1d99de99be6f0931f4556d24928881108a1a5419d823b739935abe00c5708",
+      "result_digest": "f355c0fa4c5e6b48bb5ddec067f6c0f024f06d4ec7d1e36332b3820e67c164c5"
+    }
+  ],
+  "performance": [
+    {
+      "kind": "repeated_assessments",
+      "count": 1,
+      "elapsed_ms": 0.1608,
+      "declared_members": 3,
+      "dependencies": 7
+    },
+    {
+      "kind": "repeated_assessments",
+      "count": 100,
+      "elapsed_ms": 9.851,
+      "declared_members": 3,
+      "dependencies": 7
+    },
+    {
+      "kind": "repeated_assessments",
+      "count": 1000,
+      "elapsed_ms": 97.7342,
+      "declared_members": 3,
+      "dependencies": 7
+    },
+    {
+      "kind": "layer_input",
+      "count": 1,
+      "elapsed_ms": 0.1643,
+      "declared_members": 3,
+      "dependencies": 7
+    },
+    {
+      "kind": "layer_input",
+      "count": 10,
+      "elapsed_ms": 0.14780000000000001,
+      "declared_members": 3,
+      "dependencies": 7
+    },
+    {
+      "kind": "layer_input",
+      "count": 1000,
+      "elapsed_ms": 2.4135,
+      "declared_members": 3,
+      "dependencies": 7
+    }
+  ],
+  "sample_report": {
+    "SourceId": "vector1_2015",
+    "SourceSha256": "7386f4152de455a5e2622704d51a98d8f05afd20050807f634eea4572de37142",
+    "SolutionId": "vector1_2015_type1_4_2_1",
+    "SelectionDigest": "359331b4a038cda3e4a47a3b1b7fffcf179ec1cc3d0381423f3fb12714dfd40e",
+    "LocalGeometryStatus": "clearance_pass",
+    "LocalClearanceStatus": "pass",
+    "LocalGapText": "20",
+    "CanInsertDimensionalScheme": true,
+    "MountingStatus": "not_confirmed",
+    "AutomaticBracketSelectionAllowed": false,
+    "DeclaredMembers": [
+      {
+        "FamilyId": "kr2",
+        "Title": "КР2",
+        "Execution": "galvanized_painted",
+        "ExecutionTitle": "оцинкованная сталь с порошковой окраской",
+        "Source": {
+          "SourceId": "vector1_2015",
+          "SourceSha256": "7386f4152de455a5e2622704d51a98d8f05afd20050807f634eea4572de37142",
+          "PdfPage": 6,
+          "Sheet": "3.2.1",
+          "Position": "2.2"
+        },
+        "Dimensions": [
+          {
+            "Id": "nominal_width_mm",
+            "Title": "Номинальная ширина",
+            "ValueMm": 70,
+            "ValueText": "70",
+            "Basis": "historical_nomenclature"
+          },
+          {
+            "Id": "L_mm",
+            "Title": "Длина L",
+            "ValueMm": 200,
+            "ValueText": "200",
+            "Basis": "historical_nomenclature"
+          }
+        ]
+      },
+      {
+        "FamilyId": "uk",
+        "Title": "УК",
+        "Execution": "galvanized_painted",
+        "ExecutionTitle": "оцинкованная сталь с порошковой окраской",
+        "Source": {
+          "SourceId": "vector1_2015",
+          "SourceSha256": "7386f4152de455a5e2622704d51a98d8f05afd20050807f634eea4572de37142",
+          "PdfPage": 8,
+          "Sheet": "3.3",
+          "Position": "3.2"
+        },
+        "Dimensions": [
+          {
+            "Id": "nominal_width_mm",
+            "Title": "Номинальная ширина",
+            "ValueMm": 70,
+            "ValueText": "70",
+            "Basis": "historical_nomenclature"
+          },
+          {
+            "Id": "L_mm",
+            "Title": "Длина L",
+            "ValueMm": 100,
+            "ValueText": "100",
+            "Basis": "historical_nomenclature"
+          },
+          {
+            "Id": "thickness_mm",
+            "Title": "Толщина c",
+            "ValueMm": 1.2,
+            "ValueText": "1.2",
+            "Basis": "historical_nomenclature"
+          }
+        ]
+      },
+      {
+        "FamilyId": "gp",
+        "Title": "ГП",
+        "Execution": "galvanized_painted",
+        "ExecutionTitle": "оцинкованная сталь с порошковой окраской",
+        "Source": {
+          "SourceId": "vector1_2015",
+          "SourceSha256": "7386f4152de455a5e2622704d51a98d8f05afd20050807f634eea4572de37142",
+          "PdfPage": 9,
+          "Sheet": "3.4",
+          "Position": "4.4"
+        },
+        "Dimensions": [
+          {
+            "Id": "a_mm",
+            "Title": "Полка a",
+            "ValueMm": 40,
+            "ValueText": "40",
+            "Basis": "historical_nomenclature"
+          },
+          {
+            "Id": "b_mm",
+            "Title": "Полка b",
+            "ValueMm": 40,
+            "ValueText": "40",
+            "Basis": "project_declared"
+          },
+          {
+            "Id": "thickness_mm",
+            "Title": "Толщина c",
+            "ValueMm": 1.2,
+            "ValueText": "1.2",
+            "Basis": "project_declared"
+          }
+        ]
+      }
+    ],
+    "Dependencies": [
+      {
+        "Id": "wall_to_kr2_datum",
+        "Title": "Основание — монтажная база КР2",
+        "State": "not_confirmed",
+        "ConfirmedPart": "В альбоме изображены КР2 и паронитовая прокладка толщиной 2 мм.",
+        "NeededEvidence": "Базы и ориентация сборки, связь поверхности основания с КР2 с учётом применимой прокладки и условий установки.",
+        "Consequence": "Положение КР2 относительно x = 0 не подтверждено.",
+        "Sources": [
+          {
+            "SourceId": "vector1_2015",
+            "SourceSha256": "7386f4152de455a5e2622704d51a98d8f05afd20050807f634eea4572de37142",
+            "PdfPage": 6,
+            "Sheet": "3.2.1",
+            "Position": "2.2"
+          },
+          {
+            "SourceId": "vector1_2015",
+            "SourceSha256": "7386f4152de455a5e2622704d51a98d8f05afd20050807f634eea4572de37142",
+            "PdfPage": 7,
+            "Sheet": "3.2.2",
+            "Position": "2.6"
+          },
+          {
+            "SourceId": "vector1_2015",
+            "SourceSha256": "7386f4152de455a5e2622704d51a98d8f05afd20050807f634eea4572de37142",
+            "PdfPage": 20,
+            "Sheet": "4.2.1",
+            "Position": null
+          }
+        ]
+      },
+      {
+        "Id": "kr2_length_datums",
+        "Title": "Номенклатурная длина КР2 — размер сборки",
+        "State": "not_confirmed",
+        "ConfirmedPart": "Чертёж КР2 задаёт номенклатурную длину L; отдельные размеры изделия известны.",
+        "NeededEvidence": "Связь баз размера L с монтажными плоскостями всей сборки и координатой ближайшей поверхности ГП.",
+        "Consequence": "Длину L нельзя автоматически считать выносом ГП или облицовки.",
+        "Sources": [
+          {
+            "SourceId": "vector1_2015",
+            "SourceSha256": "7386f4152de455a5e2622704d51a98d8f05afd20050807f634eea4572de37142",
+            "PdfPage": 6,
+            "Sheet": "3.2.1",
+            "Position": "2.2"
+          },
+          {
+            "SourceId": "vector1_2015",
+            "SourceSha256": "7386f4152de455a5e2622704d51a98d8f05afd20050807f634eea4572de37142",
+            "PdfPage": 20,
+            "Sheet": "4.2.1",
+            "Position": null
+          }
+        ]
+      },
+      {
+        "Id": "kr2_uk_engagement",
+        "Title": "Перехлёст и регулировка КР2–УК",
+        "State": "not_confirmed",
+        "ConfirmedPart": "Узел изображает КР2 с УК; известны отдельные номенклатурные длины.",
+        "NeededEvidence": "Допустимые минимум и максимум перехлёста, определяющие их грани и положения, пределы регулировки выбранных вариантов.",
+        "Consequence": "Допустимый вынос пары и выбор длины кронштейна не определяются суммой L КР2 и L УК.",
+        "Sources": [
+          {
+            "SourceId": "vector1_2015",
+            "SourceSha256": "7386f4152de455a5e2622704d51a98d8f05afd20050807f634eea4572de37142",
+            "PdfPage": 6,
+            "Sheet": "3.2.1",
+            "Position": "2.2"
+          },
+          {
+            "SourceId": "vector1_2015",
+            "SourceSha256": "7386f4152de455a5e2622704d51a98d8f05afd20050807f634eea4572de37142",
+            "PdfPage": 8,
+            "Sheet": "3.3",
+            "Position": "3.2"
+          },
+          {
+            "SourceId": "vector1_2015",
+            "SourceSha256": "7386f4152de455a5e2622704d51a98d8f05afd20050807f634eea4572de37142",
+            "PdfPage": 20,
+            "Sheet": "4.2.1",
+            "Position": null
+          }
+        ]
+      },
+      {
+        "Id": "kr2_uk_connection",
+        "Title": "Отверстия и закрепление КР2–УК",
+        "State": "not_confirmed",
+        "ConfirmedPart": "Крепление показано в составе узла; это не полный размерный паспорт соединения.",
+        "NeededEvidence": "Центры и размеры отверстий/пазов, расстояния до кромок, допуски и схема крепежа выбранного соединения.",
+        "Consequence": "Посадка, монтажная совместимость и полный состав крепежа не подтверждены.",
+        "Sources": [
+          {
+            "SourceId": "vector1_2015",
+            "SourceSha256": "7386f4152de455a5e2622704d51a98d8f05afd20050807f634eea4572de37142",
+            "PdfPage": 6,
+            "Sheet": "3.2.1",
+            "Position": "2.2"
+          },
+          {
+            "SourceId": "vector1_2015",
+            "SourceSha256": "7386f4152de455a5e2622704d51a98d8f05afd20050807f634eea4572de37142",
+            "PdfPage": 8,
+            "Sheet": "3.3",
+            "Position": "3.2"
+          },
+          {
+            "SourceId": "vector1_2015",
+            "SourceSha256": "7386f4152de455a5e2622704d51a98d8f05afd20050807f634eea4572de37142",
+            "PdfPage": 20,
+            "Sheet": "4.2.1",
+            "Position": null
+          }
+        ]
+      },
+      {
+        "Id": "uk_gp_datum",
+        "Title": "Посадка УК–ГП и ближайшая поверхность ГП",
+        "State": "not_confirmed",
+        "ConfirmedPart": "Узел включает УК и ГП; профиль имеет отдельные номенклатурные и проектные размеры.",
+        "NeededEvidence": "Ориентация, монтажные базы, размеры посадки и схема отверстий УК–ГП, связь с ближайшей поверхностью ГП.",
+        "Consequence": "Введённая координата ГП не доказывает, что выбранные изделия устанавливаются в этом положении.",
+        "Sources": [
+          {
+            "SourceId": "vector1_2015",
+            "SourceSha256": "7386f4152de455a5e2622704d51a98d8f05afd20050807f634eea4572de37142",
+            "PdfPage": 8,
+            "Sheet": "3.3",
+            "Position": "3.2"
+          },
+          {
+            "SourceId": "vector1_2015",
+            "SourceSha256": "7386f4152de455a5e2622704d51a98d8f05afd20050807f634eea4572de37142",
+            "PdfPage": 9,
+            "Sheet": "3.4",
+            "Position": "4.4"
+          },
+          {
+            "SourceId": "vector1_2015",
+            "SourceSha256": "7386f4152de455a5e2622704d51a98d8f05afd20050807f634eea4572de37142",
+            "PdfPage": 20,
+            "Sheet": "4.2.1",
+            "Position": null
+          }
+        ]
+      },
+      {
+        "Id": "gp_to_cladding",
+        "Title": "ГП — кляммер — наружная поверхность облицовки",
+        "State": "not_confirmed",
+        "ConfirmedPart": "ГП, кляммер и облицовка изображены; полка b и толщина c ГП зависят от проекта и расчёта.",
+        "NeededEvidence": "Фактическая ориентация и толщина ГП, положение и толщина кляммера, толщина и тыльная плоскость облицовки с общей размерной цепочкой.",
+        "Consequence": "Разность двух заявленных плоскостей не подтверждает полную монтажную цепочку до облицовки.",
+        "Sources": [
+          {
+            "SourceId": "vector1_2015",
+            "SourceSha256": "7386f4152de455a5e2622704d51a98d8f05afd20050807f634eea4572de37142",
+            "PdfPage": 9,
+            "Sheet": "3.4",
+            "Position": "4.4"
+          },
+          {
+            "SourceId": "vector1_2015",
+            "SourceSha256": "7386f4152de455a5e2622704d51a98d8f05afd20050807f634eea4572de37142",
+            "PdfPage": 20,
+            "Sheet": "4.2.1",
+            "Position": null
+          }
+        ]
+      },
+      {
+        "Id": "assembly_scope",
+        "Title": "Допустимые сочетания изделий",
+        "State": "not_confirmed",
+        "ConfirmedPart": "Альбом задаёт семейства и номенклатуру, но не подтверждает каждое произвольное сочетание выбранных размеров и исполнений.",
+        "NeededEvidence": "Правила совместимости номиналов и исполнений, направление вложения и применимые посадочные зазоры.",
+        "Consequence": "Равенство номиналов не доказывает совместимость; различие номиналов само по себе не доказывает запрет. Разница размеров УК и КР2 не становится допуском.",
+        "Sources": [
+          {
+            "SourceId": "vector1_2015",
+            "SourceSha256": "7386f4152de455a5e2622704d51a98d8f05afd20050807f634eea4572de37142",
+            "PdfPage": 3,
+            "Sheet": "2",
+            "Position": null
+          },
+          {
+            "SourceId": "vector1_2015",
+            "SourceSha256": "7386f4152de455a5e2622704d51a98d8f05afd20050807f634eea4572de37142",
+            "PdfPage": 6,
+            "Sheet": "3.2.1",
+            "Position": "2.2"
+          },
+          {
+            "SourceId": "vector1_2015",
+            "SourceSha256": "7386f4152de455a5e2622704d51a98d8f05afd20050807f634eea4572de37142",
+            "PdfPage": 8,
+            "Sheet": "3.3",
+            "Position": "3.2"
+          },
+          {
+            "SourceId": "vector1_2015",
+            "SourceSha256": "7386f4152de455a5e2622704d51a98d8f05afd20050807f634eea4572de37142",
+            "PdfPage": 9,
+            "Sheet": "3.4",
+            "Position": "4.4"
+          },
+          {
+            "SourceId": "vector1_2015",
+            "SourceSha256": "7386f4152de455a5e2622704d51a98d8f05afd20050807f634eea4572de37142",
+            "PdfPage": 20,
+            "Sheet": "4.2.1",
+            "Position": null
+          }
+        ]
+      }
+    ],
+    "OutsideCurrentAssessment": [
+      "Неподвижные/подвижные соединения, реальные опоры и непрерывность стыков требуют отдельного монтажного контракта.",
+      "Прочность, анкеровка, полный состав крепежа и допуск системы к применению здесь не проверяются.",
+      "Историческая номенклатура не подтверждает актуальный артикул, доступность изделия или установленную физическую деталь."
+    ]
+  },
+  "review_text": "Монтажная проверка выбранного решения — Вектор-1 2015, узел 4.2.1 / PDF 20.\nМонтажная пригодность: не подтверждена. Автоподбор длины кронштейна не выполняется.\nЛокальный просвет 20 мм соблюдён только по заявленным плоскостям; это не подтверждает монтажную пригодность.\nЗаявленные изделия (не назначение установленных деталей):\nКР2: оцинкованная сталь с порошковой окраской; лист 3.2.1, PDF 6, поз. 2.2.\n  Номинальная ширина: 70 мм — историческая номенклатура.\n  Длина L: 200 мм — историческая номенклатура.\nУК: оцинкованная сталь с порошковой окраской; лист 3.3, PDF 8, поз. 3.2.\n  Номинальная ширина: 70 мм — историческая номенклатура.\n  Длина L: 100 мм — историческая номенклатура.\n  Толщина c: 1.2 мм — историческая номенклатура.\nГП: оцинкованная сталь с порошковой окраской; лист 3.4, PDF 9, поз. 4.4.\n  Полка a: 40 мм — историческая номенклатура.\n  Полка b: 40 мм — заявлено проектом, расчётом не подтверждено.\n  Толщина c: 1.2 мм — заявлено проектом, расчётом не подтверждено.\nДля монтажного решения нужны подтверждённые данные:\n1. Основание — монтажная база КР2.\n  Известно: В альбоме изображены КР2 и паронитовая прокладка толщиной 2 мм.\n  Требуется: Базы и ориентация сборки, связь поверхности основания с КР2 с учётом применимой прокладки и условий установки.\n  Без этого: Положение КР2 относительно x = 0 не подтверждено.\n  Проверенные листы: лист 3.2.1, PDF 6, поз. 2.2; лист 3.2.2, PDF 7, поз. 2.6; лист 4.2.1, PDF 20.\n2. Номенклатурная длина КР2 — размер сборки.\n  Известно: Чертёж КР2 задаёт номенклатурную длину L; отдельные размеры изделия известны.\n  Требуется: Связь баз размера L с монтажными плоскостями всей сборки и координатой ближайшей поверхности ГП.\n  Без этого: Длину L нельзя автоматически считать выносом ГП или облицовки.\n  Проверенные листы: лист 3.2.1, PDF 6, поз. 2.2; лист 4.2.1, PDF 20.\n3. Перехлёст и регулировка КР2–УК.\n  Известно: Узел изображает КР2 с УК; известны отдельные номенклатурные длины.\n  Требуется: Допустимые минимум и максимум перехлёста, определяющие их грани и положения, пределы регулировки выбранных вариантов.\n  Без этого: Допустимый вынос пары и выбор длины кронштейна не определяются суммой L КР2 и L УК.\n  Проверенные листы: лист 3.2.1, PDF 6, поз. 2.2; лист 3.3, PDF 8, поз. 3.2; лист 4.2.1, PDF 20.\n4. Отверстия и закрепление КР2–УК.\n  Известно: Крепление показано в составе узла; это не полный размерный паспорт соединения.\n  Требуется: Центры и размеры отверстий/пазов, расстояния до кромок, допуски и схема крепежа выбранного соединения.\n  Без этого: Посадка, монтажная совместимость и полный состав крепежа не подтверждены.\n  Проверенные листы: лист 3.2.1, PDF 6, поз. 2.2; лист 3.3, PDF 8, поз. 3.2; лист 4.2.1, PDF 20.\n5. Посадка УК–ГП и ближайшая поверхность ГП.\n  Известно: Узел включает УК и ГП; профиль имеет отдельные номенклатурные и проектные размеры.\n  Требуется: Ориентация, монтажные базы, размеры посадки и схема отверстий УК–ГП, связь с ближайшей поверхностью ГП.\n  Без этого: Введённая координата ГП не доказывает, что выбранные изделия устанавливаются в этом положении.\n  Проверенные листы: лист 3.3, PDF 8, поз. 3.2; лист 3.4, PDF 9, поз. 4.4; лист 4.2.1, PDF 20.\n6. ГП — кляммер — наружная поверхность облицовки.\n  Известно: ГП, кляммер и облицовка изображены; полка b и толщина c ГП зависят от проекта и расчёта.\n  Требуется: Фактическая ориентация и толщина ГП, положение и толщина кляммера, толщина и тыльная плоскость облицовки с общей размерной цепочкой.\n  Без этого: Разность двух заявленных плоскостей не подтверждает полную монтажную цепочку до облицовки.\n  Проверенные листы: лист 3.4, PDF 9, поз. 4.4; лист 4.2.1, PDF 20.\n7. Допустимые сочетания изделий.\n  Известно: Альбом задаёт семейства и номенклатуру, но не подтверждает каждое произвольное сочетание выбранных размеров и исполнений.\n  Требуется: Правила совместимости номиналов и исполнений, направление вложения и применимые посадочные зазоры.\n  Без этого: Равенство номиналов не доказывает совместимость; различие номиналов само по себе не доказывает запрет. Разница размеров УК и КР2 не становится допуском.\n  Проверенные листы: лист 2, PDF 3; лист 3.2.1, PDF 6, поз. 2.2; лист 3.3, PDF 8, поз. 3.2; лист 3.4, PDF 9, поз. 4.4; лист 4.2.1, PDF 20.\nМинимум 30 мм соседнего узла 4.1 / PDF 19 не задаёт регулировку или перехлёст УК узла 4.2.1. Числа отдельного расчёта не являются общими монтажными нормами.\nНеподвижные/подвижные соединения, реальные опоры и непрерывность стыков требуют отдельного монтажного контракта.\nПрочность, анкеровка, полный состав крепежа и допуск системы к применению здесь не проверяются.\nИсторическая номенклатура не подтверждает актуальный артикул, доступность изделия или установленную физическую деталь.\n",
+  "live_autocad_checked": false,
+  "scope": "Actual pure C# mounting assessment; no CAD/files/process in product core; no mounting fit or static approval",
+  "source_sha256": {
+    "tools/mounting_assessment_0110/MountingCoreProbe.cs": "df5fa4f7718ee932e0dd7f0944ad822ae740a9408643f7903c2416b7bc4789ca",
+    "AFrame/src/AFramePlugin/FrameMountingAssessment.cs": "a3500fa56d0cbe80d09f8784ea347d28ece7b9a2d91bf6a2882ff12f1059e018",
+    "AFrame/src/AFramePlugin/FrameNodeGeometry.cs": "50f1f3d869ae141c9cb38f0efd867b28dfa24afc746002faa70740579fc24d37",
+    "AFrame/src/AFramePlugin/FrameProjectParameters.cs": "612c46eabcb1c7c80c86e5a3e0fed2153a809b8f2b1734b1e9b596e2e26ec7f1",
+    "AFrame/src/AFramePlugin/FrameSolutionSelection.cs": "cb25b6e890ce2f1e5ee458f1e378510d21f7205e529ee1894520ed686a3abd66",
+    "tools/mounting_assessment_0110/test_core.py": "757248a4ec88d5a25890798d9944ededc8f7c537453f0f633f9758406b5b2d7b",
+    "tools/node_geometry_0110/expected_numeric.json": "39a63126bdd61b63fed10798fd8ab06a5a23d107fb6c336f3a60766c2c787f6b",
+    "tools/node_geometry_0110/expected_digests.json": "91ac8ee6536b84a7ac454847415c82b654c1ac77a34fdd46f3d7ee917a53c4fa",
+    "tools/quantities_3009/probe_runtime.py": "2d37fb13990a1b24129dfe79a81ce138875e3c86ef3211d1a3a4f9ec40d150e5",
+    "AFrame/engine/test_frame_solution_selection.py": "79b853ab20b95d491fc3e76f667fc7fb7106afa6ace7b5ae9d1ede191f99aceb",
+    "AFrame/engine/frame_solution_catalog.py": "56e674855cc01e19bf2a0723dff1f3454497a99aef56f3de1b5bbf75c0d44764"
+  }
+}

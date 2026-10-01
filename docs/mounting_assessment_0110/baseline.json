@@ -1,0 +1,923 @@
+{
+  "status": "BASELINE_REPRODUCED",
+  "scope": "Existing local-plane check only; no assessment that these assemblies fit or fail",
+  "cases": [
+    {
+      "case_id": "declared_reference",
+      "selection": {
+        "schema": "aframe_solution_selection/1",
+        "catalog_id": "vector1_2015_type1_historical",
+        "catalog_revision": "6bb12795979248fd51f0d9384c8bb0f91b7c45165734ef2ce7d04fe2b6877c24",
+        "solution_id": "vector1_2015_type1_4_2_1",
+        "source_id": "vector1_2015",
+        "source_sha256": "7386f4152de455a5e2622704d51a98d8f05afd20050807f634eea4572de37142",
+        "node": {
+          "pdf_page": 20,
+          "sheet": "4.2.1"
+        },
+        "bracket": {
+          "family_id": "kr2",
+          "execution": "galvanized_painted",
+          "nominal_width_mm": 70,
+          "L_mm": 200
+        },
+        "extender": {
+          "family_id": "uk",
+          "execution": "galvanized_painted",
+          "nominal_width_mm": 70,
+          "L_mm": 100,
+          "thickness_mm": 1.2
+        },
+        "profile": {
+          "family_id": "gp",
+          "execution": "galvanized_painted",
+          "a_mm": 40,
+          "b_mm": 40,
+          "thickness_mm": 1.2,
+          "b_basis": "project_declared",
+          "thickness_basis": "project_declared"
+        },
+        "geometry": {
+          "cladding_front_offset_mm": 230,
+          "cladding_offset_basis": "wall_structural_face_to_cladding_exterior",
+          "insulation_layers_mm": [
+            100,
+            50
+          ]
+        }
+      },
+      "input": {
+        "schema": "aframe_node_geometry_input/1",
+        "unit": "mm",
+        "basis": "wall_structural_face_x0_outward_positive",
+        "profile_near_face_x_mm": 170,
+        "clearance_surface": {
+          "kind": "insulation_outer_declared",
+          "membrane_outer_x_mm": null
+        }
+      },
+      "result": {
+        "schema": "aframe_node_geometry_result/1",
+        "algorithm_revision": "vector1_2015_4_2_1_planes/2",
+        "selection_digest": "359331b4a038cda3e4a47a3b1b7fffcf179ec1cc3d0381423f3fb12714dfd40e",
+        "input_digest": "75e1831150c8896d494c1c942d43bb88577a33d59c96079050f9f9e71dcfb933",
+        "can_insert": true,
+        "status": "clearance_pass",
+        "clearance_status": "pass",
+        "gap_mm": 20,
+        "gap_text": "20",
+        "insulation_outer_x_mm": 150,
+        "cladding_front_x_mm": 230,
+        "profile_near_face_x_mm": 170,
+        "clearance_surface_x_mm": 150,
+        "clearance_rule": {
+          "source_id": "vector1_2015",
+          "source_sha256": "7386f4152de455a5e2622704d51a98d8f05afd20050807f634eea4572de37142",
+          "pdf_page": 20,
+          "sheet": "4.2.1",
+          "from": "outer_insulation_membrane_surface",
+          "to": "nearest_profile_surface",
+          "minimum_mm": 20
+        },
+        "planes": [
+          {
+            "id": "wall",
+            "title": "Поверхность строительного основания",
+            "x_mm": 0,
+            "basis": "structural_origin"
+          },
+          {
+            "id": "insulation_1",
+            "title": "Наружная граница слоя 1",
+            "x_mm": 100,
+            "basis": "derived_from_declared_layers"
+          },
+          {
+            "id": "insulation_2",
+            "title": "Наружная граница слоя 2",
+            "x_mm": 150,
+            "basis": "derived_from_declared_layers"
+          },
+          {
+            "id": "cladding_front",
+            "title": "Наружная поверхность облицовки",
+            "x_mm": 230,
+            "basis": "project_declared"
+          },
+          {
+            "id": "profile_near",
+            "title": "Ближайшая к стене поверхность ГП",
+            "x_mm": 170,
+            "basis": "local_declared"
+          }
+        ],
+        "layers": [
+          {
+            "index": 1,
+            "start_x_mm": 0,
+            "end_x_mm": 100,
+            "thickness_mm": 100
+          },
+          {
+            "index": 2,
+            "start_x_mm": 100,
+            "end_x_mm": 150,
+            "thickness_mm": 50
+          }
+        ],
+        "dimensions": [
+          {
+            "id": "layer_1",
+            "title": "Слой утеплителя 1",
+            "from_x_mm": 0,
+            "to_x_mm": 100,
+            "value_mm": 100,
+            "value_text": "100",
+            "basis": "project_declared"
+          },
+          {
+            "id": "layer_2",
+            "title": "Слой утеплителя 2",
+            "from_x_mm": 100,
+            "to_x_mm": 150,
+            "value_mm": 50,
+            "value_text": "50",
+            "basis": "project_declared"
+          },
+          {
+            "id": "cladding_offset",
+            "title": "Вынос наружной облицовки",
+            "from_x_mm": 0,
+            "to_x_mm": 230,
+            "value_mm": 230,
+            "value_text": "230",
+            "basis": "project_declared"
+          },
+          {
+            "id": "profile_offset",
+            "title": "Координата поверхности ГП",
+            "from_x_mm": 0,
+            "to_x_mm": 170,
+            "value_mm": 170,
+            "value_text": "170",
+            "basis": "local_declared"
+          },
+          {
+            "id": "local_clearance",
+            "title": "Локальный просвет",
+            "from_x_mm": 150,
+            "to_x_mm": 170,
+            "value_mm": 20,
+            "value_text": "20",
+            "basis": "derived_from_declared_planes"
+          }
+        ],
+        "issues": [],
+        "missing": [],
+        "limitations": [
+          "Размерная схема заявленных плоскостей; не рабочий узел.",
+          "Совместимость КР2–УК–ГП, регулировка и посадки не подтверждены.",
+          "Автоподбор кронштейна, статический расчёт и спецификация крепежа не выполняются.",
+          "Толщина облицовки, кляммер, анкеровка и положение полных тел изделий не определены."
+        ],
+        "result_digest": "0d92c385d0960a82bea515d6644ed8d6397a7dbdabbf863ff12545d95c942930"
+      },
+      "review_text": "Размерная схема Вектор-1 2015, узел 4.2.1 / PDF 20.\nОснование x = 0; наружу — положительное направление. Размеры в мм.\nСлой утеплителя 1: 100 мм.\nСлой утеплителя 2: 50 мм.\nВынос наружной облицовки: 230 мм.\nКоордината поверхности ГП: 170 мм.\nЛокальный просвет: 20 мм.\nЛокальный просвет: 20 мм; минимум 20 мм — соблюдён только по заявленным плоскостям.\nРазмерная схема заявленных плоскостей; не рабочий узел.\nСовместимость КР2–УК–ГП, регулировка и посадки не подтверждены.\nАвтоподбор кронштейна, статический расчёт и спецификация крепежа не выполняются.\nТолщина облицовки, кляммер, анкеровка и положение полных тел изделий не определены.\n"
+    },
+    {
+      "case_id": "short_bracket",
+      "selection": {
+        "schema": "aframe_solution_selection/1",
+        "catalog_id": "vector1_2015_type1_historical",
+        "catalog_revision": "6bb12795979248fd51f0d9384c8bb0f91b7c45165734ef2ce7d04fe2b6877c24",
+        "solution_id": "vector1_2015_type1_4_2_1",
+        "source_id": "vector1_2015",
+        "source_sha256": "7386f4152de455a5e2622704d51a98d8f05afd20050807f634eea4572de37142",
+        "node": {
+          "pdf_page": 20,
+          "sheet": "4.2.1"
+        },
+        "bracket": {
+          "family_id": "kr2",
+          "execution": "galvanized_painted",
+          "nominal_width_mm": 70,
+          "L_mm": 50
+        },
+        "extender": {
+          "family_id": "uk",
+          "execution": "galvanized_painted",
+          "nominal_width_mm": 70,
+          "L_mm": 100,
+          "thickness_mm": 1.2
+        },
+        "profile": {
+          "family_id": "gp",
+          "execution": "galvanized_painted",
+          "a_mm": 40,
+          "b_mm": 40,
+          "thickness_mm": 1.2,
+          "b_basis": "project_declared",
+          "thickness_basis": "project_declared"
+        },
+        "geometry": {
+          "cladding_front_offset_mm": 230,
+          "cladding_offset_basis": "wall_structural_face_to_cladding_exterior",
+          "insulation_layers_mm": [
+            100,
+            50
+          ]
+        }
+      },
+      "input": {
+        "schema": "aframe_node_geometry_input/1",
+        "unit": "mm",
+        "basis": "wall_structural_face_x0_outward_positive",
+        "profile_near_face_x_mm": 170,
+        "clearance_surface": {
+          "kind": "insulation_outer_declared",
+          "membrane_outer_x_mm": null
+        }
+      },
+      "result": {
+        "schema": "aframe_node_geometry_result/1",
+        "algorithm_revision": "vector1_2015_4_2_1_planes/2",
+        "selection_digest": "a82097d23ae8c43101a06233618ac6ada7fee5bcf6b21e9e9d14c751465c3ea0",
+        "input_digest": "da8a4f69c833a5615bacb6920e6c8b5bc3ad89de234f73e268ef9a1c6445b95d",
+        "can_insert": true,
+        "status": "clearance_pass",
+        "clearance_status": "pass",
+        "gap_mm": 20,
+        "gap_text": "20",
+        "insulation_outer_x_mm": 150,
+        "cladding_front_x_mm": 230,
+        "profile_near_face_x_mm": 170,
+        "clearance_surface_x_mm": 150,
+        "clearance_rule": {
+          "source_id": "vector1_2015",
+          "source_sha256": "7386f4152de455a5e2622704d51a98d8f05afd20050807f634eea4572de37142",
+          "pdf_page": 20,
+          "sheet": "4.2.1",
+          "from": "outer_insulation_membrane_surface",
+          "to": "nearest_profile_surface",
+          "minimum_mm": 20
+        },
+        "planes": [
+          {
+            "id": "wall",
+            "title": "Поверхность строительного основания",
+            "x_mm": 0,
+            "basis": "structural_origin"
+          },
+          {
+            "id": "insulation_1",
+            "title": "Наружная граница слоя 1",
+            "x_mm": 100,
+            "basis": "derived_from_declared_layers"
+          },
+          {
+            "id": "insulation_2",
+            "title": "Наружная граница слоя 2",
+            "x_mm": 150,
+            "basis": "derived_from_declared_layers"
+          },
+          {
+            "id": "cladding_front",
+            "title": "Наружная поверхность облицовки",
+            "x_mm": 230,
+            "basis": "project_declared"
+          },
+          {
+            "id": "profile_near",
+            "title": "Ближайшая к стене поверхность ГП",
+            "x_mm": 170,
+            "basis": "local_declared"
+          }
+        ],
+        "layers": [
+          {
+            "index": 1,
+            "start_x_mm": 0,
+            "end_x_mm": 100,
+            "thickness_mm": 100
+          },
+          {
+            "index": 2,
+            "start_x_mm": 100,
+            "end_x_mm": 150,
+            "thickness_mm": 50
+          }
+        ],
+        "dimensions": [
+          {
+            "id": "layer_1",
+            "title": "Слой утеплителя 1",
+            "from_x_mm": 0,
+            "to_x_mm": 100,
+            "value_mm": 100,
+            "value_text": "100",
+            "basis": "project_declared"
+          },
+          {
+            "id": "layer_2",
+            "title": "Слой утеплителя 2",
+            "from_x_mm": 100,
+            "to_x_mm": 150,
+            "value_mm": 50,
+            "value_text": "50",
+            "basis": "project_declared"
+          },
+          {
+            "id": "cladding_offset",
+            "title": "Вынос наружной облицовки",
+            "from_x_mm": 0,
+            "to_x_mm": 230,
+            "value_mm": 230,
+            "value_text": "230",
+            "basis": "project_declared"
+          },
+          {
+            "id": "profile_offset",
+            "title": "Координата поверхности ГП",
+            "from_x_mm": 0,
+            "to_x_mm": 170,
+            "value_mm": 170,
+            "value_text": "170",
+            "basis": "local_declared"
+          },
+          {
+            "id": "local_clearance",
+            "title": "Локальный просвет",
+            "from_x_mm": 150,
+            "to_x_mm": 170,
+            "value_mm": 20,
+            "value_text": "20",
+            "basis": "derived_from_declared_planes"
+          }
+        ],
+        "issues": [],
+        "missing": [],
+        "limitations": [
+          "Размерная схема заявленных плоскостей; не рабочий узел.",
+          "Совместимость КР2–УК–ГП, регулировка и посадки не подтверждены.",
+          "Автоподбор кронштейна, статический расчёт и спецификация крепежа не выполняются.",
+          "Толщина облицовки, кляммер, анкеровка и положение полных тел изделий не определены."
+        ],
+        "result_digest": "989312023fa4f1c060a8b1254bb235440d0c307ec7e753255cee55eb7b41bdf1"
+      },
+      "review_text": "Размерная схема Вектор-1 2015, узел 4.2.1 / PDF 20.\nОснование x = 0; наружу — положительное направление. Размеры в мм.\nСлой утеплителя 1: 100 мм.\nСлой утеплителя 2: 50 мм.\nВынос наружной облицовки: 230 мм.\nКоордината поверхности ГП: 170 мм.\nЛокальный просвет: 20 мм.\nЛокальный просвет: 20 мм; минимум 20 мм — соблюдён только по заявленным плоскостям.\nРазмерная схема заявленных плоскостей; не рабочий узел.\nСовместимость КР2–УК–ГП, регулировка и посадки не подтверждены.\nАвтоподбор кронштейна, статический расчёт и спецификация крепежа не выполняются.\nТолщина облицовки, кляммер, анкеровка и положение полных тел изделий не определены.\n"
+    },
+    {
+      "case_id": "long_bracket",
+      "selection": {
+        "schema": "aframe_solution_selection/1",
+        "catalog_id": "vector1_2015_type1_historical",
+        "catalog_revision": "6bb12795979248fd51f0d9384c8bb0f91b7c45165734ef2ce7d04fe2b6877c24",
+        "solution_id": "vector1_2015_type1_4_2_1",
+        "source_id": "vector1_2015",
+        "source_sha256": "7386f4152de455a5e2622704d51a98d8f05afd20050807f634eea4572de37142",
+        "node": {
+          "pdf_page": 20,
+          "sheet": "4.2.1"
+        },
+        "bracket": {
+          "family_id": "kr2",
+          "execution": "galvanized_painted",
+          "nominal_width_mm": 70,
+          "L_mm": 350
+        },
+        "extender": {
+          "family_id": "uk",
+          "execution": "galvanized_painted",
+          "nominal_width_mm": 70,
+          "L_mm": 150,
+          "thickness_mm": 1.2
+        },
+        "profile": {
+          "family_id": "gp",
+          "execution": "galvanized_painted",
+          "a_mm": 40,
+          "b_mm": 40,
+          "thickness_mm": 1.2,
+          "b_basis": "project_declared",
+          "thickness_basis": "project_declared"
+        },
+        "geometry": {
+          "cladding_front_offset_mm": 230,
+          "cladding_offset_basis": "wall_structural_face_to_cladding_exterior",
+          "insulation_layers_mm": [
+            100,
+            50
+          ]
+        }
+      },
+      "input": {
+        "schema": "aframe_node_geometry_input/1",
+        "unit": "mm",
+        "basis": "wall_structural_face_x0_outward_positive",
+        "profile_near_face_x_mm": 170,
+        "clearance_surface": {
+          "kind": "insulation_outer_declared",
+          "membrane_outer_x_mm": null
+        }
+      },
+      "result": {
+        "schema": "aframe_node_geometry_result/1",
+        "algorithm_revision": "vector1_2015_4_2_1_planes/2",
+        "selection_digest": "b1ac5d5000172ee73e62477aaca5d2de95dffd59045f5122100a10b1f1fd498b",
+        "input_digest": "6becf03ec1a724b058f723f586024304b454d1816c9de291a0a512650c912dd5",
+        "can_insert": true,
+        "status": "clearance_pass",
+        "clearance_status": "pass",
+        "gap_mm": 20,
+        "gap_text": "20",
+        "insulation_outer_x_mm": 150,
+        "cladding_front_x_mm": 230,
+        "profile_near_face_x_mm": 170,
+        "clearance_surface_x_mm": 150,
+        "clearance_rule": {
+          "source_id": "vector1_2015",
+          "source_sha256": "7386f4152de455a5e2622704d51a98d8f05afd20050807f634eea4572de37142",
+          "pdf_page": 20,
+          "sheet": "4.2.1",
+          "from": "outer_insulation_membrane_surface",
+          "to": "nearest_profile_surface",
+          "minimum_mm": 20
+        },
+        "planes": [
+          {
+            "id": "wall",
+            "title": "Поверхность строительного основания",
+            "x_mm": 0,
+            "basis": "structural_origin"
+          },
+          {
+            "id": "insulation_1",
+            "title": "Наружная граница слоя 1",
+            "x_mm": 100,
+            "basis": "derived_from_declared_layers"
+          },
+          {
+            "id": "insulation_2",
+            "title": "Наружная граница слоя 2",
+            "x_mm": 150,
+            "basis": "derived_from_declared_layers"
+          },
+          {
+            "id": "cladding_front",
+            "title": "Наружная поверхность облицовки",
+            "x_mm": 230,
+            "basis": "project_declared"
+          },
+          {
+            "id": "profile_near",
+            "title": "Ближайшая к стене поверхность ГП",
+            "x_mm": 170,
+            "basis": "local_declared"
+          }
+        ],
+        "layers": [
+          {
+            "index": 1,
+            "start_x_mm": 0,
+            "end_x_mm": 100,
+            "thickness_mm": 100
+          },
+          {
+            "index": 2,
+            "start_x_mm": 100,
+            "end_x_mm": 150,
+            "thickness_mm": 50
+          }
+        ],
+        "dimensions": [
+          {
+            "id": "layer_1",
+            "title": "Слой утеплителя 1",
+            "from_x_mm": 0,
+            "to_x_mm": 100,
+            "value_mm": 100,
+            "value_text": "100",
+            "basis": "project_declared"
+          },
+          {
+            "id": "layer_2",
+            "title": "Слой утеплителя 2",
+            "from_x_mm": 100,
+            "to_x_mm": 150,
+            "value_mm": 50,
+            "value_text": "50",
+            "basis": "project_declared"
+          },
+          {
+            "id": "cladding_offset",
+            "title": "Вынос наружной облицовки",
+            "from_x_mm": 0,
+            "to_x_mm": 230,
+            "value_mm": 230,
+            "value_text": "230",
+            "basis": "project_declared"
+          },
+          {
+            "id": "profile_offset",
+            "title": "Координата поверхности ГП",
+            "from_x_mm": 0,
+            "to_x_mm": 170,
+            "value_mm": 170,
+            "value_text": "170",
+            "basis": "local_declared"
+          },
+          {
+            "id": "local_clearance",
+            "title": "Локальный просвет",
+            "from_x_mm": 150,
+            "to_x_mm": 170,
+            "value_mm": 20,
+            "value_text": "20",
+            "basis": "derived_from_declared_planes"
+          }
+        ],
+        "issues": [],
+        "missing": [],
+        "limitations": [
+          "Размерная схема заявленных плоскостей; не рабочий узел.",
+          "Совместимость КР2–УК–ГП, регулировка и посадки не подтверждены.",
+          "Автоподбор кронштейна, статический расчёт и спецификация крепежа не выполняются.",
+          "Толщина облицовки, кляммер, анкеровка и положение полных тел изделий не определены."
+        ],
+        "result_digest": "cfb65d85510a8b80791f489ce0670a4778ca2c0f2bfb676de2721cee639d8399"
+      },
+      "review_text": "Размерная схема Вектор-1 2015, узел 4.2.1 / PDF 20.\nОснование x = 0; наружу — положительное направление. Размеры в мм.\nСлой утеплителя 1: 100 мм.\nСлой утеплителя 2: 50 мм.\nВынос наружной облицовки: 230 мм.\nКоордината поверхности ГП: 170 мм.\nЛокальный просвет: 20 мм.\nЛокальный просвет: 20 мм; минимум 20 мм — соблюдён только по заявленным плоскостям.\nРазмерная схема заявленных плоскостей; не рабочий узел.\nСовместимость КР2–УК–ГП, регулировка и посадки не подтверждены.\nАвтоподбор кронштейна, статический расчёт и спецификация крепежа не выполняются.\nТолщина облицовки, кляммер, анкеровка и положение полных тел изделий не определены.\n"
+    },
+    {
+      "case_id": "different_nominal_widths",
+      "selection": {
+        "schema": "aframe_solution_selection/1",
+        "catalog_id": "vector1_2015_type1_historical",
+        "catalog_revision": "6bb12795979248fd51f0d9384c8bb0f91b7c45165734ef2ce7d04fe2b6877c24",
+        "solution_id": "vector1_2015_type1_4_2_1",
+        "source_id": "vector1_2015",
+        "source_sha256": "7386f4152de455a5e2622704d51a98d8f05afd20050807f634eea4572de37142",
+        "node": {
+          "pdf_page": 20,
+          "sheet": "4.2.1"
+        },
+        "bracket": {
+          "family_id": "kr2",
+          "execution": "galvanized_painted",
+          "nominal_width_mm": 50,
+          "L_mm": 200
+        },
+        "extender": {
+          "family_id": "uk",
+          "execution": "galvanized_painted",
+          "nominal_width_mm": 85,
+          "L_mm": 100,
+          "thickness_mm": 1.2
+        },
+        "profile": {
+          "family_id": "gp",
+          "execution": "galvanized_painted",
+          "a_mm": 40,
+          "b_mm": 40,
+          "thickness_mm": 1.2,
+          "b_basis": "project_declared",
+          "thickness_basis": "project_declared"
+        },
+        "geometry": {
+          "cladding_front_offset_mm": 230,
+          "cladding_offset_basis": "wall_structural_face_to_cladding_exterior",
+          "insulation_layers_mm": [
+            100,
+            50
+          ]
+        }
+      },
+      "input": {
+        "schema": "aframe_node_geometry_input/1",
+        "unit": "mm",
+        "basis": "wall_structural_face_x0_outward_positive",
+        "profile_near_face_x_mm": 170,
+        "clearance_surface": {
+          "kind": "insulation_outer_declared",
+          "membrane_outer_x_mm": null
+        }
+      },
+      "result": {
+        "schema": "aframe_node_geometry_result/1",
+        "algorithm_revision": "vector1_2015_4_2_1_planes/2",
+        "selection_digest": "c5dbea4e476235e2997719722aa5162a8aef91a9df816fa519182bb06c1b90cd",
+        "input_digest": "8981650fc2912bab53555472af971263d072a103101ea7416954560f4b7a9904",
+        "can_insert": true,
+        "status": "clearance_pass",
+        "clearance_status": "pass",
+        "gap_mm": 20,
+        "gap_text": "20",
+        "insulation_outer_x_mm": 150,
+        "cladding_front_x_mm": 230,
+        "profile_near_face_x_mm": 170,
+        "clearance_surface_x_mm": 150,
+        "clearance_rule": {
+          "source_id": "vector1_2015",
+          "source_sha256": "7386f4152de455a5e2622704d51a98d8f05afd20050807f634eea4572de37142",
+          "pdf_page": 20,
+          "sheet": "4.2.1",
+          "from": "outer_insulation_membrane_surface",
+          "to": "nearest_profile_surface",
+          "minimum_mm": 20
+        },
+        "planes": [
+          {
+            "id": "wall",
+            "title": "Поверхность строительного основания",
+            "x_mm": 0,
+            "basis": "structural_origin"
+          },
+          {
+            "id": "insulation_1",
+            "title": "Наружная граница слоя 1",
+            "x_mm": 100,
+            "basis": "derived_from_declared_layers"
+          },
+          {
+            "id": "insulation_2",
+            "title": "Наружная граница слоя 2",
+            "x_mm": 150,
+            "basis": "derived_from_declared_layers"
+          },
+          {
+            "id": "cladding_front",
+            "title": "Наружная поверхность облицовки",
+            "x_mm": 230,
+            "basis": "project_declared"
+          },
+          {
+            "id": "profile_near",
+            "title": "Ближайшая к стене поверхность ГП",
+            "x_mm": 170,
+            "basis": "local_declared"
+          }
+        ],
+        "layers": [
+          {
+            "index": 1,
+            "start_x_mm": 0,
+            "end_x_mm": 100,
+            "thickness_mm": 100
+          },
+          {
+            "index": 2,
+            "start_x_mm": 100,
+            "end_x_mm": 150,
+            "thickness_mm": 50
+          }
+        ],
+        "dimensions": [
+          {
+            "id": "layer_1",
+            "title": "Слой утеплителя 1",
+            "from_x_mm": 0,
+            "to_x_mm": 100,
+            "value_mm": 100,
+            "value_text": "100",
+            "basis": "project_declared"
+          },
+          {
+            "id": "layer_2",
+            "title": "Слой утеплителя 2",
+            "from_x_mm": 100,
+            "to_x_mm": 150,
+            "value_mm": 50,
+            "value_text": "50",
+            "basis": "project_declared"
+          },
+          {
+            "id": "cladding_offset",
+            "title": "Вынос наружной облицовки",
+            "from_x_mm": 0,
+            "to_x_mm": 230,
+            "value_mm": 230,
+            "value_text": "230",
+            "basis": "project_declared"
+          },
+          {
+            "id": "profile_offset",
+            "title": "Координата поверхности ГП",
+            "from_x_mm": 0,
+            "to_x_mm": 170,
+            "value_mm": 170,
+            "value_text": "170",
+            "basis": "local_declared"
+          },
+          {
+            "id": "local_clearance",
+            "title": "Локальный просвет",
+            "from_x_mm": 150,
+            "to_x_mm": 170,
+            "value_mm": 20,
+            "value_text": "20",
+            "basis": "derived_from_declared_planes"
+          }
+        ],
+        "issues": [],
+        "missing": [],
+        "limitations": [
+          "Размерная схема заявленных плоскостей; не рабочий узел.",
+          "Совместимость КР2–УК–ГП, регулировка и посадки не подтверждены.",
+          "Автоподбор кронштейна, статический расчёт и спецификация крепежа не выполняются.",
+          "Толщина облицовки, кляммер, анкеровка и положение полных тел изделий не определены."
+        ],
+        "result_digest": "9ea0bc769f917299019c431aec900b55c46d03a1c4f10765a7aab4050413ab9e"
+      },
+      "review_text": "Размерная схема Вектор-1 2015, узел 4.2.1 / PDF 20.\nОснование x = 0; наружу — положительное направление. Размеры в мм.\nСлой утеплителя 1: 100 мм.\nСлой утеплителя 2: 50 мм.\nВынос наружной облицовки: 230 мм.\nКоордината поверхности ГП: 170 мм.\nЛокальный просвет: 20 мм.\nЛокальный просвет: 20 мм; минимум 20 мм — соблюдён только по заявленным плоскостям.\nРазмерная схема заявленных плоскостей; не рабочий узел.\nСовместимость КР2–УК–ГП, регулировка и посадки не подтверждены.\nАвтоподбор кронштейна, статический расчёт и спецификация крепежа не выполняются.\nТолщина облицовки, кляммер, анкеровка и положение полных тел изделий не определены.\n"
+    },
+    {
+      "case_id": "mixed_executions",
+      "selection": {
+        "schema": "aframe_solution_selection/1",
+        "catalog_id": "vector1_2015_type1_historical",
+        "catalog_revision": "6bb12795979248fd51f0d9384c8bb0f91b7c45165734ef2ce7d04fe2b6877c24",
+        "solution_id": "vector1_2015_type1_4_2_1",
+        "source_id": "vector1_2015",
+        "source_sha256": "7386f4152de455a5e2622704d51a98d8f05afd20050807f634eea4572de37142",
+        "node": {
+          "pdf_page": 20,
+          "sheet": "4.2.1"
+        },
+        "bracket": {
+          "family_id": "kr2",
+          "execution": "galvanized_painted",
+          "nominal_width_mm": 70,
+          "L_mm": 200
+        },
+        "extender": {
+          "family_id": "uk",
+          "execution": "corrosion_resistant",
+          "nominal_width_mm": 70,
+          "L_mm": 100,
+          "thickness_mm": 1.2
+        },
+        "profile": {
+          "family_id": "gp",
+          "execution": "galvanized_painted",
+          "a_mm": 40,
+          "b_mm": 40,
+          "thickness_mm": 1.2,
+          "b_basis": "project_declared",
+          "thickness_basis": "project_declared"
+        },
+        "geometry": {
+          "cladding_front_offset_mm": 230,
+          "cladding_offset_basis": "wall_structural_face_to_cladding_exterior",
+          "insulation_layers_mm": [
+            100,
+            50
+          ]
+        }
+      },
+      "input": {
+        "schema": "aframe_node_geometry_input/1",
+        "unit": "mm",
+        "basis": "wall_structural_face_x0_outward_positive",
+        "profile_near_face_x_mm": 170,
+        "clearance_surface": {
+          "kind": "insulation_outer_declared",
+          "membrane_outer_x_mm": null
+        }
+      },
+      "result": {
+        "schema": "aframe_node_geometry_result/1",
+        "algorithm_revision": "vector1_2015_4_2_1_planes/2",
+        "selection_digest": "69c2830300bae567597782860c8831d8b9fe3c56f1519e09e5767547acedd376",
+        "input_digest": "9dfffa4e8fa9622187d531c51e630844b52c540eb124359b155a3d0838fdf138",
+        "can_insert": true,
+        "status": "clearance_pass",
+        "clearance_status": "pass",
+        "gap_mm": 20,
+        "gap_text": "20",
+        "insulation_outer_x_mm": 150,
+        "cladding_front_x_mm": 230,
+        "profile_near_face_x_mm": 170,
+        "clearance_surface_x_mm": 150,
+        "clearance_rule": {
+          "source_id": "vector1_2015",
+          "source_sha256": "7386f4152de455a5e2622704d51a98d8f05afd20050807f634eea4572de37142",
+          "pdf_page": 20,
+          "sheet": "4.2.1",
+          "from": "outer_insulation_membrane_surface",
+          "to": "nearest_profile_surface",
+          "minimum_mm": 20
+        },
+        "planes": [
+          {
+            "id": "wall",
+            "title": "Поверхность строительного основания",
+            "x_mm": 0,
+            "basis": "structural_origin"
+          },
+          {
+            "id": "insulation_1",
+            "title": "Наружная граница слоя 1",
+            "x_mm": 100,
+            "basis": "derived_from_declared_layers"
+          },
+          {
+            "id": "insulation_2",
+            "title": "Наружная граница слоя 2",
+            "x_mm": 150,
+            "basis": "derived_from_declared_layers"
+          },
+          {
+            "id": "cladding_front",
+            "title": "Наружная поверхность облицовки",
+            "x_mm": 230,
+            "basis": "project_declared"
+          },
+          {
+            "id": "profile_near",
+            "title": "Ближайшая к стене поверхность ГП",
+            "x_mm": 170,
+            "basis": "local_declared"
+          }
+        ],
+        "layers": [
+          {
+            "index": 1,
+            "start_x_mm": 0,
+            "end_x_mm": 100,
+            "thickness_mm": 100
+          },
+          {
+            "index": 2,
+            "start_x_mm": 100,
+            "end_x_mm": 150,
+            "thickness_mm": 50
+          }
+        ],
+        "dimensions": [
+          {
+            "id": "layer_1",
+            "title": "Слой утеплителя 1",
+            "from_x_mm": 0,
+            "to_x_mm": 100,
+            "value_mm": 100,
+            "value_text": "100",
+            "basis": "project_declared"
+          },
+          {
+            "id": "layer_2",
+            "title": "Слой утеплителя 2",
+            "from_x_mm": 100,
+            "to_x_mm": 150,
+            "value_mm": 50,
+            "value_text": "50",
+            "basis": "project_declared"
+          },
+          {
+            "id": "cladding_offset",
+            "title": "Вынос наружной облицовки",
+            "from_x_mm": 0,
+            "to_x_mm": 230,
+            "value_mm": 230,
+            "value_text": "230",
+            "basis": "project_declared"
+          },
+          {
+            "id": "profile_offset",
+            "title": "Координата поверхности ГП",
+            "from_x_mm": 0,
+            "to_x_mm": 170,
+            "value_mm": 170,
+            "value_text": "170",
+            "basis": "local_declared"
+          },
+          {
+            "id": "local_clearance",
+            "title": "Локальный просвет",
+            "from_x_mm": 150,
+            "to_x_mm": 170,
+            "value_mm": 20,
+            "value_text": "20",
+            "basis": "derived_from_declared_planes"
+          }
+        ],
+        "issues": [],
+        "missing": [],
+        "limitations": [
+          "Размерная схема заявленных плоскостей; не рабочий узел.",
+          "Совместимость КР2–УК–ГП, регулировка и посадки не подтверждены.",
+          "Автоподбор кронштейна, статический расчёт и спецификация крепежа не выполняются.",
+          "Толщина облицовки, кляммер, анкеровка и положение полных тел изделий не определены."
+        ],
+        "result_digest": "9e6ad3b324900d363fca5b2e39671c0b6cde03da12fddeb7499532e2375d27b2"
+      },
+      "review_text": "Размерная схема Вектор-1 2015, узел 4.2.1 / PDF 20.\nОснование x = 0; наружу — положительное направление. Размеры в мм.\nСлой утеплителя 1: 100 мм.\nСлой утеплителя 2: 50 мм.\nВынос наружной облицовки: 230 мм.\nКоордината поверхности ГП: 170 мм.\nЛокальный просвет: 20 мм.\nЛокальный просвет: 20 мм; минимум 20 мм — соблюдён только по заявленным плоскостям.\nРазмерная схема заявленных плоскостей; не рабочий узел.\nСовместимость КР2–УК–ГП, регулировка и посадки не подтверждены.\nАвтоподбор кронштейна, статический расчёт и спецификация крепежа не выполняются.\nТолщина облицовки, кляммер, анкеровка и положение полных тел изделий не определены.\n"
+    }
+  ],
+  "head": "29dd38627ebb756dc3ef42f8db8a76a0e52a7d59",
+  "source_sha256": {
+    "MountBaseline.cs": "d2d527d5dabb2b238c13800475a5c8a87e8fabee68fdb3485a0aaa59760a6411",
+    "AFrame/src/AFramePlugin/FrameNodeGeometry.cs": "50f1f3d869ae141c9cb38f0efd867b28dfa24afc746002faa70740579fc24d37",
+    "AFrame/src/AFramePlugin/FrameProjectParameters.cs": "612c46eabcb1c7c80c86e5a3e0fed2153a809b8f2b1734b1e9b596e2e26ec7f1",
+    "AFrame/src/AFramePlugin/FrameSolutionSelection.cs": "cb25b6e890ce2f1e5ee458f1e378510d21f7205e529ee1894520ed686a3abd66"
+  }
+}

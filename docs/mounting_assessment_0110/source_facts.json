@@ -1,0 +1,649 @@
+{
+  "schema": "aframe_mounting_source_facts/1",
+  "date": "2026-10-01",
+  "base_commit": "29dd38627ebb756dc3ef42f8db8a76a0e52a7d59",
+  "stage": "2Б4",
+  "scope": "Read-only assessment of mounting-data sufficiency, one pilot; not completed mounting geometry",
+  "pilot": {
+    "solution_id": "vector1_2015_type1_4_2_1",
+    "families": [
+      "KR2",
+      "UK",
+      "GP"
+    ],
+    "cladding": "porcelain",
+    "node": "4.2.1",
+    "pdf_page": 20
+  },
+  "engineering_status": "not_confirmed",
+  "verification_status": "LOCAL_55_GROUPS_3_COMPILES_PASS_WINDOWS_CI_UI_PENDING",
+  "sources": [
+    {
+      "source_id": "vector1_2015",
+      "private_repository": "zinchenko-denis/atspec-testdata",
+      "path": "docs/facades_atr/ATR_Vector1_3.15_KG_KP_2015.pdf",
+      "sha256": "7386f4152de455a5e2622704d51a98d8f05afd20050807f634eea4572de37142",
+      "pages_visually_reviewed": [
+        3,
+        6,
+        7,
+        8,
+        9,
+        19,
+        20
+      ],
+      "purpose": "pilot manufacturer album; page19 only negative transfer control"
+    },
+    {
+      "source_id": "vector1_type1_reference_2026",
+      "private_repository": "zinchenko-denis/atspec-testdata",
+      "path": "docs/facades_calc/Static_VEKTOR1_tip1_monolit_KG_2026.pdf",
+      "sha256": "495f8fadf882dc6f6c3f2c023a08611035c5e916a3cc92ee4da675cb2a0f16d2",
+      "pages_visually_reviewed": [
+        3,
+        6,
+        7,
+        8,
+        9,
+        10,
+        12,
+        13
+      ],
+      "purpose": "one project calculation; no universal geometry limits"
+    },
+    {
+      "source_id": "method_calc_20260727",
+      "private_repository": "zinchenko-denis/atspec-testdata",
+      "path": "docs/facades_calc/METHOD_CALC.md",
+      "git_commit": "18a80ca049c00627881ddfb16286f0ad9c185a81",
+      "git_blob_sha": "8b1bc9863e16989e1f017b0dd2564b4501f41f85",
+      "read_mode": "github_fetch_file full UTF8",
+      "purpose": "secondary synthesis crosscheck, not new manufacturer mounting rule"
+    }
+  ],
+  "catalogue_facts": [
+    {
+      "id": "project_dependency",
+      "source_id": "vector1_2015",
+      "pdf_page": 3,
+      "sheet": "2",
+      "scope": "project_specific",
+      "fact": "Layers, membrane, member sizes and fixing products are determined by each project."
+    },
+    {
+      "id": "kr2_nomenclature",
+      "source_id": "vector1_2015",
+      "pdf_page": 6,
+      "sheet": "3.2.1",
+      "position": "2.2",
+      "fact": "KR2 nominal widths 50/60/70/85 mm, L50..350 mm step10, sketch thickness2 mm. These are product dimensions, not assembled offsets.",
+      "numbers": {
+        "nominal_widths_mm": [
+          50,
+          60,
+          70,
+          85
+        ],
+        "length_min_mm": 50,
+        "length_max_mm": 350,
+        "length_step_mm": 10,
+        "sketch_thickness_mm": 2
+      }
+    },
+    {
+      "id": "kr2_pad",
+      "source_id": "vector1_2015",
+      "pdf_page": 7,
+      "sheet": "3.2.2",
+      "position": "2.6",
+      "fact": "Paronite pad for KR2 has thickness2 mm. This does not certify mounting position of KR2/UK/GP or provide complete assembly dimensions.",
+      "numbers": {
+        "thickness_mm": 2
+      }
+    },
+    {
+      "id": "uk_nomenclature",
+      "source_id": "vector1_2015",
+      "pdf_page": 8,
+      "sheet": "3.3",
+      "position": "3.2",
+      "fact": "UK nominal widths50/60/70/85 differ from dimensioned sketch widths54/64/74/89. Equality of nominal labels does not prove fit; +4 cannot become universal clearance.",
+      "numbers": {
+        "nominal_widths_mm": [
+          50,
+          60,
+          70,
+          85
+        ],
+        "sketch_widths_mm": [
+          54,
+          64,
+          74,
+          89
+        ],
+        "lengths_mm": [
+          100,
+          150
+        ],
+        "thicknesses_mm": [
+          1,
+          1.2,
+          1.5
+        ]
+      }
+    },
+    {
+      "id": "gp_section",
+      "source_id": "vector1_2015",
+      "pdf_page": 9,
+      "sheet": "3.4",
+      "position": "4.4",
+      "fact": "GP has a40/50/60/80 mm; b and c depend on structural calculation and project.",
+      "numbers": {
+        "a_mm": [
+          40,
+          50,
+          60,
+          80
+        ]
+      }
+    },
+    {
+      "id": "pilot_node",
+      "source_id": "vector1_2015",
+      "pdf_page": 20,
+      "sheet": "4.2.1",
+      "node": "4.2.1",
+      "fact": "Horizontal porcelain section depicts KR2+UK+GP, pad, clamp, anchor and rivets. It confirms family composition, not arbitrary member combination fit or fixing BOM."
+    },
+    {
+      "id": "pilot_clearance",
+      "source_id": "vector1_2015",
+      "pdf_page": 20,
+      "sheet": "4.2.1",
+      "node": "4.2.1",
+      "fact": "Local min20 is outer insulation/membrane plane to nearest GP surface. It does not constrain bracket overlap or total cladding offset.",
+      "numbers": {
+        "minimum_mm": 20
+      }
+    },
+    {
+      "id": "other_node_min30",
+      "source_id": "vector1_2015",
+      "pdf_page": 19,
+      "sheet": "4.1",
+      "node": "4.1",
+      "scope": "excluded_from_pilot",
+      "fact": "min30 appears in vertical section with extender plates U2/U. It must not become UK overlap/regulation rule for4.2.1.",
+      "numbers": {
+        "excluded_minimum_mm": 30
+      }
+    },
+    {
+      "id": "calculation_is_not_mounting_document",
+      "source_id": "vector1_type1_reference_2026",
+      "pdf_pages": [
+        3,
+        6,
+        7,
+        8,
+        9,
+        12,
+        13
+      ],
+      "fact": "The selected KR2-70, UK-70-1.2, GP-40-40-1.2 and lever arms/rivet checks belong to one calculation. No complete assembled datum chain, chosen bracket length, acceptable overlap interval or hole coordinate pattern is specified."
+    },
+    {
+      "id": "method_scope",
+      "source_id": "method_calc_20260727",
+      "sections": [
+        "3. Анкер",
+        "4. Кронштейн",
+        "5. Удлинитель",
+        "7. Заклёпки"
+      ],
+      "fact": "Secondary notes reproduce project-specific lever arms and hole assumptions. They contain no manufacturer mounting envelope for selected4.2.1 and do not convert nominal labels into compatibility."
+    }
+  ],
+  "selection_semantics": {
+    "historical_catalogue": "Membership in the historical nomenclature only",
+    "project_or_zone_declaration": "Chosen dimensions and execution; GP b/c remain project-declared",
+    "local_geometry": "Declared planes and source-specific local clearance only",
+    "assembly_rules": "No confirmed dimensional assembly envelope or automatic bracket selection"
+  },
+  "unresolved_dependencies": [
+    {
+      "id": "wall_to_kr2_datum",
+      "state": "not_confirmed",
+      "required_primary_data": "Связь поверхности основания, прокладки и опорной базы КР2",
+      "would_enable": "Положение КР2 относительно x=0",
+      "source_locators": [
+        {
+          "source_id": "vector1_2015",
+          "source_sha256": "7386f4152de455a5e2622704d51a98d8f05afd20050807f634eea4572de37142",
+          "pdf_page": 6,
+          "sheet": "3.2.1",
+          "position": "2.2"
+        },
+        {
+          "source_id": "vector1_2015",
+          "source_sha256": "7386f4152de455a5e2622704d51a98d8f05afd20050807f634eea4572de37142",
+          "pdf_page": 7,
+          "sheet": "3.2.2",
+          "position": "2.6"
+        },
+        {
+          "source_id": "vector1_2015",
+          "source_sha256": "7386f4152de455a5e2622704d51a98d8f05afd20050807f634eea4572de37142",
+          "pdf_page": 20,
+          "sheet": "4.2.1"
+        }
+      ]
+    },
+    {
+      "id": "kr2_length_datums",
+      "state": "not_confirmed",
+      "required_primary_data": "Однозначные базы номенклатурной L КР2 и связь с монтажным положением",
+      "would_enable": "Перевод длины КР2 в координаты сборки",
+      "source_locators": [
+        {
+          "source_id": "vector1_2015",
+          "source_sha256": "7386f4152de455a5e2622704d51a98d8f05afd20050807f634eea4572de37142",
+          "pdf_page": 6,
+          "sheet": "3.2.1",
+          "position": "2.2"
+        },
+        {
+          "source_id": "vector1_2015",
+          "source_sha256": "7386f4152de455a5e2622704d51a98d8f05afd20050807f634eea4572de37142",
+          "pdf_page": 20,
+          "sheet": "4.2.1"
+        }
+      ]
+    },
+    {
+      "id": "kr2_uk_engagement",
+      "state": "not_confirmed",
+      "required_primary_data": "Крайние положения КР2–УК, допустимые перехлёст и ход",
+      "would_enable": "Диапазон выноса выбранной пары",
+      "source_locators": [
+        {
+          "source_id": "vector1_2015",
+          "source_sha256": "7386f4152de455a5e2622704d51a98d8f05afd20050807f634eea4572de37142",
+          "pdf_page": 6,
+          "sheet": "3.2.1",
+          "position": "2.2"
+        },
+        {
+          "source_id": "vector1_2015",
+          "source_sha256": "7386f4152de455a5e2622704d51a98d8f05afd20050807f634eea4572de37142",
+          "pdf_page": 8,
+          "sheet": "3.3",
+          "position": "3.2"
+        },
+        {
+          "source_id": "vector1_2015",
+          "source_sha256": "7386f4152de455a5e2622704d51a98d8f05afd20050807f634eea4572de37142",
+          "pdf_page": 20,
+          "sheet": "4.2.1"
+        }
+      ]
+    },
+    {
+      "id": "kr2_uk_connection",
+      "state": "not_confirmed",
+      "required_primary_data": "Посадка, отверстия/пазы, координаты, допуски, краевые расстояния и схема закрепления",
+      "would_enable": "Геометрическая допустимость соединения КР2–УК",
+      "source_locators": [
+        {
+          "source_id": "vector1_2015",
+          "source_sha256": "7386f4152de455a5e2622704d51a98d8f05afd20050807f634eea4572de37142",
+          "pdf_page": 6,
+          "sheet": "3.2.1",
+          "position": "2.2"
+        },
+        {
+          "source_id": "vector1_2015",
+          "source_sha256": "7386f4152de455a5e2622704d51a98d8f05afd20050807f634eea4572de37142",
+          "pdf_page": 8,
+          "sheet": "3.3",
+          "position": "3.2"
+        },
+        {
+          "source_id": "vector1_2015",
+          "source_sha256": "7386f4152de455a5e2622704d51a98d8f05afd20050807f634eea4572de37142",
+          "pdf_page": 20,
+          "sheet": "4.2.1"
+        }
+      ]
+    },
+    {
+      "id": "uk_gp_datum",
+      "state": "not_confirmed",
+      "required_primary_data": "Ориентация/посадка УК–ГП и размеры до ближайшей поверхности ГП",
+      "would_enable": "Связь УК с заявленной координатой поверхности ГП",
+      "source_locators": [
+        {
+          "source_id": "vector1_2015",
+          "source_sha256": "7386f4152de455a5e2622704d51a98d8f05afd20050807f634eea4572de37142",
+          "pdf_page": 8,
+          "sheet": "3.3",
+          "position": "3.2"
+        },
+        {
+          "source_id": "vector1_2015",
+          "source_sha256": "7386f4152de455a5e2622704d51a98d8f05afd20050807f634eea4572de37142",
+          "pdf_page": 9,
+          "sheet": "3.4",
+          "position": "4.4"
+        },
+        {
+          "source_id": "vector1_2015",
+          "source_sha256": "7386f4152de455a5e2622704d51a98d8f05afd20050807f634eea4572de37142",
+          "pdf_page": 20,
+          "sheet": "4.2.1"
+        }
+      ]
+    },
+    {
+      "id": "gp_to_cladding",
+      "state": "not_confirmed",
+      "required_primary_data": "Размерная цепь ГП–кляммер–плита с толщинами и поверхностями отсчёта",
+      "would_enable": "Связь ГП с наружным выносом облицовки",
+      "source_locators": [
+        {
+          "source_id": "vector1_2015",
+          "source_sha256": "7386f4152de455a5e2622704d51a98d8f05afd20050807f634eea4572de37142",
+          "pdf_page": 9,
+          "sheet": "3.4",
+          "position": "4.4"
+        },
+        {
+          "source_id": "vector1_2015",
+          "source_sha256": "7386f4152de455a5e2622704d51a98d8f05afd20050807f634eea4572de37142",
+          "pdf_page": 20,
+          "sheet": "4.2.1"
+        }
+      ]
+    },
+    {
+      "id": "assembly_scope",
+      "state": "not_confirmed",
+      "required_primary_data": "Документированная применимость к выбранным типоразмерам, материалам и исполнениям",
+      "would_enable": "Допустимость сочетания без угадывания по маркировке",
+      "source_locators": [
+        {
+          "source_id": "vector1_2015",
+          "source_sha256": "7386f4152de455a5e2622704d51a98d8f05afd20050807f634eea4572de37142",
+          "pdf_page": 3,
+          "sheet": "2"
+        },
+        {
+          "source_id": "vector1_2015",
+          "source_sha256": "7386f4152de455a5e2622704d51a98d8f05afd20050807f634eea4572de37142",
+          "pdf_page": 6,
+          "sheet": "3.2.1",
+          "position": "2.2"
+        },
+        {
+          "source_id": "vector1_2015",
+          "source_sha256": "7386f4152de455a5e2622704d51a98d8f05afd20050807f634eea4572de37142",
+          "pdf_page": 8,
+          "sheet": "3.3",
+          "position": "3.2"
+        },
+        {
+          "source_id": "vector1_2015",
+          "source_sha256": "7386f4152de455a5e2622704d51a98d8f05afd20050807f634eea4572de37142",
+          "pdf_page": 9,
+          "sheet": "3.4",
+          "position": "4.4"
+        },
+        {
+          "source_id": "vector1_2015",
+          "source_sha256": "7386f4152de455a5e2622704d51a98d8f05afd20050807f634eea4572de37142",
+          "pdf_page": 20,
+          "sheet": "4.2.1"
+        }
+      ]
+    }
+  ],
+  "baseline": {
+    "status": "BASELINE_REPRODUCED",
+    "head": "29dd38627ebb756dc3ef42f8db8a76a0e52a7d59",
+    "method": "Compiled actual FrameNodeGeometry, FrameProjectParameters and FrameSolutionSelection, no CAD doubles",
+    "source_sha256": {
+      "MountBaseline.cs": "d2d527d5dabb2b238c13800475a5c8a87e8fabee68fdb3485a0aaa59760a6411",
+      "AFrame/src/AFramePlugin/FrameNodeGeometry.cs": "50f1f3d869ae141c9cb38f0efd867b28dfa24afc746002faa70740579fc24d37",
+      "AFrame/src/AFramePlugin/FrameProjectParameters.cs": "612c46eabcb1c7c80c86e5a3e0fed2153a809b8f2b1734b1e9b596e2e26ec7f1",
+      "AFrame/src/AFramePlugin/FrameSolutionSelection.cs": "cb25b6e890ce2f1e5ee458f1e378510d21f7205e529ee1894520ed686a3abd66"
+    },
+    "baseline_json_sha256": "26583c0fd44813fc07543c9679d8b9787ff75121ec17b46c874b38b1edcef9e5",
+    "shared_input": {
+      "insulation_layers_mm": [
+        100,
+        50
+      ],
+      "profile_near_face_x_mm": 170,
+      "cladding_front_offset_mm": 230,
+      "clearance_surface": "insulation_outer_declared",
+      "purpose": "synthetic reproduction only; not project recommendations"
+    },
+    "cases": [
+      {
+        "case_id": "declared_reference",
+        "declared_members": {
+          "bracket": {
+            "family_id": "kr2",
+            "execution": "galvanized_painted",
+            "nominal_width_mm": 70,
+            "L_mm": 200
+          },
+          "extender": {
+            "family_id": "uk",
+            "execution": "galvanized_painted",
+            "nominal_width_mm": 70,
+            "L_mm": 100,
+            "thickness_mm": 1.2
+          },
+          "profile": {
+            "family_id": "gp",
+            "execution": "galvanized_painted",
+            "a_mm": 40,
+            "b_mm": 40,
+            "thickness_mm": 1.2,
+            "b_basis": "project_declared",
+            "thickness_basis": "project_declared"
+          }
+        },
+        "existing_result": {
+          "can_insert": true,
+          "clearance_status": "pass",
+          "gap_text": "20",
+          "missing": [],
+          "selection_digest": "359331b4a038cda3e4a47a3b1b7fffcf179ec1cc3d0381423f3fb12714dfd40e",
+          "input_digest": "75e1831150c8896d494c1c942d43bb88577a33d59c96079050f9f9e71dcfb933",
+          "result_digest": "0d92c385d0960a82bea515d6644ed8d6397a7dbdabbf863ff12545d95c942930"
+        }
+      },
+      {
+        "case_id": "short_bracket",
+        "declared_members": {
+          "bracket": {
+            "family_id": "kr2",
+            "execution": "galvanized_painted",
+            "nominal_width_mm": 70,
+            "L_mm": 50
+          },
+          "extender": {
+            "family_id": "uk",
+            "execution": "galvanized_painted",
+            "nominal_width_mm": 70,
+            "L_mm": 100,
+            "thickness_mm": 1.2
+          },
+          "profile": {
+            "family_id": "gp",
+            "execution": "galvanized_painted",
+            "a_mm": 40,
+            "b_mm": 40,
+            "thickness_mm": 1.2,
+            "b_basis": "project_declared",
+            "thickness_basis": "project_declared"
+          }
+        },
+        "existing_result": {
+          "can_insert": true,
+          "clearance_status": "pass",
+          "gap_text": "20",
+          "missing": [],
+          "selection_digest": "a82097d23ae8c43101a06233618ac6ada7fee5bcf6b21e9e9d14c751465c3ea0",
+          "input_digest": "da8a4f69c833a5615bacb6920e6c8b5bc3ad89de234f73e268ef9a1c6445b95d",
+          "result_digest": "989312023fa4f1c060a8b1254bb235440d0c307ec7e753255cee55eb7b41bdf1"
+        }
+      },
+      {
+        "case_id": "long_bracket",
+        "declared_members": {
+          "bracket": {
+            "family_id": "kr2",
+            "execution": "galvanized_painted",
+            "nominal_width_mm": 70,
+            "L_mm": 350
+          },
+          "extender": {
+            "family_id": "uk",
+            "execution": "galvanized_painted",
+            "nominal_width_mm": 70,
+            "L_mm": 150,
+            "thickness_mm": 1.2
+          },
+          "profile": {
+            "family_id": "gp",
+            "execution": "galvanized_painted",
+            "a_mm": 40,
+            "b_mm": 40,
+            "thickness_mm": 1.2,
+            "b_basis": "project_declared",
+            "thickness_basis": "project_declared"
+          }
+        },
+        "existing_result": {
+          "can_insert": true,
+          "clearance_status": "pass",
+          "gap_text": "20",
+          "missing": [],
+          "selection_digest": "b1ac5d5000172ee73e62477aaca5d2de95dffd59045f5122100a10b1f1fd498b",
+          "input_digest": "6becf03ec1a724b058f723f586024304b454d1816c9de291a0a512650c912dd5",
+          "result_digest": "cfb65d85510a8b80791f489ce0670a4778ca2c0f2bfb676de2721cee639d8399"
+        }
+      },
+      {
+        "case_id": "different_nominal_widths",
+        "declared_members": {
+          "bracket": {
+            "family_id": "kr2",
+            "execution": "galvanized_painted",
+            "nominal_width_mm": 50,
+            "L_mm": 200
+          },
+          "extender": {
+            "family_id": "uk",
+            "execution": "galvanized_painted",
+            "nominal_width_mm": 85,
+            "L_mm": 100,
+            "thickness_mm": 1.2
+          },
+          "profile": {
+            "family_id": "gp",
+            "execution": "galvanized_painted",
+            "a_mm": 40,
+            "b_mm": 40,
+            "thickness_mm": 1.2,
+            "b_basis": "project_declared",
+            "thickness_basis": "project_declared"
+          }
+        },
+        "existing_result": {
+          "can_insert": true,
+          "clearance_status": "pass",
+          "gap_text": "20",
+          "missing": [],
+          "selection_digest": "c5dbea4e476235e2997719722aa5162a8aef91a9df816fa519182bb06c1b90cd",
+          "input_digest": "8981650fc2912bab53555472af971263d072a103101ea7416954560f4b7a9904",
+          "result_digest": "9ea0bc769f917299019c431aec900b55c46d03a1c4f10765a7aab4050413ab9e"
+        }
+      },
+      {
+        "case_id": "mixed_executions",
+        "declared_members": {
+          "bracket": {
+            "family_id": "kr2",
+            "execution": "galvanized_painted",
+            "nominal_width_mm": 70,
+            "L_mm": 200
+          },
+          "extender": {
+            "family_id": "uk",
+            "execution": "corrosion_resistant",
+            "nominal_width_mm": 70,
+            "L_mm": 100,
+            "thickness_mm": 1.2
+          },
+          "profile": {
+            "family_id": "gp",
+            "execution": "galvanized_painted",
+            "a_mm": 40,
+            "b_mm": 40,
+            "thickness_mm": 1.2,
+            "b_basis": "project_declared",
+            "thickness_basis": "project_declared"
+          }
+        },
+        "existing_result": {
+          "can_insert": true,
+          "clearance_status": "pass",
+          "gap_text": "20",
+          "missing": [],
+          "selection_digest": "69c2830300bae567597782860c8831d8b9fe3c56f1519e09e5767547acedd376",
+          "input_digest": "9dfffa4e8fa9622187d531c51e630844b52c540eb124359b155a3d0838fdf138",
+          "result_digest": "9e6ad3b324900d363fca5b2e39671c0b6cde03da12fddeb7499532e2375d27b2"
+        }
+      }
+    ],
+    "interpretation": "All five confirm only local20 mm clearance. No member combination is proven to fit or fail. Empty local missing[] does not establish mounting completeness."
+  },
+  "constraints": {
+    "additional_cad_reads": 0,
+    "complexity": "O(input fields and layers); fixed 3 members and 7 dependencies",
+    "writes_to_existing_snapshot": false,
+    "catalogue_schema_changes": false,
+    "project_zone_schema_changes": false,
+    "node_geometry_schema_changes": false,
+    "drawing_primitive_changes": false,
+    "automatic_bracket_selection": false,
+    "physical_product_assignment": false,
+    "full_mounting_geometry": false,
+    "statics": false,
+    "live_autocad_verified": false,
+    "new_release_published": false
+  },
+  "do_not_infer": [
+    "min30 from sheet4.1 is not an overlap rule for UK in4.2.1",
+    "Equal nominal widths do not prove compatibility",
+    "Different nominal widths or execution do not by themselves prove incompatibility",
+    "Sketch width difference+4 is not an approved mounting clearance",
+    "Project-calculation lever arms, rivet counts and hole diameter are not universal mounting rules",
+    "Local clearance PASS does not establish assembly fit"
+  ],
+  "unlock_requirements": "Identified manufacturer document or approved project detail with revision, exact dimensional datums, assembly limits and applicability to the selected variants; re-review before enabling any mounting computation",
+  "restrictions_preserved": [
+    "Type 5 and NordFOX unimplemented",
+    "Vector-4 ATR absent",
+    "NSP-2 and GP-60-40 calculation restricted pending section confirmation",
+    "AKP frame only, no cassette fixing node",
+    "Fixed/sliding connections, supports, splice continuity and full statics not confirmed",
+    "No expansion to other albums or SFTK before live pilot acceptance"
+  ],
+  "privacy": "Only condensed findings, source hashes and locators are public; originals, renders and full private METHOD_CALC text are not included"
+}

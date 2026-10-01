@@ -111,7 +111,11 @@ namespace AFramePlugin
                     !FrameSolutionSelection.Same(current.Resolution.Selection, saved.Snapshot.Selection))
                     Fail("E_NODE_SOURCE_STALE", "Источники схемы изменились. Старый снимок сохранён; создайте новую схему ATFNODE.");
                 tr.Commit();
+                // Assess the already verified detached snapshot; this report
+                // neither rereads CAD nor upgrades local clearance to assembly approval.
+                var mounting = FrameMountingAssessment.Evaluate(saved.Snapshot.Selection, saved.Snapshot.Result);
                 ed.WriteMessage("\nСнимок и тело схемы соответствуют текущим источникам.\n" + saved.Snapshot.Result.ReviewText() +
+                    "\n" + mounting.ReviewText() +
                     "Перенос и поворот XY допустимы. Проверка не подтверждает посадки, регулировку, прочность или спецификацию.");
             }
         }

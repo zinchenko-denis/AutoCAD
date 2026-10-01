@@ -100,6 +100,8 @@ def main():
                                                 '--out', str(out / 'project_parameters_integration')]),
         ('node_geometry_core', '.', ['tools/node_geometry_0110/test_core.py',
                                     '--out', str(out / 'node_geometry_core')]),
+        ('mounting_assessment_core', '.', ['tools/mounting_assessment_0110/test_core.py',
+                                          '--out', str(out / 'mounting_assessment_core')]),
         ('node_geometry_cad', '.', ['tools/node_geometry_0110/test_node_cad.py',
                                    '--out', str(out / 'node_geometry_cad')]),
         ('catalog_connection_store', '.', ['tools/catalog_connections_0110/test_connection_store.py',

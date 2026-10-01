@@ -1,0 +1,16 @@
+{
+  "status": "RESOLVED_TEST_EXPECTATION",
+  "failed_case": [
+    {
+      "name": "project profile values stay declared or unknown without a new numeric envelope",
+      "status": "FAIL",
+      "error": "AFramePlugin.FrameSolutionSelectionException: Поле «Проектная полка b профиля» должно быть явно заданным числом.\n  at AFramePlugin.FrameParameterJson.Fail (System.String reason) [0x00006] in <0ed1b6f4f86b42a7b00b6da31dadc770>:0 \n  at AFramePlugin.FrameParameterJson.Selection (AFramePlugin.FrameSolutionSelection value) [0x0001d] in <0ed1b6f4f86b42a7b00b6da31dadc770>:0 \n  at AFramePlugin.FrameNodeJson.CopySelection (AFramePlugin.FrameSolutionSelection selection) [0x00000] in <0ed1b6f4f86b42a7b00b6da31dadc770>:0 \n  at AFramePlugin.FrameNodeGeometry.Evaluate (AFramePlugin.FrameSolutionSelection selection, AFramePlugin.FrameNodeGeometryInput input) [0x00006] in <0ed1b6f4f86b42a7b00b6da31dadc770>:0 \n  at MountingCoreProbe.Report (AFramePlugin.FrameSolutionSelection s, AFramePlugin.FrameNodeGeometryInput input) [0x00022] in <0ed1b6f4f86b42a7b00b6da31dadc770>:0 \n  at MountingCoreProbe.<Main>m__6 () [0x00041] in <0ed1b6f4f86b42a7b00b6da31dadc770>:0 \n  at MountingCoreProbe.Case (System.String name, System.Action action) [0x00000] in <0ed1b6f4f86b42a7b00b6da31dadc770>:0 "
+    }
+  ],
+  "initial_checks": 145,
+  "cause": "Test incorrectly inferred nullable b/c DTO means accepted missing dimensions; unchanged legacy selection validator requires positive values.",
+  "fix": "Test now requires same refusal from original geometry and mounting assessment for null b/c; product validator unchanged.",
+  "final_checks": 173,
+  "final_status": "PASS",
+  "product_core_sha256": "a3500fa56d0cbe80d09f8784ea347d28ece7b9a2d91bf6a2882ff12f1059e018"
+}

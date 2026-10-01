@@ -29,7 +29,7 @@ def main():
     src = ROOT / 'AFrame/src/AFramePlugin'
     sources = [local / x for x in ('NodeCadDoubles.cs', 'NodeCommandDoubles.cs', 'NodeCadProbe.cs')]
     sources += [ROOT / 'Common/FacadeProjectParameterStore.cs']
-    sources += [src / x for x in ('FrameSolutionSelection.cs', 'FrameProjectParameters.cs', 'FrameNodeGeometry.cs',
+    sources += [src / x for x in ('FrameSolutionSelection.cs', 'FrameProjectParameters.cs', 'FrameNodeGeometry.cs', 'FrameMountingAssessment.cs',
                                   'FrameNodeDrawing.cs', 'FrameNodeRenderer.cs', 'FrameNodeStore.cs', 'FrameNodeCommand.cs')]
     missing = [str(p.relative_to(ROOT)) for p in sources if not p.is_file()]
     if missing or not available():

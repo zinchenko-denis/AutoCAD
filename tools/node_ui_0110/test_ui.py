@@ -11,4 +11,4 @@ if __name__ == "__main__":
     raise SystemExit(runner.main(
         probe=Path(__file__).with_name("NodeUiProbe.cs"), runner_path=Path(__file__).resolve(),
         source_names=("FrameBoundedForm.cs", "FrameSolutionSelection.cs", "FrameProjectParameters.cs",
-                      "FrameNodeGeometry.cs", "FrameNodeForm.cs")))
+                      "FrameNodeGeometry.cs", "FrameMountingAssessment.cs", "FrameNodeForm.cs")))

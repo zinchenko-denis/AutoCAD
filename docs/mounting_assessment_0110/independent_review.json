@@ -1,0 +1,205 @@
+{
+  "schema": "mounting_independent_review/1",
+  "date": "2026-10-01",
+  "reviewer": "mount_independent_review",
+  "base_commit": "29dd38627ebb756dc3ef42f8db8a76a0e52a7d59",
+  "status": "LOCAL_CODE_REVIEW_PASS_WINDOWS_UI_PENDING",
+  "scope": "Read-only independent review of pure mounting assessment, ATFNODE review/check integration and source boundaries. No live AutoCAD and no engineering approval of an assembly.",
+  "blocking_findings": [],
+  "findings": [
+    {
+      "id": "source-selection",
+      "status": "PASS",
+      "evidence": "Strict existing catalogue/source validator plus same-selection SHA comparison precede report creation; null and foreign selection/source exercised by independent real C# probe."
+    },
+    {
+      "id": "local-vs-mounting",
+      "status": "PASS",
+      "evidence": "Local clearance/scheme insertion remains independent. All seven dependency states and mounting status are unconfirmed; automatic selection is always false, including 124 varied valid catalogue combinations."
+    },
+    {
+      "id": "immutable-and-exact",
+      "status": "PASS",
+      "evidence": "Public result properties have no public setters, all outward collections reject mutation, caller edits do not change existing report. Profile b/c use R/InvariantCulture text; double.Epsilon and 1e-29 do not become new plane numeric refusals."
+    },
+    {
+      "id": "stale-check-order",
+      "status": "PASS",
+      "evidence": "Command adds assessment only after original owner/body/units and source freshness checks; stale, COPY, altered body, changed units and cancellation produce no mounting report. Existing saved snapshot and DWG dump unchanged."
+    },
+    {
+      "id": "cad-work",
+      "status": "PASS",
+      "evidence": "Actual CAD adapters with doubles remain 62 GetObject and 47 own primitive visits per check; one project plus one zone read; 10000 unrelated objects add no ModelSpace enumeration."
+    },
+    {
+      "id": "geometry-compatibility",
+      "status": "PASS",
+      "evidence": "No geometry/store/renderer/schema changes. Old pure node gate1270 passes including exact numeric/digest fixtures. Assessment leaves old result serialization and digest unchanged."
+    },
+    {
+      "id": "source-claims",
+      "status": "PASS",
+      "evidence": "Reviewed precise named missing datums/overlap/holes/fit chain against source-review locators. No L(KR2)+L(UK) envelope, +4 fit tolerance, min30 transfer, profile section approval, or fixed/sliding/continuity inference introduced."
+    },
+    {
+      "id": "ui-readability",
+      "status": "PENDING_WINDOWS_VISUAL",
+      "evidence": "Form preserves CRLF, read-only vertical scroll and current CanInsert; input/back invalidation clears hidden old report. Native UI assertions cover full current report, source locators, dedicated small-window mounting scroll and large-font tail. Probe compiles locally but actual Windows screenshots still require inspection after CI."
+    }
+  ],
+  "tests": {
+    "independent_native_probe": {
+      "status": "PASS",
+      "checks": 18,
+      "cases": [
+        {
+          "name": "local clearance/scheme remains allowed independently",
+          "status": "PASS"
+        },
+        {
+          "name": "local PASS never authorizes mounting/selection",
+          "status": "PASS"
+        },
+        {
+          "name": "all seven named dependencies remain unconfirmed",
+          "status": "PASS"
+        },
+        {
+          "name": "pilot contains only explicit KR2 UK GP members",
+          "status": "PASS"
+        },
+        {
+          "name": "all outward collections immutable",
+          "status": "PASS"
+        },
+        {
+          "name": "public result properties expose no writable setters",
+          "status": "PASS"
+        },
+        {
+          "name": "each dependency locator retains exact album identity",
+          "status": "PASS"
+        },
+        {
+          "name": "profile b/c remain project statements not approved sections",
+          "status": "PASS"
+        },
+        {
+          "name": "assessment leaves old result/digest/text unchanged",
+          "status": "PASS"
+        },
+        {
+          "name": "mismatched snapshot selection exception code",
+          "status": "PASS"
+        },
+        {
+          "name": "missing selection exception code",
+          "status": "PASS"
+        },
+        {
+          "name": "missing geometry exception code",
+          "status": "PASS"
+        },
+        {
+          "name": "unknown source cannot acquire mount report",
+          "status": "PASS"
+        },
+        {
+          "name": "later mutable caller edits cannot alter published assessment",
+          "status": "PASS"
+        },
+        {
+          "name": "124 valid catalogue variants retain local clearance without invented fit/rejection",
+          "status": "PASS"
+        },
+        {
+          "name": "ancillary tiny profile values preserve R values without new plane rejection",
+          "status": "PASS"
+        },
+        {
+          "name": "mount report cannot reopen rejected gap",
+          "status": "PASS"
+        },
+        {
+          "name": "partial planes remain partial even though mounting also unconfirmed",
+          "status": "PASS"
+        }
+      ],
+      "baseline_result_digest": "0d92c385d0960a82bea515d6644ed8d6397a7dbdabbf863ff12545d95c942930",
+      "review_characters": 4686,
+      "live_autocad_checked": false,
+      "source_sha256": {
+        "IndependentMountReview.cs": "73d0d695d6d40027fc74183c58fc41015c675ec4026a795c6aa228bd65097c00",
+        "AFrame/src/AFramePlugin/FrameNodeGeometry.cs": "50f1f3d869ae141c9cb38f0efd867b28dfa24afc746002faa70740579fc24d37",
+        "AFrame/src/AFramePlugin/FrameProjectParameters.cs": "612c46eabcb1c7c80c86e5a3e0fed2153a809b8f2b1734b1e9b596e2e26ec7f1",
+        "AFrame/src/AFramePlugin/FrameSolutionSelection.cs": "cb25b6e890ce2f1e5ee458f1e378510d21f7205e529ee1894520ed686a3abd66",
+        "AFrame/src/AFramePlugin/FrameMountingAssessment.cs": "a3500fa56d0cbe80d09f8784ea347d28ece7b9a2d91bf6a2882ff12f1059e018"
+      }
+    },
+    "node_core": {
+      "status": "PASS",
+      "checks": 1270,
+      "manifest_sha256": "24fb7e3890abd5eeec9a6c3989457763dace1d1a96be0dd399bf66d70b65ceec"
+    },
+    "actual_cad_adapters": {
+      "status": "PASS",
+      "checks": 35,
+      "rollback_failure_points": 54,
+      "performance": [
+        {
+          "operations": 1,
+          "object_reads": 62,
+          "primitive_visits": 47,
+          "project_reads": 1,
+          "zone_reads": 1,
+          "elapsed_ms": 7.0025,
+          "claim": "synthetic only; no native host time"
+        },
+        {
+          "operations": 100,
+          "object_reads": 6200,
+          "primitive_visits": 4700,
+          "project_reads": 100,
+          "zone_reads": 100,
+          "elapsed_ms": 668.6857,
+          "claim": "synthetic only; no native host time"
+        },
+        {
+          "operations": 1000,
+          "object_reads": 62000,
+          "primitive_visits": 47000,
+          "project_reads": 1000,
+          "zone_reads": 1000,
+          "elapsed_ms": 6862.321,
+          "claim": "synthetic only; no native host time"
+        }
+      ],
+      "manifest_sha256": "57d3041cee660d6f26c55a3b719a44606086a085983216e4a39389ac762fb9dc"
+    }
+  },
+  "reviewed_source_sha256": {
+    "AFrame/src/AFramePlugin/FrameMountingAssessment.cs": "a3500fa56d0cbe80d09f8784ea347d28ece7b9a2d91bf6a2882ff12f1059e018",
+    "AFrame/src/AFramePlugin/FrameNodeForm.cs": "0d72badf1fac4189e75150cdbdd97dfd3114ff2bf2dab4f70590084107052c08",
+    "AFrame/src/AFramePlugin/FrameNodeCommand.cs": "d36b97c1ff93fe1d749ab0c140f198441b48b5e82305c1254d5cadafac390a22",
+    "tools/node_geometry_0110/NodeCadProbe.cs": "f8f816ee653ced3033e5009a3dfdaa6c34d53adb9535f37e63222966049513de",
+    "tools/node_ui_0110/NodeUiProbe.cs": "32e21794f3274e93e61a0ae46eb28ddf4ba86709f22c06f829146baf9f5ad09a",
+    ".github/workflows/check.yml": "6cb20a97f9c2d0b7918b9e93ae7911c53d66260b620720440dc931e73a530f81",
+    "tools/atr_review_3009/run_checks.py": "f93f47d5ec7f399679b7eb43e579ed456580d2c62993bfac82545374fe4cd2fc"
+  },
+  "not_verified": [
+    "Windows native UI screenshots for this increment (pending CI)",
+    "Live AutoCAD placement, scrolling, COPY, Undo, Save/reopen and actual DWG latency",
+    "Complete mounting envelope, hole patterns, fastener BOM and statics"
+  ],
+  "live_autocad_checked": false,
+  "final_text_delta_review": {
+    "status": "PASS",
+    "core_sha256": "a3500fa56d0cbe80d09f8784ea347d28ece7b9a2d91bf6a2882ff12f1059e018",
+    "changes": [
+      "Unknown local clearance now delegates reason to geometry rather than claiming incompleteness in every case.",
+      "A null displayed member dimension reads only not-declared, without a contradictory project declaration suffix. Existing validator still rejects absent GP b/c; no contract was relaxed."
+    ],
+    "verification": "Read final ReviewText delta and reran independent 18-check C# probe, including explicit unknown-clearance wording. No broad regression repeat for text-only delta."
+  }
+}

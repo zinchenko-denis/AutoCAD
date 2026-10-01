@@ -1,0 +1,35 @@
+{
+  "manual": "docs/facades_beginner_3009/Facades_Beginner_Manual_30.09.docx",
+  "docx_sha256": "ea2099b475a52713a71d93565ff5e0784ee32904676e40fb27e35f7ffcecf5ee",
+  "manual_source_sha256": "7f396ed4b6e52359e20d48aae46d1d2afc34ce11cbfd9af4995dde2f28564599",
+  "builder_sha256": "00333cf6ceadd01df88c18b154e12e3a3dc4e21911f6b8c0b31227a73a20c9df",
+  "pages": 51,
+  "chapters": 20,
+  "figures": 10,
+  "dxf_files": 4,
+  "visual_review": "PASS",
+  "accessibility_audit": {
+    "high": 0,
+    "medium": 0,
+    "low": 0
+  },
+  "final_qa": "docs/facades_beginner_3009/FINAL_QA.json",
+  "final_qa_sha256": "40459f7e453469803d42e8d988f265b4877b31b18cb115803e6d86e6923f9026",
+  "tutorial_replay": "docs/mounting_assessment_0110/manual_examples.json",
+  "tutorial_replay_sha256": "eb9239e1630d78eb50ca8de4a822a355cc14a3c0e9d845fb6807d608ff1761b2",
+  "new_report_pages": [
+    41,
+    42
+  ],
+  "handoff_page": 48,
+  "live_autocad": false,
+  "release_published": false,
+  "source_binding_owner": "root; SOURCE_COMMIT.json was not edited in this manual update",
+  "content_review": {
+    "reviewer": "mount_architecture",
+    "result": "PASS",
+    "scope": "Manual subsection checked against the actual core ReviewText: all seven dependencies, declared L, project b/c, local-status separation and read-only Check. No promise of automatic selection, mounting suitability or new engineering rules.",
+    "reviewed_core_sha256": "a3500fa56d0cbe80d09f8784ea347d28ece7b9a2d91bf6a2882ff12f1059e018",
+    "ui_labels_confirmed_by": "mount_integration"
+  }
+}
