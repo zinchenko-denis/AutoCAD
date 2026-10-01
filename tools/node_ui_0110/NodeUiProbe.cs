@@ -15,6 +15,7 @@ internal static class NodeUiProbe
     private static string output;
     private static readonly List<string> images = new List<string>(), reasons = new List<string>();
     private static readonly List<object> layouts = new List<object>();
+    private static readonly List<object> numericDiagnostics = new List<object>();
     private static readonly JavaScriptSerializer Json = new JavaScriptSerializer { MaxJsonLength = int.MaxValue };
     [StructLayout(LayoutKind.Sequential)] private struct NativeRect
     { internal int Left, Top, Right, Bottom; internal Rectangle Bounds { get { return Rectangle.FromLTRB(Left, Top, Right, Bottom); } } }
@@ -50,6 +51,16 @@ internal static class NodeUiProbe
     private static void Surface(Form form, int index) { Find<ComboBox>(form, "clearance_surface").SelectedIndex = index; }
     private static void Profile(Form form, string value) { Find<TextBox>(form, "profile_near_x").Text = value; }
     private static string Review(Form form) { return Find<TextBox>(form, "node_review").Text; }
+    private static object Numeric(double? value)
+    { return value.HasValue ? new { roundtrip = value.Value.ToString("R", CultureInfo.InvariantCulture),
+        ieee754_hex = BitConverter.DoubleToInt64Bits(value.Value).ToString("X16", CultureInfo.InvariantCulture) } : null; }
+    private static void NumericDiagnostic(string scenario, double expected, double cloned, double direct, double? viewed, FrameNodeForm form)
+    {
+        var entry = new { scenario, expected = Numeric(expected), typed_clone = Numeric(cloned),
+            direct_evaluation = Numeric(direct), form_evaluation = Numeric(viewed),
+            form_has_geometry = form.Geometry != null, form_status = Find<TextBox>(form, "node_status").Text };
+        numericDiagnostics.Add(entry); Console.WriteLine("NUMERIC " + Json.Serialize(entry));
+    }
     private static void Layout(FrameNodeForm form, string name)
     {
         form.PerformLayout(); Application.DoEvents();
@@ -129,6 +140,10 @@ internal static class NodeUiProbe
             Show(form); Profile(form, "170"); Surface(form, 1); Click(form, "check_node");
             Check(form.Geometry.GapText == "20" && form.Geometry.ClearanceStatus == "pass" && form.Geometry.CanInsert, "Exact20 did not pass local-only check");
             Check(Review(form).Contains(form.Geometry.GapText + " мм") && Find<TextBox>(form, "node_status").Text.Contains("только"), "Exact preview overstates acceptance");
+            var reviewLines = Find<TextBox>(form, "node_review").Lines;
+            Check(reviewLines.Any(line => line.StartsWith("Размерная схема Вектор-1 ") && !line.Contains("Основание x")), "Native review merges the source and coordinate basis lines");
+            Check(reviewLines.Any(line => line.StartsWith("Основание x = 0;") && !line.Contains("Слой утеплителя")), "Native review merges the coordinate basis and first layer lines");
+            Check(reviewLines.Any(line => line == "Слой утеплителя 1: 100 мм."), "Native review lacks a separate first layer line");
             Layout(form, "node_valid");
             Profile(form, "169,999"); // A real field edit must invalidate even while preview is displayed.
             Check(form.Geometry == null && !Find<Button>(form, "insert_node").Enabled && !Find<TextBox>(form, "node_review").Visible, "Input edit reused a previously valid preview");
@@ -208,6 +223,10 @@ internal static class NodeUiProbe
         using (var form = new FrameNodeForm(tinySelection, tinyContext))
         {
             Show(form); Click(form, "check_node");
+            var direct = FrameNodeGeometry.Evaluate(tinySelection, FrameNodeGeometryInput.CreateDefault());
+            NumericDiagnostic("tiny_declared_layer", 1e-28,
+                FrameNodeGeometry.CloneSelection(tinySelection).geometry.insulation_layers_mm[0], direct.Layers[0].ThicknessMm,
+                form.Geometry == null || form.Geometry.Layers.Count == 0 ? (double?)null : form.Geometry.Layers[0].ThicknessMm, form);
             Check(form.Geometry != null && form.Geometry.Layers.Count == 1 && form.Geometry.Layers[0].ThicknessMm == 1e-28,
                 "UI selection cloning rounded a tiny declared layer before exact evaluation");
             Click(form, "cancel_node");
@@ -218,12 +237,16 @@ internal static class NodeUiProbe
         using (var form = new FrameNodeForm(adjacent, adjacentContext))
         {
             Show(form); Click(form, "check_node");
+            var direct = FrameNodeGeometry.Evaluate(adjacent, FrameNodeGeometryInput.CreateDefault());
+            NumericDiagnostic("adjacent_declared_cladding", adjacent.geometry.cladding_front_offset_mm.Value,
+                FrameNodeGeometry.CloneSelection(adjacent).geometry.cladding_front_offset_mm.Value, direct.CladdingFrontXMm.Value,
+                form.Geometry == null ? (double?)null : form.Geometry.CladdingFrontXMm, form);
             Check(form.Geometry != null && form.Geometry.CladdingFrontXMm == adjacent.geometry.cladding_front_offset_mm,
                 "UI viewing changed the next representable declared cladding coordinate");
             Click(form, "cancel_node");
         }
         Check(Json.Serialize(callerSelection.ToDict()) == originalSelection && Json.Serialize(callerContext.ToDict()) == originalContext, "Node form changed inherited selection or provenance");
-        File.WriteAllText(Path.Combine(output, "ui_checks.json"), Json.Serialize(new { status = failures == 0 ? "PASS" : "FAIL", checks, failures, reasons, images, layouts, live_autocad_checked = false }));
+        File.WriteAllText(Path.Combine(output, "ui_checks.json"), Json.Serialize(new { status = failures == 0 ? "PASS" : "FAIL", checks, failures, reasons, images, layouts, numeric_diagnostics = numericDiagnostics, live_autocad_checked = false }));
         Console.WriteLine("Node UI: " + checks + " checks, " + failures + " failures"); return failures == 0 ? 0 : 1;
     }
 }

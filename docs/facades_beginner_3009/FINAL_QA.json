@@ -1,6 +1,6 @@
 {
-  "docx_sha256": "d79daaa1094203672512f8a7fdc7512e711178d75049059d4c8efd58407742fb",
-  "manual_source_sha256": "6182c60fc4e148cab6d7ddfe215a4d265803ec1fbaa0fe5901fa13711a22a050",
+  "docx_sha256": "c9254368cbe045af4e7371b51e8faae23d8d70bae7f258f8c3d54327918a76a4",
+  "manual_source_sha256": "3a9436c519d5199c709c1e5c0916de6289e456666f1e4fb81fa7844b9fec066e",
   "builder_sha256": "4f038ecfc7f3b893f61ca4aea2b4811701a4efe65ae5c686b6777e9b8a471ced",
   "pages": 50,
   "chapters": 20,
@@ -12,13 +12,7 @@
     {
       "pages": "1-50",
       "reviewer": "catalog_manual",
-      "method": "All first-render pages opened individually at original resolution. Final pages 1-39 byte-identical to that reviewed render; every changed final page 40-50 opened again individually at original resolution. No clipping, overlap, broken glyphs or unusable table splits found.",
-      "result": "PASS"
-    },
-    {
-      "pages": "39-41,45-47 (first render); 40,41,46,47 (final render)",
-      "reviewer": "root",
-      "method": "Independent review of changed ATFNODE instructions, failures and handoff. Final page 39 byte-identical to reviewed first render. Apparent header clipping in the tool display checked against PDF bounding boxes and PNG pixels; the full header and table text are present. Final changed pages reopened and accepted.",
+      "method": "After adding the algorithm-version refusal paragraph, all 50 pages rendered again. Pages 1-40 byte-identical to the previously reviewed edition. Every changed page 41-50 opened individually at original resolution; paragraph continuation, repeated table headers, page margins and final chapter checked. No clipping, overlap, broken glyphs or unusable table splits found.",
       "result": "PASS"
     }
   ],
@@ -63,16 +57,16 @@
     "page-38.png": "ba226931ecf221e1d140be57c64b975c56f71ad48778f753f3bc4749d05fb791",
     "page-39.png": "51b3a016920d2882d37ea9e8cc00138782e48ff1e640f353d4214ec8be430ef3",
     "page-40.png": "d5110df2d4b4c90b1ce1afae9a53ebfc15993009143a15a98f21f9c68cd3a1a3",
-    "page-41.png": "270828f48fca76da9157d02c520a5f739fd52c3ac2bcea5b5ef80cb8489dfb0c",
-    "page-42.png": "80062faacc1615ded4e0c750e338755eca6d0fc4874f9344fb954131d7010a54",
-    "page-43.png": "75c0f353222ed6ffe6884395904d2365ef1bd20f866e2c14a7f45285d26b9e33",
-    "page-44.png": "a742501e6ad3d4560171f190dbc94bd94ab7b3d84d93d9c67a65acd642c084de",
-    "page-45.png": "a970fbdd8fdd64b69a1accf7df72a2f8f9f194a7c901689c3d13bdb86cb524b5",
-    "page-46.png": "13d1faaef6296d3277235955bc79d447cb8a369ed59c30a4af62a757476fa360",
-    "page-47.png": "b94d7eea89d1b6aee10192f8ffb5ae22a97672f39f5b19c7ecee5035adb9dd2b",
-    "page-48.png": "fe43573bc9d2bb439e233975cf9b6440d87bd92b825c94b933f3bd9f4835a7d4",
-    "page-49.png": "4ade8c1b9fe0a14e00a5f498a9e316ab937354b4e95e23511a8de5d90663ce8a",
-    "page-50.png": "0a5438f3dc4ba4b2b47a89dbc36b93ec4697d0506f40caab2af2a3045613ab17"
+    "page-41.png": "069cda5b7b57befbeaa7c430eac5b87d40c0063a5da81cc11681c95f49fbbf75",
+    "page-42.png": "8a4113c0e585933feb2132c27268d302994464f97d0c28d0e5e4bcae608f30d4",
+    "page-43.png": "5bd87f72cdd7b074660f9c1344ecde7590d12cb8fcd665138aa406b37b2fd0a2",
+    "page-44.png": "1f5d5fde405f77cc2e53cc1fb2f386b3dbdd94625f7c943c96c93ce3ae7b4db1",
+    "page-45.png": "513f3e58909a6aba0b75013ed5a1fdbde50bedc707cfdfd29e13530fa526b844",
+    "page-46.png": "78674c1f792e57700419905f026c12fdc1d58a0229f751cd329cbce38d508add",
+    "page-47.png": "3dea9940045d4fc044aaa8989e7c74597f697f44e05188c79d58022f6b85d240",
+    "page-48.png": "ad81bf0780314d54fc2adffe4da098d401e3c3ebca0ead8e38e74f4bbd9e1fa0",
+    "page-49.png": "9cabc81b64db1f75ee375a2f48a1f55ac18b04d049f1ebe4216d5575abb4346d",
+    "page-50.png": "1cf4819c822259884be1227e673b01aa98ed32f58570dc5e35bc98eadd47c849"
   },
   "accessibility_audit": {
     "high": 0,
@@ -111,5 +105,34 @@
     "build": 104,
     "guide_commit": "60f3b3587c8d09780e5c7a703f010de690f73e2b",
     "pages": 42
+  },
+  "prior_visual_review": {
+    "docx_sha256": "d79daaa1094203672512f8a7fdc7512e711178d75049059d4c8efd58407742fb",
+    "result": "PASS",
+    "reviewed_ranges": [
+      {
+        "pages": "1-50",
+        "reviewer": "catalog_manual",
+        "method": "All first-render pages opened individually at original resolution. Final pages 1-39 byte-identical to that reviewed render; every changed final page 40-50 opened again individually at original resolution. No clipping, overlap, broken glyphs or unusable table splits found.",
+        "result": "PASS"
+      },
+      {
+        "pages": "39-41,45-47 (first render); 40,41,46,47 (final render)",
+        "reviewer": "root",
+        "method": "Independent review of changed ATFNODE instructions, failures and handoff. Final page 39 byte-identical to reviewed first render. Apparent header clipping in the tool display checked against PDF bounding boxes and PNG pixels; the full header and table text are present. Final changed pages reopened and accepted.",
+        "result": "PASS"
+      }
+    ]
+  },
+  "last_content_change": "Added user-facing E_NODE_ALGORITHM refusal and explicit recreation of a snapshot after an algorithm update; no automatic migration.",
+  "builder_and_tools_unchanged_for_last_content_change": true,
+  "independent_algorithm_note_review": {
+    "reviewer": "root",
+    "pages": [
+      41
+    ],
+    "status": "PASS",
+    "detail": "original",
+    "note": "Added algorithm-version refusal and recreate paragraph visually inspected after final algorithm/2 render."
   }
 }

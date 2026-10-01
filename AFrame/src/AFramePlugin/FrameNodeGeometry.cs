@@ -44,6 +44,10 @@ namespace AFramePlugin
             return n;
         }
         internal static string Text(decimal value) { return value.ToString("G29", CultureInfo.InvariantCulture); }
+        // CLR decimal casts can differ by one ULP from parsing the exact text.
+        // Every numeric export and collision check must use this same boundary.
+        internal static double CadNumber(decimal value)
+        { return double.Parse(Text(value), NumberStyles.Float, CultureInfo.InvariantCulture); }
         // Compare decimal values as normalized digit/exponent strings. Decimal
         // TryParse alone may silently round; a double roundtrip alone misses it.
         internal static string Normalized(string text)
@@ -145,13 +149,13 @@ namespace AFramePlugin
     public sealed class FrameNodePlane
     {
         public string Id { get; private set; } public string Title { get; private set; } public double XMm { get; private set; } public string Basis { get; private set; }
-        internal FrameNodePlane(string id, string title, decimal x, string basis) { Id = id; Title = title; XMm = (double)x; Basis = basis; }
+        internal FrameNodePlane(string id, string title, decimal x, string basis) { Id = id; Title = title; XMm = FrameNodeJson.CadNumber(x); Basis = basis; }
         internal Dictionary<string, object> ToDict() { return new Dictionary<string, object> { { "id", Id }, { "title", Title }, { "x_mm", XMm }, { "basis", Basis } }; }
     }
     public sealed class FrameNodeLayer
     {
         public int Index { get; private set; } public double StartXMm { get; private set; } public double EndXMm { get; private set; } public double ThicknessMm { get; private set; }
-        internal FrameNodeLayer(int index, decimal start, decimal end, decimal thickness) { Index = index; StartXMm = (double)start; EndXMm = (double)end; ThicknessMm = (double)thickness; }
+        internal FrameNodeLayer(int index, decimal start, decimal end, decimal thickness) { Index = index; StartXMm = FrameNodeJson.CadNumber(start); EndXMm = FrameNodeJson.CadNumber(end); ThicknessMm = FrameNodeJson.CadNumber(thickness); }
         internal Dictionary<string, object> ToDict() { return new Dictionary<string, object> { { "index", Index }, { "start_x_mm", StartXMm }, { "end_x_mm", EndXMm }, { "thickness_mm", ThicknessMm } }; }
     }
     public sealed class FrameNodeDimension
@@ -159,7 +163,7 @@ namespace AFramePlugin
         public string Id { get; private set; } public string Title { get; private set; } public double FromXMm { get; private set; } public double ToXMm { get; private set; }
         public double ValueMm { get; private set; } public string ValueText { get; private set; } public string Basis { get; private set; }
         internal FrameNodeDimension(string id, string title, decimal from, decimal to, decimal value, string basis)
-        { Id = id; Title = title; FromXMm = (double)from; ToXMm = (double)to; ValueMm = (double)value; ValueText = FrameNodeJson.Text(value); Basis = basis; }
+        { Id = id; Title = title; FromXMm = FrameNodeJson.CadNumber(from); ToXMm = FrameNodeJson.CadNumber(to); ValueMm = FrameNodeJson.CadNumber(value); ValueText = FrameNodeJson.Text(value); Basis = basis; }
         internal Dictionary<string, object> ToDict() { return new Dictionary<string, object> { { "id", Id }, { "title", Title }, { "from_x_mm", FromXMm }, { "to_x_mm", ToXMm }, { "value_mm", ValueMm }, { "value_text", ValueText }, { "basis", Basis } }; }
     }
     public sealed class FrameNodeIssue
@@ -207,7 +211,7 @@ namespace AFramePlugin
             CanInsert = !issues.Any(i => i.Severity == "error"); Status = !CanInsert ? "rejected" : clearanceStatus == "pass" ? "clearance_pass" : "partial";
             ResultDigest = FrameParameterJson.Hash(Content());
         }
-        private static double? Number(decimal? n) { return n.HasValue ? (double?)n.Value : null; }
+        private static double? Number(decimal? n) { return n.HasValue ? (double?)FrameNodeJson.CadNumber(n.Value) : null; }
         private Dictionary<string, object> Content()
         { return new Dictionary<string, object> { { "schema", Schema }, { "algorithm_revision", AlgorithmRevision }, { "selection_digest", SelectionDigest }, { "input_digest", InputDigest },
             { "can_insert", CanInsert }, { "status", Status }, { "clearance_status", ClearanceStatus }, { "gap_mm", GapMm }, { "gap_text", GapText },
@@ -231,7 +235,7 @@ namespace AFramePlugin
 
     public static class FrameNodeGeometry
     {
-        public const string AlgorithmRevision = "vector1_2015_4_2_1_planes/1";
+        public const string AlgorithmRevision = "vector1_2015_4_2_1_planes/2";
         private static readonly FrameNodeClearanceRule Rule = new FrameNodeClearanceRule();
         private static readonly decimal[] Powers = Enumerable.Range(0, 29).Select(Power).ToArray();
         private static decimal Power(int n) { decimal value = 1; for (int i = 0; i < n; i++) value *= 10; return value; }
@@ -280,7 +284,7 @@ namespace AFramePlugin
             var scale = new Scale(values); var planes = new List<FrameNodePlane>(); var layers = new List<FrameNodeLayer>(); var dimensions = new List<FrameNodeDimension>();
             var issues = new List<FrameNodeIssue>(); var missing = new List<string>(); var cadCoordinates = new Dictionary<double, decimal>();
             Action<string, string, decimal, string> plane = (id, title, x, basis) => {
-                double cad = (double)x; decimal prior;
+                double cad = FrameNodeJson.CadNumber(x); decimal prior;
                 if (cadCoordinates.TryGetValue(cad, out prior) && prior != x) FrameNodeJson.Fail("E_NODE_CAD_PRECISION", "Различные плоскости " + FrameNodeJson.Text(prior) + " и " + FrameNodeJson.Text(x) + " мм совпадают в CAD double; точная вставка невозможна.");
                 cadCoordinates[cad] = x; planes.Add(new FrameNodePlane(id, title, x, basis)); };
             Action<string, string> error = (code, text) => issues.Add(new FrameNodeIssue(code, text, "error"));
@@ -362,7 +366,9 @@ namespace AFramePlugin
         public static FrameNodeSnapshot FromDict(object value)
         {
             var d = FrameNodeJson.Object(value, "schema", "algorithm_revision", "created_utc", "selection", "context", "input", "input_digest", "result_digest", "snapshot_digest");
-            FrameNodeJson.Equal(d["schema"], "aframe_node_snapshot/1"); FrameNodeJson.Equal(d["algorithm_revision"], FrameNodeGeometry.AlgorithmRevision);
+            FrameNodeJson.Equal(d["schema"], "aframe_node_snapshot/1");
+            if (!(d["algorithm_revision"] is string) || (string)d["algorithm_revision"] != FrameNodeGeometry.AlgorithmRevision)
+                FrameNodeJson.Fail("E_NODE_ALGORITHM", "Снимок узла создан прежним или неизвестным алгоритмом. Создайте новый снимок через ATFNODE; автоматическая миграция не выполняется.");
             var result = Create(FrameNodeJson.ReadSelection(d["selection"]), FrameParameterContext.FromDict(d["context"]), FrameNodeGeometryInput.FromDict(d["input"]), d["created_utc"] as string);
             if (!(d["input_digest"] is string) || (string)d["input_digest"] != result.Result.InputDigest || !(d["result_digest"] is string) || (string)d["result_digest"] != result.Result.ResultDigest || !(d["snapshot_digest"] is string) || (string)d["snapshot_digest"] != result.SnapshotDigest)
                 FrameNodeJson.Fail("E_NODE_DIGEST", "Снимок узла изменён или не соответствует пересчитанному результату.");

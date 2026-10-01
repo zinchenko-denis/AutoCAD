@@ -2,15 +2,15 @@
   "schema": "node_geometry_independent_review/1",
   "date": "2026-10-01",
   "status": "PASS",
-  "base_commit": "6287e6f13c9d14497c753d91849cf3d77d7e24e9",
-  "scope": "Повторная независимая read-only ревизия узкого исправления CI209: decimal→CAD/public double, единый collision conversion, явная algorithm revision/2, CRLF для native TextBox. Дополнены прямые побитовые проверки; прежний receipt сохранён отдельно. Продуктовый код рецензент не менял.",
+  "base_commit": "a4cd2908213552437da93b4888145b3c6aeadd5b",
+  "scope": "Независимая read-only ревизия принятого source/numeric/interface контракта, конечного pure/CAD/UI кода и повторные синтетические проверки. Продуктовые файлы рецензент не менял.",
   "reviewed_source_sha256": {
-    "AFrame/src/AFramePlugin/FrameNodeGeometry.cs": "50f1f3d869ae141c9cb38f0efd867b28dfa24afc746002faa70740579fc24d37",
+    "AFrame/src/AFramePlugin/FrameNodeGeometry.cs": "cc73d9c0418f7d99718b1bcccdf6a624830ed984d9da276125043d7a0294f9df",
     "AFrame/src/AFramePlugin/FrameNodeDrawing.cs": "42d24cf17582e84da1293a26ff059a0c49ec37f9c1063f3eaa72835bf5e62b88",
     "AFrame/src/AFramePlugin/FrameNodeRenderer.cs": "80c0a621f592463b933c26414eb6a0db3985a9bd272cae72589568b0e1d19034",
     "AFrame/src/AFramePlugin/FrameNodeStore.cs": "3a6bfdef84f62d1c97d5fb4dc51667671db1053635e6c4cb45a370073ad87ae5",
     "AFrame/src/AFramePlugin/FrameNodeCommand.cs": "cc88ba17db4608ba99967330f24967a0f0cc278eaeef8f6cb29c97ff34909558",
-    "AFrame/src/AFramePlugin/FrameNodeForm.cs": "f979bd34acbe47c322cb0dfc686c96541881102cf65e85862831924e185ba579",
+    "AFrame/src/AFramePlugin/FrameNodeForm.cs": "73cdfe7bc54bc713401239762e3e13b78e8409603dffb6035136b19992497b77",
     "AFrame/src/AFramePlugin/FrameBoundedForm.cs": "6992b2f5978aa33ba0b74676fbbaf970dfce44ca769a9339b0f3b5e02adf61c4",
     "Common/FacadeQuantityStore.Manual.cs": "3ce4bafdc88bf783237ced8f39a435a264f265d32977c01df8b828a16a1442bb"
   },
@@ -46,20 +46,6 @@
       "id": "cad_style_hash_coverage",
       "status": "CLOSED",
       "meaning": "Hash фактического тела учитывает рамку/фон/колонки MText, режим прозрачности объектов и прозрачность слоя; настоящий lifecycle negative-case проходит."
-    },
-    {
-      "id": "ci209_decimal_cad_export_ulp",
-      "status": "CLOSED",
-      "before": {
-        "path": "docs/node_geometry_0110/decimal_cad_conversion_before.json",
-        "sha256": "947e80a44e860513b1779140eb9db14cf3272e740b534ab762443b8a001d7dbd"
-      },
-      "after": {
-        "path": "docs/node_geometry_0110/decimal_cad_conversion_after.json",
-        "sha256": "cf1396433c571341d60bcd3fa1825ae5528d7c8809d8cf96e0f2918ddb9b7464"
-      },
-      "meaning": "Единый decimal G29 invariant→double.Parse применяется к planes, layers, dimensions, result fields и collision dictionary. Побитовый сдвиг tiny1e-28 и nextUp479.82 устранён.",
-      "independent_counterexample": "profile=nextUp(479.82), front=nextUp(nextUp(479.82)), layers100/50, Unknown. Старый cast сливал разные плоскости в479.82000000000011 и ложно отказывал; новый код различает обе. Истинное слияние границ1e15+0.01 продолжает давать E_NODE_CAD_PRECISION."
     }
   ],
   "engineering": {
@@ -79,7 +65,7 @@
     "seed": 207208,
     "construction": "400 deterministic positive centesimal layer sets (1..8 layers), base coordinate exact sum+20; each evaluated at C# IEEE754 predecessor / base / successor. Oracle uses exact decimal arithmetic over original C# R representations.",
     "source_sha256": {
-      "AFrame/src/AFramePlugin/FrameNodeGeometry.cs": "50f1f3d869ae141c9cb38f0efd867b28dfa24afc746002faa70740579fc24d37",
+      "AFrame/src/AFramePlugin/FrameNodeGeometry.cs": "cc73d9c0418f7d99718b1bcccdf6a624830ed984d9da276125043d7a0294f9df",
       "AFrame/src/AFramePlugin/FrameProjectParameters.cs": "612c46eabcb1c7c80c86e5a3e0fed2153a809b8f2b1734b1e9b596e2e26ec7f1",
       "AFrame/src/AFramePlugin/FrameSolutionSelection.cs": "cb25b6e890ce2f1e5ee458f1e378510d21f7205e529ee1894520ed686a3abd66"
     },
@@ -92,93 +78,7 @@
     "numeric_results_sha256": "9d8dd188916e92138c2bdb9232658a7bf321327ad93ef8d1d6d2b9a4607fc465",
     "cases_current": true,
     "live_autocad_checked": false,
-    "bound_source_guard": "ValidateBoundSelection сверяет точные исходные defaults/overrides с resolved selection; численный дрейф даёт отказ, а не исправление старой проектной модели.",
-    "prior_regressions_replayed": {
-      "status": "PASS",
-      "known_order": true,
-      "actual_snapshot_json_roundtrip": true,
-      "numeric_oracle_cases": 1200
-    },
-    "output_export_review": {
-      "status": "PASS",
-      "scenario_groups": 6,
-      "typed_numeric_input_scenarios": 1200,
-      "field_assertions": 51326,
-      "cases": [
-        {
-          "name": "tiny exact declared layer exports all surfaces",
-          "status": "PASS",
-          "checks": 9
-        },
-        {
-          "name": "adjacent cladding coordinate exports all properties",
-          "status": "PASS",
-          "checks": 21
-        },
-        {
-          "name": "adjacent profile membrane output chain",
-          "status": "PASS",
-          "checks": 35
-        },
-        {
-          "name": "distinct adjacent source planes do not falsely collide",
-          "status": "PASS",
-          "checks": 26
-        },
-        {
-          "name": "true CAD coordinate collision still refuses",
-          "status": "PASS",
-          "checks": 1
-        },
-        {
-          "name": "1200 typed predecessor center successor numeric exports",
-          "status": "PASS",
-          "checks": 51234
-        }
-      ],
-      "before_cases": [
-        {
-          "name": "tiny exact declared layer exports all surfaces",
-          "status": "FAIL",
-          "checks": 2,
-          "reason": "thickness: 1.0000000000000001E-28 != 1E-28"
-        },
-        {
-          "name": "adjacent cladding coordinate exports all properties",
-          "status": "FAIL",
-          "checks": 8,
-          "reason": "frontresult: 479.82000000000011 != 479.82000000000005"
-        },
-        {
-          "name": "adjacent profile membrane output chain",
-          "status": "FAIL",
-          "checks": 9,
-          "reason": "profileresult: 479.82000000000011 != 479.82000000000005"
-        },
-        {
-          "name": "distinct adjacent source planes do not falsely collide",
-          "status": "FAIL",
-          "checks": 0,
-          "reason": "Различные плоскости 479.82000000000011 и 479.82000000000005 мм совпадают в CAD double; точная вставка невозможна."
-        },
-        {
-          "name": "true CAD coordinate collision still refuses",
-          "status": "PASS",
-          "checks": 1
-        },
-        {
-          "name": "1200 typed predecessor center successor numeric exports",
-          "status": "FAIL",
-          "checks": 189,
-          "reason": "profileresult: 479.82000000000011 != 479.82000000000005"
-        }
-      ],
-      "probe_sha256": "9e315f63176c9c4f819d7438bf475f3f76bd1e0028d0b6f5f397f3ea8a3b5033",
-      "probe_source": "using System;using System.IO;using System.Linq;using System.Collections.Generic;using System.Globalization;using System.Web.Script.Serialization;using AFramePlugin;\nclass ExportProbe{\nstatic int checks=0;static List<object>cases=new List<object>();static JavaScriptSerializer J=new JavaScriptSerializer();static FrameSolutionSelection sample;\nstatic decimal D(double x){return decimal.Parse(x.ToString(\"R\",CultureInfo.InvariantCulture),NumberStyles.Float,CultureInfo.InvariantCulture);}static double O(decimal x){return double.Parse(x.ToString(\"G29\",CultureInfo.InvariantCulture),NumberStyles.Float,CultureInfo.InvariantCulture);}static void Eq(double actual,double expected,string name){checks++;if(BitConverter.DoubleToInt64Bits(actual)!=BitConverter.DoubleToInt64Bits(expected))throw new Exception(name+\": \"+actual.ToString(\"R\")+\" != \"+expected.ToString(\"R\"));}\nstatic FrameSolutionSelection S(double? front,params double[]layers){var s=FrameNodeGeometry.CloneSelection(sample);s.geometry.cladding_front_offset_mm=front;s.geometry.insulation_layers_mm=new List<double>(layers);return s;}\nstatic void Check(string name,Action action){int first=checks;try{action();cases.Add(new{name,status=\"PASS\",checks=checks-first});}catch(Exception e){cases.Add(new{name,status=\"FAIL\",checks=checks-first,reason=e.Message});}}\nstatic void Audit(FrameSolutionSelection s,FrameNodeGeometryInput i){var r=FrameNodeGeometry.Evaluate(s,i);decimal total=0;var locations=new Dictionary<string,decimal>{{\"wall\",0}};foreach(var l in r.Layers){var n=D(s.geometry.insulation_layers_mm[l.Index-1]);Eq(l.StartXMm,O(total),\"layerstart\");Eq(l.ThicknessMm,s.geometry.insulation_layers_mm[l.Index-1],\"thickness\");total+=n;Eq(l.EndXMm,O(total),\"layerend\");locations.Add(\"insulation_\"+l.Index,total);}if(r.Layers.Count>0)Eq(r.InsulationOuterXMm.Value,O(total),\"insulationresult\");if(s.geometry.cladding_front_offset_mm.HasValue){Eq(r.CladdingFrontXMm.Value,s.geometry.cladding_front_offset_mm.Value,\"frontresult\");locations.Add(\"cladding_front\",D(s.geometry.cladding_front_offset_mm.Value));}if(i.profile_near_face_x_mm.HasValue){Eq(r.ProfileNearFaceXMm.Value,i.profile_near_face_x_mm.Value,\"profileresult\");locations.Add(\"profile_near\",D(i.profile_near_face_x_mm.Value));}if(i.clearance_surface.membrane_outer_x_mm.HasValue)locations.Add(\"membrane_outer\",D(i.clearance_surface.membrane_outer_x_mm.Value));foreach(var p in r.Planes)Eq(p.XMm,O(locations[p.Id]),\"plane:\"+p.Id);foreach(var d in r.Dimensions){Eq(d.ValueMm,double.Parse(d.ValueText,CultureInfo.InvariantCulture),\"dimvalue:\"+d.Id);if(d.Id.StartsWith(\"layer_\")){int n=int.Parse(d.Id.Substring(6));Eq(d.FromXMm,O(n==1?0:locations[\"insulation_\"+(n-1)]),\"dimfrom\");Eq(d.ToXMm,O(locations[\"insulation_\"+n]),\"dimto\");}else if(d.Id!=\"local_clearance\"){Eq(d.FromXMm,0,\"dimorigin\");Eq(d.ToXMm,d.ValueMm,\"dimoffset\");}else{Eq(d.FromXMm,r.ClearanceSurfaceXMm.Value,\"gapfrom\");Eq(d.ToXMm,r.ProfileNearFaceXMm.Value,\"gapto\");}}if(r.GapMm.HasValue)Eq(r.GapMm.Value,double.Parse(r.GapText,CultureInfo.InvariantCulture),\"gapresult\");if(r.ClearanceSurfaceXMm.HasValue)Eq(r.ClearanceSurfaceXMm.Value,O(i.clearance_surface.kind==FrameNodeClearanceSurface.Layers?total:D(i.clearance_surface.membrane_outer_x_mm.Value)),\"surfaceresult\");}\nstatic int Main(string[]args){sample=FrameSolutionSelection.FromDict(J.DeserializeObject(File.ReadAllText(args[0])));double up=BitConverter.Int64BitsToDouble(BitConverter.DoubleToInt64Bits(479.82)+1),up2=BitConverter.Int64BitsToDouble(BitConverter.DoubleToInt64Bits(479.82)+2);\nCheck(\"tiny exact declared layer exports all surfaces\",()=>Audit(S(null,1e-28),FrameNodeGeometryInput.CreateDefault()));\nCheck(\"adjacent cladding coordinate exports all properties\",()=>Audit(S(up,100,50),FrameNodeGeometryInput.CreateDefault()));\nCheck(\"adjacent profile membrane output chain\",()=>Audit(S(600,100,50),new FrameNodeGeometryInput{profile_near_face_x_mm=up,clearance_surface=new FrameNodeClearanceSurface{kind=FrameNodeClearanceSurface.Membrane,membrane_outer_x_mm=459.82000000000005}}));\nCheck(\"distinct adjacent source planes do not falsely collide\",()=>{var i=FrameNodeGeometryInput.CreateDefault();i.profile_near_face_x_mm=up;var r=FrameNodeGeometry.Evaluate(S(up2,100,50),i);if(!r.CanInsert)throw new Exception(\"unexpected rejection\");Audit(S(up2,100,50),i);});\nCheck(\"true CAD coordinate collision still refuses\",()=>{bool refused=false;try{FrameNodeGeometry.Evaluate(S(null,1e15,0.01),FrameNodeGeometryInput.CreateDefault());}catch(FrameNodeGeometryException e){refused=e.Code==\"E_NODE_CAD_PRECISION\";}checks++;if(!refused)throw new Exception(\"missing real collision refusal\");});\nCheck(\"1200 typed predecessor center successor numeric exports\",()=>{foreach(Dictionary<string,object> c in (object[])J.DeserializeObject(File.ReadAllText(args[1]))){var layers=((object[])c[\"layers\"]).Select(Convert.ToDouble).ToArray();double center=Convert.ToDouble(c[\"base_profile\"]);int delta=Convert.ToInt32(c[\"delta\"]);var input=new FrameNodeGeometryInput{profile_near_face_x_mm=BitConverter.Int64BitsToDouble(BitConverter.DoubleToInt64Bits(center)+delta),clearance_surface=new FrameNodeClearanceSurface{kind=FrameNodeClearanceSurface.Layers}};Audit(S(null,layers),input);}});\nvar report=new{status=cases.All(x=>(string)x.GetType().GetProperty(\"status\").GetValue(x,null)==\"PASS\")?\"PASS\":\"FAIL\",checks,cases};Console.WriteLine(J.Serialize(report));return report.status==\"PASS\"?0:1;}}\n",
-      "after_sha256": "1b4d2abfc6b233f1b48b13a1d4272b01c701e8fd9a49896613a0834a467caad3",
-      "before_sha256": "1b28c0785f0c5bcb19cd70563511d07f7594cf7f587f8f6d997166e02a8248f4",
-      "runtime": "Mono6.8; actual pure core; no UI/CAD doubles"
-    }
+    "bound_source_guard": "ValidateBoundSelection сверяет точные исходные defaults/overrides с resolved selection; численный дрейф даёт отказ, а не исправление старой проектной модели."
   },
   "immutable_provenance": [
     "Результаты и примитивы имеют private-set значения и read-only коллекции; ToDict создаёт отделённые коллекции.",
@@ -187,16 +87,16 @@
   ],
   "cad": {
     "status": "PASS",
-    "checks": 33,
-    "manifest_sha256": "01480e616848c514856c95c4fb2f653e6cb0277599547ae6d23645143e26d50b",
+    "checks": 30,
+    "manifest_sha256": "7b158a6757b6cfff6d6d8901cace1c489ff590ff39027378a02ee50c3b67f659",
     "source_sha256": {
       "tools/node_geometry_0110/NodeCadDoubles.cs": "cf532061c902d851ff51ed24860ebcbe07a65654856f301fd8cd814206d93882",
       "tools/node_geometry_0110/NodeCommandDoubles.cs": "25389153e65be4e70b75a61a4204b1a9a622152663c72fcced4fb585c8943f59",
-      "tools/node_geometry_0110/NodeCadProbe.cs": "9c72c204654f4c14c9eacb522b108d92b083a79b2ecb56eef117374fd00647cb",
+      "tools/node_geometry_0110/NodeCadProbe.cs": "e7d24f4e0f6fdca662a09fd0946faa8673ad2d83d0ff26462665b43efff73197",
       "Common/FacadeProjectParameterStore.cs": "71c1c2283e260514ee633c525fb8174b0e155b8e595c6433c021dcec847b948e",
       "AFrame/src/AFramePlugin/FrameSolutionSelection.cs": "cb25b6e890ce2f1e5ee458f1e378510d21f7205e529ee1894520ed686a3abd66",
       "AFrame/src/AFramePlugin/FrameProjectParameters.cs": "612c46eabcb1c7c80c86e5a3e0fed2153a809b8f2b1734b1e9b596e2e26ec7f1",
-      "AFrame/src/AFramePlugin/FrameNodeGeometry.cs": "50f1f3d869ae141c9cb38f0efd867b28dfa24afc746002faa70740579fc24d37",
+      "AFrame/src/AFramePlugin/FrameNodeGeometry.cs": "cc73d9c0418f7d99718b1bcccdf6a624830ed984d9da276125043d7a0294f9df",
       "AFrame/src/AFramePlugin/FrameNodeDrawing.cs": "42d24cf17582e84da1293a26ff059a0c49ec37f9c1063f3eaa72835bf5e62b88",
       "AFrame/src/AFramePlugin/FrameNodeRenderer.cs": "80c0a621f592463b933c26414eb6a0db3985a9bd272cae72589568b0e1d19034",
       "AFrame/src/AFramePlugin/FrameNodeStore.cs": "3a6bfdef84f62d1c97d5fb4dc51667671db1053635e6c4cb45a370073ad87ae5",
@@ -323,18 +223,6 @@
         "status": "PASS"
       },
       {
-        "name": "actual renderer and stored snapshot preserve nextUp479.82 cladding coordinate bit for bit",
-        "status": "PASS"
-      },
-      {
-        "name": "actual renderer and stored tiny layer-only partial preserve 1e-28 bit for bit",
-        "status": "PASS"
-      },
-      {
-        "name": "actual command refuses legacy source drift before UI and permits only exact numeric declarations",
-        "status": "PASS"
-      },
-      {
         "name": "actual node CAD work stays bounded with unrelated ModelSpace and repeated checks",
         "status": "PASS"
       }
@@ -355,7 +243,7 @@
       {
         "kind": "layers",
         "count": 1,
-        "elapsed_ms": 0.5646,
+        "elapsed_ms": 0.4354,
         "bytes": 2628,
         "planes": 4,
         "dimensions": 4
@@ -363,7 +251,7 @@
       {
         "kind": "layers",
         "count": 100,
-        "elapsed_ms": 3.3992,
+        "elapsed_ms": 3.8614,
         "bytes": 35434,
         "planes": 103,
         "dimensions": 103
@@ -371,7 +259,7 @@
       {
         "kind": "layers",
         "count": 1000,
-        "elapsed_ms": 34.598800000000004,
+        "elapsed_ms": 32.5704,
         "bytes": 343256,
         "planes": 1003,
         "dimensions": 1003
@@ -379,17 +267,17 @@
       {
         "kind": "independent_operations",
         "count": 1,
-        "elapsed_ms": 1.5653000000000001
+        "elapsed_ms": 0.5648000000000001
       },
       {
         "kind": "independent_operations",
         "count": 100,
-        "elapsed_ms": 38.4348
+        "elapsed_ms": 44.2962
       },
       {
         "kind": "independent_operations",
         "count": 1000,
-        "elapsed_ms": 377.031
+        "elapsed_ms": 449.4599
       }
     ],
     "cad_observations": [
@@ -399,7 +287,7 @@
         "primitive_visits": 47,
         "project_reads": 1,
         "zone_reads": 1,
-        "elapsed_ms": 6.5457,
+        "elapsed_ms": 7.9065,
         "claim": "synthetic only; no native host time"
       },
       {
@@ -408,7 +296,7 @@
         "primitive_visits": 4700,
         "project_reads": 100,
         "zone_reads": 100,
-        "elapsed_ms": 644.9806,
+        "elapsed_ms": 633.4085,
         "claim": "synthetic only; no native host time"
       },
       {
@@ -417,7 +305,7 @@
         "primitive_visits": 47000,
         "project_reads": 1000,
         "zone_reads": 1000,
-        "elapsed_ms": 6653.2689,
+        "elapsed_ms": 6937.768300000001,
         "claim": "synthetic only; no native host time"
       }
     ],
@@ -426,37 +314,10 @@
     "timing_boundary": "Синтетические наблюдения; не обещание скорости живого AutoCAD."
   },
   "remaining_validation": [
-    "Полные повторные repository gates и компиляция после fix — под ответственностью root.",
-    "Нужны повторный Windows CI и native WinForms visual review после CI209 fix; прежний CI209 не объявляется успешным.",
-    "Живая AutoCAD-приёмка вставки, GetPoint/UCS/DUCS, COPY, Save/reopen, Undo, шрифта и фактического сохранения тела остаётся обязательной."
+    "Полные repository gates и окончательная компиляция остаются под ответственностью root.",
+    "Windows numeric golden и native WinForms visual review — отдельные gates.",
+    "Живой AutoCAD должен проверить вставку, GetPoint/UCS/DUCS, COPY, Save/reopen, Undo, шрифт и фактическое сохранение тела."
   ],
   "live_autocad_checked": false,
-  "release_approved_by_this_review": false,
-  "review_history": [
-    {
-      "path": "docs/node_geometry_0110/independent_review_before_ci209_fix.json",
-      "sha256": "170a2adf4df081b45c4ee5af165d14718c88875cbfb2a906f0ed7fd86b2b761e",
-      "published_product_commit": "6287e6f13c9d14497c753d91849cf3d77d7e24e9",
-      "product_hashes_verified_against_commit": true,
-      "status_at_that_time": "PASS_WITH_SUBSEQUENT_DEFECT_FOUND_BY_CI209",
-      "subsequent_finding": "Прежний независимый oracle проверял точный текст/статус просвета и снимок; он не проверял побитовое соответствие всех public double полей точным входам. CI209 выявил +1ULP при decimal cast. Ранее выданный receipt сохранён без изменений и не выдаётся за проверку исправления."
-    }
-  ],
-  "algorithm_revision": "vector1_2015_4_2_1_planes/2",
-  "snapshot_update_policy": "Снимки прежнего или неизвестного algorithm version явно отклоняются E_NODE_ALGORITHM с требованием создать новый ATFNODE. Пересчёт/миграция старого паспорта автоматически не выполняется.",
-  "golden_validation": {
-    "status": "PASS",
-    "core_checks": 1270,
-    "native_checks": 1260,
-    "manifest_sha256": "5b8367514af295b4d0c3ad6be3143910256b9b68e9b875a01d01c29cb2f70f2e",
-    "fixture": "tools/node_geometry_0110/expected_digests.json",
-    "fixture_sha256": "91ac8ee6536b84a7ac454847415c82b654c1ac77a34fdd46f3d7ee917a53c4fa",
-    "algorithm_revision": "vector1_2015_4_2_1_planes/2"
-  },
-  "ui_fix_review": {
-    "strict_existing_assertions_preserved": true,
-    "numeric_diagnostics_added": true,
-    "crlf_change": "FrameNodeForm нормализует только разделители строк текста просмотра; точные численные значения и условия CanInsert неизменны.",
-    "native_windows_visual_confirmation": "pending next CI run; not inferred from Mono"
-  }
+  "release_approved_by_this_review": false
 }

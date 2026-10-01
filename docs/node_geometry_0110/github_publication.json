@@ -1,12 +1,20 @@
 {
-  "status": "LOCAL_VERIFIED_NOT_YET_PUBLISHED",
+  "status": "NUMERIC_FIX_LOCAL_VERIFIED_NOT_YET_PUBLISHED",
   "repository": "zinchenko-denis/AutoCAD",
   "branch": "feat/auto-reactor",
   "base_commit": "a4cd2908213552437da93b4888145b3c6aeadd5b",
-  "product_commit": null,
+  "product_commit": "6287e6f13c9d14497c753d91849cf3d77d7e24e9",
   "github_actions": {
-    "status": "NOT_STARTED",
-    "reason": "Pending source publication"
+    "head_sha": "6287e6f13c9d14497c753d91849cf3d77d7e24e9",
+    "run_id": 36846674074,
+    "run_number": 209,
+    "event": "push",
+    "status": "completed",
+    "conclusion": "failure",
+    "html_url": "https://github.com/zinchenko-denis/AutoCAD/actions/runs/36846674074",
+    "created_at": "2026-10-01T10:03:12Z",
+    "updated_at": "2026-10-01T10:08:02Z",
+    "job_id": 110318349150
   },
   "main_changed": false,
   "release_published": false,

@@ -10,7 +10,7 @@ using AFramePlugin;
 internal static class NodeCoreProbe
 {
     private static readonly JavaScriptSerializer Json = new JavaScriptSerializer { MaxJsonLength = int.MaxValue };
-    private static readonly List<object> Cases = new List<object>(), Numeric = new List<object>(), Performance = new List<object>();
+    private static readonly List<object> Cases = new List<object>(), Numeric = new List<object>(), Performance = new List<object>(), CadConversions = new List<object>();
     private static FrameSolutionSelection Sample; private static int Checks, Failed;
     private static void Need(bool value, string reason) { Checks++; if (!value) throw new Exception(reason); }
     private static void Case(string name, Action action)
@@ -25,6 +25,12 @@ internal static class NodeCoreProbe
     { var p = FrameProjectParameters.CreateNext(null, s, "0123456789abcdef0123456789abcdef"); var z = FrameZoneParameters.CreateNext(null, p, new Dictionary<string, FrameParameterOverride>());
       return FrameParameterResolver.Resolve(p, new string('a', 64), z, new string('b', 64), "A1", "Ф-1").Context; }
     private static Dictionary<string, object> Dict(object value) { return (Dictionary<string, object>)value; }
+    private static void SameBits(string field, double expected, double actual)
+    {
+        long expectedBits = BitConverter.DoubleToInt64Bits(expected), actualBits = BitConverter.DoubleToInt64Bits(actual);
+        CadConversions.Add(new { field, expected_r = expected.ToString("R", CultureInfo.InvariantCulture), actual_r = actual.ToString("R", CultureInfo.InvariantCulture), expected_bits = expectedBits.ToString(CultureInfo.InvariantCulture), actual_bits = actualBits.ToString(CultureInfo.InvariantCulture), equal = expectedBits == actualBits });
+        Need(expectedBits == actualBits, field + " changed IEEE754 bits");
+    }
     private static FrameNodeSnapshot Snapshot(FrameSolutionSelection s = null)
     { s = s ?? Selection(230, 100, 50); return FrameNodeSnapshot.Create(s, Context(s), Input(), "2026-10-01T00:00:00.0000000Z"); }
     private static void NumericCase(string name, double[] layers, double profile, string gap, string status, double? front = 230)
@@ -33,7 +39,8 @@ internal static class NodeCoreProbe
         Need(result.GapText == gap && result.ClearanceStatus == status, name + ": " + result.GapText + " " + result.ClearanceStatus);
         Need(result.CanInsert == (status == "pass"), "wrong insertion boundary");
         Need(result.Dimensions.Single(d => d.Id == "local_clearance").ValueText == gap, "dimension rounded gap");
-        Need(result.ReviewText().Contains(gap + " мм"), "review did not show exact value");
+            Need(result.ReviewText().Contains(gap + " мм"), "review did not show exact value");
+        SameBits(name + " numeric gap", double.Parse(gap,CultureInfo.InvariantCulture), result.GapMm.Value);
         Numeric.Add(new { name, gap_text = result.GapText, clearance_status = result.ClearanceStatus, can_insert = result.CanInsert, result_digest = result.ResultDigest, input_digest = result.InputDigest });
     }
     public static int Main(string[] args)
@@ -108,6 +115,8 @@ internal static class NodeCoreProbe
             Need(snap.Selection.geometry.cladding_front_offset_mm==230 && snap.Input.profile_near_face_x_mm==170 && snap.Context.origins["bracket.L_mm"]=="project_default","mutable snapshot exposure");
             foreach(string field in snap.ToDict().Keys) { var d=snap.ToDict(); d.Remove(field); Refuses(()=>FrameNodeSnapshot.FromDict(d)); }
             foreach(string field in new[]{"input_digest","result_digest","snapshot_digest","algorithm_revision"}) { var d=snap.ToDict(); d[field]=new string('f',64); Refuses(()=>FrameNodeSnapshot.FromDict(d)); }
+            var oldAlgorithm=snap.ToDict(); oldAlgorithm["algorithm_revision"]="vector1_2015_4_2_1_planes/1";
+            Refuses(()=>FrameNodeSnapshot.FromDict(oldAlgorithm),"E_NODE_ALGORITHM");
             var changed=snap.ToDict(); Dict(Dict(changed["selection"])["geometry"])["cladding_front_offset_mm"]=240; Refuses(()=>FrameNodeSnapshot.FromDict(changed));
             var origin=snap.ToDict(); Dict(Dict(origin["context"])["origins"])["bracket.L_mm"]="zone_override"; Refuses(()=>FrameNodeSnapshot.FromDict(origin),"E_NODE_DIGEST");
             var revision=snap.ToDict(); Dict(Dict(revision["context"])["project"])["revision"]=2; Refuses(()=>FrameNodeSnapshot.FromDict(revision),"E_NODE_DIGEST");
@@ -144,6 +153,40 @@ internal static class NodeCoreProbe
             var cr=FrameParameterResolver.Resolve(p,new string('a',64),clear,new string('d',64),"A1","Ф-1");
             FrameNodeGeometry.ValidateBoundSelection(cr.Selection,cr.Context,p.ToDict(),clear.ToDict()); Need(true,"exact clear");
         });
+        Case("CAD numeric export preserves exact roundtrip across every public field", () => {
+            var tiny=Selection(null,1e-28); var cloned=FrameNodeGeometry.CloneSelection(tiny); var result=FrameNodeGeometry.Evaluate(tiny,FrameNodeGeometryInput.CreateDefault());
+            SameBits("tiny clone",1e-28,cloned.geometry.insulation_layers_mm[0]);
+            SameBits("tiny layer thickness",1e-28,result.Layers[0].ThicknessMm); SameBits("tiny layer end",1e-28,result.Layers[0].EndXMm);
+            SameBits("tiny plane",1e-28,result.Planes[1].XMm); SameBits("tiny dimension value",1e-28,result.Dimensions[0].ValueMm);
+            SameBits("tiny dimension end",1e-28,result.Dimensions[0].ToXMm); SameBits("tiny result outer",1e-28,result.InsulationOuterXMm.Value);
+            double adjacent=BitConverter.Int64BitsToDouble(BitConverter.DoubleToInt64Bits(479.82)+1);
+            var s=Selection(adjacent,100,50); result=FrameNodeGeometry.Evaluate(s,FrameNodeGeometryInput.CreateDefault());
+            SameBits("adjacent cloned front",adjacent,FrameNodeGeometry.CloneSelection(s).geometry.cladding_front_offset_mm.Value);
+            SameBits("adjacent result front",adjacent,result.CladdingFrontXMm.Value); SameBits("adjacent plane",adjacent,result.Planes.Single(p=>p.Id=="cladding_front").XMm);
+            SameBits("adjacent dimension value",adjacent,result.Dimensions.Single(d=>d.Id=="cladding_offset").ValueMm);
+            SameBits("adjacent dimension end",adjacent,result.Dimensions.Single(d=>d.Id=="cladding_offset").ToXMm);
+            var layers=Selection(null,459.82,20.00000000000005,1);
+            result=FrameNodeGeometry.Evaluate(layers,FrameNodeGeometryInput.CreateDefault());
+            SameBits("adjacent layer end",adjacent,result.Layers[1].EndXMm); SameBits("adjacent layer start",adjacent,result.Layers[2].StartXMm);
+            SameBits("adjacent dimension start",adjacent,result.Dimensions[2].FromXMm);
+            var local=Input(adjacent+20,FrameNodeClearanceSurface.Membrane,adjacent);
+            result=FrameNodeGeometry.Evaluate(Selection(null),local);
+            SameBits("adjacent result surface",adjacent,result.ClearanceSurfaceXMm.Value); SameBits("adjacent result profile",local.profile_near_face_x_mm.Value,result.ProfileNearFaceXMm.Value);
+            SameBits("adjacent membrane plane",adjacent,result.Planes.Single(p=>p.Id=="membrane_outer").XMm);
+            double nextPlane=BitConverter.Int64BitsToDouble(BitConverter.DoubleToInt64Bits(479.82)+2);
+            var distinct=FrameNodeGeometry.Evaluate(Selection(nextPlane,100,50),Input(adjacent,FrameNodeClearanceSurface.Unknown));
+            Need(distinct.CanInsert && distinct.ClearanceStatus=="not_evaluated","distinct neighboring planes falsely collided");
+            SameBits("distinct neighbor profile",adjacent,distinct.ProfileNearFaceXMm.Value); SameBits("distinct neighbor front",nextPlane,distinct.CladdingFrontXMm.Value);
+            Refuses(()=>FrameNodeGeometry.Evaluate(Selection(null,1e15,0.01),FrameNodeGeometryInput.CreateDefault()),"E_NODE_CAD_PRECISION");
+            foreach(var selected in new[]{tiny,s}) {
+                var context=Context(Selection(230,100,50)); context.effective_digest=FrameParameterResolver.SelectionDigest(selected);
+                var snapshot=FrameNodeSnapshot.Create(selected,context,FrameNodeGeometryInput.CreateDefault(),"2026-10-01T00:00:00.0000000Z");
+                var restored=FrameNodeSnapshot.FromDict(Json.DeserializeObject(Json.Serialize(snapshot.ToDict())));
+                Need(restored.SnapshotDigest==snapshot.SnapshotDigest && restored.Result.ResultDigest==snapshot.Result.ResultDigest,"numeric CAD export changed snapshot roundtrip");
+                if(selected.geometry.cladding_front_offset_mm.HasValue) SameBits("adjacent snapshot front",adjacent,restored.Result.CladdingFrontXMm.Value);
+                else SameBits("tiny snapshot layer",1e-28,restored.Result.Layers[0].ThicknessMm);
+            }
+        });
         Case("linear output cardinality and independent operation measurements", () => {
             int previousBytes=0;
             foreach(int count in new[]{1,100,1000}) {
@@ -156,7 +199,7 @@ internal static class NodeCoreProbe
             }
             foreach(int count in new[]{1,100,1000}) { var s=Selection(230,100,50); var input=Input(); var watch=Stopwatch.StartNew(); for(int i=0;i<count;i++) Need(FrameNodeGeometry.Evaluate(s,input).GapText=="20","operation leaked state"); watch.Stop(); Performance.Add(new {kind="independent_operations",count,elapsed_ms=watch.Elapsed.TotalMilliseconds}); }
         });
-        var output=new { status=Failed==0?"PASS":"FAIL",checks=Checks,failed=Failed,cases=Cases,numeric=Numeric,performance=Performance,snapshot=Snapshot().ToDict(),live_autocad_checked=false };
+        var output=new { status=Failed==0?"PASS":"FAIL",checks=Checks,failed=Failed,cases=Cases,numeric=Numeric,performance=Performance,cad_conversions=CadConversions,snapshot=Snapshot().ToDict(),live_autocad_checked=false };
         File.WriteAllText(args[1],Json.Serialize(output)); Console.WriteLine("Node core: "+Checks+" checks, "+Failed+" failures"); return Failed==0?0:1;
     }
 }

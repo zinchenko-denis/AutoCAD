@@ -76,7 +76,7 @@ def main():
             files.append(Path(path).resolve())
     files += [engine / "systems.json", engine / "assembly_catalog.json"]
     manifest = {"status": "PASS", "checks": native["checks"] + len(checks), "native_checks": native["checks"],
-        "cases": native["cases"] + checks, "numeric": native["numeric"], "performance": native["performance"],
+        "cases": native["cases"] + checks, "numeric": native["numeric"], "performance": native["performance"], "cad_conversions": native["cad_conversions"],
         "legacy_frame_baseline": baseline, "live_autocad_checked": False,
         "scope": "Actual pure C# node core and unchanged real Python layout; no CAD/renderer",
         "source_sha256": {str(p.relative_to(ROOT)): hashlib.sha256(p.read_bytes()).hexdigest() for p in files}}

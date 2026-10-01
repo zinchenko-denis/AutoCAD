@@ -1,22 +1,22 @@
 {
-  "status": "LOCAL_PASS_WINDOWS_CI_UI_PENDING",
+  "status": "NUMERIC_FIX_LOCAL_PASS_WINDOWS_PENDING",
   "date_utc": "2026-10-01",
   "branch": "feat/auto-reactor",
   "base_commit": "a4cd2908213552437da93b4888145b3c6aeadd5b",
-  "product_commit": null,
-  "input_sha256_file": "input_sha256.json",
+  "product_commit": "6287e6f13c9d14497c753d91849cf3d77d7e24e9",
+  "input_sha256_file": "numeric_fix_input_sha256.json",
   "input_files_count": 246,
   "inputs_unchanged_during_final_gates": true,
   "checks": {
     "mandatory_groups": {
       "passed": 54,
       "total": 54,
-      "manifest": "gates_manifest.json"
+      "manifest": "numeric_fix_gates_manifest.json"
     },
     "facade_plugin_compile": {
       "passed": 3,
       "total": 3,
-      "manifest": "compile_manifest.json"
+      "manifest": "numeric_fix_compile_manifest.json"
     },
     "full_synthetic_and_roles": {
       "passed": 8,
@@ -24,13 +24,13 @@
       "manifest": "full_synthetic_manifest.json"
     },
     "node_core": {
-      "passed": 1234,
-      "manifest": "core_manifest.json"
+      "passed": 1270,
+      "manifest": "numeric_fix_core_manifest.json"
     },
     "node_actual_cad": {
-      "passed": 30,
-      "rollback_mutation_points": 54,
-      "manifest": "cad_manifest.json"
+      "passed": 33,
+      "manifest": "numeric_fix_cad_manifest.json",
+      "rollback_mutation_points": 54
     },
     "independent_review": {
       "status": "PASS",
@@ -45,8 +45,14 @@
       "manifest": "manual_examples.json"
     },
     "windows_ui": {
-      "status": "PENDING",
-      "expected_png": 31,
+      "status": "FAIL",
+      "checks": 377,
+      "failures": 2,
+      "run_id": 36846674074,
+      "reasons": [
+        "tiny declared layer numeric equality",
+        "next representable cladding coordinate numeric equality"
+      ],
       "live_autocad_checked": false
     }
   },
@@ -55,7 +61,7 @@
       {
         "kind": "layers",
         "count": 1,
-        "elapsed_ms": 0.6313000000000001,
+        "elapsed_ms": 0.40440000000000004,
         "bytes": 2628,
         "planes": 4,
         "dimensions": 4
@@ -63,7 +69,7 @@
       {
         "kind": "layers",
         "count": 100,
-        "elapsed_ms": 4.0339,
+        "elapsed_ms": 3.5304,
         "bytes": 35434,
         "planes": 103,
         "dimensions": 103
@@ -71,7 +77,7 @@
       {
         "kind": "layers",
         "count": 1000,
-        "elapsed_ms": 31.572100000000002,
+        "elapsed_ms": 35.0992,
         "bytes": 343256,
         "planes": 1003,
         "dimensions": 1003
@@ -79,17 +85,17 @@
       {
         "kind": "independent_operations",
         "count": 1,
-        "elapsed_ms": 0.4509
+        "elapsed_ms": 1.4759
       },
       {
         "kind": "independent_operations",
         "count": 100,
-        "elapsed_ms": 37.1796
+        "elapsed_ms": 39.899
       },
       {
         "kind": "independent_operations",
         "count": 1000,
-        "elapsed_ms": 351.9843
+        "elapsed_ms": 371.9726
       }
     ],
     "cad": [
@@ -99,7 +105,7 @@
         "primitive_visits": 47,
         "project_reads": 1,
         "zone_reads": 1,
-        "elapsed_ms": 8.546000000000001,
+        "elapsed_ms": 6.9628000000000005,
         "claim": "synthetic only; no native host time"
       },
       {
@@ -108,7 +114,7 @@
         "primitive_visits": 4700,
         "project_reads": 100,
         "zone_reads": 100,
-        "elapsed_ms": 764.5272,
+        "elapsed_ms": 660.486,
         "claim": "synthetic only; no native host time"
       },
       {
@@ -117,7 +123,7 @@
         "primitive_visits": 47000,
         "project_reads": 1000,
         "zone_reads": 1000,
-        "elapsed_ms": 6806.592500000001,
+        "elapsed_ms": 6579.3961,
         "claim": "synthetic only; no native host time"
       }
     ],
@@ -128,7 +134,7 @@
     "chapters": 20,
     "figures": 10,
     "dxf_files": 4,
-    "docx_sha256": "d79daaa1094203672512f8a7fdc7512e711178d75049059d4c8efd58407742fb",
+    "docx_sha256": "c9254368cbe045af4e7371b51e8faae23d8d70bae7f258f8c3d54327918a76a4",
     "visual_review": "all50pages plus independent changed-page review; FINAL_QA.json"
   },
   "boundaries": {
@@ -144,5 +150,10 @@
   },
   "live_autocad_checked": false,
   "release_published": false,
-  "prior_release": "build-104 stage2A only"
+  "prior_release": "build-104 stage2A only",
+  "historical_failure": {
+    "run_id": 36846674074,
+    "manifest": "windows_artifact_verification_ci209.json",
+    "ui_review": "ui_visual_review_ci209.json"
+  }
 }

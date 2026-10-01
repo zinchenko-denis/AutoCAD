@@ -1,0 +1,262 @@
+{
+  "schema": "aframe_decimal_cad_conversion_reproducer/1",
+  "status": "PASS",
+  "algorithm_revision": "vector1_2015_4_2_1_planes/2",
+  "source_sha256": "50f1f3d869ae141c9cb38f0efd867b28dfa24afc746002faa70740579fc24d37",
+  "runtime": "Mono 6.8; actual pure core native probe; no UI/CAD doubles",
+  "native_checks": 1260,
+  "cases": [
+    {
+      "field": "decimal_108_95_53_34 numeric gap",
+      "expected_r": "20",
+      "actual_r": "20",
+      "expected_bits": "4626322717216342016",
+      "actual_bits": "4626322717216342016",
+      "equal": true
+    },
+    {
+      "field": "decimal_85_03_37_89 numeric gap",
+      "expected_r": "20",
+      "actual_r": "20",
+      "expected_bits": "4626322717216342016",
+      "actual_bits": "4626322717216342016",
+      "equal": true
+    },
+    {
+      "field": "decimal_85_37_64 numeric gap",
+      "expected_r": "20",
+      "actual_r": "20",
+      "expected_bits": "4626322717216342016",
+      "actual_bits": "4626322717216342016",
+      "equal": true
+    },
+    {
+      "field": "next_down_170 numeric gap",
+      "expected_r": "19.999999999999972",
+      "actual_r": "19.999999999999972",
+      "expected_bits": "4626322717216342008",
+      "actual_bits": "4626322717216342008",
+      "equal": true
+    },
+    {
+      "field": "exact_170 numeric gap",
+      "expected_r": "20",
+      "actual_r": "20",
+      "expected_bits": "4626322717216342016",
+      "actual_bits": "4626322717216342016",
+      "equal": true
+    },
+    {
+      "field": "next_up_170 numeric gap",
+      "expected_r": "20.000000000000028",
+      "actual_r": "20.000000000000028",
+      "expected_bits": "4626322717216342024",
+      "actual_bits": "4626322717216342024",
+      "equal": true
+    },
+    {
+      "field": "gap_19_999 numeric gap",
+      "expected_r": "19.999",
+      "actual_r": "19.999",
+      "expected_bits": "4626322435741365305",
+      "actual_bits": "4626322435741365305",
+      "equal": true
+    },
+    {
+      "field": "gap_20_001 numeric gap",
+      "expected_r": "20.001",
+      "actual_r": "20.001",
+      "expected_bits": "4626322998691318727",
+      "actual_bits": "4626322998691318727",
+      "equal": true
+    },
+    {
+      "field": "next_up_479_82 numeric gap",
+      "expected_r": "20.00000000000005",
+      "actual_r": "20.00000000000005",
+      "expected_bits": "4626322717216342030",
+      "actual_bits": "4626322717216342030",
+      "equal": true
+    },
+    {
+      "field": "tiny clone",
+      "expected_r": "1E-28",
+      "actual_r": "1E-28",
+      "expected_bits": "4188260752279232537",
+      "actual_bits": "4188260752279232537",
+      "equal": true
+    },
+    {
+      "field": "tiny layer thickness",
+      "expected_r": "1E-28",
+      "actual_r": "1E-28",
+      "expected_bits": "4188260752279232537",
+      "actual_bits": "4188260752279232537",
+      "equal": true
+    },
+    {
+      "field": "tiny layer end",
+      "expected_r": "1E-28",
+      "actual_r": "1E-28",
+      "expected_bits": "4188260752279232537",
+      "actual_bits": "4188260752279232537",
+      "equal": true
+    },
+    {
+      "field": "tiny plane",
+      "expected_r": "1E-28",
+      "actual_r": "1E-28",
+      "expected_bits": "4188260752279232537",
+      "actual_bits": "4188260752279232537",
+      "equal": true
+    },
+    {
+      "field": "tiny dimension value",
+      "expected_r": "1E-28",
+      "actual_r": "1E-28",
+      "expected_bits": "4188260752279232537",
+      "actual_bits": "4188260752279232537",
+      "equal": true
+    },
+    {
+      "field": "tiny dimension end",
+      "expected_r": "1E-28",
+      "actual_r": "1E-28",
+      "expected_bits": "4188260752279232537",
+      "actual_bits": "4188260752279232537",
+      "equal": true
+    },
+    {
+      "field": "tiny result outer",
+      "expected_r": "1E-28",
+      "actual_r": "1E-28",
+      "expected_bits": "4188260752279232537",
+      "actual_bits": "4188260752279232537",
+      "equal": true
+    },
+    {
+      "field": "adjacent cloned front",
+      "expected_r": "479.82000000000005",
+      "actual_r": "479.82000000000005",
+      "expected_bits": "4647148698899442566",
+      "actual_bits": "4647148698899442566",
+      "equal": true
+    },
+    {
+      "field": "adjacent result front",
+      "expected_r": "479.82000000000005",
+      "actual_r": "479.82000000000005",
+      "expected_bits": "4647148698899442566",
+      "actual_bits": "4647148698899442566",
+      "equal": true
+    },
+    {
+      "field": "adjacent plane",
+      "expected_r": "479.82000000000005",
+      "actual_r": "479.82000000000005",
+      "expected_bits": "4647148698899442566",
+      "actual_bits": "4647148698899442566",
+      "equal": true
+    },
+    {
+      "field": "adjacent dimension value",
+      "expected_r": "479.82000000000005",
+      "actual_r": "479.82000000000005",
+      "expected_bits": "4647148698899442566",
+      "actual_bits": "4647148698899442566",
+      "equal": true
+    },
+    {
+      "field": "adjacent dimension end",
+      "expected_r": "479.82000000000005",
+      "actual_r": "479.82000000000005",
+      "expected_bits": "4647148698899442566",
+      "actual_bits": "4647148698899442566",
+      "equal": true
+    },
+    {
+      "field": "adjacent layer end",
+      "expected_r": "479.82000000000005",
+      "actual_r": "479.82000000000005",
+      "expected_bits": "4647148698899442566",
+      "actual_bits": "4647148698899442566",
+      "equal": true
+    },
+    {
+      "field": "adjacent layer start",
+      "expected_r": "479.82000000000005",
+      "actual_r": "479.82000000000005",
+      "expected_bits": "4647148698899442566",
+      "actual_bits": "4647148698899442566",
+      "equal": true
+    },
+    {
+      "field": "adjacent dimension start",
+      "expected_r": "479.82000000000005",
+      "actual_r": "479.82000000000005",
+      "expected_bits": "4647148698899442566",
+      "actual_bits": "4647148698899442566",
+      "equal": true
+    },
+    {
+      "field": "adjacent result surface",
+      "expected_r": "479.82000000000005",
+      "actual_r": "479.82000000000005",
+      "expected_bits": "4647148698899442566",
+      "actual_bits": "4647148698899442566",
+      "equal": true
+    },
+    {
+      "field": "adjacent result profile",
+      "expected_r": "499.82000000000005",
+      "actual_r": "499.82000000000005",
+      "expected_bits": "4647500542620330886",
+      "actual_bits": "4647500542620330886",
+      "equal": true
+    },
+    {
+      "field": "adjacent membrane plane",
+      "expected_r": "479.82000000000005",
+      "actual_r": "479.82000000000005",
+      "expected_bits": "4647148698899442566",
+      "actual_bits": "4647148698899442566",
+      "equal": true
+    },
+    {
+      "field": "distinct neighbor profile",
+      "expected_r": "479.82000000000005",
+      "actual_r": "479.82000000000005",
+      "expected_bits": "4647148698899442566",
+      "actual_bits": "4647148698899442566",
+      "equal": true
+    },
+    {
+      "field": "distinct neighbor front",
+      "expected_r": "479.82000000000011",
+      "actual_r": "479.82000000000011",
+      "expected_bits": "4647148698899442567",
+      "actual_bits": "4647148698899442567",
+      "equal": true
+    },
+    {
+      "field": "tiny snapshot layer",
+      "expected_r": "1E-28",
+      "actual_r": "1E-28",
+      "expected_bits": "4188260752279232537",
+      "actual_bits": "4188260752279232537",
+      "equal": true
+    },
+    {
+      "field": "adjacent snapshot front",
+      "expected_r": "479.82000000000005",
+      "actual_r": "479.82000000000005",
+      "expected_bits": "4647148698899442566",
+      "actual_bits": "4647148698899442566",
+      "equal": true
+    }
+  ],
+  "true_collision_refusal": "layers 1e15+0.01: E_NODE_CAD_PRECISION retained",
+  "false_collision_fixed": "nextUp479.82 and nextUp(nextUp479.82) remain distinct; unknown clearance stays not_evaluated",
+  "snapshot_policy": "Algorithm /1 explicitly rejected as E_NODE_ALGORITHM. /2 snapshots preserve result/input/digest through real JSON roundtrip. No legacy catalogue/project/resolver changes.",
+  "golden_revision": "decimal_cad_golden_revision.json"
+}

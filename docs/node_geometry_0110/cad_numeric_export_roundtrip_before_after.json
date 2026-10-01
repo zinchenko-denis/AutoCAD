@@ -1,0 +1,67 @@
+{
+  "schema": "aframe_node_numeric_cad_regression/1",
+  "date_utc": "2026-10-01T10:20:53.771569+00:00",
+  "scope": "Actual FrameNodeGeometry, FrameNodeDrawing, FrameNodeRenderer, FrameNodeStore and FrameNodeCommand with explicit in-memory CAD/prompt/canonical-zone seams. Direct snapshot fixture bypasses the old 2B2 resolver only for the exact renderer/store boundary; the command test invokes the actual existing resolver and rejects drift before UI and writes.",
+  "runner": "tools/node_geometry_0110/test_node_cad.py",
+  "live_autocad_checked": false,
+  "before": {
+    "source_commit": "6287e6f",
+    "method": "Compile current unchanged CAD probe and current CAD product sources while replacing only FrameNodeGeometry.cs with git show 6287e6f:AFrame/src/AFramePlugin/FrameNodeGeometry.cs in a temporary directory.",
+    "old_core_sha256": "cc73d9c0418f7d99718b1bcccdf6a624830ed984d9da276125043d7a0294f9df",
+    "checks": 33,
+    "passed": 30,
+    "failed": 3,
+    "failures": [
+      {
+        "name": "actual renderer and stored snapshot preserve nextUp479.82 cladding coordinate bit for bit",
+        "status": "FAIL",
+        "reason": "result changed cladding coordinate by one ULP"
+      },
+      {
+        "name": "actual renderer and stored tiny layer-only partial preserve 1e-28 bit for bit",
+        "status": "FAIL",
+        "reason": "tiny summary/layer drifted"
+      },
+      {
+        "name": "actual command refuses legacy source drift before UI and permits only exact numeric declarations",
+        "status": "FAIL",
+        "reason": "accepted command rounded its exact source"
+      }
+    ],
+    "sources_unchanged_during_run": true
+  },
+  "after": {
+    "core_sha256": "50f1f3d869ae141c9cb38f0efd867b28dfa24afc746002faa70740579fc24d37",
+    "checks": 33,
+    "passed": 33,
+    "failed": 0,
+    "sources_unchanged_during_run": true,
+    "source_sha256": {
+      "tools/node_geometry_0110/NodeCadDoubles.cs": "cf532061c902d851ff51ed24860ebcbe07a65654856f301fd8cd814206d93882",
+      "tools/node_geometry_0110/NodeCommandDoubles.cs": "25389153e65be4e70b75a61a4204b1a9a622152663c72fcced4fb585c8943f59",
+      "tools/node_geometry_0110/NodeCadProbe.cs": "9c72c204654f4c14c9eacb522b108d92b083a79b2ecb56eef117374fd00647cb",
+      "Common/FacadeProjectParameterStore.cs": "71c1c2283e260514ee633c525fb8174b0e155b8e595c6433c021dcec847b948e",
+      "AFrame/src/AFramePlugin/FrameSolutionSelection.cs": "cb25b6e890ce2f1e5ee458f1e378510d21f7205e529ee1894520ed686a3abd66",
+      "AFrame/src/AFramePlugin/FrameProjectParameters.cs": "612c46eabcb1c7c80c86e5a3e0fed2153a809b8f2b1734b1e9b596e2e26ec7f1",
+      "AFrame/src/AFramePlugin/FrameNodeGeometry.cs": "50f1f3d869ae141c9cb38f0efd867b28dfa24afc746002faa70740579fc24d37",
+      "AFrame/src/AFramePlugin/FrameNodeDrawing.cs": "42d24cf17582e84da1293a26ff059a0c49ec37f9c1063f3eaa72835bf5e62b88",
+      "AFrame/src/AFramePlugin/FrameNodeRenderer.cs": "80c0a621f592463b933c26414eb6a0db3985a9bd272cae72589568b0e1d19034",
+      "AFrame/src/AFramePlugin/FrameNodeStore.cs": "3a6bfdef84f62d1c97d5fb4dc51667671db1053635e6c4cb45a370073ad87ae5",
+      "AFrame/src/AFramePlugin/FrameNodeCommand.cs": "cc88ba17db4608ba99967330f24967a0f0cc278eaeef8f6cb29c97ff34909558",
+      "tools/node_geometry_0110/test_node_cad.py": "9f85d25212bd5a5fef21d5c667a0c58c2b65522bf98968b9be19b27f3b8f3c99",
+      "tools/quantities_3009/probe_runtime.py": "2d37fb13990a1b24129dfe79a81ce138875e3c86ef3211d1a3a4f9ec40d150e5"
+    }
+  },
+  "numeric_contract": {
+    "cladding_front_input_bits": 4647148698899442566,
+    "tiny_layer_input_bits": 4188260752279232537,
+    "renderer_store_assertions": "Exact IEEE754 bits in stored selection, reevaluated summary, planes/layers/dimensions, actual CAD Line X coordinates, and exact cladding dimension MText. No tolerance widening.",
+    "command_assertions": "If the existing project resolver drifts from exact raw declaration, E_NODE_SOURCE_PRECISION before form and no database mutation. Otherwise actual command create and check must preserve exact bits and report current.",
+    "algorithm_revision_after": "vector1_2015_4_2_1_planes/2"
+  },
+  "coverage_limits": [
+    "CAD object model and prompts are explicit test doubles, not a running AutoCAD host.",
+    "The old 2B2 resolver is unchanged; affected raw declarations are refused at the new node boundary.",
+    "Native COPY, Undo, UCS/DUCS and Save/reopen remain part of the future live pilot."
+  ]
+}

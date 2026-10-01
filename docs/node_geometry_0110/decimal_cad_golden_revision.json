@@ -1,0 +1,116 @@
+{
+  "schema": "aframe_node_golden_revision/1",
+  "reason": "CLR decimal-to-double casts changed public CAD coordinates by one ULP. Exact decimal text parsing corrects all exports and the collision map; the already-published algorithm /1 is rejected as E_NODE_ALGORITHM instead of reinterpreted. Algorithm /2 changes input/result/snapshot digests intentionally. Numerical status and exact label fixtures are unchanged.",
+  "old": {
+    "schema": "aframe_node_numeric_golden/1",
+    "algorithm_revision": "vector1_2015_4_2_1_planes/1",
+    "numeric": [
+      {
+        "name": "decimal_108_95_53_34",
+        "input_digest": "8da35f1141887a243ed68f64472c43d010168022d80cd121ceff0d35454776fa",
+        "result_digest": "dd1a52a7cc5a4f9a9470f5e9a731c70f1b87b7d73881acc80021722cc9701150"
+      },
+      {
+        "name": "decimal_85_03_37_89",
+        "input_digest": "cf113c237ba9690a6252f4a6467dd9288d994df81dfbdebd6d3fa1f59937e35a",
+        "result_digest": "0914130d4ddc88d986c6dee3e87ee0c2e0513a0b0998b7e6bdbbad1dc7d05a9b"
+      },
+      {
+        "name": "decimal_85_37_64",
+        "input_digest": "ccfceda3d867423c4a3936478cab269bdfc118070d0726bbdcfda87edf7fac15",
+        "result_digest": "592e35f154bf6375fb06a3db20941796de68645c93667e4c8b4ecb89e429bff5"
+      },
+      {
+        "name": "next_down_170",
+        "input_digest": "dfb3c7f7ad25413b2a5f2602aad3cc9e2d8066b21a579c618be6bdf2d97054f5",
+        "result_digest": "deaec31c10f20bab216e16cc3a1e5befc7b1c763442c019975a523c6756b5856"
+      },
+      {
+        "name": "exact_170",
+        "input_digest": "179ba8b06aee39aff57626bfa81b62557a9730a1b245853128b79a7b2257ca87",
+        "result_digest": "8fc461e5debc117fc98bc7e8c7e65dc1e4eac4bbc9916003113febd2693a4ff6"
+      },
+      {
+        "name": "next_up_170",
+        "input_digest": "571589d35b518c08e05649e968384b53c7f39a79654cd9ea35ca14dd953a06fd",
+        "result_digest": "9c8e29f09e325b14da869c9db9749db349af3861a9df8cb213dc6e7c1c4ddaa6"
+      },
+      {
+        "name": "gap_19_999",
+        "input_digest": "d00588712b9a20ca324b34a64151685e406c9b48624e3e0bc62720fe57bbc7bd",
+        "result_digest": "74b3c0736aee6181bf2c89e24767a30fa78908e502707f60f034ca25451aeb0b"
+      },
+      {
+        "name": "gap_20_001",
+        "input_digest": "7be23a8ed33c92595c82298415c8ba98c019cb81a0cd16ca9644394563d33348",
+        "result_digest": "5d0c61cc6f3a995ef694d40ecf9fb233aaec4484600d466b444e5252d8178351"
+      },
+      {
+        "name": "next_up_479_82",
+        "input_digest": "3ffa9df266f8e3ffe33089bff8552be74932163b197c557b8aaa4612558820f6",
+        "result_digest": "80443c2e7434e7e5b5204eabfea55b5dac680c2a6e1719ec79a99c070d3aba91"
+      }
+    ],
+    "snapshot": {
+      "input_digest": "ea61ea9de46ac1da19e285aba2cac71aabdeccbdd96be0e895ef7bad42637b6b",
+      "result_digest": "ec22a4b4cf25ea4b7fa017feba58e836ff0b0356a4ba864bf985c476127a50d6",
+      "snapshot_digest": "55c32a58b6a38a89ffffdac4b43f55877e701934b4edb3a5d3f53e20e6bdbbcd"
+    }
+  },
+  "new": {
+    "schema": "aframe_node_numeric_golden/1",
+    "algorithm_revision": "vector1_2015_4_2_1_planes/2",
+    "numeric": [
+      {
+        "name": "decimal_108_95_53_34",
+        "input_digest": "d18121198a8160ffea235c08af3bbbf5bd38576675a4e901ba5481fc001f6624",
+        "result_digest": "067db65559340db4528003020cd65fa738c0da7dcef4e3ac479e7400fb7ecb0b"
+      },
+      {
+        "name": "decimal_85_03_37_89",
+        "input_digest": "bba34ad92030e50a4cf48ec29cb117f3b6a0eeaa388308ae01274e130d1b1d6e",
+        "result_digest": "2e8e6f7e104decd2288f27071f664ed9444773941380f74c1584dfabcaf48c6d"
+      },
+      {
+        "name": "decimal_85_37_64",
+        "input_digest": "b12618021252a98baf6e9f08745f1d4fa817c7562276086d11d8505b100ba9d1",
+        "result_digest": "8d1d5f00023a48371686cc6528dab1449456929cd9193aa1793ae5d4ca41669f"
+      },
+      {
+        "name": "next_down_170",
+        "input_digest": "49c708b305d3ca009b3d4aab376b2876f3d7d47d45590af0f8daeb99a5acb256",
+        "result_digest": "ca47f7c416b9b6e5c4062e52b05630933239d5007116b9e0cc2ecc13c42331f9"
+      },
+      {
+        "name": "exact_170",
+        "input_digest": "7ba277a136920b5a44eb2e569758b2ebbb7ff346e94c9fb504f643e7784361de",
+        "result_digest": "3c8c2b8a73f059c910e26b50325ab8f27311e5f369be7cd7a0b749c97cae62c5"
+      },
+      {
+        "name": "next_up_170",
+        "input_digest": "21658ff2459a05c285f44ad31b6bc4d0f358ab9758443cbc41366365ab6f7c09",
+        "result_digest": "f768fa336dc766b4f52a35fcb155363a31b03208b539c17fabeb32e2c46ae710"
+      },
+      {
+        "name": "gap_19_999",
+        "input_digest": "e70f532f3753be7cb16fa20ac7055bf571da0b03d6d12edbb1766f693a16bff2",
+        "result_digest": "e3364cb5f35976f2cf0cb49d629a84372d01df80fcc1b4fffdcb99ac0e2b85eb"
+      },
+      {
+        "name": "gap_20_001",
+        "input_digest": "0efb04aed721c66a7a463fe1fd85f2c1567b7b6e76a3f47d13192c4671f306d3",
+        "result_digest": "dda4ad56ae5d5b503208ca0b8e17128a9c2324c4baeaacd01f223739ddc6e436"
+      },
+      {
+        "name": "next_up_479_82",
+        "input_digest": "27c1d99de99be6f0931f4556d24928881108a1a5419d823b739935abe00c5708",
+        "result_digest": "f355c0fa4c5e6b48bb5ddec067f6c0f024f06d4ec7d1e36332b3820e67c164c5"
+      }
+    ],
+    "snapshot": {
+      "input_digest": "75e1831150c8896d494c1c942d43bb88577a33d59c96079050f9f9e71dcfb933",
+      "result_digest": "0d92c385d0960a82bea515d6644ed8d6397a7dbdabbf863ff12545d95c942930",
+      "snapshot_digest": "e886ab45d9f40a738c540e1446eb2c7d95ac1b152ec2572665ea7bc03c6e9968"
+    }
+  }
+}

@@ -1,0 +1,65 @@
+{
+  "schema": "aframe_decimal_cad_conversion_reproducer/1",
+  "status": "REPRODUCED",
+  "source_sha256": "cc73d9c0418f7d99718b1bcccdf6a624830ed984d9da276125043d7a0294f9df",
+  "runtime": "Mono 6.8; real pure core, no UI/CAD doubles",
+  "cases": [
+    {
+      "field": "tiny clone",
+      "expected_r": "1E-28",
+      "expected_bits": "4188260752279232537",
+      "actual_r": "1E-28",
+      "actual_bits": "4188260752279232537",
+      "equal": true
+    },
+    {
+      "field": "tiny layer",
+      "expected_r": "1E-28",
+      "expected_bits": "4188260752279232537",
+      "actual_r": "1.0000000000000001E-28",
+      "actual_bits": "4188260752279232538",
+      "equal": false
+    },
+    {
+      "field": "tiny plane",
+      "expected_r": "1E-28",
+      "expected_bits": "4188260752279232537",
+      "actual_r": "1.0000000000000001E-28",
+      "actual_bits": "4188260752279232538",
+      "equal": false
+    },
+    {
+      "field": "front clone",
+      "expected_r": "479.82000000000005",
+      "expected_bits": "4647148698899442566",
+      "actual_r": "479.82000000000005",
+      "actual_bits": "4647148698899442566",
+      "equal": true
+    },
+    {
+      "field": "front result",
+      "expected_r": "479.82000000000005",
+      "expected_bits": "4647148698899442566",
+      "actual_r": "479.82000000000011",
+      "actual_bits": "4647148698899442567",
+      "equal": false
+    },
+    {
+      "field": "front plane",
+      "expected_r": "479.82000000000005",
+      "expected_bits": "4647148698899442566",
+      "actual_r": "479.82000000000011",
+      "actual_bits": "4647148698899442567",
+      "equal": false
+    },
+    {
+      "field": "front dimension",
+      "expected_r": "479.82000000000005",
+      "expected_bits": "4647148698899442566",
+      "actual_r": "479.82000000000011",
+      "actual_bits": "4647148698899442567",
+      "equal": false
+    }
+  ],
+  "interpretation": "Exact typed selection cloning preserved input bits; CLR decimal-to-double exports changed plane/layer/dimension/result by +1 ULP. This corroborates two Windows CI209 native UI assertions, not a test expectation failure."
+}

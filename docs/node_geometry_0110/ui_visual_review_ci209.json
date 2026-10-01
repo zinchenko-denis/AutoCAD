@@ -1,0 +1,236 @@
+{
+  "schema": "facade_ui_visual_review/1",
+  "status": "FAIL",
+  "reviewed_commit": "6287e6f13c9d14497c753d91849cf3d77d7e24e9",
+  "github_run_id": 36846674074,
+  "github_run_number": 209,
+  "artifact_id": 11154485150,
+  "artifact_sha256": "bdfbf40fafab8e5d6d2f4da281b4b4175c81b530d6bf32babf6430c8e6f6e8e9",
+  "artifact_digest_verified_by": "root",
+  "reviewer": "connection_ui",
+  "live_autocad_checked": false,
+  "image_count": 10,
+  "all_images_viewed_original": true,
+  "native_checks": {
+    "status": "FAIL",
+    "checks": 377,
+    "failures": 2,
+    "reasons": [
+      "UI selection cloning rounded a tiny declared layer before exact evaluation",
+      "UI viewing changed the next representable declared cladding coordinate"
+    ]
+  },
+  "images": [
+    {
+      "file": "node_blank.png",
+      "sha256": "4794f71f1aa4c41b281006cefa817a245785c6d172c0be5bc5c969f6e704d0df",
+      "width": 916,
+      "height": 689,
+      "review_detail": "original",
+      "status": "PASS",
+      "notes": "Пустые локальные координаты и неизвестная поверхность явны; вставка отключена до проверки. Поля, прокрутка и кнопки доступны."
+    },
+    {
+      "file": "node_partial.png",
+      "sha256": "1100f3e518abbb54df65986e0c77893129f42df9a79319628ae30b238f246208",
+      "width": 916,
+      "height": 689,
+      "review_detail": "original",
+      "status": "PASS_WITH_FINDING",
+      "notes": "Неполная схема явно не подтверждает локальный просвет. Вставка частичной схемы доступна после просмотра. Источник, основание и первый слой сливаются из-за одиночных LF."
+    },
+    {
+      "file": "node_valid.png",
+      "sha256": "b58bbde6a3cc7d860a7cbbf23121378d2976fe474bf308dd88b30cf0f4ea7f25",
+      "width": 916,
+      "height": 689,
+      "review_detail": "original",
+      "status": "PASS_WITH_FINDING",
+      "notes": "Локальный просвет 20 мм и ограничения читаются, кнопки доступны. Источник, основание и первый слой сливаются из-за одиночных LF."
+    },
+    {
+      "file": "node_rejected.png",
+      "sha256": "80e3abdfc2a0f32e2b7c1bdbcf122724df36111ad8e5f364def7002fc8b2e265",
+      "width": 916,
+      "height": 689,
+      "review_detail": "original",
+      "status": "PASS_WITH_FINDING",
+      "notes": "Просвет 19.999 мм показан точно; вставка отключена, Назад доступен. Источник, основание и первый слой сливаются из-за одиночных LF."
+    },
+    {
+      "file": "node_exact_boundary.png",
+      "sha256": "9bf7e8b336fe4e5d2c0fb04828327a47f6dbcba2dbdfb9e20c7261a5347b0d4d",
+      "width": 916,
+      "height": 689,
+      "review_detail": "original",
+      "status": "PASS_WITH_FINDING",
+      "notes": "Просвет 19.99999999999997 мм не округлён до 20, вставка отключена. Источник, основание и первый слой сливаются из-за одиночных LF."
+    },
+    {
+      "file": "node_membrane.png",
+      "sha256": "85e5ff495a8983f826f64c516ff7c9ce96b16b37efa4e493a254993f7bb77032",
+      "width": 916,
+      "height": 689,
+      "review_detail": "original",
+      "status": "PASS_WITH_FINDING",
+      "notes": "Явные поверхности ГП 190 мм и мембраны 170 мм дают локальный просвет 20 мм; ограничения видны. Начальные строки сливаются из-за одиночных LF."
+    },
+    {
+      "file": "node_small.png",
+      "sha256": "50d1f3ce397d5780ee2b1474d99bb08e6ae7489a8f73bd1665727fbe14a7bc8b",
+      "width": 760,
+      "height": 530,
+      "review_detail": "original",
+      "status": "PASS",
+      "notes": "Окно 760×530, реальная и managed клиентская область 744×491 совпадают. Поля доступны через прокрутку, нижние кнопки целиком видны."
+    },
+    {
+      "file": "node_large_font.png",
+      "sha256": "d54cdb714aca89748ce74e6935134bfc3632f7d8ba6d5fc224df4b4677752a1d",
+      "width": 1024,
+      "height": 728,
+      "review_detail": "original",
+      "status": "PASS",
+      "notes": "При 12 pt окно 1024×728 помещается на рабочем экране. Поля и кнопки читаются, прокрутка доступна; старого clipping нет."
+    },
+    {
+      "file": "node_large_font_review.png",
+      "sha256": "1474f8a17bbfb67f5f163a747410cb9d5c4853fe67a006bed0b0026e4cfeff49",
+      "width": 1024,
+      "height": 728,
+      "review_detail": "original",
+      "status": "PASS_WITH_FINDING",
+      "notes": "При 12 pt обзор и действия помещаются на экран. Источник, основание и первый слой сливаются из-за одиночных LF; остальные строки корректны."
+    },
+    {
+      "file": "node_contradiction.png",
+      "sha256": "f4fab50ccc98bdb77e5ecad9cf257626729c17c7612147804cf4b7ea6805d8a5",
+      "width": 916,
+      "height": 689,
+      "review_detail": "original",
+      "status": "PASS_WITH_FINDING",
+      "notes": "Пересечение слоёв 200 мм с облицовкой 180 мм объяснено; вставка отключена, Назад доступен. Начальные строки сливаются из-за одиночных LF."
+    }
+  ],
+  "layouts": [
+    {
+      "scenario": "node_blank",
+      "window": "{X=10,Y=10,Width=916,Height=689}",
+      "native_client": "{X=18,Y=41,Width=900,Height=650}",
+      "cached_client": "{X=0,Y=0,Width=900,Height=650}",
+      "screen": "{X=0,Y=0,Width=1024,Height=728}",
+      "font_points": 9,
+      "minimum_size": "{Width=760, Height=530}"
+    },
+    {
+      "scenario": "node_partial",
+      "window": "{X=10,Y=10,Width=916,Height=689}",
+      "native_client": "{X=18,Y=41,Width=900,Height=650}",
+      "cached_client": "{X=0,Y=0,Width=900,Height=650}",
+      "screen": "{X=0,Y=0,Width=1024,Height=728}",
+      "font_points": 9,
+      "minimum_size": "{Width=760, Height=530}"
+    },
+    {
+      "scenario": "node_valid",
+      "window": "{X=10,Y=10,Width=916,Height=689}",
+      "native_client": "{X=18,Y=41,Width=900,Height=650}",
+      "cached_client": "{X=0,Y=0,Width=900,Height=650}",
+      "screen": "{X=0,Y=0,Width=1024,Height=728}",
+      "font_points": 9,
+      "minimum_size": "{Width=760, Height=530}"
+    },
+    {
+      "scenario": "node_rejected",
+      "window": "{X=10,Y=10,Width=916,Height=689}",
+      "native_client": "{X=18,Y=41,Width=900,Height=650}",
+      "cached_client": "{X=0,Y=0,Width=900,Height=650}",
+      "screen": "{X=0,Y=0,Width=1024,Height=728}",
+      "font_points": 9,
+      "minimum_size": "{Width=760, Height=530}"
+    },
+    {
+      "scenario": "node_exact_boundary",
+      "window": "{X=10,Y=10,Width=916,Height=689}",
+      "native_client": "{X=18,Y=41,Width=900,Height=650}",
+      "cached_client": "{X=0,Y=0,Width=900,Height=650}",
+      "screen": "{X=0,Y=0,Width=1024,Height=728}",
+      "font_points": 9,
+      "minimum_size": "{Width=760, Height=530}"
+    },
+    {
+      "scenario": "node_membrane",
+      "window": "{X=10,Y=10,Width=916,Height=689}",
+      "native_client": "{X=18,Y=41,Width=900,Height=650}",
+      "cached_client": "{X=0,Y=0,Width=900,Height=650}",
+      "screen": "{X=0,Y=0,Width=1024,Height=728}",
+      "font_points": 9,
+      "minimum_size": "{Width=760, Height=530}"
+    },
+    {
+      "scenario": "node_small",
+      "window": "{X=10,Y=10,Width=760,Height=530}",
+      "native_client": "{X=18,Y=41,Width=744,Height=491}",
+      "cached_client": "{X=0,Y=0,Width=744,Height=491}",
+      "screen": "{X=0,Y=0,Width=1024,Height=728}",
+      "font_points": 9,
+      "minimum_size": "{Width=760, Height=530}"
+    },
+    {
+      "scenario": "node_large_font",
+      "window": "{X=0,Y=0,Width=1024,Height=728}",
+      "native_client": "{X=8,Y=31,Width=1008,Height=689}",
+      "cached_client": "{X=0,Y=0,Width=1008,Height=689}",
+      "screen": "{X=0,Y=0,Width=1024,Height=728}",
+      "font_points": 12,
+      "minimum_size": "{Width=973, Height=726}"
+    },
+    {
+      "scenario": "node_large_font_review",
+      "window": "{X=0,Y=0,Width=1024,Height=728}",
+      "native_client": "{X=8,Y=31,Width=1008,Height=689}",
+      "cached_client": "{X=0,Y=0,Width=1008,Height=689}",
+      "screen": "{X=0,Y=0,Width=1024,Height=728}",
+      "font_points": 12,
+      "minimum_size": "{Width=973, Height=726}"
+    },
+    {
+      "scenario": "node_contradiction",
+      "window": "{X=10,Y=10,Width=916,Height=689}",
+      "native_client": "{X=18,Y=41,Width=900,Height=650}",
+      "cached_client": "{X=0,Y=0,Width=900,Height=650}",
+      "screen": "{X=0,Y=0,Width=1024,Height=728}",
+      "font_points": 9,
+      "minimum_size": "{Width=760, Height=530}"
+    }
+  ],
+  "manifest_sha256": "475c6a56312fec4d65c01ef451bf83f9811d94a7c867423093c3319d5974b180",
+  "checks_sha256": "98eebbe62fd975e7b40be7e67a1cb33074123afbd5097e9723feb141de6fb316",
+  "layout_status": "PASS",
+  "blocking_findings": [
+    {
+      "id": "decimal-to-double-export",
+      "status": "FIXED_PENDING_WINDOWS_VERIFICATION",
+      "description": "Два точных численных UI утверждения выявили потерю одного ULP при экспорте результатов decimal в double. Типизированное клонирование исходного выбора сохраняет биты. Это дефект продукта, не ошибка ожиданий UI теста.",
+      "evidence": "decimal_cad_conversion_before.json",
+      "expected_actual": [
+        {
+          "expected": "1E-28",
+          "actual": "1.0000000000000001E-28"
+        },
+        {
+          "expected": "479.82000000000005",
+          "actual": "479.82000000000011"
+        }
+      ]
+    }
+  ],
+  "nonblocking_findings": [
+    {
+      "id": "native-review-linebreaks",
+      "status": "FIXED_PENDING_WINDOWS_VERIFICATION",
+      "description": "На семи снимках просмотра Windows TextBox склеивает первые строки ReviewText с одиночным LF: PDF 20.Основание и мм.Слой. Форме добавлена нормализация только отображаемого текста в CRLF, а native probe проверяет отдельные TextBox.Lines источника, основания и первого слоя. Исторические снимки CI209 содержат дефект. Полная проверка исправления ожидает следующего Windows CI."
+    }
+  ],
+  "conclusion": "Все 10 оригинальных снимков просмотрены. Геометрия окна, native границы и доступность кнопок прошли визуальную проверку. Общий результат FAIL сохранён из-за двух подтверждённых численных дефектов; чтение обзора также исправляется до следующего CI. Живой AutoCAD не проверялся."
+}
