@@ -29,9 +29,9 @@
   "release_published": false,
   "illustration_replay_manifest": "../project_params_0110/manual_examples.json",
   "illustration_geometry_matches_current": true,
-  "provenance_note": "Stage 2B2 source guide: one Vector-1 2015 pilot, explicit DWG project defaults and zone overrides, parameter provenance and freshness. All 47 pages visually inspected; 20 chapters, 10 illustrations and 4 DXF retained. Five tutorial replays match saved geometry and quantities. Source b1b4230 passed local checks; Windows CI has not started. Native Windows UI and live AutoCAD remain separate acceptance steps. Build-104 contains only preceding stage 2A.",
+  "provenance_note": "Stage 2B2 source guide: one Vector-1 2015 pilot, explicit DWG project defaults and zone overrides, parameter provenance and freshness. All 47 pages visually inspected; 20 chapters, 10 illustrations and 4 DXF retained. Five tutorial replays match saved geometry and quantities. Source b1b4230 plus equality fix75eb369 and window fixc4fd140 passed local checks and Windows CI208; all21 UI PNG inspected. Live AutoCAD remains a separate acceptance step. Build-104 contains only preceding stage 2A.",
   "product_base_commit": "375f082887a052bcba3d0379bd4946ef39b25604",
-  "product_source_state": "published_local_verified_windows_ci_pending",
+  "product_source_state": "published_local_and_windows_ci_ui_verified",
   "product_source_sha256": {
     "AClad/engine/audit_clad.py": "881ae022233fbc6ff178d2ea2f4842eb4cf7547a8cb33a8a29e69c435aad8a92",
     "AClad/engine/clad_engine.py": "cf7e3739c74517a6d4483572d19330901b11d6ef8f3eb4e95c42104645257e1e",
@@ -131,5 +131,6 @@
     "Facades/src/AFacadesPlugin/ZoneCommand.cs": "f4eee2cf9e1b3b4fcca7b34ac9d7d8c4a0d48ea2d6c543a5c7eee176f96bbdbb",
     "Facades/src/AFacadesPlugin/ZoneForm.cs": "30cc49edd277ffcdfe03261bdb82e4ff92dbaccca51284b543509ab86c40f178",
     "Facades/src/AFacadesPlugin/ZoneTable.cs": "9aad9aa85ebf1d41c40e6d3577a5df4e05ae207923f9658d790b39ad030c2c4b"
-  }
+  },
+  "validated_commit": "c4fd140d660965166fe02bd4fdac6306730a1fa6"
 }

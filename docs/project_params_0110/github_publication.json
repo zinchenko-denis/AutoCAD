@@ -1,26 +1,30 @@
 {
-  "status": "SOURCE_PUBLISHED_WINDOWS_UI_FAILURE_FIX_PENDING",
+  "status": "SOURCE_PUBLISHED_WINDOWS_CI_UI_PASS",
   "repository": "zinchenko-denis/AutoCAD",
   "branch": "feat/auto-reactor",
   "base_commit": "375f082887a052bcba3d0379bd4946ef39b25604",
   "product_commit": "b1b4230a4cfb5f53bc6e31f63254cc9dc80789f6",
   "product_tree": "23d7595f7afb3b500d051ac948028c3a41abe5e6",
   "remote_verified_by": "API ref plus git fetch and exact staged tree equality",
-  "observed_at_utc": "2026-10-01T08:20:42.344871+00:00",
+  "observed_at_utc": "2026-10-01T09:33:15.027252+00:00",
   "github_actions": {
-    "head_sha": "75eb369ac8231a1cf6311238ea12785a82abba43",
-    "run_id": 36841004585,
-    "run_number": 207,
+    "head_sha": "c4fd140d660965166fe02bd4fdac6306730a1fa6",
+    "run_id": 36842429225,
+    "run_number": 208,
     "event": "push",
     "status": "completed",
-    "conclusion": "failure",
-    "reason": "zone_small native/cached client size mismatch; 1730 native UI checks, one failure",
-    "equality_regression": "70 PASS; prior JSON order defect reproduced independently on Windows",
-    "next_action": "publish minimum-client-size fix after local gates, require green Windows CI and all21 PNG review before node geometry"
+    "conclusion": "success",
+    "html_url": "https://github.com/zinchenko-denis/AutoCAD/actions/runs/36842429225",
+    "ui_reviews": [
+      "ui_visual_review_ci208.json",
+      "legacy_ui_visual_review_ci208.json"
+    ]
   },
   "main_commit_unchanged": "e2a4e4df69a1936664c76c44cacff311ad44b07d",
   "release_published": false,
   "live_autocad_checked": false,
   "installer": "build-104 still contains stage2A only",
-  "equality_fix_commit": "75eb369ac8231a1cf6311238ea12785a82abba43"
+  "equality_fix_commit": "75eb369ac8231a1cf6311238ea12785a82abba43",
+  "validated_commit": "c4fd140d660965166fe02bd4fdac6306730a1fa6",
+  "ui_fix_commit": "c4fd140d660965166fe02bd4fdac6306730a1fa6"
 }

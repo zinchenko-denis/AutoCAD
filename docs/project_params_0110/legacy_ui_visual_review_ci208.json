@@ -1,0 +1,491 @@
+{
+  "schema": "legacy_solution_ui_visual_review/1",
+  "date": "2026-10-01",
+  "status": "PASS",
+  "blocking_findings": [],
+  "product_commit": "c4fd140d660965166fe02bd4fdac6306730a1fa6",
+  "run_id": 36842429225,
+  "run_number": 208,
+  "run_url": "https://github.com/zinchenko-denis/AutoCAD/actions/runs/36842429225",
+  "artifact": {
+    "id": 11152125702,
+    "name": "solution-ui",
+    "zip_sha256": "d7a536518f0dfc810d0d69fab94f5b835b3bc8e39226f83ed4e17d43281b256d",
+    "manifest_sha256": "d2e83ff268f55b7894da423ee885c64dd3970339cba40e5f9f8d43b31bd1cfc5",
+    "extracted_files_match_zip": true,
+    "verified_file_count": 18
+  },
+  "native_ui_checks": {
+    "status": "PASS",
+    "checks": 919,
+    "failures": 0,
+    "runtime": "Microsoft Windows NT 6.2.9200.0"
+  },
+  "source_verification": {
+    "tools/solution_catalog_0110/SolutionUiProbe.cs": {
+      "artifact_source_sha256": "3b8a205c4b6fe20b6b71d72129779c6bc5a0cf5b3f83edbe807a66db1a3aea71",
+      "git_blob_sha256": "dfb6e30dc76869b703d3dc8ae13c136bb2373a76d8fd489193bdcc612af8a809",
+      "match": "git_blob_with_LF_to_CRLF_checkout"
+    },
+    "AFrame/src/AFramePlugin/FrameForm.cs": {
+      "artifact_source_sha256": "6c17649902a4af49ead0fb412d878e726b856fd977503ee47afa4564a21b54db",
+      "git_blob_sha256": "e81d2d073b595d8812208483b02a505a698b5173f7b1f8d728fd3ebbbfbd4e23",
+      "match": "git_blob_with_LF_to_CRLF_checkout"
+    },
+    "AFrame/src/AFramePlugin/FrameSettings.cs": {
+      "artifact_source_sha256": "14fa9ad2c20caa2e4bd9931c25f24b7b6affd5ef30943410d551e556d28082e2",
+      "git_blob_sha256": "a44273b52d3ee92407d5dfc98315d6750d3aa57b7259cc2b98e4432757198cda",
+      "match": "git_blob_with_LF_to_CRLF_checkout"
+    },
+    "AFrame/src/AFramePlugin/FrameSolutionSelection.cs": {
+      "artifact_source_sha256": "a79f45984e52bcf023d3ac35a3cabdfc84fff77c07ac662e411cbaf8a8b032f7",
+      "git_blob_sha256": "cb25b6e890ce2f1e5ee458f1e378510d21f7205e529ee1894520ed686a3abd66",
+      "match": "git_blob_with_LF_to_CRLF_checkout"
+    },
+    "AFrame/src/AFramePlugin/FrameSolutionForm.cs": {
+      "artifact_source_sha256": "a0c6cbdb75274d0ab9b845b53bdda3b74475ec529aa07961920137fbb7e1ebe4",
+      "git_blob_sha256": "90618869126b84c4ce487299acff13fcffdbe42d6afea3c25aa16eee25d140e2",
+      "match": "git_blob_with_LF_to_CRLF_checkout"
+    },
+    "AFrame/src/AFramePlugin/FrameProjectParameters.cs": {
+      "artifact_source_sha256": "916fbdc792a35ab023b7d586fd929da64675a79e3e2aa4202a206bcfeba77482",
+      "git_blob_sha256": "612c46eabcb1c7c80c86e5a3e0fed2153a809b8f2b1734b1e9b596e2e26ec7f1",
+      "match": "git_blob_with_LF_to_CRLF_checkout"
+    },
+    "AFrame/src/AFramePlugin/FrameProjectForms.cs": {
+      "artifact_source_sha256": "a57f2ea8b38c548f2463b5b6dc320d84593dc9a277a9a86646e07b09d72314ed",
+      "git_blob_sha256": "56d0a12c312cf13c0c8412b0c78222bbc9634a4194ef691c4e0cfd06801a55b6",
+      "match": "git_blob_with_LF_to_CRLF_checkout"
+    },
+    "tools/solution_catalog_0110/test_solution_ui.py": {
+      "artifact_source_sha256": "40613dc2b78aec4649218e31689ee3feba1569f5ffec76322ea99ec7219672d1",
+      "git_blob_sha256": "4b58371fc5a1964999dae13495a8711652a62112ce4285b504478d1837b6c700",
+      "match": "git_blob_with_LF_to_CRLF_checkout"
+    }
+  },
+  "images": [
+    {
+      "file": "frame_main_before.png",
+      "status": "PASS",
+      "sha256": "4ac9745e227e590a09a0360d73cb4f0ed774345b1f64902c677070acd299f1bf",
+      "pixels": [
+        876,
+        753
+      ],
+      "individually_viewed_original_png": true,
+      "observation": "Все группы и нижние кнопки доступны; запрет неподтверждённого ГП-60-40 виден справа.",
+      "matches_manifest_and_zip": true
+    },
+    {
+      "file": "frame_main_selected.png",
+      "status": "PASS",
+      "sha256": "3f4e52d9fd625d309adca666ef0ca24a18064239c4430120cd6a4bae1b917526",
+      "pixels": [
+        876,
+        753
+      ],
+      "individually_viewed_original_png": true,
+      "observation": "Профиль обозначен как заданный в каталоге; запрет расчёта явного исторического выбора виден; кнопки не перекрыты.",
+      "matches_manifest_and_zip": true
+    },
+    {
+      "file": "solution_blank.png",
+      "status": "PASS",
+      "sha256": "70b06a76ef4bc47c6e738e5075727ad65d745d7423a5ca282170e23d82f923b7",
+      "pixels": [
+        916,
+        689
+      ],
+      "individually_viewed_original_png": true,
+      "observation": "Решение и исполнения не назначены; пустые проектные поля и сообщение об отсутствии выбора видны; Apply/Cancel/Clear доступны.",
+      "matches_manifest_and_zip": true
+    },
+    {
+      "file": "solution_filled.png",
+      "status": "PASS",
+      "sha256": "00d58cb783b66938e053ffa2aaa85f6e4ce0d0c5c626c52f9c325c0d11399f05",
+      "pixels": [
+        916,
+        689
+      ],
+      "individually_viewed_original_png": true,
+      "observation": "Введённые размеры и разные исполнения сохранены; обязательные b/c и пояснение о непроверенном сечении видны; кнопки доступны.",
+      "matches_manifest_and_zip": true
+    },
+    {
+      "file": "solution_source.png",
+      "status": "PASS",
+      "sha256": "5397b1c4900cfaf522c8de9ae6329b5a91b6c243e73145c7dedb01fcbe29abb7",
+      "pixels": [
+        916,
+        689
+      ],
+      "individually_viewed_original_png": true,
+      "observation": "При прокрутке полностью виден источник, SHA-256, редакция, точный узел и ограничения; минимум 30 мм не перенесён на УК.",
+      "matches_manifest_and_zip": true
+    },
+    {
+      "file": "solution_readonly.png",
+      "status": "PASS",
+      "sha256": "a41cba327b7a433b81f7c6bdc19b42c532f3c2f5fbca9938562682db8fb0fbc6",
+      "pixels": [
+        916,
+        689
+      ],
+      "individually_viewed_original_png": true,
+      "observation": "Режим только кляммеры явно обозначен; выборы и Apply/Clear выключены, кнопка Закрыть доступна.",
+      "matches_manifest_and_zip": true
+    },
+    {
+      "file": "solution_mismatch.png",
+      "status": "PASS",
+      "sha256": "3e3339c533d6555e7c82484d2c60ae27b87d19d2fb533c2bf1546d6ab552c062",
+      "pixels": [
+        916,
+        689
+      ],
+      "individually_viewed_original_png": true,
+      "observation": "Старая редакция и требование повторного выбора показаны красным текстом; недействительная идентичность не представлена подтверждённой.",
+      "matches_manifest_and_zip": true
+    },
+    {
+      "file": "solution_small.png",
+      "status": "PASS",
+      "sha256": "2ee75f717faaee508aae5fbdcd04717f87c02a7883bd3439f778be04081023a3",
+      "pixels": [
+        760,
+        530
+      ],
+      "individually_viewed_original_png": true,
+      "observation": "Минимальное окно сохраняет видимые основные поля и нижние действия; остальное находится в вертикально прокручиваемой области.",
+      "matches_manifest_and_zip": true
+    },
+    {
+      "file": "solution_small_source.png",
+      "status": "PASS",
+      "sha256": "24a34e4bcc0e2ba381ded8f6f314c3d4f21ac61799b1e40842684e371096150a",
+      "pixels": [
+        760,
+        530
+      ],
+      "individually_viewed_original_png": true,
+      "observation": "Источник доступен через прокрутку; его длинный текст имеет отдельную полосу прокрутки; Apply/Cancel/Clear остаются видимыми.",
+      "matches_manifest_and_zip": true
+    },
+    {
+      "file": "solution_large_font.png",
+      "status": "PASS",
+      "sha256": "cb394ca856a01b05d90dfa74253955302ae9d32c6475fecf69f1b4b0a7a6c6d7",
+      "pixels": [
+        1024,
+        728
+      ],
+      "individually_viewed_original_png": true,
+      "observation": "При 12 pt окно укладывается в рабочую область 1024×728; нижние действия полностью видимы; длинные подписи перенесены, содержимое прокручивается.",
+      "matches_manifest_and_zip": true
+    }
+  ],
+  "layout_observations": [
+    "Закрытые ComboBox сокращают длинные названия исполнений до ширины поля; полные исполнения видны в источнике. Это не утрата значения.",
+    "При малом окне и увеличенном шрифте часть содержимого ожидаемо вне текущего viewport, с доступной вертикальной прокруткой; нижняя панель действий не уходит за границы окна."
+  ],
+  "settings_review": {
+    "status": "PASS",
+    "artifact_id": 11152440404,
+    "zip_sha256": "4f913d3bbd7151e64e06d2d837f71ef1183a9d1a6949f3614e1a4cbb31f200bd",
+    "manifest_sha256": "adb4b1a3afafeed0c985b6b8787ad92fb70c478c2b4687c815b02b6c9651b41f",
+    "contracts_output_sha256": "ee70d0e0ac63ef17cb727659aa2f69302712f5e1bf74aba2d63a0f847a910e93",
+    "serializer_equality_diagnostic_sha256": "08c3589c3d5753509529bc99c8b3c90d952118bd2f58a74ba958706e6782c9d8",
+    "extracted_files_match_zip": true,
+    "verified_file_count": 14,
+    "checks": 70,
+    "native_checks": 47,
+    "pipeline_checks": 23,
+    "all_native_cases_pass": true,
+    "former_failure_cases": [
+      {
+        "name": "selection-context operation scaling 1000",
+        "status": "PASS"
+      },
+      {
+        "name": "same-root alias canonical comparisons scale linearly 100",
+        "status": "PASS"
+      }
+    ],
+    "source_verification": {
+      "tools/solution_catalog_0110/test_settings_contract.py": {
+        "artifact_source_sha256": "d1c99718983bd5c6d4f4aff9c4c9337c0fac1060b522040fea43251d2ed00b07",
+        "git_blob_sha256": "876a9e4bcd11b65ca09dfa671f25643700e08d414cd4b93ee2f974d781605b93",
+        "match": "git_blob_with_LF_to_CRLF_checkout"
+      },
+      "tools/solution_catalog_0110/SettingsContractProbe.cs": {
+        "artifact_source_sha256": "328138dc1cbf308dafb9b72bfedd4971f2727098aa0254cfa892ca2cc4f416f7",
+        "git_blob_sha256": "b3fc108f5465ac55a84d31433b7f2ae199e6609e43c53a4fa51d4932dbaf71a5",
+        "match": "git_blob_with_LF_to_CRLF_checkout"
+      },
+      "AFrame/src/AFramePlugin/FrameSettings.cs": {
+        "artifact_source_sha256": "14fa9ad2c20caa2e4bd9931c25f24b7b6affd5ef30943410d551e556d28082e2",
+        "git_blob_sha256": "a44273b52d3ee92407d5dfc98315d6750d3aa57b7259cc2b98e4432757198cda",
+        "match": "git_blob_with_LF_to_CRLF_checkout"
+      },
+      "AFrame/src/AFramePlugin/FrameSolutionSelection.cs": {
+        "artifact_source_sha256": "a79f45984e52bcf023d3ac35a3cabdfc84fff77c07ac662e411cbaf8a8b032f7",
+        "git_blob_sha256": "cb25b6e890ce2f1e5ee458f1e378510d21f7205e529ee1894520ed686a3abd66",
+        "match": "git_blob_with_LF_to_CRLF_checkout"
+      },
+      "AFrame/src/AFramePlugin/FrameProjectParameters.cs": {
+        "artifact_source_sha256": "916fbdc792a35ab023b7d586fd929da64675a79e3e2aa4202a206bcfeba77482",
+        "git_blob_sha256": "612c46eabcb1c7c80c86e5a3e0fed2153a809b8f2b1734b1e9b596e2e26ec7f1",
+        "match": "git_blob_with_LF_to_CRLF_checkout"
+      },
+      "AFrame/src/AFramePlugin/FrameCommand.cs": {
+        "artifact_source_sha256": "77ab95312ff52c08f01952f62e10bad3718bd44c32f1f81f8c5029973ffcbc8d",
+        "git_blob_sha256": "944d50dc7db753b931437691ca116a5cb6b07f6e84a7507265936b535274ad80",
+        "match": "git_blob_with_LF_to_CRLF_checkout"
+      },
+      "AFrame/src/AFramePlugin/FrameQuantities.cs": {
+        "artifact_source_sha256": "1c1049382e171f79fa4866a555979eced505e28ebbe691d1822253a94192d36c",
+        "git_blob_sha256": "d34f7cf6219dbfec7c88796b12477bea9382d4cca2dc125e4ebd1a252b1cf791",
+        "match": "git_blob_with_LF_to_CRLF_checkout"
+      },
+      "Common/FacadeQuantities.cs": {
+        "artifact_source_sha256": "9453f7fdd91aac9aeab389d3b0ccc9b1968c59c48dfbd04664cd8150b24af305",
+        "git_blob_sha256": "b092bf95f154d6aa8041936bffa79a82c613d7ac8f27fee9d1e6d7c0cde09f90",
+        "match": "git_blob_with_LF_to_CRLF_checkout"
+      },
+      "Common/catalogs/vector1_2015_type1_historical.json": {
+        "artifact_source_sha256": "750eb47d0ec22862267b960262ab591651ba0576c10328b85b5bde405f3ff0d7",
+        "git_blob_sha256": "4df8a3d9925595aa2d3d90af63d73be6bf1f68169685e3dc77ee19632023ca26",
+        "match": "git_blob_with_LF_to_CRLF_checkout"
+      },
+      "AFrame/engine/analiz_klu_poligon.py": {
+        "artifact_source_sha256": "33935bb1083c334fc2e3318176b20855c06ca7c7573e2be169be00e53d0e385f",
+        "git_blob_sha256": "903a3080c4b01dea51e936560adba060f12f172fe13887bd2785456881f5fa27",
+        "match": "git_blob_with_LF_to_CRLF_checkout"
+      },
+      "AFrame/engine/audit_frame.py": {
+        "artifact_source_sha256": "a1a42d5b3e49b085036ee212623de1f42e098d4c11a7158b6b2cd223725fab8f",
+        "git_blob_sha256": "7ce9adac3adddcb7619b88d789b78f4b811f9c890e9fd9b08f884b32ee4e2d48",
+        "match": "git_blob_with_LF_to_CRLF_checkout"
+      },
+      "AFrame/engine/dsverka_poligon.py": {
+        "artifact_source_sha256": "1ec28d3531cc2f0b16020961d87d441913fd7befe54a0d407a85e698267dee49",
+        "git_blob_sha256": "a971bd36882c6663c0fcbc466de5e288d9aa1f4d1f6d55e5eb462ae5d635a1ec",
+        "match": "git_blob_with_LF_to_CRLF_checkout"
+      },
+      "AFrame/engine/frame_calc.py": {
+        "artifact_source_sha256": "e85641d1e802660af062519cb88596caec154a6af9baada15bab95a3ddb222da",
+        "git_blob_sha256": "abe20fd3c0de0937ba0636914f083f7c48a7a65b3b4c85f05673278a95e1da88",
+        "match": "git_blob_with_LF_to_CRLF_checkout"
+      },
+      "AFrame/engine/frame_catalog.py": {
+        "artifact_source_sha256": "be987c0ce8452eadbc5babf0dff28dfba895baf525eea2de5278262ec5af5698",
+        "git_blob_sha256": "947a0277f3a6202dff365c1de6e86c5832dbc2c97e2a810b99d500a5d6f6b163",
+        "match": "git_blob_with_LF_to_CRLF_checkout"
+      },
+      "AFrame/engine/frame_connections.py": {
+        "artifact_source_sha256": "2f570417d9ca5fda157423fb2ff14f813e7ccc4f067183b924fce75365f992b2",
+        "git_blob_sha256": "d4febc1ce6e147f1cbce29cb64690f2c3b592efe4e40b9c88da5c8a2dcc74985",
+        "match": "git_blob_with_LF_to_CRLF_checkout"
+      },
+      "AFrame/engine/frame_engine.py": {
+        "artifact_source_sha256": "7d85bf5beda118f0750d926c16714282201a1f965e2c27cf93726126a66d6db3",
+        "git_blob_sha256": "b4acaaa98f48f91e0019b04231bb2ca361059e8d6a4e587cdbb64eb432790529",
+        "match": "git_blob_with_LF_to_CRLF_checkout"
+      },
+      "AFrame/engine/frame_plan.py": {
+        "artifact_source_sha256": "36df2b6d2aeaa1dfceb0e31b167eb3cb392a734c2c6eb4aa43a40694531400ad",
+        "git_blob_sha256": "5c4b4bbbc8258d62e965c24604906cd819b6a06a04643425ed1770b07c5d7105",
+        "match": "git_blob_with_LF_to_CRLF_checkout"
+      },
+      "AFrame/engine/frame_rules.py": {
+        "artifact_source_sha256": "1383ac5badcb5ac07eab12def255b86d679966191acef250e2b09fa41757be5e",
+        "git_blob_sha256": "511ec4ec48331034257859ccac70ef028a8c4b398acd7d5b238d778e3c63ea6f",
+        "match": "git_blob_with_LF_to_CRLF_checkout"
+      },
+      "AFrame/engine/frame_solution_catalog.py": {
+        "artifact_source_sha256": "3649cb9bc72344c206efd5011e94efe51ef448ac295ff8d2fb0cbc6af53bb02f",
+        "git_blob_sha256": "56e674855cc01e19bf2a0723dff1f3454497a99aef56f3de1b5bbf75c0d44764",
+        "match": "git_blob_with_LF_to_CRLF_checkout"
+      },
+      "AFrame/engine/frame_solution_selection.py": {
+        "artifact_source_sha256": "8d7665fd417caae469b7c50a4580fd2182cab2c73c61803b178e52a5e83ae36b",
+        "git_blob_sha256": "6490da6ced48715c4dce5ca357e0f54be9c035dd7bb6fc8d86b684f1d15f6aee",
+        "match": "git_blob_with_LF_to_CRLF_checkout"
+      },
+      "AFrame/engine/frame_spatial.py": {
+        "artifact_source_sha256": "7dc4113560b2baa8d5d786c596428f7a2731ad978c188bfea87aa86161bde2f6",
+        "git_blob_sha256": "003efc0e73b344d50d4465d2bc1bfc87f8ca149c7d443a1e7d9061e6dbfd6cec",
+        "match": "git_blob_with_LF_to_CRLF_checkout"
+      },
+      "AFrame/engine/frame_topology.py": {
+        "artifact_source_sha256": "711625511ff543363bf5738b9b924ee9fd2104c5d870bffc66097962c69f969c",
+        "git_blob_sha256": "2455ab874309d1382591800acce35dd3bde04ea3be6519f8b1de89dd5514f5d5",
+        "match": "git_blob_with_LF_to_CRLF_checkout"
+      },
+      "AFrame/engine/test_frame_calc.py": {
+        "artifact_source_sha256": "5b8f2850515ea3c7528480f579a5495cbbd9432eb8e2075c99ade0a9726a185c",
+        "git_blob_sha256": "f72160fe7a3483c35a6c0d7ef669a612e6e44defb95c33916a850c2a605d5239",
+        "match": "git_blob_with_LF_to_CRLF_checkout"
+      },
+      "AFrame/engine/test_frame_connections.py": {
+        "artifact_source_sha256": "7796a9ee818f2f0a692d685555972ee8fdc34cefa73b3a5d9709ddf228404790",
+        "git_blob_sha256": "21f2c64b59b1a1f052eadcf1c69d1aa8f0e0e60ad42182f793ac914a16971353",
+        "match": "git_blob_with_LF_to_CRLF_checkout"
+      },
+      "AFrame/engine/test_frame_engine.py": {
+        "artifact_source_sha256": "a137c20f943630a59f61aa4e6a7fa5288a58fc4c4f863d60c0e7dc9197859bfa",
+        "git_blob_sha256": "3d32ffb69a6e9bc5d229ed11201e7e09500b5f193859b6a2cbab190c73679270",
+        "match": "git_blob_with_LF_to_CRLF_checkout"
+      },
+      "AFrame/engine/test_frame_plan.py": {
+        "artifact_source_sha256": "91fd40dff46ab004b00d6fdcd53aaf2f1358951ac1e05c71fafb45a70085ed85",
+        "git_blob_sha256": "fa35454f0a80362fc17441d078feaaf18bcb271a84e599de82517329005708a6",
+        "match": "git_blob_with_LF_to_CRLF_checkout"
+      },
+      "AFrame/engine/test_frame_rules.py": {
+        "artifact_source_sha256": "df7b291c70df8ab489b74e6b5b8bc2e3da9963e44f718bd0e0b5556ae261b616",
+        "git_blob_sha256": "0f629daa13207e436eb5e425e1f4e3d7189d205ffc6956bceca0427eb237b26e",
+        "match": "git_blob_with_LF_to_CRLF_checkout"
+      },
+      "AFrame/engine/test_frame_solution_selection.py": {
+        "artifact_source_sha256": "7f53b246ff33174a7759d93bc9eca9525627f73faf70e179a8fad06ff4cb4abb",
+        "git_blob_sha256": "79b853ab20b95d491fc3e76f667fc7fb7106afa6ace7b5ae9d1ede191f99aceb",
+        "match": "git_blob_with_LF_to_CRLF_checkout"
+      },
+      "AFrame/engine/test_frame_topology.py": {
+        "artifact_source_sha256": "a3283a3509f6a5e6cb62fa3eb47bb63de7375592ad2955516e67e0f6b6d458f6",
+        "git_blob_sha256": "88f59edd4e8543ec3c444eb3557dbe7a10b922318362ca82360675da1c11586c",
+        "match": "git_blob_with_LF_to_CRLF_checkout"
+      },
+      "AFrame/engine/test_frame_topology_index.py": {
+        "artifact_source_sha256": "43898e957f3843c21d8e9239fd5baa29b8537af8e3fd15e8cb02ee0351da6c32",
+        "git_blob_sha256": "d8e139847c458cdf87fddf24b7c790e15e479ff4c2bbbd3a4848757e6560a1a7",
+        "match": "git_blob_with_LF_to_CRLF_checkout"
+      }
+    },
+    "legacy_serializer_diagnostic": {
+      "fresh_process_comparisons": 200,
+      "fresh_process_legacy_string_mismatches": 20,
+      "first_mismatch_iteration": 0,
+      "first_mismatch_same_structured_values": true,
+      "first_mismatch_direct_equality": true,
+      "first_mismatch_property_orders_differ": true,
+      "first_property_order": [
+        "schema",
+        "catalog_id",
+        "catalog_revision",
+        "solution_id",
+        "source_id",
+        "source_sha256",
+        "node",
+        "pdf_page",
+        "sheet",
+        "bracket",
+        "family_id",
+        "execution",
+        "nominal_width_mm",
+        "L_mm",
+        "extender",
+        "family_id",
+        "execution",
+        "nominal_width_mm",
+        "L_mm",
+        "thickness_mm",
+        "profile",
+        "family_id",
+        "execution",
+        "a_mm",
+        "b_mm",
+        "thickness_mm",
+        "b_basis",
+        "thickness_basis",
+        "geometry",
+        "cladding_front_offset_mm",
+        "cladding_offset_basis",
+        "insulation_layers_mm"
+      ],
+      "second_property_order": [
+        "geometry",
+        "cladding_front_offset_mm",
+        "cladding_offset_basis",
+        "insulation_layers_mm",
+        "schema",
+        "catalog_id",
+        "catalog_revision",
+        "solution_id",
+        "source_id",
+        "source_sha256",
+        "node",
+        "pdf_page",
+        "sheet",
+        "bracket",
+        "family_id",
+        "execution",
+        "nominal_width_mm",
+        "L_mm",
+        "extender",
+        "family_id",
+        "execution",
+        "nominal_width_mm",
+        "L_mm",
+        "thickness_mm",
+        "profile",
+        "family_id",
+        "execution",
+        "a_mm",
+        "b_mm",
+        "thickness_mm",
+        "b_basis",
+        "thickness_basis"
+      ],
+      "contract_loop_comparisons": 1000,
+      "contract_loop_legacy_string_mismatches": 0,
+      "interpretation": "Windows повторно воспроизвёл нестабильность старого сравнения строк JavaScriptSerializer: значения равны, порядок свойств различается. Точное сравнение полей проходит. Диагностика наблюдательная; момент исходного сбоя CI #206 не восстанавливается."
+    },
+    "performance_observations": [
+      {
+        "owners": 100,
+        "capture_observations": 100,
+        "resolve_observations": 100,
+        "elapsed_ms": 28.549300000000002,
+        "cad_calls": 0,
+        "modelspace_scans": 0
+      },
+      {
+        "owners": 1000,
+        "capture_observations": 1000,
+        "resolve_observations": 1000,
+        "elapsed_ms": 302.423,
+        "cad_calls": 0,
+        "modelspace_scans": 0
+      },
+      {
+        "scenario": "same_root_aliases_then_canonicals",
+        "aliases": 100,
+        "canonical_observations": 100,
+        "capture_observations": 200,
+        "alias_comparisons": 199,
+        "resolve_observations": 1,
+        "elapsed_ms": 65.2234,
+        "cad_calls": 0,
+        "modelspace_scans": 0
+      },
+      {
+        "scenario": "same_root_aliases_then_canonicals",
+        "aliases": 1000,
+        "canonical_observations": 1000,
+        "capture_observations": 2000,
+        "alias_comparisons": 1999,
+        "resolve_observations": 1,
+        "elapsed_ms": 592.1584,
+        "cad_calls": 0,
+        "modelspace_scans": 0
+      }
+    ],
+    "scope": "Actual native settings, selected-owner metadata/freshness guard, real engine and actual quantity producer; CAD objects doubled"
+  },
+  "scope": "Независимый просмотр всех 10 оригинальных PNG Windows CI #208 по отдельности; проверены SHA-256 PNG, manifest, исходников точного product commit и соответствие всех извлечённых файлов архивным байтам. Снимки #207 не подменяют текущую ревизию.",
+  "live_autocad_checked": false,
+  "new_project_zone_ui_review": "Новые окна проекта и зон проверяются отдельно; этот документ относится к прежним окнам каталога/ATFRAME и контрактам settings."
+}
