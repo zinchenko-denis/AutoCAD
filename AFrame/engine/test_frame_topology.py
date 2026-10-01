@@ -45,19 +45,27 @@ class TestFrameTopology(unittest.TestCase):
                 self.assertTrue(result["static_model"]["members"])
                 self.assertEqual({m["support_count"] for m in result["static_model"]["members"]}, {count})
 
-    def test_before_repro_single_span_cannot_be_promoted_to_two(self):
+    def test_single_span_is_calculated_as_one_with_actual_free_ends(self):
         for sub in ("vertical", "ortho"):
             result = fe.op_frame(request(sub, 1000))
-            self.refused(result, "E_CALC_TOPOLOGY_UNSUPPORTED", "single_span_unsupported")
-            self.assertEqual({m["span_count"] for m in result["static_model"]["members"]}, {1})
+            self.assertTrue(result["ok"], result.get("error"))
+            model = result["calc_report"]["static_model"]
+            self.assertEqual({m["span_count"] for m in model["members"]}, {1})
+            for case in model["member_calculation"]["cases"]:
+                self.assertEqual(case["chain"]["member_coefficients"]["span_count"], 1)
+                self.assertEqual(case["bottom_free"], 300)
+                self.assertEqual(case["top_free"], 300 if sub == "vertical" else 100)
 
-    def test_before_repro_real_two_spans_do_not_use_multi(self):
+    def test_real_two_spans_use_the_two_span_row(self):
         for sub in ("vertical", "ortho"):
             result = fe.op_frame(request(sub, 1800))
-            self.refused(result, "E_CALC_TOPOLOGY_UNSUPPORTED", "span_class_mismatch")
-            for member in result["static_model"]["members"]:
+            self.assertTrue(result["ok"], result.get("error"))
+            model = result["calc_report"]["static_model"]
+            for member in model["members"]:
                 self.assertEqual(member["actual_span_class"], "2")
-                self.assertEqual(member["coefficient_span_class"], "multi")
+                self.assertEqual(member["coefficient_span_class"], "2")
+            for case in model["member_calculation"]["cases"]:
+                self.assertGreaterEqual(case["chain"]["member_coefficients"]["k_reaction"], 1.25)
 
     def test_regular_positive_controls_do_not_certify_static_model(self):
         for sub in ("vertical", "ortho"):
@@ -68,7 +76,7 @@ class TestFrameTopology(unittest.TestCase):
             self.assertEqual(model["geometric_screening"], {"status": "passed", "reasons": []})
             self.assertEqual(model["fixed_sliding"], "not_modeled")
             self.assertEqual(model["splice_continuity"], "not_modeled")
-            self.assertEqual(model["cantilevers"], "not_verified")
+            self.assertEqual(model["cantilevers"], "uniform_load_screened")
             self.assertTrue(any("Статическая модель не подтверждена" in note for note in result["notes"]))
 
     def test_interfloor_two_span_counterexample_refused(self):
@@ -142,9 +150,15 @@ class TestFrameTopology(unittest.TestCase):
     def test_ortho_long_interval_cannot_hide_behind_multi_class(self):
         rail = dict(x=100, y0=0, y1=3600, kind="ШП-60-20")
         horizontal = [dict(y=y, x0=0, x1=200, kind="ГП-40-40") for y in (300, 900, 2100, 2700, 3300)]
-        model = ft.screen_layout("ortho", [rail], horizontal, [], dict(rail_len=3000, v_step=600))
-        self.assertEqual(model["geometric_screening"]["reasons"][0]["reason"],
-                         "support_interval_exceeds_calculated_span")
+        from test_frame_beam import INPUTS
+        model = ft.screen_layout("ortho", [rail], horizontal, [],
+            dict(INPUTS, scheme="ortho", v_step=600), bracket_steps={"main": 500, "corner": 500})
+        case = model["member_calculation"]["cases"][0]
+        self.assertEqual(case["response"]["span"], 1200)
+        self.assertEqual(case["intervals"], [600, 1200, 600, 600])
+        self.assertGreater(case["chain"]["member_coefficients"]["c_f_local"], 0)
+        # Geometry can no longer be approved by silently checking only 600 mm.
+        self.assertEqual(model["members"][0]["coefficient_span"], 1200)
 
     def test_empty_geometry_is_not_a_vacuous_pass(self):
         model = ft.screen_layout("vertical", [], [], [], dict(rail_len=3000))

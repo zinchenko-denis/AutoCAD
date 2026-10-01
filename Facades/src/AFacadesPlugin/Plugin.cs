@@ -19,6 +19,7 @@ namespace AFacadesPlugin
     {
         public void Initialize()
         {
+            try { FacadeSafety.FacadeBundleVersions.Schedule(); } catch { }
             try
             {
                 var doc = AcApp.DocumentManager.MdiActiveDocument;
@@ -27,8 +28,8 @@ namespace AFacadesPlugin
                         "\nAFacades загружен (сборка DLL от " + BuildStamp() +
                         "). Команды: ATFZONE — зоны облицовки из замкнутых " +
                         "контуров (площади, отливы, откосы); ATFTABLE — " +
-                        "ведомость по выбранным штриховкам/маркам зон. " +
-                        "Раскладка (ATCLAD) — отдельный бандл AClad.\n");
+                        "ведомости фасада; ATFZONEACCEPT — принять старую зону. " +
+                        "Раскладка (ATTILE) — модуль AClad.\n");
             }
             catch { }
             try { FacadesRibbon.Init();
@@ -63,7 +64,7 @@ namespace AFacadesPlugin
             catch { return "?"; }
         }
 
-        public void Terminate() { try { FacadesRibbon.Cleanup();
+        public void Terminate() { try { FacadeSafety.FacadeBundleVersions.Cancel(); FacadesRibbon.Cleanup();
             FacadesClassic.Cleanup(); } catch { } }
     }
 }

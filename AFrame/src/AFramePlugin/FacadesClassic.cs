@@ -18,6 +18,9 @@ namespace AFramePlugin
         {
             new[] { "Подсистема (ATFRAME)", "ATFRAME" },
             new[] { "Размеры кронштейнов (ATFRAMEDIM)", "ATFRAMEDIM" },
+            new[] { "Параметры проекта (ATFPROJECT)", "ATFPROJECT" },
+            new[] { "Параметры зон (ATFZONEPARAMS)", "ATFZONEPARAMS" },
+            new[] { "Размерная схема узла (ATFNODE)", "ATFNODE" },
         };
 
         private static bool _quitHooked;

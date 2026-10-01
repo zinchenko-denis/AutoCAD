@@ -57,7 +57,7 @@ jobs:
           (cd ABlockGen/engine && python test_vitrage_plan.py && python test_vitrage_recognize.py && python test_crash_scenarios.py)
           (cd Facades/engine && python test_facade_zones.py && python test_facades_engine.py)
           (cd AClad/engine && python test_cladding_plan.py && python test_clad_engine.py && python test_tile_pattern.py && python audit_clad.py)
-          (cd AFrame/engine && python test_frame_plan.py && python test_frame_calc.py && python test_frame_engine.py && python audit_frame.py)
+          (cd AFrame/engine && python test_frame_plan.py && python test_frame_calc.py && python test_frame_beam.py && python test_frame_cutting.py && python test_frame_engine.py && python audit_frame.py)
           python tools/engine_contract.py
           python tools/xmod_check.py --no-fixture --allow=X6
           python tools/label_refs_check.py
@@ -253,7 +253,7 @@ jobs:
         with:
           tag_name: latest
           name: "ATableSpec + ABlockGen + AFacades + AClad + AFrame — последняя сборка"
-          body: "Сборка №${{ github.run_number }}, коммит ${{ github.sha }} (исходники — релиз build-${{ github.run_number }}; тег latest исторический и на код не указывает). Готовые бандлы. ATableSpec.bundle.zip — спецификации/раскрой из блоков (команда ATSPEC). ABlockGen.bundle.zip — генератор витражей из блоков (команды ATVITRAGEAR, ATVITRAGE). AFacades.bundle.zip — фасады, этап 1: зоны облицовки, площади и погонажи (команды ATFZONE, ATFTABLE; ставится один раз). AClad.bundle.zip — фасады, этап 2: раскладка облицовки — кассеты (ATCLAD) и мелкоштучная плитка/кирпич с раскраской по образцу (ATTILE); обновляется часто, AFacades не трогает. AFrame.bundle.zip — фасады, этап 3: подсистема НВФ — кронштейны/направляющие/кляммеры по раскладке (команда ATFRAME). Распаковать нужный zip, папку *.bundle положить в %APPDATA%\\Autodesk\\ApplicationPlugins\\, перезапустить AutoCAD."
+          body: "Сборка №${{ github.run_number }}, коммит ${{ github.sha }} (исходники — релиз build-${{ github.run_number }}; тег latest исторический и на код не указывает). Готовые бандлы. ATableSpec.bundle.zip — спецификации/раскрой из блоков (команда ATSPEC). ABlockGen.bundle.zip — генератор витражей из блоков (команды ATVITRAGEAR, ATVITRAGE). AFacades.bundle.zip — фасады, этап 1: зоны облицовки, площади и погонажи (команды ATFZONE, ATFTABLE). AClad.bundle.zip — фасады, этап 2: раскладка облицовки — кассеты (ATCLAD) и мелкоштучная плитка/кирпич с раскраской по образцу (ATTILE); обновляется вместе с AFacades и AFrame из той же сборки. AFrame.bundle.zip — фасады, этап 3: подсистема НВФ — кронштейны/направляющие/кляммеры по раскладке (команда ATFRAME). Три фасадных модуля AFacades, AClad и AFrame устанавливать и обновлять вместе, одной сборкой; старые папки при закрытом AutoCAD перенести в резервную папку вне ApplicationPlugins. Распаковать архивы, папки *.bundle положить в %APPDATA%\\Autodesk\\ApplicationPlugins\\, перезапустить AutoCAD."
           files: |
             ATableSpec.bundle.zip
             ABlockGen.bundle.zip

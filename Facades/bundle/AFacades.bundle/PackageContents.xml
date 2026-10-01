@@ -31,6 +31,7 @@
       <Commands GroupName="AFacadesCommands">
         <Command Global="ATFZONE" Local="ATFZONE" />
         <Command Global="ATFZONERESET" Local="ATFZONERESET" />
+        <Command Global="ATFZONEACCEPT" Local="ATFZONEACCEPT" />
         <Command Global="ATFTABLE" Local="ATFTABLE" />
       </Commands>
     </ComponentEntry>

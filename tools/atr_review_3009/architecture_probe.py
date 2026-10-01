@@ -155,19 +155,26 @@ def main():
     normal_ortho = run('supported_ortho', req)
     check('supported_ortho_positive', normal_ortho['ok'] and normal_ortho['calc_report']['scheme'] == 'ortho')
     check('ortho_static_model_not_verified', static_screen(normal_ortho, 'passed'))
-    # Separate emitted pieces must satisfy the existing coefficient span class.
-    # These native requests retain the 3000 mm calculation length and shorten
-    # only the actual facade, exposing support-count errors without new norms.
+    # Each emitted piece uses its actual support scheme. Shortening a facade
+    # must no longer reject supported one/two-span pieces categorically.
     for sub in ('vertical', 'ortho'):
-        for height, reason in ((600, 'insufficient_supports'), (1000, 'single_span_unsupported'),
-                               (1800, 'span_class_mismatch')):
+        for height, reason in ((600, 'insufficient_supports'), (1000, None), (1800, None)):
             req = inputs(native[f'porcelain_{sub}_calc']['params'])
             req['contours'][0]['pts'] = [[0, 0], [6000, 0], [6000, height], [0, height]]
-            # One row zone makes the expected refusal independent of corner spacing.
+            # One row zone makes this support-scheme test independent of corners.
             req['corners_x'] = []
             result = run(f'{sub}_{height}_topology', req)
-            check(f'{sub}_{height}_{reason}', refused_for(result, 'E_CALC_TOPOLOGY_UNSUPPORTED', reason),
-                  result.get('unsupported'))
+            if reason:
+                check(f'{sub}_{height}_{reason}', refused_for(result, 'E_CALC_TOPOLOGY_UNSUPPORTED', reason),
+                      result.get('unsupported'))
+            else:
+                model = result.get('calc_report', {}).get('static_model', {})
+                members = model.get('members') or []
+                member_cases = model.get('member_calculation', {}).get('cases') or []
+                check(f'{sub}_{height}_actual_scheme_passes', result['ok'] and bool(members) and bool(member_cases)
+                      and static_screen(result, 'passed')
+                      and all(m['support_count'] >= 2 and m['coefficient_span_class'] == m['actual_span_class']
+                              for m in members) and all(c['chain']['passed'] for c in member_cases), result.get('error'))
         req = inputs(native[f'porcelain_{sub}_manual']['params'])
         manual = run(sub + '_manual', req)
         check(sub + '_manual_kept', native[f'porcelain_{sub}_manual']['valid'] is None
@@ -199,6 +206,15 @@ def main():
     check('type5_geometry_refused', not direct_result['ok'] and direct_result.get('error_code') == 'E_CALC_SCHEME_MISMATCH' and not any(direct_result.get(k) for k in ('rails','hrails','brackets','clamps')), direct_result.get('error'))
     # This profile selection and anchor resistance are both available in the native form.
     mass_request = inputs(native['profile_ШП-60-20']['params'])
+    weak_anchor = run('native_shp_weak_anchor', mass_request)
+    check('native_shp_weak_anchor_addressed_refusal',
+          refused_for(weak_anchor, 'E_CALC_MEMBER_CAPACITY', 'member_capacity_exceeded')
+          and all('анкер, кг' in item.get('failed_checks', []) for item in weak_anchor.get('unsupported', [])),
+          weak_anchor.get('error'))
+    # Keep the original 565 N negative separately. Use a sufficient explicit
+    # anchor input for the independent positive test of selected profile mass.
+    mass_request = copy.deepcopy(mass_request)
+    mass_request['calc']['na_max'] = 3000
     mass_result = run('native_shp_mass', mass_request)
     check('native_shp_positive', mass_result['ok'], mass_result.get('error'))
     if mass_result['ok']:

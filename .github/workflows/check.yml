@@ -14,6 +14,7 @@ on:
       - "ABlockGen/engine/**"
       - "Facades/src/**"
       - "Facades/engine/**"
+      - "Facades/tests/**"
       - "AClad/src/**"
       - "AClad/engine/**"
       - "AFrame/src/**"
@@ -97,6 +98,17 @@ jobs:
           python test_facade_zones.py
           python test_facades_engine.py
 
+      - name: Facade bundle versions and legacy zone adoption
+        shell: pwsh
+        env:
+          PYTHONUTF8: "1"
+          PYTHONIOENCODING: "utf-8"
+        run: |
+          python tools/facades/test_bundle_versions.py
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          python Facades/tests/test_zone_migration.py
+          exit $LASTEXITCODE
+
       - name: AClad engine unit test
         shell: bash
         env:
@@ -118,6 +130,8 @@ jobs:
           python test_frame_plan.py
           # 23.09 (ревью): расчёт несущей способности и CLI в CI не гонялись
           python test_frame_calc.py
+          python test_frame_beam.py
+          python test_frame_cutting.py
           python test_frame_engine.py
           python test_frame_rules.py
           python test_frame_topology.py

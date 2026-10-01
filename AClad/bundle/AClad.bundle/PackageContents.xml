@@ -9,7 +9,7 @@
     Contents/engine/clad_engine.exe   — замороженный py-движок (PyInstaller)
 
   ОТДЕЛЬНЫЙ бандл от AFacades (просьба Германа 22.07): этап 1 (зоны)
-  ставится один раз, раскладка переустанавливается при каждой итерации.
+  обновляется вместе с AClad и AFrame из одного выпуска.
 -->
 <ApplicationPackage
     SchemaVersion="1.0"

@@ -114,7 +114,9 @@ def x3():
     каждой зоне свои (zones[]/contours[].joints_x). До фикса — объединение
     прогона на все метки и общий список в движке: цоколь 14 → 29 стоек."""
     r, _ = atfzone([{"id": "A0", "pts": rect(0, 0, 9000, 1200)},
-                    {"id": "B0", "pts": rect(0, 1200, 9000, 4200)},
+                    # Полоса над окнами 1100 мм вмещает две опоры с
+                    # отступами 300; этот тест проверяет оси разных зон.
+                    {"id": "B0", "pts": rect(0, 1200, 9000, 4800)},
                     {"id": "B1", "pts": rect(1300, 2100, 2700, 3700)},
                     {"id": "B2", "pts": rect(5100, 2100, 6800, 3700)}])
     parts = {p["id"]: p for p in r["zones_full"]}
@@ -152,7 +154,23 @@ def x4():
     """23.09s: штриховка зоны + её полилинии в одной выборке — FrameCommand
     убирает полилинии зоны (outer_contour_id, openings[].id) из «голых», как
     CladCommand; иначе зона строилась бы дважды."""
-    contours = [{"id": "2F0", "pts": rect(0, 0, 6000, 3000)},
+    # Сначала исходный 600-мм участок над окном: адресный отказ
+    # по исходным контурам, без частичного построения.
+    short = fre.run({"op": "frame", "sub_type": "vertical", "system": None,
+        "contours": [{"id": "2F0", "pts": rect(0, 0, 6000, 3000)},
+                     {"id": "2F1", "pts": rect(2000, 900, 3400, 2400)}],
+        "joints_x": [305.0 + 610 * k for k in range(10)]})
+    addressed = {(p.get("x"), p.get("y0"), p.get("y1"), p.get("length"),
+                  p.get("support_count"), tuple(p.get("support_y", [])), p.get("bracket_start_offset"))
+                 for p in short.get("unsupported", [])}
+    expected = {(x, 2400, 3000, 600, 1, (2700,), 300) for x in (2135, 2745, 3355)}
+    negative_ok = (not short.get("ok") and short.get("error_code") == "E_UNSUPPORTED_RAIL" and
+        short.get("unsupported_counts") == {"rail_pieces": 3} and addressed == expected and
+        not any(short.get(k) for k in ("rails", "brackets", "hrails", "clamps", "fittings")))
+    rep("OK" if negative_ok else "BUG", "X4-short", "исходная 600-мм полоса: точный отказ с тремя адресами, без геометрии")
+    # Положительная проверка двойной выборки — та же зона с верхом 3600,
+    # без заведомо одноопорной полосы; штатный отступ 300 сохранён.
+    contours = [{"id": "2F0", "pts": rect(0, 0, 6000, 3600)},
                 {"id": "2F1", "pts": rect(2000, 900, 3400, 2400)}]
     r, _ = atfzone(contours)
     part = r["zones_full"][0]
@@ -163,6 +181,10 @@ def x4():
     only_zone = fre.run(roundtrip(dict(base, zones=zrec, contours=[])))
     ids = {part["meta"]["outer_contour_id"]} | {o["id"] for o in part.get("openings") or []}
     sent = fre.run(roundtrip(dict(base, zones=zrec, contours=[c for c in contours if c["id"] not in ids])))
+    if not only_zone.get("ok") or not sent.get("ok"):
+        rep("BUG", "X4", "движок отказал на положительном примере: %s / %s" %
+            (only_zone.get("error"), sent.get("error")))
+        return
     n1, n2 = (x["summary"]["rails"] + x["summary"]["brackets_row"] + x["summary"]["brackets_main"]
               + len(x["clamps"]) for x in (only_zone, sent))
     if only_zone.get("ok") and n1 > 0 and n1 == n2:
@@ -173,7 +195,7 @@ def x4():
 
 # ── X8 ───────────────────────────────────────────────────────────────
 def x8():
-    r, _ = atfzone([{"id": "1A", "pts": rect(0, 0, 6000, 3000)},
+    r, _ = atfzone([{"id": "1A", "pts": rect(0, 0, 6000, 3600)},
                     {"id": "1B", "pts": rect(2000, 900, 3400, 2400)}])
     part = r["zones_full"][0]
     # FrameCommand.cs:270-283: zonesPayload.Add({zone_id: pid, zone: part из _fzones.json})

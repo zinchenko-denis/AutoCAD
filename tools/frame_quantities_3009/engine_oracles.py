@@ -97,7 +97,14 @@ def run_cases():
     assert stock['oracle']['counts']['rail'] == 3
     assert stock['oracle']['length_m']['rail'] == 6.08
     assert stock['response']['summary']['rail_stock_est'] == 2
-    assert [piece['len'] for piece in stock['response']['rails']] == [3000.0, 3000.0, 80.0]
+    # Последние два хлыста перераспределены: 80-мм одноопорный хвост
+    # устранён, общий погонаж и оба зазора прежние.
+    stock_rails = stock['response']['rails']
+    assert [piece['len'] for piece in stock_rails] == [3000.0, 1540.0, 1540.0]
+    assert all(b['y0'] - a['y1'] == 10 for a, b in zip(stock_rails, stock_rails[1:]))
+    assert all(len({b['y'] for b in stock['response']['brackets']
+                    if b['x'] == piece['x'] and piece['y0'] <= b['y'] <= piece['y1']}) >= 2
+               for piece in stock_rails)
     assert results['empty']['oracle']['physical_count'] == 0
     assert results['only_clamps']['oracle']['counts'] == {'clamp': 5}
     assert results['clinker_shina']['oracle']['counts']['shina'] == 42

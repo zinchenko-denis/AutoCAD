@@ -108,14 +108,19 @@ namespace AFacadesPlugin
             RibbonTab tab = FindOrCreateTab(rc);
             var src = new RibbonPanelSource
             { Title = "Зоны", Id = PanelId };
-src.Items.Add(MakeButton("Зоны", "ATFZONE",
+            src.Items.Add(MakeButton("Зоны", "ATFZONE",
                 "ATFZONE — зоны облицовки: контуры, площади, отливы/" +
                 "откосы, размеры.", "afc_zone"));
             src.Items.Add(MakeButton("Ведомость", "ATFTABLE",
-                "ATFTABLE — ведомость зон (чертёж/Excel).",
+                "ATFTABLE — ведомость зон, облицовки, подсистемы и ручных элементов (чертёж/Excel).",
                 "afc_table"));
+            src.Items.Add(MakeButton("Принять\nстарую зону", "ATFZONEACCEPT",
+                "ATFZONEACCEPT — принять текущую геометрию старой зоны после явного подтверждения. Старые раскладки автоматически не подтверждаются.", "afc_zone"));
+            src.Items.Add(MakeButton("Связи\nконтуров", "ATFZONERESET",
+                "ATFZONERESET — сбросить старые связи контуров проёмов/парапетов перед повторным ATFZONE. Удаляются только явно выбранные старые линии схемы.", "afc_zone"));
             var panel = new RibbonPanel { Source = src };
-            tab.Panels.Add(panel);}
+            tab.Panels.Add(panel);
+        }
 
         private static RibbonButton MakeButton(string text, string cmd,
                                                string tip, string icon)

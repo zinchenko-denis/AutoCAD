@@ -10,15 +10,15 @@ namespace ACladPlugin
 {
     /// <summary>
     /// AClad — раскладка облицовки НВФ (этап 2 фасадного направления).
-    /// Отдельный бандл (просьба Германа 22.07): боевой AFacades (зоны/
-    /// ведомости) ставится один раз, AClad переустанавливается при
-    /// каждой итерации раскладки. Гибрид-паттерн ATableSpec: тонкий C#
+    /// Фасадные AFacades/AClad/AFrame обновляются вместе из одного выпуска.
+    /// Гибрид-паттерн ATableSpec: тонкий C#
     /// + замороженный py-движок (clad_engine.exe).
     /// </summary>
     public class Plugin : IExtensionApplication
     {
         public void Initialize()
         {
+            try { FacadeSafety.FacadeBundleVersions.Schedule(); } catch { }
             try
             {
                 var doc = AcApp.DocumentManager.MdiActiveDocument;
@@ -62,7 +62,7 @@ namespace ACladPlugin
             catch { return "?"; }
         }
 
-        public void Terminate() { try { FacadesRibbon.Cleanup();
+        public void Terminate() { try { FacadeSafety.FacadeBundleVersions.Cancel(); FacadesRibbon.Cleanup();
             FacadesClassic.Cleanup(); } catch { } }
     }
 }

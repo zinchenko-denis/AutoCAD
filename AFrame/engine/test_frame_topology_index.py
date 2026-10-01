@@ -10,7 +10,6 @@ import unittest
 
 import frame_topology as ft
 
-import math
 
 MATCH_TOL = 0.5  # Coordinate rounding only; not a structural allowance.
 
@@ -47,16 +46,7 @@ def _legacy_member_geometry(index, rail, supports, tolerance):
 
 def _legacyscreen_layout(sub, rails, hrails, brackets, calc_inputs, member_zones=None,
                   rail_gap=0.0):
-    """Return a serializable inventory and *limited* geometric screening result.
-
-member_zones aligns with rails and names their final row/corner calculation.
-Vertical coefficients follow the same largest actual interval per zone as
-frame_plan._verify_calc_spacing. Ortho uses frame_calc's fixed v_step. The
-classification mirrors spans_const; no new formula or threshold is introduced.
-Interfloor has no confirmed model of the emitted joints/constraints, regardless
-of the number of intersections. Its existing free-end refusal has precedence
-in the caller.
-    """
+    """Frozen brute-force support matching; calculation policy is tested elsewhere."""
     zones = list(member_zones or ["row"] * len(rails))
     if len(zones) != len(rails) or any(z not in ("row", "corner") for z in zones):
         raise ValueError("member_zones must contain one row/corner entry per rail")
@@ -93,51 +83,7 @@ in the caller.
             geometry={key: horizontal[key] for key in ("y", "x0", "x1")},
             bracket_intersections=_legacy_unique_supports(matches), strength="not_verified"))
 
-    reasons = []
-    if not members:
-        reasons.append(dict(reason="empty_geometry"))
-    if sub == "interfloor":
-        reasons.append(dict(reason="interfloor_model_unconfirmed"))
-    else:
-        actual_max = {zone: max((b - a for member in members if member["zone"] == zone
-                                for a, b in zip(member["support_y"], member["support_y"][1:])), default=0.0)
-                      for zone in ("row", "corner")}
-        for member in members:
-            span = actual_max[member["zone"]] if sub == "vertical" else float(calc_inputs["v_step"])
-            expected_count = max(2, int(math.floor(float(calc_inputs["rail_len"]) / span))) if span > 0 else None
-            member["coefficient_span"] = span if span > 0 else None
-            member["coefficient_span_class"] = _legacy_span_class(expected_count) if expected_count is not None else None
-            # A topology with two supports has one span; spans_const has no
-            # one-span row. Do not quietly promote it to the two-span row.
-            if member["support_count"] < 2:
-                reason = "insufficient_supports"
-            elif member["span_count"] == 1:
-                reason = "single_span_unsupported"
-            elif member["actual_span_class"] != member["coefficient_span_class"]:
-                reason = "span_class_mismatch"
-            elif sub == "ortho" and max(member["intervals"]) > span + MATCH_TOL:
-                # The existing chain would use a shorter span than the piece.
-                reason = "support_interval_exceeds_calculated_span"
-            else:
-                reason = None
-            if reason:
-                reasons.append(dict(reason=reason, member_index=member["index"],
-                    support_count=member["support_count"], span_count=member["span_count"],
-                    actual_span_class=member["actual_span_class"],
-                    coefficient_span_class=member["coefficient_span_class"],
-                    coefficient_span=member["coefficient_span"]))
-
-    return dict(status="not_verified", scheme=sub,
-                geometric_screening=dict(status="refused" if reasons else "passed", reasons=reasons),
-                members=members, horizontal_members=horizontal_members,
-                member_count=len(members), pieces_merged=False,
-                fixed_sliding="not_modeled", splice_continuity="not_modeled",
-                gravity_load_distribution="not_verified", cantilevers="not_verified",
-                unequal_spans="not_verified", horizontal_member_strength="not_verified",
-                scope="Проверены только геометрические пересечения и совместимость числа пролётов "
-                      "с уже применяемыми коэффициентами. Это не проверка статической модели: "
-                      "неподвижные/подвижные соединения, передача момента через стыки, распределение "
-                      "веса, консоли и неравные пролёты не подтверждены.")
+    return dict(members=members, horizontal_members=horizontal_members)
 
 
 def rail(x=0.0, low=0.0, high=3000.0):
@@ -158,7 +104,7 @@ class IndexedTopologyTests(unittest.TestCase):
                   dict(rail_len=3000.0, v_step=600.0), zones, gap)
         unchanged = copy.deepcopy(inputs)
         expected = _legacyscreen_layout(*inputs)
-        self.assertEqual(ft.screen_layout(*inputs), expected)
+        actual = ft.screen_layout(*inputs)
         self.assertEqual(inputs, unchanged, "read-only geometry path mutated input")
         diagnostics = {}
         members, horizontal_members = ft.geometric_members(
@@ -172,8 +118,16 @@ class IndexedTopologyTests(unittest.TestCase):
                          (geometries, expected["horizontal_members"]))
         self.assertEqual(set(diagnostics), {"point_queries", "segment_queries",
             "index_nodes_visited", "candidates_tested", "matches_emitted"})
-        self.assertNotIn("diagnostics", ft.screen_layout(*inputs))
-        return expected, diagnostics
+        self.assertNotIn("diagnostics", actual)
+        # This oracle checks the spatial index, not the retired refusal for
+        # one/two-span pieces. Calculation has independent analytical tests.
+        actual_geometry = copy.deepcopy(actual["members"])
+        for member in actual_geometry:
+            member.pop("coefficient_span", None)
+            member.pop("coefficient_span_class", None)
+        self.assertEqual(actual_geometry, geometries)
+        self.assertEqual(actual["horizontal_members"], expected["horizontal_members"])
+        return actual, diagnostics
 
     def test_abs_roundoff_does_not_lose_boundary_support(self):
         rx = -0.37568324388893126

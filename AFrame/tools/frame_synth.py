@@ -18,7 +18,7 @@
  F4  кляммер на стене (допуск 60 мм по торцам) и не в проёме;
  F5  горизонтальный профиль на стене и не сквозь проём;
  F6  кронштейн держит профиль (лежит на стойке или на ГП);
- F7  каждая стойка держится: вертикальная — ≥1 кронштейн на куске,
+ F7  каждая стойка держится: вертикальная — ≥2 кронштейна на куске,
      ортогональная — кусок пересекает ≥1 ГП;
  F8  шаг кронштейнов на стойке ≤ шага системы (+1 мм), вертикальная;
  F9  куски на одной оси не перекрываются;
@@ -107,6 +107,23 @@ def safe_refusal(req, res):
                 and set(counts) == {"pieces", "joints"}
                 and all(isinstance(n, int) and n >= 0 for n in counts.values())
                 and sum(counts.values()) > 0)
+    if code == "E_UNSUPPORTED_RAIL":
+        pieces = res.get("unsupported") or []
+        if req.get("calc") is not None or req.get("parts") == "clamps" or \
+                req.get("sub_type", "vertical") != "vertical" or not pieces or \
+                counts != {"rail_pieces": len(pieces)}:
+            return False
+        for piece in pieces:
+            values = [piece.get(k) for k in ("x", "y0", "y1", "length", "bracket_start_offset")]
+            ys = piece.get("support_y") or []
+            if any(not isinstance(v, (int, float)) or not math.isfinite(v) for v in values + ys):
+                return False
+            x, y0, y1, length, offset = values
+            if y1 <= y0 or abs(length - (y1 - y0)) > 0.001 or offset < 0 or \
+                    piece.get("support_count") != len(ys) or len(ys) >= 2 or \
+                    ys != sorted(set(ys)) or any(y < y0 - 0.5 or y > y1 + 0.5 for y in ys):
+                return False
+        return True
     if req.get("calc") is None or req.get("parts") == "clamps":
         return False
     if code == "E_CALC_NOT_PASSED":
@@ -141,7 +158,7 @@ def safe_refusal(req, res):
     if code == "E_CALC_MODEL_UNCONFIRMED":
         return (sub == "interfloor" and unsupported == [{"reason": "interfloor_model_unconfirmed"}]
                 and counts == {"vertical_members": 0} and bool(model.get("members")))
-    if code != "E_CALC_TOPOLOGY_UNSUPPORTED" or sub not in ("vertical", "ortho"):
+    if code not in ("E_CALC_TOPOLOGY_UNSUPPORTED", "E_CALC_MEMBER_CAPACITY") or sub not in ("vertical", "ortho"):
         return False
     members = {m.get("index"): m for m in model.get("members") or []}
     if counts != {"vertical_members": len({r.get("member_index") for r in unsupported})}:
@@ -154,20 +171,24 @@ def safe_refusal(req, res):
         spans = len(supports) - 1 if supports else 0
         actual = "multi" if spans >= 4 else str(spans)
         if supports != sorted(set(supports)) or member.get("support_count") != len(supports) or \
-                issue.get("support_count") != len(supports) or issue.get("span_count") != spans or \
-                issue.get("actual_span_class") != actual:
+                issue.get("support_count") != len(supports) or issue.get("span_count") != spans:
             return False
         reason = issue.get("reason")
-        if reason == "insufficient_supports" and len(supports) < 2:
+        if reason == "insufficient_supports" and len(supports) < 2 and issue.get("actual_span_class") == actual:
             continue
-        if reason == "single_span_unsupported" and len(supports) == 2:
-            continue
-        if reason == "span_class_mismatch" and spans >= 2 and \
-                issue.get("coefficient_span_class") in ("2", "3", "multi") and \
-                actual != issue["coefficient_span_class"]:
-            continue
-        if reason == "support_interval_exceeds_calculated_span" and sub == "ortho" and spans >= 2 and \
-                max(b - a for a, b in zip(supports, supports[1:])) > issue.get("coefficient_span", math.inf) + 0.5:
+        if reason == "member_capacity_exceeded" and code == "E_CALC_MEMBER_CAPACITY" and spans >= 1:
+            cases = {case.get("id"): case for case in model.get("member_calculation", {}).get("cases") or []}
+            case = cases.get(issue.get("calculation_case"))
+            if case is None or member.get("calculation_case") != case.get("id"):
+                return False
+            chain = case.get("chain") or {}
+            failed = [check for check in chain.get("checks") or [] if check.get("ok") is False]
+            if chain.get("passed") is not False or not failed or \
+                    issue.get("failed_checks") != [check.get("name") for check in failed] or \
+                    any(not isinstance(check.get(k), (int, float)) or not math.isfinite(check[k])
+                        for check in failed for k in ("value", "limit")) or \
+                    any(check["value"] < check["limit"] - 0.1 for check in failed):
+                return False
             continue
         return False
     return True
@@ -510,8 +531,8 @@ def check_place(sc, res, step_max):
     if sc["sub"] == "vertical":
         for r in rails:
             ys = sorted(b["y"] for b in br if abs(b["x"] - r["x"]) <= T and r["y0"] - T <= b["y"] <= r["y1"] + T)
-            if not ys:
-                bad.append(("F7", "стойка x=%.0f [%.0f..%.0f] без кронштейна" % (r["x"], r["y0"], r["y1"])))
+            if len(set(ys)) < 2:
+                bad.append(("F7", "стойка x=%.0f [%.0f..%.0f] имеет менее двух кронштейнов" % (r["x"], r["y0"], r["y1"])))
             for a, b2 in zip(ys, ys[1:]):
                 if step_max and b2 - a > step_max + T:
                     bad.append(("F8", "шаг %.0f > %.0f на стойке x=%.0f" % (b2 - a, step_max, r["x"])))
@@ -689,6 +710,23 @@ def run_scenario(sc, rng):
     res = fre.run(json.loads(json.dumps(sc["req"])))
     dt = time.time() - t0
     if not res.get("ok"):
+        if res.get("error_code") == "E_UNSUPPORTED_RAIL":
+            def unsupported_geometry(result, dx=0.0, dy=0.0):
+                return sorted((round(p["x"] - dx, 3), round(p["y0"] - dy, 3),
+                    round(p["y1"] - dy, 3), tuple(round(y - dy, 3) for y in p["support_y"]))
+                    for p in result.get("unsupported") or [])
+            valid = safe_refusal(sc["req"], res)
+            if valid:
+                expected = unsupported_geometry(res)
+                for q, dx, dy in ((sc["req"], 0, 0), (_shifted(sc["req"], *SHIFT), *SHIFT),
+                                  (_reordered(sc["req"], rng), 0, 0)):
+                    check = fre.run(json.loads(json.dumps(q)))
+                    valid = valid and safe_refusal(q, check) and \
+                        unsupported_geometry(check, dx, dy) == expected
+            if valid:
+                REFUSED[sc["sub"]] += 1
+                return [], dt, 0
+            return [("F0", "неустойчивый или непустой отказ по опорам направляющих")], dt, 0
         if res.get("error_code") == "E_UNSUPPORTED_SHINA" and sc.get("tile"):
             counts = res.get("unsupported_counts") or {}
             valid = bool(res.get("error")) and sum(counts.values()) > 0 and \
@@ -760,8 +798,11 @@ def check_static_contract():
                           q_clad=20, offset=200, na_max=3000))
     for sub in ("vertical", "ortho"):
         for height, reason in ((3000, None), (6000, None), (140, "insufficient_supports"),
-                               (600, "insufficient_supports"), (1000, "single_span_unsupported"),
-                               (1800, "span_class_mismatch")):
+                               (600, "insufficient_supports"), (1000, None), (1800, None)):
+            # The existing horizontal pitch in this orthogonal example fails
+            # the actual two-span bracket check; no topology mismatch remains.
+            if sub == "ortho" and height == 1800:
+                reason = "member_capacity_exceeded"
             req = dict(base, sub_type=sub, system="Вектор-1" if sub == "vertical" else "Ортогональная",
                        contours=[dict(id="O", pts=rect(0, 0, 2400, height))])
             res = fre.run(json.loads(json.dumps(req)))
@@ -783,14 +824,16 @@ def check_static_contract():
                         ys = {h["y"] for h in res["hrails"] if h["kind"] == "ГП-40-40"
                               and h["x0"] - 0.5 <= rail["x"] <= h["x1"] + 0.5
                               and rail["y0"] - 0.5 <= h["y"] <= rail["y1"] + 0.5}
-                    if member.get("support_y") != sorted(ys) or len(ys) < 3:
+                    if member.get("support_y") != sorted(ys) or len(ys) < 2 or \
+                            member.get("coefficient_span_class") != ("multi" if len(ys) >= 5 else str(len(ys) - 1)):
                         bad.append(("S1", "%s: опоры отчёта не совпадают с выданными элементами" % tag))
                 if len(model.get("members") or []) != len(res["rails"]):
                     bad.append(("S1", "%s: стыки объединили отдельные расчётные куски" % tag))
                 outcomes["successful_calc/" + sub] += 1
             else:
                 actual = {u.get("reason") for u in res.get("unsupported") or []}
-                if not safe_refusal(req, res) or res.get("error_code") != "E_CALC_TOPOLOGY_UNSUPPORTED" or actual != {reason}:
+                expected_code = "E_CALC_MEMBER_CAPACITY" if reason == "member_capacity_exceeded" else "E_CALC_TOPOLOGY_UNSUPPORTED"
+                if not safe_refusal(req, res) or res.get("error_code") != expected_code or actual != {reason}:
                     bad.append(("S2", "%s: ожидался точный отказ %s, получен %s/%s" %
                                 (tag, reason, res.get("error_code"), sorted(str(r) for r in actual))))
                 else:

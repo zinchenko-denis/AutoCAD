@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 """Краш-аудит frame_plan: геометрические инварианты выхода."""
 import os
-import sys, itertools, random
+import sys, itertools, random, math
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from frame_plan import frame_plan
+from frame_plan import frame_plan, load_system
 
 T = 1.0  # гео-допуск, мм
 
@@ -17,6 +17,27 @@ def boxes(holes):
 def check(tag, req, p):
     errs = []
     if not p.get("ok"):
+        # При исходном коротком участке штатные торцевые отступы дают одну
+        # опору. Принимаем только этот адресный отказ, проверяя его числа.
+        # Произвольная ошибка движка по-прежнему является провалом аудита.
+        items = p.get("unsupported") or []
+        offset = load_system(req.get("system") or "Standart").get("bracket_start_offset")
+        valid = (p.get("error_code") == "E_UNSUPPORTED_RAIL" and
+                 (req.get("sub_type") or "vertical") == "vertical" and not req.get("calc") and
+                 req.get("parts") != "clamps" and items and offset is not None and
+                 p.get("unsupported_counts") == {"rail_pieces": len(items)} and
+                 not any(p.get(k) for k in ("rails", "hrails", "brackets", "clamps", "fittings", "calc_report")))
+        for item in items if valid else []:
+            length = item.get("length", float("nan"))
+            valid = valid and all(isinstance(item.get(k), (float, int)) and math.isfinite(item[k])
+                                  for k in ("x", "y0", "y1", "length"))
+            valid = valid and (0 < length <= 2 * offset + .001 and
+                abs(item["y1"] - item["y0"] - length) < .001 and
+                item.get("bracket_start_offset") == offset and item.get("support_count") == 1 and
+                len(item.get("support_y", [])) == 1 and
+                abs(item["support_y"][0] - (item["y0"] + item["y1"]) / 2) < .001)
+        if valid:
+            return []
         return ["%s: ДВИЖОК ОТКАЗАЛ: %s" % (tag, p.get("error"))]
     sub = req.get("sub_type") or "vertical"
     rails = p["rails"]; hr = p.get("hrails") or []
@@ -74,8 +95,8 @@ def check(tag, req, p):
             ys = sorted(b["y"] for b in br
                         if abs(b["x"] - r["x"]) <= T and
                         r["y0"] - T <= b["y"] <= r["y1"] + T)
-            if not ys and r["y1"] - r["y0"] > 600 + T:
-                errs.append("%s: НАПРАВЛЯЮЩАЯ БЕЗ КРОНШТЕЙНОВ x=%.0f "
+            if len(set(ys)) < 2:
+                errs.append("%s: НАПРАВЛЯЮЩАЯ С МЕНЕЕ ЧЕМ ДВУМЯ ОПОРАМИ x=%.0f "
                             "len=%.0f" % (tag, r["x"], r["y1"] - r["y0"]))
             for a, b2 in zip(ys, ys[1:]):
                 if b2 - a > step_max + T:
@@ -205,14 +226,17 @@ for _tag, _req in list(_lash_base)[:40]:
 
 allerrs = []
 crash = 0
+refused = 0
 for tag, req in SC:
     try:
         p = frame_plan(req)
     except Exception as e:
         allerrs.append("%s: ИСКЛЮЧЕНИЕ %r" % (tag, e)); crash += 1
         continue
-    allerrs += check(tag, req, p)
-print("сценариев:", len(SC), "нарушений:", len(allerrs), "крашей:", crash)
+    errors = check(tag, req, p)
+    allerrs += errors
+    refused += int(not p.get("ok") and not errors)
+print("сценариев:", len(SC), "адресных отказов:", refused, "нарушений:", len(allerrs), "крашей:", crash)
 import collections
 kinds = collections.Counter(e.split(":")[1].strip().split(" (")[0].split(" x=")[0].split(" в ")[0] for e in allerrs)
 for k, v in kinds.most_common():

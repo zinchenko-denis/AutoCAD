@@ -21,8 +21,11 @@ def base_request(mode):
                'joints_x': [i * 608.0 + 304 for i in range(8)], 'floors_y': [3000],
                'rows_y': [605 * i for i in range(1, 10)]}
     if mode == 'limited_calc':
-        request['calc'] = {'wind_region': 'II', 'terrain': 'B', 'height': 41.2, 'q_clad': 25,
-                           'offset': 230, 'na_max': 1880, 'profile': 'ШП-60-20-20-1,2', 'q_rails': 1.21}
+        # Positive timing scenario. The former 41.2 m/1880 N case now fails
+        # the actual bracket check with 300 mm overhangs; retain that negative
+        # explicitly below, never count a refusal as a fast calculation.
+        request['calc'] = {'wind_region': 'II', 'terrain': 'B', 'height': 30, 'q_clad': 25,
+                           'offset': 230, 'na_max': 3000, 'profile': 'ШП-60-20-20-1,2', 'q_rails': 1.21}
     return request
 
 
@@ -73,6 +76,15 @@ def main():
     if args.worker is not None:
         print(json.dumps(worker(args.worker, args.mode), ensure_ascii=False))
         return 0
+    former = base_request('limited_calc')
+    former['calc'].update(height=41.2, na_max=1880)
+    rejected = frame_engine.run(dict(former, zones=[one_zone(0)]))
+    assert not rejected['ok'] and rejected.get('error_code') == 'E_CALC_MEMBER_CAPACITY'
+    assert not any(rejected.get(key) for key in ARRAYS)
+    failures = [check for case in rejected['static_model']['member_calculation']['cases']
+                for check in case['chain']['checks'] if not check['ok']]
+    assert failures and all(check['name'] == 'кронштейн 1-1, кг/см²'
+                            and check['value'] > check['limit'] for check in failures)
     out = (args.out or Path(tempfile.mkdtemp(prefix='frame_engine_perf_'))).resolve()
     out.mkdir(parents=True, exist_ok=True)
     targets = [int(value) for value in args.targets.split(',')]

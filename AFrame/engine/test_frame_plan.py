@@ -248,14 +248,15 @@ ok(all(c["kind"] == "боковой" for c in p["clamps"]
 
 # ── FR8 (переписан 07.08a, ответ Германа В-ад): floors пуст —
 #    ХЛЫСТЫ rail_std от низа с зазором МЕЖДУ (полигон: низы
-#    24070.3+3010n), последний обрезается; кронштейны все одного
+#    24070.3+3010n); последние два перераспределяются, если хвост
+#    не вмещает две опоры при заданных отступах; кронштейны одного
 #    типа (несущих нет), floor_step вертикальной игнорируется ──
 p = frame_plan({"system": "Standart",
                 "contours": [{"outer": rect(0, 0, 1220, 6100)}],
                 "joints_x": [610], "floor_step": 3000})
 r = sorted((x["y0"], x["y1"]) for x in p["rails"])
-ok(r == [(0.0, 3000.0), (3010.0, 6010.0), (6020.0, 6100.0)],
-   "FR8: хлысты 3000 от низа, зазор 10 между, обрезок (%s)" % r)
+ok(r == [(0.0, 3000.0), (3010.0, 4550.0), (4560.0, 6100.0)],
+   "FR8: нижний хлыст прежний; вместо 80-мм хвоста два куска 1540 с зазором 10 (%s)" % r)
 ok(p["summary"]["brackets_main"] == 0 and
    p["summary"]["brackets_row"] > 0 and
    not any("автоматически" in n for n in p["notes"]),
@@ -318,19 +319,22 @@ p = frame_plan({"system": "Вектор-1", "contours":
                 [{"outer": rect(0, 0, 5000, 6000)}],
                 "joints_x": [i * 608.0 + 304 for i in range(8)],
                 "floors_y": [3000], "calc": CALC_RESP})
-ok(p["ok"], "FR-C1: ok")
-ok(p["summary"]["calc_steps"] == {"main": 800, "corner": 450},
-   "FR-C1: шаги по расчёту 800/450 — как выводы республиканской (%s)"
-   % p["summary"].get("calc_steps"))
-ok(any("ПО РАСЧЁТУ" in n for n in p["notes"]), "FR-C1: note о расчёте")
-ok(p["calc_report"]["row"]["passed"] and
-   p["calc_report"]["corner"]["passed"] and
-   len(p["calc_report"]["row"]["checks"]) >= 7,
-   "FR-C1: calc_report с цепочкой проверок")
-mid = [b for b in p["brackets"] if 2000 < b["x"] < 3000]
-ys = sorted(set(round(b["y"]) for b in mid))
-dl = [ys[i + 1] - ys[i] for i in range(len(ys) - 1)]
-ok(dl and max(dl) <= 800 + 1, "FR-C1: шаг кронштейнов в поле <=800")
+# The source arithmetic remains 800/450. Its 300-mm free ends were not
+# included in that table: the actual corner reaction now exposes a failure.
+from frame_calc import report as _arithmetic_report
+ok(not p["ok"] and p.get("error_code") == "E_CALC_MEMBER_CAPACITY",
+   "FR-C1: actual overhang reaction fails instead of certifying the source table")
+_c1_arithmetic = _arithmetic_report(p["calc_inputs"])
+ok({"main": _c1_arithmetic["row"]["step"], "corner": _c1_arithmetic["corner"]["step"]}
+   == {"main": 800, "corner": 450}, "FR-C1: original arithmetic 800/450 is unchanged")
+_c1_cases = p["static_model"]["member_calculation"]["cases"]
+_c1_bad = [c for case in _c1_cases for c in case["chain"]["checks"] if not c["ok"]]
+ok(_c1_bad and all(c["name"] == "кронштейн 1-1, кг/см²" and c["value"] > c["limit"]
+                  for c in _c1_bad), "FR-C1: real failed component is the bracket")
+ok(any(case["response"]["k_reaction"] > 1.5 for case in _c1_cases),
+   "FR-C1: 300-mm overhang reaction is larger than the historical 1.132 row")
+ok(not p.get("rails") and not p.get("brackets") and "calc_report" not in p,
+   "FR-C1: failure cannot emit a partial construction")
 
 # C2: расчёт не проходит (анкер 300 Н) → честный отказ
 p = frame_plan({"system": "Вектор-1", "contours":
@@ -380,20 +384,15 @@ p = frame_plan({"system": "Ортогональная", "sub_type": "ortho",
                          "height": 10, "q_clad": 25, "offset": 260,
                          "na_max": 1280, "e3": 12, "e4": 25,
                          "v_step": 400, "max_step": 600}})
-ok(not p["ok"] and p.get("error_code") == "E_CALC_TOPOLOGY_UNSUPPORTED",
-   "FR-C6: 2400 mm fragment cannot inherit the source multispan coefficients")
-_c6_reasons = p["static_model"]["geometric_screening"]["reasons"]
-ok(_c6_reasons and all(r["reason"] == "span_class_mismatch" and
-                       r["actual_span_class"] == "3" and
-                       r["coefficient_span_class"] == "multi" for r in _c6_reasons),
-   "FR-C6: actual three spans conflict with the applied multispan coefficients")
-ok(not any(p.get(k) for k in ("rails", "hrails", "brackets", "clamps", "fittings")),
-   "FR-C6: topology refusal emits no construction")
-from frame_calc import report as _arithmetic_report
-_c6_arithmetic = _arithmetic_report(p["calc_inputs"])
-ok({"main": _c6_arithmetic["row"]["step"], "corner": _c6_arithmetic["corner"]["step"]}
-   == {"main": 600, "corner": 600} and "calc_report" not in p,
-   "FR-C6: historical arithmetic remains 600/600, without approving this geometry")
+ok(p["ok"], "FR-C6: actual three-span pieces can be calculated (%s)" % p.get("error"))
+_c6_model = p["calc_report"]["static_model"]
+ok(all(m["span_count"] == 3 and m["coefficient_span_class"] == "3" for m in _c6_model["members"]),
+   "FR-C6: actual three spans use their own coefficient row")
+ok(all(case["chain"]["passed"] and case["response"]["span"] == 600
+       for case in _c6_model["member_calculation"]["cases"]),
+   "FR-C6: check actual 600-mm spans, not the requested 400-mm nominal value")
+ok(p["calc_report"]["steps"] == {"main": 600, "corner": 600},
+   "FR-C6: source step selection remains 600/600")
 
 
 # ── FR-G (фидбэк Германа 27.07): угловые зоны от УКАЗАННЫХ углов ──
@@ -690,6 +689,15 @@ p_p6 = frame_plan({"system": "Вектор-1", "sub_type": "vertical",
                    "calc": dict(_CALC),
                    "contours": [{"outer": rect(0, 0, 1200, 3000)}],
                    "joints_x": [600], "floors_y": [3000]})
+ok(not p_p6["ok"] and p_p6.get("error_code") == "E_CALC_MEMBER_CAPACITY",
+   "FR-P6: high corner wind with 300-mm free ends has an addressed failure")
+# The profile-candidate test uses an explicitly non-corner facade. The
+# original corner fixture above remains a refusal control, not discarded.
+p_p6 = frame_plan({"system": "Вектор-1", "sub_type": "vertical", "corners_x": [],
+                   "calc": dict(_CALC),
+                   "contours": [{"outer": rect(0, 0, 1200, 3000)}],
+                   "joints_x": [600], "floors_y": [3000]})
+ok(p_p6["ok"], "FR-P6: row-zone profile selection passes")
 _vars = {v["profile"] for v in
          p_p6["calc_report"]["variants"]["row"]} \
     if isinstance(p_p6["calc_report"].get("variants"), dict) \
@@ -702,7 +710,10 @@ ok(all(r["profile"] == p_p6["calc_report"]["profile"]["row"]
 
 # ── FR-A (краш-аудит 03.08): стойки не идут сквозь соседние окна;
 #    верхние доп. кронштейны орто держат перемычку ГП ──
-p_a1 = frame_plan({"system": "Вектор-1", "sub_type": "vertical",
+# Здесь проверяем пересечение геометрии, поэтому у коротких нижних участков
+# задаём отступ 100 явно как вход теста. Это не рекомендация для проекта.
+# Отказ исходного участка при штатных 300 проверяет test_frame_cutting.py.
+p_a1 = frame_plan({"system": {"name": "Вектор-1", "bracket_start_offset": 100}, "sub_type": "vertical",
                    "contours": [{"outer": rect(0, 0, 4000, 4000),
                                  "holes": [rect(300, 400, 1250, 1400),
                                            rect(1300, 300, 2500,
@@ -755,7 +766,7 @@ ok(_ov == 0,
    % _ov)
 
 # A4: ПЕРЕСЕКАЮЩИЕСЯ окна — стойки не идут сквозь проёмы и без дублей
-p_a4 = frame_plan({"system": "Вектор-1", "sub_type": "vertical",
+p_a4 = frame_plan({"system": {"name": "Вектор-1", "bracket_start_offset": 100}, "sub_type": "vertical",
                    "contours": [{"outer": rect(0, 0, 4800, 5400),
                                  "holes": [rect(0, 650, 2000, 2850),
                                            rect(600, 1900, 2800,
@@ -795,7 +806,8 @@ def _dubl(pp):
 for _tag, _jx in (("слева", [900.0, 996.0]),
                   ("справа", [2804.0, 2900.0]),
                   ("с обеих", [900.0, 996.0, 2804.0, 2900.0])):
-    _pa5 = frame_plan({"system": "Standart", "sub_type": "vertical",
+    # Та же геометрическая проверка дублей; тестовый отступ задан явно.
+    _pa5 = frame_plan({"system": {"name": "Standart", "bracket_start_offset": 100}, "sub_type": "vertical",
                        "contours": [{"outer": rect(0, 0, 4000, 3000),
                                      "holes": [rect(1000, 500,
                                                     2800, 2700)]}],
@@ -808,7 +820,7 @@ for _tag, _jx in (("слева", [900.0, 996.0]),
 
 # A6: смещённый кусок не съедает собственную ось целиком — профиль на
 # высоте окна остаётся ровно один и покрывает окно + выступ 50/50
-_pa6 = frame_plan({"system": "Standart", "sub_type": "vertical",
+_pa6 = frame_plan({"system": {"name": "Standart", "bracket_start_offset": 100}, "sub_type": "vertical",
                    "contours": [{"outer": rect(0, 0, 4000, 3000),
                                  "holes": [rect(1000, 500, 2800,
                                                 2700)]}],
@@ -952,7 +964,9 @@ import subprocess as _sp, tempfile as _tf
 _rq = {"system": "Standart", "sub_type": "vertical",
        "contours": [{"outer": rect(0, 0, 7200, 6000), "holes": [rect(2000, 900, 3400, 2400)]}],
        "joints_x": [305.0 + 610 * k for k in range(12)], "rows_y": [605.0 * k for k in range(1, 10)],
-       "floors_y": [3000.0]}
+       # Стык 3100 оставляет после окна 695 мм под штатные торцевые
+       # отступы 300. Старый стык 3000 создавал отдельный 595-мм кусок.
+       "floors_y": [3100.0]}
 _full = frame_plan(json.loads(json.dumps(_rq)))
 _fr = frame_plan(dict(json.loads(json.dumps(_rq)), parts="frame"))
 ok(_fr["ok"] and not _fr["clamps"] and _fr["rails"] == _full["rails"] and _fr["brackets"] == _full["brackets"],
@@ -1058,7 +1072,9 @@ _zone = {"schema": "facade_zone/1", "id": "Ф-1", "units": "mm",
          "openings": [{"id": "W", "kind": "window", "poly": {"pts": rect(2000, 900, 3400, 2400),
                                                              "bulges": [0, 0, 0, 0]}}],
          "meta": {"outer_contour_id": "A"}}
-_base = {"op": "frame", "sub_type": "vertical", "system": "Standart",
+# Здесь проверяется чтение JSON/единиц/зон. Участок 600 мм над окном
+# допускается только с явно заданным тестовым отступом, не штатными 300.
+_base = {"op": "frame", "sub_type": "vertical", "system": {"name": "Standart", "bracket_start_offset": 100},
          "joints_x": [305.0 + 610 * k for k in range(10)], "rows_y": [605.0 * k for k in range(1, 5)]}
 _r = _fe.run(dict(json.loads(json.dumps(_base)), zones=[{"zone_id": "Ф-1", "zone": _zone}]))
 ok(_r["ok"] and _r["summary"]["rails"] > 0 and {t["zone"] for t in _r["rails"]} == {"Ф-1"},
@@ -1112,7 +1128,7 @@ _reg = dict(json.loads(json.dumps(_ir)), joints_x=[305.0 + 610 * k for k in rang
 _r2 = _fe.run(_reg)
 ok(_r2["ok"] and not any("грузовая ширина для расчёта" in n for n in _r2["notes"]),
    "IR2: регулярная сетка — ширина прежняя (нота не нужна)")
-_tri = _fe.run({"op": "frame", "sub_type": "vertical", "system": "Standart",
+_tri = _fe.run({"op": "frame", "sub_type": "vertical", "system": {"name": "Standart", "bracket_start_offset": 100},
                 "contours": [{"id": "T", "pts": [[0, 0], [6000, 0], [3000, 6000]]}],
                 "joints_x": [305.0 + 610 * k for k in range(10)], "rows_y": [605.0 * k for k in range(1, 10)]})
 ok(_tri["ok"] and _tri["rails"] and all(_pip([[0, 0], [6000, 0], [3000, 6000]], t["x"], t["y1"])
@@ -1142,15 +1158,18 @@ _mz = _fe.run({"op": "frame", "sub_type": "vertical", "system": "Вектор-1"
                         "na_max": 3000}})
 ok(_mz["ok"] and [c["zone_id"] for c in _mz.get("calc_reports") or []] == ["Ф-1", "Ф-2"],
    "IR6: расчётный отчёт по каждой зоне (calc_reports), не только последней")
-_U = [[0, 0], [2600, 0], [2600, 2400], [2500, 2400], [2500, 100], [100, 100], [100, 2400], [0, 2400]]
+# Нижняя полоса U — 700 мм: на ней помещаются две опоры с отступами 300.
+# Отдельная зона остаётся внутри габарита U, но вне самого полигона.
+_U = [[0, 0], [2600, 0], [2600, 2400], [2500, 2400], [2500, 700], [100, 700], [100, 2400], [0, 2400]]
 _g = _fe.run({"op": "frame", "sub_type": "vertical", "system": "Standart",
-              "contours": [{"id": "U", "pts": _U}, {"id": "I", "pts": rect(300, 300, 2300, 2200)}],
+              "contours": [{"id": "U", "pts": _U}, {"id": "I", "pts": rect(300, 900, 2300, 2200)}],
               "joints_x": [305.0 + 610 * k for k in range(5)], "rows_y": [605.0 * k for k in range(1, 4)]})
 ok(_g["ok"] and {t["zone"] for t in _g["rails"]} == {"контур U", "контур I"},
    "IR7: U-полоса вокруг отдельной зоны — обе зоны (не «проём»)")
 _Uw = [[0, 0], [9000, 0], [9000, 6000], [6000, 6000], [6000, 3000], [3000, 3000], [3000, 6000], [0, 6000]]
 _Uo = [[500, 500], [8500, 500], [8500, 2500], [7000, 2500], [7000, 1500], [2000, 1500], [2000, 2500], [500, 2500]]
-_h = _fe.run({"op": "frame", "sub_type": "vertical", "system": "Standart",
+# Тест вложенности, как ZF: отступ 100 задан явно для 500-мм полосы.
+_h = _fe.run({"op": "frame", "sub_type": "vertical", "system": {"name": "Standart", "bracket_start_offset": 100},
               "contours": [{"id": "W", "pts": _Uw}, {"id": "O", "pts": _Uo}],
               "joints_x": [305.0 + 610 * k for k in range(15)], "rows_y": [605.0 * k for k in range(1, 10)]})
 ok(_h["ok"] and {t["zone"] for t in _h["rails"]} == {"контур W"},
@@ -1186,7 +1205,9 @@ ok(not any(abs(h["y"] - 6400) < 60 for h in pg2["hrails"]) and
 #    (стартовая по низу и над проёмами, рядовые по центрам швов, концевая по
 #    верху и под проёмами — Герман 29.09j, 9б), хлысты до 2500 со стыком на
 #    направляющей (9в); кляммеров нет ──
-tsys = {"name": "Standart", "bracket_step": 600, "bracket_step_corner": 600}
+# Геометрия шин здесь включает короткие полосы; отступ 100 — явное
+# условие теста. При штатных 300 такой кусок должен дать адресный отказ.
+tsys = {"name": "Standart", "bracket_step": 600, "bracket_step_corner": 600, "bracket_start_offset": 100}
 treq = {"system": tsys, "exact_step": True, "cladding": "clinker", "tile_step_x": 600,
         "contours": [{"outer": rect(0, 0, 3000, 2400),
                       "holes": [rect(1000, 800, 1600, 2000)]}],
@@ -1229,7 +1250,8 @@ ok(sorted((h["x0"], h["x1"]) for h in pt["hrails"] if h["y"] == 2400) == [(0, 25
 ok(sorted((h["x0"], h["x1"]) for h in pt["hrails"] if h["y"] == 1200) == [(0, 1000), (1600, 3000)],
    "FR-T3: рядовая в ряду окна — до граней проёма")
 b100 = sorted(b["y"] for b in pt["brackets"] if b["x"] == 100)
-ok(b100 == [300, 900, 1500, 2100], "FR-T4: кронштейны шагом 600 буквально от 300 (%s)" % b100)
+ok(b100 == [100, 700, 1300, 1900, 2300],
+   "FR-T4: шаг 600 буквально от заданного в тесте отступа 100; последний у верхнего торца (%s)" % b100)
 ok(any("вертикальных направляющих 6 шагом 600" in n for n in pt["notes"]) and
    any("хлыстов шины 20" in n and "стык на направляющей" in n for n in pt["notes"]),
    "FR-T4: итог в замечаниях (%s)" % pt["notes"])
@@ -1256,22 +1278,24 @@ pn = frame_plan(dict(treq, joints_x=[], contours=[{"outer": rect(0, 0, 150, 2400
 ok(pn["ok"] and sorted(set(r["x"] for r in pn["rails"])) == [75],
    "FR-T7: зона уже 200 мм — одна стойка посередине")
 # 29.09c (Герман): у плитки кронштейны ПО РАСЧЁТУ; грузовая ширина = заданный шаг
-# The window fixture contains a one-support and a single-span fragment. Keep
-# it as an exact refusal, and exercise the load-width success on a rectangle.
+# The original 400-mm strip above the window still has only one support.
+# Single-span pieces are now calculated. At 600-mm corner width the actual
+# end weight also overloads two brackets; reducing width to 400 removes that
+# capacity failure, while the genuine one-support strip remains unsupported.
 for _tile_corner in (600, 400):
     _tile_refusal = frame_plan(dict(treq, system="Вектор-1", exact_step=False,
         tile_step_x_corner=_tile_corner,
         calc={"wind_region": "II", "terrain": "B", "height": 30,
               "q_clad": 40, "offset": 200, "na_max": 3000}))
-    ok(not _tile_refusal["ok"] and _tile_refusal.get("error_code") == "E_CALC_TOPOLOGY_UNSUPPORTED",
-       "FR-T7: window fragments have an exact topology refusal")
+    _tile_code = "E_CALC_MEMBER_CAPACITY" if _tile_corner == 600 else "E_CALC_TOPOLOGY_UNSUPPORTED"
+    ok(not _tile_refusal["ok"] and _tile_refusal.get("error_code") == _tile_code,
+       "FR-T7: window fragments have an addressed physical refusal")
     _tile_reasons = _tile_refusal["static_model"]["geometric_screening"]["reasons"]
-    ok({r["reason"] for r in _tile_reasons} ==
-       {"insufficient_supports", "single_span_unsupported", "span_class_mismatch"} and
-       all((r["reason"] == "insufficient_supports" and r["support_count"] == 1) or
-           (r["reason"] == "single_span_unsupported" and r["support_count"] == 2) or
-           (r["reason"] == "span_class_mismatch" and r["actual_span_class"] != r["coefficient_span_class"])
-           for r in _tile_reasons), "FR-T7: refusal reasons match actual support counts")
+    _tile_expected = {"insufficient_supports", "member_capacity_exceeded"} if _tile_corner == 600 else {"insufficient_supports"}
+    ok({r["reason"] for r in _tile_reasons} == _tile_expected and
+       all(r["support_count"] == 1 if r["reason"] == "insufficient_supports" else
+           r["failed_checks"] == ["кронштейн 1-1, кг/см²"] for r in _tile_reasons),
+       "FR-T7: exact one-support and bracket-capacity failures; no span-class blanket refusal")
     ok(not any(_tile_refusal.get(k) for k in ("rails", "hrails", "brackets", "clamps", "fittings"))
        and "calc_report" not in _tile_refusal, "FR-T7: no geometry or success report on refusal")
 pk = frame_plan(dict(treq, system="Вектор-1", exact_step=False,
@@ -1342,7 +1366,7 @@ ok(pi0["ok"] and not pi0["hrails"] and not pi0["rails"] and
    any("межэтажная без отметок" in n for n in pi0["notes"]) and
    not any("хлыстов" in n for n in pi0["notes"]),
    "FR-T10: межэтажная без отметок — ни направляющих, ни шин")
-po = frame_plan(dict(treq, sub_type="ortho"))
+po = frame_plan(dict(treq, sub_type="ortho", system=dict(tsys, bracket_start_offset=300)))
 ok(po["ok"] and sorted(set(r["x"] for r in po["rails"] if r["kind"] == "ШП-60-20")) ==
    [100, 700, 1300, 1900, 2500, 2900] and
    sorted(set(r["x"] for r in po["rails"] if r["kind"] == "Z-профиль")) == [900, 1700],
@@ -1469,7 +1493,7 @@ _pier = [[0, 0], [1000, 0], [1000, 1000], [1350, 1000], [1350, 0], [1850, 0], [1
          [2200, 1000], [2200, 0], [3000, 0], [3000, 3000], [0, 3000]]
 # 29.09t (Герман, ответ на 6е PDF №28: «вставить дополнительную направляющую в 100 мм, как у окна»):
 # у краёв вырезов — направляющие 1450 и 1750 по высоте простенка (+50), с кронштейнами; шина на них
-_pp = frame_plan(dict(treq, contours=[{"outer": _pier}]))
+_pp = frame_plan(dict(treq, contours=[{"outer": _pier}], system=dict(tsys, bracket_start_offset=300)))
 _st = [(h["x0"], h["x1"]) for h in _pp["hrails"] if h["y"] == 0 and 1300 < h["x0"] < 1900]
 _nr = sorted((r["x"], r["y0"], r["y1"]) for r in _pp["rails"] if r["x"] in (900, 1450, 1750, 2300))
 ok(_st == [(1350, 1850)] and not any("удлинить не до чего" in n for n in _pp["notes"]) and

@@ -10,7 +10,7 @@
     Contents/engine/systems.json        — справочник систем НВФ
 
   ОТДЕЛЬНЫЙ бандл (этап 3 фасадного направления): подсистема
-  итерационная, переустанавливается часто; AFacades/AClad не трогает.
+  обновляется вместе с AFacades и AClad из одного выпуска.
 -->
 <ApplicationPackage
     SchemaVersion="1.0"

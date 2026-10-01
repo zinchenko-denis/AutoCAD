@@ -67,7 +67,9 @@ import os
 import sys
 
 from frame_rules import resolve_layout_contract, declared_scope
-from frame_topology import screen_layout, refusal as topology_refusal
+from frame_topology import geometric_members, screen_layout, refusal as topology_refusal
+from frame_supports import (rail_cuts as _rail_cuts, rail_brackets as _rail_brackets,
+                            refine_vertical_supports)
 from frame_connections import build_connection_passport
 from frame_solution_selection import prepare_solution, _UNPREPARED
 
@@ -583,39 +585,6 @@ def _in_boxes(boxes, x, y):
                for bx0, by0, bx1, by1 in boxes)
 
 
-def _rail_brackets(a, b, start_off, step, exact=False):
-    """Кронштейны ОДНОЙ направляющей [a, b] — ТЗ Германа 26.07:
-    первый 300 от НИЗА, последний 300 от ВЕРХА, между ними равномерно
-    с шагом ≤ расчётного (3000 → 300-800-800-800-300 = 4 шт);
-    нестандартная длина — крайние 300/300, между ними ≤ шага;
-    короче 2×300 — один кронштейн в центре.
-
-    exact=True — фидбэк Германа 04.08 п.1: «при ручной установке шага
-    800 программа ставит кронштейны через 798». Так и было задумано
-    (В16, решение Дениса 24.07: «размазывая длину между перекрытиями»
-    — на куске 2990 остаётся 2390 между крайними, что при трёх
-    пролётах даёт 796.7), но ЗАДАННЫЙ РУКАМИ шаг конструктор ожидает
-    видеть буквально. В этом режиме идём от низа ровно шагом, а
-    неполный остаток добираем последним кронштейном в 300 от верха —
-    короче шага получается только последний пролёт."""
-    L = b - a
-    if L <= 2 * start_off + EPS:
-        return [a + L / 2.0]
-    lo, hi = a + start_off, b - start_off
-    if not step:
-        return [lo, hi]
-    if exact:
-        out = [lo]
-        y = lo + step
-        while y < hi - EPS:
-            out.append(y)
-            y += step
-        if hi - out[-1] > EPS:
-            out.append(hi)
-        return out
-    k = max(1, int(math.ceil((hi - lo - EPS) / step)))
-    return [lo + (hi - lo) * j / k for j in range(k + 1)]
-
 
 def _win_edges(holes, axes, edge_off=0.0):
     """Оконные стойки — где разрешён БОКОВОЙ кляммер (Герман 30.07 п.4:
@@ -1030,17 +999,19 @@ def _verify_calc_spacing(report, req, sub, rails, hrails, brackets, corners, cor
     it is not a new analysis of cantilevers, connection nodes or horizontal beams.
     """
     import frame_calc
-    bounds = [_bbox(_closed(c.get("outer") or []))
-              for c in req.get("contours") or [] if len(c.get("outer") or []) >= 3]
     intervals = {"row": [], "corner": []}
-    members = rails if sub == "vertical" else [h for h in hrails if h["kind"] not in SHINA_KINDS]
+    if sub == "vertical":
+        # Геометрический индекс уже построен по каждому куску. Не сканируем
+        # все кронштейны заново для каждой направляющей и не применяем общую
+        # многопролётную строку вместо только что проверенной схемы куска.
+        for member in report["static_model"]["members"]:
+            intervals[member["zone"]].extend(member["intervals"])
+    bounds = [_bbox(_closed(c.get("outer") or []))
+              for c in req.get("contours") or [] if len(c.get("outer") or []) >= 3] if sub != "vertical" else []
+    members = [] if sub == "vertical" else [h for h in hrails if h["kind"] not in SHINA_KINDS]
     for member in members:
-        if sub == "vertical":
-            points = sorted(set(b["y"] for b in brackets if abs(b["x"] - member["x"]) <= 0.5
-                                and member["y0"] - 0.5 <= b["y"] <= member["y1"] + 0.5))
-        else:
-            points = sorted(set(b["x"] for b in brackets if abs(b["y"] - member["y"]) <= 0.5
-                                and member["x0"] - 0.5 <= b["x"] <= member["x1"] + 0.5))
+        points = sorted(set(b["x"] for b in brackets if abs(b["y"] - member["y"]) <= 0.5
+                            and member["x0"] - 0.5 <= b["x"] <= member["x1"] + 0.5))
         for a, b in zip(points, points[1:]):
             x, y = ((member["x"], (a + b) / 2.0) if sub == "vertical" else
                     ((a + b) / 2.0, member["y"]))
@@ -1055,13 +1026,17 @@ def _verify_calc_spacing(report, req, sub, rails, hrails, brackets, corners, cor
             continue
         step = max(intervals[zone])
         limit = report["steps"]["corner" if zone == "corner" else "main"]
-        inp = dict(report["inputs"], profile=report["profile"][zone])
-        chain = frame_calc.calc_chain(inp, step, zone)
-        if step > limit + 0.5 or not chain["passed"]:
+        chain = None
+        if sub != "vertical":
+            inp = dict(report["inputs"], profile=report["profile"][zone])
+            chain = frame_calc.calc_chain(inp, step, zone)
+        if step > limit + 0.5 or (chain is not None and not chain["passed"]):
             return None, ("Расчёт выданной геометрии не проходит: %s зона, фактический шаг %.1f мм "
                           "(расчётный предел %.1f мм). Подсистема не выдана; прежняя сохранена." %
                           ("угловая" if zone == "corner" else "рядовая", step, limit))
-        checked[zone] = {"intervals": len(intervals[zone]), "max_step": round(step, 4), "chain": chain}
+        checked[zone] = {"intervals": len(intervals[zone]), "max_step": round(step, 4)}
+        if chain is not None:
+            checked[zone]["chain"] = chain
     return {"passed": True, "scope": "Интервалы между соседними кронштейнами на непрерывных элементах; "
             "для межэтажной цепочки — максимальный фактический интервал отметок/границ стены.",
             "rail_len": report["inputs"]["rail_len"], "zones": checked}, None
@@ -1342,6 +1317,7 @@ def _frame_plan(req):
     edge_rail = float(system.get("edge_rail_off") or 100.0)
 
     notes, rails, brackets, clamps = [], [], [], []
+    rebalanced_cuts = 0
     hrails, fittings = [], []
     # 26.09 (Денис): облицовка. Керамогранит/композит — как было (стойки по
     # швам раскладки, кляммеры). Бетонная/клинкерная плитка — подсистема БЕЗ
@@ -2282,17 +2258,17 @@ def _frame_plan(req):
                 # перекрытии, — «несущий» (В-е). Отметок НЕТ (lash,
                 # Герман 07.08 ответ 2): хлысты РОВНО rail_std от
                 # низа куска, зазор gap МЕЖДУ хлыстами (полигон: низы
-                # 24070.3+3010n), последний обрезается, кронштейны
+                # 24070.3+3010n), короткий хвост делит длину с предыдущим,
+                # кронштейны
                 # все одного типа. В обоих режимах на каждую
                 # направляющую: 300 от торцов + равномерно ≤ шага
                 # (ТЗ 26.07), короткая — один в центре.
                 segs2 = []
                 if lash:
-                    yq = s_lo
-                    while s_hi - yq > EPS:
-                        ce = min(yq + rail_std, s_hi)
-                        segs2.append((yq, ce, False))
-                        yq = ce + gap
+                    cuts = _rail_cuts(s_lo, s_hi, rail_std, gap, start_off)
+                    if len(cuts) > 1 and cuts[-2][1] - cuts[-2][0] < rail_std - EPS:
+                        rebalanced_cuts += 1
+                    segs2 = [(a, b, False) for a, b in cuts]
                     seams_in = [b for _a, b, _f in segs2[:-1]]
                 else:
                     cuts = ([s_lo, s_hi]
@@ -2381,7 +2357,15 @@ def _frame_plan(req):
                     in_c = _in_corner(zx, x0, x1, corner_zone,
                                       corners)
                     stp = step_corner if in_c else step_main
+                    rail_parts = []
                     for za, zb in spans:
+                        cuts = _rail_cuts(za, zb, rail_std, gap, start_off) if lash else [(za, zb)]
+                        if len(cuts) > 1 and cuts[-2][1] - cuts[-2][0] < rail_std - EPS:
+                            rebalanced_cuts += 1
+                        rail_parts.extend(cuts)
+                        _piece_clamps(clamps, rows, za, zb, zx, True,
+                                      [b for _a, b in cuts[:-1]], wedges)
+                    for za, zb in rail_parts:
                         rails.append({"x": round(zx, 4),
                                       "y0": round(za, 4),
                                       "y1": round(zb, 4),
@@ -2396,8 +2380,6 @@ def _frame_plan(req):
                                 brackets.append({"x": round(zx, 4),
                                                  "y": round(y, 4),
                                                  "kind": "рядовой"})
-                        _piece_clamps(clamps, rows, za, zb, zx,
-                                      True, [], wedges)
 
     # 29.09l (Герман, ответ на 9в PDF №27): «лучше делать стык хлыстов на
     # направляющей». Прогоны шин режутся на хлысты ПОСЛЕ расстановки: стык — на
@@ -2440,11 +2422,10 @@ def _frame_plan(req):
                     if abs(rr["x"] - zx) <= 50.0:
                         spans = _sub_y(spans, rr["y0"], rr["y1"])
                 for za, zb in [(a5, b5) for a5, b5 in spans if b5 - a5 > 100.0]:
-                    yq, rail_parts = za, []
-                    while zb - yq > EPS:
-                        ce = min(yq + rail_std, zb) if rail_std > EPS else zb
-                        rail_parts.append((yq, ce))
-                        yq = ce + gap_v
+                    rail_parts = _rail_cuts(za, zb, rail_std, gap_v,
+                                           start_off if sub == "vertical" else None)
+                    if len(rail_parts) > 1 and rail_parts[-2][1] - rail_parts[-2][0] < rail_std - EPS:
+                        rebalanced_cuts += 1
                     for pa, pb in rail_parts:
                         if pb - pa <= EPS:
                             continue
@@ -2579,6 +2560,30 @@ def _frame_plan(req):
                     "unsupported": unsupported, "unsupported_counts": {"pieces": n_bare, "joints": n_air},
                     "notes": notes}
 
+    if rebalanced_cuts:
+        notes.append("Перераспределены последние два хлыста на %d участках: сохранены зазор и "
+                     "заданные отступы кронштейнов от торцов; искусственный короткий хвост устранён."
+                     % rebalanced_cuts)
+
+    if calc_rep is None and sub == "vertical" and parts != "clamps":
+        members, _horizontal = geometric_members(sub, rails, hrails, brackets)
+        missing = [dict(member_index=m["index"], **m["geometry"],
+                        length=round(m["geometry"]["y1"] - m["geometry"]["y0"], 4),
+                        support_y=m["support_y"], support_count=m["support_count"],
+                        bracket_start_offset=start_off) for m in members if m["support_count"] < 2]
+        if missing:
+            first = missing[0]
+            return {"ok": False, "error_code": "E_UNSUPPORTED_RAIL",
+                    "error": "Подсистема не построена: %d направляющих имеют менее двух опор. "
+                             "Первая: X=%.1f, Y=%.1f…%.1f мм, длина %.1f мм, опор %d. "
+                             "При заданных отступах от торцов исходный участок слишком короток; "
+                             "требуется изменение границ/стыков или отдельное решение крепления. "
+                             "Прежняя подсистема сохранена." %
+                             (len(missing), first["x"], first["y0"], first["y1"],
+                              first["length"], first["support_count"]),
+                    "unsupported": missing, "unsupported_counts": {"rail_pieces": len(missing)},
+                    "notes": notes}
+
     if calc_rep is not None:
         # A passed arithmetic chain does not establish the static model.
         # Record every emitted piece, including zero-gap abutting pieces,
@@ -2593,7 +2598,19 @@ def _frame_plan(req):
             member_zones.append("corner" if any(
                 _in_corner(x, box[0], box[2], corner_zone, corners) for box in own_boxes) else "row")
         static_model = screen_layout(sub, rails, hrails, brackets, calc_rep["inputs"],
-                                     member_zones, rail_gap=gap)
+                                     member_zones, rail_gap=gap,
+                                     profiles_by_zone=calc_rep["profile"], bracket_steps=calc_rep["steps"])
+        if sub == "vertical" and start_off is not None:
+            brackets, refinements = refine_vertical_supports(rails, brackets, static_model,
+                calc_rep, float(start_off), exact_step)
+            calc_rep["support_refinements"] = refinements
+            if refinements:
+                notes.append("На %d направляющих шаг кронштейнов уменьшен по расчёту самого куска; "
+                             "общий шаг — верхний предел. Профили и торцевые отступы сохранены."
+                             % len(refinements))
+                static_model = screen_layout(sub, rails, hrails, brackets, calc_rep["inputs"],
+                    member_zones, rail_gap=gap, profiles_by_zone=calc_rep["profile"],
+                    bracket_steps=calc_rep["steps"])
         calc_rep["static_model"] = static_model
 
     if calc_rep is not None and sub == "interfloor":
@@ -2639,15 +2656,15 @@ def _frame_plan(req):
             return {"ok": False, "error_code": "E_CALC_LAYOUT", "error": error,
                     "static_model": static_model, "calc_inputs": calc_rep["inputs"]}
         calc_rep["layout_verification"] = verification
-        notes.append("Статическая модель не подтверждена: проверка числа геометрических опор "
-                     "и арифметической цепочки не проверяет неподвижные/подвижные соединения, "
-                     "непрерывность через стыки, консоли и распределение веса.")
+        notes.append("Статическая модель не подтверждена: расчёт пролётов и свесов каждого куска "
+                     "при равномерной нагрузке не задаёт неподвижные/подвижные соединения, "
+                     "непрерывность через стыки и распределение веса.")
         calc_rep["method"] = {
             "name": "Вектор — цепочка по переданным статическим расчётам",
-            "version": "review-3009",
-            "coverage": "Проверены арифметические цепочки, выданные шаги и ограниченные геометрические "
-                        "условия числа опор/пролётов. Применимость статической модели не подтверждена: "
-                        "закрепления, стыки, распределение веса, консоли, неравные пролёты, "
+            "version": "member-beams-2026-10-02",
+            "coverage": "Каждый кусок проверен по фактическим пролётам и свесам при равномерной "
+                        "поперечной нагрузке; проверены шаги и число геометрических опор. "
+                        "Закрепления, стыки, распределение веса, "
                         "горизонтальные НГП/СП и проект в целом требуют отдельной проверки конструктора."}
     clamps = _merge_clamps(clamps)
     # 01.08 (письмо Германа, п.2): марка профиля для СОСТОЯНИЯ

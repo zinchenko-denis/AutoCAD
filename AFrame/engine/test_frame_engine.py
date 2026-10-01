@@ -69,9 +69,8 @@ class TestFrameEngine(unittest.TestCase):
 
 
     def test_calc_passthrough(self):
-        """Этап 4: блок calc пробрасывается, шаги по расчёту, отчёт
-        в выходе (кейс республиканской: 800/450)."""
-        res = fe.run({
+        """CLI preserves both the real corner failure and an explicit row pass."""
+        req = {
             "op": "frame", "system": "Вектор-1",
             "contours": [{"id": "A", "pts": rect(0, 0, 5000, 6000)}],
             "joints_x": [i * 608.0 + 304 for i in range(8)],
@@ -79,12 +78,21 @@ class TestFrameEngine(unittest.TestCase):
             "calc": {"wind_region": "II", "terrain": "B",
                      "height": 41.2, "q_clad": 25, "offset": 230,
                      "na_max": 1880, "profile": "ШП-60-20-20-1,2",
-                     "q_rails": 1.21}})
-        self.assertTrue(res["ok"], res)
-        self.assertEqual(res["summary"]["calc_steps"],
-                         {"main": 800, "corner": 450})
+                     "q_rails": 1.21}}
+        failed = fe.run(req)
+        self.assertFalse(failed["ok"])
+        self.assertEqual(failed["error_code"], "E_CALC_MEMBER_CAPACITY")
+        self.assertEqual(failed["failed_zone"], "контур A")
+        self.assertTrue(all(r["failed_checks"] == ["кронштейн 1-1, кг/см²"]
+                            for r in failed["unsupported"]))
+        self.assertFalse(failed.get("rails"))
+        # Corner declaration is explicit, not a weakened load or missed failure.
+        res = fe.run(dict(req, corners_x=[]))
+        self.assertTrue(res["ok"], res.get("error"))
+        self.assertEqual(res["summary"]["calc_steps"], {"main": 800, "corner": 450})
         self.assertEqual(len(res["calc_report"]["row"]["checks"]), 8)
         self.assertTrue(any("РАСЧЁТУ" in n for n in res["notes"]))
+        self.assertEqual(res["calc_report"]["static_model"]["member_calculation"]["status"], "passed")
 
     def test_interfloor_hrails_via_cli(self):
         """Регресс 27.07: sub_type/hrails/fittings терялись в

@@ -108,16 +108,23 @@ namespace AFramePlugin
             RibbonTab tab = FindOrCreateTab(rc);
             var src = new RibbonPanelSource
             { Title = "Подсистема", Id = PanelId };
-src.Items.Add(MakeButton("Подсистема", "ATFRAME",
+            src.Items.Add(MakeButton("Подсистема", "ATFRAME",
                 "ATFRAME — кронштейны/направляющие/кляммеры по " +
-                "раскладке ATCLAD (вертикальная, межэтажная, " +
+                "раскладке ATTILE (вертикальная, межэтажная, " +
                 "ортогональная).", "afr_frame"));
             src.Items.Add(MakeButton("Размеры", "ATFRAMEDIM",
                 "ATFRAMEDIM — размеры между центрами кронштейнов " +
                 "столбца или ряда (письмо Германа 01.08).",
                 "afr_frame"));
+            src.Items.Add(MakeButton("Параметры\nпроекта", "ATFPROJECT",
+                "ATFPROJECT — общие параметры фасадного проекта в текущем чертеже.", "afr_frame"));
+            src.Items.Add(MakeButton("Параметры\nзоны", "ATFZONEPARAMS",
+                "ATFZONEPARAMS — наследование параметров проекта, исключения для выбранных зон и отвязка от проекта.", "afr_frame"));
+            src.Items.Add(MakeButton("Схема\nузла", "ATFNODE",
+                "ATFNODE — создать или проверить размерную схему узла. Это диагностическая схема, а не рабочий узел.", "afr_frame"));
             var panel = new RibbonPanel { Source = src };
-            tab.Panels.Add(panel);}
+            tab.Panels.Add(panel);
+        }
 
         private static RibbonButton MakeButton(string text, string cmd,
                                                string tip, string icon)

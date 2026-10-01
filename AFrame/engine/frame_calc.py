@@ -66,7 +66,8 @@ ICE_RHO = 0.9    # г/см³
 ICE_GAMMA = 1.8
 
 # (c_M, k_нер, c_f) по числу пролётов
-SPAN_CONST = {2: (0.125, 1.25, 0.0052),
+SPAN_CONST = {1: (1.0 / 8.0, 0.5, 5.0 / 384.0),
+              2: (0.125, 1.25, 0.0052),
               3: (0.100, 1.10, 0.00675),
               "multi": (0.106, 1.132, 0.0063)}
 
@@ -247,7 +248,7 @@ def _checks_pack(name, value, limit):
                 ok=value <= limit + 1e-9)
 
 
-def calc_chain(inp, step, zone):
+def calc_chain(inp, step, zone, member_response=None):
     """Полная цепочка для одного шага и зоны ('row'|'corner').
 
     inp — dict:
@@ -268,6 +269,9 @@ def calc_chain(inp, step, zone):
       висячие поля переопределения: e1..e4 (плечи анкера), ry
     step — подбираемый шаг, мм:
       vertical: верт. шаг кронштейнов L1; interfloor/ortho: гориз. шаг L2.
+    member_response — внутренняя проверка фактического отдельного куска:
+      frame_beam.response, а не произвольные характеристики изделия.
+      Исторический подбор без этого аргумента не меняется.
     Возвращает dict: checks[], n_p, n_w, w_p, passed.
     """
     inp = resolved_inputs(inp)
@@ -312,6 +316,28 @@ def calc_chain(inp, step, zone):
     else:
         raise ValueError("scheme")
 
+    beam_coefficients = None
+    if member_response is not None:
+        if scheme not in ("vertical", "ortho"):
+            raise ValueError("расчёт отдельного куска не разрешает межэтажную схему")
+        count = member_response["span_count"]
+        if not isinstance(count, int) or count < 1:
+            raise ValueError("кусок должен иметь хотя бы один пролёт")
+        base = SPAN_CONST["multi" if count >= 4 else count]
+        c_m = max(base[0], _number("beam.c_m", member_response["c_m"], zero=True))
+        k_ner = max(base[1], _number("beam.k_reaction", member_response["k_reaction"], zero=True))
+        c_f = max(base[2], _number("beam.c_f_local", member_response["c_f_local"], zero=True))
+        prof_span = _number("beam.span", member_response["span"])
+        # Same tributary dead-load rule as the existing method. Transverse
+        # reactions must never reduce or redistribute gravity between anchors.
+        # Include the end tributary strip (free end + half adjacent span),
+        # retaining the old full max-span strip as a lower bound.
+        l1_m = prof_span / 1000.0
+        gravity_length = max(prof_span, _number("beam.gravity_length", member_response["gravity_length"]))
+        n_p = (q_clad * b + q_rails) * gravity_length / 1000.0
+        n_w = w_eff * l1_m * (b if scheme == "vertical" else l2_m) * k_ner
+        beam_coefficients = dict(span_count=count, c_m=c_m, k_reaction=k_ner, c_f_local=c_f)
+
     checks = []
 
     # --- анкер
@@ -351,8 +377,12 @@ def calc_chain(inp, step, zone):
     checks.append(_checks_pack("профиль σ, кг/см²", s_prof, ry))
     q_n = w_eff * prof_b / 1.4 / 100.0            # кг/см (нормативная)
     f_cm = c_f * q_n * l_cm ** 4 / (E_STEEL * prof["Jx"] / 1e4)
+    deflection_length = prof_span
+    if member_response is not None and member_response["c_f_local"] >= base[2]:
+        deflection_length = _number("beam.deflection_length", member_response["deflection_length"])
+        f_cm *= deflection_length / prof_span
     checks.append(_checks_pack("профиль f, мм", f_cm * 10.0,
-                               prof_span / F_LIMIT_DIV))
+                               deflection_length / F_LIMIT_DIV))
 
     # --- заклёпки (оба соединения — одни N)
     n_riv = inp.get("n_rivets", 2)
@@ -363,9 +393,12 @@ def calc_chain(inp, step, zone):
                                n_res / (n_riv * RIVET_D_CM * RIVET_T_CM),
                                RIVET_R_SMYAT))
 
-    return dict(zone=zone, step=step, w_p=round(w_p, 1),
-                n_p=round(n_p, 1), n_w=round(n_w, 1),
-                checks=checks, passed=all(c["ok"] for c in checks))
+    result = dict(zone=zone, step=step, w_p=round(w_p, 1),
+                  n_p=round(n_p, 1), n_w=round(n_w, 1),
+                  checks=checks, passed=all(c["ok"] for c in checks))
+    if beam_coefficients is not None:
+        result["member_coefficients"] = beam_coefficients
+    return result
 
 
 def pick_step(inp, zone, candidates=None):

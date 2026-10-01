@@ -18,6 +18,8 @@ namespace AFacadesPlugin
         {
             new[] { "Зоны фасада (ATFZONE)", "ATFZONE" },
             new[] { "Ведомость зон (ATFTABLE)", "ATFTABLE" },
+            new[] { "Принять старую зону (ATFZONEACCEPT)", "ATFZONEACCEPT" },
+            new[] { "Сбросить связи контуров (ATFZONERESET)", "ATFZONERESET" },
         };
 
         private static bool _quitHooked;

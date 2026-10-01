@@ -81,8 +81,8 @@ def native_short_rails():
                "rows_y": [600, 1200, 1800, 2400, 3020],
                "calc": {"terrain": "B", "height": 30, "q_clad": 25,
                         "offset": 230, "na_max": 3000, "wind_region": "II"}}
-    # This fixture exercises metadata/readback, not a calculation. The last
-    # 150 mm stock piece has only one support and must not be calc-approved.
+    # Stock cutting must redistribute the former 150 mm tail before metadata
+    # readback; no single-support physical piece may reach the drawing.
     manual = copy.deepcopy(request)
     manual.pop("calc")
     full = fp.frame_plan(manual)
@@ -96,7 +96,7 @@ def vertical_only_clamps():
     request = {"op": "frame", "system": "Standart", "sub_type": "vertical",
                "contours": [
                    {"id": "O", "pts": [[0, 0], [5800, 0], [5800, 8800],
-                                         [4300, 8800], [4300, 3200], [0, 3200]]},
+                                         [4300, 8800], [4300, 3900], [0, 3900]]},
                    {"id": "H0", "pts": rect(3800, 0, 5600, 1200)},
                    {"id": "H1", "pts": rect(4110, 1570, 4910, 3120)},
                    {"id": "H2", "pts": rect(140, 2490, 1540, 3140)},
@@ -104,6 +104,11 @@ def vertical_only_clamps():
                "joints_x": [421.881, 1029.881, 1637.881, 2245.881, 2853.881,
                             3461.881, 4069.881, 4677.881, 5285.881],
                "rows_y": [1208, 2416, 3624, 4832, 6040, 7248, 8456]}
+    # Raise the ledge above the windows for a supported clamp-readback
+    # positive. The original 3200 mm ledge produced 10/30 mm one-support
+    # fragments, now covered explicitly by the negative test below.
+    # The separate 320–510 mm piers use explicit 100 mm test offsets.
+    request["system"] = {"name": "Standart", "bracket_start_offset": 100}
     full = fe.run(copy.deepcopy(request))
     fixed = [{"x": r["x"], "y0": r["y0"], "y1": r["y1"]} for r in full["rails"]]
     again = fe.run(dict(copy.deepcopy(request), parts="clamps", rails_fixed=fixed))
@@ -144,19 +149,29 @@ class FrameContractRegressions(unittest.TestCase):
         self.assertEqual(clamp_set(full), clamp_set(again),
                          "Native RailGeom kept %d of %d generated rails" %
                          (len(fixed), len(full["rails"])))
-        rejected = fp.frame_plan(request)
-        self.assertFalse(rejected["ok"])
-        self.assertEqual(rejected["error_code"], "E_CALC_TOPOLOGY_UNSUPPORTED")
-        reasons = rejected["static_model"]["geometric_screening"]["reasons"]
-        self.assertTrue(reasons)
-        self.assertTrue(all(r["reason"] == "insufficient_supports" and r["support_count"] == 1
-                            for r in reasons))
-        self.assertFalse(any(rejected.get(k) for k in ("rails", "hrails", "brackets", "clamps", "fittings")))
+        calculated = fp.frame_plan(request)
+        self.assertTrue(calculated["ok"], calculated.get("error"))
+        model = calculated["calc_report"]["static_model"]
+        self.assertTrue(all(m["support_count"] >= 2 for m in model["members"]))
+        self.assertTrue(all(c["chain"]["passed"] for c in model["member_calculation"]["cases"]))
+        self.assertEqual(model["status"], "not_verified")
 
     def test_vertical_only_clamps_repeats_full_layout(self):
         _, full, again = vertical_only_clamps()
         self.assertEqual(clamp_set(full), clamp_set(again),
                          "The known mismatch is also present in vertical systems")
+
+    def test_original_clamp_fixture_has_addressed_short_piece_refusal(self):
+        request, _, _ = vertical_only_clamps()
+        request["contours"][0]["pts"][4][1] = 3200
+        request["contours"][0]["pts"][5][1] = 3200
+        result = fe.run(request)
+        self.assertFalse(result["ok"])
+        self.assertEqual(result["error_code"], "E_UNSUPPORTED_RAIL")
+        self.assertTrue(result["unsupported"])
+        self.assertTrue(all(p["support_count"] < 2 for p in result["unsupported"]))
+        self.assertTrue({10.0, 30.0}.issubset({p["length"] for p in result["unsupported"]}))
+        self.assertFalse(any(result.get(k) for k in ("rails", "hrails", "brackets", "clamps", "fittings")))
 
     def test_shina_has_at_least_one_vertical_support(self):
         _, result = unsupported_gable_shina()
@@ -212,19 +227,18 @@ class FrameContractRegressions(unittest.TestCase):
                    "calc": {"terrain": "B", "height": 30, "q_clad": 25,
                             "offset": 230, "na_max": 3000, "wind_region": "II"}}
         result = fp.frame_plan(request)
-        self.assertFalse(result["ok"])
-        self.assertEqual(result["error_code"], "E_CALC_TOPOLOGY_UNSUPPORTED")
-        reasons = result["static_model"]["geometric_screening"]["reasons"]
-        self.assertTrue(reasons)
-        self.assertTrue(all(r["reason"] == "span_class_mismatch" and
-                            r["actual_span_class"] != r["coefficient_span_class"] for r in reasons))
-        self.assertFalse(any(result.get(k) for k in ("rails", "hrails", "brackets", "clamps", "fittings")))
-        # Preserve the original shifted-corner placement regression in manual
-        # mode using the same arithmetic steps; no structural claim is made.
+        self.assertTrue(result["ok"], result.get("error"))
+        model = result["calc_report"]["static_model"]
+        shifted = [m for m in model["members"] if m["geometry"]["x"] == 1490]
+        self.assertTrue(shifted)
+        self.assertTrue(all(m["zone"] == "corner" for m in shifted))
+        cases = model["member_calculation"]["cases"]
+        self.assertTrue(all(cases[m["calculation_case"]]["zone"] == "corner" and
+                            cases[m["calculation_case"]]["chain"]["passed"] for m in shifted))
+        # The manual mode still honours the same corner pitch independently.
         manual = copy.deepcopy(request)
         manual.pop("calc")
-        self.assertNotIn("calc_report", result)
-        arithmetic = fc.report(result["calc_inputs"])
+        arithmetic = fc.report(result["calc_report"]["inputs"])
         steps = {"main": arithmetic["row"]["step"], "corner": arithmetic["corner"]["step"]}
         manual["system"] = {"name": "Вектор-1", "bracket_step": steps["main"],
                             "bracket_step_corner": steps["corner"]}
@@ -242,14 +256,16 @@ class FrameContractRegressions(unittest.TestCase):
         self.assertTrue(fp.frame_plan(request)["ok"])
         # Simulate an over-wide generated interval to exercise the final gate.
         # The initial calculator remains real and approves the normal steps.
-        # Four supports match the three-span coefficient class, but intervals
-        # exceed the accepted step: this must reach the spacing gate.
+        # Local refinement can now repair these intervals. It must check the
+        # repaired physical supports before any drawable result is returned.
         with patch.object(fp, "_rail_brackets", side_effect=lambda a, b, *args:
                           [a + 100, a + 1000, a + 2000, b - 100]):
             result = fp.frame_plan(request)
-        self.assertFalse(result["ok"])
-        self.assertEqual(result["error_code"], "E_CALC_LAYOUT")
-        self.assertFalse(any(result.get(k) for k in ("rails", "hrails", "brackets", "clamps")))
+        self.assertTrue(result["ok"], result.get("error"))
+        report = result["calc_report"]
+        self.assertTrue(report["support_refinements"])
+        self.assertTrue(report["layout_verification"]["passed"])
+        self.assertTrue(all(c["chain"]["passed"] for c in report["static_model"]["member_calculation"]["cases"]))
 
     def test_explicit_invalid_calc_dimensions_are_not_defaults(self):
         request, _, _ = long_floor()

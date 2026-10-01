@@ -88,7 +88,13 @@ namespace FacadeSafety
                 var data = Read(tr, carrier, DataKey, out ignored);
                 zoneId = S(Get(data, "zone_id"));
                 if (state == null || S(Get(state, "schema")) != "1")
-                    return Fail(zoneId, "нет проверяемого снимка геометрии (старая зона)");
+                {
+                    if (HasSnapshot(tr, carrier)) return Fail(zoneId, "снимок геометрии повреждён или имеет неподдерживаемую версию");
+                    return new ZoneGeometryResult { ZoneId = zoneId,
+                        Reason = "Зона «" + (zoneId.Length == 0 ? "без марки" : zoneId) +
+                        "»: нет проверяемого снимка геометрии (старая зона). Выполните ATFZONEACCEPT, чтобы явно принять текущие контуры без пересоздания зоны. " +
+                        "Старая раскладка и ведомости при этом не подтверждаются; их нужно пересчитать." };
+                }
                 if (!(carrier is Hatch) && !(carrier is MText)) return Fail(zoneId, "неподдерживаемый объект зоны");
                 if (S(Get(state, "revision")).Length == 0 || zoneId.Length == 0 || zoneId != S(Get(state, "zone_id"))) return Fail(zoneId, "повреждены данные зоны");
                 if (S(Get(state, "carrier_handle")) != carrier.Handle.ToString()) return Fail(zoneId, "выбрана копия штриховки или марки");
@@ -149,6 +155,12 @@ namespace FacadeSafety
             catch (System.Exception ex) { return Fail(zoneId, "геометрию нельзя проверить: " + ex.Message); }
         }
 
+        internal static bool HasSnapshot(Transaction tr, Entity carrier)
+        {
+            if (carrier == null || carrier.ExtensionDictionary.IsNull) return false;
+            var ext = tr.GetObject(carrier.ExtensionDictionary, OpenMode.ForRead) as DBDictionary;
+            return ext != null && ext.Contains(Key);
+        }
 
         internal static bool TryReadPolyline(Polyline poly, string role, out GeometryLoop loop, out string reason)
         {

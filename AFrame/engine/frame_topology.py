@@ -1,13 +1,11 @@
 # -*- coding: utf-8 -*-
-"""Screen the applicability of existing frame_calc coefficients to real pieces.
+"""Check actual member geometry and limited beam arithmetic.
 
-This module does not calculate a beam or assert connection properties. Each
+Beam arithmetic does not assert mounting connection properties. Each
 emitted rail remains a separate member, including abutting pieces at gap=0.
 Geometric intersections are candidate supports, not evidence of fixed/sliding
 connections, moment transfer, gravity-load distribution or cantilever capacity.
 """
-import math
-
 from frame_spatial import BoundsIndex
 
 MATCH_TOL = 0.5  # Coordinate rounding only; not a structural allowance.
@@ -122,66 +120,93 @@ def geometric_members(sub, rails, hrails, brackets, member_zones=None,
     return members, horizontal_members
 
 
-def screen_layout(sub, rails, hrails, brackets, calc_inputs, member_zones=None,
-                  rail_gap=0.0):
-    """Return a serializable inventory and *limited* geometric screening result.
+def evaluate_member(calc_inputs, profile, member, zone, bracket_step, beam_cache=None):
+    """One real piece; cache geometry responses only inside the current operation."""
+    import frame_beam
+    import frame_calc
+    key = (tuple(member["intervals"]), member["bottom_free"], member["top_free"])
+    cache = beam_cache if beam_cache is not None else {}
+    if key not in cache:
+        cache[key] = frame_beam.response(*key)
+    beam = cache[key]
+    step = beam["span"] if calc_inputs["scheme"] == "vertical" else bracket_step
+    chain = frame_calc.calc_chain(dict(calc_inputs, profile=profile), step, zone,
+                                  member_response=beam)
+    return dict(response=beam, chain=chain)
 
-member_zones aligns with rails and names their final row/corner calculation.
-Vertical coefficients follow the same largest actual interval per zone as
-frame_plan._verify_calc_spacing. Ortho uses frame_calc's fixed v_step. The
-classification mirrors spans_const; no new formula or threshold is introduced.
-Interfloor has no confirmed model of the emitted joints/constraints, regardless
-of the number of intersections. Its existing free-end refusal has precedence
-in the caller.
+
+def screen_layout(sub, rails, hrails, brackets, calc_inputs, member_zones=None,
+                  rail_gap=0.0, profiles_by_zone=None, bracket_steps=None):
+    """Check each physical member under the existing uniform-load idealisation.
+
+    Geometric intersections remain candidate supports. Per-member arithmetic
+    uses actual spans and free ends, and does not establish fixed/sliding
+    joints, axial load distribution or continuity across separate pieces.
+    Minimal geometry-only callers (without scheme) receive no strength claim.
     """
     members, horizontal_members = geometric_members(
         sub, rails, hrails, brackets, member_zones, rail_gap)
-
-    reasons = []
+    reasons, cases = [], []
+    beam_cache, case_cache = {}, {}
+    calculate = calc_inputs.get("scheme") in ("vertical", "ortho")
     if not members:
         reasons.append(dict(reason="empty_geometry"))
     if sub == "interfloor":
         reasons.append(dict(reason="interfloor_model_unconfirmed"))
     else:
-        actual_max = {zone: max((b - a for member in members if member["zone"] == zone
-                                for a, b in zip(member["support_y"], member["support_y"][1:])), default=0.0)
-                      for zone in ("row", "corner")}
         for member in members:
-            span = actual_max[member["zone"]] if sub == "vertical" else float(calc_inputs["v_step"])
-            expected_count = max(2, int(math.floor(float(calc_inputs["rail_len"]) / span))) if span > 0 else None
-            member["coefficient_span"] = span if span > 0 else None
-            member["coefficient_span_class"] = _span_class(expected_count) if expected_count is not None else None
-            # A topology with two supports has one span; spans_const has no
-            # one-span row. Do not quietly promote it to the two-span row.
+            span = max(member["intervals"], default=0.0)
+            member["coefficient_span"] = span or None
+            member["coefficient_span_class"] = member["actual_span_class"] if span else None
             if member["support_count"] < 2:
-                reason = "insufficient_supports"
-            elif member["span_count"] == 1:
-                reason = "single_span_unsupported"
-            elif member["actual_span_class"] != member["coefficient_span_class"]:
-                reason = "span_class_mismatch"
-            elif sub == "ortho" and max(member["intervals"]) > span + MATCH_TOL:
-                # The existing chain would use a shorter span than the piece.
-                reason = "support_interval_exceeds_calculated_span"
-            else:
-                reason = None
-            if reason:
-                reasons.append(dict(reason=reason, member_index=member["index"],
-                    support_count=member["support_count"], span_count=member["span_count"],
+                reasons.append(dict(reason="insufficient_supports", member_index=member["index"],
+                    geometry=dict(member["geometry"]), support_count=member["support_count"], span_count=member["span_count"],
                     actual_span_class=member["actual_span_class"],
                     coefficient_span_class=member["coefficient_span_class"],
                     coefficient_span=member["coefficient_span"]))
+                continue
+            if not calculate:
+                continue
+            zone = member["zone"]
+            profile = (profiles_by_zone or {}).get(zone, calc_inputs["profile"])
+            geometry_key = (tuple(member["intervals"]), member["bottom_free"], member["top_free"])
+            step = span if sub == "vertical" else float((bracket_steps or {}).get(
+                "corner" if zone == "corner" else "main", calc_inputs.get("max_step", 800)))
+            # A resolved section is immutable during this one layout operation.
+            profile_key = tuple(sorted(profile.items())) if isinstance(profile, dict) else profile
+            key = (geometry_key, zone, profile_key, step)
+            if key not in case_cache:
+                calculation = evaluate_member(calc_inputs, profile, member, zone, step, beam_cache)
+                case_cache[key] = len(cases)
+                cases.append(dict(id=len(cases), zone=zone, profile=profile,
+                    span=span, intervals=member["intervals"],
+                    bottom_free=member["bottom_free"], top_free=member["top_free"],
+                    response=calculation["response"], chain=calculation["chain"]))
+            case_id = case_cache[key]
+            member["calculation_case"] = case_id
+            if not cases[case_id]["chain"]["passed"]:
+                reasons.append(dict(reason="member_capacity_exceeded", member_index=member["index"],
+                    geometry=dict(member["geometry"]), support_count=member["support_count"], span_count=member["span_count"],
+                    calculation_case=case_id, failed_checks=[c["name"] for c in
+                    cases[case_id]["chain"]["checks"] if not c["ok"]]))
 
     return dict(status="not_verified", scheme=sub,
                 geometric_screening=dict(status="refused" if reasons else "passed", reasons=reasons),
                 members=members, horizontal_members=horizontal_members,
                 member_count=len(members), pieces_merged=False,
+                member_calculation=dict(status=("passed" if cases and not reasons else
+                    "refused" if calculate else "not_requested"), cases=cases,
+                    evaluated_members=sum("calculation_case" in m for m in members),
+                    unique_geometries=len(beam_cache)),
                 fixed_sliding="not_modeled", splice_continuity="not_modeled",
-                gravity_load_distribution="not_verified", cantilevers="not_verified",
-                unequal_spans="not_verified", horizontal_member_strength="not_verified",
-                scope="Проверены только геометрические пересечения и совместимость числа пролётов "
-                      "с уже применяемыми коэффициентами. Это не проверка статической модели: "
-                      "неподвижные/подвижные соединения, передача момента через стыки, распределение "
-                      "веса, консоли и неравные пролёты не подтверждены.")
+                gravity_load_distribution="not_verified",
+                cantilevers="uniform_load_screened" if cases else "not_verified",
+                unequal_spans="uniform_load_screened" if cases else "not_verified",
+                horizontal_member_strength="not_verified",
+                scope="Каждый отдельный кусок проверен по фактическим пролётам и свободным концам "
+                      "при равномерной поперечной нагрузке и простых опорах. Разные куски не склеены. "
+                      "Это ограниченный расчёт: неподвижные/подвижные соединения, передача момента "
+                      "через стыки, распределение веса и работа горизонтальных элементов не подтверждены.")
 
 
 def refusal(static_model):
@@ -193,17 +218,32 @@ def refusal(static_model):
     descriptions = {
         "empty_geometry": "нет вертикальных элементов для проверки",
         "insufficient_supports": "менее двух геометрических опор",
-        "single_span_unsupported": "однопролётная схема отсутствует в применённой расчётной цепочке",
-        "span_class_mismatch": "число пролётов куска не соответствует применённым коэффициентам",
-        "support_interval_exceeds_calculated_span": "интервал опор превышает пролёт расчётной цепочки",
+        "member_capacity_exceeded": "проверка фактического куска по нагрузке не проходит",
         "interfloor_model_unconfirmed": "для межэтажного каркаса не подтверждена модель соединений "
                                           "и непрерывности НСП через стыки",
     }
     kinds = list(dict.fromkeys(reason["reason"] for reason in screening["reasons"]))
+    piece_reasons = [reason for reason in screening["reasons"] if "member_index" in reason]
+    detail = ""
+    if piece_reasons:
+        first = piece_reasons[0]
+        geometry = first["geometry"]
+        detail = (" Первый проблемный кусок: X=%g, Y=%g…%g мм; опор %d, пролётов %d." %
+                  (geometry["x"], geometry["y0"], geometry["y1"],
+                   first["support_count"], first["span_count"]))
+        if first["reason"] == "member_capacity_exceeded":
+            case = static_model["member_calculation"]["cases"][first["calculation_case"]]
+            failed = next(check for check in case["chain"]["checks"] if not check["ok"])
+            detail += " %s: %g > %g." % (failed["name"], failed["value"], failed["limit"])
+        if len(piece_reasons) > 1:
+            detail += " Всего проблемных кусков: %d." % len(piece_reasons)
     return dict(ok=False,
-        error_code="E_CALC_MODEL_UNCONFIRMED" if interfloor else "E_CALC_TOPOLOGY_UNSUPPORTED",
-        error="Расчёт не применён: %s. Используйте ручной режим по отдельному проектному расчёту; "
-              "прежняя подсистема сохранена." % "; ".join(descriptions[kind] for kind in kinds),
+        error_code=("E_CALC_MODEL_UNCONFIRMED" if interfloor else
+                    "E_CALC_MEMBER_CAPACITY" if "member_capacity_exceeded" in kinds else
+                    "E_CALC_TOPOLOGY_UNSUPPORTED"),
+        error=("Расчёт не применён: %s.%s Уточните сечение, шаг и опоры; "
+               "прежняя подсистема сохранена.") %
+              ("; ".join(descriptions[kind] for kind in kinds), detail),
         static_model=static_model, unsupported=screening["reasons"],
         unsupported_counts=dict(vertical_members=len({r["member_index"] for r in screening["reasons"]
                                                       if "member_index" in r})))

@@ -11,8 +11,8 @@ namespace AFramePlugin
     /// <summary>
     /// AFrame — подсистема НВФ (этап 3 фасадного направления):
     /// кронштейны + направляющие + кляммеры по согласованной раскладке
-    /// AClad. Отдельный бандл (паттерн AClad): итерационный этап,
-    /// переустанавливается часто. Гибрид: тонкий C# + замороженный
+    /// AClad. AFacades/AClad/AFrame обновляются вместе из одного выпуска.
+    /// Гибрид: тонкий C# + замороженный
     /// py-движок (frame_engine.exe). Концепт и решения —
     /// Facades/docs/STAGE3_FRAME.md.
     /// </summary>
@@ -20,15 +20,16 @@ namespace AFramePlugin
     {
         public void Initialize()
         {
+            try { FacadeSafety.FacadeBundleVersions.Schedule(); } catch { }
             try
             {
                 var doc = AcApp.DocumentManager.MdiActiveDocument;
                 if (doc != null)
                     doc.Editor.WriteMessage(
                         "\nAFrame загружен (сборка DLL от " + BuildStamp() +
-                        "). Команда: ATFRAME — подсистема НВФ " +
-                        "(кронштейны/направляющие/кляммеры) по " +
-                        "раскладке ATCLAD.\n");
+                        "). Команды: ATFRAME — подсистема НВФ по раскладке ATTILE; " +
+                        "ATFPROJECT — параметры проекта; ATFZONEPARAMS — параметры зон; " +
+                        "ATFNODE — размерная схема узла.\n");
             }
             catch { }
             try { FacadesRibbon.Init();
@@ -63,7 +64,7 @@ namespace AFramePlugin
             catch { return "?"; }
         }
 
-        public void Terminate() { try { FacadesRibbon.Cleanup();
+        public void Terminate() { try { FacadeSafety.FacadeBundleVersions.Cancel(); FacadesRibbon.Cleanup();
             FacadesClassic.Cleanup(); } catch { } }
     }
 }

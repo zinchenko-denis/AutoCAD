@@ -5,7 +5,7 @@ Usage: python tools/catalog_connections_0110/reproduce_topology_performance.py \
            --out /path/to/evidence
 
 The frozen brute-force oracle ships with the regression test, so a shallow CI
-checkout is sufficient. Full outputs must match; runtime is observational and
+checkout is sufficient. Full geometric outputs must match; runtime is observational and
 is not a test threshold. The 10,000-member brute-force controls can take minutes.
 """
 import argparse
@@ -48,6 +48,13 @@ def fixture(count, tall=False, counting=False):
 
 def screen(function, rails, brackets):
     return function("vertical", rails, [], brackets, dict(rail_len=3000.0))
+
+
+def indexed_geometry(sub, rails, hrails, brackets, _calc_inputs):
+    # The frozen oracle covers spatial joins. New beam-calculation/report
+    # policy is checked separately and is not part of index equivalence.
+    members, horizontal_members = indexed.geometric_members(sub, rails, hrails, brackets)
+    return dict(members=members, horizontal_members=horizontal_members)
 
 
 def digest(value):
@@ -97,15 +104,15 @@ def counting_measurement(count):
     baseline_reads = CountingBracket.x_reads
     require(baseline_reads == count * len(brackets), "brute-force reproduction changed")
     CountingBracket.x_reads = 0
-    actual = screen(indexed.screen_layout, rails, brackets)
+    actual = screen(indexed_geometry, rails, brackets)
     indexed_reads = CountingBracket.x_reads
-    require(actual == expected, "indexed and brute-force full outputs differ")
+    require(actual == expected, "indexed and brute-force full geometric outputs differ")
     require(indexed_reads <= 10 * count, "indexed bracket access is not linear on this fixture")
     diagnostics = check_geometric_api(rails, brackets, expected)
     return dict(rails=count, brackets=len(brackets),
                 baseline_bracket_x_reads=baseline_reads,
                 indexed_bracket_x_reads=indexed_reads,
-                full_output_equal=True, output_sha256=digest(actual),
+                geometric_output_equal=True, output_sha256=digest(actual),
                 diagnostics=diagnostics)
 
 
@@ -120,13 +127,13 @@ def timing_measurement(count, tall):
     print("Normal dictionaries: %s, %d rails; indexed control" % (name, count), flush=True)
     gc.collect()
     start = time.perf_counter()
-    actual = screen(indexed.screen_layout, rails, brackets)
+    actual = screen(indexed_geometry, rails, brackets)
     indexed_seconds = time.perf_counter() - start
-    require(actual == expected, "indexed and brute-force full outputs differ")
+    require(actual == expected, "indexed and brute-force full geometric outputs differ")
     diagnostics = check_geometric_api(rails, brackets, expected)
     return dict(fixture=name, rails=count, brackets=len(brackets),
                 baseline_seconds=baseline_seconds, indexed_seconds=indexed_seconds,
-                full_output_equal=True, output_sha256=digest(actual),
+                geometric_output_equal=True, output_sha256=digest(actual),
                 diagnostics=diagnostics)
 
 
