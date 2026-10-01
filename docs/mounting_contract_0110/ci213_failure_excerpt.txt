@@ -1,0 +1,21 @@
+2026-10-01T15:40:24.2233252Z Connection table C# checks: 35
+2026-10-01T15:40:24.6015489Z Connection real-engine table checks: 25
+2026-10-01T15:40:27.3882377Z Shared candidate table checks: 8781 PASS
+2026-10-01T15:40:28.0519401Z Connection table XLSX checks: 42 PASS; real engine members: 4
+2026-10-01T15:40:33.6705018Z FAIL default: actual window outside monitor working area {X=10,Y=10,Width=1044,Height=760}/{X=0,Y=0,Width=1024,Height=728}
+2026-10-01T15:40:33.6705850Z FAIL default: control outside native visible area: TextBox {X=31,Y=54,Width=1002,Height=58}
+2026-10-01T15:40:33.6706523Z FAIL default: control outside native visible area: DataGridView {X=31,Y=118,Width=1002,Height=378}
+2026-10-01T15:40:33.6707179Z FAIL default: control outside native visible area: TextBox {X=31,Y=502,Width=1002,Height=129}
+2026-10-01T15:40:33.6707820Z FAIL default: control outside native visible area: TextBox {X=31,Y=659,Width=1002,Height=50}
+2026-10-01T15:40:33.6708427Z FAIL default: control outside native visible area: Button {X=955,Y=718,Width=75,Height=25}
+2026-10-01T15:40:33.6709021Z FAIL default: control outside native visible area: Button {X=862,Y=718,Width=87,Height=25}
+2026-10-01T15:40:33.6709740Z FAIL large_font: actual window outside monitor working area {X=10,Y=10,Width=1044,Height=760}/{X=0,Y=0,Width=1024,Height=728}
+2026-10-01T15:40:33.6713041Z FAIL large_font: control outside native visible area: TextBox {X=31,Y=54,Width=1002,Height=58}
+2026-10-01T15:40:33.6713917Z FAIL large_font: control outside native visible area: DataGridView {X=31,Y=118,Width=1002,Height=378}
+2026-10-01T15:40:33.6714607Z FAIL large_font: control outside native visible area: TextBox {X=31,Y=502,Width=1002,Height=129}
+2026-10-01T15:40:33.6715260Z FAIL large_font: control outside native visible area: TextBox {X=31,Y=659,Width=1002,Height=50}
+2026-10-01T15:40:33.6716417Z FAIL large_font: control outside native visible area: Button {X=955,Y=718,Width=75,Height=31}
+2026-10-01T15:40:33.6717065Z FAIL large_font: control outside native visible area: Button {X=838,Y=718,Width=111,Height=31}
+2026-10-01T15:40:33.6717609Z Connection actual WinForms: 348 checks, 14 failures; 4 images
+2026-10-01T15:40:33.6718085Z ConnectionUiProbe: FAIL Actual WinForms scenario failed; see run.log
+2026-10-01T15:40:33.7030720Z ##[error]Process completed with exit code 1.

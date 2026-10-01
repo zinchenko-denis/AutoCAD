@@ -1,0 +1,19 @@
+{
+  "status": "FAIL",
+  "live_autocad_checked": false,
+  "source_sha256": {
+    "tools\\mounting_contract_0110\\ConnectionUiProbe.cs": "6e9d2ff747be5593420cac128c7edee02cf5cbfd8abbb47e558d035bb8d47d60",
+    "Common\\FacadeQuantities.cs": "9453f7fdd91aac9aeab389d3b0ccc9b1968c59c48dfbd04664cd8150b24af305",
+    "Facades\\src\\AFacadesPlugin\\ConnectionTableData.cs": "c623f58a3c451ee1ea6dd1cc3ff6970e78a9000d392038935efaeafda47deb34",
+    "Facades\\src\\AFacadesPlugin\\QuantityTableView.cs": "215f6452a984220bd47380954874a3f8d24056842c93d3bd30440fbc89540b76",
+    "Facades\\src\\AFacadesPlugin\\QuantityTableView.Connections.cs": "a7e4a878fbc78ee26d14a284fffbbcd5f858fb6036cfa5e83586a5902edd5474",
+    "Facades\\src\\AFacadesPlugin\\QuantityTablePreview.cs": "821861a4432d8e16b9345136d54770254ec4bf04d59bfcb0927c7f5f93bf8cb9",
+    "Facades\\src\\AFacadesPlugin\\CladdingTableData.cs": "fac718cf658527499f115b04892fb0b90d87e6c05255b6044097f5fec06a6915",
+    "Facades\\src\\AFacadesPlugin\\FrameTableData.cs": "bb39d1b962f97322875fd821dd7e665213ed1241f657d3151ab22af913b946d6",
+    "tools\\solution_catalog_0110\\test_solution_ui.py": "05fb5c5d6b30c6bbac7a7a8f0e8b2fd239611e20df70da28a5442dede256044d",
+    "tools\\mounting_contract_0110\\test_ui.py": "61ec59891f8ea48d52c847afe1310f4a80f3a40b25980a5aef50a749d9dc83b6"
+  },
+  "reason": "Actual WinForms scenario failed; see run.log",
+  "report_origin": "shared_support_real_engine_to_actual_producer",
+  "report_sha256": "d1471f5d48e8633fd0f60282c52046df902fe6c78ded5ed943a394a3a112986c"
+}

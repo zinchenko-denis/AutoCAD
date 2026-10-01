@@ -1,0 +1,140 @@
+{
+  "schema": "facade_connection_ui_fix_independent_review/1",
+  "reviewed_at_utc": "2026-10-01T15:45:49.321944+00:00",
+  "base_commit": "0e98fe4006dc4e0c88bb32df6c4946af452d6a97",
+  "status": "LOCAL_CODE_REVIEW_AND_COMPILE_PASS_NATIVE_WINDOWS_PENDING",
+  "source_sha256": {
+    "Facades/src/AFacadesPlugin/QuantityTablePreview.cs": "3d80c7d79046e874be4e511dd16cacb5c4781912069ecb2886a213c7078d7bf0",
+    "AFrame/src/AFramePlugin/FrameBoundedForm.cs": "6992b2f5978aa33ba0b74676fbbaf970dfce44ca769a9339b0f3b5e02adf61c4",
+    "Facades/src/AFacadesPlugin/ConnectionTableData.cs": "c686399113c25df64575f031d2fad71c0702d2cea65011f68078ee51fc1d92e0",
+    "Common/FacadeQuantities.cs": "b092bf95f154d6aa8041936bffa79a82c613d7ac8f27fee9d1e6d7c0cde09f90",
+    "Facades/src/AFacadesPlugin/QuantityTableView.cs": "9656e74f8c3e4a932e4303e694a0690ddf2e14c308de64afa53bce9a8dc80480",
+    "Facades/src/AFacadesPlugin/QuantityTableView.Connections.cs": "1dbc4269e64eda11011c6ad63400870072ebe4d37ac7f959bf74e0d18438e8f8",
+    "tools/mounting_contract_0110/ConnectionUiProbe.cs": "fa77698e5358211c6dd90fe680276563ffb003ec345658790a02fb2008098516",
+    "tools/mounting_contract_0110/test_ui.py": "407dc3e664dbd8f5243ff38d65c41044bf3f84b6e3c7032099ccf58c71784f53",
+    "tools/solution_catalog_0110/test_solution_ui.py": "ae96cd84df7a148b665acd28eacdf737a0d5eed30c47e829c0f48abee04facc5",
+    ".github/workflows/check.yml": "aa2a537e56b082f3ea347116e240f3af56e62a97dbd66297f59aedf2a0ece466"
+  },
+  "reviewer": "independent_review subagent; product source not edited by reviewer",
+  "scope": "Narrow QuantityTablePreview bounds/client-size fix after CI213; original connection diagnostics and engineering contract unchanged.",
+  "ci213_reproduction": {
+    "run_id": 36885378560,
+    "job_id": 110447237656,
+    "head_sha": "0e98fe4006dc4e0c88bb32df6c4946af452d6a97",
+    "checks": 348,
+    "failures": 14,
+    "failed_scenarios": [
+      "default",
+      "large_font"
+    ],
+    "native_window": "X10 Y10 Width1044 Height760",
+    "working_area": "X0 Y0 Width1024 Height728",
+    "small_scenario": "880x620 fits; no failures",
+    "native_client_equals_cached_client": true,
+    "cause": "Requested window extends outside actual working area, footer controls beyond screen. Existing evidence does not demonstrate a cache mismatch.",
+    "ui_checks_sha256": "f0297decc4a849ee5355fd6c2b147ade68e976aa9a813818208d49c1d4c7f275",
+    "source_manifest_sha256": "dc720d9ad3ffa9ef3a3abfb973505badcbead688806e95c47322f8fd1c8f98d9",
+    "personally_inspected_images": {
+      "connections_default_columns.png": "4bbd85e53bd69d016acb8e09e9e344f37eeba23c13e9e7fe97ba09bb12307d1c",
+      "connections_default_warnings.png": "72c4e5d01317fa65ddb8121467bb7116c68245a48b1da070b4de43e8e304362d",
+      "connections_small_warnings.png": "0e5793d6e3f8ee0e24c0ee90c052bbc7be2f9462560b9acc50979a6a9c20f403",
+      "connections_large_font_warnings.png": "f4aa8a99a7b6e1a2a1574f9561df1f5ab28f8b4942fbc57010574e1b9b73795b"
+    }
+  },
+  "diff_review": {
+    "product_files_changed": [
+      "Facades/src/AFacadesPlugin/QuantityTablePreview.cs"
+    ],
+    "inserted_lines": 38,
+    "removed_lines": 0,
+    "three_methods_equal_to_existing_frame_bounded_form_after_trivia_removal": true,
+    "no_cross_plugin_dependency_added": true,
+    "working_area_position_and_size_clamped": true,
+    "minimum_is_limited_to_available_screen": true,
+    "minimum_setter_recursion_guarded": true,
+    "client_size_constrained_before_base_cache": true,
+    "constructor_layout_virtual_grid_tooltips_buttons_note_unchanged": true,
+    "connection_table_diagnostics_unchanged": true,
+    "engineering_statuses_unchanged": true,
+    "cad_reads_or_rebuilds_added": false,
+    "complexity": "constant work per UI size/position update; no member/geometry loops"
+  },
+  "test_integrity": {
+    "status": "PASS",
+    "bounded_methods_equal": [
+      "SetClientSizeCore",
+      "SetBoundsCore",
+      "FitMinimum"
+    ],
+    "compared_to": "AFrame/src/AFramePlugin/FrameBoundedForm.cs",
+    "ci213_source_hash_correspondence": {
+      "tools/mounting_contract_0110/ConnectionUiProbe.cs": "LF_to_CRLF",
+      "Common/FacadeQuantities.cs": "LF_to_CRLF",
+      "Facades/src/AFacadesPlugin/ConnectionTableData.cs": "LF_to_CRLF",
+      "Facades/src/AFacadesPlugin/QuantityTableView.cs": "LF_to_CRLF",
+      "Facades/src/AFacadesPlugin/QuantityTableView.Connections.cs": "LF_to_CRLF",
+      "Facades/src/AFacadesPlugin/QuantityTablePreview.cs": "LF_to_CRLF",
+      "Facades/src/AFacadesPlugin/CladdingTableData.cs": "LF_to_CRLF",
+      "Facades/src/AFacadesPlugin/FrameTableData.cs": "LF_to_CRLF",
+      "tools/solution_catalog_0110/test_solution_ui.py": "LF_to_CRLF",
+      "tools/mounting_contract_0110/test_ui.py": "LF_to_CRLF"
+    },
+    "test_table_validators_unchanged": true
+  },
+  "executed_checks": [
+    {
+      "command": "python3 tools/mounting_contract_0110/test_ui.py --out <independent>/ui_fix_compile --report <CI213 fresh engine/producer fixture>",
+      "compilation": "PASS",
+      "runtime": "BLOCKED",
+      "reason": "Xvfb unavailable; compilation succeeded, no GUI execution claimed",
+      "no_native_ui_pass_claimed": true
+    },
+    {
+      "command": "Compare SetClientSizeCore/SetBoundsCore/FitMinimum method bodies with existing FrameBoundedForm",
+      "status": "PASS"
+    },
+    {
+      "command": "Compare CI213 source hashes against exact baseline Git files",
+      "status": "PASS",
+      "sources_verified": 10,
+      "only_normalization": "LF to CRLF, explicit per-source verification"
+    },
+    {
+      "command": "Verify strict UI probe, runner, workflow, table and common validator unchanged from HEAD",
+      "status": "PASS"
+    },
+    {
+      "command": "git diff --check",
+      "status": "PASS"
+    }
+  ],
+  "local_ui_compile_manifest": {
+    "status": "BLOCKED",
+    "live_autocad_checked": false,
+    "source_sha256": {
+      "tools/mounting_contract_0110/ConnectionUiProbe.cs": "fa77698e5358211c6dd90fe680276563ffb003ec345658790a02fb2008098516",
+      "Common/FacadeQuantities.cs": "b092bf95f154d6aa8041936bffa79a82c613d7ac8f27fee9d1e6d7c0cde09f90",
+      "Facades/src/AFacadesPlugin/ConnectionTableData.cs": "c686399113c25df64575f031d2fad71c0702d2cea65011f68078ee51fc1d92e0",
+      "Facades/src/AFacadesPlugin/QuantityTableView.cs": "9656e74f8c3e4a932e4303e694a0690ddf2e14c308de64afa53bce9a8dc80480",
+      "Facades/src/AFacadesPlugin/QuantityTableView.Connections.cs": "1dbc4269e64eda11011c6ad63400870072ebe4d37ac7f959bf74e0d18438e8f8",
+      "Facades/src/AFacadesPlugin/QuantityTablePreview.cs": "3d80c7d79046e874be4e511dd16cacb5c4781912069ecb2886a213c7078d7bf0",
+      "Facades/src/AFacadesPlugin/CladdingTableData.cs": "8dec6b35b881f29b9da51d9e2c3769be360f53c6fac06670c2005a60e94405fa",
+      "Facades/src/AFacadesPlugin/FrameTableData.cs": "58de42f818cf70d470bb438b025cb6cb4c70391700d43eeeaee23042281f1ffc",
+      "tools/solution_catalog_0110/test_solution_ui.py": "ae96cd84df7a148b665acd28eacdf737a0d5eed30c47e829c0f48abee04facc5",
+      "tools/mounting_contract_0110/test_ui.py": "407dc3e664dbd8f5243ff38d65c41044bf3f84b6e3c7032099ccf58c71784f53"
+    },
+    "reason": "Xvfb unavailable; compilation succeeded, no GUI execution claimed",
+    "report_origin": "shared_support_real_engine_to_actual_producer",
+    "report_sha256": "d1471f5d48e8633fd0f60282c52046df902fe6c78ded5ed943a394a3a112986c"
+  },
+  "blocker_verdict": {
+    "local_review_blockers": [],
+    "before_overall_success_required": [
+      "Run unchanged strict Windows UI probe on corrected commit",
+      "Inspect all four resulting PNG and native window/client geometry",
+      "Wait for overall Windows check result"
+    ],
+    "live_autocad_checked": false
+  },
+  "previous_review_relation": "Original table/XLSX independent audit remains valid for its unchanged dependencies. Its old QuantityTablePreview hash is historical and is not silently updated; this document records new UI source review."
+}

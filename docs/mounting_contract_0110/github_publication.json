@@ -1,12 +1,29 @@
 {
-  "status": "PREPARING_SOURCE_PUBLICATION",
+  "status": "SOURCE_PUBLISHED_WINDOWS_CI_FAILED_UI_FIX_IN_PROGRESS",
   "repository": "zinchenko-denis/AutoCAD",
   "branch": "feat/auto-reactor",
   "base_commit": "51f6b7fb5f3d3ee9e989a8fec0f0548c1304bf32",
-  "product_commit": null,
-  "github_actions": null,
+  "product_commit": "0e98fe4006dc4e0c88bb32df6c4946af452d6a97",
+  "github_actions": {
+    "id": 36885378560,
+    "job_id": 110447237656,
+    "run_number": 213,
+    "head_sha": "0e98fe4006dc4e0c88bb32df6c4946af452d6a97",
+    "status": "completed",
+    "conclusion": "failure",
+    "html_url": "https://github.com/zinchenko-denis/AutoCAD/actions/runs/36885378560"
+  },
   "main_verified_sha": "e2a4e4df69a1936664c76c44cacff311ad44b07d",
   "main_changed": false,
   "release_published": false,
-  "live_autocad_checked": false
+  "live_autocad_checked": false,
+  "product_tree": "98a396b474a43cc3c878cf42f4288abfed399b8e",
+  "local_fast_forward_verified": true,
+  "failure_reason": "Actual QuantityTablePreview outside 1024x728 working area in default and 12pt scenarios; 14/348 failures; table/XLSX passed",
+  "artifact": {
+    "id": 11174252019,
+    "name": "connection-table-ui",
+    "sha256": "c68d5846e80654fc60a3d582191ab19ae7bc89b3f936a89c9f7767f4fe08c0e1",
+    "size_in_bytes": 750787
+  }
 }

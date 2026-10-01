@@ -1,5 +1,5 @@
 {
-  "base_commit": "0e98fe4006dc4e0c88bb32df6c4946af452d6a97",
+  "base_commit": "51f6b7fb5f3d3ee9e989a8fec0f0548c1304bf32",
   "results": [
     {
       "name": "Facades_test_facade_zones",
@@ -8,7 +8,7 @@
         "test_facade_zones.py"
       ],
       "returncode": 0,
-      "seconds": 0.118
+      "seconds": 0.106
     },
     {
       "name": "Facades_test_facades_engine",
@@ -17,7 +17,7 @@
         "test_facades_engine.py"
       ],
       "returncode": 0,
-      "seconds": 0.16
+      "seconds": 0.215
     },
     {
       "name": "AClad_test_cladding_plan",
@@ -26,7 +26,7 @@
         "test_cladding_plan.py"
       ],
       "returncode": 0,
-      "seconds": 0.032
+      "seconds": 0.047
     },
     {
       "name": "AClad_test_clad_engine",
@@ -35,7 +35,7 @@
         "test_clad_engine.py"
       ],
       "returncode": 0,
-      "seconds": 0.076
+      "seconds": 0.078
     },
     {
       "name": "AClad_test_tile_pattern",
@@ -44,7 +44,7 @@
         "test_tile_pattern.py"
       ],
       "returncode": 0,
-      "seconds": 0.653
+      "seconds": 0.721
     },
     {
       "name": "AClad_audit_clad",
@@ -53,7 +53,7 @@
         "audit_clad.py"
       ],
       "returncode": 0,
-      "seconds": 0.195
+      "seconds": 0.226
     },
     {
       "name": "AFrame_test_frame_plan",
@@ -62,7 +62,7 @@
         "test_frame_plan.py"
       ],
       "returncode": 0,
-      "seconds": 0.337
+      "seconds": 0.344
     },
     {
       "name": "AFrame_test_frame_calc",
@@ -80,7 +80,7 @@
         "test_frame_engine.py"
       ],
       "returncode": 0,
-      "seconds": 0.07
+      "seconds": 0.074
     },
     {
       "name": "AFrame_test_frame_rules",
@@ -89,7 +89,7 @@
         "test_frame_rules.py"
       ],
       "returncode": 0,
-      "seconds": 0.103
+      "seconds": 0.09
     },
     {
       "name": "AFrame_test_frame_topology",
@@ -98,7 +98,7 @@
         "test_frame_topology.py"
       ],
       "returncode": 0,
-      "seconds": 0.085
+      "seconds": 0.073
     },
     {
       "name": "AFrame_test_frame_topology_index",
@@ -107,7 +107,7 @@
         "test_frame_topology_index.py"
       ],
       "returncode": 0,
-      "seconds": 4.465
+      "seconds": 4.541
     },
     {
       "name": "AFrame_test_frame_connections",
@@ -116,7 +116,7 @@
         "test_frame_connections.py"
       ],
       "returncode": 0,
-      "seconds": 0.13
+      "seconds": 0.141
     },
     {
       "name": "AFrame_test_frame_solution_selection",
@@ -125,7 +125,7 @@
         "test_frame_solution_selection.py"
       ],
       "returncode": 0,
-      "seconds": 0.109
+      "seconds": 0.139
     },
     {
       "name": "AFrame_audit_frame",
@@ -134,7 +134,7 @@
         "audit_frame.py"
       ],
       "returncode": 0,
-      "seconds": 0.404
+      "seconds": 0.465
     },
     {
       "name": "xmod",
@@ -145,7 +145,7 @@
         "--allow=X6"
       ],
       "returncode": 0,
-      "seconds": 0.067
+      "seconds": 0.082
     },
     {
       "name": "frame_quick",
@@ -155,7 +155,7 @@
         "--quick"
       ],
       "returncode": 0,
-      "seconds": 7.47
+      "seconds": 7.793
     },
     {
       "name": "zones_quick",
@@ -165,7 +165,7 @@
         "--quick"
       ],
       "returncode": 0,
-      "seconds": 10.562
+      "seconds": 11.491
     },
     {
       "name": "tile_quick",
@@ -175,7 +175,7 @@
         "--quick"
       ],
       "returncode": 0,
-      "seconds": 22.937
+      "seconds": 20.461
     },
     {
       "name": "roles_quick",
@@ -185,7 +185,7 @@
         "--quick"
       ],
       "returncode": 0,
-      "seconds": 4.393
+      "seconds": 3.929
     },
     {
       "name": "engine_contract",
@@ -194,7 +194,7 @@
         "tools/engine_contract.py"
       ],
       "returncode": 0,
-      "seconds": 0.62
+      "seconds": 0.57
     },
     {
       "name": "facade_regressions",
@@ -202,10 +202,10 @@
       "arguments": [
         "tools/fixes_3009/run_facade_regressions.py",
         "--out",
-        "/workspace/scratch/58a6cc5ac740/2v_ui_fix_final/checks/regressions"
+        "/workspace/scratch/58a6cc5ac740/2v_final/checks/regressions"
       ],
       "returncode": 0,
-      "seconds": 8.346
+      "seconds": 8.243
     },
     {
       "name": "atr_topology",
@@ -214,7 +214,7 @@
         "tools/atr_review_3009/vector1_topology.py"
       ],
       "returncode": 0,
-      "seconds": 0.045
+      "seconds": 0.049
     },
     {
       "name": "atr_vector5",
@@ -222,10 +222,10 @@
       "arguments": [
         "tools/atr_review_3009/vector5_contract_probe.py",
         "--out",
-        "/workspace/scratch/58a6cc5ac740/2v_ui_fix_final/checks/vector5"
+        "/workspace/scratch/58a6cc5ac740/2v_final/checks/vector5"
       ],
       "returncode": 0,
-      "seconds": 0.698
+      "seconds": 0.675
     },
     {
       "name": "atr_architecture",
@@ -233,10 +233,10 @@
       "arguments": [
         "tools/atr_review_3009/architecture_probe.py",
         "--out",
-        "/workspace/scratch/58a6cc5ac740/2v_ui_fix_final/checks/architecture"
+        "/workspace/scratch/58a6cc5ac740/2v_final/checks/architecture"
       ],
       "returncode": 0,
-      "seconds": 0.808
+      "seconds": 0.783
     },
     {
       "name": "atr_mass",
@@ -244,12 +244,12 @@
       "arguments": [
         "tools/atr_review_3009/vector5_mass_review.py",
         "--evidence",
-        "/workspace/scratch/58a6cc5ac740/2v_ui_fix_final/checks/architecture/evidence.json",
+        "/workspace/scratch/58a6cc5ac740/2v_final/checks/architecture/evidence.json",
         "--out",
-        "/workspace/scratch/58a6cc5ac740/2v_ui_fix_final/checks/mass_review.json"
+        "/workspace/scratch/58a6cc5ac740/2v_final/checks/mass_review.json"
       ],
       "returncode": 0,
-      "seconds": 0.048
+      "seconds": 0.053
     },
     {
       "name": "static_model_gap",
@@ -257,10 +257,10 @@
       "arguments": [
         "tools/static_review_3009/reproduce_model_gap.py",
         "--out",
-        "/workspace/scratch/58a6cc5ac740/2v_ui_fix_final/checks/static_model_gap.json"
+        "/workspace/scratch/58a6cc5ac740/2v_final/checks/static_model_gap.json"
       ],
       "returncode": 0,
-      "seconds": 0.056
+      "seconds": 0.052
     },
     {
       "name": "quantities_core",
@@ -268,7 +268,7 @@
       "arguments": [
         "tools/quantities_3009/test_quantities_core.py",
         "--out",
-        "/workspace/scratch/58a6cc5ac740/2v_ui_fix_final/checks/quantities_core"
+        "/workspace/scratch/58a6cc5ac740/2v_final/checks/quantities_core"
       ],
       "returncode": 0,
       "seconds": 0.791
@@ -279,10 +279,10 @@
       "arguments": [
         "tools/quantities_3009/test_cladding_producer.py",
         "--out",
-        "/workspace/scratch/58a6cc5ac740/2v_ui_fix_final/checks/quantities_producer"
+        "/workspace/scratch/58a6cc5ac740/2v_final/checks/quantities_producer"
       ],
       "returncode": 0,
-      "seconds": 2.317
+      "seconds": 2.339
     },
     {
       "name": "quantities_table",
@@ -290,10 +290,10 @@
       "arguments": [
         "tools/quantities_3009/test_cladding_table.py",
         "--out",
-        "/workspace/scratch/58a6cc5ac740/2v_ui_fix_final/checks/quantities_table"
+        "/workspace/scratch/58a6cc5ac740/2v_final/checks/quantities_table"
       ],
       "returncode": 0,
-      "seconds": 0.935
+      "seconds": 0.89
     },
     {
       "name": "quantities_store",
@@ -301,10 +301,10 @@
       "arguments": [
         "tools/quantities_3009/test_quantity_store.py",
         "--out",
-        "/workspace/scratch/58a6cc5ac740/2v_ui_fix_final/checks/quantities_store"
+        "/workspace/scratch/58a6cc5ac740/2v_final/checks/quantities_store"
       ],
       "returncode": 0,
-      "seconds": 2.709
+      "seconds": 2.816
     },
     {
       "name": "frame_quantities_core",
@@ -312,10 +312,10 @@
       "arguments": [
         "tools/frame_quantities_3009/test_frame_core.py",
         "--out",
-        "/workspace/scratch/58a6cc5ac740/2v_ui_fix_final/checks/frame_quantities_core"
+        "/workspace/scratch/58a6cc5ac740/2v_final/checks/frame_quantities_core"
       ],
       "returncode": 0,
-      "seconds": 0.821
+      "seconds": 0.881
     },
     {
       "name": "frame_quantities_core_perf",
@@ -324,10 +324,10 @@
         "tools/frame_quantities_3009/test_frame_core_perf.py",
         "--quick",
         "--out",
-        "/workspace/scratch/58a6cc5ac740/2v_ui_fix_final/checks/frame_quantities_core_perf"
+        "/workspace/scratch/58a6cc5ac740/2v_final/checks/frame_quantities_core_perf"
       ],
       "returncode": 0,
-      "seconds": 1.52
+      "seconds": 1.595
     },
     {
       "name": "frame_quantities_producer",
@@ -335,10 +335,10 @@
       "arguments": [
         "tools/frame_quantities_3009/test_frame_producer.py",
         "--out",
-        "/workspace/scratch/58a6cc5ac740/2v_ui_fix_final/checks/frame_quantities_producer"
+        "/workspace/scratch/58a6cc5ac740/2v_final/checks/frame_quantities_producer"
       ],
       "returncode": 0,
-      "seconds": 3.544
+      "seconds": 3.587
     },
     {
       "name": "frame_quantities_table",
@@ -346,10 +346,10 @@
       "arguments": [
         "tools/frame_quantities_3009/test_frame_table.py",
         "--out",
-        "/workspace/scratch/58a6cc5ac740/2v_ui_fix_final/checks/frame_quantities_table"
+        "/workspace/scratch/58a6cc5ac740/2v_final/checks/frame_quantities_table"
       ],
       "returncode": 0,
-      "seconds": 0.825
+      "seconds": 0.824
     },
     {
       "name": "frame_engine_perf",
@@ -359,10 +359,10 @@
         "--targets",
         "1000,3000",
         "--out",
-        "/workspace/scratch/58a6cc5ac740/2v_ui_fix_final/checks/frame_engine_perf"
+        "/workspace/scratch/58a6cc5ac740/2v_final/checks/frame_engine_perf"
       ],
       "returncode": 0,
-      "seconds": 0.353
+      "seconds": 0.354
     },
     {
       "name": "quantities_store_perf",
@@ -371,10 +371,10 @@
         "tools/quantities_3009/test_quantity_store_perf.py",
         "--quick",
         "--out",
-        "/workspace/scratch/58a6cc5ac740/2v_ui_fix_final/checks/quantities_store_perf"
+        "/workspace/scratch/58a6cc5ac740/2v_final/checks/quantities_store_perf"
       ],
       "returncode": 0,
-      "seconds": 13.257
+      "seconds": 14.288
     },
     {
       "name": "quantities_store_encoding",
@@ -382,10 +382,10 @@
       "arguments": [
         "tools/frame_quantities_3009/test_store_encoding.py",
         "--out",
-        "/workspace/scratch/58a6cc5ac740/2v_ui_fix_final/checks/quantities_store_encoding"
+        "/workspace/scratch/58a6cc5ac740/2v_final/checks/quantities_store_encoding"
       ],
       "returncode": 0,
-      "seconds": 0.907
+      "seconds": 0.858
     },
     {
       "name": "manual_quantities_core",
@@ -393,10 +393,10 @@
       "arguments": [
         "tools/manual_quantities_0110/test_manual_core.py",
         "--out",
-        "/workspace/scratch/58a6cc5ac740/2v_ui_fix_final/checks/manual_quantities_core"
+        "/workspace/scratch/58a6cc5ac740/2v_final/checks/manual_quantities_core"
       ],
       "returncode": 0,
-      "seconds": 0.905
+      "seconds": 0.829
     },
     {
       "name": "manual_quantities_core_perf",
@@ -405,10 +405,10 @@
         "tools/manual_quantities_0110/test_manual_core_perf.py",
         "--quick",
         "--out",
-        "/workspace/scratch/58a6cc5ac740/2v_ui_fix_final/checks/manual_quantities_core_perf"
+        "/workspace/scratch/58a6cc5ac740/2v_final/checks/manual_quantities_core_perf"
       ],
       "returncode": 0,
-      "seconds": 4.859
+      "seconds": 4.857
     },
     {
       "name": "manual_quantities_cad",
@@ -416,10 +416,10 @@
       "arguments": [
         "tools/manual_quantities_0110/test_manual_cad.py",
         "--out",
-        "/workspace/scratch/58a6cc5ac740/2v_ui_fix_final/checks/manual_quantities_cad"
+        "/workspace/scratch/58a6cc5ac740/2v_final/checks/manual_quantities_cad"
       ],
       "returncode": 0,
-      "seconds": 2.331
+      "seconds": 2.351
     },
     {
       "name": "manual_quantities_cad_perf",
@@ -428,10 +428,10 @@
         "tools/manual_quantities_0110/test_manual_cad.py",
         "--performance",
         "--out",
-        "/workspace/scratch/58a6cc5ac740/2v_ui_fix_final/checks/manual_quantities_cad_perf"
+        "/workspace/scratch/58a6cc5ac740/2v_final/checks/manual_quantities_cad_perf"
       ],
       "returncode": 0,
-      "seconds": 11.307
+      "seconds": 11.783
     },
     {
       "name": "manual_quantities_output",
@@ -439,10 +439,10 @@
       "arguments": [
         "tools/manual_quantities_0110/test_manual_output.py",
         "--out",
-        "/workspace/scratch/58a6cc5ac740/2v_ui_fix_final/checks/manual_quantities_output"
+        "/workspace/scratch/58a6cc5ac740/2v_final/checks/manual_quantities_output"
       ],
       "returncode": 0,
-      "seconds": 0.965
+      "seconds": 1.028
     },
     {
       "name": "catalog_tutorial_examples",
@@ -450,10 +450,10 @@
       "arguments": [
         "docs/facades_beginner_3009/replay_examples.py",
         "--out",
-        "/workspace/scratch/58a6cc5ac740/2v_ui_fix_final/checks/catalog_tutorial_examples.json"
+        "/workspace/scratch/58a6cc5ac740/2v_final/checks/catalog_tutorial_examples.json"
       ],
       "returncode": 0,
-      "seconds": 0.153
+      "seconds": 0.147
     },
     {
       "name": "solution_settings_contract",
@@ -461,10 +461,10 @@
       "arguments": [
         "tools/solution_catalog_0110/test_settings_contract.py",
         "--out",
-        "/workspace/scratch/58a6cc5ac740/2v_ui_fix_final/checks/solution_settings_contract"
+        "/workspace/scratch/58a6cc5ac740/2v_final/checks/solution_settings_contract"
       ],
       "returncode": 0,
-      "seconds": 5.303
+      "seconds": 5.114
     },
     {
       "name": "project_parameters_core",
@@ -472,10 +472,10 @@
       "arguments": [
         "tools/project_params_0110/test_core.py",
         "--out",
-        "/workspace/scratch/58a6cc5ac740/2v_ui_fix_final/checks/project_parameters_core"
+        "/workspace/scratch/58a6cc5ac740/2v_final/checks/project_parameters_core"
       ],
       "returncode": 0,
-      "seconds": 3.849
+      "seconds": 3.757
     },
     {
       "name": "project_parameters_store",
@@ -483,10 +483,10 @@
       "arguments": [
         "tools/project_params_0110/test_store_contract.py",
         "--out",
-        "/workspace/scratch/58a6cc5ac740/2v_ui_fix_final/checks/project_parameters_store"
+        "/workspace/scratch/58a6cc5ac740/2v_final/checks/project_parameters_store"
       ],
       "returncode": 0,
-      "seconds": 9.657
+      "seconds": 9.406
     },
     {
       "name": "project_parameters_integration",
@@ -494,10 +494,10 @@
       "arguments": [
         "tools/project_params_0110/test_integration.py",
         "--out",
-        "/workspace/scratch/58a6cc5ac740/2v_ui_fix_final/checks/project_parameters_integration"
+        "/workspace/scratch/58a6cc5ac740/2v_final/checks/project_parameters_integration"
       ],
       "returncode": 0,
-      "seconds": 1.193
+      "seconds": 1.216
     },
     {
       "name": "node_geometry_core",
@@ -505,10 +505,10 @@
       "arguments": [
         "tools/node_geometry_0110/test_core.py",
         "--out",
-        "/workspace/scratch/58a6cc5ac740/2v_ui_fix_final/checks/node_geometry_core"
+        "/workspace/scratch/58a6cc5ac740/2v_final/checks/node_geometry_core"
       ],
       "returncode": 0,
-      "seconds": 1.555
+      "seconds": 1.501
     },
     {
       "name": "mounting_assessment_core",
@@ -516,10 +516,10 @@
       "arguments": [
         "tools/mounting_assessment_0110/test_core.py",
         "--out",
-        "/workspace/scratch/58a6cc5ac740/2v_ui_fix_final/checks/mounting_assessment_core"
+        "/workspace/scratch/58a6cc5ac740/2v_final/checks/mounting_assessment_core"
       ],
       "returncode": 0,
-      "seconds": 1.105
+      "seconds": 1.136
     },
     {
       "name": "node_geometry_cad",
@@ -527,10 +527,10 @@
       "arguments": [
         "tools/node_geometry_0110/test_node_cad.py",
         "--out",
-        "/workspace/scratch/58a6cc5ac740/2v_ui_fix_final/checks/node_geometry_cad"
+        "/workspace/scratch/58a6cc5ac740/2v_final/checks/node_geometry_cad"
       ],
       "returncode": 0,
-      "seconds": 10.442
+      "seconds": 10.364
     },
     {
       "name": "catalog_connection_store",
@@ -538,10 +538,10 @@
       "arguments": [
         "tools/catalog_connections_0110/test_connection_store.py",
         "--out",
-        "/workspace/scratch/58a6cc5ac740/2v_ui_fix_final/checks/catalog_connection_store"
+        "/workspace/scratch/58a6cc5ac740/2v_final/checks/catalog_connection_store"
       ],
       "returncode": 0,
-      "seconds": 5.578
+      "seconds": 5.37
     },
     {
       "name": "catalog_clamps_manual_boundary",
@@ -549,10 +549,10 @@
       "arguments": [
         "tools/catalog_connections_0110/test_clamps_manual_boundary.py",
         "--out",
-        "/workspace/scratch/58a6cc5ac740/2v_ui_fix_final/checks/catalog_clamps_manual_boundary"
+        "/workspace/scratch/58a6cc5ac740/2v_final/checks/catalog_clamps_manual_boundary"
       ],
       "returncode": 0,
-      "seconds": 0.838
+      "seconds": 0.8
     },
     {
       "name": "catalog_connection_table",
@@ -560,12 +560,12 @@
       "arguments": [
         "tools/catalog_connections_0110/test_connection_table.py",
         "--out",
-        "/workspace/scratch/58a6cc5ac740/2v_ui_fix_final/checks/catalog_connection_table",
+        "/workspace/scratch/58a6cc5ac740/2v_final/checks/catalog_connection_table",
         "--report",
-        "/workspace/scratch/58a6cc5ac740/2v_ui_fix_final/checks/catalog_connection_store/independent_zones_report.json"
+        "/workspace/scratch/58a6cc5ac740/2v_final/checks/catalog_connection_store/independent_zones_report.json"
       ],
       "returncode": 0,
-      "seconds": 4.207
+      "seconds": 3.925
     },
     {
       "name": "catalog_topology_performance",
@@ -573,10 +573,10 @@
       "arguments": [
         "tools/catalog_connections_0110/reproduce_topology_performance.py",
         "--out",
-        "/workspace/scratch/58a6cc5ac740/2v_ui_fix_final/checks/catalog_topology_performance"
+        "/workspace/scratch/58a6cc5ac740/2v_final/checks/catalog_topology_performance"
       ],
       "returncode": 0,
-      "seconds": 62.137
+      "seconds": 63.911
     }
   ],
   "source_sha256": {
@@ -676,7 +676,7 @@
     "Facades/src/AFacadesPlugin/ManualQuantityView.cs": "fda37a2e20b7a4666dd61682da4db58b672ff27843dae21f13da4f04906ce3cc",
     "Facades/src/AFacadesPlugin/Plugin.cs": "d486cb0746e6edef83c41a68f85f1e60b19a3c764c317a170de1e92b9db38476",
     "Facades/src/AFacadesPlugin/QuantityTableIdentity.cs": "82044b27845ff586b475040e4a968398c0325bdf8c6205cd6f5b226597810454",
-    "Facades/src/AFacadesPlugin/QuantityTablePreview.cs": "3d80c7d79046e874be4e511dd16cacb5c4781912069ecb2886a213c7078d7bf0",
+    "Facades/src/AFacadesPlugin/QuantityTablePreview.cs": "7e8998347dae61a9389783f481986fe84944f879464f79560585b95db5096116",
     "Facades/src/AFacadesPlugin/QuantityTableView.Connections.cs": "1dbc4269e64eda11011c6ad63400870072ebe4d37ac7f959bf74e0d18438e8f8",
     "Facades/src/AFacadesPlugin/QuantityTableView.cs": "9656e74f8c3e4a932e4303e694a0690ddf2e14c308de64afa53bce9a8dc80480",
     "Facades/src/AFacadesPlugin/QuantityXlsxFile.cs": "3c79e7a701ad6ba50bc81ce41cc88ba5d9c0c76c52e601115ccd3df460c3f75e",

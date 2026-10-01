@@ -1,5 +1,5 @@
 {
-  "status": "LOCAL_PASS_WINDOWS_CI_PENDING",
+  "status": "LOCAL_PASS_AFTER_UI_FIX_WINDOWS_PENDING",
   "date_utc": "2026-10-01",
   "branch": "feat/auto-reactor",
   "base_commit": "51f6b7fb5f3d3ee9e989a8fec0f0548c1304bf32",
@@ -17,10 +17,11 @@
     "local_gates": "55/55 PASS",
     "facade_compile": "PASS 3/3",
     "independent_review": "PASS; no blocking local findings",
-    "native_connection_ui": "Linux compile PASS, runtime BLOCKED by unavailable display; Windows pending",
-    "local_elapsed_seconds": 218.187,
+    "native_connection_ui": "CI213 FAIL 14/348 outside WorkingArea; bounded window fix locally compiled and independently reviewed; next Windows run pending",
+    "local_elapsed_seconds": 217.378,
     "full_synth_dependency_files_unchanged": 44,
-    "final_gate_source_files_unchanged": 236
+    "final_gate_source_files_unchanged": 236,
+    "ui_fix_independent_review": "PASS"
   },
   "performance": {
     "strategy": "one index over selected deduplicated physical support links; peer list once per shared bracket, split at ID boundaries; bounded count per member",
@@ -40,7 +41,11 @@
     "independent_review.json",
     "source_facts.json",
     "manual_review.json",
-    "manual_examples.json"
+    "manual_examples.json",
+    "ci213_triage.json",
+    "ci213_source_binding.json",
+    "ui_fix_independent_review.json",
+    "full_synth_revalidation_ui_fix.json"
   ],
   "boundaries": {
     "mounting_status": "not_confirmed",

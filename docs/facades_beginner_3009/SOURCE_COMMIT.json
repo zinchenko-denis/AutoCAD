@@ -31,7 +31,7 @@
   "illustration_geometry_matches_current": true,
   "provenance_note": "Guide 2В1: count of shared physical bracket candidates in member rows; full bracket/rail IDs in report warnings. 52 pages, 10 illustrations, 4 DXF retained; 5 tutorial replays PASS; current visual QA in FINAL_QA.json. Full mounting contract and live AutoCAD not confirmed.",
   "product_base_commit": "51f6b7fb5f3d3ee9e989a8fec0f0548c1304bf32",
-  "product_source_state": "2В1 local gates 55/55, compile 3/3, synth 8/8, independent review PASS; Windows CI pending",
+  "product_source_state": "2В1 after native window fix: repeated local55/55, compile3/3, independent UI review PASS; synth8/8 reused after44 dependency hashes matched; Windows pending",
   "product_source_sha256": {
     ".github/workflows/check.yml": "aa2a537e56b082f3ea347116e240f3af56e62a97dbd66297f59aedf2a0ece466",
     "AClad/bundle/AClad.bundle/PackageContents.xml": "c6c5853eb59e213c1633b1b0750980c4728f00d2d86d6998f37d0677099c6fdc",
@@ -144,7 +144,7 @@
     "Facades/src/AFacadesPlugin/ManualQuantityView.cs": "fda37a2e20b7a4666dd61682da4db58b672ff27843dae21f13da4f04906ce3cc",
     "Facades/src/AFacadesPlugin/Plugin.cs": "d486cb0746e6edef83c41a68f85f1e60b19a3c764c317a170de1e92b9db38476",
     "Facades/src/AFacadesPlugin/QuantityTableIdentity.cs": "82044b27845ff586b475040e4a968398c0325bdf8c6205cd6f5b226597810454",
-    "Facades/src/AFacadesPlugin/QuantityTablePreview.cs": "7e8998347dae61a9389783f481986fe84944f879464f79560585b95db5096116",
+    "Facades/src/AFacadesPlugin/QuantityTablePreview.cs": "3d80c7d79046e874be4e511dd16cacb5c4781912069ecb2886a213c7078d7bf0",
     "Facades/src/AFacadesPlugin/QuantityTableView.Connections.cs": "1dbc4269e64eda11011c6ad63400870072ebe4d37ac7f959bf74e0d18438e8f8",
     "Facades/src/AFacadesPlugin/QuantityTableView.cs": "9656e74f8c3e4a932e4303e694a0690ddf2e14c308de64afa53bce9a8dc80480",
     "Facades/src/AFacadesPlugin/QuantityXlsxFile.cs": "3c79e7a701ad6ba50bc81ce41cc88ba5d9c0c76c52e601115ccd3df460c3f75e",

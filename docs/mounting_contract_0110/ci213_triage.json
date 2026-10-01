@@ -1,0 +1,62 @@
+{
+  "run_id": 36885378560,
+  "job_id": 110447237656,
+  "head_sha": "0e98fe4006dc4e0c88bb32df6c4946af452d6a97",
+  "artifact_id": 11174252019,
+  "artifact_sha256": "c68d5846e80654fc60a3d582191ab19ae7bc89b3f936a89c9f7767f4fe08c0e1",
+  "artifact_digest_verified": true,
+  "ui": {
+    "status": "FAIL",
+    "checks": 348,
+    "failures": 14,
+    "reasons": [
+      "default: actual window outside monitor working area {X=10,Y=10,Width=1044,Height=760}/{X=0,Y=0,Width=1024,Height=728}",
+      "default: control outside native visible area: TextBox {X=31,Y=54,Width=1002,Height=58}",
+      "default: control outside native visible area: DataGridView {X=31,Y=118,Width=1002,Height=378}",
+      "default: control outside native visible area: TextBox {X=31,Y=502,Width=1002,Height=129}",
+      "default: control outside native visible area: TextBox {X=31,Y=659,Width=1002,Height=50}",
+      "default: control outside native visible area: Button {X=955,Y=718,Width=75,Height=25}",
+      "default: control outside native visible area: Button {X=862,Y=718,Width=87,Height=25}",
+      "large_font: actual window outside monitor working area {X=10,Y=10,Width=1044,Height=760}/{X=0,Y=0,Width=1024,Height=728}",
+      "large_font: control outside native visible area: TextBox {X=31,Y=54,Width=1002,Height=58}",
+      "large_font: control outside native visible area: DataGridView {X=31,Y=118,Width=1002,Height=378}",
+      "large_font: control outside native visible area: TextBox {X=31,Y=502,Width=1002,Height=129}",
+      "large_font: control outside native visible area: TextBox {X=31,Y=659,Width=1002,Height=50}",
+      "large_font: control outside native visible area: Button {X=955,Y=718,Width=75,Height=31}",
+      "large_font: control outside native visible area: Button {X=838,Y=718,Width=111,Height=31}"
+    ],
+    "images": [
+      "connections_default_columns.png",
+      "connections_default_warnings.png",
+      "connections_small_warnings.png",
+      "connections_large_font_warnings.png"
+    ]
+  },
+  "actual_cause": "QuantityTablePreview requested bounds exceed Windows WorkingArea 1024x728; native window 1044x760 at10,10; footer controls extend below screen. Native and cached client sizes agree. This is product window positioning/sizing, not text data or test mismatch.",
+  "images_visually_inspected": [
+    "connections_default_columns.png",
+    "connections_default_warnings.png",
+    "connections_small_warnings.png",
+    "connections_large_font_warnings.png"
+  ],
+  "visual_review": "All four PNG reviewed. Addressed warning text is present, full content scrollable. Note tooltip checks pass. Footer label visually complete at9pt and12pt. Whole bitmap includes off-screen region; native bounds prove actual clipping. Small880x620 fits.",
+  "fix": "Limit bounds and client size to WorkingArea in QuantityTablePreview, using existing FrameBoundedForm pattern locally without cross-plugin coupling. Same probe unchanged.",
+  "patch_sha256": "8801effc9f7c1ef8deaf9e36615ac3b9d640808e3aeb52b04249e200453ff4cc",
+  "local_compile": "PASS; no runtime UI execution claimed locally",
+  "windows_fix_verification": "pending",
+  "live_autocad_checked": false,
+  "before_source_sha256": {
+    "tools\\mounting_contract_0110\\ConnectionUiProbe.cs": "6e9d2ff747be5593420cac128c7edee02cf5cbfd8abbb47e558d035bb8d47d60",
+    "Common\\FacadeQuantities.cs": "9453f7fdd91aac9aeab389d3b0ccc9b1968c59c48dfbd04664cd8150b24af305",
+    "Facades\\src\\AFacadesPlugin\\ConnectionTableData.cs": "c623f58a3c451ee1ea6dd1cc3ff6970e78a9000d392038935efaeafda47deb34",
+    "Facades\\src\\AFacadesPlugin\\QuantityTableView.cs": "215f6452a984220bd47380954874a3f8d24056842c93d3bd30440fbc89540b76",
+    "Facades\\src\\AFacadesPlugin\\QuantityTableView.Connections.cs": "a7e4a878fbc78ee26d14a284fffbbcd5f858fb6036cfa5e83586a5902edd5474",
+    "Facades\\src\\AFacadesPlugin\\QuantityTablePreview.cs": "821861a4432d8e16b9345136d54770254ec4bf04d59bfcb0927c7f5f93bf8cb9",
+    "Facades\\src\\AFacadesPlugin\\CladdingTableData.cs": "fac718cf658527499f115b04892fb0b90d87e6c05255b6044097f5fec06a6915",
+    "Facades\\src\\AFacadesPlugin\\FrameTableData.cs": "bb39d1b962f97322875fd821dd7e665213ed1241f657d3151ab22af913b946d6",
+    "tools\\solution_catalog_0110\\test_solution_ui.py": "05fb5c5d6b30c6bbac7a7a8f0e8b2fd239611e20df70da28a5442dede256044d",
+    "tools\\mounting_contract_0110\\test_ui.py": "61ec59891f8ea48d52c847afe1310f4a80f3a40b25980a5aef50a749d9dc83b6"
+  },
+  "table_status": "PASS",
+  "after_preview_sha256": "3d80c7d79046e874be4e511dd16cacb5c4781912069ecb2886a213c7078d7bf0"
+}

@@ -7,6 +7,7 @@ namespace AFacadesPlugin
     internal class QuantityTablePreview : Form
     {
         private readonly TextBox _note = new TextBox();
+        private bool _constrainingWindow;
         internal string UserNote { get { return _note.Text; } }
 
         internal QuantityTablePreview(QuantityTableView data, string note, bool allowContinue = true)
@@ -79,6 +80,43 @@ namespace AFacadesPlugin
             layout.Controls.Add(new Label { Text = "Редактируйте примечание здесь. Ручные правки чисел в DWG/Excel не меняют исходные данные:", Dock = DockStyle.Fill });
             layout.Controls.Add(_note); layout.Controls.Add(buttons);
             Controls.Add(layout); AcceptButton = allowContinue ? accept : cancel; CancelButton = cancel;
+        }
+
+        // The requested 1180 x 760 window can exceed a small monitor: Windows
+        // does not keep the footer on-screen automatically. Apply the same native
+        // size boundary as facade parameter dialogs, before WinForms caches its
+        // client dimensions, so layout and the actual HWND remain consistent.
+        protected override void SetClientSizeCore(int width, int height)
+        {
+            Rectangle work = Screen.FromPoint(Location).WorkingArea;
+            FitMinimum(work.Size);
+            Size border = SizeFromClientSize(Size.Empty);
+            int minWidth = Math.Max(1, MinimumSize.Width - border.Width),
+                minHeight = Math.Max(1, MinimumSize.Height - border.Height);
+            base.SetClientSizeCore(Math.Max(minWidth, Math.Min(width, Math.Max(1, work.Width - border.Width))),
+                Math.Max(minHeight, Math.Min(height, Math.Max(1, work.Height - border.Height))));
+        }
+
+        protected override void SetBoundsCore(int x, int y, int width, int height, BoundsSpecified specified)
+        {
+            if (_constrainingWindow) { base.SetBoundsCore(x, y, width, height, specified); return; }
+            Rectangle work = Screen.FromPoint(new Point(x, y)).WorkingArea;
+            FitMinimum(work.Size);
+            width = Math.Min(Math.Max(width, MinimumSize.Width), work.Width);
+            height = Math.Min(Math.Max(height, MinimumSize.Height), work.Height);
+            x = Math.Max(work.Left, Math.Min(x, work.Right - width));
+            y = Math.Max(work.Top, Math.Min(y, work.Bottom - height));
+            base.SetBoundsCore(x, y, width, height, specified);
+        }
+
+        private void FitMinimum(Size available)
+        {
+            if (_constrainingWindow) return;
+            Size minimum = new Size(Math.Min(MinimumSize.Width, available.Width), Math.Min(MinimumSize.Height, available.Height));
+            if (minimum == MinimumSize) return;
+            _constrainingWindow = true;
+            try { MinimumSize = minimum; }
+            finally { _constrainingWindow = false; }
         }
 
         private static string CellText(QuantityTableView data, int rowIndex, int columnIndex)
