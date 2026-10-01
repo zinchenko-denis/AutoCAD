@@ -1,0 +1,59 @@
+{
+  "schema": "pilot_release_local_verification/1",
+  "status": "PASS",
+  "recorded_utc": "2026-10-01T20:27:16.852964+00:00",
+  "source_commit": "c4009838875aa0f225971153bf4b54fe288e8e79",
+  "scope": "One explicit full60 runner and compile3 for new release-inspector/documentation commit. Product and all5 module bundle inputs remain unchanged. This is not native AutoCAD acceptance.",
+  "gate_groups": 60,
+  "failed_groups": 0,
+  "gate_seconds_sum": 211.856,
+  "compiled_plugins": [
+    "AFacadesPlugin",
+    "ACladPlugin",
+    "AFramePlugin"
+  ],
+  "compile_failures": 0,
+  "known_warning": "Unchanged CS0108 ManualQuantityForm.Select hides Control.Select",
+  "stable_test_inputs": 255,
+  "stable_input_binding": {
+    "previous254_manifest": "docs/node_lifecycle_0110/gate_source_hashes.json",
+    "previous254_manifest_sha256": "1a76bbf095cc0c53b134d8e325a24c71a9ae6e530d5196c4b1ebb2a9904d2930",
+    "previous254_all_unchanged": true,
+    "new_input": "tools/pilot_release_0110/verify_release_extension.py",
+    "new_input_sha256": "463c24f950e8351ec65019b018ec9cc388e8a91d6a1c684afcd3195e65fdfa4b",
+    "before_after_identical": true,
+    "all255_sorted_map_sha256": "c4967ebeba845927fee0c0582a6e0ab4ab93445641c3a3536f87319ca2e3a8a9"
+  },
+  "product_bundle_files_unchanged": 177,
+  "product_bundle_scope": "Common plus src/engine/bundle in ATableSpec, ABlockGen, Facades, AClad, AFrame; all files read from immutable c400983 and working tree; no untracked product files",
+  "full_synth": {
+    "repeated": false,
+    "reused_runs": 8,
+    "dependencies_verified_before_after": 44,
+    "original_manifest": "docs/mounting_contract_0110/full_synth_manifest.json",
+    "original_manifest_sha256": "8692ef5657db8a451a4fb9edf40a3791530ef170ed1ba11e2b11ad4d8672ef31"
+  },
+  "compiler_reference_files_verified_before_after": 29,
+  "dependency_guard": "docs/node_lifecycle_0110/baseline_dependency_guard.json",
+  "dependency_guard_sha256": "c7f7cc2b09055ac5eb58633a50e65b644549a7f12d9528e5868efcd0ce617fad",
+  "focused_gate_checks": {
+    "limited_pilot_acceptance": 1275,
+    "table_command_lifecycle": 4886,
+    "pilot_node_table_lifecycle": 5119
+  },
+  "extension_preflight": "extension_preflight.json",
+  "extension_preflight_sha256": "e32465a8994a166b6eeea1163a73e4d1355304d4ae80c6f1b3d3ee084d5142e5",
+  "local_checks_log_sha256": "f7c83c1249f27f6893869c81070236de7db3d18299a1aaf00f1352e38c022635",
+  "local_compile_log_sha256": "bdea2db452fb1b33b3427642aed436341e933ed813ae887b0bd84f99c04f797d",
+  "guide_not_part_of_unchanged_claim": "New manual/documents have independent build105 QA receipts; only product/code/bundle inputs are unchanged.",
+  "commands": [
+    "python3 tools/atr_review_3009/run_checks.py --out /workspace/scratch/58a6cc5ac740/pilot_release_verification/checks",
+    "python3 tools/fixes_3009/compile_facades.py --references /workspace/scratch/ba306982747c/verification_deps/compile_refs --out /workspace/scratch/58a6cc5ac740/pilot_release_verification/compile"
+  ],
+  "full_local_logs_directory": "/workspace/scratch/58a6cc5ac740/pilot_release_verification",
+  "live_autocad_checked": false,
+  "engineering_approval": false,
+  "release_extension_receipt": "release_extension_receipt.json",
+  "release_extension_receipt_sha256": "009189922c1f965eddb41b85905bc32428067cf868c243e10bd3d63a70faf97d",
+  "release_extension_status": "PASS"
+}

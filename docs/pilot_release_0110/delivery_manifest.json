@@ -1,0 +1,137 @@
+{
+  "schema": "facades_pilot_delivery/1",
+  "build": 105,
+  "source_sha": "c4009838875aa0f225971153bf4b54fe288e8e79",
+  "contents": [
+    {
+      "path": "Bundles/AClad.bundle.zip",
+      "bytes": 8364242,
+      "sha256": "2f467fb45d0f0ea3323526466d097e5ab70afb6bc8e4bc2e55a1297fcc9d7892"
+    },
+    {
+      "path": "Bundles/AFacades.bundle.zip",
+      "bytes": 8340177,
+      "sha256": "54e6632f6961bc99f312d729022e4eead208272c24791a1b291de50592b14804"
+    },
+    {
+      "path": "Bundles/AFrame.bundle.zip",
+      "bytes": 8478260,
+      "sha256": "a36cee5532626b101b88b03bb0c966db31f7b23b0302811b22fedca6f54b3637"
+    },
+    {
+      "path": "docs/CURRENT_MILESTONES.md",
+      "bytes": 16102,
+      "sha256": "c044423974fd813ca3b8c4ff33c5a662ca2fed5f934d3b67fab54d95cdcc470b"
+    },
+    {
+      "path": "docs/FRAME_QUANTITIES_30.09.md",
+      "bytes": 23751,
+      "sha256": "386ea6dcde03ce6f72e55c8681a12885e5e93bb66e5b8d1f93b398957d05c1eb"
+    },
+    {
+      "path": "docs/NODE_GEOMETRY_01.10.md",
+      "bytes": 20348,
+      "sha256": "7ddb72bfbf4b2f836a6c2021b3d93cd98143f4299b63aa5ac35edac0cb46bd5d"
+    },
+    {
+      "path": "docs/NODE_TABLE_LIFECYCLE_01.10.md",
+      "bytes": 7984,
+      "sha256": "707a47293770bd7c0435b9138d8ccf4b19a2696b6a18e441d7be0a56a8432612"
+    },
+    {
+      "path": "docs/NOMINAL_MOUNTING_01.10.md",
+      "bytes": 16317,
+      "sha256": "435a28fd21cc82caea701f409559e356fc31255259b6448c49567298aff50124"
+    },
+    {
+      "path": "docs/SOLUTION_CATALOG_01.10.md",
+      "bytes": 24257,
+      "sha256": "64e1069a67489426e455bd547f5a44164d2bf6e4c092f8bc17a4b2ade184f1c2"
+    },
+    {
+      "path": "docs/facades_beginner_3009/Facades_Beginner_Manual_30.09.docx",
+      "bytes": 985469,
+      "sha256": "b634ec29402db740dd9849a6cb23f131bdf56b105ed9588c9b1d9e8bbe4a829a"
+    },
+    {
+      "path": "docs/facades_beginner_3009/assets/01_source_rect.dxf",
+      "bytes": 16811,
+      "sha256": "b4aa0b2af3f5788ebbe8b0e13295ac24a2c4d123e876d7009ff9dbcb3765d6f5"
+    },
+    {
+      "path": "docs/facades_beginner_3009/assets/02_source_gable.dxf",
+      "bytes": 16833,
+      "sha256": "018714f09807bd3583a450eb00001e55c7d8b405eaf95d84cc48aa69d816079a"
+    },
+    {
+      "path": "docs/facades_beginner_3009/assets/03_reference_rect.dxf",
+      "bytes": 297972,
+      "sha256": "ba23618841da27508cea2df96a02fe04a80e1af866853c7231f502e8b504d12e"
+    },
+    {
+      "path": "docs/facades_beginner_3009/assets/04_reference_gable.dxf",
+      "bytes": 223737,
+      "sha256": "ee6f21c676e59868c735e64bda4c0e6402c0e759a68e704e54f8b4c278a524fa"
+    },
+    {
+      "path": "docs/node_lifecycle_0110/host_acceptance.md",
+      "bytes": 7841,
+      "sha256": "dbfb87fc6e2c46687b41318f328bb953ce79d83cf52833059277d168b784922c"
+    },
+    {
+      "path": "docs/pilot_completion_0110/engineering_review.md",
+      "bytes": 21127,
+      "sha256": "accce6af416da9dfeedb801dc505adec002ad5c7becf600d25abe9323cabd8ed"
+    },
+    {
+      "path": "docs/pilot_release_0110/Facades_Feedback_build105.docx",
+      "bytes": 45253,
+      "sha256": "ad5ab152493754c1d3853d8d0f599c4e503b1e650ade4f713649ad8bf1aa1432"
+    },
+    {
+      "path": "docs/pilot_release_0110/Facades_Full_Manual_build105.pdf",
+      "bytes": 1949678,
+      "sha256": "0b70d879922f7ac96cedcefb56bc302858e17107de670c8c708c002c1c0c80b7"
+    },
+    {
+      "path": "docs/pilot_release_0110/Facades_Pilot_build105.docx",
+      "bytes": 60695,
+      "sha256": "44e83b0392c2aa33eccb039cbe93c9b1324a76f0a9f9fe67e131da3f09e869a6"
+    },
+    {
+      "path": "docs/pilot_release_0110/Facades_Pilot_build105.pdf",
+      "bytes": 255843,
+      "sha256": "4747732a737d7039247d8027998d163e443a0388d6ea9c60c93c63cf2bb50822"
+    },
+    {
+      "path": "docs/pilot_release_0110/Install_AutoCAD_2024_build105.docx",
+      "bytes": 40467,
+      "sha256": "2310aa1307b6c925d259193a2738e58a01110342717b3ef25260b87010dd51a6"
+    },
+    {
+      "path": "docs/pilot_release_0110/Install_AutoCAD_2024_build105.pdf",
+      "bytes": 67717,
+      "sha256": "8371c1684b3aa25c3838f19570587f9e635a858842baecb785e103edc96622a4"
+    },
+    {
+      "path": "docs/pilot_release_0110/assets/Pilot_KG_2zones_source.dxf",
+      "bytes": 15774,
+      "sha256": "2af4d6ef2e306669b7c29cb492a41c5bc448e2e808f8f32503ca058d173f103c"
+    },
+    {
+      "path": "docs/table_lifecycle_0110/human_route.md",
+      "bytes": 9909,
+      "sha256": "f0ee14d40d771b5604253cf685fed7ec56700f9db593fb9ad9b196cfa4a6edc2"
+    }
+  ],
+  "engineering_approved": false,
+  "live_autocad": "NOT_RUN",
+  "start": "START_HERE.txt",
+  "archive": {
+    "name": "Facades_Pilot_build105.zip",
+    "bytes": 27896653,
+    "sha256": "614d4120341adbff644b1978a52a126264af0f8a0f85c40fc37ddad21aeff607",
+    "url": "https://github.com/zinchenko-denis/AutoCAD/releases/download/build-105/Facades_Pilot_build105.zip",
+    "crc_and_all_payloads_verified": true
+  }
+}

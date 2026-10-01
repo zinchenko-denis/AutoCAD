@@ -1,0 +1,27 @@
+{
+  "status": "PASS",
+  "reviewer": "node_lifecycle",
+  "pages": [
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12,
+    13,
+    14,
+    15,
+    16,
+    17
+  ],
+  "method": "Each final PNG opened individually at original resolution; no clipping, overlap, missing glyphs or broken table rows. Repeated table headers and clear figure captions preserved.",
+  "docx_sha256": "b634ec29402db740dd9849a6cb23f131bdf56b105ed9588c9b1d9e8bbe4a829a",
+  "pdf_sha256": "0b70d879922f7ac96cedcefb56bc302858e17107de670c8c708c002c1c0c80b7",
+  "product_or_live_validation_claim": false
+}

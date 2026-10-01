@@ -1,0 +1,150 @@
+{
+  "observed_at_utc": "2026-10-01T20:26:15.569Z",
+  "repository": "zinchenko-denis/AutoCAD",
+  "authorized_source_commit": "c4009838875aa0f225971153bf4b54fe288e8e79",
+  "product_commit": "b4bf2897f6df85e4219c83ab64b39dd59d2d17d8",
+  "main_before": "e2a4e4df69a1936664c76c44cacff311ad44b07d",
+  "main_after": "e2a4e4df69a1936664c76c44cacff311ad44b07d",
+  "build_tag_sha": "c4009838875aa0f225971153bf4b54fe288e8e79",
+  "build_tag_type": "commit",
+  "build_workflow": {
+    "id": 36920164573,
+    "name": "build-bundle",
+    "head_branch": "feat/auto-reactor",
+    "head_sha": "c4009838875aa0f225971153bf4b54fe288e8e79",
+    "run_number": 105,
+    "run_attempt": 1,
+    "status": "completed",
+    "conclusion": "success",
+    "event": "workflow_dispatch",
+    "html_url": "https://github.com/zinchenko-denis/AutoCAD/actions/runs/36920164573",
+    "created_at": "2026-10-01T20:14:52Z",
+    "updated_at": "2026-10-01T20:20:04Z"
+  },
+  "check_workflow": {
+    "id": 36920592506,
+    "name": "check",
+    "head_branch": "feat/auto-reactor",
+    "head_sha": "c4009838875aa0f225971153bf4b54fe288e8e79",
+    "run_number": 220,
+    "run_attempt": 1,
+    "status": "completed",
+    "conclusion": "success",
+    "event": "workflow_dispatch",
+    "html_url": "https://github.com/zinchenko-denis/AutoCAD/actions/runs/36920592506",
+    "created_at": "2026-10-01T20:18:22Z",
+    "updated_at": "2026-10-01T20:25:10Z"
+  },
+  "latest_release": {
+    "id": 340372507,
+    "tag_name": "latest",
+    "html_url": "https://github.com/zinchenko-denis/AutoCAD/releases/tag/latest",
+    "created_at": "2026-06-16T19:37:31Z",
+    "published_at": "2026-06-16T19:49:19Z",
+    "draft": false,
+    "prerelease": false,
+    "assets": [
+      {
+        "id": 604062356,
+        "name": "ABlockGen.bundle.zip",
+        "size": 8187531,
+        "digest": "sha256:e5cca72fbc710dfeed205ad20c132a06e2b0efe92c9baf9d6217c3fbf909f856",
+        "browser_download_url": "https://github.com/zinchenko-denis/AutoCAD/releases/download/latest/ABlockGen.bundle.zip",
+        "created_at": "2026-10-01T20:19:49Z",
+        "updated_at": "2026-10-01T20:19:50Z"
+      },
+      {
+        "id": 604062358,
+        "name": "AClad.bundle.zip",
+        "size": 8364242,
+        "digest": "sha256:2f467fb45d0f0ea3323526466d097e5ab70afb6bc8e4bc2e55a1297fcc9d7892",
+        "browser_download_url": "https://github.com/zinchenko-denis/AutoCAD/releases/download/latest/AClad.bundle.zip",
+        "created_at": "2026-10-01T20:19:49Z",
+        "updated_at": "2026-10-01T20:19:50Z"
+      },
+      {
+        "id": 604062363,
+        "name": "AFacades.bundle.zip",
+        "size": 8340177,
+        "digest": "sha256:54e6632f6961bc99f312d729022e4eead208272c24791a1b291de50592b14804",
+        "browser_download_url": "https://github.com/zinchenko-denis/AutoCAD/releases/download/latest/AFacades.bundle.zip",
+        "created_at": "2026-10-01T20:19:49Z",
+        "updated_at": "2026-10-01T20:19:50Z"
+      },
+      {
+        "id": 604062357,
+        "name": "AFrame.bundle.zip",
+        "size": 8478260,
+        "digest": "sha256:a36cee5532626b101b88b03bb0c966db31f7b23b0302811b22fedca6f54b3637",
+        "browser_download_url": "https://github.com/zinchenko-denis/AutoCAD/releases/download/latest/AFrame.bundle.zip",
+        "created_at": "2026-10-01T20:19:49Z",
+        "updated_at": "2026-10-01T20:19:50Z"
+      },
+      {
+        "id": 604062355,
+        "name": "ATableSpec.bundle.zip",
+        "size": 25630478,
+        "digest": "sha256:f1386c82084227c3783c6642e17d9feff9e1b378a80d27b3711ed41082c25aee",
+        "browser_download_url": "https://github.com/zinchenko-denis/AutoCAD/releases/download/latest/ATableSpec.bundle.zip",
+        "created_at": "2026-10-01T20:19:49Z",
+        "updated_at": "2026-10-01T20:19:51Z"
+      }
+    ]
+  },
+  "immutable_release": {
+    "id": 401321845,
+    "tag_name": "build-105",
+    "html_url": "https://github.com/zinchenko-denis/AutoCAD/releases/tag/build-105",
+    "created_at": "2026-10-01T20:03:24Z",
+    "published_at": "2026-10-01T20:19:58Z",
+    "draft": false,
+    "prerelease": false,
+    "assets": [
+      {
+        "id": 604062490,
+        "name": "ABlockGen.bundle.zip",
+        "size": 8187531,
+        "digest": "sha256:e5cca72fbc710dfeed205ad20c132a06e2b0efe92c9baf9d6217c3fbf909f856",
+        "browser_download_url": "https://github.com/zinchenko-denis/AutoCAD/releases/download/build-105/ABlockGen.bundle.zip",
+        "created_at": "2026-10-01T20:19:55Z",
+        "updated_at": "2026-10-01T20:19:56Z"
+      },
+      {
+        "id": 604062484,
+        "name": "AClad.bundle.zip",
+        "size": 8364242,
+        "digest": "sha256:2f467fb45d0f0ea3323526466d097e5ab70afb6bc8e4bc2e55a1297fcc9d7892",
+        "browser_download_url": "https://github.com/zinchenko-denis/AutoCAD/releases/download/build-105/AClad.bundle.zip",
+        "created_at": "2026-10-01T20:19:55Z",
+        "updated_at": "2026-10-01T20:19:56Z"
+      },
+      {
+        "id": 604062483,
+        "name": "AFacades.bundle.zip",
+        "size": 8340177,
+        "digest": "sha256:54e6632f6961bc99f312d729022e4eead208272c24791a1b291de50592b14804",
+        "browser_download_url": "https://github.com/zinchenko-denis/AutoCAD/releases/download/build-105/AFacades.bundle.zip",
+        "created_at": "2026-10-01T20:19:55Z",
+        "updated_at": "2026-10-01T20:19:56Z"
+      },
+      {
+        "id": 604062489,
+        "name": "AFrame.bundle.zip",
+        "size": 8478260,
+        "digest": "sha256:a36cee5532626b101b88b03bb0c966db31f7b23b0302811b22fedca6f54b3637",
+        "browser_download_url": "https://github.com/zinchenko-denis/AutoCAD/releases/download/build-105/AFrame.bundle.zip",
+        "created_at": "2026-10-01T20:19:55Z",
+        "updated_at": "2026-10-01T20:19:56Z"
+      },
+      {
+        "id": 604062486,
+        "name": "ATableSpec.bundle.zip",
+        "size": 25630478,
+        "digest": "sha256:f1386c82084227c3783c6642e17d9feff9e1b378a80d27b3711ed41082c25aee",
+        "browser_download_url": "https://github.com/zinchenko-denis/AutoCAD/releases/download/build-105/ATableSpec.bundle.zip",
+        "created_at": "2026-10-01T20:19:55Z",
+        "updated_at": "2026-10-01T20:19:57Z"
+      }
+    ]
+  }
+}

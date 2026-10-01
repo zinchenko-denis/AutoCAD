@@ -1,0 +1,217 @@
+{
+  "schema": "pilot_release_extension/1",
+  "status": "PASS",
+  "recorded_utc": "2026-10-01T20:26:45.036620+00:00",
+  "build": 105,
+  "source_sha": "c4009838875aa0f225971153bf4b54fe288e8e79",
+  "verifier_sha256": "463c24f950e8351ec65019b018ec9cc388e8a91d6a1c684afcd3195e65fdfa4b",
+  "base_verifier_sha256": "3cc58f9a55a06319301d8d8d3f69c88df453754ccd67f9bf13faf45ec2f077a9",
+  "bundles": {
+    "AFacades": {
+      "archive_sha256": "54e6632f6961bc99f312d729022e4eead208272c24791a1b291de50592b14804",
+      "dll": {
+        "machine": "AMD64",
+        "sha256": "b952cc394c3464db3d89b69f9c5c88a6af86b7ce0bc5421f6a8de4d0d9219043",
+        "bytes": 383488
+      },
+      "metadata": {
+        "required_types_found": [
+          "FacadeSafety.FacadeProjectParameterStore"
+        ],
+        "type_count": 125,
+        "commands": [
+          {
+            "global": "ATFTABLE",
+            "flags": 2,
+            "type": "AFacadesPlugin.TableCommand",
+            "method": "Run"
+          },
+          {
+            "global": "ATFZONE",
+            "flags": 2,
+            "type": "AFacadesPlugin.ZoneCommand",
+            "method": "Run"
+          },
+          {
+            "global": "ATFZONERESET",
+            "flags": 0,
+            "type": "AFacadesPlugin.ZoneCommand",
+            "method": "ResetSchemeLinks"
+          }
+        ],
+        "execution_performed": false
+      },
+      "command_source_manifest": {
+        "ATFTABLE": "Facades/src/AFacadesPlugin/TableCommand.cs",
+        "ATFZONE": "Facades/src/AFacadesPlugin/ZoneCommand.cs",
+        "ATFZONERESET": "Facades/src/AFacadesPlugin/ZoneCommand.cs"
+      },
+      "xml_commands": [
+        "ATFTABLE",
+        "ATFZONE",
+        "ATFZONERESET"
+      ]
+    },
+    "AClad": {
+      "archive_sha256": "2f467fb45d0f0ea3323526466d097e5ab70afb6bc8e4bc2e55a1297fcc9d7892",
+      "dll": {
+        "machine": "AMD64",
+        "sha256": "a07f8503565c61c85d61de5603d4eb44facda168b91f366c122c8dd8798a596a",
+        "bytes": 352768
+      },
+      "metadata": {
+        "required_types_found": [
+          "FacadeSafety.FacadeProjectParameterStore"
+        ],
+        "type_count": 103,
+        "commands": [
+          {
+            "global": "ATCLAD",
+            "flags": 2,
+            "type": "ACladPlugin.CladCommand",
+            "method": "Run"
+          },
+          {
+            "global": "ATCLADDIM",
+            "flags": 0,
+            "type": "ACladPlugin.CladCommand",
+            "method": "RunDim"
+          },
+          {
+            "global": "ATTILE",
+            "flags": 2,
+            "type": "ACladPlugin.TilePatternCommand",
+            "method": "Run"
+          }
+        ],
+        "execution_performed": false
+      },
+      "command_source_manifest": {
+        "ATCLAD": "AClad/src/ACladPlugin/CladCommand.cs",
+        "ATCLADDIM": "AClad/src/ACladPlugin/CladCommand.cs",
+        "ATTILE": "AClad/src/ACladPlugin/TilePatternCommand.cs"
+      },
+      "xml_commands": [
+        "ATCLAD",
+        "ATCLADDIM",
+        "ATTILE"
+      ]
+    },
+    "AFrame": {
+      "archive_sha256": "a36cee5532626b101b88b03bb0c966db31f7b23b0302811b22fedca6f54b3637",
+      "dll": {
+        "machine": "AMD64",
+        "sha256": "29bffa7d29d04b700a7228c34b33d0380650f9955b00ed1741b8094e0e591edb",
+        "bytes": 544256
+      },
+      "metadata": {
+        "required_types_found": [
+          "AFramePlugin.FrameMountingAssessment",
+          "AFramePlugin.FrameMountingAssessmentResult",
+          "AFramePlugin.FrameMountingNominalChain",
+          "AFramePlugin.FrameNodeCommand",
+          "AFramePlugin.FrameNodeForm",
+          "AFramePlugin.FrameNodeGeometry",
+          "AFramePlugin.FrameNodeGeometryResult",
+          "AFramePlugin.FrameNodeRenderer",
+          "AFramePlugin.FrameNodeSnapshot",
+          "AFramePlugin.FrameNodeStore",
+          "AFramePlugin.FrameParameterResolver",
+          "AFramePlugin.FrameProjectCommand",
+          "AFramePlugin.FrameProjectForm",
+          "AFramePlugin.FrameProjectParameters",
+          "AFramePlugin.FrameSolutionSelection",
+          "AFramePlugin.FrameZoneParameters",
+          "AFramePlugin.FrameZoneParametersForm",
+          "FacadeSafety.FacadeProjectParameterStore"
+        ],
+        "type_count": 162,
+        "commands": [
+          {
+            "global": "ATDEDUP",
+            "flags": 0,
+            "type": "AFramePlugin.FrameCommand",
+            "method": "RunDedup"
+          },
+          {
+            "global": "ATFNODE",
+            "flags": 0,
+            "type": "AFramePlugin.FrameNodeCommand",
+            "method": "Node"
+          },
+          {
+            "global": "ATFPROJECT",
+            "flags": 0,
+            "type": "AFramePlugin.FrameProjectCommand",
+            "method": "Project"
+          },
+          {
+            "global": "ATFRAME",
+            "flags": 2,
+            "type": "AFramePlugin.FrameCommand",
+            "method": "Run"
+          },
+          {
+            "global": "ATFRAMEDIM",
+            "flags": 0,
+            "type": "AFramePlugin.FrameCommand",
+            "method": "RunDim"
+          },
+          {
+            "global": "ATFZONEPARAMS",
+            "flags": 2,
+            "type": "AFramePlugin.FrameProjectCommand",
+            "method": "ZoneParameters"
+          }
+        ],
+        "execution_performed": false
+      },
+      "engine": {
+        "machine": "AMD64",
+        "sha256": "da76ebc843605547a90419659f66a47eaf3d6a64ef5aeefa5896070dbab85e4a",
+        "bytes": 8466978,
+        "pilot_modules": {
+          "required_modules": {
+            "frame_solution_selection": {
+              "bytecode_sha256": "ac44ac0913272819de5b7d31e316e115bbb96f4169cd5b0a05ffe6582afb1323",
+              "bytes": 12273,
+              "source_path": "AFrame/engine/frame_solution_selection.py",
+              "source_sha256": "6490da6ced48715c4dce5ca357e0f54be9c035dd7bb6fc8d86b684f1d15f6aee"
+            },
+            "frame_solution_catalog": {
+              "bytecode_sha256": "02969d9fbcb7581d568c5511284a11298156822523202ca710292279214d399f",
+              "bytes": 5963,
+              "source_path": "AFrame/engine/frame_solution_catalog.py",
+              "source_sha256": "56e674855cc01e19bf2a0723dff1f3454497a99aef56f3de1b5bbf75c0d44764"
+            }
+          },
+          "pyz_modules": 115,
+          "extraction": "Standard reader decodes PYZ TOC with marshal; module payload raw=True, no module unmarshal/import/exec",
+          "source_bytecode_equivalence_claimed": false,
+          "execution_performed": false
+        }
+      },
+      "command_source_manifest": {
+        "ATFRAME": "AFrame/src/AFramePlugin/FrameCommand.cs",
+        "ATFRAMEDIM": "AFrame/src/AFramePlugin/FrameCommand.cs",
+        "ATDEDUP": "AFrame/src/AFramePlugin/FrameCommand.cs",
+        "ATFNODE": "AFrame/src/AFramePlugin/FrameNodeCommand.cs",
+        "ATFPROJECT": "AFrame/src/AFramePlugin/FrameProjectCommand.cs",
+        "ATFZONEPARAMS": "AFrame/src/AFramePlugin/FrameProjectCommand.cs"
+      },
+      "xml_commands": [
+        "ATDEDUP",
+        "ATFNODE",
+        "ATFPROJECT",
+        "ATFRAME",
+        "ATFRAMEDIM",
+        "ATFZONEPARAMS"
+      ]
+    }
+  },
+  "live_autocad_checked": false,
+  "windows_exe_executed": false,
+  "dll_loaded_in_autocad": false,
+  "engineering_approval": false,
+  "base_receipt_sha256": "33e2e4f939c3d62bf064501fc21fac3144205fb3560f9ea8039150cf2678a690"
+}

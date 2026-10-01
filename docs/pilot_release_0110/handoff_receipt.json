@@ -1,0 +1,56 @@
+{
+  "schema": "pilot_release_handoff/1",
+  "recorded_at": "2026-10-01T20:43:48.695866+00:00",
+  "release": "build-105",
+  "release_source_sha": "c4009838875aa0f225971153bf4b54fe288e8e79",
+  "last_product_change": "b4bf2897f6df85e4219c83ab64b39dd59d2d17d8",
+  "build": {
+    "number": 105,
+    "id": 36920164573,
+    "conclusion": "success",
+    "successful_steps": 37
+  },
+  "windows_check": {
+    "number": 220,
+    "id": 36920592506,
+    "conclusion": "success",
+    "successful_steps": 41
+  },
+  "local_gates": {
+    "passed": 60,
+    "failed": 0,
+    "compiled_plugins": 3
+  },
+  "delivery": {
+    "asset": "Facades_Pilot_build105.zip",
+    "sha256": "614d4120341adbff644b1978a52a126264af0f8a0f85c40fc37ddad21aeff607",
+    "bytes": 27896653,
+    "payload_files": 24,
+    "assets_downloaded_and_verified": 8,
+    "original_five_bundle_assets_unchanged": true,
+    "guide_pages": 14,
+    "install_pages": 2,
+    "feedback_pages": 8,
+    "full_manual_pages": 52
+  },
+  "source_changes": "Documentation and release inspector only; all product/src/engine/bundle inputs unchanged from c400983. ATableSpec and ABlockGen unchanged.",
+  "main_unchanged_sha": "e2a4e4df69a1936664c76c44cacff311ad44b07d",
+  "native_autocad": "NOT_RUN",
+  "engineering_contract_2V": "OPEN",
+  "validated_calculation_3A": "OPEN",
+  "automatic_selection": "CLOSED",
+  "full_working_nodes_and_fasteners": "INCOMPLETE",
+  "next_action": "German/design office run П00–П17 and return filled feedback with DWG/JSON/XLSX, F2/screenshots and speed measurements; engineering answers are not a prerequisite. Reproduce first returned blocking defect or process concrete engineering answer.",
+  "new_installer_requires_new_command": true,
+  "evidence_sha256": {
+    "publication_evidence.json": "18da1ee871e3d3f81e9fbce130ab34074979ed1ccc9b3edbf56e13952021971b",
+    "bundle_receipt.json": "33e2e4f939c3d62bf064501fc21fac3144205fb3560f9ea8039150cf2678a690",
+    "release_extension_receipt.json": "009189922c1f965eddb41b85905bc32428067cf868c243e10bd3d63a70faf97d",
+    "local_verification.json": "0ff05595caab94139b273a02c5d551dd581764e8c38cbfa96f9d50d9e048941e",
+    "DOCUMENT_QA.json": "5f6d066aed4c9c7f5266a2d8dfe15816ce7b64345b0192c627d6b2c4ecf2049c",
+    "delivery_manifest.json": "a8eb97ad0e69ce26fc35943d379b063053b68965d2fed27e781cf77981870453",
+    "delivery_publication.json": "96fd506f608e712fa5a59ba9bcfc57f95a051b872a33a8453d4211f412c5f47a",
+    "manual_source_sha256.json": "026ad137412c7d34ba9e264c0f0ff1267e8cabe3dad38861ca3c888e635d3cc2"
+  },
+  "repository_publication": "This containing commit publishes the release materials. Final branch/check receipt follows without changing released binaries."
+}

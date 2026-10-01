@@ -1,0 +1,50 @@
+{
+  "schema": "pilot_source_dxf/1",
+  "path": "docs/pilot_release_0110/assets/Pilot_KG_2zones_source.dxf",
+  "sha256": "2af4d6ef2e306669b7c29cb492a41c5bc448e2e808f8f32503ca058d173f103c",
+  "units": "mm",
+  "entities": 2,
+  "plugin_passports": false,
+  "purpose": "Two source polylines only; engineer creates zones and outputs through actual AutoCAD commands.",
+  "polylines": [
+    [
+      [
+        0.0,
+        0.0
+      ],
+      [
+        1210.0,
+        0.0
+      ],
+      [
+        1210.0,
+        1820.0
+      ],
+      [
+        0.0,
+        1820.0
+      ]
+    ],
+    [
+      [
+        2410.0,
+        0.0
+      ],
+      [
+        3620.0,
+        0.0
+      ],
+      [
+        3620.0,
+        1820.0
+      ],
+      [
+        2410.0,
+        1820.0
+      ]
+    ]
+  ],
+  "area_each_m2": 2.2022,
+  "dxf_audit_errors": 0,
+  "live_autocad": "NOT_RUN"
+}

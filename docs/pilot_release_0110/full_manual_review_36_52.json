@@ -1,0 +1,325 @@
+{
+  "schema": "manual_build105_visual_review/1",
+  "reviewer": "independent_review",
+  "reviewed_at_utc": "2026-10-01T20:20:45.687514+00:00",
+  "status": "PASS",
+  "scope": "Individual original-resolution visual review of rendered pages36–52 only; no document edits.",
+  "skill": "documents + tasks/verify_render.md",
+  "pages_reviewed": [
+    36,
+    37,
+    38,
+    39,
+    40,
+    41,
+    42,
+    43,
+    44,
+    45,
+    46,
+    47,
+    48,
+    49,
+    50,
+    51,
+    52
+  ],
+  "page_count": 17,
+  "pages": [
+    {
+      "page": 36,
+      "file": "render/page-36.png",
+      "sha256": "9eaebf1eba6c828621ebda3b6f93a6bcdfc145c78fac5f37c6c901874b8db622",
+      "pixels": [
+        1547,
+        2002
+      ],
+      "opened_individually": true,
+      "detail": "original",
+      "result": "PASS",
+      "clipping": false,
+      "overlap": false,
+      "missing_glyphs": false,
+      "broken_table_layout": false,
+      "notes": "Текст и нумерованный список читаются; переход абзаца на37 обычный, без обрезки."
+    },
+    {
+      "page": 37,
+      "file": "render/page-37.png",
+      "sha256": "15e14ec65a623c40da1719ed5d54a3b497477ade67eb3dc2d84ad6f1fabfc43a",
+      "pixels": [
+        1547,
+        2002
+      ],
+      "opened_individually": true,
+      "detail": "original",
+      "result": "PASS",
+      "clipping": false,
+      "overlap": false,
+      "missing_glyphs": false,
+      "broken_table_layout": false,
+      "notes": "Продолжение абзаца и список2Б2 читаются; переход пункта на38 корректный."
+    },
+    {
+      "page": 38,
+      "file": "render/page-38.png",
+      "sha256": "ba226931ecf221e1d140be57c64b975c56f71ad48778f753f3bc4749d05fb791",
+      "pixels": [
+        1547,
+        2002
+      ],
+      "opened_individually": true,
+      "detail": "original",
+      "result": "PASS",
+      "clipping": false,
+      "overlap": false,
+      "missing_glyphs": false,
+      "broken_table_layout": false,
+      "notes": "Таблица наследования помещается, строки и границы целые; заголовки не перекрывают текст."
+    },
+    {
+      "page": 39,
+      "file": "render/page-39.png",
+      "sha256": "51b3a016920d2882d37ea9e8cc00138782e48ff1e640f353d4214ec8be430ef3",
+      "pixels": [
+        1547,
+        2002
+      ],
+      "opened_individually": true,
+      "detail": "original",
+      "result": "PASS",
+      "clipping": false,
+      "overlap": false,
+      "missing_glyphs": false,
+      "broken_table_layout": false,
+      "notes": "Раздел ATFNODE и шаги1–2 читаются, нижняя граница текста не обрезана."
+    },
+    {
+      "page": 40,
+      "file": "render/page-40.png",
+      "sha256": "d5110df2d4b4c90b1ce1afae9a53ebfc15993009143a15a98f21f9c68cd3a1a3",
+      "pixels": [
+        1547,
+        2002
+      ],
+      "opened_individually": true,
+      "detail": "original",
+      "result": "PASS",
+      "clipping": false,
+      "overlap": false,
+      "missing_glyphs": false,
+      "broken_table_layout": false,
+      "notes": "Шаги3–5 и численный пример целиком читаются, жирные подписи и символы корректны."
+    },
+    {
+      "page": 41,
+      "file": "render/page-41.png",
+      "sha256": "bb25f57a461536862d4f7d4dd62a584673dcfcda684fd64d0415a4ac664dbd09",
+      "pixels": [
+        1547,
+        2002
+      ],
+      "opened_individually": true,
+      "detail": "original",
+      "result": "PASS",
+      "clipping": false,
+      "overlap": false,
+      "missing_glyphs": false,
+      "broken_table_layout": false,
+      "notes": "Таблицы результатов/баз читаются; начало таблицы баз не обрезано, продолжение на42."
+    },
+    {
+      "page": 42,
+      "file": "render/page-42.png",
+      "sha256": "14aa4eab405cce4258ae6f14c6d9af2cfe2ec4cc332be7f0c8f37bf0e8a88b44",
+      "pixels": [
+        1547,
+        2002
+      ],
+      "opened_individually": true,
+      "detail": "original",
+      "result": "PASS",
+      "clipping": false,
+      "overlap": false,
+      "missing_glyphs": false,
+      "broken_table_layout": false,
+      "notes": "У таблицы баз повторён заголовок; последняя строка и формула целые; список без наложений."
+    },
+    {
+      "page": 43,
+      "file": "render/page-43.png",
+      "sha256": "8aca596915d32bd737456d9aeb2695167303b75b271bbd1b4ae8c954f5e79e3a",
+      "pixels": [
+        1547,
+        2002
+      ],
+      "opened_individually": true,
+      "detail": "original",
+      "result": "PASS",
+      "clipping": false,
+      "overlap": false,
+      "missing_glyphs": false,
+      "broken_table_layout": false,
+      "notes": "Продолжение монтажа, проверка снимка и ограничения читаются без дефектов."
+    },
+    {
+      "page": 44,
+      "file": "render/page-44.png",
+      "sha256": "51dc33d58a6d784c48dd686f9561174c763151311ed94e6e9fdeaac298d4b765",
+      "pixels": [
+        1547,
+        2002
+      ],
+      "opened_individually": true,
+      "detail": "original",
+      "result": "PASS",
+      "clipping": false,
+      "overlap": false,
+      "missing_glyphs": false,
+      "broken_table_layout": false,
+      "notes": "Разделы14/15 и моноширинные команды читаются; обычный перенос абзаца на45."
+    },
+    {
+      "page": 45,
+      "file": "render/page-45.png",
+      "sha256": "b6ab182180b9b2b485678cbb2ec7b963bb65ec39d1da30844e7d5e1fd73cf515",
+      "pixels": [
+        1547,
+        2002
+      ],
+      "opened_individually": true,
+      "detail": "original",
+      "result": "PASS",
+      "clipping": false,
+      "overlap": false,
+      "missing_glyphs": false,
+      "broken_table_layout": false,
+      "notes": "Таблица ошибок имеет читаемые три колонки; строки не разрезаны и не обрезаны."
+    },
+    {
+      "page": 46,
+      "file": "render/page-46.png",
+      "sha256": "8da1503625dc5959b470666fdc840e7008cb684eacd77906f99dd440aec1ee45",
+      "pixels": [
+        1547,
+        2002
+      ],
+      "opened_individually": true,
+      "detail": "original",
+      "result": "PASS",
+      "clipping": false,
+      "overlap": false,
+      "missing_glyphs": false,
+      "broken_table_layout": false,
+      "notes": "Продолжение таблицы с повторённой шапкой; длинные формулировки помещаются."
+    },
+    {
+      "page": 47,
+      "file": "render/page-47.png",
+      "sha256": "3b914fca8207fd1e12bef6fcdff471b42c8373aceb6a852d5638195a2cdbdaf9",
+      "pixels": [
+        1547,
+        2002
+      ],
+      "opened_individually": true,
+      "detail": "original",
+      "result": "PASS",
+      "clipping": false,
+      "overlap": false,
+      "missing_glyphs": false,
+      "broken_table_layout": false,
+      "notes": "Повторённая шапка; команды и многострочные ячейки читаются, нет наложений."
+    },
+    {
+      "page": 48,
+      "file": "render/page-48.png",
+      "sha256": "6f334bc49536907a3cc7e361d01413ec3a036ea0fcb741b70705c34f23e983a2",
+      "pixels": [
+        1547,
+        2002
+      ],
+      "opened_individually": true,
+      "detail": "original",
+      "result": "PASS",
+      "clipping": false,
+      "overlap": false,
+      "missing_glyphs": false,
+      "broken_table_layout": false,
+      "notes": "Таблица продолжается с повторённой шапкой; нижняя строка полностью видна."
+    },
+    {
+      "page": 49,
+      "file": "render/page-49.png",
+      "sha256": "4fe4e468aa8dc2141b0648644b1d18961f028a0a8162e123adc7dcf7d6a0c478",
+      "pixels": [
+        1547,
+        2002
+      ],
+      "opened_individually": true,
+      "detail": "original",
+      "result": "PASS",
+      "clipping": false,
+      "overlap": false,
+      "missing_glyphs": false,
+      "broken_table_layout": false,
+      "notes": "Завершение таблицы и раздел передачи читаются; имена файлов целые."
+    },
+    {
+      "page": 50,
+      "file": "render/page-50.png",
+      "sha256": "bc91de89d00f078f342ef580ff5ed0cee599fe421dfd6cb4aaba119782b44875",
+      "pixels": [
+        1547,
+        2002
+      ],
+      "opened_individually": true,
+      "detail": "original",
+      "result": "PASS",
+      "clipping": false,
+      "overlap": false,
+      "missing_glyphs": false,
+      "broken_table_layout": false,
+      "notes": "Раздел18 и словарь читаются; таблица корректно продолжается на51."
+    },
+    {
+      "page": 51,
+      "file": "render/page-51.png",
+      "sha256": "198795dd17017fa7e9067efb932933e9f8bb3e3bee0bd0917bd903884c84fa2b",
+      "pixels": [
+        1547,
+        2002
+      ],
+      "opened_individually": true,
+      "detail": "original",
+      "result": "PASS",
+      "clipping": false,
+      "overlap": false,
+      "missing_glyphs": false,
+      "broken_table_layout": false,
+      "notes": "Повторённая шапка словаря, все строки целые; начало итогового списка читается."
+    },
+    {
+      "page": 52,
+      "file": "render/page-52.png",
+      "sha256": "40cd48bf84785a1da96a9b7e5ff2647065a8a45badfc7862f5fdbc49bf7af678",
+      "pixels": [
+        1547,
+        2002
+      ],
+      "opened_individually": true,
+      "detail": "original",
+      "result": "PASS",
+      "clipping": false,
+      "overlap": false,
+      "missing_glyphs": false,
+      "broken_table_layout": false,
+      "notes": "Продолжение списка и завершающий абзац читаются; свободное поле в конце документа допустимо."
+    }
+  ],
+  "blocking_findings": [],
+  "limits": [
+    "Visual rendering QA only, not source engineering validation.",
+    "No live AutoCAD or product runtime validation claimed.",
+    "Pages1–35 are outside this reviewer assignment."
+  ]
+}

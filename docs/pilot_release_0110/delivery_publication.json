@@ -1,0 +1,149 @@
+{
+  "release_id": 401321845,
+  "tag": "build-105",
+  "url": "https://github.com/zinchenko-denis/AutoCAD/releases/tag/build-105",
+  "title": "build-105 — фасадный пилот для AutoCAD 2024",
+  "body": "Проверочный выпуск для Германа и проектного отдела по команде Дениса от 01.10.2026.\r\n\r\n**Начните с Facades_Pilot_build105.zip в Assets.** В одном архиве: три фасадных бандла, установка на 2 страницах, маршрут пилота с шестью инженерными вопросами, заполняемый протокол, полное руководство на 52 страницах и пять учебных DXF. Распакуйте архив и откройте START_HERE.txt. Инструкции также доступны отдельными Word/PDF файлами ниже.\r\n\r\nУстанавливать вместе AFacades, AClad и AFrame из этой сборки. Для фасадного пилота ATableSpec и ABlockGen переустанавливать не требуется. AutoCAD: полный Windows 64 bit, целевая машина Германа — 2024. Отдельный Python не нужен.\r\n\r\nВыпуск включает изменения после build-104: исторический выбор решения Вектор-1 2015, ATFPROJECT и ATFZONEPARAMS, диагностическую схему ATFNODE с монтажным отчётом и номинальными базами, адресные предупреждения соединений, исправления отмены ручных осей и точки вставки ведомости в повёрнутой ПСК.\r\n\r\nСобранные исходники: `c4009838875aa0f225971153bf4b54fe288e8e79`. [Build №105](https://github.com/zinchenko-denis/AutoCAD/actions/runs/36920164573) и [Windows check №220](https://github.com/zinchenko-denis/AutoCAD/actions/runs/36920592506) — success. Десять скачанных ZIP latest/build-105 проверены; новые команды и модули внутри DLL/EXE подтверждены. Бинарные файлы этого снимка не заменены при добавлении инструкций.\r\n\r\n**Живой AutoCAD ещё не проверен.** Отдел проверяет построения, ведомости, актуальность, отмены, save/open, COPY/SaveAs/Undo и скорость. Ответы на инженерные вопросы не блокируют начало тестирования. Монтажный контракт, подтверждённый расчёт несущей способности, автоматический подбор, полный рабочий узел и полный крепёж остаются незавершёнными. Учебные шаги не являются рабочими расчётными рекомендациями.\r\n\r\nВернуть заполненный Facades_Feedback_build105.docx, исходный и итоговый DWG с соответствующим JSON, XLSX, F2/снимки и замеры. Рабочие файлы объекта передавать через согласованное закрытое пространство. Новые выпуск и слияние main не выполняются автоматически по результатам пилота.",
+  "assets": [
+    {
+      "name": "ABlockGen.bundle.zip",
+      "size": 8187531,
+      "digest": "sha256:e5cca72fbc710dfeed205ad20c132a06e2b0efe92c9baf9d6217c3fbf909f856",
+      "url": "https://github.com/zinchenko-denis/AutoCAD/releases/download/build-105/ABlockGen.bundle.zip"
+    },
+    {
+      "name": "AClad.bundle.zip",
+      "size": 8364242,
+      "digest": "sha256:2f467fb45d0f0ea3323526466d097e5ab70afb6bc8e4bc2e55a1297fcc9d7892",
+      "url": "https://github.com/zinchenko-denis/AutoCAD/releases/download/build-105/AClad.bundle.zip"
+    },
+    {
+      "name": "AFacades.bundle.zip",
+      "size": 8340177,
+      "digest": "sha256:54e6632f6961bc99f312d729022e4eead208272c24791a1b291de50592b14804",
+      "url": "https://github.com/zinchenko-denis/AutoCAD/releases/download/build-105/AFacades.bundle.zip"
+    },
+    {
+      "name": "AFrame.bundle.zip",
+      "size": 8478260,
+      "digest": "sha256:a36cee5532626b101b88b03bb0c966db31f7b23b0302811b22fedca6f54b3637",
+      "url": "https://github.com/zinchenko-denis/AutoCAD/releases/download/build-105/AFrame.bundle.zip"
+    },
+    {
+      "name": "ATableSpec.bundle.zip",
+      "size": 25630478,
+      "digest": "sha256:f1386c82084227c3783c6642e17d9feff9e1b378a80d27b3711ed41082c25aee",
+      "url": "https://github.com/zinchenko-denis/AutoCAD/releases/download/build-105/ATableSpec.bundle.zip"
+    },
+    {
+      "name": "Facades_Feedback_build105.docx",
+      "size": 45253,
+      "digest": "sha256:ad5ab152493754c1d3853d8d0f599c4e503b1e650ade4f713649ad8bf1aa1432",
+      "url": "https://github.com/zinchenko-denis/AutoCAD/releases/download/build-105/Facades_Feedback_build105.docx"
+    },
+    {
+      "name": "Facades_Full_Manual_build105.docx",
+      "size": 985469,
+      "digest": "sha256:b634ec29402db740dd9849a6cb23f131bdf56b105ed9588c9b1d9e8bbe4a829a",
+      "url": "https://github.com/zinchenko-denis/AutoCAD/releases/download/build-105/Facades_Full_Manual_build105.docx"
+    },
+    {
+      "name": "Facades_Full_Manual_build105.pdf",
+      "size": 1949678,
+      "digest": "sha256:0b70d879922f7ac96cedcefb56bc302858e17107de670c8c708c002c1c0c80b7",
+      "url": "https://github.com/zinchenko-denis/AutoCAD/releases/download/build-105/Facades_Full_Manual_build105.pdf"
+    },
+    {
+      "name": "Facades_Pilot_build105.docx",
+      "size": 60695,
+      "digest": "sha256:44e83b0392c2aa33eccb039cbe93c9b1324a76f0a9f9fe67e131da3f09e869a6",
+      "url": "https://github.com/zinchenko-denis/AutoCAD/releases/download/build-105/Facades_Pilot_build105.docx"
+    },
+    {
+      "name": "Facades_Pilot_build105.pdf",
+      "size": 255843,
+      "digest": "sha256:4747732a737d7039247d8027998d163e443a0388d6ea9c60c93c63cf2bb50822",
+      "url": "https://github.com/zinchenko-denis/AutoCAD/releases/download/build-105/Facades_Pilot_build105.pdf"
+    },
+    {
+      "name": "Facades_Pilot_build105.zip",
+      "size": 27896653,
+      "digest": "sha256:614d4120341adbff644b1978a52a126264af0f8a0f85c40fc37ddad21aeff607",
+      "url": "https://github.com/zinchenko-denis/AutoCAD/releases/download/build-105/Facades_Pilot_build105.zip"
+    },
+    {
+      "name": "Install_AutoCAD_2024_build105.docx",
+      "size": 40467,
+      "digest": "sha256:2310aa1307b6c925d259193a2738e58a01110342717b3ef25260b87010dd51a6",
+      "url": "https://github.com/zinchenko-denis/AutoCAD/releases/download/build-105/Install_AutoCAD_2024_build105.docx"
+    },
+    {
+      "name": "Install_AutoCAD_2024_build105.pdf",
+      "size": 67717,
+      "digest": "sha256:8371c1684b3aa25c3838f19570587f9e635a858842baecb785e103edc96622a4",
+      "url": "https://github.com/zinchenko-denis/AutoCAD/releases/download/build-105/Install_AutoCAD_2024_build105.pdf"
+    }
+  ],
+  "observed_at": "2026-10-01T20:42:22.315Z",
+  "checked_at": "2026-10-01T20:43:15.041245+00:00",
+  "delivery_assets": [
+    {
+      "name": "Facades_Feedback_build105.docx",
+      "size": 45253,
+      "digest": "sha256:ad5ab152493754c1d3853d8d0f599c4e503b1e650ade4f713649ad8bf1aa1432",
+      "url": "https://github.com/zinchenko-denis/AutoCAD/releases/download/build-105/Facades_Feedback_build105.docx",
+      "download_verified": true
+    },
+    {
+      "name": "Facades_Full_Manual_build105.docx",
+      "size": 985469,
+      "digest": "sha256:b634ec29402db740dd9849a6cb23f131bdf56b105ed9588c9b1d9e8bbe4a829a",
+      "url": "https://github.com/zinchenko-denis/AutoCAD/releases/download/build-105/Facades_Full_Manual_build105.docx",
+      "download_verified": true
+    },
+    {
+      "name": "Facades_Full_Manual_build105.pdf",
+      "size": 1949678,
+      "digest": "sha256:0b70d879922f7ac96cedcefb56bc302858e17107de670c8c708c002c1c0c80b7",
+      "url": "https://github.com/zinchenko-denis/AutoCAD/releases/download/build-105/Facades_Full_Manual_build105.pdf",
+      "download_verified": true
+    },
+    {
+      "name": "Facades_Pilot_build105.docx",
+      "size": 60695,
+      "digest": "sha256:44e83b0392c2aa33eccb039cbe93c9b1324a76f0a9f9fe67e131da3f09e869a6",
+      "url": "https://github.com/zinchenko-denis/AutoCAD/releases/download/build-105/Facades_Pilot_build105.docx",
+      "download_verified": true
+    },
+    {
+      "name": "Facades_Pilot_build105.pdf",
+      "size": 255843,
+      "digest": "sha256:4747732a737d7039247d8027998d163e443a0388d6ea9c60c93c63cf2bb50822",
+      "url": "https://github.com/zinchenko-denis/AutoCAD/releases/download/build-105/Facades_Pilot_build105.pdf",
+      "download_verified": true
+    },
+    {
+      "name": "Facades_Pilot_build105.zip",
+      "size": 27896653,
+      "digest": "sha256:614d4120341adbff644b1978a52a126264af0f8a0f85c40fc37ddad21aeff607",
+      "url": "https://github.com/zinchenko-denis/AutoCAD/releases/download/build-105/Facades_Pilot_build105.zip",
+      "download_verified": true
+    },
+    {
+      "name": "Install_AutoCAD_2024_build105.docx",
+      "size": 40467,
+      "digest": "sha256:2310aa1307b6c925d259193a2738e58a01110342717b3ef25260b87010dd51a6",
+      "url": "https://github.com/zinchenko-denis/AutoCAD/releases/download/build-105/Install_AutoCAD_2024_build105.docx",
+      "download_verified": true
+    },
+    {
+      "name": "Install_AutoCAD_2024_build105.pdf",
+      "size": 67717,
+      "digest": "sha256:8371c1684b3aa25c3838f19570587f9e635a858842baecb785e103edc96622a4",
+      "url": "https://github.com/zinchenko-denis/AutoCAD/releases/download/build-105/Install_AutoCAD_2024_build105.pdf",
+      "download_verified": true
+    }
+  ],
+  "original_five_bundle_assets_unchanged": true,
+  "result": "PASS"
+}

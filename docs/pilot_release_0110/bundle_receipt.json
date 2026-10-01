@@ -1,0 +1,657 @@
+{
+  "schema": "facade_release_verification/1",
+  "status": "PASS",
+  "observed_at_utc": "2026-10-01T20:26:16.174644+00:00",
+  "build": 105,
+  "release_sha": "c4009838875aa0f225971153bf4b54fe288e8e79",
+  "source_ref": "c4009838875aa0f225971153bf4b54fe288e8e79",
+  "live_autocad_checked": false,
+  "windows_exe_executed": false,
+  "dll_loaded_in_autocad": false,
+  "engineering_approval": false,
+  "scope": "Downloaded release bytes, source assets, PE/CLR/PyInstaller structure; no runtime acceptance.",
+  "verifier_sha256": "3cc58f9a55a06319301d8d8d3f69c88df453754ccd67f9bf13faf45ec2f077a9",
+  "bundles": {
+    "ATableSpec": {
+      "asset": "ATableSpec.bundle.zip",
+      "archive_sha256": "f1386c82084227c3783c6642e17d9feff9e1b378a80d27b3711ed41082c25aee",
+      "bytes": 25630478,
+      "latest_equals_build_bytes": true,
+      "zip_crc": "PASS",
+      "file_count": 20,
+      "exact_expected_file_set": true,
+      "build_info": {
+        "pyinstaller": "6.22.3",
+        "python": "3.12.10",
+        "sha": "c4009838875aa0f225971153bf4b54fe288e8e79",
+        "built_utc": "2026-10-01T20:18:41Z",
+        "build": "105",
+        "ref": "feat/auto-reactor",
+        "bundle": "ATableSpec",
+        "attempt": "1"
+      },
+      "source_asset_sha256": {
+        "ATableSpec/bundle/ATableSpec.bundle/Contents/icons/ats_edit.png": {
+          "git_blob_sha256": "4b259dedc4d9ef2c4614d8458005c7435c8ae470fc5befabc88bc676fc040d4b",
+          "archive_sha256": "4b259dedc4d9ef2c4614d8458005c7435c8ae470fc5befabc88bc676fc040d4b",
+          "comparison": "exact_bytes"
+        },
+        "ATableSpec/bundle/ATableSpec.bundle/Contents/icons/ats_edit_16.bmp": {
+          "git_blob_sha256": "7aa0a2fc38d980b87b791e2fd7248da1170e807cdf462820dc98c6e035c5fbc0",
+          "archive_sha256": "7aa0a2fc38d980b87b791e2fd7248da1170e807cdf462820dc98c6e035c5fbc0",
+          "comparison": "exact_bytes"
+        },
+        "ATableSpec/bundle/ATableSpec.bundle/Contents/icons/ats_edit_32.bmp": {
+          "git_blob_sha256": "81c1eb961b28f5910f67d288c9cf27f43edbeb095d488733fbce3f0a622ae4ed",
+          "archive_sha256": "81c1eb961b28f5910f67d288c9cf27f43edbeb095d488733fbce3f0a622ae4ed",
+          "comparison": "exact_bytes"
+        },
+        "ATableSpec/bundle/ATableSpec.bundle/Contents/icons/ats_export.png": {
+          "git_blob_sha256": "08b253340de788133779209dbd12a49ad9adcf9c84c44aefda4da3111242ff2e",
+          "archive_sha256": "08b253340de788133779209dbd12a49ad9adcf9c84c44aefda4da3111242ff2e",
+          "comparison": "exact_bytes"
+        },
+        "ATableSpec/bundle/ATableSpec.bundle/Contents/icons/ats_export_16.bmp": {
+          "git_blob_sha256": "126df95b61cb438420a17b7cc1fb0c68c989404e3b215d5700d5ce1ee3a8f3a5",
+          "archive_sha256": "126df95b61cb438420a17b7cc1fb0c68c989404e3b215d5700d5ce1ee3a8f3a5",
+          "comparison": "exact_bytes"
+        },
+        "ATableSpec/bundle/ATableSpec.bundle/Contents/icons/ats_export_32.bmp": {
+          "git_blob_sha256": "d9c22d28d166497a74590e26363d845ec5037e31ec22622b7a9125ca9af9e12c",
+          "archive_sha256": "d9c22d28d166497a74590e26363d845ec5037e31ec22622b7a9125ca9af9e12c",
+          "comparison": "exact_bytes"
+        },
+        "ATableSpec/bundle/ATableSpec.bundle/Contents/icons/ats_report.png": {
+          "git_blob_sha256": "649612e0bb18878a1c01edc57ac85d77bb7da627f0a7c4dddc3378400b02e27b",
+          "archive_sha256": "649612e0bb18878a1c01edc57ac85d77bb7da627f0a7c4dddc3378400b02e27b",
+          "comparison": "exact_bytes"
+        },
+        "ATableSpec/bundle/ATableSpec.bundle/Contents/icons/ats_report_16.bmp": {
+          "git_blob_sha256": "bf4455113e4d8325e5bfeade9831436cf1f35cb29a271d5c8f8eb9ced61fbe76",
+          "archive_sha256": "bf4455113e4d8325e5bfeade9831436cf1f35cb29a271d5c8f8eb9ced61fbe76",
+          "comparison": "exact_bytes"
+        },
+        "ATableSpec/bundle/ATableSpec.bundle/Contents/icons/ats_report_32.bmp": {
+          "git_blob_sha256": "fb87d33ffedd94a3914a81ef56983e7116ab36e51af4c1612cb85c067476ac11",
+          "archive_sha256": "fb87d33ffedd94a3914a81ef56983e7116ab36e51af4c1612cb85c067476ac11",
+          "comparison": "exact_bytes"
+        },
+        "ATableSpec/bundle/ATableSpec.bundle/Contents/icons/ats_spec.png": {
+          "git_blob_sha256": "b101948caa3419a3871268d50dbca48a451317ce73e4936a57f1d6f2e32d806a",
+          "archive_sha256": "b101948caa3419a3871268d50dbca48a451317ce73e4936a57f1d6f2e32d806a",
+          "comparison": "exact_bytes"
+        },
+        "ATableSpec/bundle/ATableSpec.bundle/Contents/icons/ats_spec_16.bmp": {
+          "git_blob_sha256": "903a82a1824df33d8214266be6c18b04ffe5b68b8846e7f1db1bff66cf1b1ac8",
+          "archive_sha256": "903a82a1824df33d8214266be6c18b04ffe5b68b8846e7f1db1bff66cf1b1ac8",
+          "comparison": "exact_bytes"
+        },
+        "ATableSpec/bundle/ATableSpec.bundle/Contents/icons/ats_spec_32.bmp": {
+          "git_blob_sha256": "ed305fd780405993f410151a382cf4e41dcb7447d14589fc67c6992f03df8255",
+          "archive_sha256": "ed305fd780405993f410151a382cf4e41dcb7447d14589fc67c6992f03df8255",
+          "comparison": "exact_bytes"
+        },
+        "ATableSpec/bundle/ATableSpec.bundle/Contents/icons/ats_update.png": {
+          "git_blob_sha256": "2da25f22c08fb92ec893de5324e61ab6a59f6b63b4d6f7b85d93e6933fe595bc",
+          "archive_sha256": "2da25f22c08fb92ec893de5324e61ab6a59f6b63b4d6f7b85d93e6933fe595bc",
+          "comparison": "exact_bytes"
+        },
+        "ATableSpec/bundle/ATableSpec.bundle/Contents/icons/ats_update_16.bmp": {
+          "git_blob_sha256": "1fdff9390906348caa76781c2a6a23ce42e8179c6d5213971c8d1db69ecf58b4",
+          "archive_sha256": "1fdff9390906348caa76781c2a6a23ce42e8179c6d5213971c8d1db69ecf58b4",
+          "comparison": "exact_bytes"
+        },
+        "ATableSpec/bundle/ATableSpec.bundle/Contents/icons/ats_update_32.bmp": {
+          "git_blob_sha256": "98dbe0294153247f1004178f1e2ad6c2e73f0d751e2e228b4f2872feeddffdc0",
+          "archive_sha256": "98dbe0294153247f1004178f1e2ad6c2e73f0d751e2e228b4f2872feeddffdc0",
+          "comparison": "exact_bytes"
+        },
+        "ATableSpec/bundle/ATableSpec.bundle/PackageContents.xml": {
+          "git_blob_sha256": "a0bae5b4a5067059fd94a57e7be203ae16e5591c8759a9e0c35beb2de7c3c7bb",
+          "archive_sha256": "b422373831f2315e72f50c81e480a2d373fadd75aedeaf4fe511fa6fd45e660a",
+          "comparison": "LF_CRLF_only"
+        },
+        "ATableSpec/engine/mapping.yaml": {
+          "git_blob_sha256": "f6078953ea023dbcf170068fd54c933b6a4871756ca8eaf2739e2afafc0f2177",
+          "archive_sha256": "14a9ba48bfbbf4fc28b771d21fea176a9bfa5212d54615546dba485f4b213c87",
+          "comparison": "LF_CRLF_only"
+        }
+      },
+      "dll": {
+        "machine": "AMD64",
+        "sha256": "ec2a4c7d26c155d6052714c7a6c7d6a8e9baf200f401579c216a0615efe8585d",
+        "bytes": 139264,
+        "metadata": {
+          "type_count": 47,
+          "required_types_found": [],
+          "execution_performed": false
+        }
+      },
+      "engine": {
+        "machine": "AMD64",
+        "sha256": "ab72f5d567aafc81dab9cbff94e979c181a460826cc8cc2b32684ee4bccd7493",
+        "bytes": 25816301,
+        "frozen_archive": {
+          "entrypoint": "dxf_spec",
+          "pyz_modules": 1022,
+          "required_modules": {},
+          "execution_performed": false
+        }
+      },
+      "urls": {
+        "latest": "https://github.com/zinchenko-denis/AutoCAD/releases/download/latest/ATableSpec.bundle.zip",
+        "build-105": "https://github.com/zinchenko-denis/AutoCAD/releases/download/build-105/ATableSpec.bundle.zip"
+      }
+    },
+    "ABlockGen": {
+      "asset": "ABlockGen.bundle.zip",
+      "archive_sha256": "e5cca72fbc710dfeed205ad20c132a06e2b0efe92c9baf9d6217c3fbf909f856",
+      "bytes": 8187531,
+      "latest_equals_build_bytes": true,
+      "zip_crc": "PASS",
+      "file_count": 13,
+      "exact_expected_file_set": true,
+      "build_info": {
+        "pyinstaller": "6.22.3",
+        "bundle": "ABlockGen",
+        "attempt": "1",
+        "build": "105",
+        "ref": "feat/auto-reactor",
+        "built_utc": "2026-10-01T20:18:54Z",
+        "python": "3.12.10",
+        "sha": "c4009838875aa0f225971153bf4b54fe288e8e79"
+      },
+      "source_asset_sha256": {
+        "ABlockGen/bundle/ABlockGen.bundle/Contents/icons/abg_ar.png": {
+          "git_blob_sha256": "ad48c931e90d0c7e6c13125be352d0e1be9d0d1c33152f455142055e57209970",
+          "archive_sha256": "ad48c931e90d0c7e6c13125be352d0e1be9d0d1c33152f455142055e57209970",
+          "comparison": "exact_bytes"
+        },
+        "ABlockGen/bundle/ABlockGen.bundle/Contents/icons/abg_ar_16.bmp": {
+          "git_blob_sha256": "6d77d3db0216b8865d51e838c5f082ab7d9a9f789474bf14ce265ec0a8671837",
+          "archive_sha256": "6d77d3db0216b8865d51e838c5f082ab7d9a9f789474bf14ce265ec0a8671837",
+          "comparison": "exact_bytes"
+        },
+        "ABlockGen/bundle/ABlockGen.bundle/Contents/icons/abg_ar_32.bmp": {
+          "git_blob_sha256": "703e8cfe6752139c57b2a460b0b736f81a574fde0d7506d5451bece5685583ee",
+          "archive_sha256": "703e8cfe6752139c57b2a460b0b736f81a574fde0d7506d5451bece5685583ee",
+          "comparison": "exact_bytes"
+        },
+        "ABlockGen/bundle/ABlockGen.bundle/Contents/icons/abg_grid.png": {
+          "git_blob_sha256": "e5406f5dcbdf37c32cc1efd2ab3c48f6cc251f058bc02bbd01aeb7fb8529e148",
+          "archive_sha256": "e5406f5dcbdf37c32cc1efd2ab3c48f6cc251f058bc02bbd01aeb7fb8529e148",
+          "comparison": "exact_bytes"
+        },
+        "ABlockGen/bundle/ABlockGen.bundle/Contents/icons/abg_grid_16.bmp": {
+          "git_blob_sha256": "0895396a2800a6fa2c079d9ea3cc317a2aa2ed79f3f712ebd27c52baf5b54ffd",
+          "archive_sha256": "0895396a2800a6fa2c079d9ea3cc317a2aa2ed79f3f712ebd27c52baf5b54ffd",
+          "comparison": "exact_bytes"
+        },
+        "ABlockGen/bundle/ABlockGen.bundle/Contents/icons/abg_grid_32.bmp": {
+          "git_blob_sha256": "3601f43f31543335a4f0d2162a5485bb6cf46b8c235ab48f6189e7882210b7bd",
+          "archive_sha256": "3601f43f31543335a4f0d2162a5485bb6cf46b8c235ab48f6189e7882210b7bd",
+          "comparison": "exact_bytes"
+        },
+        "ABlockGen/bundle/ABlockGen.bundle/Contents/icons/abg_report.png": {
+          "git_blob_sha256": "649612e0bb18878a1c01edc57ac85d77bb7da627f0a7c4dddc3378400b02e27b",
+          "archive_sha256": "649612e0bb18878a1c01edc57ac85d77bb7da627f0a7c4dddc3378400b02e27b",
+          "comparison": "exact_bytes"
+        },
+        "ABlockGen/bundle/ABlockGen.bundle/Contents/icons/abg_report_16.bmp": {
+          "git_blob_sha256": "bf4455113e4d8325e5bfeade9831436cf1f35cb29a271d5c8f8eb9ced61fbe76",
+          "archive_sha256": "bf4455113e4d8325e5bfeade9831436cf1f35cb29a271d5c8f8eb9ced61fbe76",
+          "comparison": "exact_bytes"
+        },
+        "ABlockGen/bundle/ABlockGen.bundle/Contents/icons/abg_report_32.bmp": {
+          "git_blob_sha256": "fb87d33ffedd94a3914a81ef56983e7116ab36e51af4c1612cb85c067476ac11",
+          "archive_sha256": "fb87d33ffedd94a3914a81ef56983e7116ab36e51af4c1612cb85c067476ac11",
+          "comparison": "exact_bytes"
+        },
+        "ABlockGen/bundle/ABlockGen.bundle/PackageContents.xml": {
+          "git_blob_sha256": "84f7561bd1eeedf37baa80ae4d8eab83d0713296943ceb8b169cab0b366c9dd0",
+          "archive_sha256": "dd1982d212920d9e66710f607bcb397e5bda072361183899582225bf382d96a8",
+          "comparison": "LF_CRLF_only"
+        }
+      },
+      "dll": {
+        "machine": "AMD64",
+        "sha256": "dfb632ecd7262bccb3b8c0e97c39472c815221a2d387827c584049189601db73",
+        "bytes": 55296,
+        "metadata": {
+          "type_count": 22,
+          "required_types_found": [],
+          "execution_performed": false
+        }
+      },
+      "engine": {
+        "machine": "AMD64",
+        "sha256": "84b76c60c1b5d62159948488e6fa0d87ac54c0b944da62d76f8e7b35499d723b",
+        "bytes": 8356620,
+        "frozen_archive": {
+          "entrypoint": "vitrage_engine",
+          "pyz_modules": 108,
+          "required_modules": {},
+          "execution_performed": false
+        }
+      },
+      "urls": {
+        "latest": "https://github.com/zinchenko-denis/AutoCAD/releases/download/latest/ABlockGen.bundle.zip",
+        "build-105": "https://github.com/zinchenko-denis/AutoCAD/releases/download/build-105/ABlockGen.bundle.zip"
+      }
+    },
+    "AFacades": {
+      "asset": "AFacades.bundle.zip",
+      "archive_sha256": "54e6632f6961bc99f312d729022e4eead208272c24791a1b291de50592b14804",
+      "bytes": 8340177,
+      "latest_equals_build_bytes": true,
+      "zip_crc": "PASS",
+      "file_count": 10,
+      "exact_expected_file_set": true,
+      "build_info": {
+        "build": "105",
+        "ref": "feat/auto-reactor",
+        "sha": "c4009838875aa0f225971153bf4b54fe288e8e79",
+        "python": "3.12.10",
+        "built_utc": "2026-10-01T20:19:08Z",
+        "attempt": "1",
+        "bundle": "AFacades",
+        "pyinstaller": "6.22.3"
+      },
+      "source_asset_sha256": {
+        "Facades/bundle/AFacades.bundle/Contents/icons/afc_table.png": {
+          "git_blob_sha256": "0d92dc40173380459832a249dee7580b0ccda9fa4359904559477abd63708f44",
+          "archive_sha256": "0d92dc40173380459832a249dee7580b0ccda9fa4359904559477abd63708f44",
+          "comparison": "exact_bytes"
+        },
+        "Facades/bundle/AFacades.bundle/Contents/icons/afc_zone.png": {
+          "git_blob_sha256": "77f27e773a9b44e826d37f6108a71fddc005476654a60c62c2c623686a72d67d",
+          "archive_sha256": "77f27e773a9b44e826d37f6108a71fddc005476654a60c62c2c623686a72d67d",
+          "comparison": "exact_bytes"
+        },
+        "Facades/bundle/AFacades.bundle/Contents/templates/shtukaturka.json": {
+          "git_blob_sha256": "79d5a261714033ad9bd8f1b110a69544e51dd4b8d97ed8638b13ade4e66c4b6e",
+          "archive_sha256": "707a66c2a3984fe55ab13ffc66237e376c6da357cbea4bc61f5a0ea3b61d08ae",
+          "comparison": "LF_CRLF_only"
+        },
+        "Facades/bundle/AFacades.bundle/Contents/templates/shtukaturka.xlsx": {
+          "git_blob_sha256": "2d27253de138eb6f92e55a974a652cda36d439c8c9ac4ed54ef5aaccb082a98f",
+          "archive_sha256": "2d27253de138eb6f92e55a974a652cda36d439c8c9ac4ed54ef5aaccb082a98f",
+          "comparison": "exact_bytes"
+        },
+        "Facades/bundle/AFacades.bundle/Contents/templates/vent.json": {
+          "git_blob_sha256": "97ec1cec58d814e6e619b6891d01440ed807b321848261bac9f6eb39bba0a58f",
+          "archive_sha256": "d438668ad30a74361f4750df08c4fb031b9b901cd31db4070c9a4e157bd06342",
+          "comparison": "LF_CRLF_only"
+        },
+        "Facades/bundle/AFacades.bundle/Contents/templates/vent.xlsx": {
+          "git_blob_sha256": "0a01aac1b3091ff7d6b1414752b2da87e8ae85941d41679623b4d9a501795065",
+          "archive_sha256": "0a01aac1b3091ff7d6b1414752b2da87e8ae85941d41679623b4d9a501795065",
+          "comparison": "exact_bytes"
+        },
+        "Facades/bundle/AFacades.bundle/PackageContents.xml": {
+          "git_blob_sha256": "210897357716688c5f4d7c292bbbf57a2f6da8f4d03763130aa9d882ace569a6",
+          "archive_sha256": "ac9ff1b9a31608f94151cfcff54fe9faaffd9d7bae7a275e7e4eaecdccac3269",
+          "comparison": "LF_CRLF_only"
+        }
+      },
+      "dll": {
+        "machine": "AMD64",
+        "sha256": "b952cc394c3464db3d89b69f9c5c88a6af86b7ce0bc5421f6a8de4d0d9219043",
+        "bytes": 383488,
+        "metadata": {
+          "type_count": 125,
+          "required_types_found": [
+            "ConnectionTableData",
+            "QuantityTableIdentity",
+            "QuantityConnectionPassport"
+          ],
+          "execution_performed": false
+        }
+      },
+      "engine": {
+        "machine": "AMD64",
+        "sha256": "02464f0e823f12e5bad1d02c4ea0b9cf39887f88bbe1f614aec51ebb35f5d191",
+        "bytes": 8364074,
+        "frozen_archive": {
+          "entrypoint": "facades_engine",
+          "pyz_modules": 107,
+          "required_modules": {
+            "facade_zones": {
+              "bytecode_sha256": "90fe0836131e1b1bc4823699668e12f5a8219a880cbc4357e8861628a0fca288",
+              "bytes": 78493
+            }
+          },
+          "execution_performed": false
+        }
+      },
+      "urls": {
+        "latest": "https://github.com/zinchenko-denis/AutoCAD/releases/download/latest/AFacades.bundle.zip",
+        "build-105": "https://github.com/zinchenko-denis/AutoCAD/releases/download/build-105/AFacades.bundle.zip"
+      }
+    },
+    "AClad": {
+      "asset": "AClad.bundle.zip",
+      "archive_sha256": "2f467fb45d0f0ea3323526466d097e5ab70afb6bc8e4bc2e55a1297fcc9d7892",
+      "bytes": 8364242,
+      "latest_equals_build_bytes": true,
+      "zip_crc": "PASS",
+      "file_count": 7,
+      "exact_expected_file_set": true,
+      "build_info": {
+        "ref": "feat/auto-reactor",
+        "bundle": "AClad",
+        "python": "3.12.10",
+        "build": "105",
+        "sha": "c4009838875aa0f225971153bf4b54fe288e8e79",
+        "pyinstaller": "6.22.3",
+        "built_utc": "2026-10-01T20:19:21Z",
+        "attempt": "1"
+      },
+      "source_asset_sha256": {
+        "AClad/bundle/AClad.bundle/Contents/icons/acl_clad.png": {
+          "git_blob_sha256": "153ff141e5231fd60574bbef62e9d63b1704a09dfce73170b782d894f2ff1691",
+          "archive_sha256": "153ff141e5231fd60574bbef62e9d63b1704a09dfce73170b782d894f2ff1691",
+          "comparison": "exact_bytes"
+        },
+        "AClad/bundle/AClad.bundle/Contents/icons/acl_dim.png": {
+          "git_blob_sha256": "2e0be1bb02a9b21b980172ab348c8fcab0a0f840b7d8027dcb789956e7bee31f",
+          "archive_sha256": "2e0be1bb02a9b21b980172ab348c8fcab0a0f840b7d8027dcb789956e7bee31f",
+          "comparison": "exact_bytes"
+        },
+        "AClad/bundle/AClad.bundle/Contents/icons/acl_tile.png": {
+          "git_blob_sha256": "8defa8b7981209a72bf63f9c4787bd843622c10b2e19c014c0c03fb2098932fc",
+          "archive_sha256": "8defa8b7981209a72bf63f9c4787bd843622c10b2e19c014c0c03fb2098932fc",
+          "comparison": "exact_bytes"
+        },
+        "AClad/bundle/AClad.bundle/PackageContents.xml": {
+          "git_blob_sha256": "c6c5853eb59e213c1633b1b0750980c4728f00d2d86d6998f37d0677099c6fdc",
+          "archive_sha256": "4cfbfe451824457e6974ad95ab94e70886a3443058953d160ec4794c75e6d308",
+          "comparison": "LF_CRLF_only"
+        }
+      },
+      "dll": {
+        "machine": "AMD64",
+        "sha256": "a07f8503565c61c85d61de5603d4eb44facda168b91f366c122c8dd8798a596a",
+        "bytes": 352768,
+        "metadata": {
+          "type_count": 103,
+          "required_types_found": [
+            "QuantityConnectionPassport"
+          ],
+          "execution_performed": false
+        }
+      },
+      "engine": {
+        "machine": "AMD64",
+        "sha256": "18104c42cf995c237d81cea05af23b05d6a344e6161ad74a99cb1cf412cb98e2",
+        "bytes": 8418354,
+        "frozen_archive": {
+          "entrypoint": "clad_engine",
+          "pyz_modules": 109,
+          "required_modules": {
+            "cladding_plan": {
+              "bytecode_sha256": "e87e7f39d62d04a1c2acae608d14999ea0697fcefd012c0b145965a233ce013a",
+              "bytes": 39396
+            },
+            "polygon_clip": {
+              "bytecode_sha256": "1453587e72d5d35344a9e43ccf9f839c79103353ca9c3748ccbf36c976d3ab6d",
+              "bytes": 14564
+            },
+            "tile_pattern": {
+              "bytecode_sha256": "39adeccc9d5509b94ba8e2fa62ed48c03db6e9284a1e4c6c922811650bc47ee0",
+              "bytes": 133556
+            }
+          },
+          "execution_performed": false
+        }
+      },
+      "urls": {
+        "latest": "https://github.com/zinchenko-denis/AutoCAD/releases/download/latest/AClad.bundle.zip",
+        "build-105": "https://github.com/zinchenko-denis/AutoCAD/releases/download/build-105/AClad.bundle.zip"
+      }
+    },
+    "AFrame": {
+      "asset": "AFrame.bundle.zip",
+      "archive_sha256": "a36cee5532626b101b88b03bb0c966db31f7b23b0302811b22fedca6f54b3637",
+      "bytes": 8478260,
+      "latest_equals_build_bytes": true,
+      "zip_crc": "PASS",
+      "file_count": 6,
+      "exact_expected_file_set": true,
+      "build_info": {
+        "ref": "feat/auto-reactor",
+        "bundle": "AFrame",
+        "pyinstaller": "6.22.3",
+        "sha": "c4009838875aa0f225971153bf4b54fe288e8e79",
+        "python": "3.12.10",
+        "built_utc": "2026-10-01T20:19:33Z",
+        "attempt": "1",
+        "build": "105"
+      },
+      "source_asset_sha256": {
+        "AFrame/bundle/AFrame.bundle/Contents/icons/afr_frame.png": {
+          "git_blob_sha256": "a35b29bd67dabb7508649089057e379701abedd7e92ec5c98c9e1b080dd4cb67",
+          "archive_sha256": "a35b29bd67dabb7508649089057e379701abedd7e92ec5c98c9e1b080dd4cb67",
+          "comparison": "exact_bytes"
+        },
+        "AFrame/bundle/AFrame.bundle/PackageContents.xml": {
+          "git_blob_sha256": "c7b93ccf4efeac8767d61b8532553b8f74a5dc022f5a426b9bd97767cddd3889",
+          "archive_sha256": "8b4eb2b67ac65382ccd5070c13dd2bcb0f4cd89962525482fcb234cb086f63a5",
+          "comparison": "LF_CRLF_only"
+        },
+        "AFrame/engine/systems.json": {
+          "git_blob_sha256": "e9ee0a4cf0c535473dd9931f9b2a3d86dd1d932fe18f84682ef3fd221fbc03c3",
+          "archive_sha256": "881cce9e53278755266ca2441e4891ae71196524dde63634e9742e6e072236ca",
+          "comparison": "LF_CRLF_only"
+        }
+      },
+      "dll": {
+        "machine": "AMD64",
+        "sha256": "29bffa7d29d04b700a7228c34b33d0380650f9955b00ed1741b8094e0e591edb",
+        "bytes": 544256,
+        "metadata": {
+          "type_count": 162,
+          "required_types_found": [
+            "FrameQuantities",
+            "QuantityConnectionPassport"
+          ],
+          "execution_performed": false
+        }
+      },
+      "engine": {
+        "machine": "AMD64",
+        "sha256": "da76ebc843605547a90419659f66a47eaf3d6a64ef5aeefa5896070dbab85e4a",
+        "bytes": 8466978,
+        "frozen_archive": {
+          "entrypoint": "frame_engine",
+          "pyz_modules": 115,
+          "required_modules": {
+            "frame_plan": {
+              "bytecode_sha256": "fad82e9543f37e141633541ad403b1e8091733c9d40d8e57c7903d3fc7e32a3a",
+              "bytes": 166728
+            },
+            "frame_calc": {
+              "bytecode_sha256": "46a26372707273c5b7549d0723442a49f7527f8949cc46ecc4b17ad9ef18da36",
+              "bytes": 28290
+            },
+            "frame_rules": {
+              "bytecode_sha256": "fcd55d632f89efc1fe159459b31d07c9d81c77baa9a6ec43609f1eb740e2ed09",
+              "bytes": 24234
+            },
+            "frame_topology": {
+              "bytecode_sha256": "d0d712d81232bd3e891b7d9f51c263df1dc03c422c730b2dc50d9dff4dc96978",
+              "bytes": 14300
+            },
+            "frame_spatial": {
+              "bytecode_sha256": "9a7b9f95d62db727dd60882d0559755c0a1ecf165657dff1e2803c5f8f1b0606",
+              "bytes": 6838
+            },
+            "frame_connections": {
+              "bytecode_sha256": "3d7f10c2085b70e37cac54284ad1d2c9570370de918dbf768fb72834fc1dc379",
+              "bytes": 12831
+            },
+            "frame_catalog": {
+              "bytecode_sha256": "01b174a66c201530240177acc138e76cbd1d5455d9e60672653143e84b0f42bd",
+              "bytes": 4243
+            }
+          },
+          "execution_performed": false
+        }
+      },
+      "urls": {
+        "latest": "https://github.com/zinchenko-denis/AutoCAD/releases/download/latest/AFrame.bundle.zip",
+        "build-105": "https://github.com/zinchenko-denis/AutoCAD/releases/download/build-105/AFrame.bundle.zip"
+      }
+    }
+  },
+  "publication": {
+    "observed_at_utc": "2026-10-01T20:26:15.569Z",
+    "repository": "zinchenko-denis/AutoCAD",
+    "authorized_source_commit": "c4009838875aa0f225971153bf4b54fe288e8e79",
+    "product_commit": "b4bf2897f6df85e4219c83ab64b39dd59d2d17d8",
+    "main_before": "e2a4e4df69a1936664c76c44cacff311ad44b07d",
+    "main_after": "e2a4e4df69a1936664c76c44cacff311ad44b07d",
+    "build_tag_sha": "c4009838875aa0f225971153bf4b54fe288e8e79",
+    "build_tag_type": "commit",
+    "build_workflow": {
+      "id": 36920164573,
+      "name": "build-bundle",
+      "head_branch": "feat/auto-reactor",
+      "head_sha": "c4009838875aa0f225971153bf4b54fe288e8e79",
+      "run_number": 105,
+      "run_attempt": 1,
+      "status": "completed",
+      "conclusion": "success",
+      "event": "workflow_dispatch",
+      "html_url": "https://github.com/zinchenko-denis/AutoCAD/actions/runs/36920164573",
+      "created_at": "2026-10-01T20:14:52Z",
+      "updated_at": "2026-10-01T20:20:04Z"
+    },
+    "check_workflow": {
+      "id": 36920592506,
+      "name": "check",
+      "head_branch": "feat/auto-reactor",
+      "head_sha": "c4009838875aa0f225971153bf4b54fe288e8e79",
+      "run_number": 220,
+      "run_attempt": 1,
+      "status": "completed",
+      "conclusion": "success",
+      "event": "workflow_dispatch",
+      "html_url": "https://github.com/zinchenko-denis/AutoCAD/actions/runs/36920592506",
+      "created_at": "2026-10-01T20:18:22Z",
+      "updated_at": "2026-10-01T20:25:10Z"
+    },
+    "latest_release": {
+      "id": 340372507,
+      "tag_name": "latest",
+      "html_url": "https://github.com/zinchenko-denis/AutoCAD/releases/tag/latest",
+      "created_at": "2026-06-16T19:37:31Z",
+      "published_at": "2026-06-16T19:49:19Z",
+      "draft": false,
+      "prerelease": false,
+      "assets": [
+        {
+          "id": 604062356,
+          "name": "ABlockGen.bundle.zip",
+          "size": 8187531,
+          "digest": "sha256:e5cca72fbc710dfeed205ad20c132a06e2b0efe92c9baf9d6217c3fbf909f856",
+          "browser_download_url": "https://github.com/zinchenko-denis/AutoCAD/releases/download/latest/ABlockGen.bundle.zip",
+          "created_at": "2026-10-01T20:19:49Z",
+          "updated_at": "2026-10-01T20:19:50Z"
+        },
+        {
+          "id": 604062358,
+          "name": "AClad.bundle.zip",
+          "size": 8364242,
+          "digest": "sha256:2f467fb45d0f0ea3323526466d097e5ab70afb6bc8e4bc2e55a1297fcc9d7892",
+          "browser_download_url": "https://github.com/zinchenko-denis/AutoCAD/releases/download/latest/AClad.bundle.zip",
+          "created_at": "2026-10-01T20:19:49Z",
+          "updated_at": "2026-10-01T20:19:50Z"
+        },
+        {
+          "id": 604062363,
+          "name": "AFacades.bundle.zip",
+          "size": 8340177,
+          "digest": "sha256:54e6632f6961bc99f312d729022e4eead208272c24791a1b291de50592b14804",
+          "browser_download_url": "https://github.com/zinchenko-denis/AutoCAD/releases/download/latest/AFacades.bundle.zip",
+          "created_at": "2026-10-01T20:19:49Z",
+          "updated_at": "2026-10-01T20:19:50Z"
+        },
+        {
+          "id": 604062357,
+          "name": "AFrame.bundle.zip",
+          "size": 8478260,
+          "digest": "sha256:a36cee5532626b101b88b03bb0c966db31f7b23b0302811b22fedca6f54b3637",
+          "browser_download_url": "https://github.com/zinchenko-denis/AutoCAD/releases/download/latest/AFrame.bundle.zip",
+          "created_at": "2026-10-01T20:19:49Z",
+          "updated_at": "2026-10-01T20:19:50Z"
+        },
+        {
+          "id": 604062355,
+          "name": "ATableSpec.bundle.zip",
+          "size": 25630478,
+          "digest": "sha256:f1386c82084227c3783c6642e17d9feff9e1b378a80d27b3711ed41082c25aee",
+          "browser_download_url": "https://github.com/zinchenko-denis/AutoCAD/releases/download/latest/ATableSpec.bundle.zip",
+          "created_at": "2026-10-01T20:19:49Z",
+          "updated_at": "2026-10-01T20:19:51Z"
+        }
+      ]
+    },
+    "immutable_release": {
+      "id": 401321845,
+      "tag_name": "build-105",
+      "html_url": "https://github.com/zinchenko-denis/AutoCAD/releases/tag/build-105",
+      "created_at": "2026-10-01T20:03:24Z",
+      "published_at": "2026-10-01T20:19:58Z",
+      "draft": false,
+      "prerelease": false,
+      "assets": [
+        {
+          "id": 604062490,
+          "name": "ABlockGen.bundle.zip",
+          "size": 8187531,
+          "digest": "sha256:e5cca72fbc710dfeed205ad20c132a06e2b0efe92c9baf9d6217c3fbf909f856",
+          "browser_download_url": "https://github.com/zinchenko-denis/AutoCAD/releases/download/build-105/ABlockGen.bundle.zip",
+          "created_at": "2026-10-01T20:19:55Z",
+          "updated_at": "2026-10-01T20:19:56Z"
+        },
+        {
+          "id": 604062484,
+          "name": "AClad.bundle.zip",
+          "size": 8364242,
+          "digest": "sha256:2f467fb45d0f0ea3323526466d097e5ab70afb6bc8e4bc2e55a1297fcc9d7892",
+          "browser_download_url": "https://github.com/zinchenko-denis/AutoCAD/releases/download/build-105/AClad.bundle.zip",
+          "created_at": "2026-10-01T20:19:55Z",
+          "updated_at": "2026-10-01T20:19:56Z"
+        },
+        {
+          "id": 604062483,
+          "name": "AFacades.bundle.zip",
+          "size": 8340177,
+          "digest": "sha256:54e6632f6961bc99f312d729022e4eead208272c24791a1b291de50592b14804",
+          "browser_download_url": "https://github.com/zinchenko-denis/AutoCAD/releases/download/build-105/AFacades.bundle.zip",
+          "created_at": "2026-10-01T20:19:55Z",
+          "updated_at": "2026-10-01T20:19:56Z"
+        },
+        {
+          "id": 604062489,
+          "name": "AFrame.bundle.zip",
+          "size": 8478260,
+          "digest": "sha256:a36cee5532626b101b88b03bb0c966db31f7b23b0302811b22fedca6f54b3637",
+          "browser_download_url": "https://github.com/zinchenko-denis/AutoCAD/releases/download/build-105/AFrame.bundle.zip",
+          "created_at": "2026-10-01T20:19:55Z",
+          "updated_at": "2026-10-01T20:19:56Z"
+        },
+        {
+          "id": 604062486,
+          "name": "ATableSpec.bundle.zip",
+          "size": 25630478,
+          "digest": "sha256:f1386c82084227c3783c6642e17d9feff9e1b378a80d27b3711ed41082c25aee",
+          "browser_download_url": "https://github.com/zinchenko-denis/AutoCAD/releases/download/build-105/ATableSpec.bundle.zip",
+          "created_at": "2026-10-01T20:19:55Z",
+          "updated_at": "2026-10-01T20:19:57Z"
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,505 @@
+{
+  "source_sha": "c4009838875aa0f225971153bf4b54fe288e8e79",
+  "build": {
+    "workflow": "build-105",
+    "jobs": [
+      {
+        "id": 110563937057,
+        "name": "test",
+        "status": "completed",
+        "conclusion": "success",
+        "steps": [
+          {
+            "name": "Set up job",
+            "number": 1,
+            "status": "completed",
+            "conclusion": "success"
+          },
+          {
+            "name": "Checkout",
+            "number": 2,
+            "status": "completed",
+            "conclusion": "success"
+          },
+          {
+            "name": "Setup Python",
+            "number": 3,
+            "status": "completed",
+            "conclusion": "success"
+          },
+          {
+            "name": "Engine tests and facade gates",
+            "number": 4,
+            "status": "completed",
+            "conclusion": "success"
+          },
+          {
+            "name": "Post Setup Python",
+            "number": 7,
+            "status": "completed",
+            "conclusion": "success"
+          },
+          {
+            "name": "Post Checkout",
+            "number": 8,
+            "status": "completed",
+            "conclusion": "success"
+          },
+          {
+            "name": "Complete job",
+            "number": 9,
+            "status": "completed",
+            "conclusion": "success"
+          }
+        ]
+      },
+      {
+        "id": 110564730758,
+        "name": "build",
+        "status": "completed",
+        "conclusion": "success",
+        "steps": [
+          {
+            "name": "Set up job",
+            "number": 1,
+            "status": "completed",
+            "conclusion": "success"
+          },
+          {
+            "name": "Checkout",
+            "number": 2,
+            "status": "completed",
+            "conclusion": "success"
+          },
+          {
+            "name": "Setup .NET SDK",
+            "number": 3,
+            "status": "completed",
+            "conclusion": "success"
+          },
+          {
+            "name": "Setup Python",
+            "number": 4,
+            "status": "completed",
+            "conclusion": "success"
+          },
+          {
+            "name": "Build plugin DLL",
+            "number": 5,
+            "status": "completed",
+            "conclusion": "success"
+          },
+          {
+            "name": "Freeze engine EXE",
+            "number": 6,
+            "status": "completed",
+            "conclusion": "success"
+          },
+          {
+            "name": "Assemble bundle",
+            "number": 7,
+            "status": "completed",
+            "conclusion": "success"
+          },
+          {
+            "name": "Build ABlockGen DLL",
+            "number": 8,
+            "status": "completed",
+            "conclusion": "success"
+          },
+          {
+            "name": "Freeze ABlockGen engine EXE",
+            "number": 9,
+            "status": "completed",
+            "conclusion": "success"
+          },
+          {
+            "name": "Assemble ABlockGen bundle",
+            "number": 10,
+            "status": "completed",
+            "conclusion": "success"
+          },
+          {
+            "name": "Build AFacades DLL",
+            "number": 11,
+            "status": "completed",
+            "conclusion": "success"
+          },
+          {
+            "name": "Freeze AFacades engine EXE",
+            "number": 12,
+            "status": "completed",
+            "conclusion": "success"
+          },
+          {
+            "name": "Assemble AFacades bundle",
+            "number": 13,
+            "status": "completed",
+            "conclusion": "success"
+          },
+          {
+            "name": "Build AClad DLL",
+            "number": 14,
+            "status": "completed",
+            "conclusion": "success"
+          },
+          {
+            "name": "Freeze AClad engine EXE",
+            "number": 15,
+            "status": "completed",
+            "conclusion": "success"
+          },
+          {
+            "name": "Assemble AClad bundle",
+            "number": 16,
+            "status": "completed",
+            "conclusion": "success"
+          },
+          {
+            "name": "Build AFrame DLL",
+            "number": 17,
+            "status": "completed",
+            "conclusion": "success"
+          },
+          {
+            "name": "Freeze AFrame engine EXE",
+            "number": 18,
+            "status": "completed",
+            "conclusion": "success"
+          },
+          {
+            "name": "Assemble AFrame bundle",
+            "number": 19,
+            "status": "completed",
+            "conclusion": "success"
+          },
+          {
+            "name": "Upload artifact",
+            "number": 20,
+            "status": "completed",
+            "conclusion": "success"
+          },
+          {
+            "name": "Upload ABlockGen artifact",
+            "number": 21,
+            "status": "completed",
+            "conclusion": "success"
+          },
+          {
+            "name": "Upload AFacades artifact",
+            "number": 22,
+            "status": "completed",
+            "conclusion": "success"
+          },
+          {
+            "name": "Upload AClad artifact",
+            "number": 23,
+            "status": "completed",
+            "conclusion": "success"
+          },
+          {
+            "name": "Upload AFrame artifact",
+            "number": 24,
+            "status": "completed",
+            "conclusion": "success"
+          },
+          {
+            "name": "Publish to \"latest\" release",
+            "number": 25,
+            "status": "completed",
+            "conclusion": "success"
+          },
+          {
+            "name": "Publish immutable \"build-N\" release",
+            "number": 26,
+            "status": "completed",
+            "conclusion": "success"
+          },
+          {
+            "name": "Post Setup Python",
+            "number": 50,
+            "status": "completed",
+            "conclusion": "success"
+          },
+          {
+            "name": "Post Setup .NET SDK",
+            "number": 51,
+            "status": "completed",
+            "conclusion": "success"
+          },
+          {
+            "name": "Post Checkout",
+            "number": 52,
+            "status": "completed",
+            "conclusion": "success"
+          },
+          {
+            "name": "Complete job",
+            "number": 53,
+            "status": "completed",
+            "conclusion": "success"
+          }
+        ]
+      }
+    ]
+  },
+  "check": {
+    "workflow": "check-220",
+    "jobs": [
+      {
+        "id": 110565375575,
+        "name": "check",
+        "status": "completed",
+        "conclusion": "success",
+        "steps": [
+          {
+            "name": "Set up job",
+            "number": 1,
+            "status": "completed",
+            "conclusion": "success"
+          },
+          {
+            "name": "Checkout",
+            "number": 2,
+            "status": "completed",
+            "conclusion": "success"
+          },
+          {
+            "name": "Setup .NET SDK",
+            "number": 3,
+            "status": "completed",
+            "conclusion": "success"
+          },
+          {
+            "name": "Build plugin DLL (compile check)",
+            "number": 4,
+            "status": "completed",
+            "conclusion": "success"
+          },
+          {
+            "name": "Build ABlockGen DLL (compile check)",
+            "number": 5,
+            "status": "completed",
+            "conclusion": "success"
+          },
+          {
+            "name": "Build AFacades DLL (compile check)",
+            "number": 6,
+            "status": "completed",
+            "conclusion": "success"
+          },
+          {
+            "name": "Build AClad DLL (compile check)",
+            "number": 7,
+            "status": "completed",
+            "conclusion": "success"
+          },
+          {
+            "name": "Build AFrame DLL (compile check)",
+            "number": 8,
+            "status": "completed",
+            "conclusion": "success"
+          },
+          {
+            "name": "Setup Python",
+            "number": 9,
+            "status": "completed",
+            "conclusion": "success"
+          },
+          {
+            "name": "Engine unit test",
+            "number": 10,
+            "status": "completed",
+            "conclusion": "success"
+          },
+          {
+            "name": "ABlockGen engine unit test",
+            "number": 11,
+            "status": "completed",
+            "conclusion": "success"
+          },
+          {
+            "name": "AFacades engine unit test",
+            "number": 12,
+            "status": "completed",
+            "conclusion": "success"
+          },
+          {
+            "name": "AClad engine unit test",
+            "number": 13,
+            "status": "completed",
+            "conclusion": "success"
+          },
+          {
+            "name": "AFrame engine unit test",
+            "number": 14,
+            "status": "completed",
+            "conclusion": "success"
+          },
+          {
+            "name": "Native zone geometry regressions (no AutoCAD host)",
+            "number": 15,
+            "status": "completed",
+            "conclusion": "success"
+          },
+          {
+            "name": "Native zone and layout adapters (CAD API doubles)",
+            "number": 16,
+            "status": "completed",
+            "conclusion": "success"
+          },
+          {
+            "name": "Cladding quantities (native core, real producers, XLSX, CAD API doubles)",
+            "number": 17,
+            "status": "completed",
+            "conclusion": "success"
+          },
+          {
+            "name": "Frame quantities (core, real producers, XLSX and bounded operation counts)",
+            "number": 18,
+            "status": "completed",
+            "conclusion": "success"
+          },
+          {
+            "name": "Manual facade quantities (actual mapper, CAD adapters and bounded work)",
+            "number": 19,
+            "status": "completed",
+            "conclusion": "success"
+          },
+          {
+            "name": "Facade connection passports (source identities, typed data, XLSX and indexed joins)",
+            "number": 20,
+            "status": "completed",
+            "conclusion": "success"
+          },
+          {
+            "name": "Upload connection table and native preview evidence",
+            "number": 21,
+            "status": "completed",
+            "conclusion": "success"
+          },
+          {
+            "name": "Historical facade catalogue (actual settings, engine and producer)",
+            "number": 22,
+            "status": "completed",
+            "conclusion": "success"
+          },
+          {
+            "name": "Pilot mounting interface contract (trace verification, engineering remains blocked)",
+            "number": 23,
+            "status": "completed",
+            "conclusion": "success"
+          },
+          {
+            "name": "Upload pilot mounting contract evidence",
+            "number": 24,
+            "status": "completed",
+            "conclusion": "success"
+          },
+          {
+            "name": "Limited pilot workflow and axis cancellation (explicit CAD doubles)",
+            "number": 25,
+            "status": "completed",
+            "conclusion": "success"
+          },
+          {
+            "name": "Upload limited pilot workflow evidence",
+            "number": 26,
+            "status": "completed",
+            "conclusion": "success"
+          },
+          {
+            "name": "Table command lifecycle (persistent pilot, explicit CAD doubles)",
+            "number": 27,
+            "status": "completed",
+            "conclusion": "success"
+          },
+          {
+            "name": "Upload table command lifecycle evidence",
+            "number": 28,
+            "status": "completed",
+            "conclusion": "success"
+          },
+          {
+            "name": "Pilot node and table lifecycle (same canonical sources, explicit CAD doubles)",
+            "number": 29,
+            "status": "completed",
+            "conclusion": "success"
+          },
+          {
+            "name": "Upload pilot node and table lifecycle evidence",
+            "number": 30,
+            "status": "completed",
+            "conclusion": "success"
+          },
+          {
+            "name": "Upload historical catalogue UI evidence",
+            "number": 31,
+            "status": "completed",
+            "conclusion": "success"
+          },
+          {
+            "name": "Upload solution settings contract evidence",
+            "number": 32,
+            "status": "completed",
+            "conclusion": "success"
+          },
+          {
+            "name": "Project and zone parameters (native contracts, CAD store and WinForms)",
+            "number": 33,
+            "status": "completed",
+            "conclusion": "success"
+          },
+          {
+            "name": "Upload project parameters evidence",
+            "number": 34,
+            "status": "completed",
+            "conclusion": "success"
+          },
+          {
+            "name": "Pilot node geometry and mounting readiness (core, CAD adapters and WinForms)",
+            "number": 35,
+            "status": "completed",
+            "conclusion": "success"
+          },
+          {
+            "name": "Upload pilot node geometry evidence",
+            "number": 36,
+            "status": "completed",
+            "conclusion": "success"
+          },
+          {
+            "name": "Facades quick gates (audits, contracts, synth)",
+            "number": 37,
+            "status": "completed",
+            "conclusion": "success"
+          },
+          {
+            "name": "Post Setup Python",
+            "number": 72,
+            "status": "completed",
+            "conclusion": "success"
+          },
+          {
+            "name": "Post Setup .NET SDK",
+            "number": 73,
+            "status": "completed",
+            "conclusion": "success"
+          },
+          {
+            "name": "Post Checkout",
+            "number": 74,
+            "status": "completed",
+            "conclusion": "success"
+          },
+          {
+            "name": "Complete job",
+            "number": 75,
+            "status": "completed",
+            "conclusion": "success"
+          }
+        ]
+      }
+    ]
+  }
+}

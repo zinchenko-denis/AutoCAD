@@ -1,0 +1,91 @@
+{
+  "status": "PASS",
+  "date": "2026-10-01",
+  "release": "build-105",
+  "release_source_sha": "c4009838875aa0f225971153bf4b54fe288e8e79",
+  "scope": "Document build, render and all-page visual QA only; no native AutoCAD acceptance.",
+  "renderer": "documents/render_docx.py using Codex primary runtime Python and LibreOffice",
+  "layout": {
+    "page": "Letter portrait",
+    "body_font": "Arial",
+    "body_points": 11,
+    "heading_color": "000000",
+    "table_borders": "D9D9D9",
+    "feedback_editable": true
+  },
+  "artifacts": [
+    {
+      "name": "Install_AutoCAD_2024_build105.docx",
+      "sha256": "2310aa1307b6c925d259193a2738e58a01110342717b3ef25260b87010dd51a6",
+      "render_pages": 2,
+      "visual_review": "PASS",
+      "reviewer": "node_review",
+      "page_png_sha256": [
+        "f81797df55355f6b8198eefaf21516596026bc0af498390b1d91d6e00c5538c4",
+        "fec6686d8aec969f593202e96108eb048e9850083dcf102a4eedaa61712cb3d5"
+      ],
+      "pdf": {
+        "name": "Install_AutoCAD_2024_build105.pdf",
+        "sha256": "8371c1684b3aa25c3838f19570587f9e635a858842baecb785e103edc96622a4",
+        "pages": 2
+      }
+    },
+    {
+      "name": "Facades_Pilot_build105.docx",
+      "sha256": "44e83b0392c2aa33eccb039cbe93c9b1324a76f0a9f9fe67e131da3f09e869a6",
+      "render_pages": 14,
+      "visual_review": "PASS",
+      "reviewer": "node_review",
+      "page_png_sha256": [
+        "1e0fad860e14b151adc90f460d9e9e1796b22f2443e6d125c72cc9cf6179b654",
+        "767314f9d81ba79c0caf54679c9c407d0b59daf03b5f5cd6c3cd045b5d036796",
+        "fcf8c3b6076952cc7435b0ba97c0a78a07cea19962e7e0112088f1b188304acc",
+        "bafb25c960a5e04b3b2de003a5dcc51c50a8f37a04c8fe530e7c41918de6f04f",
+        "2104cfdf281020ab4677e4ed87fa864b6ac505e833a179c7cf7dd6d4c8238a2e",
+        "e339e132ad8c6831f3d8c4cf2106ffb3749ece772f7267dab310edb71559dbdf",
+        "858b57bfde5dfe27c64f6a504e71e455dfe1c488456fd73629fe2e43d49bb9fb",
+        "5b04ef9f217094dc58fb5238b4c40b2b4cd051e93b29f13ae2270ad3f89f51a5",
+        "96f3c9978bbe66ace4d49e6430f464fa3afece318babd3aab2ed537125372d39",
+        "058e9ca35ba5ae977045dd5d45891258e102659b3ce1fc72d5fa5c8d019e2d24",
+        "5e80e6d0ac93542bdbae0f26ce8d8bd060749b7644f261b59ba7dde6aa5ef403",
+        "f26f163c0d6c66ec9b0a1c8e42d64232e262a7e8886bc4501391687c69deb9c6",
+        "b34a154769fac9319ccbcb7e902e5dab1cdfbf083394b14478cd73de8e240d2d",
+        "e14317b6d3a7b8cebf39867d726d9af4c138fdd99a1d4a2bcbe7ac0547e38a40"
+      ],
+      "pdf": {
+        "name": "Facades_Pilot_build105.pdf",
+        "sha256": "4747732a737d7039247d8027998d163e443a0388d6ea9c60c93c63cf2bb50822",
+        "pages": 14
+      }
+    },
+    {
+      "name": "Facades_Feedback_build105.docx",
+      "sha256": "ad5ab152493754c1d3853d8d0f599c4e503b1e650ade4f713649ad8bf1aa1432",
+      "render_pages": 8,
+      "visual_review": "PASS",
+      "reviewer": "node_review",
+      "page_png_sha256": [
+        "e9320d7df4e8177bd24afe6fdf8c4743a8f5dc5b09ca634164dfb3fa66965f1a",
+        "c592b76d5144a1e8514ff4920bdf4b11f42d909149d069373d1826b3d82126da",
+        "2af350c0e693d8617d60f7b3ce3265f183d53ba3977f202d29dcef528680c9fc",
+        "22743ea14908dfa2858e020cdff6a36be20b636b7e70c60d43e95f4f89643b6c",
+        "bbfdc97df6e41963cb49e9a2df3521eec97f9a966a6aff9c2306335a3759ae52",
+        "7366782509ce0347bdea655870b2cbe8c684f954a6871d05655c6584724565f2",
+        "527e0fe25e42ad86af2f7813e5e64e9dc26054bc9ef658235b1c43f328bb59c5",
+        "5af1b507e1591420d0331c69df85bfd6e3b15505a35d7b2e94e350a3f764839b"
+      ]
+    }
+  ],
+  "checks": [
+    "All 24 rendered pages inspected at original resolution; feedback pages 1-4 unchanged byte-for-byte after final iteration.",
+    "No clipping, overlaps, missing glyphs, truncated rows, broken title rules or unreadable table headings remain.",
+    "Installation 2 pages; complete route П00-П17 and all six engineering questions 14 pages; editable feedback 8 pages.",
+    "Source Markdown hashes verified unchanged; full source SHA and build-105 references preserved.",
+    "All feedback route rows remain NOT_RUN; no claim of completed host acceptance, 2В, 3А or automatic selection.",
+    "All DOCX settings lack documentProtection; texts and tables remain editable."
+  ],
+  "limitations": [
+    "Pagination may vary with the installed Word version and fonts; supplied PDFs preserve the reviewed layout.",
+    "LibreOffice uses an available Arial-compatible font for rendering."
+  ]
+}

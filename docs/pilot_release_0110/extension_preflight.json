@@ -1,0 +1,138 @@
+{
+  "status": "PASS",
+  "verifier_sha256": "463c24f950e8351ec65019b018ec9cc388e8a91d6a1c684afcd3195e65fdfa4b",
+  "scope": "New metadata parser on previously compiled current product; expected refusal of real build104 lacking post104 features. Not release105 result.",
+  "compiled_product_source": "b2a6d09, byte-identical product to c400983 by177 current product/bundle checks",
+  "local_dll_checks": {
+    "AFacades": {
+      "dll_sha256": "608097f86089d7732ac2dd460e0f0371bad758e37fbb6a7937d5fbc8c1c7ae97",
+      "metadata": {
+        "required_types_found": [
+          "FacadeSafety.FacadeProjectParameterStore"
+        ],
+        "type_count": 127,
+        "commands": [
+          {
+            "global": "ATFTABLE",
+            "flags": 2,
+            "type": "AFacadesPlugin.TableCommand",
+            "method": "Run"
+          },
+          {
+            "global": "ATFZONE",
+            "flags": 2,
+            "type": "AFacadesPlugin.ZoneCommand",
+            "method": "Run"
+          },
+          {
+            "global": "ATFZONERESET",
+            "flags": 0,
+            "type": "AFacadesPlugin.ZoneCommand",
+            "method": "ResetSchemeLinks"
+          }
+        ],
+        "execution_performed": false
+      }
+    },
+    "AClad": {
+      "dll_sha256": "4a560b87c50c977f334843f1f64888dbd02a319161697048067e2b1359940af7",
+      "metadata": {
+        "required_types_found": [
+          "FacadeSafety.FacadeProjectParameterStore"
+        ],
+        "type_count": 105,
+        "commands": [
+          {
+            "global": "ATCLAD",
+            "flags": 2,
+            "type": "ACladPlugin.CladCommand",
+            "method": "Run"
+          },
+          {
+            "global": "ATCLADDIM",
+            "flags": 0,
+            "type": "ACladPlugin.CladCommand",
+            "method": "RunDim"
+          },
+          {
+            "global": "ATTILE",
+            "flags": 2,
+            "type": "ACladPlugin.TilePatternCommand",
+            "method": "Run"
+          }
+        ],
+        "execution_performed": false
+      }
+    },
+    "AFrame": {
+      "dll_sha256": "24735f3fcd1039efc64839436ef8ecb9922f26a9e865e5b553cb0c7cf88189d9",
+      "metadata": {
+        "required_types_found": [
+          "AFramePlugin.FrameMountingAssessment",
+          "AFramePlugin.FrameMountingAssessmentResult",
+          "AFramePlugin.FrameMountingNominalChain",
+          "AFramePlugin.FrameNodeCommand",
+          "AFramePlugin.FrameNodeForm",
+          "AFramePlugin.FrameNodeGeometry",
+          "AFramePlugin.FrameNodeGeometryResult",
+          "AFramePlugin.FrameNodeRenderer",
+          "AFramePlugin.FrameNodeSnapshot",
+          "AFramePlugin.FrameNodeStore",
+          "AFramePlugin.FrameParameterResolver",
+          "AFramePlugin.FrameProjectCommand",
+          "AFramePlugin.FrameProjectForm",
+          "AFramePlugin.FrameProjectParameters",
+          "AFramePlugin.FrameSolutionSelection",
+          "AFramePlugin.FrameZoneParameters",
+          "AFramePlugin.FrameZoneParametersForm",
+          "FacadeSafety.FacadeProjectParameterStore"
+        ],
+        "type_count": 164,
+        "commands": [
+          {
+            "global": "ATDEDUP",
+            "flags": 0,
+            "type": "AFramePlugin.FrameCommand",
+            "method": "RunDedup"
+          },
+          {
+            "global": "ATFNODE",
+            "flags": 0,
+            "type": "AFramePlugin.FrameNodeCommand",
+            "method": "Node"
+          },
+          {
+            "global": "ATFPROJECT",
+            "flags": 0,
+            "type": "AFramePlugin.FrameProjectCommand",
+            "method": "Project"
+          },
+          {
+            "global": "ATFRAME",
+            "flags": 2,
+            "type": "AFramePlugin.FrameCommand",
+            "method": "Run"
+          },
+          {
+            "global": "ATFRAMEDIM",
+            "flags": 0,
+            "type": "AFramePlugin.FrameCommand",
+            "method": "RunDim"
+          },
+          {
+            "global": "ATFZONEPARAMS",
+            "flags": 2,
+            "type": "AFramePlugin.FrameProjectCommand",
+            "method": "ZoneParameters"
+          }
+        ],
+        "execution_performed": false
+      }
+    }
+  },
+  "old104_expected_failure": {
+    "exit_code": 1,
+    "reason": "ValueError: AFacades: absent pilot CLR types ['FacadeSafety.FacadeProjectParameterStore']",
+    "receipt_sha256": "c725259e0cd83612f3b2d7831f4690424c0c1e2a5f81d16da1e42272dbfe8f23"
+  }
+}

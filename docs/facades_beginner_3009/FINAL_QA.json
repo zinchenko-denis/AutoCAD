@@ -1,25 +1,42 @@
 {
-  "docx_sha256": "93f89325d1d944dd3e8279cc1afb95d9cb6983a6c7a26eb2f91c890c19435f8d",
-  "manual_source_sha256": "350868b2e597b78de4dc5070073eeb36632285972f0db002ce51d66c3cdffe50",
-  "builder_sha256": "8ab05d1afdf7ae240fe38f91aed7e0667a7977d2a772187ca2c29448c175fb1d",
+  "schema": "full_manual_build105_qa/1",
+  "reviewed_at_utc": "2026-10-01T20:22:33.617304+00:00",
+  "docx_sha256": "b634ec29402db740dd9849a6cb23f131bdf56b105ed9588c9b1d9e8bbe4a829a",
+  "pdf_path": "../pilot_release_0110/Facades_Full_Manual_build105.pdf",
+  "pdf_sha256": "0b70d879922f7ac96cedcefb56bc302858e17107de670c8c708c002c1c0c80b7",
+  "manual_source_sha256": "77247a372f82a3226695547e026ff20573b847b4c2f80e4e9af2a7e222fefe93",
+  "builder_sha256": "1026e4588bc5dd2634d1176948bacb8a0b1a35011d65266e85ff1f5c56b9dbc2",
   "pages": 52,
   "chapters": 20,
   "figures": 10,
   "dxf_files": 4,
-  "edition": "2В2 addressed verified bracket inventory without a support-candidate reference; source after build-104, no installer release for stages 2Б1–2Б5 and 2В1–2В2",
+  "edition": "Full reference manual for pilot build105, source c400983; release source binding, manual-axis Esc and table UCS behavior updated without restructuring",
   "visual_review": "PASS",
   "reviewed_ranges": [
     {
-      "pages": "1-52",
-      "reviewer": "manual_update",
-      "method": "All 52 pages rendered. Compared with the published 2В1 baseline: changed pages 1, 3, 27–31 and 46–49 opened at original resolution and visually accepted; the other 41 page PNGs are byte-identical to previously reviewed pages. After the final scope clarification on page 27, that page was opened again and the other 51 page PNGs matched the initial reviewed 2В2 render. Truncated intermediate PNGs were regenerated individually from the same PDF at 182 DPI; all 52 final PNGs fully decoded. No clipping, overlap or broken glyphs.",
-      "result": "PASS"
+      "path": "../pilot_release_0110/full_manual_review_1_17.json",
+      "sha256": "23066c9f70a6355f0e744f8d857a5cbdf9ff7303ee3089b37bf093386e6517aa",
+      "pages": "1–17",
+      "status": "PASS"
+    },
+    {
+      "path": "../pilot_release_0110/full_manual_review_18_35.json",
+      "sha256": "db5c8191f87a2e9e4f68e2db35d37b9f9385ed69c4245b79a728ca80c2823b79",
+      "pages": "18–35",
+      "status": "PASS"
+    },
+    {
+      "path": "../pilot_release_0110/full_manual_review_36_52.json",
+      "sha256": "105b5c522710cf27dc024966273b64bf027d6f5f6ac1f3f0c8904e8aa4f7c7b6",
+      "pages": "36–52",
+      "status": "PASS"
     }
   ],
+  "visual_method": "All52 pages rendered by canonical render_docx.py; every page opened individually at original resolution across3 reviewers. No clipping, overlap, broken glyphs or broken table rows. Five truncated raster files regenerated individually from SAME PDF at182DPI; all52 final PNGs fully decoded.",
   "page_png_sha256": {
-    "page-1.png": "3ec74aaedf88bdea22a10d9bc62eb5a687fafbb8494a6b4a4792ba05fab7a427",
+    "page-1.png": "341b749301d7ea8c842e53e1e3c543989f5dbb2557fa1ed4015db1b1e9596c83",
     "page-2.png": "d9ea2ffa7fc98a59aedffbf9db17052f9f599e619117c29cca0d145f68caed9f",
-    "page-3.png": "534bf6cd360c213e4a5a03aa15189fb6b107d96cedc15fdfc83ae7974363738b",
+    "page-3.png": "c239fbd766cf36982f674bb08547dc823a60eecab74793260e9a55c3bb69a6b0",
     "page-4.png": "96be51246b75a40acc40e8479533265b53a7d77a67469d0a942a3ea01dd2d6b1",
     "page-5.png": "5c8a759f09f8334b19ad9d13c491689059fc5b0b36f786ab90c3bf75b2104eea",
     "page-6.png": "497d81392ecf63fbfd49c1a6ac4288fd6276c8a491e91a5aea9bcf37ad8725e6",
@@ -37,22 +54,22 @@
     "page-18.png": "31cebec230dffc4fa926f69181e931b9ef0cbbc828a7a0c8d51e095a20f13eab",
     "page-19.png": "03d065d586577ee33c05646ab6296b3341a4615f35bf77f91a11e530b0a2f051",
     "page-20.png": "2d9e57cf86c2600d28a58b74266555bd31ff8f9a726a9cd24ccd33fa95ed26a5",
-    "page-21.png": "479322dd52a3743731f26400520464804beef3c8ebd8ca9052074d5fca0d88ac",
-    "page-22.png": "8cb7862276320a30c9236ba7ac6d08fc740a97be1aa8c0dd0becf4ccc08355a2",
-    "page-23.png": "ce85de213e9df3e9022c3f0136d8b65776e5d5c721de14e47a9a5693c92cef26",
-    "page-24.png": "c8b7bfc35bca85c144336594e978f73d6a053ebc76e8eda9c4a4bd4e66df8574",
-    "page-25.png": "c73171e91a0f3b0935db14a18aaef96b8def2614025cc14bd1f1acc8e70b0327",
-    "page-26.png": "1455e7061c18e25d4ec5400febd1dd16aef10e495c575283559d0cc3e287bbc5",
-    "page-27.png": "3d249234037bf9d1802465353484d2e9e0318f755b62eaf51a06e900a4267604",
-    "page-28.png": "36ac05b9bce863a06cbc9f091bc21563c77111b894463b4ef61ddda300701ac4",
-    "page-29.png": "963cd2611b9283496c89b37e98eb0a243084780c8e6c790e6490081a46f326c4",
-    "page-30.png": "8269a980f8e3ba48b60800282658627190f8aff12aaa67b4bbed0c9762814e65",
-    "page-31.png": "85776e0d85950a64d040bee08741b3b853401baed57759b49b86c8173659bbb0",
+    "page-21.png": "e2a3f0822d98935c93ef75d7af66e12629d11cd51f83f82fea7a5d42a2c2e504",
+    "page-22.png": "9e7160595f8398720ba14a2792260377406c49f85db2b63c5615f521dc3402c2",
+    "page-23.png": "666686998593959091baea8fb19d549193019a5a0c505be6805d0c64d42f84f8",
+    "page-24.png": "ccb837bb944fb5a7be81ca1e498129162b81d69f714e583a0dd27ff64de4f8f5",
+    "page-25.png": "d60838500ab73b1165df9658a67f0868e16040c09f94002a9411fca668a6dead",
+    "page-26.png": "7d3bcff7d1f494e33daa93cef37bacb8d4ab74039df92c33244f58a1aeb541cd",
+    "page-27.png": "9f7c93b64a148313d9f39e0db234bd937a6cf921915053fbec234146a6d5d519",
+    "page-28.png": "8846375fb4ac716a435a6b2d37872ff631e4a1275d7d7ed8bf2b522342ad3ba3",
+    "page-29.png": "5bc3daf90b0edb1c6c194b5c6167728afb85d6152a0b682a2ac81576cfddbe10",
+    "page-30.png": "c2f557bb252edb85d4edfe14ac0eedf22f183e65bcfa94783df27f717e9a6eba",
+    "page-31.png": "7d71337627e7de9962d89077645cc35700cb7a7a13e84613e0368bd0a0e162b3",
     "page-32.png": "f3f7dad942fe456ed6352558c85778aa438b525ea851e30a1faf8483df16ee12",
     "page-33.png": "c8d9088cc5d43ed802c0dd4208f1b75afc07becadf4591fa438fd87cc387b2d0",
     "page-34.png": "a4c6b3b9a6f520bd6f2b23410e99c4ae11cefb00898d0f4eab5a8f8123efe26f",
     "page-35.png": "ed83bcd303ba9793c0e8013a88e8e332b63e4db173741cf29b8b3fe283a87ee9",
-    "page-36.png": "37ebf678e7048fc29834ee71f7d2cc3707adddb7522f2e9afec1b2b9d9e2d644",
+    "page-36.png": "9eaebf1eba6c828621ebda3b6f93a6bcdfc145c78fac5f37c6c901874b8db622",
     "page-37.png": "15e14ec65a623c40da1719ed5d54a3b497477ade67eb3dc2d84ad6f1fabfc43a",
     "page-38.png": "ba226931ecf221e1d140be57c64b975c56f71ad48778f753f3bc4749d05fb791",
     "page-39.png": "51b3a016920d2882d37ea9e8cc00138782e48ff1e640f353d4214ec8be430ef3",
@@ -64,8 +81,8 @@
     "page-45.png": "b6ab182180b9b2b485678cbb2ec7b963bb65ec39d1da30844e7d5e1fd73cf515",
     "page-46.png": "8da1503625dc5959b470666fdc840e7008cb684eacd77906f99dd440aec1ee45",
     "page-47.png": "3b914fca8207fd1e12bef6fcdff471b42c8373aceb6a852d5638195a2cdbdaf9",
-    "page-48.png": "4396bf41be81bae0e97ec2e47f536a09cc76540310bd3745a67709c64c566076",
-    "page-49.png": "4186c22349eb11d561cf110c77a0a4b77c73f68ce05f52520b8c6808982668f5",
+    "page-48.png": "6f334bc49536907a3cc7e361d01413ec3a036ea0fcb741b70705c34f23e983a2",
+    "page-49.png": "4fe4e468aa8dc2141b0648644b1d18961f028a0a8162e123adc7dcf7d6a0c478",
     "page-50.png": "bc91de89d00f078f342ef580ff5ed0cee599fe421dfd6cb4aaba119782b44875",
     "page-51.png": "198795dd17017fa7e9067efb932933e9f8bb3e3bee0bd0917bd903884c84fa2b",
     "page-52.png": "40cd48bf84785a1da96a9b7e5ff2647065a8a45badfc7862f5fdbc49bf7af678"
@@ -92,101 +109,38 @@
     "assets/03_reference_rect.dxf": "ba23618841da27508cea2df96a02fe04a80e1af866853c7231f502e8b504d12e",
     "assets/04_reference_gable.dxf": "ee6f21c676e59868c735e64bda4c0e6402c0e759a68e704e54f8b4c278a524fa"
   },
-  "tutorial_replay_expected_receipt": "../orphan_connections_0110/manual_examples.json",
   "tutorial_replay": {
-    "checks": 5,
-    "passed": true,
+    "mode": "inherited_not_rerun",
+    "receipt": "../orphan_connections_0110/manual_examples.json",
     "receipt_sha256": "92db8391fb2370f317c386084ad2c63b775e4a01acde188ebc211cf06bebaf60",
-    "engine_source_files": 35,
-    "engine_sources_unchanged_after_replay": true,
-    "scope": "Saved tutorial requests and independent saved geometry/quantity references only; not a test of the new C# connection-table diagnostic."
+    "engine_files": 35,
+    "all_engine_hashes_still_match": true,
+    "prior_result": "5/5 PASS",
+    "claim": "No new tutorial or product execution claimed by this manual rebuild"
   },
   "live_autocad": false,
-  "release_published": false,
-  "prior_release": {
-    "build": 104,
-    "guide_commit": "60f3b3587c8d09780e5c7a703f010de690f73e2b",
-    "pages": 42
-  },
-  "last_content_change": "Subsection 8.9 explains the exact bracket-ID message with ID/zone verification and unknown physical attachment; chapter 16 adds the corresponding response. The final clarification excludes manual details and results without an available passport, while preserving support for saved valid passports. Source/release status updated to 2В2.",
+  "release_published": true,
+  "release_build": 105,
+  "release_url": "https://github.com/zinchenko-denis/AutoCAD/releases/tag/build-105",
+  "release_validation_status": "Release published; downloaded-archive validation and exact-target check220 tracked by root separately",
+  "target_commit": "c4009838875aa0f225971153bf4b54fe288e8e79",
+  "product_validation_reference": "../node_lifecycle_0110/github_publication.json",
+  "product_validation_repeated_for_document": false,
+  "last_content_change": "Existing version section/cover banner updated tobuild105; Esc during manual axes explicitly included; new table UCS→WCS once, refusal on changed UCS, unchanged Update position. No geometry, product or DXF changes.",
   "content_review_sources": [
-    "Facades/src/AFacadesPlugin/ConnectionTableData.cs"
+    "AFrame/src/AFramePlugin/FrameCommand.cs",
+    "Facades/src/AFacadesPlugin/FacadeQuantityTableCommand.cs"
   ],
-  "scope_limit": "Document visual QA and tutorial replay do not establish mounting suitability, complete mounting contract, product CI success or live AutoCAD acceptance.",
+  "content_review_source_sha256": {
+    "AFrame/src/AFramePlugin/FrameCommand.cs": "45e4643209439ec2eae0abd0367dc2fb84930cb54e9c5298171cafeea93a30d4",
+    "Facades/src/AFacadesPlugin/FacadeQuantityTableCommand.cs": "08ba2ef01f32293956380d2c4842d46ff1dae2b7aa860df7ed0c7d4435f85e38"
+  },
+  "scope_limit": "Document layout/content QA only; not mounting suitability, complete mounting contract, strength calculation, live AutoCAD or installer acceptance.",
   "prior_visual_review": {
-    "docx_sha256": "f9e93e05feed0551dbe4556ef78f7eef26b1645d0629c257debd3a6b1410b2b2",
+    "commit": "c4009838875aa0f225971153bf4b54fe288e8e79",
+    "docx_sha256": "93f89325d1d944dd3e8279cc1afb95d9cb6983a6c7a26eb2f91c890c19435f8d",
     "pages": 52,
     "result": "PASS",
-    "reviewed_ranges": [
-      {
-        "pages": "1-52",
-        "reviewer": "manual_update",
-        "method": "All 52 pages rendered after generalizing the count location to the affected guide rows. Page 27 opened at original resolution and visually accepted; the other 51 PNGs are byte-identical to the immediately preceding reviewed 2В1 render. Truncated intermediate PNGs detected by full decoding were regenerated individually from the same PDF at 182 DPI; all final PNGs decoded successfully. No clipping, overlap, broken glyphs or layout changes outside page 27.",
-        "result": "PASS"
-      }
-    ],
-    "prior_visual_review": {
-      "docx_sha256": "71678484ce4a22a26924e714a310b4e0d051848b94687bb821e06244602feddc",
-      "pages": 52,
-      "result": "PASS",
-      "reviewed_ranges": [
-        {
-          "pages": "1-52",
-          "reviewer": "manual_update",
-          "method": "All 52 pages rendered after replacing shared bracket IDs in member notes with the count. Page 27 opened at original resolution and visually accepted; the other 51 PNGs are byte-identical to the immediately preceding reviewed 2В1 render. One truncated intermediate PNG (page 32) was regenerated individually from the same PDF at 182 DPI; all final PNGs decoded successfully. No clipping, overlap, broken glyphs or layout changes outside page 27.",
-          "result": "PASS"
-        }
-      ],
-      "prior_visual_review": {
-        "docx_sha256": "bc367a7f64d3deb8a8276f426c6be9c842fd2fe2a7cf3f0cc961346619e21751",
-        "pages": 52,
-        "result": "PASS",
-        "reviewed_ranges": [
-          {
-            "pages": "1-52",
-            "reviewer": "manual_update",
-            "method": "All 52 pages rendered. 38 pages byte-identical to the reviewed 2Б5 PNGs. Changed pages 1, 3, 27-31 and 46-52 opened individually at original resolution; top-margin crops checked where the tool display cropped the view. No clipping, overlap, broken glyphs or unusable table splits found. Four truncated intermediate PNG files were detected by full decoding and regenerated individually from the same rendered PDF at 182 DPI; all 52 PNGs then decoded successfully.",
-            "result": "PASS"
-          }
-        ],
-        "prior_visual_review": {
-          "docx_sha256": "2c34cce452863fc9fdea067e4b01dade590a0c1be2b156d974cba4fa74a884ea",
-          "pages": 52,
-          "result": "PASS",
-          "reviewed_ranges": [
-            {
-              "pages": "1-52",
-              "reviewer": "catalog_manual",
-              "method": "All 52 pages rendered. Pages 2 and 4-40 byte-identical to the previously reviewed edition. Every changed or new page 1, 3 and 41-52 opened individually at original resolution. Page 47 top margin additionally inspected from the actual PNG crop and PDF text bounding boxes to distinguish display cropping from document clipping. No clipping, overlap, broken glyphs or unusable table splits found.",
-              "result": "PASS"
-            },
-            {
-              "pages": "41,42,49",
-              "reviewer": "root",
-              "method": "Independent view of nominal mounting bases, the formula with unknown overlap and handoff. Text readable, split table repeats its header, no new layout findings.",
-              "result": "PASS"
-            }
-          ]
-        }
-      }
-    }
-  },
-  "content_review": {
-    "reviewer": "manual_update; stable implementation wording confirmed by contract_gap; root reviewed final pages 27 and 46",
-    "result": "PASS",
-    "scope": "Subsection 8.9 and chapter 16 explain the exact addressable message when a bracket ID exists in the verified generated inventory of the same source run and selected canonical zone but has no support-candidate reference in an available inventory_only passport. The bracket remains in the bill; actual attachment presence/type and mounting ownership remain unknown. Manual/unavailable cases receive no false zero. No assigned support, installation defect, mounting suitability, force transfer, fixity, continuity, calculation or auto-selection approval. The accepted engine fallback used for reproduction is not taught as normal current ATFRAME UI input.",
-    "reviewed_source_sha256": "04fb3ddfcaa568ca68703a32dc49ec08c1bd59d98d3766201b90c0920ffe26f9",
-    "source_hash_binding_owner": "root binds the final product commit after CI",
-    "final_source_recheck": "Read-only review confirms the ordinary 2В2 sentence is unchanged. Only exceptionally long combined ID/zone messages are split into lossless numbered continuations; the manual explanation remains accurate. No DOCX rebuild or new tutorial tests needed for this technical output boundary fix."
-  },
-  "source_binding_owner": "root; SOURCE_COMMIT.json is updated after the product commit",
-  "root_review": {
-    "pages_viewed": [
-      27,
-      46
-    ],
-    "final_page_27_viewed": true,
-    "result": "PASS",
-    "scope": "Root reviewed final page 27 and page 46; correct available-passport exclusion and layout. No mounting or calculation approval."
+    "history": "Previous FINAL_QA.json and rendered-edition provenance retained in Git before this documentation-only edit."
   }
 }

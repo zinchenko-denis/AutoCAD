@@ -1,0 +1,24 @@
+{
+  "build": 105,
+  "source_sha": "c4009838875aa0f225971153bf4b54fe288e8e79",
+  "sources": {
+    "INSTALL_AUTOCAD_2024.md": "45d66264a40c2110fc5a05bd73fa4c91c479102b46149ec51c26f7f5f157b727",
+    "PILOT_GUIDE.md": "4aba7ae1c5defea3a6be763d236af3edbd9355de9a5150ac3bb3e7cf74367c84",
+    "FEEDBACK_TEMPLATE.md": "cc75c3832044504d26b59a41d899a6da5f02eee2347bd6bb2110ae366aef1f6d",
+    "ENGINEERING_QUESTIONS.md": "506d1e84634efc20da225b1c15acf6b6c209559f4dd0e8af32f27088410ae2d4"
+  },
+  "outputs": {
+    "Install_AutoCAD_2024_build105.docx": "2310aa1307b6c925d259193a2738e58a01110342717b3ef25260b87010dd51a6",
+    "Facades_Pilot_build105.docx": "44e83b0392c2aa33eccb039cbe93c9b1324a76f0a9f9fe67e131da3f09e869a6",
+    "Facades_Feedback_build105.docx": "ad5ab152493754c1d3853d8d0f599c4e503b1e650ade4f713649ad8bf1aa1432"
+  },
+  "editorial_changes": [
+    "Combined PILOT_GUIDE.md with ENGINEERING_QUESTIONS.md.",
+    "Replaced the duplicated product-status table with a reference to the full pilot guide.",
+    "Replaced the duplicated defect-report table with a reference to the editable feedback form and П17; retained the distinction between expected engineering limits and defects.",
+    "Sanitized title/heading punctuation for Word styles; preserved body meaning and all six engineering questions.",
+    "Converted the passport field/value table into editable labelled paragraphs; all feedback route statuses remain NOT_RUN.",
+    "Expanded compressed slash separators in narrow feedback cells and started the reusable defect card on a new page.",
+    "Mapped installation, pilot and feedback Markdown hyperlinks to their deliverable DOCX names."
+  ]
+}
