@@ -1,0 +1,168 @@
+{
+  "schema": "legacy_solution_ui_visual_review/1",
+  "date": "2026-10-01",
+  "status": "PASS",
+  "blocking_findings": [],
+  "reviewed_commit": "b35a5149adfcd42907d4974ac61ef997fd279a59",
+  "product_commit": "b35a5149adfcd42907d4974ac61ef997fd279a59",
+  "run_number": 212,
+  "artifact": {
+    "name": "solution-catalog-ui",
+    "manifest_sha256": "35a4370fbed2f8c6ebdd289780be0ff6b4be484d475dc927ce6dec638fd65c99",
+    "ui_checks_sha256": "e72a8d545a6472df5bcf431d9b51fcb8d1529dc9c37b37fa2388b95db12864f2",
+    "archive_verification": "Архив и commit проверены ведущим агентом отдельно; здесь независимо просмотрены оригинальные PNG и сверены их SHA-256 с manifest."
+  },
+  "native_ui_checks": {
+    "status": "PASS",
+    "checks": 919,
+    "failures": 0,
+    "runtime": "Microsoft Windows NT 6.2.9200.0"
+  },
+  "images": [
+    {
+      "file": "solution_blank.png",
+      "status": "PASS",
+      "sha256": "70b06a76ef4bc47c6e738e5075727ad65d745d7423a5ca282170e23d82f923b7",
+      "pixels": [
+        916,
+        689
+      ],
+      "individually_viewed_original_png": true,
+      "matches_artifact_manifest": true,
+      "identical_to_ci211": true,
+      "observation": "Пустой выбор явно указан красным текстом; автоматических назначений нет. Поля и три нижних действия видны. Источник находится ниже в прокручиваемой области."
+    },
+    {
+      "file": "solution_filled.png",
+      "status": "PASS",
+      "sha256": "00d58cb783b66938e053ffa2aaa85f6e4ce0d0c5c626c52f9c325c0d11399f05",
+      "pixels": [
+        916,
+        689
+      ],
+      "individually_viewed_original_png": true,
+      "matches_artifact_manifest": true,
+      "identical_to_ci211": true,
+      "observation": "Выбран исторический пилот; значения КР2 70/200, УК 60/150/1.2 и ГП 40/47.5/1.5 видны. Отказ от автоматического расчёта и три нижних действия читаются; длинные исполнения частично видны в закрытых ComboBox, полностью — на снимке источника."
+    },
+    {
+      "file": "solution_source.png",
+      "status": "PASS",
+      "sha256": "5397b1c4900cfaf522c8de9ae6329b5a91b6c243e73145c7dedb01fcbe29abb7",
+      "pixels": [
+        916,
+        689
+      ],
+      "individually_viewed_original_png": true,
+      "matches_artifact_manifest": true,
+      "identical_to_ci211": true,
+      "observation": "После прокрутки доступны полные названия исполнений, источник, узел 4.2.1 / PDF 20, SHA-256, редакция и ограничения. Текст сообщает, что совместимость и регулировка не подтверждены. Нижние действия видны."
+    },
+    {
+      "file": "solution_readonly.png",
+      "status": "PASS",
+      "sha256": "a41cba327b7a433b81f7c6bdc19b42c532f3c2f5fbca9938562682db8fb0fbc6",
+      "pixels": [
+        916,
+        689
+      ],
+      "individually_viewed_original_png": true,
+      "matches_artifact_manifest": true,
+      "identical_to_ci211": true,
+      "observation": "Режим просмотра существующего каркаса при выборе только кляммеров обозначен сверху и красным статусом. Изменяемые выборы, Apply и Clear отключены; Закрыть доступна."
+    },
+    {
+      "file": "solution_mismatch.png",
+      "status": "PASS",
+      "sha256": "3e3339c533d6555e7c82484d2c60ae27b87d19d2fb533c2bf1546d6ab552c062",
+      "pixels": [
+        916,
+        689
+      ],
+      "individually_viewed_original_png": true,
+      "matches_artifact_manifest": true,
+      "identical_to_ci211": true,
+      "observation": "Повреждённая редакция каталога приводит к читаемому отказу и требованию повторного явного выбора; сообщение и нижние действия не перекрыты."
+    },
+    {
+      "file": "solution_small.png",
+      "status": "PASS",
+      "sha256": "2ee75f717faaee508aae5fbdcd04717f87c02a7883bd3439f778be04081023a3",
+      "pixels": [
+        760,
+        530
+      ],
+      "individually_viewed_original_png": true,
+      "matches_artifact_manifest": true,
+      "identical_to_ci211": true,
+      "observation": "Окно 760×530: поля верхних групп читаются, нижняя часть доступна вертикальной прокруткой. Статус и все три нижние кнопки помещаются. Длинные исполнения в закрытых ComboBox показаны частично."
+    },
+    {
+      "file": "solution_small_source.png",
+      "status": "PASS",
+      "sha256": "24a34e4bcc0e2ba381ded8f6f314c3d4f21ac61799b1e40842684e371096150a",
+      "pixels": [
+        760,
+        530
+      ],
+      "individually_viewed_original_png": true,
+      "matches_artifact_manifest": true,
+      "identical_to_ci211": true,
+      "observation": "На минимальном окне источник и ограничения доступны после прокрутки. Видны полные исполнения; нижние строки самого источника имеют отдельную вертикальную прокрутку. Нижние кнопки читаются и не перекрыты."
+    },
+    {
+      "file": "solution_large_font.png",
+      "status": "PASS",
+      "sha256": "cb394ca856a01b05d90dfa74253955302ae9d32c6475fecf69f1b4b0a7a6c6d7",
+      "pixels": [
+        1024,
+        728
+      ],
+      "individually_viewed_original_png": true,
+      "matches_artifact_manifest": true,
+      "identical_to_ci211": true,
+      "observation": "Окно 1024×728 со шрифтом 12 pt: основной заголовок, поля, красный статус и все три кнопки видны; тело прокручивается. Native bounds каталога из manifest совпадают с WorkingArea и не выходят за неё."
+    },
+    {
+      "file": "frame_main_before.png",
+      "status": "PASS",
+      "sha256": "4ac9745e227e590a09a0360d73cb4f0ed774345b1f64902c677070acd299f1bf",
+      "pixels": [
+        876,
+        753
+      ],
+      "individually_viewed_original_png": true,
+      "matches_artifact_manifest": true,
+      "identical_to_ci211": true,
+      "observation": "В полном bitmap видны все группы, нижние кнопки и отказ по неподтверждённому ГП-60-40. Размещение всего HWND главного окна в WorkingArea данным снимком не доказано; см. limitations."
+    },
+    {
+      "file": "frame_main_selected.png",
+      "status": "PASS",
+      "sha256": "3f4e52d9fd625d309adca666ef0ca24a18064239c4430120cd6a4bae1b917526",
+      "pixels": [
+        876,
+        753
+      ],
+      "individually_viewed_original_png": true,
+      "matches_artifact_manifest": true,
+      "identical_to_ci211": true,
+      "observation": "В полном bitmap виден запрет автоматического расчёта исторического пилота и все нижние кнопки. Размещение всего HWND главного окна в WorkingArea данным снимком не доказано; см. limitations."
+    }
+  ],
+  "prior_comparison": {
+    "run_number": 211,
+    "review": "docs/mounting_assessment_0110/legacy_ui_visual_review_ci211.json",
+    "images_identical": 10,
+    "images_compared": 10,
+    "conclusion": "Все 10 PNG совпадают байт в байт с CI211. Различий отображения относительно предыдущего подтверждённого прогона нет; отмеченные ниже границы доказательства относятся и к предыдущему этапу, а не являются новым дефектом 2Б5."
+  },
+  "limitations": [
+    "Проверен полный bitmap окон и сохранённые native bounds диалога каталога. DrawToBitmap не является снимком всего рабочего стола и может включать участки за границей видимого экрана.",
+    "Снимки FrameForm имеют 876×753 пикселя, тогда как WorkingArea, сохранённая для диалога каталога в том же прогоне, составляет 1024×728. Probe не записывает native bounds именно FrameForm; доступность всех его кнопок на реальном экране этим набором не подтверждена. Эта форма в 2Б5 не изменялась, оба её PNG идентичны CI211.",
+    "Длинные исполнения в закрытых ComboBox частично скрыты шириной контрола; полные названия прочитаны в прокручиваемой панели источника.",
+    "Пройденный нативный WinForms-стенд и просмотр изображений не заменяют живую проверку внутри AutoCAD."
+  ],
+  "live_autocad_checked": false,
+  "conclusion": "Все 10 фактических оригинальных PNG индивидуально просмотрены. В пределах полного bitmap отсутствуют перекрытые нижние действия; каталог сохраняет видимость кнопок при минимальном размере и шрифте 12 pt. PASS ограничен перечисленной областью проверки; native экран главного FrameForm не объявляется подтверждённым."
+}

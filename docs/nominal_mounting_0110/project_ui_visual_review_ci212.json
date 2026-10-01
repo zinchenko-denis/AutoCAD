@@ -1,0 +1,230 @@
+{
+  "status": "PASS",
+  "head_sha": "b35a5149adfcd42907d4974ac61ef997fd279a59",
+  "run_number": 212,
+  "run_id": 36878556165,
+  "reviewer": "catalog_manual",
+  "reviewed_count": 11,
+  "method": "Each of the 11 actual CI212 PNGs was opened through view_image(detail=original) and visually inspected. Results are based on this fresh review, not inherited from the prior CI211 receipt or inferred from automated checks.",
+  "native_ui_checks": {
+    "manifest": "project_parameters_ui_results/manifest.json",
+    "manifest_sha256": "337a1649b532ab1f83065533ef944b27f2b56030da2293a140df8451dbb2acbf",
+    "status": "PASS",
+    "checks": 1730,
+    "failures": 0,
+    "reasons": [],
+    "layouts": [
+      {
+        "scenario": "project_filled",
+        "window": "{X=10,Y=10,Width=916,Height=689}",
+        "native_client": "{X=18,Y=41,Width=900,Height=650}",
+        "cached_client": "{X=0,Y=0,Width=900,Height=650}",
+        "screen": "{X=0,Y=0,Width=1024,Height=728}",
+        "font_points": 9,
+        "minimum_size": "{Width=760, Height=530}"
+      },
+      {
+        "scenario": "project_review",
+        "window": "{X=10,Y=10,Width=916,Height=689}",
+        "native_client": "{X=18,Y=41,Width=900,Height=650}",
+        "cached_client": "{X=0,Y=0,Width=900,Height=650}",
+        "screen": "{X=0,Y=0,Width=1024,Height=728}",
+        "font_points": 9,
+        "minimum_size": "{Width=760, Height=530}"
+      },
+      {
+        "scenario": "zone_overrides",
+        "window": "{X=10,Y=10,Width=916,Height=689}",
+        "native_client": "{X=18,Y=41,Width=900,Height=650}",
+        "cached_client": "{X=0,Y=0,Width=900,Height=650}",
+        "screen": "{X=0,Y=0,Width=1024,Height=728}",
+        "font_points": 9,
+        "minimum_size": "{Width=760, Height=530}"
+      },
+      {
+        "scenario": "zone_review",
+        "window": "{X=10,Y=10,Width=916,Height=689}",
+        "native_client": "{X=18,Y=41,Width=900,Height=650}",
+        "cached_client": "{X=0,Y=0,Width=900,Height=650}",
+        "screen": "{X=0,Y=0,Width=1024,Height=728}",
+        "font_points": 9,
+        "minimum_size": "{Width=760, Height=530}"
+      },
+      {
+        "scenario": "zone_detach_review",
+        "window": "{X=10,Y=10,Width=916,Height=689}",
+        "native_client": "{X=18,Y=41,Width=900,Height=650}",
+        "cached_client": "{X=0,Y=0,Width=900,Height=650}",
+        "screen": "{X=0,Y=0,Width=1024,Height=728}",
+        "font_points": 9,
+        "minimum_size": "{Width=760, Height=530}"
+      },
+      {
+        "scenario": "zone_small",
+        "window": "{X=10,Y=10,Width=760,Height=530}",
+        "native_client": "{X=18,Y=41,Width=744,Height=491}",
+        "cached_client": "{X=0,Y=0,Width=744,Height=491}",
+        "screen": "{X=0,Y=0,Width=1024,Height=728}",
+        "font_points": 9,
+        "minimum_size": "{Width=760, Height=530}"
+      },
+      {
+        "scenario": "zone_large_font",
+        "window": "{X=0,Y=0,Width=1024,Height=728}",
+        "native_client": "{X=8,Y=31,Width=1008,Height=689}",
+        "cached_client": "{X=0,Y=0,Width=1008,Height=689}",
+        "screen": "{X=0,Y=0,Width=1024,Height=728}",
+        "font_points": 12,
+        "minimum_size": "{Width=973, Height=726}"
+      },
+      {
+        "scenario": "zone_large_font_review",
+        "window": "{X=0,Y=0,Width=1024,Height=728}",
+        "native_client": "{X=8,Y=31,Width=1008,Height=689}",
+        "cached_client": "{X=0,Y=0,Width=1008,Height=689}",
+        "screen": "{X=0,Y=0,Width=1024,Height=728}",
+        "font_points": 12,
+        "minimum_size": "{Width=973, Height=726}"
+      },
+      {
+        "scenario": "bound_group_origins",
+        "window": "{X=10,Y=10,Width=916,Height=689}",
+        "native_client": "{X=18,Y=41,Width=900,Height=650}",
+        "cached_client": "{X=0,Y=0,Width=900,Height=650}",
+        "screen": "{X=0,Y=0,Width=1024,Height=728}",
+        "font_points": 9,
+        "minimum_size": "{Width=760, Height=530}"
+      },
+      {
+        "scenario": "bound_group_large_font",
+        "window": "{X=0,Y=0,Width=1024,Height=728}",
+        "native_client": "{X=8,Y=31,Width=1008,Height=689}",
+        "cached_client": "{X=0,Y=0,Width=1008,Height=689}",
+        "screen": "{X=0,Y=0,Width=1024,Height=728}",
+        "font_points": 12,
+        "minimum_size": "{Width=973, Height=726}"
+      },
+      {
+        "scenario": "bound_atframe",
+        "window": "{X=0,Y=39,Width=916,Height=689}",
+        "native_client": "{X=8,Y=70,Width=900,Height=650}",
+        "cached_client": "{X=0,Y=0,Width=900,Height=650}",
+        "screen": "{X=0,Y=0,Width=1024,Height=728}",
+        "font_points": 9,
+        "minimum_size": "{Width=760, Height=530}"
+      }
+    ]
+  },
+  "reviewed_files": [
+    {
+      "file": "project_parameters_ui_results/bound_atframe.png",
+      "sha256": "c9c43601ed31a9d42f685a575a2ff5129530fb5bd35a8201898e9287ffa6f15a",
+      "width_px": 916,
+      "height_px": 689,
+      "status": "PASS",
+      "findings": [],
+      "observation": "Окно просмотра привязанных параметров: происхождение полей и пояснение ATFRAME читаемы, кнопка «Закрыть» видна целиком. Нижняя часть содержимого остаётся в области с полосой прокрутки и не перекрывает панель кнопок."
+    },
+    {
+      "file": "project_parameters_ui_results/bound_group_large_font.png",
+      "sha256": "f71bd0ac71e1600a2f649e97550e17553462aa6196655cc010aec841a5ffcba4",
+      "width_px": 1024,
+      "height_px": 728,
+      "status": "PASS",
+      "findings": [],
+      "observation": "При шрифте 12 pt окно целиком помещается в кадр 1024×728. Количества зон по происхождению переносятся, поля и нижняя кнопка читаемы. Верхние и нижние строки содержимого частично скрыты внутри прокрученной области, не границами самого окна."
+    },
+    {
+      "file": "project_parameters_ui_results/bound_group_origins.png",
+      "sha256": "1ed664f2ab9b721750664bcd55a5eb39b7af3eecb7671aa61d3513ce34f36a62",
+      "width_px": 916,
+      "height_px": 689,
+      "status": "PASS",
+      "findings": [],
+      "observation": "Видны количества зон с проектными, собственными и незаданными значениями. Прокрученная форма, сообщение о режиме просмотра и «Закрыть» разделены, наложений нет."
+    },
+    {
+      "file": "project_parameters_ui_results/project_filled.png",
+      "sha256": "01f152a7a3f1dbab773ec651cc45e3250f197195bd4f5af96bf643fc65221202",
+      "width_px": 916,
+      "height_px": 689,
+      "status": "PASS",
+      "findings": [],
+      "observation": "Заполненные размеры КР2/УК/ГП и необязательные параметры читаемы. Пояснение о проектных размерах b/c и запрете автоподбора видно; источник расположен в прокручиваемой области. Обе нижние кнопки целиком видны."
+    },
+    {
+      "file": "project_parameters_ui_results/project_review.png",
+      "sha256": "e0bdf8a0ae9c5fcc95ae8b9cd0540ffab9ee597a7f3f4dddbd67173881f580b2",
+      "width_px": 916,
+      "height_px": 689,
+      "status": "PASS",
+      "findings": [],
+      "observation": "Обзор создания проекта читаем, переносы сохранены. Выделенный текст различим, инженерные ограничения и отсутствие автоматической привязки зон видны. Кнопки «Назад», «Сохранить проект», «Отмена» не обрезаны."
+    },
+    {
+      "file": "project_parameters_ui_results/zone_detach_review.png",
+      "sha256": "aa952ce02bfb0b6d3d14a046b19277a1e4fc9e68ee8b908598f08727c7211a35",
+      "width_px": 916,
+      "height_px": 689,
+      "status": "PASS",
+      "findings": [],
+      "observation": "Текст снятия привязки и последствия для прежнего результата читаемы. Сообщение, что наследованные параметры не становятся локальными автоматически, видно. Все три нижние кнопки в кадре."
+    },
+    {
+      "file": "project_parameters_ui_results/zone_large_font.png",
+      "sha256": "7bbed570b4ccab9b7d902e8206b7834ccecd894b6fc84a27cdc45ddc837fa7ec",
+      "width_px": 1024,
+      "height_px": 728,
+      "status": "PASS",
+      "findings": [],
+      "observation": "При шрифте 12 pt флажки «Своё значение», происхождение и пояснение читаемы. Область содержания имеет вертикальную прокрутку; нижняя поясняющая панель и все кнопки помещаются в кадр 1024×728."
+    },
+    {
+      "file": "project_parameters_ui_results/zone_large_font_review.png",
+      "sha256": "50777187215e2fd3b5a2b94eb7c090961d749ed0a77d10c722280e1e471b7008",
+      "width_px": 1024,
+      "height_px": 728,
+      "status": "PASS",
+      "findings": [],
+      "observation": "Обзор при шрифте 12 pt читаем, различимы отсутствие изменений и сохранение редакции привязки. Три нижние кнопки полностью видны, текст не накладывается на панели."
+    },
+    {
+      "file": "project_parameters_ui_results/zone_overrides.png",
+      "sha256": "5bf093b91d4e0abe2c1e143cbe8763d0afada3168d92da0b7ae53c41f5310253",
+      "width_px": 916,
+      "height_px": 689,
+      "status": "PASS",
+      "findings": [],
+      "observation": "Виден явный пустой вынос: установлен флажок «Своё значение» и показано «В зоне не задано». Верхняя инструкция, видимые поля, пояснение и нижние кнопки читаемы; продолжение формы доступно в прокручиваемой области."
+    },
+    {
+      "file": "project_parameters_ui_results/zone_review.png",
+      "sha256": "4b3a008b8c0821cef592f3a18c94f35bfd3f94419a161ecc818c0adeebe76ff9",
+      "width_px": 916,
+      "height_px": 689,
+      "status": "PASS",
+      "findings": [],
+      "observation": "Обзор отличает своё значение полки b от наследуемого и явную очистку необязательных полей. Предупреждение о полном построении ATFRAME видно. Текст и кнопки не обрезаны."
+    },
+    {
+      "file": "project_parameters_ui_results/zone_small.png",
+      "sha256": "d94b6f44d794178aace6dbc4a79b720b83b779d46e21e451cfada6d76c0b5bf8",
+      "width_px": 760,
+      "height_px": 530,
+      "status": "PASS",
+      "findings": [],
+      "observation": "Малое окно 760×530: верхняя инструкция переносится, видимые флажки и числа читаемы. Есть вертикальная полоса прокрутки; «Снять привязку», «Проверить изменения», «Отмена» целиком помещаются."
+    }
+  ],
+  "findings": [],
+  "observations": [
+    "В закрытых списках длинные названия исполнений видны лишь в пределах ширины поля; раскрытые списки на этих снимках не проверялись. Это отмеченная граница статического просмотра, а не подтверждение показа каждого длинного названия целиком.",
+    "Частично видимые строки у верхнего и нижнего края прокрученных форм находятся внутри области с полосой прокрутки. Панели сообщений и кнопки не обрезаны границами окна."
+  ],
+  "scope": "Visible layout, readability and scaling of project, zone and bound ATFRAME parameter windows in the native Windows CI harness.",
+  "limitations": [
+    "Статические PNG не проверяют взаимодействие с AutoCAD, сохранение DWG, клавиатурную навигацию или фактическую прокрутку.",
+    "Указанные 1730 автоматических проверок взяты из манифеста Windows UI и отделены от независимого визуального просмотра; этот протокол не объявляет итог всех продуктовых проверок."
+  ],
+  "live_autocad": false
+}

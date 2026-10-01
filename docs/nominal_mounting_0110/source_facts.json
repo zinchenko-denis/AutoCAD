@@ -504,5 +504,6 @@
     "album_analysis.json": "28664af1f33200a58b12af41d1aee5f941c19195e4056ace2143b66531253c31",
     "calc_analysis.md": "5d7c74b04baa386c8eb1ea3acab7829dbf758ae03ef4c756c809af3c9172b1f0",
     "calc_analysis.json": "91fa9536989f104e7bec3a0e67e6be07c4cc30f2c371259ec1ce08551d4d93d1"
-  }
+  },
+  "verification_status": "LOCAL_AND_WINDOWS_CI_UI_PASS"
 }

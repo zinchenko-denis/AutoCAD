@@ -1,9 +1,9 @@
 {
-  "status": "LOCAL_PASS_WINDOWS_CI_UI_PENDING",
+  "status": "LOCAL_AND_WINDOWS_CI_UI_PASS",
   "date_utc": "2026-10-01",
   "branch": "feat/auto-reactor",
   "base_commit": "7db1a937ac2da47f949bcca08e03dffd6090c0f0",
-  "product_commit": null,
+  "product_commit": "b35a5149adfcd42907d4974ac61ef997fd279a59",
   "scope": "2Б5: nominal mounting datums from the same existing Vector-1 2015 album; signed UK chain remains unresolved; no new sources or adjustment approval",
   "input_sha256_file": "input_sha256.json",
   "input_files_count": 251,
@@ -18,15 +18,26 @@
     "rollback_failure_points": 54,
     "independent_review": "PASS_AFTER_TEST_ANCHOR_CORRECTION",
     "tutorial_replays": 5,
-    "windows_ci": "PENDING",
-    "windows_ui": "PENDING"
+    "windows_ci": "PASS",
+    "windows_ui": "PASS",
+    "windows_run_number": 212,
+    "windows_ui_checks": 535,
+    "reviewed_png": 36
   },
   "performance": {
     "new_cad_reads": 0,
     "modelspace_scans": 0,
     "cad_report": "cad.json",
     "assessment": "O(1) new nominal calculations, 4 immutable datums; existing clone/validation/hash linear in selected fields/layers; no runtime files/network/Python",
-    "live_autocad_timing_verified": false
+    "live_autocad_timing_verified": false,
+    "cad_reads_per_check": 62,
+    "own_primitive_visits_per_check": 47,
+    "scale_checks": [
+      1,
+      100,
+      1000
+    ],
+    "additional_reads_with_10000_unrelated_entities": 0
   },
   "guide": {
     "manual": "docs/facades_beginner_3009/Facades_Beginner_Manual_30.09.docx",
@@ -62,5 +73,6 @@
   "live_autocad_checked": false,
   "release_published": false,
   "prior_release": "build-104",
-  "main_changed": false
+  "main_changed": false,
+  "validated_commit": "b35a5149adfcd42907d4974ac61ef997fd279a59"
 }

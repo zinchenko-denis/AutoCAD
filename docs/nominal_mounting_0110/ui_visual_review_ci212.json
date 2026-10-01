@@ -1,0 +1,236 @@
+{
+  "schema": "facade_nominal_mounting_ui_visual_review/1",
+  "date": "2026-10-01",
+  "status": "PASS",
+  "source_commit": "b35a5149adfcd42907d4974ac61ef997fd279a59",
+  "workflow": "check",
+  "run_number": 212,
+  "run_id": 36878556165,
+  "artifact": "node-geometry",
+  "artifact_subdirectory": "node_geometry_ui_results",
+  "review_method": "Every one of the 15 downloaded original PNG files was individually opened with view_image(detail=original). No reconstructed screenshots, contact sheet replacements or browser-generated substitutions were used.",
+  "originals_reviewed": 15,
+  "expected_originals": 15,
+  "native_checks": {
+    "status": "PASS",
+    "checks": 535,
+    "failures": 0,
+    "reasons": []
+  },
+  "artifact_manifest_sha256": "d226bcce9afb9d2e39754103cf80040280be7591815f844694aed18238149e20",
+  "ui_checks_json_sha256": "0b07f172566ed0fb1f2404b41cc34a8dc7c642da5858c7ebbccde86689daf432",
+  "render_hashes_match_artifact_manifest": true,
+  "findings": [],
+  "closed_review_finding": {
+    "id": "nominal_UI_scroll_anchor",
+    "description": "The old trailing-dot search string no longer matched the amended partial-confirmation heading. The current screenshot node_mounting_requirements.png visibly starts at the corrected section 1 heading.",
+    "status": "FIX_CONFIRMED_VISUALLY"
+  },
+  "scope_limits": [
+    "Native Windows WinForms probe screenshots; not a live AutoCAD session.",
+    "A screenshot shows one scroll position. All 15 supplied images were reviewed; lower content beyond a viewport is not claimed visible in that particular image.",
+    "Partial last lines at scrollable viewport edges are normal viewport clipping, not evidence of missing report text.",
+    "This visual review does not establish mounting suitability, permitted overlap/travel, structural capacity or a completed dynamic node."
+  ],
+  "live_autocad_checked": false,
+  "images": [
+    {
+      "file": "node_blank.png",
+      "sha256": "4794f71f1aa4c41b281006cefa817a245785c6d172c0be5bc5c969f6e704d0df",
+      "width_px": 916,
+      "height_px": 689,
+      "status": "PASS",
+      "original_image_visually_reviewed": true,
+      "observations_ru": [
+        "Поле ближайшей поверхности ГП пустое; поверхность для проверки не задана; поле мембраны выключено.",
+        "Параметры зоны и ограничения читаются; форма имеет вертикальную прокрутку, кнопки полностью видны; вставка выключена."
+      ]
+    },
+    {
+      "file": "node_partial.png",
+      "sha256": "b661e72906e7bf509b848a888c0335adbf3511b54a2feddb08fcadbea8553d6e",
+      "width_px": 916,
+      "height_px": 689,
+      "status": "PASS",
+      "original_image_visually_reviewed": true,
+      "observations_ru": [
+        "Видно, что координата ГП и поверхность проверки не заданы; локальная проверка не выполнена.",
+        "Разрешена только явно названная частичная размерная схема; монтажная пригодность не подтверждена.",
+        "Номинальные базы и символ h видны в отдельном отчёте, без назначения численного положения УК."
+      ]
+    },
+    {
+      "file": "node_valid.png",
+      "sha256": "5aaa3062eb771f13868323d028b65777a9500aa3ba808d87584f07a5729f7b5e",
+      "width_px": 916,
+      "height_px": 689,
+      "status": "PASS",
+      "original_image_visually_reviewed": true,
+      "observations_ru": [
+        "ГП x=170 мм, слои 100+50 мм и локальный просвет 20 мм показаны отдельными строками.",
+        "Успех локального просвета отделён от неподтверждённого монтажа; кнопка вставки схемы доступна.",
+        "Номинальные базы x=0/2/2/202 мм и тождество 302 мм − h читаются, постоянная часть не названа выносом сборки."
+      ]
+    },
+    {
+      "file": "node_mounting_members.png",
+      "sha256": "716a14f0ebce9163e5b0fdc153308721a6fd9da7e863697f268173097db5630d",
+      "width_px": 916,
+      "height_px": 689,
+      "status": "PASS",
+      "original_image_visually_reviewed": true,
+      "observations_ru": [
+        "Прокрутка открывает заголовок заявленных изделий; КР2 L200, УК L100 и выбранный ГП читаются.",
+        "Историческая номенклатура отделена от проектных b/c ГП.",
+        "Две зависимости частично подтверждены; ниже перехлёст остаётся неподтверждённым для пилота."
+      ]
+    },
+    {
+      "file": "node_mounting_nominal.png",
+      "sha256": "393674c67115531b0f0951c147152b3c38725e5740bc4fcd2d8c7770a6abe90d",
+      "width_px": 916,
+      "height_px": 689,
+      "status": "PASS",
+      "original_image_visually_reviewed": true,
+      "observations_ru": [
+        "Заголовок номинальных баз, четыре координаты и первичные листы/PDF читаются.",
+        "Формула пятки УК содержит неизвестный h и определение знаковой разности; следующий текст не допускает вывода хода или численного положения.",
+        "Все четыре условия номинальной схемы видны, включая дополнительную подкладку, допуски и отсутствие автоматической совместимости номинала 85."
+      ]
+    },
+    {
+      "file": "node_mounting_requirements.png",
+      "sha256": "2bc9ad5cea330c4112b2eb4058f554ed9c70a02b5426e8254aad71b9c565ebf2",
+      "width_px": 916,
+      "height_px": 689,
+      "status": "PASS",
+      "original_image_visually_reviewed": true,
+      "observations_ru": [
+        "Исправленный UI-локатор фактически открывает начало пункта 1: основание — монтажная база КР2 — частично подтверждено.",
+        "Первые две зависимости отделены от неподтверждённых перехлёста, отверстий и посадки.",
+        "min30 показан как факт других узлов с PDF34/37/44/46; перенос на пилот и допустимый ход не подтверждаются."
+      ]
+    },
+    {
+      "file": "node_rejected.png",
+      "sha256": "c2acc113e90a6893a25c97901528575238a79cd63e9989dcdcb8e08d22b50dee",
+      "width_px": 916,
+      "height_px": 689,
+      "status": "PASS",
+      "original_image_visually_reviewed": true,
+      "observations_ru": [
+        "ГП 169.999 мм даёт локальный просвет 19.999 мм; несоблюдение минимума показано без округления до проходного значения.",
+        "Вставка запрещена, соответствующая кнопка выключена, красное сообщение читается.",
+        "Номинальная диагностика присутствует, но не снимает отказ размерной схемы."
+      ]
+    },
+    {
+      "file": "node_exact_boundary.png",
+      "sha256": "341583e30abdb9d550ee2daa6db83810ea4e4a2244fcb6296de03105c3373a37",
+      "width_px": 916,
+      "height_px": 689,
+      "status": "PASS",
+      "original_image_visually_reviewed": true,
+      "observations_ru": [
+        "Длинное десятичное значение непосредственно ниже границы и просвет 19.99999999999997 мм остаются читаемыми; минимум 20 мм не считается соблюдённым.",
+        "Кнопка вставки выключена; отказ показан и в размерной части, и в монтажном отчёте."
+      ]
+    },
+    {
+      "file": "node_membrane.png",
+      "sha256": "b993bcdf169034909818793f3fdb9d27546dde20a50967853c2f893b549ba8b4",
+      "width_px": 916,
+      "height_px": 689,
+      "status": "PASS",
+      "original_image_visually_reviewed": true,
+      "observations_ru": [
+        "Отдельно видны ГП 190 мм, мембрана 170 мм и просвет 20 мм; просвет не подменён толщиной слоёв.",
+        "Номинальная база КР2 остаётся 202 мм; перемена заявленной поверхности ГП не назначает координату УК.",
+        "Монтажный статус остаётся неподтверждённым; кнопки полностью видны."
+      ]
+    },
+    {
+      "file": "node_small.png",
+      "sha256": "50d1f3ce397d5780ee2b1474d99bb08e6ae7489a8f73bd1665727fbe14a7bc8b",
+      "width_px": 760,
+      "height_px": 530,
+      "status": "PASS",
+      "original_image_visually_reviewed": true,
+      "observations_ru": [
+        "Минимальное окно 760×530: поля ГП и поверхности проверки не перекрываются, ширина формы не требует горизонтальной прокрутки.",
+        "Внешний вертикальный скролл доступен; сообщение и три кнопки читаются, вставка до проверки выключена."
+      ]
+    },
+    {
+      "file": "node_mounting_small.png",
+      "sha256": "2c840fff02bc263ab107259cb0c0fda2c0c1d2fd75f650b0403045827a0edf2b",
+      "width_px": 760,
+      "height_px": 530,
+      "status": "PASS",
+      "original_image_visually_reviewed": true,
+      "observations_ru": [
+        "В минимальном окне заголовок номинальных баз и все четыре координаты доступны.",
+        "Длинные строки формулы и источников переносятся по ширине; неопределённость h/УК/хода и условия прилегания читаются.",
+        "Статус локальной проверки и кнопки остаются видимыми вне прокручиваемого текста."
+      ]
+    },
+    {
+      "file": "node_large_font.png",
+      "sha256": "ae1f70279f147db6b1a8f9de0329cad46d15eaab8ea8959944ad611db5e59214",
+      "width_px": 1024,
+      "height_px": 728,
+      "status": "PASS",
+      "original_image_visually_reviewed": true,
+      "observations_ru": [
+        "При шрифте 12 pt форма помещается в рабочую область; подписи и ввод ГП/поверхности проверки не пересекаются.",
+        "Вертикальная прокрутка основной формы доступна; кнопки полностью видимы, вставка до проверки выключена."
+      ]
+    },
+    {
+      "file": "node_large_font_review.png",
+      "sha256": "54a8f61cc264e312a0b8a27ab03a322aeeb91a7bb38538f5ca89df2054eb7e10",
+      "width_px": 1024,
+      "height_px": 728,
+      "status": "PASS",
+      "original_image_visually_reviewed": true,
+      "observations_ru": [
+        "Увеличенный текст обзора читается; строки проекта, размерной схемы и ограничений раздельны.",
+        "Локальные 20 мм и неподтверждённая монтажная пригодность одновременно видны; кнопки не обрезаны."
+      ]
+    },
+    {
+      "file": "node_mounting_tail_large_font.png",
+      "sha256": "1e1387ad79e955a4dcc8c1ea27b73a65b71c6003265d205c8157b124ad60e704",
+      "width_px": 1024,
+      "height_px": 728,
+      "status": "PASS",
+      "original_image_visually_reviewed": true,
+      "observations_ru": [
+        "Хвост отчёта реально прокручен в область просмотра при шрифте 12 pt; пункты 6/7 и их источники читаются.",
+        "Различены min30 для У2/У и min30 для КР2–УК других типов; перенос на 4.2.1 явно не подтверждён.",
+        "Неподвижность/подвижность, прочность, анкеровка и историческая номенклатура остаются ограничениями; последняя строка и кнопки полностью видны."
+      ]
+    },
+    {
+      "file": "node_contradiction.png",
+      "sha256": "8295e105c53ba822545342d84e17fd8fc01d1f756c72d1ce3697bee4fb1827a3",
+      "width_px": 916,
+      "height_px": 689,
+      "status": "PASS",
+      "original_image_visually_reviewed": true,
+      "observations_ru": [
+        "Видны слои 150+50 мм и наружная облицовка 180 мм; противоречие плоскостей x200/x180 сформулировано численно.",
+        "Проверка просвета не выполнена, вставка запрещена; кнопка выключена и красное сообщение доступно.",
+        "Номинальный отчёт не снимает отказ и не меняет заявленные плоскости."
+      ]
+    }
+  ],
+  "additional_root_review": {
+    "status": "PASS",
+    "method": "Viewed original Windows artifact PNGs; nominal formulas, explicit unknown h, conditions, status and bottom controls readable.",
+    "images": [
+      "node_mounting_nominal.png",
+      "node_mounting_small.png"
+    ]
+  }
+}
