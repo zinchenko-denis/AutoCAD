@@ -1,0 +1,33 @@
+{
+  "status": "REPRODUCED",
+  "live_autocad_checked": false,
+  "product_state": "Uncommitted 2B2 implementation before adapter fix; exact source hashes below",
+  "scope": "Actual FrameProjectOperation with actual project store and explicit host/geometry doubles; adapter-contract reproduction, no live AutoCAD claim",
+  "issue": "Bound ATFRAME prewrite can accept unchanged raw binding while fresh canonical geometry verification has a changed fingerprint",
+  "sequence": [
+    "Observe bound canonical owner and its validated fingerprint",
+    "Keep parameter Xrecord unchanged",
+    "Return a different fingerprint from fresh ZoneGeometryGuard",
+    "VerifyFresh unexpectedly accepts before the fix"
+  ],
+  "cases": [
+    {
+      "name": "actual bound prewrite guard revalidates fresh canonical geometry despite unchanged binding record",
+      "status": "FAIL",
+      "reason": "fresh geometry changed without parameter mutation: expected refusal"
+    }
+  ],
+  "checks": 33,
+  "source_sha256": {
+    "tools/project_params_0110/command_doubles.cs": "cdbdfca646fc02088babf38a582313331af84642ae52cf51fd4541cf175b0c1d",
+    "tools/project_params_0110/CommandIntegrationProbe.cs": "9d716ab8fde46b62edb02b029ae1ebdc4c1ed99ef0892880c91af6cff6e8ef7c",
+    "Common/FacadeProjectParameterStore.cs": "71c1c2283e260514ee633c525fb8174b0e155b8e595c6433c021dcec847b948e",
+    "AFrame/src/AFramePlugin/FrameProjectParameters.cs": "612c46eabcb1c7c80c86e5a3e0fed2153a809b8f2b1734b1e9b596e2e26ec7f1",
+    "AFrame/src/AFramePlugin/FrameSolutionSelection.cs": "129f4f526e00b410433ab5c3e07f0df5e39449d68a880855c8ee66c4dc0a3e10",
+    "AFrame/src/AFramePlugin/FrameSettings.cs": "a44273b52d3ee92407d5dfc98315d6750d3aa57b7259cc2b98e4432757198cda",
+    "AFrame/src/AFramePlugin/FrameProjectCommand.cs": "9fbe6e05af983bcb4c1d88cf2ffbf2775a3df8d50820a395dd25d4cca71810b1",
+    "tools/project_params_0110/native_store_cad.cs": "242cebc40726091ec45506606140b37f37cb01866f0bbdd4b188eda1e3e5d047",
+    "tools/project_params_0110/test_integration.py": "085c1d3a355137c4c44e91a390c9c23c4f2333b634ca5a61209562ce3b0db880",
+    "AFrame/src/AFramePlugin/FrameCommand.cs": "944d50dc7db753b931437691ca116a5cb6b07f6e84a7507265936b535274ad80"
+  }
+}

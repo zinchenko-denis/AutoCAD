@@ -136,7 +136,8 @@ namespace AFramePlugin
         }
 
         internal void Store(Transaction tr, Database db, IEnumerable<Entity> carriers,
-            FacadeQuantityStore.FrameSources sources, ISet<string> erasedHandles)
+            FacadeQuantityStore.FrameSources sources, ISet<string> erasedHandles,
+            FacadeProjectParameterStore.ReadContext projectReads = null)
         {
             CheckCancel();
             if (unavailable == null)
@@ -182,7 +183,13 @@ namespace AFramePlugin
             if (unavailable != null)
                 FacadeQuantityStore.MarkFrameUnavailable(tr, db, carriers, unavailable);
             else
-                FacadeQuantityStore.StoreFrame(tr, db, carriers, report, sources);
+                FacadeQuantityStore.StoreFrame(tr, db, carriers, report, sources, projectReads);
+        }
+
+        internal void SetProjectParameters(Dictionary<string, object> snapshot)
+        {
+            if (snapshot == null || report == null) throw new InvalidOperationException("Нет снимка параметров проекта для ведомости.");
+            report.parameters["project_parameters_snapshot"] = snapshot;
         }
 
         // Expected visibility mapping is resolved once per base definition and

@@ -1,0 +1,551 @@
+{
+  "initial_results": [
+    {
+      "name": "Facades_test_facade_zones",
+      "cwd": "Facades/engine",
+      "arguments": [
+        "test_facade_zones.py"
+      ],
+      "returncode": 0,
+      "seconds": 0.1
+    },
+    {
+      "name": "Facades_test_facades_engine",
+      "cwd": "Facades/engine",
+      "arguments": [
+        "test_facades_engine.py"
+      ],
+      "returncode": 0,
+      "seconds": 0.153
+    },
+    {
+      "name": "AClad_test_cladding_plan",
+      "cwd": "AClad/engine",
+      "arguments": [
+        "test_cladding_plan.py"
+      ],
+      "returncode": 0,
+      "seconds": 0.031
+    },
+    {
+      "name": "AClad_test_clad_engine",
+      "cwd": "AClad/engine",
+      "arguments": [
+        "test_clad_engine.py"
+      ],
+      "returncode": 0,
+      "seconds": 0.09
+    },
+    {
+      "name": "AClad_test_tile_pattern",
+      "cwd": "AClad/engine",
+      "arguments": [
+        "test_tile_pattern.py"
+      ],
+      "returncode": 0,
+      "seconds": 0.661
+    },
+    {
+      "name": "AClad_audit_clad",
+      "cwd": "AClad/engine",
+      "arguments": [
+        "audit_clad.py"
+      ],
+      "returncode": 0,
+      "seconds": 0.166
+    },
+    {
+      "name": "AFrame_test_frame_plan",
+      "cwd": "AFrame/engine",
+      "arguments": [
+        "test_frame_plan.py"
+      ],
+      "returncode": 0,
+      "seconds": 0.283
+    },
+    {
+      "name": "AFrame_test_frame_calc",
+      "cwd": "AFrame/engine",
+      "arguments": [
+        "test_frame_calc.py"
+      ],
+      "returncode": 0,
+      "seconds": 0.021
+    },
+    {
+      "name": "AFrame_test_frame_engine",
+      "cwd": "AFrame/engine",
+      "arguments": [
+        "test_frame_engine.py"
+      ],
+      "returncode": 0,
+      "seconds": 0.056
+    },
+    {
+      "name": "AFrame_test_frame_rules",
+      "cwd": "AFrame/engine",
+      "arguments": [
+        "test_frame_rules.py"
+      ],
+      "returncode": 0,
+      "seconds": 0.075
+    },
+    {
+      "name": "AFrame_test_frame_topology",
+      "cwd": "AFrame/engine",
+      "arguments": [
+        "test_frame_topology.py"
+      ],
+      "returncode": 0,
+      "seconds": 0.074
+    },
+    {
+      "name": "AFrame_test_frame_topology_index",
+      "cwd": "AFrame/engine",
+      "arguments": [
+        "test_frame_topology_index.py"
+      ],
+      "returncode": 0,
+      "seconds": 3.896
+    },
+    {
+      "name": "AFrame_test_frame_connections",
+      "cwd": "AFrame/engine",
+      "arguments": [
+        "test_frame_connections.py"
+      ],
+      "returncode": 0,
+      "seconds": 0.136
+    },
+    {
+      "name": "AFrame_test_frame_solution_selection",
+      "cwd": "AFrame/engine",
+      "arguments": [
+        "test_frame_solution_selection.py"
+      ],
+      "returncode": 0,
+      "seconds": 0.119
+    },
+    {
+      "name": "AFrame_audit_frame",
+      "cwd": "AFrame/engine",
+      "arguments": [
+        "audit_frame.py"
+      ],
+      "returncode": 0,
+      "seconds": 0.398
+    },
+    {
+      "name": "xmod",
+      "cwd": ".",
+      "arguments": [
+        "tools/xmod_check.py",
+        "--no-fixture",
+        "--allow=X6"
+      ],
+      "returncode": 0,
+      "seconds": 0.061
+    },
+    {
+      "name": "frame_quick",
+      "cwd": ".",
+      "arguments": [
+        "AFrame/tools/frame_synth.py",
+        "--quick"
+      ],
+      "returncode": 0,
+      "seconds": 7.349
+    },
+    {
+      "name": "zones_quick",
+      "cwd": ".",
+      "arguments": [
+        "Facades/tools/zones_synth.py",
+        "--quick"
+      ],
+      "returncode": 0,
+      "seconds": 11.593
+    },
+    {
+      "name": "tile_quick",
+      "cwd": ".",
+      "arguments": [
+        "AClad/tools/attile_synth.py",
+        "--quick"
+      ],
+      "returncode": 0,
+      "seconds": 21.173
+    },
+    {
+      "name": "roles_quick",
+      "cwd": ".",
+      "arguments": [
+        "tools/roles_synth.py",
+        "--quick"
+      ],
+      "returncode": 0,
+      "seconds": 3.974
+    },
+    {
+      "name": "engine_contract",
+      "cwd": ".",
+      "arguments": [
+        "tools/engine_contract.py"
+      ],
+      "returncode": 0,
+      "seconds": 0.544
+    },
+    {
+      "name": "facade_regressions",
+      "cwd": ".",
+      "arguments": [
+        "tools/fixes_3009/run_facade_regressions.py",
+        "--out",
+        "/workspace/scratch/ba306982747c/project_params_verification/gates/regressions"
+      ],
+      "returncode": 0,
+      "seconds": 8.236
+    },
+    {
+      "name": "atr_topology",
+      "cwd": ".",
+      "arguments": [
+        "tools/atr_review_3009/vector1_topology.py"
+      ],
+      "returncode": 0,
+      "seconds": 0.05
+    },
+    {
+      "name": "atr_vector5",
+      "cwd": ".",
+      "arguments": [
+        "tools/atr_review_3009/vector5_contract_probe.py",
+        "--out",
+        "/workspace/scratch/ba306982747c/project_params_verification/gates/vector5"
+      ],
+      "returncode": 0,
+      "seconds": 0.686
+    },
+    {
+      "name": "atr_architecture",
+      "cwd": ".",
+      "arguments": [
+        "tools/atr_review_3009/architecture_probe.py",
+        "--out",
+        "/workspace/scratch/ba306982747c/project_params_verification/gates/architecture"
+      ],
+      "returncode": 0,
+      "seconds": 0.857
+    },
+    {
+      "name": "atr_mass",
+      "cwd": ".",
+      "arguments": [
+        "tools/atr_review_3009/vector5_mass_review.py",
+        "--evidence",
+        "/workspace/scratch/ba306982747c/project_params_verification/gates/architecture/evidence.json",
+        "--out",
+        "/workspace/scratch/ba306982747c/project_params_verification/gates/mass_review.json"
+      ],
+      "returncode": 0,
+      "seconds": 0.071
+    },
+    {
+      "name": "static_model_gap",
+      "cwd": ".",
+      "arguments": [
+        "tools/static_review_3009/reproduce_model_gap.py",
+        "--out",
+        "/workspace/scratch/ba306982747c/project_params_verification/gates/static_model_gap.json"
+      ],
+      "returncode": 0,
+      "seconds": 0.063
+    },
+    {
+      "name": "quantities_core",
+      "cwd": ".",
+      "arguments": [
+        "tools/quantities_3009/test_quantities_core.py",
+        "--out",
+        "/workspace/scratch/ba306982747c/project_params_verification/gates/quantities_core"
+      ],
+      "returncode": 0,
+      "seconds": 0.823
+    },
+    {
+      "name": "quantities_producer",
+      "cwd": ".",
+      "arguments": [
+        "tools/quantities_3009/test_cladding_producer.py",
+        "--out",
+        "/workspace/scratch/ba306982747c/project_params_verification/gates/quantities_producer"
+      ],
+      "returncode": 0,
+      "seconds": 2.518
+    },
+    {
+      "name": "quantities_table",
+      "cwd": ".",
+      "arguments": [
+        "tools/quantities_3009/test_cladding_table.py",
+        "--out",
+        "/workspace/scratch/ba306982747c/project_params_verification/gates/quantities_table"
+      ],
+      "returncode": 0,
+      "seconds": 0.966
+    },
+    {
+      "name": "quantities_store",
+      "cwd": ".",
+      "arguments": [
+        "tools/quantities_3009/test_quantity_store.py",
+        "--out",
+        "/workspace/scratch/ba306982747c/project_params_verification/gates/quantities_store"
+      ],
+      "returncode": 0,
+      "seconds": 3.303
+    },
+    {
+      "name": "frame_quantities_core",
+      "cwd": ".",
+      "arguments": [
+        "tools/frame_quantities_3009/test_frame_core.py",
+        "--out",
+        "/workspace/scratch/ba306982747c/project_params_verification/gates/frame_quantities_core"
+      ],
+      "returncode": 0,
+      "seconds": 0.78
+    },
+    {
+      "name": "frame_quantities_core_perf",
+      "cwd": ".",
+      "arguments": [
+        "tools/frame_quantities_3009/test_frame_core_perf.py",
+        "--quick",
+        "--out",
+        "/workspace/scratch/ba306982747c/project_params_verification/gates/frame_quantities_core_perf"
+      ],
+      "returncode": 0,
+      "seconds": 1.711
+    },
+    {
+      "name": "frame_quantities_producer",
+      "cwd": ".",
+      "arguments": [
+        "tools/frame_quantities_3009/test_frame_producer.py",
+        "--out",
+        "/workspace/scratch/ba306982747c/project_params_verification/gates/frame_quantities_producer"
+      ],
+      "returncode": 0,
+      "seconds": 3.73
+    },
+    {
+      "name": "frame_quantities_table",
+      "cwd": ".",
+      "arguments": [
+        "tools/frame_quantities_3009/test_frame_table.py",
+        "--out",
+        "/workspace/scratch/ba306982747c/project_params_verification/gates/frame_quantities_table"
+      ],
+      "returncode": 0,
+      "seconds": 0.988
+    },
+    {
+      "name": "frame_engine_perf",
+      "cwd": ".",
+      "arguments": [
+        "tools/frame_quantities_3009/test_frame_engine_perf.py",
+        "--targets",
+        "1000,3000",
+        "--out",
+        "/workspace/scratch/ba306982747c/project_params_verification/gates/frame_engine_perf"
+      ],
+      "returncode": 0,
+      "seconds": 0.405
+    },
+    {
+      "name": "quantities_store_perf",
+      "cwd": ".",
+      "arguments": [
+        "tools/quantities_3009/test_quantity_store_perf.py",
+        "--quick",
+        "--out",
+        "/workspace/scratch/ba306982747c/project_params_verification/gates/quantities_store_perf"
+      ],
+      "returncode": 0,
+      "seconds": 13.537
+    },
+    {
+      "name": "quantities_store_encoding",
+      "cwd": ".",
+      "arguments": [
+        "tools/frame_quantities_3009/test_store_encoding.py",
+        "--out",
+        "/workspace/scratch/ba306982747c/project_params_verification/gates/quantities_store_encoding"
+      ],
+      "returncode": 0,
+      "seconds": 0.878
+    },
+    {
+      "name": "manual_quantities_core",
+      "cwd": ".",
+      "arguments": [
+        "tools/manual_quantities_0110/test_manual_core.py",
+        "--out",
+        "/workspace/scratch/ba306982747c/project_params_verification/gates/manual_quantities_core"
+      ],
+      "returncode": 0,
+      "seconds": 0.909
+    },
+    {
+      "name": "manual_quantities_core_perf",
+      "cwd": ".",
+      "arguments": [
+        "tools/manual_quantities_0110/test_manual_core_perf.py",
+        "--quick",
+        "--out",
+        "/workspace/scratch/ba306982747c/project_params_verification/gates/manual_quantities_core_perf"
+      ],
+      "returncode": 0,
+      "seconds": 4.765
+    },
+    {
+      "name": "manual_quantities_cad",
+      "cwd": ".",
+      "arguments": [
+        "tools/manual_quantities_0110/test_manual_cad.py",
+        "--out",
+        "/workspace/scratch/ba306982747c/project_params_verification/gates/manual_quantities_cad"
+      ],
+      "returncode": 0,
+      "seconds": 2.124
+    },
+    {
+      "name": "manual_quantities_cad_perf",
+      "cwd": ".",
+      "arguments": [
+        "tools/manual_quantities_0110/test_manual_cad.py",
+        "--performance",
+        "--out",
+        "/workspace/scratch/ba306982747c/project_params_verification/gates/manual_quantities_cad_perf"
+      ],
+      "returncode": 1,
+      "seconds": 11.876
+    },
+    {
+      "name": "manual_quantities_output",
+      "cwd": ".",
+      "arguments": [
+        "tools/manual_quantities_0110/test_manual_output.py",
+        "--out",
+        "/workspace/scratch/ba306982747c/project_params_verification/gates/manual_quantities_output"
+      ],
+      "returncode": 0,
+      "seconds": 1.028
+    },
+    {
+      "name": "catalog_tutorial_examples",
+      "cwd": ".",
+      "arguments": [
+        "docs/facades_beginner_3009/replay_examples.py",
+        "--out",
+        "/workspace/scratch/ba306982747c/project_params_verification/gates/catalog_tutorial_examples.json"
+      ],
+      "returncode": 0,
+      "seconds": 0.168
+    },
+    {
+      "name": "solution_settings_contract",
+      "cwd": ".",
+      "arguments": [
+        "tools/solution_catalog_0110/test_settings_contract.py",
+        "--out",
+        "/workspace/scratch/ba306982747c/project_params_verification/gates/solution_settings_contract"
+      ],
+      "returncode": 0,
+      "seconds": 5.459
+    },
+    {
+      "name": "project_parameters_core",
+      "cwd": ".",
+      "arguments": [
+        "tools/project_params_0110/test_core.py",
+        "--out",
+        "/workspace/scratch/ba306982747c/project_params_verification/gates/project_parameters_core"
+      ],
+      "returncode": 0,
+      "seconds": 3.907
+    },
+    {
+      "name": "project_parameters_store",
+      "cwd": ".",
+      "arguments": [
+        "tools/project_params_0110/test_store_contract.py",
+        "--out",
+        "/workspace/scratch/ba306982747c/project_params_verification/gates/project_parameters_store"
+      ],
+      "returncode": 0,
+      "seconds": 9.032
+    },
+    {
+      "name": "project_parameters_integration",
+      "cwd": ".",
+      "arguments": [
+        "tools/project_params_0110/test_integration.py",
+        "--out",
+        "/workspace/scratch/ba306982747c/project_params_verification/gates/project_parameters_integration"
+      ],
+      "returncode": 0,
+      "seconds": 1.192
+    },
+    {
+      "name": "catalog_connection_store",
+      "cwd": ".",
+      "arguments": [
+        "tools/catalog_connections_0110/test_connection_store.py",
+        "--out",
+        "/workspace/scratch/ba306982747c/project_params_verification/gates/catalog_connection_store"
+      ],
+      "returncode": 0,
+      "seconds": 5.184
+    },
+    {
+      "name": "catalog_clamps_manual_boundary",
+      "cwd": ".",
+      "arguments": [
+        "tools/catalog_connections_0110/test_clamps_manual_boundary.py",
+        "--out",
+        "/workspace/scratch/ba306982747c/project_params_verification/gates/catalog_clamps_manual_boundary"
+      ],
+      "returncode": 0,
+      "seconds": 0.718
+    },
+    {
+      "name": "catalog_connection_table",
+      "cwd": ".",
+      "arguments": [
+        "tools/catalog_connections_0110/test_connection_table.py",
+        "--out",
+        "/workspace/scratch/ba306982747c/project_params_verification/gates/catalog_connection_table",
+        "--report",
+        "/workspace/scratch/ba306982747c/project_params_verification/gates/catalog_connection_store/independent_zones_report.json"
+      ],
+      "returncode": 0,
+      "seconds": 1.081
+    },
+    {
+      "name": "catalog_topology_performance",
+      "cwd": ".",
+      "arguments": [
+        "tools/catalog_connections_0110/reproduce_topology_performance.py",
+        "--out",
+        "/workspace/scratch/ba306982747c/project_params_verification/gates/catalog_topology_performance"
+      ],
+      "returncode": 0,
+      "seconds": 62.374
+    }
+  ],
+  "reason": "manual_quantities_cad_perf had 9/9 passing cases but sources_unchanged_during_run=false during concurrent review; entire mandatory suite repeated after source freeze",
+  "final_groups_passed": 52,
+  "live_autocad_checked": false
+}

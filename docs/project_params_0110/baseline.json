@@ -1,0 +1,153 @@
+{
+  "status": "REPRODUCED",
+  "observations": [
+    {
+      "name": "independent_snapshots_do_not_inherit",
+      "meaning": "Settings clone stores a full independent declaration; there is no project dependency.",
+      "reproduced": true,
+      "evidence": {
+        "changed_default_candidate": 320,
+        "prior_zone": 230
+      }
+    },
+    {
+      "name": "different_zone_values_refuse_as_different_solutions",
+      "meaning": "2B1 rejects the mixed selection; no override origin is available.",
+      "reproduced": true,
+      "evidence": {
+        "refusal": "Выбранные зоны имеют разные каталожные решения либо смешивают новый/старый каркас с явным выбором. Выберите однородную группу зон."
+      }
+    },
+    {
+      "name": "no_project_or_zone_parameter_contract",
+      "meaning": "Current settings expose a complete selection but no project/zone dependency or origin.",
+      "reproduced": true,
+      "evidence": {
+        "keys": [
+          "ask_corners",
+          "ask_floors",
+          "axes",
+          "axis_step",
+          "cladding",
+          "corner_zone",
+          "floor_step",
+          "height",
+          "mode",
+          "na_max",
+          "offset",
+          "profile",
+          "q_clad",
+          "rail_brand_clinker",
+          "rail_brand_concrete",
+          "rail_gap",
+          "rail_step_corner",
+          "row_step",
+          "signs",
+          "solution_selection",
+          "start_off",
+          "step_corner",
+          "step_main",
+          "steps",
+          "sub_type",
+          "terrain",
+          "tile_step_h",
+          "tile_step_h_corner",
+          "tile_whip",
+          "wind_region"
+        ]
+      }
+    },
+    {
+      "name": "proposed_external_contract_is_not_persisted",
+      "meaning": "Illustrative future top-level data is ignored, not a supported schema or a legacy bug.",
+      "reproduced": true,
+      "evidence": {
+        "after_keys": [
+          "ask_corners",
+          "ask_floors",
+          "axes",
+          "axis_step",
+          "cladding",
+          "corner_zone",
+          "floor_step",
+          "height",
+          "mode",
+          "na_max",
+          "offset",
+          "profile",
+          "q_clad",
+          "rail_brand_clinker",
+          "rail_brand_concrete",
+          "rail_gap",
+          "rail_step_corner",
+          "row_step",
+          "signs",
+          "solution_selection",
+          "start_off",
+          "step_corner",
+          "step_main",
+          "steps",
+          "sub_type",
+          "terrain",
+          "tile_step_h",
+          "tile_step_h_corner",
+          "tile_whip",
+          "wind_region"
+        ]
+      }
+    },
+    {
+      "name": "clear_and_inherit_have_no_distinct_encoding",
+      "meaning": "The same unset geometry cannot encode an explicit clear versus an inherited unset value.",
+      "reproduced": true,
+      "evidence": {
+        "geometry": {
+          "cladding_front_offset_mm": null,
+          "cladding_offset_basis": "wall_structural_face_to_cladding_exterior",
+          "insulation_layers_mm": []
+        }
+      }
+    },
+    {
+      "name": "external_project_change_is_not_a_freshness_dependency",
+      "meaning": "Actual FrameOwnerState hashes only saved ATFRAME; adding project storage requires an explicit freshness dependency.",
+      "reproduced": true,
+      "evidence": {
+        "before": "1EF0DF9CD03A2F82D4F2498D04CAF5E11051F2ABD387734FF7C8B1CEBC96D272",
+        "after": "1EF0DF9CD03A2F82D4F2498D04CAF5E11051F2ABD387734FF7C8B1CEBC96D272",
+        "owner_reads": 2,
+        "project_reads": 0
+      }
+    },
+    {
+      "name": "existing_cancel_clone_is_isolated",
+      "meaning": "Existing detached-dialog behavior must be retained.",
+      "reproduced": true,
+      "evidence": {
+        "stored_value": 230
+      }
+    },
+    {
+      "name": "global_convenience_profile_is_not_project_defaults",
+      "meaning": "2B1 intentionally strips declaration from global convenience settings.",
+      "reproduced": true,
+      "evidence": {
+        "global_selection_present": false
+      }
+    }
+  ],
+  "live_autocad_checked": false,
+  "baseline_commit": "375f082887a052bcba3d0379bd4946ef39b25604",
+  "source_sha256": {
+    "AFrame/src/AFramePlugin/FrameSettings.cs": "f76eb206dcbc97977015865ec88edaaf9311c1769573f801e839f21ed4fb95c4",
+    "AFrame/src/AFramePlugin/FrameSolutionSelection.cs": "59e20979aff3c3628c44d44715bb275069672f35bacd1ee454fb759e596f804a",
+    "Common/FacadeQuantityStore.Frame.cs": "e7abeee9029ebdb074bdd0fe5de08d7ebe9fa3a7b2378c6289a2a222c83ce3e5",
+    "Common/FacadeQuantityStore.cs": "72e8b053ff8f5f87dd0a57ab9a80340f54a845093387e1ffa82348b3d52d5a0a",
+    "Common/catalogs/vector1_2015_type1_historical.json": "4df8a3d9925595aa2d3d90af63d73be6bf1f68169685e3dc77ee19632023ca26"
+  },
+  "probe_sha256": {
+    "reproduce_baseline.py": "0546b0e923919c7a68d78943433202cac6a81c8c328cd02bb72b36fa73345fd4",
+    "reproduce_baseline.cs": "612fc19ff18cafc3716ce841256d6759aceb021ce7a931a2e2d325f458c29313"
+  },
+  "scope": "Pinned actual native settings, selection context and extracted FrameOwnerState; synthetic user dimensions, CAD storage doubled; no product edits"
+}

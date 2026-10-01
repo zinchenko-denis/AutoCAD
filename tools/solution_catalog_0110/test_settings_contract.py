@@ -25,7 +25,7 @@ def compile_actual_settings(out):
     src = ROOT / 'AFrame/src/AFramePlugin'
     command_source = (src / 'FrameCommand.cs').read_text(encoding='utf-8')
     read = command_source[command_source.index('        private static string ReadFrameMetadata('):command_source.index('        private static Extents3d? SelRegion(')]
-    start = command_source.index('                var currentSolutionScope = new FrameSolutionSelectionScope();')
+    start = command_source.index('                var currentSolutionScope = new FrameSolutionSelectionScope(true);')
     end = command_source.index('                var bt = (BlockTable)tr.GetObject', start)
     fresh = command_source[start:end]
     result_start = command_source.index('            var solutionRoots = FrameSolutionSelectionScope.EngineRoots(')
@@ -39,15 +39,25 @@ def compile_actual_settings(out):
     guard = out / 'ActualFrameGuard.cs'
     guard.write_text('''using System; using System.Text; using System.Collections.Generic; using System.Web.Script.Serialization;
 namespace AFramePlugin { internal static class FrameGuardBridge {
+// This older suite exercises the unbound 2B1 branch. The actual project
+// operation and command paths are executed by project_params_0110 separately.
+private sealed class UnboundProjectOperation {
+internal bool IsBound { get { return false; } }
+internal void ValidateGroup(IEnumerable<string> roots) {}
+internal void ValidateClamps(IEnumerable<string> roots) {}
+internal void VerifySavedSettings(int owner, Dictionary<string,object> settings) {}
+}
 private const string XKeyFrame = "ATFRAME";
 private static object Get(Dictionary<string,object> d,string k){object v;return d!=null&&d.TryGetValue(k,out v)?v:null;}
 private static string SafeStr(object value){return value == null ? "" : Convert.ToString(value, System.Globalization.CultureInfo.InvariantCulture);}
 internal static Dictionary<string,object> Read(Transaction tr,JavaScriptSerializer ser,Entity e){return ReadFrameSettings(tr,ser,e);}
 internal static void Fresh(Transaction tr,JavaScriptSerializer ser,Dictionary<int,Tuple<string,bool>> solutionOwners,HashSet<int> canonicalSolutionOwners,List<string> solutionRoots,FrameSolutionSelectionContext resolvedSolutionContext){
+var projectOperation=new UnboundProjectOperation();
 ''' + fresh + '''
 }
 internal static void SolutionGate(FrameSettings fs,Dictionary<string,object> res,FrameSolutionSelectionScope solutionScope,Dictionary<string,List<string>> oldByRoot){
 var partToRoot=new Dictionary<string,string>(); bool clampsOnly=fs.ClampsOnly; string declaredSolutionReason=null;
+var projectOperation=new UnboundProjectOperation();
 ''' + result_gate + '''
 }
 internal static double[] AxisBoundsAfterZoneDedup(Dictionary<string,Dictionary<string,object>> polyData){
@@ -65,7 +75,7 @@ return new[]{bbx0,bbx1,bby0,bby1};
     assert len(categories) == 1
     extracted = out / 'ActualFrameProducer.cs'
     extracted.write_text(prefix + '\nnamespace AFramePlugin { internal sealed class FrameQuantities {\n' + categories[0] + '\n' + producer[producer.index(marker):], encoding='utf-8')
-    sources = [Path(__file__).with_name('SettingsContractProbe.cs'), src / 'FrameSettings.cs', src / 'FrameSolutionSelection.cs',
+    sources = [Path(__file__).with_name('SettingsContractProbe.cs'), src / 'FrameSettings.cs', src / 'FrameSolutionSelection.cs', src / 'FrameProjectParameters.cs',
                ROOT / 'Common/FacadeQuantities.cs', guard, extracted]
     executable = out / 'SettingsContractProbe.exe'
     compiled = compile_probe(sources, ['System.Web.Extensions'], executable)
@@ -147,7 +157,7 @@ def main():
     clamps_response=frame_engine.run(clamps_request);check(clamps_response['ok'],'real clamps engine fixture')
     check(run('--consume','clamps_pipeline',{'settings':clamps_packet['settings'],'request':clamps_request,'response':clamps_response})['ok'],'retained identity echo refused')
     files=[Path(__file__).resolve(),Path(__file__).with_name('SettingsContractProbe.cs')]
-    files += [ROOT/'AFrame/src/AFramePlugin'/n for n in ('FrameSettings.cs','FrameSolutionSelection.cs','FrameCommand.cs','FrameQuantities.cs')]
+    files += [ROOT/'AFrame/src/AFramePlugin'/n for n in ('FrameSettings.cs','FrameSolutionSelection.cs','FrameProjectParameters.cs','FrameCommand.cs','FrameQuantities.cs')]
     files += [ROOT/'Common/FacadeQuantities.cs',ROOT/'Common/catalogs/vector1_2015_type1_historical.json'] + list((ROOT/'AFrame/engine').glob('*.py'))
     manifest={'status':'PASS','checks':checks+native['checks'],'native_checks':native['checks'],'pipeline_checks':checks,
               'live_autocad_checked':False,'performance':native['performance'],

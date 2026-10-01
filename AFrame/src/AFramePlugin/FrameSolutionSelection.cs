@@ -232,10 +232,19 @@ namespace AFramePlugin
     {
         private readonly Dictionary<string, Dictionary<string, object>> byRoot = new Dictionary<string, Dictionary<string, object>>(StringComparer.Ordinal);
         private readonly FrameSolutionSelectionContext preliminary = new FrameSolutionSelectionContext();
+        private readonly bool deferGroupValidation;
+        private readonly HashSet<string> preliminaryRoots = new HashSet<string>(StringComparer.Ordinal);
         private readonly Dictionary<string, FrameSolutionSelection> aliases = new Dictionary<string, FrameSolutionSelection>(StringComparer.Ordinal);
         public int Observations { get; private set; }
         public int AliasComparisons { get; private set; }
-        public FrameSolutionSelection Baseline { get { return preliminary.Baseline; } }
+        public FrameSolutionSelectionScope(bool deferGroupValidation = false)
+        { this.deferGroupValidation = deferGroupValidation; }
+        public FrameSolutionSelection Baseline { get {
+            if (!deferGroupValidation) return preliminary.Baseline;
+            var current = new FrameSolutionSelectionContext();
+            foreach (string root in preliminaryRoots) current.Add(byRoot[root]);
+            return current.Baseline;
+        } }
         public void Add(string root, Dictionary<string, object> settings, bool rawContour)
         {
             if (string.IsNullOrEmpty(root)) throw new FrameSolutionSelectionException("Не определён исходный корень выбора решения.");
@@ -250,7 +259,11 @@ namespace AFramePlugin
             Observations++;
             // A raw null contour may be an opening. Its actual owning root is
             // resolved by the existing engine, not by a second geometry pass.
-            if (!rawContour || selection != null) preliminary.Add(settings);
+            if (!rawContour || selection != null)
+            {
+                preliminaryRoots.Add(root);
+                if (!deferGroupValidation) preliminary.Add(settings);
+            }
         }
         // A drawing mark is an alias of the verified zone hatch. An absent
         // declaration on that alias does not make a second, legacy zone.

@@ -37,6 +37,7 @@ using AFramePlugin;
 namespace AFramePlugin { class Transaction {} class Database {} class Entity {} }
 namespace FacadeSafety
 {
+    static class FacadeProjectParameterStore { public class ReadContext {} }
     class QuantitySelection
     {
         public bool Ok = true;
@@ -51,7 +52,8 @@ namespace FacadeSafety
         public static string Unavailable;
         public static void MarkFrameUnavailable(Transaction t, Database d, IEnumerable<Entity> owners, string reason)
         { Unavailable = reason; }
-        public static void StoreFrame(Transaction t, Database d, IEnumerable<Entity> owners, QuantityReport report, FrameSources sources)
+        public static void StoreFrame(Transaction t, Database d, IEnumerable<Entity> owners, QuantityReport report, FrameSources sources,
+            FacadeProjectParameterStore.ReadContext projectReads = null)
         { Saved = report; }
     }
 }

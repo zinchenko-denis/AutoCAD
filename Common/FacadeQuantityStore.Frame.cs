@@ -22,6 +22,7 @@ namespace FacadeSafety
         public sealed class FrameSources
         {
             public List<FrameSource> sources { get; set; } = new List<FrameSource>();
+            public FacadeProjectParameterStore.ProjectDependency project_dependency { get; set; }
         }
 
         internal static bool IsFrameCandidate(Transaction tr, Entity e)
@@ -32,11 +33,11 @@ namespace FacadeSafety
         { return ReadCore(tr, db, ids, true, byZone, false); }
 
         internal static void StoreFrame(Transaction tr, Database db, IEnumerable<Entity> carriers,
-            QuantityReport report, FrameSources sources)
+            QuantityReport report, FrameSources sources, FacadeProjectParameterStore.ReadContext projectReads = null)
         {
             if (report == null || report.kind != "frame") throw new InvalidOperationException("Нет состава подсистемы.");
             var owners = new List<Entity>(carriers);
-            StoreCore(tr, db, owners, "ATFRAME", report, sources);
+            StoreCore(tr, db, owners, "ATFRAME", report, sources, projectReads);
             foreach (var e in owners) Remove(tr, e, FrameUnavailableKey);
         }
 
@@ -78,9 +79,10 @@ namespace FacadeSafety
         // Capture unique input objects, plus original contours referenced by the
         // existing geometry guards. Cladding's drawn-piece references are not
         // traversed: the frame consumes its validated axes, not its rendering.
-        internal static FrameSources CaptureFrameSources(Transaction tr, Database db, IEnumerable<ObjectId> ids)
+        internal static FrameSources CaptureFrameSources(Transaction tr, Database db, IEnumerable<ObjectId> ids,
+            FacadeProjectParameterStore.ProjectDependency projectDependency = null)
         {
-            var result = new FrameSources(); var queue = new Queue<ObjectId>(ids);
+            var result = new FrameSources { project_dependency = projectDependency }; var queue = new Queue<ObjectId>(ids);
             var seen = new HashSet<ObjectId>(); var context = new LayoutGeometryGuard.VerificationContext();
             DefinitionCaches.Remove(tr);
             while (queue.Count > 0)
@@ -123,7 +125,8 @@ namespace FacadeSafety
             return Hash(text.ToString());
         }
 
-        private static string FrameSourceMetadata(Transaction tr, Entity e, Queue<ObjectId> sources)
+        private static string FrameSourceMetadata(Transaction tr, Entity e, Queue<ObjectId> sources,
+            FacadeProjectParameterStore.ReadContext projectReads = null)
         {
             var text = new StringBuilder();
             DBDictionary ext = e.ExtensionDictionary.IsNull ? null : (DBDictionary)tr.GetObject(e.ExtensionDictionary, OpenMode.ForRead);
@@ -137,14 +140,22 @@ namespace FacadeSafety
                     if (sources != null && key.EndsWith("_GEOMETRY", StringComparison.Ordinal)) sources.Enqueue(id);
                 }
             }
+            // Absence must preserve published source hashes. A newly added,
+            // changed or removed binding invalidates only its old frame result.
+            if (ext != null && ext.Contains(FacadeProjectParameterStore.ZoneKey))
+            {
+                var binding = FacadeProjectParameterStore.ReadZone(tr, e as Hatch, null, projectReads);
+                Add(text, FacadeProjectParameterStore.ZoneKey); Add(text, binding.RecordDigest);
+            }
             return Hash(text.ToString());
         }
 
         private static void VerifyFrameSources(Transaction tr, Database db, FrameSources snapshot,
-            Dictionary<string, FrameSource> observed = null)
+            Dictionary<string, FrameSource> observed = null, FacadeProjectParameterStore.ReadContext projectReads = null)
         {
             if (snapshot == null || snapshot.sources == null || snapshot.sources.Count == 0)
                 throw new InvalidOperationException("Нет снимка источников подсистемы. Повторите ATFRAME.");
+            FacadeProjectParameterStore.VerifyProject(tr, db, snapshot.project_dependency, projectReads);
             var seen = new HashSet<string>();
             if (observed == null) observed = new Dictionary<string, FrameSource>();
             foreach (var source in snapshot.sources)
@@ -155,7 +166,7 @@ namespace FacadeSafety
                 {
                     var e = Live(tr, Resolve(db, source.handle));
                     if (e != null) current = new FrameSource { handle = source.handle, geometry = FrameSourceGeometry(tr, e),
-                        metadata = FrameSourceMetadata(tr, e, null) };
+                        metadata = FrameSourceMetadata(tr, e, null, projectReads) };
                     observed[source.handle] = current;
                 }
                 if (current == null || current.geometry != source.geometry || current.metadata != source.metadata)

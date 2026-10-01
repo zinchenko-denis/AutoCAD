@@ -1,0 +1,80 @@
+{
+  "status": "PASS",
+  "checks": 67,
+  "native_checks": 44,
+  "pipeline_checks": 23,
+  "live_autocad_checked": false,
+  "performance": [
+    {
+      "owners": 100,
+      "capture_observations": 100,
+      "resolve_observations": 100,
+      "elapsed_ms": 91.8981,
+      "cad_calls": 0,
+      "modelspace_scans": 0
+    },
+    {
+      "owners": 1000,
+      "capture_observations": 1000,
+      "resolve_observations": 1000,
+      "elapsed_ms": 957.2971,
+      "cad_calls": 0,
+      "modelspace_scans": 0
+    },
+    {
+      "scenario": "same_root_aliases_then_canonicals",
+      "aliases": 100,
+      "canonical_observations": 100,
+      "capture_observations": 200,
+      "alias_comparisons": 199,
+      "resolve_observations": 1,
+      "elapsed_ms": 172.9438,
+      "cad_calls": 0,
+      "modelspace_scans": 0
+    },
+    {
+      "scenario": "same_root_aliases_then_canonicals",
+      "aliases": 1000,
+      "canonical_observations": 1000,
+      "capture_observations": 2000,
+      "alias_comparisons": 1999,
+      "resolve_observations": 1,
+      "elapsed_ms": 2004.5596,
+      "cad_calls": 0,
+      "modelspace_scans": 0
+    }
+  ],
+  "scope": "Actual native settings, selected-owner metadata/freshness guard, real engine and actual quantity producer; CAD objects doubled",
+  "source_sha256": {
+    "tools/solution_catalog_0110/test_settings_contract.py": "5c576ec192f8b4039356c62f5910c10890f5df52116c45e81507e29880813428",
+    "tools/solution_catalog_0110/SettingsContractProbe.cs": "c33f3aae2039add806c1ccff7b35ba5b3455aaada005cd172c090d285e1aa058",
+    "AFrame/src/AFramePlugin/FrameSettings.cs": "a44273b52d3ee92407d5dfc98315d6750d3aa57b7259cc2b98e4432757198cda",
+    "AFrame/src/AFramePlugin/FrameSolutionSelection.cs": "129f4f526e00b410433ab5c3e07f0df5e39449d68a880855c8ee66c4dc0a3e10",
+    "AFrame/src/AFramePlugin/FrameProjectParameters.cs": "612c46eabcb1c7c80c86e5a3e0fed2153a809b8f2b1734b1e9b596e2e26ec7f1",
+    "AFrame/src/AFramePlugin/FrameCommand.cs": "944d50dc7db753b931437691ca116a5cb6b07f6e84a7507265936b535274ad80",
+    "AFrame/src/AFramePlugin/FrameQuantities.cs": "d34f7cf6219dbfec7c88796b12477bea9382d4cca2dc125e4ebd1a252b1cf791",
+    "Common/FacadeQuantities.cs": "b092bf95f154d6aa8041936bffa79a82c613d7ac8f27fee9d1e6d7c0cde09f90",
+    "Common/catalogs/vector1_2015_type1_historical.json": "4df8a3d9925595aa2d3d90af63d73be6bf1f68169685e3dc77ee19632023ca26",
+    "AFrame/engine/test_frame_topology_index.py": "d8e139847c458cdf87fddf24b7c790e15e479ff4c2bbbd3a4848757e6560a1a7",
+    "AFrame/engine/test_frame_connections.py": "21f2c64b59b1a1f052eadcf1c69d1aa8f0e0e60ad42182f793ac914a16971353",
+    "AFrame/engine/frame_engine.py": "b4acaaa98f48f91e0019b04231bb2ca361059e8d6a4e587cdbb64eb432790529",
+    "AFrame/engine/frame_plan.py": "5c4b4bbbc8258d62e965c24604906cd819b6a06a04643425ed1770b07c5d7105",
+    "AFrame/engine/test_frame_engine.py": "3d32ffb69a6e9bc5d229ed11201e7e09500b5f193859b6a2cbab190c73679270",
+    "AFrame/engine/frame_solution_selection.py": "6490da6ced48715c4dce5ca357e0f54be9c035dd7bb6fc8d86b684f1d15f6aee",
+    "AFrame/engine/test_frame_solution_selection.py": "79b853ab20b95d491fc3e76f667fc7fb7106afa6ace7b5ae9d1ede191f99aceb",
+    "AFrame/engine/frame_catalog.py": "947a0277f3a6202dff365c1de6e86c5832dbc2c97e2a810b99d500a5d6f6b163",
+    "AFrame/engine/test_frame_plan.py": "fa35454f0a80362fc17441d078feaaf18bcb271a84e599de82517329005708a6",
+    "AFrame/engine/test_frame_rules.py": "0f629daa13207e436eb5e425e1f4e3d7189d205ffc6956bceca0427eb237b26e",
+    "AFrame/engine/frame_topology.py": "2455ab874309d1382591800acce35dd3bde04ea3be6519f8b1de89dd5514f5d5",
+    "AFrame/engine/frame_connections.py": "d4febc1ce6e147f1cbce29cb64690f2c3b592efe4e40b9c88da5c8a2dcc74985",
+    "AFrame/engine/frame_spatial.py": "003efc0e73b344d50d4465d2bc1bfc87f8ca149c7d443a1e7d9061e6dbfd6cec",
+    "AFrame/engine/frame_solution_catalog.py": "56e674855cc01e19bf2a0723dff1f3454497a99aef56f3de1b5bbf75c0d44764",
+    "AFrame/engine/dsverka_poligon.py": "a971bd36882c6663c0fcbc466de5e288d9aa1f4d1f6d55e5eb462ae5d635a1ec",
+    "AFrame/engine/analiz_klu_poligon.py": "903a3080c4b01dea51e936560adba060f12f172fe13887bd2785456881f5fa27",
+    "AFrame/engine/audit_frame.py": "7ce9adac3adddcb7619b88d789b78f4b811f9c890e9fd9b08f884b32ee4e2d48",
+    "AFrame/engine/test_frame_calc.py": "f72160fe7a3483c35a6c0d7ef669a612e6e44defb95c33916a850c2a605d5239",
+    "AFrame/engine/frame_rules.py": "511ec4ec48331034257859ccac70ef028a8c4b398acd7d5b238d778e3c63ea6f",
+    "AFrame/engine/frame_calc.py": "abe20fd3c0de0937ba0636914f083f7c48a7a65b3b4c85f05673278a95e1da88",
+    "AFrame/engine/test_frame_topology.py": "88f59edd4e8543ec3c444eb3557dbe7a10b922318362ca82360675da1c11586c"
+  }
+}

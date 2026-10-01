@@ -32,7 +32,7 @@ def main():
     local = Path(__file__).resolve().parent
     sources = [ROOT / "Common" / name for name in (
         "GeometryFingerprint.cs", "ZoneGeometryGuard.cs", "LayoutGeometryGuard.cs",
-        "FacadeQuantities.cs", "FacadeQuantityStore.cs", "FacadeQuantityStore.Frame.cs", "ManualQuantities.cs", "ManualQuantityGeometry.cs",
+        "FacadeQuantities.cs", "FacadeQuantityStore.cs", "FacadeQuantityStore.Frame.cs", "FacadeProjectParameterStore.cs", "ManualQuantities.cs", "ManualQuantityGeometry.cs",
         "FacadeQuantityStore.Manual.cs")]
     sources += [local / "QuantityStoreCheck.cs", local / "QuantityCadDoubles.cs"]
     fixture_builder = ROOT / "tools/fixes_3009/test_zone_geometry_adapter.py"

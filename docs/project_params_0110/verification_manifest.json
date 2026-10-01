@@ -1,0 +1,113 @@
+{
+  "status": "LOCAL_PASS_WINDOWS_CI_PENDING",
+  "date_utc": "2026-10-01",
+  "branch": "feat/auto-reactor",
+  "base_commit": "375f082887a052bcba3d0379bd4946ef39b25604",
+  "input_sha256_file": "input_sha256.json",
+  "input_files_count": 260,
+  "inputs_unchanged_during_final_gates": true,
+  "checks": {
+    "mandatory_groups": {
+      "passed": 52,
+      "total": 52,
+      "manifest": "gates_manifest.json"
+    },
+    "facade_plugin_compile": {
+      "passed": 3,
+      "total": 3,
+      "manifest": "compile_manifest.json"
+    },
+    "full_synthetic_and_roles": {
+      "passed": 8,
+      "total": 8,
+      "seeds": [
+        2909,
+        77,
+        5
+      ],
+      "manifest": "full_synthetic_manifest.json"
+    },
+    "project_core": {
+      "passed": 152,
+      "manifest": "project_parameters_core.json"
+    },
+    "project_store": {
+      "passed": 44,
+      "manifest": "project_parameters_store.json"
+    },
+    "actual_commands_and_guard": {
+      "passed": 33,
+      "manifest": "project_parameters_integration.json"
+    },
+    "tutorials": {
+      "passed": 5,
+      "manifest": "manual_examples.json"
+    },
+    "windows_ui": {
+      "status": "PENDING",
+      "required": "Actual Windows WinForms and visual review of old 10 + new 11 images"
+    }
+  },
+  "performance": {
+    "core": [
+      {
+        "zones": 10,
+        "milliseconds": 6,
+        "serialized_bytes": 8121,
+        "bytes_per_zone": 812.1,
+        "max_owner_characters": 1137,
+        "origins": 130,
+        "cad_reads": 0
+      },
+      {
+        "zones": 100,
+        "milliseconds": 63,
+        "serialized_bytes": 77871,
+        "bytes_per_zone": 778.71,
+        "max_owner_characters": 1137,
+        "origins": 1300,
+        "cad_reads": 0
+      },
+      {
+        "zones": 1000,
+        "milliseconds": 639,
+        "serialized_bytes": 775371,
+        "bytes_per_zone": 775.371,
+        "max_owner_characters": 1137,
+        "origins": 13000,
+        "cad_reads": 0
+      },
+      {
+        "zones": 3000,
+        "milliseconds": 1896,
+        "serialized_bytes": 2325371,
+        "bytes_per_zone": 775.1236666666666,
+        "max_owner_characters": 1137,
+        "origins": 39000,
+        "cad_reads": 0
+      }
+    ],
+    "cad_counts_source": "project_parameters_store.json",
+    "claim": "Operation counts and pure runtime measurements only; no live AutoCAD duration claim"
+  },
+  "guide": {
+    "pages": 47,
+    "chapters": 20,
+    "figures": 10,
+    "dxf_files": 4,
+    "docx_sha256": "d905ebcd18da9cb4dd36ea638bca9a2ed1e07bf4b8b1fc44c9185fb2fe5df1c9",
+    "visual_review": "all 47 pages; FINAL_QA.json"
+  },
+  "boundaries": {
+    "pilot": "Vector-1 2015 type1 porcelain node4.2.1 KR2+UK+GP",
+    "engineering_declaration_only": true,
+    "automatic_bracket_selection": false,
+    "expanded_systems_and_sftk": "deferred until live pilot acceptance",
+    "live_autocad_checked": false,
+    "main_changed": false,
+    "glazing_modules_changed": false
+  },
+  "live_autocad_checked": false,
+  "release_published": false,
+  "prior_release": "build-104, stage2A only"
+}

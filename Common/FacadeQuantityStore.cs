@@ -111,12 +111,14 @@ namespace FacadeSafety
         }
 
         private static void StoreCore(Transaction tr, Database db, IEnumerable<Entity> carriers,
-            string layoutKey, QuantityReport report, FrameSources frameSources)
+            string layoutKey, QuantityReport report, FrameSources frameSources,
+            FacadeProjectParameterStore.ReadContext projectReads = null)
         {
             bool frame = layoutKey == "ATFRAME";
             string ownerKey = frame ? FrameOwnerKey : OwnerKey, elementKey = frame ? FrameElementKey : ElementKey;
             var validationContext = new LayoutGeometryGuard.VerificationContext();
-            if (frame) { DefinitionCaches.Remove(tr); VerifyFrameSources(tr, db, frameSources); }
+            if (frame) { DefinitionCaches.Remove(tr); VerifyFrameSources(tr, db, frameSources, null,
+                projectReads ?? new FacadeProjectParameterStore.ReadContext()); }
             if (!frame && layoutKey != "ATTILE" && layoutKey != "ATCLAD")
                 throw new InvalidOperationException("Неизвестный источник ведомости облицовки.");
             if (report == null || !SafeId(report.run_id) || !SafeId(report.report_id))
@@ -236,6 +238,7 @@ namespace FacadeSafety
             var manualNames = new Dictionary<string, ObjectId>(StringComparer.Ordinal);
             var digestParts = new List<string>();
             var frameObserved = new Dictionary<string, FrameSource>();
+            var projectReads = new FacadeProjectParameterStore.ReadContext();
             var timer = Stopwatch.StartNew();
             try
             {
@@ -362,7 +365,7 @@ namespace FacadeSafety
                 foreach (var pendingRead in pendingReads)
                 {
                     var entry = pendingRead.Entry; var report = pendingRead.Report;
-                    VerifyEntry(tr, db, entry, report, pendingRead.Digest, pendingRead.Refs, validationContext, frameObserved, checkCoincidence);
+                    VerifyEntry(tr, db, entry, report, pendingRead.Digest, pendingRead.Refs, validationContext, frameObserved, checkCoincidence, projectReads);
                     for (int i = entry.owners.Count; i < entry.owners.Count + entry.entity_handles.Count; i++)
                         verifiedEntities.Add(pendingRead.Refs[i]);
                     digestParts.Add(entry.run_id + ":" + pendingRead.Digest);
@@ -504,9 +507,12 @@ namespace FacadeSafety
 
         private static void VerifyEntry(Transaction tr, Database db, Entry entry, QuantityReport report,
             string digest, List<ObjectId> refs, LayoutGeometryGuard.VerificationContext validationContext,
-            Dictionary<string, FrameSource> frameObserved, Action<Entity, QuantityElement> verifiedElement)
+            Dictionary<string, FrameSource> frameObserved, Action<Entity, QuantityElement> verifiedElement,
+            FacadeProjectParameterStore.ReadContext projectReads)
         {
             bool frame = entry.layout_key == "ATFRAME";
+            if (frame && entry.frame_sources != null)
+                FacadeProjectParameterStore.VerifyProject(tr, db, entry.frame_sources.project_dependency, projectReads);
             string ownerKey = frame ? FrameOwnerKey : OwnerKey, elementKey = frame ? FrameElementKey : ElementKey;
             int sourceCount = frame && entry.frame_sources != null && entry.frame_sources.sources != null ? entry.frame_sources.sources.Count : 0;
             if (refs.Count != entry.owners.Count + entry.entity_handles.Count + sourceCount)
@@ -558,7 +564,7 @@ namespace FacadeSafety
                 for (int i = 0; i < sourceCount; i++)
                     if (refs[pos++].IsNull || refs[pos - 1].Handle.ToString() != entry.frame_sources.sources[i].handle)
                         throw new InvalidOperationException("Ссылка на источник подсистемы изменена или скопирована.");
-                VerifyFrameSources(tr, db, entry.frame_sources, frameObserved);
+                VerifyFrameSources(tr, db, entry.frame_sources, frameObserved, projectReads);
             }
         }
 

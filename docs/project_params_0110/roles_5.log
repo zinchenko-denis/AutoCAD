@@ -1,0 +1,53 @@
+РОЛИ: ролей 21, фасадов 168, время 12.1 с
+  [RESULT] control/safe_refusal/interfloor/model_unconfirmed: 1
+  [RESULT] control/safe_refusal/ortho/insufficient_supports: 2
+  [RESULT] control/safe_refusal/ortho/single_span_unsupported: 1
+  [RESULT] control/safe_refusal/ortho/span_class_mismatch: 1
+  [RESULT] control/safe_refusal/vertical/insufficient_supports: 2
+  [RESULT] control/safe_refusal/vertical/single_span_unsupported: 1
+  [RESULT] control/safe_refusal/vertical/span_class_mismatch: 1
+  [RESULT] control/successful_calc/ortho: 2
+  [RESULT] control/successful_calc/vertical: 2
+  [RESULT] control/successful_clamps/interfloor: 1
+  [RESULT] control/successful_manual/interfloor: 1
+  [RESULT] expected_ui_refusal/interfloor_model_unconfirmed: 3
+  [RESULT] safe_refusal/E_CALC_TOPOLOGY_UNSUPPORTED: 118
+  [RESULT] safe_refusal/E_UNSUPPORTED_SHINA: 19
+  [RESULT] safe_refusal/full_for_clamps/E_CALC_TOPOLOGY_UNSUPPORTED: 12
+  [RESULT] successful_frame_results: 67
+  керамогранит по умолчанию                                      OK
+  керамогранит: отметки перекрытий и углы по краям               OK
+  керамогранит: межэтажная вручную 700/500                       OK
+  керамогранит: ортогональная, только подсистема                 OK
+  керамогранит: только кляммеры по готовой подсистеме            OK
+  клинкер: вертикальная по расчёту, углы, угловой шаг 400, марка OK
+  бетон: межэтажная по отметкам                                  OK
+  клинкер: межэтажная, окна с узкими простенками (уже шага)      OK
+  бетон: межэтажная без отметок (шаг этажа 3000)                 OK
+  клинкер: ортогональная вручную 600/400, хлыст 3 м              OK
+  клинкер без раскладки ATTILE (ряды шагом 88)                   OK
+  керамогранит без раскладки: оси шагом 608, швы 605             OK
+  переделщик: керамогранит → клинкер → бетон → снова клинкер     OK
+  сметчик: витражи, двери, парапет; керамогранит                 OK
+  невнимательный: шаг направляющих 50                            OK
+  невнимательный: плитка без раскладки и без шага рядов          OK
+  невнимательный: межэтажная без отметок и без шага этажа        OK
+  невнимательный: расчёт с высотой здания 0                      OK
+  бетон: межэтажная по отметкам — ручной проектный режим         OK
+  клинкер: межэтажная, окна с узкими простенками (уже шага) — ручной проектный режим OK
+  бетон: межэтажная без отметок (шаг этажа 3000) — ручной проектный режим OK
+  [INFO] безопасный отказ: бетон: межэтажная по отметкам — ручной проектный режим / E_UNSUPPORTED_SHINA: 1
+  [INFO] безопасный отказ: керамогранит без раскладки: оси шагом 608, швы 605 / E_CALC_TOPOLOGY_UNSUPPORTED: 12
+  [INFO] безопасный отказ: керамогранит по умолчанию / E_CALC_TOPOLOGY_UNSUPPORTED: 12
+  [INFO] безопасный отказ: керамогранит: ортогональная, только подсистема / E_CALC_TOPOLOGY_UNSUPPORTED: 12
+  [INFO] безопасный отказ: керамогранит: отметки перекрытий и углы по краям / E_CALC_TOPOLOGY_UNSUPPORTED: 12
+  [INFO] безопасный отказ: клинкер без раскладки ATTILE (ряды шагом 88) / E_CALC_TOPOLOGY_UNSUPPORTED: 7
+  [INFO] безопасный отказ: клинкер без раскладки ATTILE (ряды шагом 88) / E_UNSUPPORTED_SHINA: 5
+  [INFO] безопасный отказ: клинкер: вертикальная по расчёту, углы, угловой шаг 400, марка / E_CALC_TOPOLOGY_UNSUPPORTED: 9
+  [INFO] безопасный отказ: клинкер: вертикальная по расчёту, углы, угловой шаг 400, марка / E_UNSUPPORTED_SHINA: 3
+  [INFO] безопасный отказ: клинкер: межэтажная, окна с узкими простенками (уже шага) — ручной проектный режим / E_UNSUPPORTED_SHINA: 2
+  [INFO] безопасный отказ: клинкер: ортогональная вручную 600/400, хлыст 3 м / E_UNSUPPORTED_SHINA: 2
+  [INFO] безопасный отказ: переделщик: керамогранит → клинкер → бетон → снова клинкер / E_CALC_TOPOLOGY_UNSUPPORTED: 42
+  [INFO] безопасный отказ: переделщик: керамогранит → клинкер → бетон → снова клинкер / E_UNSUPPORTED_SHINA: 6
+  [INFO] безопасный отказ: сметчик: витражи, двери, парапет; керамогранит / E_CALC_TOPOLOGY_UNSUPPORTED: 12
+  самые долгие: переделщик: керамогранит/gable-2 0.83с, переделщик: керамогранит/gable-3 0.53с, клинкер: вертикальная по/gable-11 0.36с

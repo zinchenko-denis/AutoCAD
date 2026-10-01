@@ -242,6 +242,33 @@ jobs:
           path: solution_ui_results/
           if-no-files-found: warn
 
+      - name: Project and zone parameters (native contracts, CAD store and WinForms)
+        shell: pwsh
+        env:
+          PYTHONUTF8: "1"
+          PYTHONIOENCODING: "utf-8"
+        run: |
+          python tools/project_params_0110/test_core.py --out project_parameters_core_results
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          python tools/project_params_0110/test_store_contract.py --out project_parameters_store_results
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          python tools/project_params_0110/test_integration.py --out project_parameters_integration_results
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          python tools/project_params_0110/test_ui.py --out project_parameters_ui_results
+          exit $LASTEXITCODE
+
+      - name: Upload project parameters evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: project-parameters-ui
+          path: |
+            project_parameters_core_results/
+            project_parameters_store_results/
+            project_parameters_integration_results/
+            project_parameters_ui_results/
+          if-no-files-found: warn
+
       - name: Facades quick gates (audits, contracts, synth)
         shell: bash
         env:

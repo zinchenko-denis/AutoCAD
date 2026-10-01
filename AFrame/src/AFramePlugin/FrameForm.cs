@@ -19,6 +19,7 @@ namespace AFramePlugin
     {
         private readonly FrameSettings _s;
         private readonly bool _hasLayout;
+        private readonly FrameSolutionEditorContext _projectContext;
         private bool _loading;
 
         // 26.09 (Денис): первым пунктом — что облицовываем
@@ -69,10 +70,12 @@ namespace AFramePlugin
             c.Left = x; c.Top = y; c.Width = w;
         }
 
-        public FrameForm(FrameSettings s, bool hasLayout)
+        public FrameForm(FrameSettings s, bool hasLayout, FrameSolutionEditorContext projectContext = null)
         {
             _s = (s ?? new FrameSettings()).Clone();
             _hasLayout = hasLayout;
+            _projectContext = projectContext == null && _s.ProjectParametersContext != null ?
+                FrameProjectForms.ReadOnlyContext(new[] { _s.ProjectParametersContext }) : projectContext;
             Text = "ATFRAME — подсистема НВФ и кляммеры";
             FormBorderStyle = FormBorderStyle.FixedDialog;
             StartPosition = FormStartPosition.CenterScreen;
@@ -210,13 +213,14 @@ namespace AFramePlugin
                 d.RailBrandConcrete = _s.RailBrandConcrete; d.RailBrandClinker = _s.RailBrandClinker;
                 // Явное решение снимается только отдельной командой в его окне.
                 d.SolutionSelection = _s.SolutionSelection == null ? null : _s.SolutionSelection.Clone();
+                d.ProjectParametersContext = _s.ProjectParametersContext == null ? null : _s.ProjectParametersContext.Clone();
                 CopyInto(d, _s);
                 LoadControls();
             };
             _solution.Click += delegate
             {
                 ReadControls();
-                using (var form = new FrameSolutionForm(_s.SolutionSelection, _s.ClampsOnly))
+                using (var form = new FrameSolutionForm(_s.SolutionSelection, _s.ClampsOnly || _projectContext != null, _projectContext))
                     if (form.ShowDialog(this) == DialogResult.OK)
                     {
                         _s.SolutionSelection = form.Result;

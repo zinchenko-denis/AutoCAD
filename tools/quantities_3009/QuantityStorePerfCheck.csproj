@@ -19,6 +19,7 @@
     <Compile Include="../../Common/FacadeQuantities.cs" Link="FacadeQuantities.cs" />
     <Compile Include="../../Common/FacadeQuantityStore.cs" Link="FacadeQuantityStore.cs" />
     <Compile Include="../../Common/FacadeQuantityStore.Frame.cs" Link="FacadeQuantityStore.Frame.cs" />
+    <Compile Include="../../Common/FacadeProjectParameterStore.cs" Link="FacadeProjectParameterStore.cs" />
     <Compile Include="../../Common/ManualQuantities.cs" Link="ManualQuantities.cs" />
     <Compile Include="../../Common/ManualQuantityGeometry.cs" Link="ManualQuantityGeometry.cs" />
     <Compile Include="../../Common/FacadeQuantityStore.Manual.cs" Link="FacadeQuantityStore.Manual.cs" />

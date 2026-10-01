@@ -46,6 +46,7 @@ namespace AFramePlugin
         public bool AskCorners = true, AskFloors = true;
         public double FloorStep = 3000;        // межэтажная без отметок
         public FrameSolutionSelection SolutionSelection; // explicit historical source declaration; null preserves legacy behavior
+        public FrameParameterContext ProjectParametersContext; // this owner only; never an all-zone map
         public string Signs = "cond";          // cond | samples
 
         public const double DefStartOff = 300, DefRailGap = 10, DefCornerZone = 1500;
@@ -238,6 +239,11 @@ namespace AFramePlugin
 
         public string ValidateSolutionSelection()
         {
+            if (ProjectParametersContext != null)
+            {
+                try { ProjectParametersContext.ValidateSelection(SolutionSelection); }
+                catch (FrameSolutionSelectionException error) { return error.Message; }
+            }
             if (SolutionSelection == null) return null;
             string reason = SolutionSelection.Validate();
             if (reason != null) return reason;
@@ -374,6 +380,20 @@ namespace AFramePlugin
         private static string F(double v) { return v.ToString("0.##", CultureInfo.InvariantCulture); }
         private static bool Finite(double v) { return !double.IsNaN(v) && !double.IsInfinity(v); }
 
+        public void ApplyProjectParameters(FrameParameterResolution resolution)
+        {
+            if (resolution == null) throw new FrameSolutionSelectionException("Не разрешены параметры проекта для зоны.");
+            SolutionSelection = resolution.Selection;
+            ProjectParametersContext = resolution.Context;
+        }
+        public void DetachProjectParameters()
+        {
+            // A saved inherited snapshot is not a local declaration. A genuine
+            // unbound 2B1 choice has no context and remains available as before.
+            if (ProjectParametersContext != null) SolutionSelection = null;
+            ProjectParametersContext = null;
+        }
+
         // ── хранение ──
         public Dictionary<string, object> ToDict()
         {
@@ -392,6 +412,11 @@ namespace AFramePlugin
                 { "signs", Signs },
             };
             if (SolutionSelection != null) result["solution_selection"] = SolutionSelection.ToDict();
+            if (ProjectParametersContext != null)
+            {
+                ProjectParametersContext.ValidateSelection(SolutionSelection);
+                result["project_parameters_context"] = ProjectParametersContext.ToDict();
+            }
             return result;
         }
 
@@ -399,12 +424,12 @@ namespace AFramePlugin
         // a different drawing. Drawing metadata uses the complete ToDict above.
         public Dictionary<string, object> ToLastDict()
         {
-            var result = ToDict(); result.Remove("solution_selection"); return result;
+            var result = ToDict(); result.Remove("solution_selection"); result.Remove("project_parameters_context"); return result;
         }
         public static FrameSettings FromLastDict(Dictionary<string, object> value)
         {
             if (value == null) return new FrameSettings();
-            var copy = new Dictionary<string, object>(value); copy.Remove("solution_selection");
+            var copy = new Dictionary<string, object>(value); copy.Remove("solution_selection"); copy.Remove("project_parameters_context");
             return FromDict(copy);
         }
 
@@ -472,6 +497,13 @@ namespace AFramePlugin
             s.Signs = OneOf(S(d, "signs", s.Signs), "cond", "cond", "samples");
             object selection;
             if (d.TryGetValue("solution_selection", out selection)) s.SolutionSelection = FrameSolutionSelection.FromDict(selection);
+            object context;
+            if (d.TryGetValue("project_parameters_context", out context))
+            {
+                if (context == null) throw new FrameSolutionSelectionException("Проектный снимок параметров повреждён; он не заменяется локальным выбором.");
+                s.ProjectParametersContext = FrameParameterContext.FromDict(context);
+                s.ProjectParametersContext.ValidateSelection(s.SolutionSelection);
+            }
             return s;
         }
 

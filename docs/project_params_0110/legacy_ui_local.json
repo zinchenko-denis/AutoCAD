@@ -1,0 +1,15 @@
+{
+  "status": "BLOCKED",
+  "live_autocad_checked": false,
+  "source_sha256": {
+    "tools/solution_catalog_0110/SolutionUiProbe.cs": "dfb6e30dc76869b703d3dc8ae13c136bb2373a76d8fd489193bdcc612af8a809",
+    "AFrame/src/AFramePlugin/FrameForm.cs": "e81d2d073b595d8812208483b02a505a698b5173f7b1f8d728fd3ebbbfbd4e23",
+    "AFrame/src/AFramePlugin/FrameSettings.cs": "a44273b52d3ee92407d5dfc98315d6750d3aa57b7259cc2b98e4432757198cda",
+    "AFrame/src/AFramePlugin/FrameSolutionSelection.cs": "129f4f526e00b410433ab5c3e07f0df5e39449d68a880855c8ee66c4dc0a3e10",
+    "AFrame/src/AFramePlugin/FrameSolutionForm.cs": "5bbbcdb6bee495fd5c14266c8ef2aa1ed483a1e4bfd31dda458b2ef977d48a65",
+    "AFrame/src/AFramePlugin/FrameProjectParameters.cs": "612c46eabcb1c7c80c86e5a3e0fed2153a809b8f2b1734b1e9b596e2e26ec7f1",
+    "AFrame/src/AFramePlugin/FrameProjectForms.cs": "56d0a12c312cf13c0c8412b0c78222bbc9634a4194ef691c4e0cfd06801a55b6",
+    "tools/solution_catalog_0110/test_solution_ui.py": "4b58371fc5a1964999dae13495a8711652a62112ce4285b504478d1837b6c700"
+  },
+  "reason": "Xvfb unavailable; compilation succeeded, no GUI execution claimed"
+}

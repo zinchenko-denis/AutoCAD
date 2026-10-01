@@ -118,7 +118,8 @@ namespace AFramePlugin
             // направляющих и кронштейнов)
             Dictionary<string, object> prevFs = null;
             bool explicitCanonicalSettingsChosen = false;
-            var solutionScope = new FrameSolutionSelectionScope();
+            var solutionScope = new FrameSolutionSelectionScope(true);
+            var projectOperation = new FrameProjectOperation();
             var solutionOwners = new Dictionary<ObjectId, Tuple<string, bool>>();
             var canonicalSolutionOwners = new HashSet<ObjectId>();
             var initialFrameSettings = new Dictionary<ObjectId, Dictionary<string, object>>();
@@ -216,7 +217,6 @@ namespace AFramePlugin
                                 pl.GetPoint2dAt(n - 1)) <= CloseTol;
                         if (!closed) continue;
                         string h = pl.Handle.ToString();
-                        solutionScope.Add("контур " + h, selectedSettings, true);
                         solutionOwners[ent.ObjectId] = Tuple.Create("контур " + h, true);
                         if (prevFs == null) prevFs = selectedSettings;
                         polyByHandle[h] = pl.ObjectId;
@@ -229,7 +229,6 @@ namespace AFramePlugin
                     if (m == null) continue;
                     string zid = SafeStr(Get(m, "zone_id"));
                     if (zid.Length == 0) continue;
-                    solutionScope.AddAlias(zid, selectedSettings);
                     solutionOwners[ent.ObjectId] = Tuple.Create(zid, false);
                     if (prevFs == null) prevFs = selectedSettings;
                     var zh = ent as Hatch;           // 23.09n: габарит штриховки зоны
@@ -279,6 +278,8 @@ namespace AFramePlugin
             // запуск по полилиниям) заменяется вместе с зоной: «контур H» → корень
             var dropRoot = new Dictionary<string, string>();
             var verifiedZoneHatches = new HashSet<ObjectId>();
+            var verifiedZoneFingerprints = new Dictionary<ObjectId, string>();
+            var projectCanonicalOwners = new Dictionary<ObjectId, ObjectId>();
             using (var geometryTr = db.TransactionManager.StartTransaction())
             {
                 foreach (var kv in zoneObjs)
@@ -288,7 +289,8 @@ namespace AFramePlugin
                     string zoneReason;
                     // A merged layout name is not a physical ATFZONE root. Resolve
                     // each selected carrier, then union only its verified parts.
-                    if (!TryGetVerifiedZoneParts(geometryTr, db, kv.Value, fz, out parts, out zoneHatches, out zoneReason))
+                    if (!TryGetVerifiedZoneParts(geometryTr, db, kv.Value, fz, out parts, out zoneHatches, out zoneReason,
+                        verifiedZoneFingerprints, projectCanonicalOwners))
                     {
                         ed.WriteMessage("\nATFRAME: зона " + kv.Key + " не подтверждена: " + zoneReason +
                             "\nПовторите ATFZONE, затем ATCLAD/ATTILE и ATFRAME. Прежняя подсистема сохранена.");
@@ -310,7 +312,9 @@ namespace AFramePlugin
                             CollectOldByRoot(geometryTr, ser, canonical, oldByRoot);
                         }
                         if (!kv.Value.Contains(hatchId)) kv.Value.Add(hatchId);
-                        solutionScope.AddCanonical(kv.Key, canonicalSettings);
+                        projectCanonicalOwners[hatchId] = hatchId;
+                        projectOperation.Observe(geometryTr, db, geometryTr.GetObject(hatchId, OpenMode.ForRead) as Hatch,
+                            verifiedZoneFingerprints[hatchId], kv.Key, canonicalSettings);
                         canonicalSolutionOwners.Add(hatchId);
                         solutionOwners[hatchId] = Tuple.Create(kv.Key, false);
                         prevFs = FrameSolutionSelectionScope.PreferCanonicalWindowSettings(prevFs, canonicalSettings,
@@ -358,6 +362,24 @@ namespace AFramePlugin
                 }
                 geometryTr.Commit();
             }
+            projectOperation.ValidateGroup();
+            projectOperation.CaptureSavedSettings(initialFrameSettings, projectCanonicalOwners, solutionOwners);
+            if (!projectOperation.IsBound)
+            {
+                // A detached inherited result is not a new local declaration.
+                // Keep original dictionaries for freshness, normalize only intent.
+                solutionScope = new FrameSolutionSelectionScope(true);
+                foreach (var owner in solutionOwners)
+                {
+                    var previous = initialFrameSettings[owner.Key];
+                    var local = previous == null ? null : FrameSettings.FromDict(previous);
+                    if (local != null) local.DetachProjectParameters();
+                    var values = local == null ? null : local.ToDict();
+                    if (owner.Value.Item2) solutionScope.Add(owner.Value.Item1, values, true);
+                    else if (canonicalSolutionOwners.Contains(owner.Key)) solutionScope.AddCanonical(owner.Value.Item1, values);
+                    else solutionScope.AddAlias(owner.Value.Item1, values);
+                }
+            }
             var contoursPayload = new List<Dictionary<string, object>>();
             var rawPayloadIds = new HashSet<ObjectId>();
             foreach (var kv in polyData)
@@ -390,10 +412,12 @@ namespace AFramePlugin
             bool hasLayout = joints.Count > 0;
             FrameSettings fs = prevFs != null ? FrameSettings.FromDict(prevFs)
                                               : FrameSettings.LoadLast();
-            if (solutionScope.Baseline != null) fs.SolutionSelection = solutionScope.Baseline;
+            if (!projectOperation.IsBound && solutionScope.Baseline != null) fs.SolutionSelection = solutionScope.Baseline;
+            projectOperation.Apply(fs);
             if (prevFs != null)
                 ed.WriteMessage("\nПараметры — с прошлой подсистемы этой зоны.");
-            using (var ff = new FrameForm(fs, hasLayout))
+            using (var ff = new FrameForm(fs, hasLayout,
+                projectOperation.IsBound ? FrameProjectForms.ReadOnlyContext(projectOperation.Contexts()) : null))
             {
                 if (AcApp.ShowModalDialog(ff) != WinForms.DialogResult.OK)
                 { ed.WriteMessage("\nОтменено."); return; }
@@ -401,6 +425,7 @@ namespace AFramePlugin
             }
             string declaredSolutionReason = fs.ValidateSolutionSelection();
             if (declaredSolutionReason != null) throw new FrameSolutionSelectionException(declaredSolutionReason);
+            projectOperation.ValidateSelectedSettings(fs);
             bool clampsOnly = fs.ClampsOnly;
 
             if (joints.Count == 0)
@@ -657,7 +682,7 @@ namespace AFramePlugin
                         }
                         previousQuantities = FacadeQuantityStore.ReadFrame(qtr, db, oldOwners);
                     }
-                    quantitySources = FacadeQuantityStore.CaptureFrameSources(qtr, db, sourceIds);
+                    quantitySources = FacadeQuantityStore.CaptureFrameSources(qtr, db, sourceIds, projectOperation.Dependency);
                     qtr.Commit();
                 }
             }
@@ -693,11 +718,13 @@ namespace AFramePlugin
                 return;
             }
             var solutionRoots = FrameSolutionSelectionScope.EngineRoots(Get(res, "per_zone"), partToRoot);
-            var resolvedSolutionContext = solutionScope.Resolve(solutionRoots);
+            projectOperation.ValidateGroup(solutionRoots);
+            var resolvedSolutionContext = projectOperation.IsBound ? null : solutionScope.Resolve(solutionRoots);
             if (clampsOnly)
             {
                 FrameSolutionSelectionScope.ValidateClampsRoots(solutionRoots, oldByRoot.Keys);
-                declaredSolutionReason = resolvedSolutionContext.ValidateClamps(fs.SolutionSelection);
+                projectOperation.ValidateClamps(solutionRoots);
+                declaredSolutionReason = resolvedSolutionContext == null ? null : resolvedSolutionContext.ValidateClamps(fs.SolutionSelection);
                 if (declaredSolutionReason != null) throw new FrameSolutionSelectionException(declaredSolutionReason);
             }
             if (fs.SolutionSelection != null) fs.SolutionSelection.ValidateEngineReport(Get(res, "solution_report"), clampsOnly);
@@ -716,6 +743,7 @@ namespace AFramePlugin
             var handlesByRoot = new Dictionary<string, List<string>>();
             var quantityPrepareWatch = System.Diagnostics.Stopwatch.StartNew();
             var quantities = new FrameQuantities(res, payload, partToRoot, clampsOnly, previousQuantities);
+            if (projectOperation.IsBound) quantities.SetProjectParameters(FrameParameterResolver.RunSnapshot(projectOperation.Contexts(solutionRoots)));
             if (quantitySourceReason != null) quantities.Unavailable(quantitySourceReason);
             quantityPrepareWatch.Stop();
             var quantityCarriers = new List<Entity>();
@@ -730,20 +758,28 @@ namespace AFramePlugin
             using (doc.LockDocument())
             using (var tr = db.TransactionManager.StartTransaction())
             {
+                var projectFreshReads = new FacadeProjectParameterStore.ReadContext();
+                projectOperation.VerifyFresh(tr, db, projectFreshReads);
                 // Re-read only selected owners. A changed declaration during the
                 // dialog/calculation cannot silently replace the saved baseline.
-                var currentSolutionScope = new FrameSolutionSelectionScope();
+                var currentSolutionScope = new FrameSolutionSelectionScope(true);
                 foreach (var owner in solutionOwners)
                 {
                     var entity = tr.GetObject(owner.Key, OpenMode.ForRead) as Entity;
                     if (entity == null || entity.IsErased) throw new FrameSolutionSelectionException("Исходный объект выбора решения удалён; повторите ATFRAME.");
                     var currentSettings = ReadFrameSettings(tr, ser, entity);
-                    if (owner.Value.Item2) currentSolutionScope.Add(owner.Value.Item1, currentSettings, true);
-                    else if (canonicalSolutionOwners.Contains(owner.Key)) currentSolutionScope.AddCanonical(owner.Value.Item1, currentSettings);
-                    else currentSolutionScope.AddAlias(owner.Value.Item1, currentSettings);
+                    projectOperation.VerifySavedSettings(owner.Key, currentSettings);
+                    if (!projectOperation.IsBound)
+                    {
+                        var local = currentSettings == null ? null : FrameSettings.FromDict(currentSettings);
+                        if (local != null) { local.DetachProjectParameters(); currentSettings = local.ToDict(); }
+                        if (owner.Value.Item2) currentSolutionScope.Add(owner.Value.Item1, currentSettings, true);
+                        else if (canonicalSolutionOwners.Contains(owner.Key)) currentSolutionScope.AddCanonical(owner.Value.Item1, currentSettings);
+                        else currentSolutionScope.AddAlias(owner.Value.Item1, currentSettings);
+                    }
                 }
-                var currentSolutionContext = currentSolutionScope.Resolve(solutionRoots);
-                if (!FrameSolutionSelection.Same(currentSolutionContext.Baseline, resolvedSolutionContext.Baseline))
+                var currentSolutionContext = projectOperation.IsBound ? null : currentSolutionScope.Resolve(solutionRoots);
+                if (!projectOperation.IsBound && !FrameSolutionSelection.Same(currentSolutionContext.Baseline, resolvedSolutionContext.Baseline))
                     throw new FrameSolutionSelectionException("Выбор решения исходного каркаса изменился после открытия окна. Повторите ATFRAME.");
                 var bt = (BlockTable)tr.GetObject(db.BlockTableId,
                                                   OpenMode.ForRead);
@@ -1063,6 +1099,7 @@ namespace AFramePlugin
                             var te = (Entity)tr.GetObject(tid,
                                 OpenMode.ForWrite);
                             meta["owner"] = te.Handle.ToString();
+                            meta["settings"] = projectOperation.SettingsForOwner(fs, tid, projectCanonicalOwners);
                             StoreData(tr, te, ser.Serialize(meta), XKeyFrame, hl);
                             quantityCarriers.Add(te);
                             quantities.Owner(te, root);
@@ -1086,7 +1123,7 @@ namespace AFramePlugin
                 quantityDrawWatch.Stop();
                 var quantityStoreWatch = System.Diagnostics.Stopwatch.StartNew();
                 if (quantityCarriers.Count > 0)
-                    quantities.Store(tr, db, quantityCarriers, quantitySources, erasedH);
+                    quantities.Store(tr, db, quantityCarriers, quantitySources, erasedH, projectFreshReads);
                 else quantityKeptPrevious = true;
                 FrameQuantities.CheckCancel();
                 tr.Commit();
@@ -1846,6 +1883,7 @@ namespace AFramePlugin
                 if (settings == null) throw new FrameSolutionSelectionException("Параметры прежней подсистемы повреждены; выбор каталога не подменяется умолчанием.");
                 object selection;
                 if (settings.TryGetValue("solution_selection", out selection)) FrameSolutionSelection.FromDict(selection);
+                if (settings.ContainsKey("project_parameters_context")) FrameSettings.FromDict(settings);
                 return settings;
             }
             catch (FrameSolutionSelectionException) { throw; }
@@ -2207,7 +2245,8 @@ namespace AFramePlugin
 
         internal static bool TryGetVerifiedZoneParts(Transaction tr, Database db,
             IEnumerable<ObjectId> carriers, IDictionary<string, Dictionary<string, object>> sidecar,
-            out List<Dictionary<string, object>> parts, out List<ObjectId> hatchIds, out string reason)
+            out List<Dictionary<string, object>> parts, out List<ObjectId> hatchIds, out string reason,
+            IDictionary<ObjectId, string> fingerprints = null, IDictionary<ObjectId, ObjectId> canonicalOwners = null)
         {
             parts = new List<Dictionary<string, object>>();
             hatchIds = new List<ObjectId>();
@@ -2230,6 +2269,8 @@ namespace AFramePlugin
                         return false;
                     }
                     if (!hatchIds.Contains(verified.HatchId)) hatchIds.Add(verified.HatchId);
+                    if (fingerprints != null) fingerprints[verified.HatchId] = verified.Fingerprint;
+                    if (canonicalOwners != null) canonicalOwners[id] = verified.HatchId;
                     foreach (var part in verified.Parts)
                     {
                         string partId = SafeStr(Get(part, "id"));

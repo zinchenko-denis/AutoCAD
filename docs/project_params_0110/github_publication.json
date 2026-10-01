@@ -1,0 +1,8 @@
+{
+  "status": "PENDING",
+  "branch": "feat/auto-reactor",
+  "base_commit": "375f082887a052bcba3d0379bd4946ef39b25604",
+  "main_changed": false,
+  "release_published": false,
+  "live_autocad_checked": false
+}

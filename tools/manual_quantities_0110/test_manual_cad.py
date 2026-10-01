@@ -34,7 +34,7 @@ def main():
     local = Path(__file__).resolve().parent
     sources = [ROOT / 'Common' / (name + '.cs') for name in (
         'GeometryFingerprint', 'ZoneGeometryGuard', 'LayoutGeometryGuard', 'FacadeQuantities',
-        'FacadeQuantityStore', 'FacadeQuantityStore.Frame', 'ManualQuantities',
+        'FacadeQuantityStore', 'FacadeQuantityStore.Frame', 'FacadeProjectParameterStore', 'ManualQuantities',
         'ManualQuantityGeometry', 'FacadeQuantityStore.Manual')]
     sources += [ROOT / 'tools/quantities_3009' / name for name in ('QuantityStoreCheck.cs', 'QuantityCadDoubles.cs')]
     sources += [local / 'ManualCadCheck.cs']

@@ -44,9 +44,10 @@ def main():
                       'actions': [['Cladding', 'composite'], ['Mode', mode]]})
     (out / 'settings_input.json').write_text(json.dumps(roles), encoding='utf-8')
     settings_sources = [root / 'AFrame/tools/roles/RolesDump.cs', root / 'AFrame/src/AFramePlugin/FrameSettings.cs']
-    dependency = root / 'AFrame/src/AFramePlugin/FrameSolutionSelection.cs'
-    if dependency.exists():
-        settings_sources.append(dependency)
+    for name in ('FrameSolutionSelection.cs', 'FrameProjectParameters.cs'):
+        dependency = root / 'AFrame/src/AFramePlugin' / name
+        if dependency.exists():
+            settings_sources.append(dependency)
     subprocess.run([shutil.which('mcs') or 'mcs', '-r:System.Web.Extensions.dll',
                     '-out:' + str(out / 'settings.exe')] + [str(p) for p in settings_sources], check=True)
     subprocess.run([shutil.which('mono') or 'mono', str(out / 'settings.exe'),
@@ -104,7 +105,7 @@ def main():
     unknown = frame_plan(dict(copy.deepcopy(requests['vertical']), cladding='metal_cassette'))
     check('MK has no accepted material contract', not unknown['ok'])
     files = ['AFrame/engine/frame_plan.py', 'AFrame/engine/frame_calc.py',
-             'AFrame/engine/systems.json', 'AFrame/src/AFramePlugin/FrameSettings.cs', 'AFrame/src/AFramePlugin/FrameSolutionSelection.cs',
+             'AFrame/engine/systems.json', 'AFrame/src/AFramePlugin/FrameSettings.cs', 'AFrame/src/AFramePlugin/FrameSolutionSelection.cs', 'AFrame/src/AFramePlugin/FrameProjectParameters.cs',
              'AClad/engine/cladding_plan.py']
     report = {'source': str(root), 'checks': checks, 'passed': len(checks),
               'source_sha256': {p: hashlib.sha256((root / p).read_bytes()).hexdigest() for p in files if (root / p).exists()},

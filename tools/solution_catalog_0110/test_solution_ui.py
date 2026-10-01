@@ -19,29 +19,32 @@ sys.path.insert(0, str(ROOT / 'tools/quantities_3009'))
 from probe_runtime import available, command, compile_probe
 
 
-def main():
+def main(probe=None, runner_path=None):
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--out', type=Path)
     args = parser.parse_args()
     out = (args.out or Path(tempfile.mkdtemp(prefix='solution_ui_'))).resolve()
     out.mkdir(parents=True, exist_ok=True)
-    files = [Path(__file__).with_name('SolutionUiProbe.cs')]
+    probe = Path(probe) if probe is not None else Path(__file__).with_name('SolutionUiProbe.cs')
+    files = [probe]
     files += [ROOT / 'AFrame/src/AFramePlugin' / name for name in (
-        'FrameForm.cs', 'FrameSettings.cs', 'FrameSolutionSelection.cs', 'FrameSolutionForm.cs')]
+        'FrameForm.cs', 'FrameSettings.cs', 'FrameSolutionSelection.cs', 'FrameSolutionForm.cs',
+        'FrameProjectParameters.cs', 'FrameProjectForms.cs')]
+    tracked = files + [Path(__file__).resolve()] + ([Path(runner_path)] if runner_path is not None else [])
     manifest = {'status': 'BLOCKED', 'live_autocad_checked': False,
-                'source_sha256': {str(p.relative_to(ROOT)): hashlib.sha256(p.read_bytes()).hexdigest() for p in files + [Path(__file__).resolve()]}}
+                'source_sha256': {str(p.relative_to(ROOT)): hashlib.sha256(p.read_bytes()).hexdigest() for p in tracked}}
 
     def finish(status, reason=None):
         manifest['status'] = status
         if reason:
             manifest['reason'] = reason
         (out / 'manifest.json').write_text(json.dumps(manifest, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
-        print('Solution UI:', status, reason or '')
+        print(probe.stem + ':', status, reason or '')
         return 0 if status == 'PASS' else 2 if status == 'BLOCKED' else 1
 
     if not available():
         return finish('BLOCKED', 'Native .NET compiler/runtime unavailable')
-    exe = out / 'SolutionUiProbe.exe'
+    exe = out / (probe.stem + '.exe')
     compiled = compile_probe(files, ['System.Windows.Forms', 'System.Drawing', 'System.Web.Extensions'], exe)
     (out / 'compile.log').write_text(compiled.stdout + compiled.stderr, encoding='utf-8')
     if compiled.returncode:

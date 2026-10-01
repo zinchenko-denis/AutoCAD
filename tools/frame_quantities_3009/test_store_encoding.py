@@ -29,7 +29,7 @@ def main():
     out.mkdir(parents=True, exist_ok=True)
     sources = [ROOT / "Common" / name for name in (
         "GeometryFingerprint.cs", "ZoneGeometryGuard.cs", "LayoutGeometryGuard.cs",
-        "FacadeQuantities.cs", "FacadeQuantityStore.cs", "FacadeQuantityStore.Frame.cs", "ManualQuantities.cs", "ManualQuantityGeometry.cs",
+        "FacadeQuantities.cs", "FacadeQuantityStore.cs", "FacadeQuantityStore.Frame.cs", "FacadeProjectParameterStore.cs", "ManualQuantities.cs", "ManualQuantityGeometry.cs",
         "FacadeQuantityStore.Manual.cs")]
     sources += [ROOT / "tools/quantities_3009/QuantityCadDoubles.cs",
                 Path(__file__).with_name("StoreEncodingProbe.cs")]

@@ -1,0 +1,117 @@
+{
+  "status": "PASS",
+  "checks": 152,
+  "native_checks": 145,
+  "pipeline_checks": 7,
+  "cases": [
+    {
+      "name": "project bootstrap and roundtrip are explicit and detached",
+      "status": "PASS"
+    },
+    {
+      "name": "semantic project no-op preserves revision; change increments and overflow refuses",
+      "status": "PASS"
+    },
+    {
+      "name": "strict project schema/digest/revision validation",
+      "status": "PASS"
+    },
+    {
+      "name": "inherit and project revision resolve dynamically without mutating previous snapshot",
+      "status": "PASS"
+    },
+    {
+      "name": "set survives project change, clear differs from inherit, reset restores inheritance",
+      "status": "PASS"
+    },
+    {
+      "name": "all thirteen fields are effective and source identity remains immutable",
+      "status": "PASS"
+    },
+    {
+      "name": "malformed, unsupported and required-clear overrides refuse",
+      "status": "PASS"
+    },
+    {
+      "name": "zone identities and signed payload detect tampering",
+      "status": "PASS"
+    },
+    {
+      "name": "effective snapshots and returned values are detached",
+      "status": "PASS"
+    },
+    {
+      "name": "mixed effective or bound/unbound groups refuse; equal values retain distinct origins",
+      "status": "PASS"
+    },
+    {
+      "name": "snapshot strictness and raw-record hashes participate in equality",
+      "status": "PASS"
+    },
+    {
+      "name": "settings roundtrip is per-owner; global preferences exclude dependencies",
+      "status": "PASS"
+    },
+    {
+      "name": "detach clears inherited snapshot but preserves genuine 2B1 local choice",
+      "status": "PASS"
+    },
+    {
+      "name": "run snapshot stores shared project once and per-zone provenance once",
+      "status": "PASS"
+    },
+    {
+      "name": "10/100/1000/3000 zone contexts have linear stored size and zero member-dependent work",
+      "status": "PASS"
+    }
+  ],
+  "performance": [
+    {
+      "zones": 10,
+      "milliseconds": 6,
+      "serialized_bytes": 8121,
+      "bytes_per_zone": 812.1,
+      "max_owner_characters": 1137,
+      "origins": 130,
+      "cad_reads": 0
+    },
+    {
+      "zones": 100,
+      "milliseconds": 63,
+      "serialized_bytes": 77871,
+      "bytes_per_zone": 778.71,
+      "max_owner_characters": 1137,
+      "origins": 1300,
+      "cad_reads": 0
+    },
+    {
+      "zones": 1000,
+      "milliseconds": 639,
+      "serialized_bytes": 775371,
+      "bytes_per_zone": 775.371,
+      "max_owner_characters": 1137,
+      "origins": 13000,
+      "cad_reads": 0
+    },
+    {
+      "zones": 3000,
+      "milliseconds": 1896,
+      "serialized_bytes": 2325371,
+      "bytes_per_zone": 775.1236666666666,
+      "max_owner_characters": 1137,
+      "origins": 39000,
+      "cad_reads": 0
+    }
+  ],
+  "live_autocad_checked": false,
+  "scope": "Actual pure C# resolver/settings and real Python engine; no CAD API or drawing writes",
+  "source_sha256": {
+    "tools/project_params_0110/CoreProbe.cs": "e513e9eab0e94e2f90523e82c2a5d782084c73cbcbac13ef98c6bc580c88b304",
+    "AFrame/src/AFramePlugin/FrameProjectParameters.cs": "612c46eabcb1c7c80c86e5a3e0fed2153a809b8f2b1734b1e9b596e2e26ec7f1",
+    "AFrame/src/AFramePlugin/FrameSolutionSelection.cs": "129f4f526e00b410433ab5c3e07f0df5e39449d68a880855c8ee66c4dc0a3e10",
+    "AFrame/src/AFramePlugin/FrameSettings.cs": "a44273b52d3ee92407d5dfc98315d6750d3aa57b7259cc2b98e4432757198cda",
+    "tools/project_params_0110/test_core.py": "3042a1a121b7f111cec578599e7c3afaf221fa0f358e14e3ba78d8193303dfd3",
+    "AFrame/engine/frame_solution_selection.py": "6490da6ced48715c4dce5ca357e0f54be9c035dd7bb6fc8d86b684f1d15f6aee",
+    "AFrame/engine/frame_solution_catalog.py": "56e674855cc01e19bf2a0723dff1f3454497a99aef56f3de1b5bbf75c0d44764"
+  }
+}

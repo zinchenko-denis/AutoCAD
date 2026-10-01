@@ -1,0 +1,376 @@
+{
+  "status": "PASS",
+  "live_autocad_checked": false,
+  "transaction_rollback": "explicit_in_memory_model_only",
+  "source_sha256": {
+    "Common/FacadeProjectParameterStore.cs": "71c1c2283e260514ee633c525fb8174b0e155b8e595c6433c021dcec847b948e",
+    "tools/project_params_0110/native_store_cad.cs": "242cebc40726091ec45506606140b37f37cb01866f0bbdd4b188eda1e3e5d047",
+    "tools/project_params_0110/native_store_probe.cs": "041276fa2991969bfdac01b9bf0f5452aef32048a8f8b344434fe148a5f1ad54",
+    "Common/GeometryFingerprint.cs": "24114ef7a18a56415313b009d7819c94190efa5ea517df2081d1f51951819332",
+    "Common/ZoneGeometryGuard.cs": "daf06e2822a4d9ef2be818df1bf904779fa202adb1e5bce7fc0ba49c084970b8",
+    "Common/LayoutGeometryGuard.cs": "b582662e3557d023b8a318cf3fc59175616b0ac4f8bdbba0eccf4c2c960338da",
+    "Common/FacadeQuantities.cs": "b092bf95f154d6aa8041936bffa79a82c613d7ac8f27fee9d1e6d7c0cde09f90",
+    "Common/FacadeQuantityStore.cs": "91b47821efb92614d99e3a3cda57290c0643a50abc120dc5b9dca30f2bdd0af4",
+    "Common/FacadeQuantityStore.Frame.cs": "25d92ebc92bb2a9ef8e0c346be403eba6b18bf80338da1f38dfcd9551216ebf3",
+    "Common/ManualQuantities.cs": "f73ec0d29da2dfe4a61aa496cda5e9ff25632a5dd26bf4d1e2ff85ed6dc3dcb8",
+    "Common/ManualQuantityGeometry.cs": "07b975b09199d87405fce4757c959d00293e4fdf4b003572f80a30f240812693",
+    "Common/FacadeQuantityStore.Manual.cs": "d86511944ec3ee71b44b6539452332ea37a3e4d48823e67ad2275403fb9ce793",
+    "tools/quantities_3009/QuantityStoreCheck.cs": "364d04b761b5ef625638c18e6062884e5b06884d94e7bf1465d84ad71b3f4c11",
+    "tools/quantities_3009/QuantityCadDoubles.cs": "64f3d9ca1dd988fd95bbd1e135025111800c142b6ea85e5b9663561ab4813cca",
+    "tools/fixes_3009/test_zone_geometry_adapter.py": "95bc79a705323e1ca7a33e0ada636d6c3b52ff9261bb65dbc4c66ab66b304630",
+    "Facades/engine/facade_zones.py": "a6d93dfc7b9e399be3dab4bb2a624c714b12fe79236503fe54c105122bfeea01",
+    "Facades/engine/facades_engine.py": "f0046539d586d75f0d3042b83b7e155f06762f84869721544cd6542fa27ad306",
+    "tools/project_params_0110/native_quantity_probe.cs": "803b1a59fb852fc644666c805c204a732dba83f1253e201999d2d0234f821fcf",
+    "tools/project_params_0110/native_legacy_source_metadata.cs": "53dbb7e045afd58aad4dbb454db16e4bdebbf660ab298c0a270f76072f397717",
+    "tools/project_params_0110/test_store_contract.py": "801052deff5b82439d02b6f403b3ce0e22211223cd00ba7a6f3366ee12c67e60",
+    "tools/quantities_3009/probe_runtime.py": "2d37fb13990a1b24129dfe79a81ce138875e3c86ef3211d1a3a4f9ec40d150e5"
+  },
+  "result": {
+    "status": "PASS",
+    "checks": 32,
+    "cases": [
+      {
+        "name": "absent project and zone reads create no persistent records",
+        "status": "PASS"
+      },
+      {
+        "name": "project read context caches an absent snapshot",
+        "status": "PASS"
+      },
+      {
+        "name": "project raw digest is exact JSON and committed payload survives",
+        "status": "PASS"
+      },
+      {
+        "name": "existing malformed project does not become absent",
+        "status": "PASS"
+      },
+      {
+        "name": "project root and parameters must have correct CAD object types",
+        "status": "PASS"
+      },
+      {
+        "name": "malformed project identity and dependency header refuse",
+        "status": "PASS"
+      },
+      {
+        "name": "unbound legacy dependency does not inspect unrelated project state",
+        "status": "PASS"
+      },
+      {
+        "name": "project CAS rejects whitespace-only raw change before writing",
+        "status": "PASS"
+      },
+      {
+        "name": "project CAS checks absent-to-present and present-to-absent changes",
+        "status": "PASS"
+      },
+      {
+        "name": "uncommitted writes roll back in the explicit transaction model",
+        "status": "PASS"
+      },
+      {
+        "name": "later storage failure rolls back earlier writes in the transaction model",
+        "status": "PASS"
+      },
+      {
+        "name": "canonical zone roundtrip verifies owner self-pointer and generation",
+        "status": "PASS"
+      },
+      {
+        "name": "copied zone record does not bind to the copy",
+        "status": "PASS"
+      },
+      {
+        "name": "zone rejects missing duplicate null and foreign self-pointers",
+        "status": "PASS"
+      },
+      {
+        "name": "zone malformed existing data never becomes inherited absence",
+        "status": "PASS"
+      },
+      {
+        "name": "existing invalid extension dictionary never becomes absent binding",
+        "status": "PASS"
+      },
+      {
+        "name": "zone write and clear require an explicit verified fingerprint",
+        "status": "PASS"
+      },
+      {
+        "name": "zone create and clear CAS reject concurrent record changes",
+        "status": "PASS"
+      },
+      {
+        "name": "zone CAS checks exact raw record even during explicit generation rebind",
+        "status": "PASS"
+      },
+      {
+        "name": "explicit same-owner generation rebind differs from ordinary stale consumption",
+        "status": "PASS"
+      },
+      {
+        "name": "explicit null empty array and inherit remain distinct in storage",
+        "status": "PASS"
+      },
+      {
+        "name": "project dependency read caching 100",
+        "status": "PASS"
+      },
+      {
+        "name": "project dependency read caching 1000",
+        "status": "PASS"
+      },
+      {
+        "name": "distinct zone record reads scale linearly 100",
+        "status": "PASS"
+      },
+      {
+        "name": "distinct zone record reads scale linearly 1000",
+        "status": "PASS"
+      },
+      {
+        "name": "same canonical zone read caching 100",
+        "status": "PASS"
+      },
+      {
+        "name": "same canonical zone read caching 1000",
+        "status": "PASS"
+      },
+      {
+        "name": "cached zone snapshot still checks every requested generation",
+        "status": "PASS"
+      },
+      {
+        "name": "zone absence is cached only within its phase and fresh context sees binding",
+        "status": "PASS"
+      },
+      {
+        "name": "fresh zone context and writer CAS detect a change after cached snapshot",
+        "status": "PASS"
+      },
+      {
+        "name": "result buffers are read once and disposed on accepted and refused data",
+        "status": "PASS"
+      },
+      {
+        "name": "new validation context detects raw or semantic project change",
+        "status": "PASS"
+      }
+    ],
+    "performance": [
+      {
+        "scenario": "shared_project_dependency",
+        "consumers": 100,
+        "elapsed_ms": 0.20170000000000002,
+        "counters": {
+          "object_reads": 3,
+          "object_writes": 0,
+          "nod_reads": 1,
+          "dictionary_reads": 4,
+          "dictionary_writes": 0,
+          "xrecord_data_reads": 1,
+          "xrecord_data_writes": 0,
+          "buffer_disposals": 1,
+          "modelspace_reads": 0
+        },
+        "context_project_reads": 1
+      },
+      {
+        "scenario": "shared_project_dependency",
+        "consumers": 1000,
+        "elapsed_ms": 1.4475,
+        "counters": {
+          "object_reads": 3,
+          "object_writes": 0,
+          "nod_reads": 1,
+          "dictionary_reads": 4,
+          "dictionary_writes": 0,
+          "xrecord_data_reads": 1,
+          "xrecord_data_writes": 0,
+          "buffer_disposals": 1,
+          "modelspace_reads": 0
+        },
+        "context_project_reads": 1
+      },
+      {
+        "scenario": "distinct_zone_records",
+        "zones": 100,
+        "elapsed_ms": 2.5203,
+        "counters": {
+          "object_reads": 200,
+          "object_writes": 0,
+          "nod_reads": 0,
+          "dictionary_reads": 200,
+          "dictionary_writes": 0,
+          "xrecord_data_reads": 100,
+          "xrecord_data_writes": 0,
+          "buffer_disposals": 100,
+          "modelspace_reads": 0
+        }
+      },
+      {
+        "scenario": "distinct_zone_records",
+        "zones": 1000,
+        "elapsed_ms": 21.2648,
+        "counters": {
+          "object_reads": 2000,
+          "object_writes": 0,
+          "nod_reads": 0,
+          "dictionary_reads": 2000,
+          "dictionary_writes": 0,
+          "xrecord_data_reads": 1000,
+          "xrecord_data_writes": 0,
+          "buffer_disposals": 1000,
+          "modelspace_reads": 0
+        }
+      },
+      {
+        "scenario": "same_canonical_zone",
+        "consumers": 100,
+        "elapsed_ms": 1.1656,
+        "counters": {
+          "object_reads": 2,
+          "object_writes": 0,
+          "nod_reads": 0,
+          "dictionary_reads": 2,
+          "dictionary_writes": 0,
+          "xrecord_data_reads": 1,
+          "xrecord_data_writes": 0,
+          "buffer_disposals": 1,
+          "modelspace_reads": 0
+        },
+        "context_zone_reads": 1
+      },
+      {
+        "scenario": "same_canonical_zone",
+        "consumers": 1000,
+        "elapsed_ms": 0.07440000000000001,
+        "counters": {
+          "object_reads": 2,
+          "object_writes": 0,
+          "nod_reads": 0,
+          "dictionary_reads": 2,
+          "dictionary_writes": 0,
+          "xrecord_data_reads": 1,
+          "xrecord_data_writes": 0,
+          "buffer_disposals": 1,
+          "modelspace_reads": 0
+        },
+        "context_zone_reads": 1
+      }
+    ],
+    "live_autocad_checked": false,
+    "rollback_scope": "explicit in-memory transaction model only"
+  },
+  "quantity_result": {
+    "status": "PASS",
+    "checks": 12,
+    "cases": [
+      {
+        "name": "bound stored quantity is initially fresh",
+        "status": "PASS"
+      },
+      {
+        "name": "project revision invalidates an already stored quantity",
+        "status": "PASS"
+      },
+      {
+        "name": "project raw whitespace mutation invalidates dependency independently of semantic digest",
+        "status": "PASS"
+      },
+      {
+        "name": "deleted project cannot turn a bound stored quantity into local legacy",
+        "status": "PASS"
+      },
+      {
+        "name": "zone override edits and deletion invalidate stored quantity",
+        "status": "PASS"
+      },
+      {
+        "name": "new explicit zone binding invalidates earlier source snapshot",
+        "status": "PASS"
+      },
+      {
+        "name": "legacy unbound quantity remains independent from a later project",
+        "status": "PASS"
+      },
+      {
+        "name": "source hashes without binding match actual 375f082 algorithm",
+        "status": "PASS"
+      },
+      {
+        "name": "store checks changed project before any quantity write",
+        "status": "PASS"
+      },
+      {
+        "name": "quantity prewrite reuses the current phase canonical binding snapshot",
+        "status": "PASS"
+      },
+      {
+        "name": "many report reads share one project record 100",
+        "status": "PASS"
+      },
+      {
+        "name": "many report reads share one project record 1000",
+        "status": "PASS"
+      }
+    ],
+    "performance": [
+      {
+        "reports": 100,
+        "project_record_reads": 1,
+        "expected_existing_modelspace_visits": 500,
+        "additional_modelspace_scans": 0,
+        "elapsed_ms": 91.0378,
+        "counters": {
+          "get_object_read": 2710,
+          "get_object_write": 0,
+          "dictionary_contains": 2006,
+          "dictionary_get": 705,
+          "dictionary_set": 0,
+          "xrecord_data_get": 1403,
+          "xrecord_data_set": 0,
+          "buffer_enumerations": 702,
+          "buffer_values": 2702,
+          "buffer_text_chars": 419106,
+          "points_read": 800,
+          "bulges_read": 800,
+          "hatch_loops_read": 200,
+          "typed_values_allocated": 0,
+          "objects_created": 0,
+          "modelspace_visits": 500
+        }
+      },
+      {
+        "reports": 1000,
+        "project_record_reads": 1,
+        "expected_existing_modelspace_visits": 5000,
+        "additional_modelspace_scans": 0,
+        "elapsed_ms": 953.7783000000001,
+        "counters": {
+          "get_object_read": 27010,
+          "get_object_write": 0,
+          "dictionary_contains": 20006,
+          "dictionary_get": 7005,
+          "dictionary_set": 0,
+          "xrecord_data_get": 14003,
+          "xrecord_data_set": 0,
+          "buffer_enumerations": 7002,
+          "buffer_values": 27746,
+          "buffer_text_chars": 4197167,
+          "points_read": 8000,
+          "bulges_read": 8000,
+          "hatch_loops_read": 2000,
+          "typed_values_allocated": 0,
+          "objects_created": 0,
+          "modelspace_visits": 5000
+        }
+      }
+    ],
+    "live_autocad_checked": false,
+    "fixture_sha256": "45768d6bccb2815d56cb485227a0707cf9421e23831296128eb10531a4477921"
+  },
+  "sources_unchanged_during_run": true,
+  "checks": 44
+}
