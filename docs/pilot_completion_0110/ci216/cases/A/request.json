@@ -1,0 +1,88 @@
+{
+  "sub_type": "vertical",
+  "system": {
+    "name": "Вектор-1",
+    "bracket_step": 800,
+    "bracket_step_corner": 800
+  },
+  "rail_profile": null,
+  "nsp_type": null,
+  "cladding": "porcelain",
+  "exact_step": true,
+  "floor_step": 0,
+  "parts": "frame",
+  "solution_selection": {
+    "schema": "aframe_solution_selection/1",
+    "catalog_id": "vector1_2015_type1_historical",
+    "catalog_revision": "6bb12795979248fd51f0d9384c8bb0f91b7c45165734ef2ce7d04fe2b6877c24",
+    "solution_id": "vector1_2015_type1_4_2_1",
+    "source_id": "vector1_2015",
+    "source_sha256": "7386f4152de455a5e2622704d51a98d8f05afd20050807f634eea4572de37142",
+    "node": {
+      "pdf_page": 20,
+      "sheet": "4.2.1"
+    },
+    "bracket": {
+      "family_id": "kr2",
+      "execution": "galvanized_painted",
+      "nominal_width_mm": 70,
+      "L_mm": 200
+    },
+    "extender": {
+      "family_id": "uk",
+      "execution": "galvanized_painted",
+      "nominal_width_mm": 70,
+      "L_mm": 100,
+      "thickness_mm": 1.2
+    },
+    "profile": {
+      "family_id": "gp",
+      "execution": "galvanized_painted",
+      "a_mm": 40,
+      "b_mm": 40,
+      "thickness_mm": 1.2,
+      "b_basis": "project_declared",
+      "thickness_basis": "project_declared"
+    },
+    "geometry": {
+      "cladding_front_offset_mm": null,
+      "cladding_offset_basis": "wall_structural_face_to_cladding_exterior",
+      "insulation_layers_mm": []
+    }
+  },
+  "op": "frame",
+  "floors_y": [
+    1500
+  ],
+  "joints_x": [
+    600
+  ],
+  "zones": [
+    {
+      "zone_id": "Z0",
+      "zone": {
+        "contour": {
+          "pts": [
+            [
+              0,
+              0
+            ],
+            [
+              1200,
+              0
+            ],
+            [
+              1200,
+              3000
+            ],
+            [
+              0,
+              3000
+            ]
+          ]
+        },
+        "openings": []
+      }
+    }
+  ]
+}

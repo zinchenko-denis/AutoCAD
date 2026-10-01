@@ -1,7 +1,7 @@
 # Указатель хронологии (генерируется: `tools/make_chronology.py`)
 
 <!-- pilot-completion-index:start -->
-Актуальное продолжение 01.10: [план завершения и аудит 2В3](PILOT_COMPLETION_PLAN_01.10.md), [доказательства](pilot_completion_0110/), [промт](SESSION_PROMPT_AFTER_2V3_01.10.md). Продукт `129513f` не меняется; проверка аудита PASS не означает инженерный допуск или полный приёмочный проход.
+Актуальное продолжение 01.10 (`1fb6762`, Windows check №216 success): [план завершения и аудит 2В3](PILOT_COMPLETION_PLAN_01.10.md), [доказательства](pilot_completion_0110/), [промт](SESSION_PROMPT_AFTER_2V3_01.10.md). Продукт `129513f` не меняется; проверка аудита PASS не означает инженерный допуск или полный приёмочный проход.
 <!-- pilot-completion-index:end -->
 
 <!-- orphan-index:start -->

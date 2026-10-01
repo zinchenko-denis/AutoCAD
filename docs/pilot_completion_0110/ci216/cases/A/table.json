@@ -1,0 +1,234 @@
+{
+  "core_ok": true,
+  "source_unchanged": true,
+  "quantity_rows": [
+    {
+      "basis": "installed",
+      "zone_id": "Z0",
+      "zone_ids": [
+        "Z0"
+      ],
+      "role": "bracket",
+      "product_id": null,
+      "identity_group": null,
+      "mark": null,
+      "type": "рядовой",
+      "material": null,
+      "coating": null,
+      "system": "Вектор-1",
+      "color": null,
+      "orientation": "horizontal",
+      "piece_kind": "symbol",
+      "width_mm": null,
+      "height_mm": null,
+      "shape_id": null,
+      "unit": "шт.",
+      "quantity": 4,
+      "area_m2": null,
+      "length_mm": null,
+      "total_length_m": null,
+      "element_ids": [
+        "3eb4e9288515483e8755d3fd71f57176:brackets:0",
+        "3eb4e9288515483e8755d3fd71f57176:brackets:1",
+        "3eb4e9288515483e8755d3fd71f57176:brackets:2",
+        "3eb4e9288515483e8755d3fd71f57176:brackets:3"
+      ],
+      "note": null
+    },
+    {
+      "basis": "installed",
+      "zone_id": "Z0",
+      "zone_ids": [
+        "Z0"
+      ],
+      "role": "rail",
+      "product_id": null,
+      "identity_group": null,
+      "mark": "ГП-40-40-1,2",
+      "type": "направляющая",
+      "material": null,
+      "coating": null,
+      "system": "Вектор-1",
+      "color": null,
+      "orientation": "vertical",
+      "piece_kind": "segment",
+      "width_mm": null,
+      "height_mm": null,
+      "shape_id": null,
+      "unit": "шт.",
+      "quantity": 1,
+      "area_m2": null,
+      "length_mm": 3000,
+      "total_length_m": 3,
+      "element_ids": [
+        "3eb4e9288515483e8755d3fd71f57176:rails:0"
+      ],
+      "note": null
+    },
+    {
+      "basis": "estimate",
+      "zone_id": "Z0",
+      "zone_ids": [
+        "Z0"
+      ],
+      "role": "rail_stock_est",
+      "product_id": null,
+      "identity_group": null,
+      "mark": null,
+      "type": null,
+      "material": null,
+      "coating": null,
+      "system": "Вектор-1",
+      "color": null,
+      "orientation": null,
+      "piece_kind": null,
+      "width_mm": null,
+      "height_mm": null,
+      "shape_id": null,
+      "unit": "шт.",
+      "quantity": 1,
+      "area_m2": null,
+      "length_mm": 6000,
+      "total_length_m": null,
+      "element_ids": [],
+      "note": "Оценка по сумме длин; раскрой и закупка не рассчитаны.; Оценка хлыстов по сумме длин; не раскрой и не закупка. Область: Z0"
+    }
+  ],
+  "quantity_issues": [
+    {
+      "code": "Q_FRAME_ENGINEERING_LIMIT",
+      "message": "Ведомость учитывает построенные элементы. Полная статическая модель, неподвижные/подвижные соединения, стыки и комплектность узлов не подтверждены.",
+      "report_id": "3eb4e9288515483e8755d3fd71f57176",
+      "element_id": null,
+      "element_ids": [],
+      "element_count": 0,
+      "severity": "warning"
+    },
+    {
+      "code": "Q_VALUE_UNKNOWN",
+      "message": "Не указано: каталожное изделие, материал, покрытие. Деталей: 1.",
+      "report_id": "3eb4e9288515483e8755d3fd71f57176",
+      "element_id": "3eb4e9288515483e8755d3fd71f57176:rails:0",
+      "element_ids": [
+        "3eb4e9288515483e8755d3fd71f57176:rails:0"
+      ],
+      "element_count": 1,
+      "severity": "warning"
+    },
+    {
+      "code": "Q_VALUE_UNKNOWN",
+      "message": "Не указано: каталожное изделие, марка, материал, покрытие. Деталей: 4.",
+      "report_id": "3eb4e9288515483e8755d3fd71f57176",
+      "element_id": null,
+      "element_ids": [
+        "3eb4e9288515483e8755d3fd71f57176:brackets:0",
+        "3eb4e9288515483e8755d3fd71f57176:brackets:1",
+        "3eb4e9288515483e8755d3fd71f57176:brackets:2",
+        "3eb4e9288515483e8755d3fd71f57176:brackets:3"
+      ],
+      "element_count": 4,
+      "severity": "warning"
+    }
+  ],
+  "table_headers": [
+    "Зона",
+    "Элемент / марка",
+    "Кандидаты опор, поз.",
+    "Интервалы, шт.",
+    "Интервалы, мм",
+    "Свободный участок в начале, мм",
+    "Свободный участок в конце, мм",
+    "Закрепление",
+    "Соседние куски / непрерывность",
+    "Справочная идентификация",
+    "Примечание"
+  ],
+  "table_members": [
+    [
+      "Z0",
+      "ГП-40-40-1,2 / CAD 1",
+      4,
+      3,
+      "800; 800; 800",
+      300,
+      300,
+      "Не определено: неподвижное / подвижное",
+      "Соседние куски на той же оси не найдены. Непрерывность не подтверждена",
+      "Справочное совпадение марки: ГП-40-40-1,2 — PDF 3: обозначения элементов расчётного примера, PDF стр. 3. Характеристики не импортированы; изделие не подобрано",
+      "Элемент: 3eb4e9288515483e8755d3fd71f57176:rails:0. Кандидаты от начала направляющей: 300 мм: 3eb4e9288515483e8755d3fd71f57176:brackets:0; 1100 мм: 3eb4e9288515483e8755d3fd71f57176:brackets:1; 1900 мм: 3eb4e9288515483e8755d3fd71f57176:brackets:2; 2700 мм: 3eb4e9288515483e8755d3fd71f57176:brackets:3. Совпадение положения не подтверждает крепление. Свободные участки — от низа/верха направляющей до крайнего кандидата опоры; это не вынос фасада."
+    ]
+  ],
+  "table_messages": [
+    "Ведомость учитывает построенные элементы. Полная статическая модель, неподвижные/подвижные соединения, стыки и комплектность узлов не подтверждены.",
+    "Не указано: каталожное изделие, материал, покрытие. Деталей: 1.",
+    "Не указано: каталожное изделие, марка, материал, покрытие. Деталей: 4.",
+    "Исходная ведомость имеет ограничения полноты или номенклатуры. Наличие геометрического паспорта указано отдельно.",
+    "Геометрический паспорт: пресет Вектор-1, вертикальная схема, керамогранит. Соответствие всей схемы типу 1 альбома не утверждается.",
+    "Редакция справочного реестра: f22c58b52010219ad5106e712ed87a5bd1c67730eaf3a67e6ecfa82ada6900fc.",
+    "Справочный источник: vector1_type1_reference_2026; редакция 2026; PDF 3: обозначения элементов расчётного примера; SHA-256 495f8fadf882dc6f6c3f2c023a08611035c5e916a3cc92ee4da675cb2a0f16d2.",
+    "Пересечения — кандидаты опор. Закрепления, передача усилий и непрерывность через стыки не подтверждены. Количество: 4."
+  ],
+  "coverage": "Показаны геометрические кандидаты опор и интервалы между ними, а не подтверждённые расчётные пролёты. Неподвижные и подвижные закрепления, непрерывность стыков, распределение собственного веса и прочность не подтверждены. Совпадение марки с источником не является подбором изделия или допуском к монтажу.",
+  "actual_dto_properties": {
+    "passport": [
+      "catalog_revision",
+      "catalog_scope",
+      "coverage",
+      "issues",
+      "joints",
+      "members",
+      "passport_id",
+      "reason",
+      "references",
+      "schema",
+      "scheme",
+      "source_run_id",
+      "sources",
+      "status",
+      "summary",
+      "zone_ids"
+    ],
+    "member": [
+      "bottom_free_mm",
+      "intervals_mm",
+      "profile_match",
+      "rail_element_id",
+      "span_count",
+      "support_count",
+      "supports",
+      "top_free_mm",
+      "zone_id"
+    ],
+    "support": [
+      "bracket_element_ids",
+      "offset_mm"
+    ],
+    "element": [
+      "area_mm2",
+      "cad_entities",
+      "coating",
+      "color",
+      "element_id",
+      "height_mm",
+      "identity_group",
+      "length_mm",
+      "mark",
+      "material",
+      "orientation",
+      "origin",
+      "piece_kind",
+      "product_id",
+      "rings",
+      "role",
+      "shape_id",
+      "system",
+      "type",
+      "width_mm",
+      "zone_id",
+      "zone_ids"
+    ]
+  },
+  "response_unchanged": true,
+  "request_unchanged": true,
+  "native_parameters_exact": true
+}

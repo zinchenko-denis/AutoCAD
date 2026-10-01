@@ -1,0 +1,176 @@
+[
+  {
+    "name": "A",
+    "selection": {
+      "schema": "aframe_solution_selection/1",
+      "catalog_id": "vector1_2015_type1_historical",
+      "catalog_revision": "6bb12795979248fd51f0d9384c8bb0f91b7c45165734ef2ce7d04fe2b6877c24",
+      "solution_id": "vector1_2015_type1_4_2_1",
+      "source_id": "vector1_2015",
+      "source_sha256": "7386f4152de455a5e2622704d51a98d8f05afd20050807f634eea4572de37142",
+      "node": {
+        "pdf_page": 20,
+        "sheet": "4.2.1"
+      },
+      "bracket": {
+        "family_id": "kr2",
+        "execution": "galvanized_painted",
+        "nominal_width_mm": 70,
+        "L_mm": 200
+      },
+      "extender": {
+        "family_id": "uk",
+        "execution": "galvanized_painted",
+        "nominal_width_mm": 70,
+        "L_mm": 100,
+        "thickness_mm": 1.2
+      },
+      "profile": {
+        "family_id": "gp",
+        "execution": "galvanized_painted",
+        "a_mm": 40,
+        "b_mm": 40,
+        "thickness_mm": 1.2,
+        "b_basis": "project_declared",
+        "thickness_basis": "project_declared"
+      },
+      "geometry": {
+        "cladding_front_offset_mm": null,
+        "cladding_offset_basis": "wall_structural_face_to_cladding_exterior",
+        "insulation_layers_mm": []
+      }
+    }
+  },
+  {
+    "name": "B",
+    "selection": {
+      "schema": "aframe_solution_selection/1",
+      "catalog_id": "vector1_2015_type1_historical",
+      "catalog_revision": "6bb12795979248fd51f0d9384c8bb0f91b7c45165734ef2ce7d04fe2b6877c24",
+      "solution_id": "vector1_2015_type1_4_2_1",
+      "source_id": "vector1_2015",
+      "source_sha256": "7386f4152de455a5e2622704d51a98d8f05afd20050807f634eea4572de37142",
+      "node": {
+        "pdf_page": 20,
+        "sheet": "4.2.1"
+      },
+      "bracket": {
+        "family_id": "kr2",
+        "execution": "corrosion_resistant",
+        "nominal_width_mm": 85,
+        "L_mm": 350
+      },
+      "extender": {
+        "family_id": "uk",
+        "execution": "corrosion_resistant",
+        "nominal_width_mm": 85,
+        "L_mm": 150,
+        "thickness_mm": 1.5
+      },
+      "profile": {
+        "family_id": "gp",
+        "execution": "corrosion_resistant",
+        "a_mm": 80,
+        "b_mm": 60,
+        "thickness_mm": 1.5,
+        "b_basis": "project_declared",
+        "thickness_basis": "project_declared"
+      },
+      "geometry": {
+        "cladding_front_offset_mm": null,
+        "cladding_offset_basis": "wall_structural_face_to_cladding_exterior",
+        "insulation_layers_mm": []
+      }
+    }
+  },
+  {
+    "name": "no_selection",
+    "selection": null
+  },
+  {
+    "name": "step_below_ui_minimum",
+    "selection": {
+      "schema": "aframe_solution_selection/1",
+      "catalog_id": "vector1_2015_type1_historical",
+      "catalog_revision": "6bb12795979248fd51f0d9384c8bb0f91b7c45165734ef2ce7d04fe2b6877c24",
+      "solution_id": "vector1_2015_type1_4_2_1",
+      "source_id": "vector1_2015",
+      "source_sha256": "7386f4152de455a5e2622704d51a98d8f05afd20050807f634eea4572de37142",
+      "node": {
+        "pdf_page": 20,
+        "sheet": "4.2.1"
+      },
+      "bracket": {
+        "family_id": "kr2",
+        "execution": "galvanized_painted",
+        "nominal_width_mm": 70,
+        "L_mm": 200
+      },
+      "extender": {
+        "family_id": "uk",
+        "execution": "galvanized_painted",
+        "nominal_width_mm": 70,
+        "L_mm": 100,
+        "thickness_mm": 1.2
+      },
+      "profile": {
+        "family_id": "gp",
+        "execution": "galvanized_painted",
+        "a_mm": 40,
+        "b_mm": 40,
+        "thickness_mm": 1.2,
+        "b_basis": "project_declared",
+        "thickness_basis": "project_declared"
+      },
+      "geometry": {
+        "cladding_front_offset_mm": null,
+        "cladding_offset_basis": "wall_structural_face_to_cladding_exterior",
+        "insulation_layers_mm": []
+      }
+    },
+    "step_main": 99
+  },
+  {
+    "name": "calc_selected",
+    "selection": {
+      "schema": "aframe_solution_selection/1",
+      "catalog_id": "vector1_2015_type1_historical",
+      "catalog_revision": "6bb12795979248fd51f0d9384c8bb0f91b7c45165734ef2ce7d04fe2b6877c24",
+      "solution_id": "vector1_2015_type1_4_2_1",
+      "source_id": "vector1_2015",
+      "source_sha256": "7386f4152de455a5e2622704d51a98d8f05afd20050807f634eea4572de37142",
+      "node": {
+        "pdf_page": 20,
+        "sheet": "4.2.1"
+      },
+      "bracket": {
+        "family_id": "kr2",
+        "execution": "galvanized_painted",
+        "nominal_width_mm": 70,
+        "L_mm": 200
+      },
+      "extender": {
+        "family_id": "uk",
+        "execution": "galvanized_painted",
+        "nominal_width_mm": 70,
+        "L_mm": 100,
+        "thickness_mm": 1.2
+      },
+      "profile": {
+        "family_id": "gp",
+        "execution": "galvanized_painted",
+        "a_mm": 40,
+        "b_mm": 40,
+        "thickness_mm": 1.2,
+        "b_basis": "project_declared",
+        "thickness_basis": "project_declared"
+      },
+      "geometry": {
+        "cladding_front_offset_mm": null,
+        "cladding_offset_basis": "wall_structural_face_to_cladding_exterior",
+        "insulation_layers_mm": []
+      }
+    },
+    "steps": "calc"
+  }
+]

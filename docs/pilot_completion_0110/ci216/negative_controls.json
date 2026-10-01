@@ -1,0 +1,91 @@
+[
+  {
+    "name": "lost_declaration",
+    "rejected_by": "audit evidence-integrity assertions",
+    "reason": "producer preserves exact declaration"
+  },
+  {
+    "name": "wrong_selection",
+    "rejected_by": "audit evidence-integrity assertions",
+    "reason": "producer preserves exact declaration"
+  },
+  {
+    "name": "source_substitution",
+    "rejected_by": "audit evidence-integrity assertions",
+    "reason": "producer preserves reference provenance exactly"
+  },
+  {
+    "name": "invented_product_assignment",
+    "rejected_by": "audit evidence-integrity assertions",
+    "reason": "declaration is not silently assigned as physical product"
+  },
+  {
+    "name": "lost_candidate_identity",
+    "rejected_by": "audit evidence-integrity assertions",
+    "reason": "candidate endpoint resolves to the actual bracket symbol"
+  },
+  {
+    "name": "missing_physical_endpoint",
+    "rejected_by": "actual common core",
+    "issues": [
+      {
+        "code": "Q_FRAME_ENGINEERING_LIMIT",
+        "message": "Ведомость учитывает построенные элементы. Полная статическая модель, неподвижные/подвижные соединения, стыки и комплектность узлов не подтверждены.",
+        "report_id": "3eb4e9288515483e8755d3fd71f57176",
+        "element_id": null,
+        "element_ids": [],
+        "element_count": 0,
+        "severity": "warning"
+      },
+      {
+        "code": "Q_VALUE_UNKNOWN",
+        "message": "Не указано: каталожное изделие, материал, покрытие. Деталей: 1.",
+        "report_id": "3eb4e9288515483e8755d3fd71f57176",
+        "element_id": "3eb4e9288515483e8755d3fd71f57176:rails:0",
+        "element_ids": [
+          "3eb4e9288515483e8755d3fd71f57176:rails:0"
+        ],
+        "element_count": 1,
+        "severity": "warning"
+      },
+      {
+        "code": "Q_VALUE_UNKNOWN",
+        "message": "Не указано: каталожное изделие, марка, материал, покрытие. Деталей: 4.",
+        "report_id": "3eb4e9288515483e8755d3fd71f57176",
+        "element_id": null,
+        "element_ids": [
+          "3eb4e9288515483e8755d3fd71f57176:brackets:0",
+          "3eb4e9288515483e8755d3fd71f57176:brackets:1",
+          "3eb4e9288515483e8755d3fd71f57176:brackets:2",
+          "3eb4e9288515483e8755d3fd71f57176:brackets:3"
+        ],
+        "element_count": 4,
+        "severity": "warning"
+      },
+      {
+        "code": "Q_CONNECTION_INVALID",
+        "message": "Повреждён паспорт соединений: кронштейн отсутствует, повторяется или относится к другой зоне.",
+        "report_id": "3eb4e9288515483e8755d3fd71f57176",
+        "element_id": null,
+        "element_ids": [],
+        "element_count": 0,
+        "severity": "error"
+      }
+    ]
+  },
+  {
+    "name": "false_engine_assignment",
+    "rejected_by": "actual ValidateEngineReport",
+    "reason": "Не поддерживается значение «physical_assignment» выбранного решения. Требуется явный повторный выбор по текущему каталогу."
+  },
+  {
+    "name": "wrong_historical_source",
+    "rejected_by": "actual C# settings and actual engine",
+    "settings_reason": "Не поддерживается значение «source_sha256» выбранного решения. Требуется явный повторный выбор по текущему каталогу.",
+    "engine_response": {
+      "ok": false,
+      "error_code": "E_SOLUTION_IDENTITY",
+      "error": "source_sha256: значение не соответствует выбранному каталогу и его редакции."
+    }
+  }
+]

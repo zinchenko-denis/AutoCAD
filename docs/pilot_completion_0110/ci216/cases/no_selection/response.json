@@ -1,0 +1,222 @@
+{
+  "ok": true,
+  "rails": [
+    {
+      "x": 600.0,
+      "y0": 0.0,
+      "y1": 3000.0,
+      "len": 3000.0,
+      "clamp_role": "regular",
+      "kind": "направляющая",
+      "profile": "ГП-40-40",
+      "zone": "Z0"
+    }
+  ],
+  "hrails": [],
+  "brackets": [
+    {
+      "x": 600.0,
+      "y": 300.0,
+      "kind": "рядовой",
+      "zone": "Z0"
+    },
+    {
+      "x": 600.0,
+      "y": 1100.0,
+      "kind": "рядовой",
+      "zone": "Z0"
+    },
+    {
+      "x": 600.0,
+      "y": 1900.0,
+      "kind": "рядовой",
+      "zone": "Z0"
+    },
+    {
+      "x": 600.0,
+      "y": 2700.0,
+      "kind": "рядовой",
+      "zone": "Z0"
+    }
+  ],
+  "clamps": [],
+  "fittings": [],
+  "per_zone": [
+    {
+      "zone_id": "Z0",
+      "rails": 1,
+      "rails_lm": 3.0,
+      "brackets_main": 0,
+      "brackets_row": 4,
+      "clamps": 0,
+      "hrails": 0
+    }
+  ],
+  "notes": [
+    "Z0: Результат ограничен геометрией выбранной схемы и выполненными расчётными проверками; полный комплект узлов АТР и соответствие системы производителя не подтверждаются.",
+    "Z0: Standart — исторический геометрический пресет проекта B/КАФТ с позднейшими рабочими правилами. Он не подтверждает полный комплект КАФТ или Вектора. Штатный UI при расчётной вертикальной схеме явно передаёт Вектор-1 через SysOverride.",
+    "Z0: Ручные шаги/исторический пресет не являются расчётными пределами и не подтверждают несущую способность нового объекта."
+  ],
+  "system_used": {
+    "rail_rule": "every_joint",
+    "bracket_step": 800,
+    "bracket_step_corner": 800,
+    "bracket_start_offset": 300.0,
+    "corner_zone": 1500.0,
+    "rail_gap": 10.0,
+    "rail_stock": 6000.0,
+    "min_from_corner": 150.0,
+    "min_from_defshov": 100.0,
+    "rail_width": 40.0,
+    "edge_offset": 100.0,
+    "edge_overhang": 50.0,
+    "mid_rail_over": 650.0,
+    "_name": "Standart"
+  },
+  "summary": {
+    "rails": 1,
+    "rails_lm": 3.0,
+    "hrails": 0,
+    "hrails_lm": 0.0,
+    "fittings": 0,
+    "rail_stock_est": 1,
+    "brackets_main": 0,
+    "brackets_row": 4,
+    "clamps_start": 0,
+    "clamps_row": 0,
+    "clamps_side": 0,
+    "clamps_combo": 0,
+    "zones": 1,
+    "parts": "frame",
+    "cladding": "porcelain"
+  },
+  "design_scope": {
+    "schema": "aframe_design_scope/1",
+    "per_zone": [
+      {
+        "zone_id": "Z0",
+        "scope": {
+          "schema": "aframe_layout_contract/1",
+          "registry_revision": "2026-09-30.static-1",
+          "registry_id": "legacy_standart_geometry",
+          "requested_system_name": "Standart",
+          "preset_provenance": "legacy_project_geometry_preset",
+          "preset_overrides_present": true,
+          "manufacturer_id": null,
+          "series": null,
+          "album_edition": null,
+          "approved_node_id": null,
+          "identity_note": "Выбранный legacy пресет не задаёт утверждённую комбинацию производителя, серии, редакции и узла.",
+          "code_scheme": "vertical",
+          "album_type_candidates": [
+            "vector1_2015_type1",
+            "vector1_2015_type2",
+            "vector5_2017_type1",
+            "vector5_2017_type2"
+          ],
+          "album_correspondence": "partial",
+          "cladding": "porcelain",
+          "requested_parts": "frame",
+          "attachment_scope": "porcelain_clamps_geometry",
+          "calculation_requested": false,
+          "calculation_application": "limited_chain_with_geometric_screening",
+          "static_model_verification": "not_verified",
+          "manufacturer_compliance": "not_asserted",
+          "design_limits_from_preset": false,
+          "source_ids": [
+            "project_b_2026",
+            "german_frame_2026",
+            "implementation_scope_2026",
+            "vector1_2015",
+            "vector5_2017"
+          ],
+          "known_missing": [
+            "fixed_sliding_supports",
+            "thermal_movement_design",
+            "building_movement_joints",
+            "full_opening_corner_nodes",
+            "anchor_substrate_tests",
+            "complete_fastener_bom",
+            "other_porcelain_nodes",
+            "fire_opening_reinforcement",
+            "current_vector_album"
+          ],
+          "has_openings": false,
+          "scope": "partial_frame_layout",
+          "frame_geometry_requested": true,
+          "cladding_attachment_requested": false
+        }
+      }
+    ],
+    "manufacturer_compliance": "not_asserted"
+  },
+  "connection_passport": {
+    "schema": "aframe_connection_passport/1",
+    "status": "unavailable",
+    "reason": "Для выбранного пресета паспорт соединений ещё не реализован; система по имени не подменяется.",
+    "scheme": "vertical",
+    "catalog_revision": "f22c58b52010219ad5106e712ed87a5bd1c67730eaf3a67e6ecfa82ada6900fc",
+    "catalog_scope": "reference_project_only",
+    "sources": [
+      {
+        "source_id": "vector1_type1_reference_2026",
+        "sha256": "495f8fadf882dc6f6c3f2c023a08611035c5e916a3cc92ee4da675cb2a0f16d2",
+        "kind": "private_project_calculation",
+        "edition": "2026",
+        "locator": "PDF 3: обозначения элементов расчётного примера"
+      }
+    ],
+    "references": [
+      {
+        "reference_id": "calc_C.kr2_70",
+        "kind": "project_calculation_section",
+        "designation": "КР2-70",
+        "role": "bracket",
+        "source_id": "vector1_type1_reference_2026",
+        "pdf_pages": [
+          3
+        ],
+        "properties_status": "not_imported"
+      },
+      {
+        "reference_id": "calc_C.uk70_1_2",
+        "kind": "project_calculation_section",
+        "designation": "УК-70-1,2",
+        "role": "extender",
+        "source_id": "vector1_type1_reference_2026",
+        "pdf_pages": [
+          3
+        ],
+        "properties_status": "not_imported"
+      },
+      {
+        "reference_id": "calc_C.gp40_40_1_2",
+        "kind": "project_calculation_section",
+        "designation": "ГП-40-40-1,2",
+        "role": "rail",
+        "source_id": "vector1_type1_reference_2026",
+        "pdf_pages": [
+          3
+        ],
+        "properties_status": "not_imported"
+      }
+    ],
+    "members": [],
+    "joints": [],
+    "coverage": {
+      "fixed_sliding": "not_modeled",
+      "splice_continuity": "not_modeled",
+      "gravity_load_distribution": "not_verified",
+      "strength": "not_verified"
+    },
+    "summary": {
+      "members": 0,
+      "support_positions": 0,
+      "support_links": 0,
+      "geometric_joints": 0,
+      "matched_profile_references": 0,
+      "unresolved_profile_references": 0
+    },
+    "issues": []
+  }
+}

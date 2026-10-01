@@ -1,0 +1,53 @@
+{
+  "schema": "pilot_completion_publication/1",
+  "baseline_checkpoint": "1535d67eed9224c498ecc0cd73a6b0889a3f76a2",
+  "audit_commit": "1fb676213856cad6013f299fa231359d288ccb60",
+  "audit_tree": "1b27207da75d0ac38c54c1ec4779b9b47efe1e70",
+  "unchanged_product_commit": "129513f6fb5ae646c1b733bbf9e03ad36060cbfc",
+  "branch": "feat/auto-reactor",
+  "publication_method": "GitHub API blobs/tree/commit, immediate parent verification and force=false; local fast-forward",
+  "windows_check": {
+    "id": 36898541954,
+    "name": "check",
+    "head_branch": "feat/auto-reactor",
+    "head_sha": "1fb676213856cad6013f299fa231359d288ccb60",
+    "path": ".github/workflows/check.yml",
+    "run_number": 216,
+    "event": "push",
+    "status": "completed",
+    "conclusion": "success",
+    "run_attempt": 1,
+    "created_at": "2026-10-01T17:19:35Z",
+    "updated_at": "2026-10-01T17:28:27Z",
+    "html_url": "https://github.com/zinchenko-denis/AutoCAD/actions/runs/36898541954"
+  },
+  "job_id": 110491590710,
+  "artifact_receipt": "ci216/artifact_verification.json",
+  "artifact_receipt_sha256": "a8c100faeaa4447f1aeff3a75e4f77ac43df7c41825fb4f880895cd21ab3b9a7",
+  "separate_outcomes": {
+    "verification": "PASS",
+    "engineering_assessment": "BLOCKED",
+    "full_acceptance_cycle": "NOT_RUN"
+  },
+  "local": {
+    "mandatory_groups_passed": 56,
+    "compile_plugins_passed": 3,
+    "audit_checks_passed": 131,
+    "independent_saved_evidence_checks": 79,
+    "stable_source_files": 240,
+    "reused_full_synth_runs": 8,
+    "revalidated_synth_dependencies": 44
+  },
+  "product_code_changes": [],
+  "main_checked_unchanged": "e2a4e4df69a1936664c76c44cacff311ad44b07d",
+  "protected_modules_changed": false,
+  "guide_rebuilt": false,
+  "new_ui_visual_review_claimed": false,
+  "guide_protocol": "guide_applicability.json",
+  "ui_applicability": "Product and UI sources unchanged. Prior review681/7 remains bound to product129513f / CI215; no new PNG review claimed. CI216 full job passes separately.",
+  "live_autocad_checked": false,
+  "installer_created": false,
+  "following_handoff_commit": "Documentation only; identify by the containing Git commit, not a self-referential hash.",
+  "snapshot_note": "Earlier local and independent review files record PENDING before publication; this receipt and ci216/ci_run.json hold the final Windows status.",
+  "next_step": "Fixed acceptance scenario for the limited permitted building/quantity workflow (P1/P5), keeping mounting/calculation admission blocked."
+}

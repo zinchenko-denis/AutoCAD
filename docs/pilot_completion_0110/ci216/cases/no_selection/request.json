@@ -1,0 +1,49 @@
+{
+  "sub_type": "vertical",
+  "system": {
+    "name": "Standart",
+    "bracket_step": 800,
+    "bracket_step_corner": 800
+  },
+  "rail_profile": "ГП-40-40",
+  "nsp_type": null,
+  "cladding": "porcelain",
+  "exact_step": true,
+  "floor_step": 0,
+  "parts": "frame",
+  "op": "frame",
+  "floors_y": [
+    1500
+  ],
+  "joints_x": [
+    600
+  ],
+  "zones": [
+    {
+      "zone_id": "Z0",
+      "zone": {
+        "contour": {
+          "pts": [
+            [
+              0,
+              0
+            ],
+            [
+              1200,
+              0
+            ],
+            [
+              1200,
+              3000
+            ],
+            [
+              0,
+              3000
+            ]
+          ]
+        },
+        "openings": []
+      }
+    }
+  ]
+}
