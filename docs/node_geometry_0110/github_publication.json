@@ -1,10 +1,49 @@
 {
-  "status": "NUMERIC_FIX_LOCAL_VERIFIED_NOT_YET_PUBLISHED",
+  "status": "SOURCE_PUBLISHED_WINDOWS_CI_UI_PASS",
   "repository": "zinchenko-denis/AutoCAD",
   "branch": "feat/auto-reactor",
   "base_commit": "a4cd2908213552437da93b4888145b3c6aeadd5b",
-  "product_commit": "6287e6f13c9d14497c753d91849cf3d77d7e24e9",
+  "product_commit": "e10ce939d844ff945abe74bcf421b71752913249",
   "github_actions": {
+    "head_sha": "e10ce939d844ff945abe74bcf421b71752913249",
+    "run_id": 36848759137,
+    "run_number": 210,
+    "event": "push",
+    "status": "completed",
+    "conclusion": "success",
+    "html_url": "https://github.com/zinchenko-denis/AutoCAD/actions/runs/36848759137",
+    "created_at": "2026-10-01T10:22:47Z",
+    "updated_at": "2026-10-01T10:28:42Z",
+    "job_id": 110325156621,
+    "node_core_checks": 1270,
+    "node_cad_checks": 33,
+    "node_ui_checks": 380,
+    "node_ui_failures": 0,
+    "legacy_ui_checks": 919,
+    "project_ui_checks": 1730,
+    "screenshot": {
+      "path": "ci210_success.jpg",
+      "sha256": "b6668dae2d0a7daabc72b8294e8bb8bcfe93e49e42cff2e51239864ad9ead5a6",
+      "visible_status": "Success",
+      "capture": "browser viewport; same inspected and saved bytes"
+    },
+    "nonblocking_warnings": [
+      "Existing ManualQuantityForm.Select hides Control.Select (two compiler emissions)",
+      "Actions Node20 deprecation; update separately with compatibility verification"
+    ],
+    "ui_reviews": [
+      "ui_visual_review_ci210.json",
+      "legacy_ui_visual_review_ci210.json",
+      "../project_params_0110/ui_visual_review_ci210.json"
+    ]
+  },
+  "main_changed": false,
+  "release_published": false,
+  "live_autocad_checked": false,
+  "initial_product_commit": "6287e6f13c9d14497c753d91849cf3d77d7e24e9",
+  "validated_commit": "e10ce939d844ff945abe74bcf421b71752913249",
+  "product_tree": "077f7e9ec17cfab7fcf2876ef9ba5e37949ffd35",
+  "prior_failed_github_actions": {
     "head_sha": "6287e6f13c9d14497c753d91849cf3d77d7e24e9",
     "run_id": 36846674074,
     "run_number": 209,
@@ -16,7 +55,6 @@
     "updated_at": "2026-10-01T10:08:02Z",
     "job_id": 110318349150
   },
-  "main_changed": false,
-  "release_published": false,
-  "live_autocad_checked": false
+  "observed_at_utc": "2026-10-01T10:31:02.872680+00:00",
+  "artifact_verification": "windows_artifact_verification_ci210.json"
 }

@@ -1,0 +1,269 @@
+{
+  "schema": "facade_ui_visual_review/1",
+  "status": "PASS",
+  "reviewed_commit": "e10ce939d844ff945abe74bcf421b71752913249",
+  "github_run_id": 36848759137,
+  "github_run_number": 210,
+  "artifact_id": 11154832273,
+  "artifact_sha256": "8df84a2f75b7042ecde38b34c97b671d52507d69af97c445c5b931962c198987",
+  "artifact_digest_verified_by": "root",
+  "source_manifest_verified_by": "root",
+  "reviewer": "connection_ui",
+  "live_autocad_checked": false,
+  "image_count": 10,
+  "all_images_viewed_original": true,
+  "native_checks": {
+    "status": "PASS",
+    "checks": 380,
+    "failures": 0,
+    "reasons": []
+  },
+  "prior_failure_evidence": "ui_visual_review_ci209.json",
+  "layout_status": "PASS",
+  "resolved_findings": [
+    {
+      "id": "decimal-to-double-export",
+      "status": "PASS",
+      "evidence": "numeric_diagnostics",
+      "description": "Оба ранее падавших точных утверждения прошли. В tiny_declared_layer и adjacent_declared_cladding совпадают round-trip текст и IEEE754-биты expected, typed clone, direct evaluation и form evaluation. Точность утверждений не ослаблена."
+    },
+    {
+      "id": "native-review-linebreaks",
+      "status": "PASS",
+      "description": "На всех семи снимках просмотра, включая 12 pt, источник, основание координат и первый слой разделены строками. Три новых native проверки TextBox.Lines прошли."
+    }
+  ],
+  "blocking_findings": [],
+  "nonblocking_findings": [],
+  "images": [
+    {
+      "file": "node_blank.png",
+      "sha256": "4794f71f1aa4c41b281006cefa817a245785c6d172c0be5bc5c969f6e704d0df",
+      "width": 916,
+      "height": 689,
+      "review_detail": "original",
+      "status": "PASS",
+      "notes": "Поля локальных координат пусты; поверхность явно не задана. До проверки вставка отключена; прокрутка и кнопки доступны."
+    },
+    {
+      "file": "node_partial.png",
+      "sha256": "339fe191c4481ef6242cbfec5751fce1e3aef28c4f4fbc33b70fed35560ebb9e",
+      "width": 916,
+      "height": 689,
+      "review_detail": "original",
+      "status": "PASS",
+      "notes": "Источник, основание и первый слой теперь на отдельных строках. Неизвестные локальные параметры и неполная проверка указаны явно, вставка частичной схемы доступна после просмотра."
+    },
+    {
+      "file": "node_valid.png",
+      "sha256": "25b22dfa6118142099cfbd5b969c4c9aea86b8b3f4be8b7c7adba557d89896c3",
+      "width": 916,
+      "height": 689,
+      "review_detail": "original",
+      "status": "PASS",
+      "notes": "Источник, основание и слои разделены. Локальный просвет 20 мм и ограничения прочности/монтажа читаются; действия доступны."
+    },
+    {
+      "file": "node_rejected.png",
+      "sha256": "9e3d47d56f19eab4f26e7d3c24d5930191386c783431c6667b23cbd339138257",
+      "width": 916,
+      "height": 689,
+      "review_detail": "original",
+      "status": "PASS",
+      "notes": "Число 19.999 мм показано без округления, минимум 20 мм не соблюдён, вставка отключена. Начальные строки обзора разделены."
+    },
+    {
+      "file": "node_exact_boundary.png",
+      "sha256": "995e1a56a1ce1830bbd67bf3876dbc1ee431f4584c55a9bc911647f1223e3e5b",
+      "width": 916,
+      "height": 689,
+      "review_detail": "original",
+      "status": "PASS",
+      "notes": "Просвет 19.99999999999997 мм не округлён до 20 мм, вставка отключена. Точный текст числа и отдельные строки источника/основания читаются."
+    },
+    {
+      "file": "node_membrane.png",
+      "sha256": "974c3fc9489a244de181a1d0478081c82f913320777c058d9dc458102afdddfa",
+      "width": 916,
+      "height": 689,
+      "review_detail": "original",
+      "status": "PASS",
+      "notes": "Поверхности ГП 190 мм и мембраны 170 мм дают локальный просвет 20 мм. Разделение строк и границы частичной проверки читаются."
+    },
+    {
+      "file": "node_small.png",
+      "sha256": "50d1f3ce397d5780ee2b1474d99bb08e6ae7489a8f73bd1665727fbe14a7bc8b",
+      "width": 760,
+      "height": 530,
+      "review_detail": "original",
+      "status": "PASS",
+      "notes": "При запросе уменьшенного размера окно 760×530; native и managed client 744×491 совпадают. Вставка до просмотра отключена, кнопки целиком видны, тело прокручивается."
+    },
+    {
+      "file": "node_large_font.png",
+      "sha256": "d54cdb714aca89748ce74e6935134bfc3632f7d8ba6d5fc224df4b4677752a1d",
+      "width": 1024,
+      "height": 728,
+      "review_detail": "original",
+      "status": "PASS",
+      "notes": "При шрифте 12 pt окно 1024×728 помещается на рабочем экране; поля и нижние действия не обрезаны, тело прокручивается."
+    },
+    {
+      "file": "node_large_font_review.png",
+      "sha256": "1e7f963ddcaf79f853345b77fd5ad18ea756944378d9fc510ac285802ca60438",
+      "width": 1024,
+      "height": 728,
+      "review_detail": "original",
+      "status": "PASS",
+      "notes": "При 12 pt источник, основание и первый слой отчётливо разделены строками. Обзор, ограничения и все нижние кнопки помещаются в клиентскую область."
+    },
+    {
+      "file": "node_contradiction.png",
+      "sha256": "74f094b40e8ed4781e64920af4e328744abdecb766caf96ee46571a1873da183",
+      "width": 916,
+      "height": 689,
+      "review_detail": "original",
+      "status": "PASS",
+      "notes": "Противоречие утеплителя x=200 мм и облицовки x=180 мм объяснено, вставка отключена. Строки источника, основания и первого слоя разделены; Назад доступен."
+    }
+  ],
+  "layouts": [
+    {
+      "scenario": "node_blank",
+      "window": "{X=10,Y=10,Width=916,Height=689}",
+      "native_client": "{X=18,Y=41,Width=900,Height=650}",
+      "cached_client": "{X=0,Y=0,Width=900,Height=650}",
+      "screen": "{X=0,Y=0,Width=1024,Height=728}",
+      "font_points": 9,
+      "minimum_size": "{Width=760, Height=530}"
+    },
+    {
+      "scenario": "node_partial",
+      "window": "{X=10,Y=10,Width=916,Height=689}",
+      "native_client": "{X=18,Y=41,Width=900,Height=650}",
+      "cached_client": "{X=0,Y=0,Width=900,Height=650}",
+      "screen": "{X=0,Y=0,Width=1024,Height=728}",
+      "font_points": 9,
+      "minimum_size": "{Width=760, Height=530}"
+    },
+    {
+      "scenario": "node_valid",
+      "window": "{X=10,Y=10,Width=916,Height=689}",
+      "native_client": "{X=18,Y=41,Width=900,Height=650}",
+      "cached_client": "{X=0,Y=0,Width=900,Height=650}",
+      "screen": "{X=0,Y=0,Width=1024,Height=728}",
+      "font_points": 9,
+      "minimum_size": "{Width=760, Height=530}"
+    },
+    {
+      "scenario": "node_rejected",
+      "window": "{X=10,Y=10,Width=916,Height=689}",
+      "native_client": "{X=18,Y=41,Width=900,Height=650}",
+      "cached_client": "{X=0,Y=0,Width=900,Height=650}",
+      "screen": "{X=0,Y=0,Width=1024,Height=728}",
+      "font_points": 9,
+      "minimum_size": "{Width=760, Height=530}"
+    },
+    {
+      "scenario": "node_exact_boundary",
+      "window": "{X=10,Y=10,Width=916,Height=689}",
+      "native_client": "{X=18,Y=41,Width=900,Height=650}",
+      "cached_client": "{X=0,Y=0,Width=900,Height=650}",
+      "screen": "{X=0,Y=0,Width=1024,Height=728}",
+      "font_points": 9,
+      "minimum_size": "{Width=760, Height=530}"
+    },
+    {
+      "scenario": "node_membrane",
+      "window": "{X=10,Y=10,Width=916,Height=689}",
+      "native_client": "{X=18,Y=41,Width=900,Height=650}",
+      "cached_client": "{X=0,Y=0,Width=900,Height=650}",
+      "screen": "{X=0,Y=0,Width=1024,Height=728}",
+      "font_points": 9,
+      "minimum_size": "{Width=760, Height=530}"
+    },
+    {
+      "scenario": "node_small",
+      "window": "{X=10,Y=10,Width=760,Height=530}",
+      "native_client": "{X=18,Y=41,Width=744,Height=491}",
+      "cached_client": "{X=0,Y=0,Width=744,Height=491}",
+      "screen": "{X=0,Y=0,Width=1024,Height=728}",
+      "font_points": 9,
+      "minimum_size": "{Width=760, Height=530}"
+    },
+    {
+      "scenario": "node_large_font",
+      "window": "{X=0,Y=0,Width=1024,Height=728}",
+      "native_client": "{X=8,Y=31,Width=1008,Height=689}",
+      "cached_client": "{X=0,Y=0,Width=1008,Height=689}",
+      "screen": "{X=0,Y=0,Width=1024,Height=728}",
+      "font_points": 12,
+      "minimum_size": "{Width=973, Height=726}"
+    },
+    {
+      "scenario": "node_large_font_review",
+      "window": "{X=0,Y=0,Width=1024,Height=728}",
+      "native_client": "{X=8,Y=31,Width=1008,Height=689}",
+      "cached_client": "{X=0,Y=0,Width=1008,Height=689}",
+      "screen": "{X=0,Y=0,Width=1024,Height=728}",
+      "font_points": 12,
+      "minimum_size": "{Width=973, Height=726}"
+    },
+    {
+      "scenario": "node_contradiction",
+      "window": "{X=10,Y=10,Width=916,Height=689}",
+      "native_client": "{X=18,Y=41,Width=900,Height=650}",
+      "cached_client": "{X=0,Y=0,Width=900,Height=650}",
+      "screen": "{X=0,Y=0,Width=1024,Height=728}",
+      "font_points": 9,
+      "minimum_size": "{Width=760, Height=530}"
+    }
+  ],
+  "numeric_diagnostics": [
+    {
+      "scenario": "tiny_declared_layer",
+      "expected": {
+        "roundtrip": "1E-28",
+        "ieee754_hex": "3A1FB0F6BE506019"
+      },
+      "typed_clone": {
+        "roundtrip": "1E-28",
+        "ieee754_hex": "3A1FB0F6BE506019"
+      },
+      "direct_evaluation": {
+        "roundtrip": "1E-28",
+        "ieee754_hex": "3A1FB0F6BE506019"
+      },
+      "form_evaluation": {
+        "roundtrip": "1E-28",
+        "ieee754_hex": "3A1FB0F6BE506019"
+      },
+      "form_has_geometry": true,
+      "form_status": "Частичная размерная схема. Проверка локального просвета не выполнена. Это не рабочий узел."
+    },
+    {
+      "scenario": "adjacent_declared_cladding",
+      "expected": {
+        "roundtrip": "479.82000000000005",
+        "ieee754_hex": "407DFD1EB851EB86"
+      },
+      "typed_clone": {
+        "roundtrip": "479.82000000000005",
+        "ieee754_hex": "407DFD1EB851EB86"
+      },
+      "direct_evaluation": {
+        "roundtrip": "479.82000000000005",
+        "ieee754_hex": "407DFD1EB851EB86"
+      },
+      "form_evaluation": {
+        "roundtrip": "479.82000000000005",
+        "ieee754_hex": "407DFD1EB851EB86"
+      },
+      "form_has_geometry": true,
+      "form_status": "Частичная размерная схема. Проверка локального просвета не выполнена. Это не рабочий узел."
+    }
+  ],
+  "manifest_sha256": "a4f371ff56c0d17229743e4f0c0e6fbe809a574219b7b908cc2012cb4e4824fd",
+  "checks_sha256": "1e5f7ccce7008e60d6d6bd765daf6c40422c855b0e7ea9702ff4b8276eb99442",
+  "conclusion": "Все 10 оригинальных PNG просмотрены. Предыдущие дефекты численного экспорта и переводов строк устранены в данном Windows CI. Малый размер и 12 pt сохраняют корректные native границы и доступность действий. Это проверка WinForms вне живого AutoCAD."
+}

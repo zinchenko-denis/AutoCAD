@@ -1,5 +1,5 @@
 {
-  "product_commit": null,
+  "product_commit": "e10ce939d844ff945abe74bcf421b71752913249",
   "illustration_product_commit": "8360c238f342d82c1dd83c63789729506c34df18",
   "illustration_source_manifest": "assets/source_manifest.json",
   "illustration_engine_hashes_match_current": false,
@@ -29,9 +29,9 @@
   "release_published": false,
   "illustration_replay_manifest": "../node_geometry_0110/manual_examples.json",
   "illustration_geometry_matches_current": true,
-  "provenance_note": "Stage2B3 source guide: declared node planes, exact local clearance, partial/refused cases, Create/Check freshness and ownership. All50pages visually inspected;20chapters/10illustrations/4DXF retained. Five tutorial replays PASS. Full local gates and facade compilation passed; Windows CI/UI pending. No live AutoCAD or new installer; build104 contains stage2A. Algorithm-version refusal/recreate note added; updated page41 independently reviewed and pages41-50 fully reviewed. CI209 failed the new numeric export assertions; fix and repeat pending.",
+  "provenance_note": "Stage2B3 algorithm/2, exact declared planes/layers and local clearance, partial/refused cases, Create/Check freshness and ownership, explicit recreate of old algorithm snapshots. Local54/54 and compile3/3, full unchanged-engine synthesis8/8, tutorials5/5; Windows CI210 and all31 original UI PNG PASS. Guide50pages: first40 identical to accepted render, all41-50 re-inspected, page41 independently viewed. No live AutoCAD or new installer; build104 contains stage2A.",
   "product_base_commit": "a4cd2908213552437da93b4888145b3c6aeadd5b",
-  "product_source_state": "numeric_fix_local_verified_windows_pending",
+  "product_source_state": "published_local_and_windows_ci_ui_verified",
   "product_source_sha256": {
     "AClad/engine/audit_clad.py": "881ae022233fbc6ff178d2ea2f4842eb4cf7547a8cb33a8a29e69c435aad8a92",
     "AClad/engine/clad_engine.py": "cf7e3739c74517a6d4483572d19330901b11d6ef8f3eb4e95c42104645257e1e",
@@ -139,5 +139,5 @@
     "Facades/src/AFacadesPlugin/ZoneForm.cs": "30cc49edd277ffcdfe03261bdb82e4ff92dbaccca51284b543509ab86c40f178",
     "Facades/src/AFacadesPlugin/ZoneTable.cs": "9aad9aa85ebf1d41c40e6d3577a5df4e05ae207923f9658d790b39ad030c2c4b"
   },
-  "validated_commit": null
+  "validated_commit": "e10ce939d844ff945abe74bcf421b71752913249"
 }

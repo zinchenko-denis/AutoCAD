@@ -1,0 +1,239 @@
+{
+  "schema": "facade_ui_visual_review/1",
+  "status": "PASS",
+  "reviewed_commit": "e10ce939d844ff945abe74bcf421b71752913249",
+  "github_run_id": 36848759137,
+  "github_run_number": 210,
+  "artifact_id": 11155050696,
+  "artifact_sha256": "afa6aa40df74b61275dc576a025b49d510f9315e2294bf6b7bae7a753d85f8a7",
+  "artifact_digest_verified_by": "root",
+  "reviewer": "project_integration_review",
+  "live_autocad_checked": false,
+  "image_count": 11,
+  "all_images_viewed_original": true,
+  "native_checks": {
+    "status": "PASS",
+    "checks": 1730,
+    "failures": 0,
+    "reasons": []
+  },
+  "images": [
+    {
+      "file": "project_filled.png",
+      "sha256": "01f152a7a3f1dbab773ec651cc45e3250f197195bd4f5af96bf643fc65221202",
+      "width": 916,
+      "height": 689,
+      "review_detail": "original",
+      "status": "PASS",
+      "notes": "Поля проекта и обе нижние кнопки читаются. Раздел источника находится в прокручиваемом теле. Длинные исполнения сокращены шириной свёрнутого списка, числовые значения видны."
+    },
+    {
+      "file": "project_review.png",
+      "sha256": "e0bdf8a0ae9c5fcc95ae8b9cd0540ffab9ee597a7f3f4dddbd67173881f580b2",
+      "width": 916,
+      "height": 689,
+      "review_detail": "original",
+      "status": "PASS",
+      "notes": "Обзор изменений и предупреждения читаются, кнопки Назад, Сохранить проект и Отмена целиком видны. Сохраняется неблокирующее замечание: вместо русской подписи исполнения в обзоре указан ID galvanized_painted."
+    },
+    {
+      "file": "zone_overrides.png",
+      "sha256": "5bf093b91d4e0abe2c1e143cbe8763d0afada3168d92da0b7ae53c41f5310253",
+      "width": 916,
+      "height": 689,
+      "review_detail": "original",
+      "status": "PASS",
+      "notes": "Наследуемые поля отличаются от собственных значений; показана явная очистка выноса. Кнопки доступны, нижние поля находятся в прокручиваемом теле."
+    },
+    {
+      "file": "zone_review.png",
+      "sha256": "4b3a008b8c0821cef592f3a18c94f35bfd3f94419a161ecc818c0adeebe76ff9",
+      "width": 916,
+      "height": 689,
+      "review_detail": "original",
+      "status": "PASS",
+      "notes": "Обзор явно показывает смену происхождения при том же числе, очистку выноса и утеплителя, последствия привязки и необходимость полного построения. Текст переносится без горизонтального обрезания."
+    },
+    {
+      "file": "zone_detach_review.png",
+      "sha256": "aa952ce02bfb0b6d3d14a046b19277a1e4fc9e68ee8b908598f08727c7211a35",
+      "width": 916,
+      "height": 689,
+      "review_detail": "original",
+      "status": "PASS",
+      "notes": "Предупреждение о снятии привязки и необходимости явного локального решения читается. Все три действия видны целиком."
+    },
+    {
+      "file": "zone_small.png",
+      "sha256": "d94b6f44d794178aace6dbc4a79b720b83b779d46e21e451cfada6d76c0b5bf8",
+      "width": 760,
+      "height": 530,
+      "review_detail": "original",
+      "status": "PASS",
+      "notes": "Минимальное окно 760×530: заголовок и пояснения переносятся, три нижние кнопки целиком видны. Тело прокручивается вертикально; лишней незаполненной полосы справа и снизу нет. Native и managed client по протоколу равны 744×491."
+    },
+    {
+      "file": "zone_large_font.png",
+      "sha256": "7bbed570b4ccab9b7d902e8206b7834ccecd894b6fc84a27cdc45ddc837fa7ec",
+      "width": 1024,
+      "height": 728,
+      "review_detail": "original",
+      "status": "PASS",
+      "notes": "Шрифт 12 pt: окно 1024×728 помещается на экране, подписи и нижние кнопки читаются. Высокое тело имеет вертикальную прокрутку; нижние поля не обязаны одновременно помещаться в текущей области."
+    },
+    {
+      "file": "zone_large_font_review.png",
+      "sha256": "50777187215e2fd3b5a2b94eb7c090961d749ed0a77d10c722280e1e471b7008",
+      "width": 1024,
+      "height": 728,
+      "review_detail": "original",
+      "status": "PASS",
+      "notes": "Шрифт 12 pt: обзор отсутствия изменений, сохранение редакции привязки и предупреждения читаются. Кнопки Назад, Сохранить зоны и Отмена целиком видны."
+    },
+    {
+      "file": "bound_group_origins.png",
+      "sha256": "1ed664f2ab9b721750664bcd55a5eb39b7af3eecb7671aa61d3513ce34f36a62",
+      "width": 916,
+      "height": 689,
+      "review_detail": "original",
+      "status": "PASS",
+      "notes": "Просмотр группы: количества зон по происхождению переносятся на строки. Текущая прокрутка скрывает начало тела; кнопка проверки отключена, Закрыть доступна."
+    },
+    {
+      "file": "bound_group_large_font.png",
+      "sha256": "f71bd0ac71e1600a2f649e97550e17553462aa6196655cc010aec841a5ffcba4",
+      "width": 1024,
+      "height": 728,
+      "review_detail": "original",
+      "status": "PASS",
+      "notes": "Просмотр группы при 12 pt помещается в окно. Сводки происхождения и числа читаются, Закрыть видна целиком. Начало содержимого скрыто текущей вертикальной прокруткой."
+    },
+    {
+      "file": "bound_atframe.png",
+      "sha256": "c9c43601ed31a9d42f685a575a2ff5129530fb5bd35a8201898e9287ffa6f15a",
+      "width": 916,
+      "height": 689,
+      "review_detail": "original",
+      "status": "PASS",
+      "notes": "Просмотр привязанной зоны: редакция проекта указана у полей, предупреждение о режиме просмотра читается, изменение отключено, Закрыть доступна."
+    }
+  ],
+  "layouts": [
+    {
+      "scenario": "project_filled",
+      "window": "{X=10,Y=10,Width=916,Height=689}",
+      "native_client": "{X=18,Y=41,Width=900,Height=650}",
+      "cached_client": "{X=0,Y=0,Width=900,Height=650}",
+      "screen": "{X=0,Y=0,Width=1024,Height=728}",
+      "font_points": 9,
+      "minimum_size": "{Width=760, Height=530}"
+    },
+    {
+      "scenario": "project_review",
+      "window": "{X=10,Y=10,Width=916,Height=689}",
+      "native_client": "{X=18,Y=41,Width=900,Height=650}",
+      "cached_client": "{X=0,Y=0,Width=900,Height=650}",
+      "screen": "{X=0,Y=0,Width=1024,Height=728}",
+      "font_points": 9,
+      "minimum_size": "{Width=760, Height=530}"
+    },
+    {
+      "scenario": "zone_overrides",
+      "window": "{X=10,Y=10,Width=916,Height=689}",
+      "native_client": "{X=18,Y=41,Width=900,Height=650}",
+      "cached_client": "{X=0,Y=0,Width=900,Height=650}",
+      "screen": "{X=0,Y=0,Width=1024,Height=728}",
+      "font_points": 9,
+      "minimum_size": "{Width=760, Height=530}"
+    },
+    {
+      "scenario": "zone_review",
+      "window": "{X=10,Y=10,Width=916,Height=689}",
+      "native_client": "{X=18,Y=41,Width=900,Height=650}",
+      "cached_client": "{X=0,Y=0,Width=900,Height=650}",
+      "screen": "{X=0,Y=0,Width=1024,Height=728}",
+      "font_points": 9,
+      "minimum_size": "{Width=760, Height=530}"
+    },
+    {
+      "scenario": "zone_detach_review",
+      "window": "{X=10,Y=10,Width=916,Height=689}",
+      "native_client": "{X=18,Y=41,Width=900,Height=650}",
+      "cached_client": "{X=0,Y=0,Width=900,Height=650}",
+      "screen": "{X=0,Y=0,Width=1024,Height=728}",
+      "font_points": 9,
+      "minimum_size": "{Width=760, Height=530}"
+    },
+    {
+      "scenario": "zone_small",
+      "window": "{X=10,Y=10,Width=760,Height=530}",
+      "native_client": "{X=18,Y=41,Width=744,Height=491}",
+      "cached_client": "{X=0,Y=0,Width=744,Height=491}",
+      "screen": "{X=0,Y=0,Width=1024,Height=728}",
+      "font_points": 9,
+      "minimum_size": "{Width=760, Height=530}"
+    },
+    {
+      "scenario": "zone_large_font",
+      "window": "{X=0,Y=0,Width=1024,Height=728}",
+      "native_client": "{X=8,Y=31,Width=1008,Height=689}",
+      "cached_client": "{X=0,Y=0,Width=1008,Height=689}",
+      "screen": "{X=0,Y=0,Width=1024,Height=728}",
+      "font_points": 12,
+      "minimum_size": "{Width=973, Height=726}"
+    },
+    {
+      "scenario": "zone_large_font_review",
+      "window": "{X=0,Y=0,Width=1024,Height=728}",
+      "native_client": "{X=8,Y=31,Width=1008,Height=689}",
+      "cached_client": "{X=0,Y=0,Width=1008,Height=689}",
+      "screen": "{X=0,Y=0,Width=1024,Height=728}",
+      "font_points": 12,
+      "minimum_size": "{Width=973, Height=726}"
+    },
+    {
+      "scenario": "bound_group_origins",
+      "window": "{X=10,Y=10,Width=916,Height=689}",
+      "native_client": "{X=18,Y=41,Width=900,Height=650}",
+      "cached_client": "{X=0,Y=0,Width=900,Height=650}",
+      "screen": "{X=0,Y=0,Width=1024,Height=728}",
+      "font_points": 9,
+      "minimum_size": "{Width=760, Height=530}"
+    },
+    {
+      "scenario": "bound_group_large_font",
+      "window": "{X=0,Y=0,Width=1024,Height=728}",
+      "native_client": "{X=8,Y=31,Width=1008,Height=689}",
+      "cached_client": "{X=0,Y=0,Width=1008,Height=689}",
+      "screen": "{X=0,Y=0,Width=1024,Height=728}",
+      "font_points": 12,
+      "minimum_size": "{Width=973, Height=726}"
+    },
+    {
+      "scenario": "bound_atframe",
+      "window": "{X=0,Y=39,Width=916,Height=689}",
+      "native_client": "{X=8,Y=70,Width=900,Height=650}",
+      "cached_client": "{X=0,Y=0,Width=900,Height=650}",
+      "screen": "{X=0,Y=0,Width=1024,Height=728}",
+      "font_points": 9,
+      "minimum_size": "{Width=760, Height=530}"
+    }
+  ],
+  "manifest_sha256": "337a1649b532ab1f83065533ef944b27f2b56030da2293a140df8451dbb2acbf",
+  "checks_sha256": "6568af77c60e51e26a3afa1c276580dc2ed9d33ae4e50b72ec1737fe6d0541e4",
+  "prior_reviews": [
+    "ui_visual_review_ci207.json",
+    "ui_visual_review_ci208.json",
+    "ui_visual_review_ci209.json"
+  ],
+  "all_image_bytes_match_ci209": true,
+  "blocking_findings": [],
+  "nonblocking_findings": [
+    {
+      "id": "execution-id-preview",
+      "scenario": "project_review",
+      "description": "Сохраняется ранее отмеченный ID galvanized_painted в обзоре создания проекта вместо русской подписи. Числа и действия доступны; это не новое изменение CI210."
+    }
+  ],
+  "conclusion": "Все 11 исходных PNG CI210 просмотрены в исходном размере. Новых визуальных дефектов не найдено; малое окно и шрифт 12 pt сохраняют доступность действий, прокрутка видна. Изображения побайтно совпадают с CI209. Нативные проверки формы: 1730 PASS; запуск внутри AutoCAD не проводился."
+}

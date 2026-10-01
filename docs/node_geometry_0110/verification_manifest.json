@@ -1,9 +1,9 @@
 {
-  "status": "NUMERIC_FIX_LOCAL_PASS_WINDOWS_PENDING",
+  "status": "LOCAL_AND_WINDOWS_CI_UI_PASS",
   "date_utc": "2026-10-01",
   "branch": "feat/auto-reactor",
   "base_commit": "a4cd2908213552437da93b4888145b3c6aeadd5b",
-  "product_commit": "6287e6f13c9d14497c753d91849cf3d77d7e24e9",
+  "product_commit": "e10ce939d844ff945abe74bcf421b71752913249",
   "input_sha256_file": "numeric_fix_input_sha256.json",
   "input_files_count": 246,
   "inputs_unchanged_during_final_gates": true,
@@ -45,15 +45,20 @@
       "manifest": "manual_examples.json"
     },
     "windows_ui": {
-      "status": "FAIL",
-      "checks": 377,
-      "failures": 2,
-      "run_id": 36846674074,
-      "reasons": [
-        "tiny declared layer numeric equality",
-        "next representable cladding coordinate numeric equality"
+      "status": "PASS",
+      "head_sha": "e10ce939d844ff945abe74bcf421b71752913249",
+      "run_id": 36848759137,
+      "png_reviewed": 31,
+      "reviews": [
+        "ui_visual_review_ci210.json",
+        "legacy_ui_visual_review_ci210.json",
+        "../project_params_0110/ui_visual_review_ci210.json"
       ],
       "live_autocad_checked": false
+    },
+    "windows_artifacts": {
+      "status": "PASS",
+      "manifest": "windows_artifact_verification_ci210.json"
     }
   },
   "performance": {
@@ -155,5 +160,7 @@
     "run_id": 36846674074,
     "manifest": "windows_artifact_verification_ci209.json",
     "ui_review": "ui_visual_review_ci209.json"
-  }
+  },
+  "validated_commit": "e10ce939d844ff945abe74bcf421b71752913249",
+  "algorithm_revision": "vector1_2015_4_2_1_planes/2"
 }
