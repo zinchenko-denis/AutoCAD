@@ -1,0 +1,13 @@
+{
+  "status": "BLOCKED",
+  "live_autocad_checked": false,
+  "source_sha256": {
+    "tools/solution_catalog_0110/SolutionUiProbe.cs": "20e513632acbc02bfb7a156c529684020ce6cfb83cae395d01448173d8fcc35e",
+    "AFrame/src/AFramePlugin/FrameForm.cs": "eb2f9ac9ba5a9a4577d99bc7db1a2e28ef8540e04c1129463c33d0279cb3181c",
+    "AFrame/src/AFramePlugin/FrameSettings.cs": "f76eb206dcbc97977015865ec88edaaf9311c1769573f801e839f21ed4fb95c4",
+    "AFrame/src/AFramePlugin/FrameSolutionSelection.cs": "59e20979aff3c3628c44d44715bb275069672f35bacd1ee454fb759e596f804a",
+    "AFrame/src/AFramePlugin/FrameSolutionForm.cs": "5d102846f45431872498f142a8f9d2b438a623f8811594f79d6040a9cc5cbc7e",
+    "tools/solution_catalog_0110/test_solution_ui.py": "10017015ddb6ba11312df95f4169dea44c7ca28fce6ecb7292118d2eacbc9136"
+  },
+  "reason": "Xvfb could not create a native display; see xvfb.log. No GUI execution claimed"
+}

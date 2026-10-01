@@ -132,7 +132,8 @@ def dump_roles():
     else:
         exe = os.path.join(tempfile.gettempdir(), "roles_dump.exe")
         src = [os.path.join(ROOT, "AFrame", "tools", "roles", "RolesDump.cs"),
-               os.path.join(ROOT, "AFrame", "src", "AFramePlugin", "FrameSettings.cs")]
+               os.path.join(ROOT, "AFrame", "src", "AFramePlugin", "FrameSettings.cs"),
+               os.path.join(ROOT, "AFrame", "src", "AFramePlugin", "FrameSolutionSelection.cs")]
         subprocess.check_call(["mcs", "-nologo", "-out:" + exe, "-r:System.Web.Extensions.dll"] + src,
                               stdout=subprocess.DEVNULL)
         runner = ["mono", exe]

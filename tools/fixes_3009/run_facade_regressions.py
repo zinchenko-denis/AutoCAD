@@ -66,7 +66,8 @@ def main():
             exe = out / "FrameSettingsProbe.exe"
             if run("FrameSettingsProbe_compile", ["mcs", "-r:System.Web.Extensions.dll",
                    "-out:" + str(exe), str(PROBES / "FrameSettingsProbe.cs"),
-                   str(ROOT / "AFrame/src/AFramePlugin/FrameSettings.cs")]) == 0:
+                   str(ROOT / "AFrame/src/AFramePlugin/FrameSettings.cs"),
+                   str(ROOT / "AFrame/src/AFramePlugin/FrameSolutionSelection.cs")]) == 0:
                 run("FrameSettingsProbe", ["mono", str(exe)])
     (out / "manifest.json").write_text(json.dumps({"scope": "facades only",
         "python_only": args.python_only, "results": results}, ensure_ascii=False, indent=2), encoding="utf-8")

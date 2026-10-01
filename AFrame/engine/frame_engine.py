@@ -34,6 +34,7 @@ import sys
 
 import frame_plan as fp
 from frame_connections import merge_connection_passports
+from frame_solution_selection import prepare_solution
 
 EPS = 1e-6
 
@@ -267,6 +268,10 @@ def _group_contours(raw, notes):
 
 
 def op_frame(req):
+    # One immutable catalogue snapshot per operation, not per zone/member.
+    prepared_solution, error = prepare_solution(req)
+    if error is not None:
+        return error
     notes = []
     items = []
     for zrec in req.get("zones") or []:
@@ -333,7 +338,8 @@ def op_frame(req):
             if key in contour and contour[key] is not None:
                 creq[key] = contour.pop(key)
         creq["contours"] = [contour]
-        res = fp.frame_plan(creq)
+        res = fp.frame_plan(creq, prepared_solution=prepared_solution,
+                            include_solution_report=False)
         if not res.get("ok"):
             return {"ok": False, "error": "%s: %s" % (zone_id, res.get("error")),
                     "error_code": res.get("error_code", "E_FRAME_PLAN"),
@@ -414,6 +420,9 @@ def op_frame(req):
         "design_scope": {"schema": "aframe_design_scope/1", "per_zone": design_scopes,
                          "manufacturer_compliance": "not_asserted"}}
     out["connection_passport"] = merge_connection_passports(req, connection_passports)
+    if prepared_solution is not None:
+        out["solution_report"] = prepared_solution.report()
+        notes.extend(prepared_solution.notes())
     if calc_report is not None:
         out["calc_report"] = calc_report
         out["calc_reports"] = calc_reports

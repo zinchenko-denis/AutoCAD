@@ -16,6 +16,7 @@
   <ItemGroup>
     <Compile Include="RolesDump.cs" />
     <Compile Include="..\..\src\AFramePlugin\FrameSettings.cs" Link="FrameSettings.cs" />
+    <Compile Include="..\..\src\AFramePlugin\FrameSolutionSelection.cs" Link="FrameSolutionSelection.cs" />
   </ItemGroup>
 
   <ItemGroup>

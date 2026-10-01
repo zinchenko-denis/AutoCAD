@@ -116,6 +116,34 @@ def rect(x0, y0, x1, y1):
     return [[x0, y0], [x1, y0], [x1, y1], [x0, y1]]
 
 
+def frame_solution_sample():
+    """Positive explicit-selection branch; dimensions are synthetic user input.
+
+    Resolve identity from the canonical registry, not a second revision table.
+    This sample must execute geometry and return the actual solution_report.
+    """
+    sys.path.insert(0, os.path.join(ROOT, "AFrame/engine"))
+    from frame_solution_catalog import catalog_snapshot
+    catalog = catalog_snapshot()
+    selected = {
+        "schema": "aframe_solution_selection/1", "catalog_id": catalog["catalog_id"],
+        "catalog_revision": catalog["revision"], "solution_id": catalog["solution"]["solution_id"],
+        "source_id": catalog["source"]["source_id"], "source_sha256": catalog["source"]["sha256"],
+        "node": catalog["solution"]["node"],
+        "bracket": {"family_id": "kr2", "execution": "galvanized_painted", "nominal_width_mm": 70, "L_mm": 200},
+        "extender": {"family_id": "uk", "execution": "galvanized_painted", "nominal_width_mm": 70, "L_mm": 100, "thickness_mm": 1.2},
+        "profile": {"family_id": "gp", "execution": "galvanized_painted", "a_mm": 40, "b_mm": 40,
+                    "thickness_mm": 1.2, "b_basis": "project_declared", "thickness_basis": "project_declared"},
+        "geometry": {"cladding_front_offset_mm": None,
+                     "cladding_offset_basis": catalog["geometry_parameters"]["cladding_offset_basis"],
+                     "insulation_layers_mm": []}}
+    return {"op": "frame", "sub_type": "vertical", "cladding": "porcelain", "parts": "frame",
+            "system": {"name": "Вектор-1", "bracket_step": 800, "bracket_step_corner": 600},
+            "exact_step": True, "rail_profile": None, "calc": None, "solution_selection": selected,
+            "contours": [{"id": "catalog-positive", "pts": rect(0, 0, 1200, 2400)}],
+            "joints_x": [300, 900], "rows_y": [600, 1200, 1800]}
+
+
 def responses():
     res = {}
     res["Facades"] = capture("Facades/engine", "facades_engine", ["run", "op_zones"],
@@ -150,7 +178,12 @@ def responses():
                                                "offset": 150, "na_max": 1880}})
                              for st, sysn, fl in (("vertical", "Standart", []), ("vertical", "Standart", [3000.0]),
                                                   ("interfloor", "Межэтажная", [3000.0]),
-                                                  ("ortho", "Ортогональная", []))])
+                                                  ("ortho", "Ортогональная", []))] +
+                            [("run", frame_solution_sample())])
+    if not any(r.get("ok") and r.get("rails") and
+               (r.get("solution_report") or {}).get("status") == "declared_selection"
+               for r in res["AFrame"]):
+        raise AssertionError("AFrame: explicit-selection sample did not produce geometry and solution_report")
     res["ABlockGen"] = capture("ABlockGen/engine", "vitrage_recognize", ["recognize"],
                                ["test_vitrage_recognize.py"], [])
     res["ABlockGen"] += capture("ABlockGen/engine", "vitrage_plan", ["build_plan"],

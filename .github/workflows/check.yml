@@ -123,6 +123,7 @@ jobs:
           python test_frame_topology.py
           python test_frame_topology_index.py
           python test_frame_connections.py
+          python test_frame_solution_selection.py
 
       - name: Native zone geometry regressions (no AutoCAD host)
         shell: pwsh
@@ -221,6 +222,25 @@ jobs:
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           python docs/facades_beginner_3009/replay_examples.py --out connection_tutorial_results.json
           exit $LASTEXITCODE
+
+      - name: Historical facade catalogue (actual settings, engine and producer)
+        shell: pwsh
+        env:
+          PYTHONUTF8: "1"
+          PYTHONIOENCODING: "utf-8"
+        run: |
+          python tools/solution_catalog_0110/test_settings_contract.py --out solution_settings_results
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          python tools/solution_catalog_0110/test_solution_ui.py --out solution_ui_results
+          exit $LASTEXITCODE
+
+      - name: Upload historical catalogue UI evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: solution-catalog-ui
+          path: solution_ui_results/
+          if-no-files-found: warn
 
       - name: Facades quick gates (audits, contracts, synth)
         shell: bash

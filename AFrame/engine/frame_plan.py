@@ -69,6 +69,7 @@ import sys
 from frame_rules import resolve_layout_contract, declared_scope
 from frame_topology import screen_layout, refusal as topology_refusal
 from frame_connections import build_connection_passport
+from frame_solution_selection import prepare_solution, _UNPREPARED
 
 EPS = 1e-6
 CLAMP_MERGE = 100.0  # мм: ближе — один кляммер (кромка откоса
@@ -1220,8 +1221,12 @@ def shina_summary(hrails):
     return out
 
 
-def frame_plan(req):
+def frame_plan(req, prepared_solution=_UNPREPARED, include_solution_report=True):
     """Validate source identity before geometry; retain scope for every mode."""
+    if prepared_solution is _UNPREPARED:
+        prepared_solution, error = prepare_solution(req)
+        if error is not None:
+            return error
     sub = (req.get("sub_type") or "vertical").strip().lower()
     resolved = resolve_layout_contract(req, {}, sub)
     if not resolved["ok"]:
@@ -1235,6 +1240,9 @@ def frame_plan(req):
         model = (out.get("calc_report") or {}).get("static_model") or {}
         out["connection_passport"] = build_connection_passport(req, out,
             prepared_members=model.get("members"))
+        if prepared_solution is not None and include_solution_report:
+            out["solution_report"] = prepared_solution.report()
+            out.setdefault("notes", []).extend(prepared_solution.notes())
     return out
 
 

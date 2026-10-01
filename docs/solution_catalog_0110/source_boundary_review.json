@@ -1,0 +1,516 @@
+{
+  "schema": "source_engineering_review/1",
+  "reviewed_at": "2026-10-01",
+  "scope": "independent catalogue/source comparison and C#/Python pure boundary validation; no AutoCAD",
+  "catalogue_matches_source_facts": true,
+  "embedded_csharp_catalogue_matches_python": true,
+  "cases": [
+    {
+      "id": "valid_project_dimensions_not_2026_section",
+      "accepted": true,
+      "python_csharp_agree": true
+    },
+    {
+      "id": "kr2_width_50",
+      "accepted": true,
+      "python_csharp_agree": true
+    },
+    {
+      "id": "kr2_width_60",
+      "accepted": true,
+      "python_csharp_agree": true
+    },
+    {
+      "id": "kr2_width_70",
+      "accepted": true,
+      "python_csharp_agree": true
+    },
+    {
+      "id": "kr2_width_85",
+      "accepted": true,
+      "python_csharp_agree": true
+    },
+    {
+      "id": "kr2_width_49",
+      "accepted": false,
+      "python_csharp_agree": true
+    },
+    {
+      "id": "kr2_width_90",
+      "accepted": false,
+      "python_csharp_agree": true
+    },
+    {
+      "id": "kr2_width_70.1",
+      "accepted": false,
+      "python_csharp_agree": true
+    },
+    {
+      "id": "kr2_width_True",
+      "accepted": false,
+      "python_csharp_agree": true
+    },
+    {
+      "id": "kr2_width_'70'",
+      "accepted": false,
+      "python_csharp_agree": true
+    },
+    {
+      "id": "kr2_width_None",
+      "accepted": false,
+      "python_csharp_agree": true
+    },
+    {
+      "id": "kr2_length_50",
+      "accepted": true,
+      "python_csharp_agree": true
+    },
+    {
+      "id": "kr2_length_60",
+      "accepted": true,
+      "python_csharp_agree": true
+    },
+    {
+      "id": "kr2_length_170",
+      "accepted": true,
+      "python_csharp_agree": true
+    },
+    {
+      "id": "kr2_length_350",
+      "accepted": true,
+      "python_csharp_agree": true
+    },
+    {
+      "id": "kr2_length_49",
+      "accepted": false,
+      "python_csharp_agree": true
+    },
+    {
+      "id": "kr2_length_55",
+      "accepted": false,
+      "python_csharp_agree": true
+    },
+    {
+      "id": "kr2_length_345",
+      "accepted": false,
+      "python_csharp_agree": true
+    },
+    {
+      "id": "kr2_length_360",
+      "accepted": false,
+      "python_csharp_agree": true
+    },
+    {
+      "id": "kr2_length_True",
+      "accepted": false,
+      "python_csharp_agree": true
+    },
+    {
+      "id": "kr2_length_'170'",
+      "accepted": false,
+      "python_csharp_agree": true
+    },
+    {
+      "id": "kr2_length_None",
+      "accepted": false,
+      "python_csharp_agree": true
+    },
+    {
+      "id": "uk_length_100",
+      "accepted": true,
+      "python_csharp_agree": true
+    },
+    {
+      "id": "uk_length_150",
+      "accepted": true,
+      "python_csharp_agree": true
+    },
+    {
+      "id": "uk_length_99",
+      "accepted": false,
+      "python_csharp_agree": true
+    },
+    {
+      "id": "uk_length_200",
+      "accepted": false,
+      "python_csharp_agree": true
+    },
+    {
+      "id": "uk_length_100.1",
+      "accepted": false,
+      "python_csharp_agree": true
+    },
+    {
+      "id": "uk_length_True",
+      "accepted": false,
+      "python_csharp_agree": true
+    },
+    {
+      "id": "uk_length_'100'",
+      "accepted": false,
+      "python_csharp_agree": true
+    },
+    {
+      "id": "uk_length_None",
+      "accepted": false,
+      "python_csharp_agree": true
+    },
+    {
+      "id": "uk_thickness_1",
+      "accepted": true,
+      "python_csharp_agree": true
+    },
+    {
+      "id": "uk_thickness_1.2",
+      "accepted": true,
+      "python_csharp_agree": true
+    },
+    {
+      "id": "uk_thickness_1.5",
+      "accepted": true,
+      "python_csharp_agree": true
+    },
+    {
+      "id": "uk_thickness_2",
+      "accepted": false,
+      "python_csharp_agree": true
+    },
+    {
+      "id": "uk_thickness_1.25",
+      "accepted": false,
+      "python_csharp_agree": true
+    },
+    {
+      "id": "uk_thickness_True",
+      "accepted": false,
+      "python_csharp_agree": true
+    },
+    {
+      "id": "uk_thickness_'1.2'",
+      "accepted": false,
+      "python_csharp_agree": true
+    },
+    {
+      "id": "uk_thickness_None",
+      "accepted": false,
+      "python_csharp_agree": true
+    },
+    {
+      "id": "gp_a_40",
+      "accepted": true,
+      "python_csharp_agree": true
+    },
+    {
+      "id": "gp_a_50",
+      "accepted": true,
+      "python_csharp_agree": true
+    },
+    {
+      "id": "gp_a_60",
+      "accepted": true,
+      "python_csharp_agree": true
+    },
+    {
+      "id": "gp_a_80",
+      "accepted": true,
+      "python_csharp_agree": true
+    },
+    {
+      "id": "gp_a_70",
+      "accepted": false,
+      "python_csharp_agree": true
+    },
+    {
+      "id": "gp_a_40.01",
+      "accepted": false,
+      "python_csharp_agree": true
+    },
+    {
+      "id": "gp_a_True",
+      "accepted": false,
+      "python_csharp_agree": true
+    },
+    {
+      "id": "gp_a_'40'",
+      "accepted": false,
+      "python_csharp_agree": true
+    },
+    {
+      "id": "gp_a_None",
+      "accepted": false,
+      "python_csharp_agree": true
+    },
+    {
+      "id": "gp_project_b_43",
+      "accepted": true,
+      "python_csharp_agree": true
+    },
+    {
+      "id": "gp_project_b_1.3",
+      "accepted": true,
+      "python_csharp_agree": true
+    },
+    {
+      "id": "gp_project_b_0",
+      "accepted": false,
+      "python_csharp_agree": true
+    },
+    {
+      "id": "gp_project_b_-1",
+      "accepted": false,
+      "python_csharp_agree": true
+    },
+    {
+      "id": "gp_project_b_True",
+      "accepted": false,
+      "python_csharp_agree": true
+    },
+    {
+      "id": "gp_project_b_'43'",
+      "accepted": false,
+      "python_csharp_agree": true
+    },
+    {
+      "id": "gp_project_b_None",
+      "accepted": false,
+      "python_csharp_agree": true
+    },
+    {
+      "id": "bracket_execution_'corrosion_resistant'",
+      "accepted": true,
+      "python_csharp_agree": true
+    },
+    {
+      "id": "bracket_execution_'galvanized_painted'",
+      "accepted": true,
+      "python_csharp_agree": true
+    },
+    {
+      "id": "bracket_execution_'galvanized'",
+      "accepted": false,
+      "python_csharp_agree": true
+    },
+    {
+      "id": "bracket_execution_'08пс'",
+      "accepted": false,
+      "python_csharp_agree": true
+    },
+    {
+      "id": "bracket_execution_None",
+      "accepted": false,
+      "python_csharp_agree": true
+    },
+    {
+      "id": "extender_execution_'corrosion_resistant'",
+      "accepted": true,
+      "python_csharp_agree": true
+    },
+    {
+      "id": "extender_execution_'galvanized_painted'",
+      "accepted": true,
+      "python_csharp_agree": true
+    },
+    {
+      "id": "extender_execution_'galvanized'",
+      "accepted": false,
+      "python_csharp_agree": true
+    },
+    {
+      "id": "extender_execution_'08пс'",
+      "accepted": false,
+      "python_csharp_agree": true
+    },
+    {
+      "id": "extender_execution_None",
+      "accepted": false,
+      "python_csharp_agree": true
+    },
+    {
+      "id": "profile_execution_'corrosion_resistant'",
+      "accepted": true,
+      "python_csharp_agree": true
+    },
+    {
+      "id": "profile_execution_'galvanized_painted'",
+      "accepted": true,
+      "python_csharp_agree": true
+    },
+    {
+      "id": "profile_execution_'galvanized'",
+      "accepted": false,
+      "python_csharp_agree": true
+    },
+    {
+      "id": "profile_execution_'08пс'",
+      "accepted": false,
+      "python_csharp_agree": true
+    },
+    {
+      "id": "profile_execution_None",
+      "accepted": false,
+      "python_csharp_agree": true
+    },
+    {
+      "id": "wrong_b_basis",
+      "accepted": false,
+      "python_csharp_agree": true
+    },
+    {
+      "id": "wrong_thickness_basis",
+      "accepted": false,
+      "python_csharp_agree": true
+    },
+    {
+      "id": "unknown_schema",
+      "accepted": false,
+      "python_csharp_agree": true
+    },
+    {
+      "id": "unknown_catalog_id",
+      "accepted": false,
+      "python_csharp_agree": true
+    },
+    {
+      "id": "unknown_catalog_revision",
+      "accepted": false,
+      "python_csharp_agree": true
+    },
+    {
+      "id": "unknown_source_id",
+      "accepted": false,
+      "python_csharp_agree": true
+    },
+    {
+      "id": "unknown_source_sha256",
+      "accepted": false,
+      "python_csharp_agree": true
+    },
+    {
+      "id": "unknown_solution_id",
+      "accepted": false,
+      "python_csharp_agree": true
+    },
+    {
+      "id": "wrong_node_pdf",
+      "accepted": false,
+      "python_csharp_agree": true
+    },
+    {
+      "id": "bool_node_pdf",
+      "accepted": false,
+      "python_csharp_agree": true
+    },
+    {
+      "id": "float_node_pdf_equal",
+      "accepted": true,
+      "python_csharp_agree": true
+    },
+    {
+      "id": "wrong_node_sheet",
+      "accepted": false,
+      "python_csharp_agree": true
+    },
+    {
+      "id": "mixed_width_and_material_permitted_identity_only",
+      "accepted": true,
+      "python_csharp_agree": true
+    },
+    {
+      "id": "extra_unverified_overlap",
+      "accepted": false,
+      "python_csharp_agree": true
+    },
+    {
+      "id": "missing_project_thickness",
+      "accepted": false,
+      "python_csharp_agree": true
+    },
+    {
+      "id": "zero_layer",
+      "accepted": false,
+      "python_csharp_agree": true
+    },
+    {
+      "id": "bool_layer",
+      "accepted": false,
+      "python_csharp_agree": true
+    },
+    {
+      "id": "str_layer",
+      "accepted": false,
+      "python_csharp_agree": true
+    },
+    {
+      "id": "project_layers",
+      "accepted": true,
+      "python_csharp_agree": true
+    },
+    {
+      "id": "not_declared_planes_are_allowed",
+      "accepted": true,
+      "python_csharp_agree": true
+    },
+    {
+      "id": "nonfinite_project_b_NaN",
+      "accepted": false,
+      "python_csharp_agree": true
+    },
+    {
+      "id": "nonfinite_project_b_Infinity",
+      "accepted": false,
+      "python_csharp_agree": true
+    }
+  ],
+  "request_refusals": [
+    {
+      "field": "calc",
+      "code": "E_SOLUTION_CALC_UNCONFIRMED"
+    },
+    {
+      "field": "rail_profile",
+      "code": "E_SOLUTION_PROFILE_CONFLICT"
+    },
+    {
+      "field": "system",
+      "code": "E_SOLUTION_SCOPE"
+    },
+    {
+      "field": "cladding",
+      "code": "E_SOLUTION_SCOPE"
+    }
+  ],
+  "report_guards": {
+    "assembly_compatibility": "not_verified",
+    "calculation_binding": "not_confirmed",
+    "physical_assignment": "not_asserted",
+    "product_id": null,
+    "project_dimensions": "declared_not_verified"
+  },
+  "explicit_selection_describe": [
+    {
+      "legacy_profile": "Авто",
+      "description": "Вертикальная подсистема без кляммеров; шаги вручную: рядовая 800, угловая 800 мм; профиль заявлен в каталоге, физическое назначение не подтверждено. Несущая способность при ручном шаге программой не проверяется. Оси стоек и швы — из раскладки зон. После «Разложить» указать: внешние углы здания, отметки перекрытий.",
+      "system": "Вектор-1",
+      "engine_rail_profile": null
+    },
+    {
+      "legacy_profile": "ГП-40-40",
+      "description": "Вертикальная подсистема без кляммеров; шаги вручную: рядовая 800, угловая 800 мм; профиль заявлен в каталоге, физическое назначение не подтверждено. Несущая способность при ручном шаге программой не проверяется. Оси стоек и швы — из раскладки зон. После «Разложить» указать: внешние углы здания, отметки перекрытий.",
+      "system": "Вектор-1",
+      "engine_rail_profile": null
+    },
+    {
+      "legacy_profile": "ГП-60-40",
+      "description": "Вертикальная подсистема без кляммеров; шаги вручную: рядовая 800, угловая 800 мм; профиль заявлен в каталоге, физическое назначение не подтверждено. Несущая способность при ручном шаге программой не проверяется. Оси стоек и швы — из раскладки зон. После «Разложить» указать: внешние углы здания, отметки перекрытий.",
+      "system": "Вектор-1",
+      "engine_rail_profile": null
+    }
+  ],
+  "snapshot_sha256": {
+    "AFrame/engine/frame_solution_selection.py": "6490da6ced48715c4dce5ca357e0f54be9c035dd7bb6fc8d86b684f1d15f6aee",
+    "AFrame/src/AFramePlugin/FrameSettings.cs": "f76eb206dcbc97977015865ec88edaaf9311c1769573f801e839f21ed4fb95c4",
+    "AFrame/engine/frame_solution_catalog.py": "56e674855cc01e19bf2a0723dff1f3454497a99aef56f3de1b5bbf75c0d44764",
+    "AFrame/src/AFramePlugin/FrameSolutionSelection.cs": "59e20979aff3c3628c44d44715bb275069672f35bacd1ee454fb759e596f804a"
+  },
+  "live_autocad": false
+}

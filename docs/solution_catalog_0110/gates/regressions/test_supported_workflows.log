@@ -1,0 +1,7 @@
+test_calculated_schemes_produce_real_frames (__main__.SupportedFrames.test_calculated_schemes_produce_real_frames) ... ok
+test_manual_interfloor_produces_frame_without_calculation_claim (__main__.SupportedFrames.test_manual_interfloor_produces_frame_without_calculation_claim) ... ok
+
+----------------------------------------------------------------------
+Ran 2 tests in 0.007s
+
+OK

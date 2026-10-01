@@ -1,0 +1,2 @@
+Compilation succeeded - 1 warning(s)
+/workspace/scratch/ba306982747c/AutoCAD-complex/tools/solution_catalog_0110/SettingsContractProbe.cs(292,44): warning CS0649: Field `AFramePlugin.Transaction.ModelSpaceScans' is never assigned to, and will always have its default value `0'

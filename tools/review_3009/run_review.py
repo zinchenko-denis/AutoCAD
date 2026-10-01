@@ -46,7 +46,8 @@ def main():
         exe = out / "FrameSettingsProbe.exe"
         code = run("FrameSettingsProbe_compile", ["mcs", "-r:System.Web.Extensions.dll",
                    "-out:" + str(exe), str(HERE / "FrameSettingsProbe.cs"),
-                   str(ROOT / "AFrame/src/AFramePlugin/FrameSettings.cs")])
+                   str(ROOT / "AFrame/src/AFramePlugin/FrameSettings.cs"),
+                   str(ROOT / "AFrame/src/AFramePlugin/FrameSolutionSelection.cs")])
         if code == 0:
             run("FrameSettingsProbe", ["mono", str(exe)])
     else:

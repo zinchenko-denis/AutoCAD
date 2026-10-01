@@ -1,26 +1,33 @@
 {
-  "docx_sha256": "692273369802aae701d1bded843aac222e768b311fe140440b9f8595d02fb17f",
-  "manual_source_sha256": "eaadbd560dcd434c39a7f2bc359d045db60f35ed48eed106808bfb09311f565c",
-  "builder_sha256": "17d5d9cd5b57d70e5563425bac56b4ec1a9c73c04df212ac4cca8ceffe978300",
-  "pages": 42,
+  "docx_sha256": "8c8384d38bcd2aa299f35d8f207fdbeb4979f1ce1bb55dab6269f2c5e5845903",
+  "manual_source_sha256": "d29000c028504bd3243fd685cac3e3439b471f866072b50fd6d0e0f024513d56",
+  "builder_sha256": "f42a86a575b3b0300223a58fd7755ec51621c66c541336b18d2a923c5acaf0cd",
+  "pages": 44,
   "chapters": 20,
   "figures": 10,
   "dxf_files": 4,
+  "edition": "2Б1 source after build-104; no installer release for this edition",
   "visual_review": "PASS",
   "reviewed_ranges": [
     {
-      "pages": "1-42",
+      "pages": "1-22",
+      "reviewer": "release_2a_audit",
+      "method": "Each page opened individually at original resolution. Clean tables, figures and version distinction. All final PNGs byte-identical to reviewed first render.",
+      "result": "PASS"
+    },
+    {
+      "pages": "23-44",
       "reviewer": "catalog_manual",
-      "method": "Individual full-page original-resolution inspection of every page. After scope and pagination corrections, changed pages 27-31 and 42 inspected again; other 36 PNGs were byte-identical to inspected pages. Final wording change affected only page 42, which was re-inspected; all other final PNGs remain byte-identical. PNG files verified readable.",
+      "method": "Each page opened individually at original resolution. Final wording changed only pages 37-38; both re-rendered and inspected again. Other PNGs byte-identical to reviewed first render.",
       "result": "PASS"
     }
   ],
   "page_png_sha256": {
-    "page-1.png": "6e1d70ba9137e35a710cd9eadebb2a431405fa985475ff73a5a4cd82bf09a4bc",
+    "page-1.png": "2e847c66474513700d69994687b326082798dfb61766b1924f86e2089961d523",
     "page-2.png": "d9ea2ffa7fc98a59aedffbf9db17052f9f599e619117c29cca0d145f68caed9f",
-    "page-3.png": "783cb99c0f465cdc083ad3a04ed4d8313fa60df969f7cac0df666ba4b6db283b",
-    "page-4.png": "d4cf4949a8992ee9d550f60a277c5c11e5216cd26920353630866cef258e825c",
-    "page-5.png": "6917f2a3e6b5d0a83256c07b238e3adad79f1eb586ad3d4d85844c180cadf989",
+    "page-3.png": "b7b51d913e02ab7e61fb842288a7957e37ccc83e5b043d3a017caf67bdeb9854",
+    "page-4.png": "0d8a0ff077d7f65575919824803943abe4a650ddf35920eb7f9f544116f4fc3e",
+    "page-5.png": "f7cbdb65ec0b40967e9084d989cb90272ccee37eaebdb56c21ccbd4f14c9c6d7",
     "page-6.png": "497d81392ecf63fbfd49c1a6ac4288fd6276c8a491e91a5aea9bcf37ad8725e6",
     "page-7.png": "7da728c1f860f040906297326ec30acb4bba063d182f7a6ecce58c64379c08aa",
     "page-8.png": "49d4c906c3560be7b019525e0b02515da2a77a22e02f52a291601aa426f66a61",
@@ -31,8 +38,8 @@
     "page-13.png": "94559534c719197bb4dbe8808464c02904c1857acb48e5679d0abf838b1d1f2f",
     "page-14.png": "ef6c1837c637c21b0fc173d9b7250450a167d874669407b40ef5ff55d130ffd9",
     "page-15.png": "3f73047ac0928f9bffc55bf68ee7520a745c4f66c4e48f4ed88e5bacbda3c512",
-    "page-16.png": "c91040306e5206d0bd75762fb3c127533550263b3a7cf87471309496f1284fa9",
-    "page-17.png": "b498190139a78fda2cb993f10be987c45bb25950b2f8e188c558f0a8c6a3fce0",
+    "page-16.png": "1654789f4fd1de60b48cc9426df5d7d9048e4fbbe86c57ac020c504a0970fb2a",
+    "page-17.png": "a26808d6ed7a143e93bde3d92fd54d0fad565f576bd4b35e9df6a94d2a0f14f1",
     "page-18.png": "31cebec230dffc4fa926f69181e931b9ef0cbbc828a7a0c8d51e095a20f13eab",
     "page-19.png": "03d065d586577ee33c05646ab6296b3341a4615f35bf77f91a11e530b0a2f051",
     "page-20.png": "2d9e57cf86c2600d28a58b74266555bd31ff8f9a726a9cd24ccd33fa95ed26a5",
@@ -50,20 +57,29 @@
     "page-32.png": "f3f7dad942fe456ed6352558c85778aa438b525ea851e30a1faf8483df16ee12",
     "page-33.png": "c8d9088cc5d43ed802c0dd4208f1b75afc07becadf4591fa438fd87cc387b2d0",
     "page-34.png": "a4c6b3b9a6f520bd6f2b23410e99c4ae11cefb00898d0f4eab5a8f8123efe26f",
-    "page-35.png": "aad107ed9c22061044bc6e65b74aa5d9d8f3c2656c41ba4f5f8413dfe47ca8c5",
-    "page-36.png": "2dde8b97669934a5d250bc2da7ed346989dbdbd2ae744368628749fdc301a1db",
-    "page-37.png": "f718f821fc3f8c1b4720d464aafa827a64389bc1bef1b877913de1b79cb43208",
-    "page-38.png": "50f3b50143d5c9bfe3e526858026336cdea363c6ec468f192532ec64e70e2e50",
-    "page-39.png": "ec1a60575cdfd7ffd744ac74fccd700f470b35c9e6c311f5cba60c0bae568b7f",
-    "page-40.png": "c15b5e475485096b81163fbe497d2fb8d19b985f72361852a3b77d7ebe70db25",
-    "page-41.png": "af62383a56ab060bde207667c39a7220a8b7376edcb37c24da5cc08d0f3d7302",
-    "page-42.png": "2fba87361a8bd7942d249c454428eb8e2f3d58dcb56f56577feddf52e841fb66"
+    "page-35.png": "ed83bcd303ba9793c0e8013a88e8e332b63e4db173741cf29b8b3fe283a87ee9",
+    "page-36.png": "752db687886bedc6a5f69c14b1be5ccacc447ca0c22aead24fc966b259c351be",
+    "page-37.png": "a6d806c5e0d59a4e85110c6b6b92b60a201227650ca3d7d60b4a271998c1ec84",
+    "page-38.png": "480731bd61dfd5cc94608bc020bd9ada36d7cc90a997a5d09b07986b2e91ec4c",
+    "page-39.png": "9c6202ebd416dcf667dd4b8000cc5a089e0a05bb07f186e65fb2c72ba0806cb9",
+    "page-40.png": "b6568cda5dbaed88e446e194473fa8c22b8e266f706880e772627deadf3212fb",
+    "page-41.png": "bad8d8dbea0b9eddd69c63dfe70c18a7cd3ecf4ee4211e8d3efb713b07827d47",
+    "page-42.png": "e9f201d9fab5fc36bf82583a1b9469d6c696884f927dd0b1ec1d90293f80a4c4",
+    "page-43.png": "0890771e81ab7e5e706306942b4d8721c56270b9baacf6d530d330fde5ac5ced",
+    "page-44.png": "10199a8d363f9759b613d43f397ef55f1095c48ed5dd6343fbf3bf90719a7584"
   },
   "accessibility_audit": {
     "high": 0,
     "medium": 0,
     "low": 0
   },
+  "tutorial_assets_unchanged": true,
+  "tutorial_replay_expected_receipt": "../solution_catalog_0110/manual_examples.json",
   "live_autocad": false,
-  "release_published": false
+  "release_published": false,
+  "prior_release": {
+    "build": 104,
+    "guide_commit": "60f3b3587c8d09780e5c7a703f010de690f73e2b",
+    "pages": 42
+  }
 }

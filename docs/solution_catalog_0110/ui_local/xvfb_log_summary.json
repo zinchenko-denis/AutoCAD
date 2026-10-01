@@ -1,0 +1,10 @@
+{
+  "status": "BLOCKED",
+  "original_bytes": 24328075,
+  "original_sha256": "748755ee56e05e1e834efa87382b940367e3d4ad10d456ae292c84702f669b89",
+  "original_lines": 357219,
+  "saved_excerpt": "xvfb.log",
+  "excerpt_first_lines": 40,
+  "excerpt_last_lines": 20,
+  "note": "Repeated native display initialization failures summarized to avoid committing a large repetitive log. Original scratch log retained; no GUI execution claimed."
+}

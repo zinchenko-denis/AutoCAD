@@ -1,0 +1,25 @@
+РАССТАНОВКА: сценариев 600, элементов 230667, время 16.5 с
+  нарушения (число сценариев из 120 на форму):
+  форма   —
+  rect
+  L
+  step
+  U
+  gable
+ПЛИТКА: сценариев 360, нарушений нет
+  построено 283; безопасно ОТКЛОНЕНО (не выдано): 77 {'vertical': 25, 'ortho': 28, 'interfloor': 24}
+  самые долгие: tile-rect-ortho-004 0.02с/2171, tile-gable-ortho-020 0.02с/0, tile-rect-vertical_l-009 0.02с/2373
+РАСЧЁТ: нарушений 0
+  [INFO] K6 ветер B при h=2 м 42.4 кг/м² против h=5 м 55.1 (-23%): нижней отсечки высоты нет
+СТАТИЧЕСКИЙ КОНТРАКТ: нарушений 0
+  [RESULT] safe_refusal/interfloor/model_unconfirmed: 1
+  [RESULT] safe_refusal/ortho/insufficient_supports: 2
+  [RESULT] safe_refusal/ortho/single_span_unsupported: 1
+  [RESULT] safe_refusal/ortho/span_class_mismatch: 1
+  [RESULT] safe_refusal/vertical/insufficient_supports: 2
+  [RESULT] safe_refusal/vertical/single_span_unsupported: 1
+  [RESULT] safe_refusal/vertical/span_class_mismatch: 1
+  [RESULT] successful_calc/ortho: 2
+  [RESULT] successful_calc/vertical: 2
+  [RESULT] successful_clamps/interfloor: 1
+  [RESULT] successful_manual/interfloor: 1

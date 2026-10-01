@@ -1,0 +1,61 @@
+_XSERVTransSocketOpenCOTSServer: Unable to open socket for local
+_XSERVTransOpen: transport open failed for local/b748f6546427:0
+_XSERVTransMakeAllCOTSServerListeners: failed to open listener for local
+_XSERVTransSocketOpenCOTSServer: Unable to open socket for unix
+_XSERVTransOpen: transport open failed for unix/b748f6546427:0
+_XSERVTransMakeAllCOTSServerListeners: failed to open listener for unix
+_XSERVTransSocketOpenCOTSServer: Unable to open socket for local
+_XSERVTransOpen: transport open failed for local/b748f6546427:1
+_XSERVTransMakeAllCOTSServerListeners: failed to open listener for local
+_XSERVTransSocketOpenCOTSServer: Unable to open socket for unix
+_XSERVTransOpen: transport open failed for unix/b748f6546427:1
+_XSERVTransMakeAllCOTSServerListeners: failed to open listener for unix
+_XSERVTransSocketOpenCOTSServer: Unable to open socket for local
+_XSERVTransOpen: transport open failed for local/b748f6546427:2
+_XSERVTransMakeAllCOTSServerListeners: failed to open listener for local
+_XSERVTransSocketOpenCOTSServer: Unable to open socket for unix
+_XSERVTransOpen: transport open failed for unix/b748f6546427:2
+_XSERVTransMakeAllCOTSServerListeners: failed to open listener for unix
+_XSERVTransSocketOpenCOTSServer: Unable to open socket for local
+_XSERVTransOpen: transport open failed for local/b748f6546427:3
+_XSERVTransMakeAllCOTSServerListeners: failed to open listener for local
+_XSERVTransSocketOpenCOTSServer: Unable to open socket for unix
+_XSERVTransOpen: transport open failed for unix/b748f6546427:3
+_XSERVTransMakeAllCOTSServerListeners: failed to open listener for unix
+_XSERVTransSocketOpenCOTSServer: Unable to open socket for local
+_XSERVTransOpen: transport open failed for local/b748f6546427:4
+_XSERVTransMakeAllCOTSServerListeners: failed to open listener for local
+_XSERVTransSocketOpenCOTSServer: Unable to open socket for unix
+_XSERVTransOpen: transport open failed for unix/b748f6546427:4
+_XSERVTransMakeAllCOTSServerListeners: failed to open listener for unix
+_XSERVTransSocketOpenCOTSServer: Unable to open socket for local
+_XSERVTransOpen: transport open failed for local/b748f6546427:5
+_XSERVTransMakeAllCOTSServerListeners: failed to open listener for local
+_XSERVTransSocketOpenCOTSServer: Unable to open socket for unix
+_XSERVTransOpen: transport open failed for unix/b748f6546427:5
+_XSERVTransMakeAllCOTSServerListeners: failed to open listener for unix
+_XSERVTransSocketOpenCOTSServer: Unable to open socket for local
+_XSERVTransOpen: transport open failed for local/b748f6546427:6
+_XSERVTransMakeAllCOTSServerListeners: failed to open listener for local
+_XSERVTransSocketOpenCOTSServer: Unable to open socket for unix
+[Repeated native display initialization failures omitted; see xvfb_log_summary.json for original size/hash.]
+_XSERVTransOpen: transport open failed for local/b748f6546427:59533
+_XSERVTransMakeAllCOTSServerListeners: failed to open listener for local
+_XSERVTransSocketOpenCOTSServer: Unable to open socket for unix
+_XSERVTransOpen: transport open failed for unix/b748f6546427:59533
+_XSERVTransMakeAllCOTSServerListeners: failed to open listener for unix
+_XSERVTransSocketOpenCOTSServer: Unable to open socket for local
+_XSERVTransOpen: transport open failed for local/b748f6546427:59534
+_XSERVTransMakeAllCOTSServerListeners: failed to open listener for local
+_XSERVTransSocketOpenCOTSServer: Unable to open socket for unix
+_XSERVTransOpen: transport open failed for unix/b748f6546427:59534
+_XSERVTransMakeAllCOTSServerListeners: failed to open listener for unix
+_XSERVTransSocketOpenCOTSServer: Unable to open socket for local
+_XSERVTransOpen: transport open failed for local/b748f6546427:59535
+_XSERVTransMakeAllCOTSServerListeners: failed to open listener for local
+_XSERVTransSocketOpenCOTSServer: Unable to open socket for unix
+_XSERVTransOpen: transport open failed for unix/b748f6546427:59535
+_XSERVTransMakeAllCOTSServerListeners: failed to open listener for unix
+(EE)
+Fatal server error:
+(EE) Failed to find a socket to listen on(EE)

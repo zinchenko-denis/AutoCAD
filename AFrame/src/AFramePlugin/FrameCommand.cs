@@ -64,6 +64,8 @@ namespace AFramePlugin
             try { RunCore(doc); }
             catch (OperationCanceledException)
             { doc.Editor.WriteMessage("\nATFRAME отменено. Прежняя подсистема сохранена."); }
+            catch (FrameSolutionSelectionException ex)
+            { doc.Editor.WriteMessage("\nATFRAME: " + ex.Message + "\nПрежняя подсистема сохранена."); }
             catch (System.Exception ex)
             {
                 try
@@ -115,6 +117,11 @@ namespace AFramePlugin
             // по зонам (режим «только кляммеры» переписывает метку, не теряя
             // направляющих и кронштейнов)
             Dictionary<string, object> prevFs = null;
+            bool explicitCanonicalSettingsChosen = false;
+            var solutionScope = new FrameSolutionSelectionScope();
+            var solutionOwners = new Dictionary<ObjectId, Tuple<string, bool>>();
+            var canonicalSolutionOwners = new HashSet<ObjectId>();
+            var initialFrameSettings = new Dictionary<ObjectId, Dictionary<string, object>>();
             var oldByRoot = new Dictionary<string, List<string>>();
             // 23.09 (ревью): оси швов — СВОИ у каждой зоны (из её метки
             // раскладки), а не общим списком всех меток выбора
@@ -178,7 +185,8 @@ namespace AFramePlugin
                     // прежняя подсистема (метка ATFRAME) — с любого
                     CollectOldHandles(tr, ser, ent, oldHandles);
                     CollectOldByRoot(tr, ser, ent, oldByRoot);
-                    if (prevFs == null) prevFs = ReadFrameSettings(tr, ser, ent);
+                    var selectedSettings = ReadFrameSettings(tr, ser, ent);
+                    initialFrameSettings[ent.ObjectId] = selectedSettings;
 
                     // замкнутые полилинии — геометрия ВСЕГДА, метка не
                     // нужна (26.07: окна-полилинии без метки выпадали
@@ -208,6 +216,9 @@ namespace AFramePlugin
                                 pl.GetPoint2dAt(n - 1)) <= CloseTol;
                         if (!closed) continue;
                         string h = pl.Handle.ToString();
+                        solutionScope.Add("контур " + h, selectedSettings, true);
+                        solutionOwners[ent.ObjectId] = Tuple.Create("контур " + h, true);
+                        if (prevFs == null) prevFs = selectedSettings;
                         polyByHandle[h] = pl.ObjectId;
                         // Unsupported contours stop the whole command above:
                         // dropping an arc-shaped opening would fill that hole.
@@ -218,6 +229,9 @@ namespace AFramePlugin
                     if (m == null) continue;
                     string zid = SafeStr(Get(m, "zone_id"));
                     if (zid.Length == 0) continue;
+                    solutionScope.AddAlias(zid, selectedSettings);
+                    solutionOwners[ent.ObjectId] = Tuple.Create(zid, false);
+                    if (prevFs == null) prevFs = selectedSettings;
                     var zh = ent as Hatch;           // 23.09n: габарит штриховки зоны
                     if (zh != null)
                         try
@@ -254,95 +268,9 @@ namespace AFramePlugin
                     }
                 }
             }
-            // ── 1б. ОКНО параметров (Герман 23.09: «такое же диалоговое окно,
-            //    как у ATTILE»): что раскладывать, тип, профиль, шаги, оси,
-            //    точки после ОК, знаки — вместо ~15 вопросов командной строки ──
-            bool hasLayout = joints.Count > 0;
-            FrameSettings fs = prevFs != null ? FrameSettings.FromDict(prevFs)
-                                              : FrameSettings.LoadLast();
-            if (prevFs != null)
-                ed.WriteMessage("\nПараметры — с прошлой подсистемы этой зоны.");
-            using (var ff = new FrameForm(fs, hasLayout))
-            {
-                if (AcApp.ShowModalDialog(ff) != WinForms.DialogResult.OK)
-                { ed.WriteMessage("\nОтменено."); return; }
-                fs = ff.Result;
-            }
-            fs.SaveLast();
-            bool clampsOnly = fs.ClampsOnly;
-
-            if (joints.Count == 0)
-            {
-                double bbx0 = double.MaxValue, bbx1 = double.MinValue;
-                double bby0 = double.MaxValue, bby1 = double.MinValue;
-                foreach (var pd in polyData.Values)
-                {
-                    var pts0 = pd["pts"] as List<object>;
-                    if (pts0 == null) continue;
-                    foreach (var po in pts0)
-                    {
-                        var xy = po as double[];
-                        if (xy == null || xy.Length < 2) continue;
-                        if (xy[0] < bbx0) bbx0 = xy[0];
-                        if (xy[0] > bbx1) bbx1 = xy[0];
-                        if (xy[1] < bby0) bby0 = xy[1];
-                        if (xy[1] > bby1) bby1 = xy[1];
-                    }
-                }
-                // 26.09: у плитки оси стоек строит движок шагом от края зоны —
-                // первую ось не спрашиваем; ряды для шин — шагом швов ниже
-                if (fs.IsTile) { }
-                else if (fs.Axes == "points")
-                {
-                    while (true)
-                    {
-                        var pjo = new PromptPointOptions(
-                            "\nТочка на оси стойки (Enter — дальше): ")
-                        { AllowNone = true };
-                        var pjv = ed.GetPoint(pjo);
-                        if (pjv.Status != PromptStatus.OK) break;
-                        joints.Add(pjv.Value.X);
-                        ed.WriteMessage("\n  ось X = " +
-                            F0(pjv.Value.X) + " (всего " +
-                            joints.Count + ")");
-                    }
-                }
-                else
-                {
-                    var pfo = new PromptPointOptions(
-                        "\nТочка ПЕРВОЙ оси стойки (шаг " + F0(fs.AxisStep) + " мм — из окна): ");
-                    var pfv = ed.GetPoint(pfo);
-                    if (pfv.Status != PromptStatus.OK) return;
-                    double jstep = fs.AxisStep;
-                    if (jstep < 50) jstep = 608.0;
-                    double margin = 150.0;
-                    for (double jx0 = pfv.Value.X;
-                         jx0 >= bbx0 + margin; jx0 -= jstep)
-                        joints.Add(jx0);
-                    for (double jx0 = pfv.Value.X + jstep;
-                         jx0 <= bbx1 - margin; jx0 += jstep)
-                        joints.Add(jx0);
-                    ed.WriteMessage("\n  осей по шагу " + F0(jstep) +
-                        ": " + joints.Count);
-                }
-                if (joints.Count == 0 && !fs.IsTile)
-                { ed.WriteMessage("\nОсей нет — отмена."); return; }
-                if (rowsY.Count == 0 && !fs.IsTile)   // у плитки — ряды от низа каждой зоны, в движке
-                {
-                    double rstep = fs.RowStep;
-                    if (rstep >= 50)
-                        for (double ry0 = bby0 + rstep;
-                             ry0 < bby1; ry0 += rstep)
-                            rowsY.Add(ry0);
-                }
-            }
-            if (oldMeta > 0)
-                ed.WriteMessage("\nМетка ATCLAD старой сборки: " + oldMeta +
-                    " объект(ов) — их оси не учтены (перегенерируйте " +
-                    "ATCLAD).");
-            if (zoneObjs.Count == 0 && polyData.Count == 0)
-            { ed.WriteMessage("\nНет пригодных зон."); return; }
-
+            // Preserve the original selection for later manual-axis bounds:
+            // verified zone geometry removes its own contours from polyData.
+            var axisInputContours = new List<Dictionary<string, object>>(polyData.Values);
             // ── 2. геометрия зон из <dwg>_fzones.json ──
             var fz = LoadFzones(ed, db, ser);
             var zonesPayload = new List<Dictionary<string, object>>();
@@ -372,13 +300,21 @@ namespace AFramePlugin
                         // A selection through a zone mark must publish the same
                         // frame owner on its verified canonical hatch. Otherwise
                         // later whole-zone/manual selection cannot discover it.
-                        if (!kv.Value.Contains(hatchId))
+                        Dictionary<string, object> canonicalSettings;
+                        if (!initialFrameSettings.TryGetValue(hatchId, out canonicalSettings))
                         {
-                            kv.Value.Add(hatchId);
                             var canonical = geometryTr.GetObject(hatchId, OpenMode.ForRead) as Entity;
+                            canonicalSettings = ReadFrameSettings(geometryTr, ser, canonical);
+                            initialFrameSettings[hatchId] = canonicalSettings;
                             CollectOldHandles(geometryTr, ser, canonical, oldHandles);
                             CollectOldByRoot(geometryTr, ser, canonical, oldByRoot);
                         }
+                        if (!kv.Value.Contains(hatchId)) kv.Value.Add(hatchId);
+                        solutionScope.AddCanonical(kv.Key, canonicalSettings);
+                        canonicalSolutionOwners.Add(hatchId);
+                        solutionOwners[hatchId] = Tuple.Create(kv.Key, false);
+                        prevFs = FrameSolutionSelectionScope.PreferCanonicalWindowSettings(prevFs, canonicalSettings,
+                            ref explicitCanonicalSettingsChosen);
                     }
                     List<Extents3d> hexts;
                     if (hatchExt.TryGetValue(kv.Key, out hexts) &&
@@ -447,6 +383,97 @@ namespace AFramePlugin
             }
             if (zonesPayload.Count == 0 && contoursPayload.Count == 0)
             { ed.WriteMessage("\nНет геометрии зон."); return; }
+
+            // ── 1б. ОКНО параметров (Герман 23.09: «такое же диалоговое окно,
+            //    как у ATTILE»): что раскладывать, тип, профиль, шаги, оси,
+            //    точки после ОК, знаки — вместо ~15 вопросов командной строки ──
+            bool hasLayout = joints.Count > 0;
+            FrameSettings fs = prevFs != null ? FrameSettings.FromDict(prevFs)
+                                              : FrameSettings.LoadLast();
+            if (solutionScope.Baseline != null) fs.SolutionSelection = solutionScope.Baseline;
+            if (prevFs != null)
+                ed.WriteMessage("\nПараметры — с прошлой подсистемы этой зоны.");
+            using (var ff = new FrameForm(fs, hasLayout))
+            {
+                if (AcApp.ShowModalDialog(ff) != WinForms.DialogResult.OK)
+                { ed.WriteMessage("\nОтменено."); return; }
+                fs = ff.Result;
+            }
+            string declaredSolutionReason = fs.ValidateSolutionSelection();
+            if (declaredSolutionReason != null) throw new FrameSolutionSelectionException(declaredSolutionReason);
+            bool clampsOnly = fs.ClampsOnly;
+
+            if (joints.Count == 0)
+            {
+                double bbx0 = double.MaxValue, bbx1 = double.MinValue;
+                double bby0 = double.MaxValue, bby1 = double.MinValue;
+                foreach (var pd in axisInputContours)
+                {
+                    var pts0 = pd["pts"] as List<object>;
+                    if (pts0 == null) continue;
+                    foreach (var po in pts0)
+                    {
+                        var xy = po as double[];
+                        if (xy == null || xy.Length < 2) continue;
+                        if (xy[0] < bbx0) bbx0 = xy[0];
+                        if (xy[0] > bbx1) bbx1 = xy[0];
+                        if (xy[1] < bby0) bby0 = xy[1];
+                        if (xy[1] > bby1) bby1 = xy[1];
+                    }
+                }
+                // 26.09: у плитки оси стоек строит движок шагом от края зоны —
+                // первую ось не спрашиваем; ряды для шин — шагом швов ниже
+                if (fs.IsTile) { }
+                else if (fs.Axes == "points")
+                {
+                    while (true)
+                    {
+                        var pjo = new PromptPointOptions(
+                            "\nТочка на оси стойки (Enter — дальше): ")
+                        { AllowNone = true };
+                        var pjv = ed.GetPoint(pjo);
+                        if (pjv.Status != PromptStatus.OK) break;
+                        joints.Add(pjv.Value.X);
+                        ed.WriteMessage("\n  ось X = " +
+                            F0(pjv.Value.X) + " (всего " +
+                            joints.Count + ")");
+                    }
+                }
+                else
+                {
+                    var pfo = new PromptPointOptions(
+                        "\nТочка ПЕРВОЙ оси стойки (шаг " + F0(fs.AxisStep) + " мм — из окна): ");
+                    var pfv = ed.GetPoint(pfo);
+                    if (pfv.Status != PromptStatus.OK) return;
+                    double jstep = fs.AxisStep;
+                    if (jstep < 50) jstep = 608.0;
+                    double margin = 150.0;
+                    for (double jx0 = pfv.Value.X;
+                         jx0 >= bbx0 + margin; jx0 -= jstep)
+                        joints.Add(jx0);
+                    for (double jx0 = pfv.Value.X + jstep;
+                         jx0 <= bbx1 - margin; jx0 += jstep)
+                        joints.Add(jx0);
+                    ed.WriteMessage("\n  осей по шагу " + F0(jstep) +
+                        ": " + joints.Count);
+                }
+                if (joints.Count == 0 && !fs.IsTile)
+                { ed.WriteMessage("\nОсей нет — отмена."); return; }
+                if (rowsY.Count == 0 && !fs.IsTile)   // у плитки — ряды от низа каждой зоны, в движке
+                {
+                    double rstep = fs.RowStep;
+                    if (rstep >= 50)
+                        for (double ry0 = bby0 + rstep;
+                             ry0 < bby1; ry0 += rstep)
+                            rowsY.Add(ry0);
+                }
+            }
+            if (oldMeta > 0)
+                ed.WriteMessage("\nМетка ATCLAD старой сборки: " + oldMeta +
+                    " объект(ов) — их оси не учтены (перегенерируйте " +
+                    "ATCLAD).");
+            if (zoneObjs.Count == 0 && polyData.Count == 0)
+            { ed.WriteMessage("\nНет пригодных зон."); return; }
 
             // ── 3. параметры из ОКНА (23.09b) — то, что раньше спрашивала
             //    командная строка: тип (ТЗ 26.07), профиль (письмо 01.08 п.2),
@@ -665,6 +692,15 @@ namespace AFramePlugin
                 PrintNotes(ed, Get(res, "notes") as object[]);
                 return;
             }
+            var solutionRoots = FrameSolutionSelectionScope.EngineRoots(Get(res, "per_zone"), partToRoot);
+            var resolvedSolutionContext = solutionScope.Resolve(solutionRoots);
+            if (clampsOnly)
+            {
+                FrameSolutionSelectionScope.ValidateClampsRoots(solutionRoots, oldByRoot.Keys);
+                declaredSolutionReason = resolvedSolutionContext.ValidateClamps(fs.SolutionSelection);
+                if (declaredSolutionReason != null) throw new FrameSolutionSelectionException(declaredSolutionReason);
+            }
+            if (fs.SolutionSelection != null) fs.SolutionSelection.ValidateEngineReport(Get(res, "solution_report"), clampsOnly);
             var rails = Get(res, "rails") as object[];
             var hrails = Get(res, "hrails") as object[];
             var brackets = Get(res, "brackets") as object[];
@@ -694,6 +730,21 @@ namespace AFramePlugin
             using (doc.LockDocument())
             using (var tr = db.TransactionManager.StartTransaction())
             {
+                // Re-read only selected owners. A changed declaration during the
+                // dialog/calculation cannot silently replace the saved baseline.
+                var currentSolutionScope = new FrameSolutionSelectionScope();
+                foreach (var owner in solutionOwners)
+                {
+                    var entity = tr.GetObject(owner.Key, OpenMode.ForRead) as Entity;
+                    if (entity == null || entity.IsErased) throw new FrameSolutionSelectionException("Исходный объект выбора решения удалён; повторите ATFRAME.");
+                    var currentSettings = ReadFrameSettings(tr, ser, entity);
+                    if (owner.Value.Item2) currentSolutionScope.Add(owner.Value.Item1, currentSettings, true);
+                    else if (canonicalSolutionOwners.Contains(owner.Key)) currentSolutionScope.AddCanonical(owner.Value.Item1, currentSettings);
+                    else currentSolutionScope.AddAlias(owner.Value.Item1, currentSettings);
+                }
+                var currentSolutionContext = currentSolutionScope.Resolve(solutionRoots);
+                if (!FrameSolutionSelection.Same(currentSolutionContext.Baseline, resolvedSolutionContext.Baseline))
+                    throw new FrameSolutionSelectionException("Выбор решения исходного каркаса изменился после открытия окна. Повторите ATFRAME.");
                 var bt = (BlockTable)tr.GetObject(db.BlockTableId,
                                                   OpenMode.ForRead);
                 var ms = (BlockTableRecord)tr.GetObject(
@@ -1041,6 +1092,9 @@ namespace AFramePlugin
                 tr.Commit();
                 quantityStoreMs = quantityStoreWatch.ElapsedMilliseconds;
             }
+            // Only a committed drawing update may advance convenience settings;
+            // the explicit project selection is excluded by SaveLast itself.
+            fs.SaveLast();
 
             // ── 7. отчёт ──
             var sum = Get(res, "summary") as Dictionary<string, object>;
@@ -1754,17 +1808,49 @@ namespace AFramePlugin
             return sb.ToString();
         }
 
+        private static string ReadFrameMetadata(Transaction tr, Entity ent)
+        {
+            if (ent == null) throw new FrameSolutionSelectionException("Не найден носитель прежнего выбора решения.");
+            if (ent.ExtensionDictionary.IsNull) return null;
+            var ext = tr.GetObject(ent.ExtensionDictionary, OpenMode.ForRead) as DBDictionary;
+            if (ext == null) throw new FrameSolutionSelectionException("Повреждён словарь метки прежней подсистемы.");
+            if (!ext.Contains(XKeyFrame)) return null;
+            var record = tr.GetObject(ext.GetAt(XKeyFrame), OpenMode.ForRead) as Xrecord;
+            if (record == null)
+                throw new FrameSolutionSelectionException("Метка ATFRAME существует, но не содержит данных. Выбор решения не подменяется умолчанием.");
+            using (var data = record.Data)
+            {
+                if (data == null)
+                    throw new FrameSolutionSelectionException("Метка ATFRAME существует, но не содержит данных. Выбор решения не подменяется умолчанием.");
+                var text = new StringBuilder();
+                foreach (TypedValue value in data)
+                    if (value.TypeCode == (int)DxfCode.Text) text.Append(SafeStr(value.Value));
+                if (text.Length == 0)
+                    throw new FrameSolutionSelectionException("Метка ATFRAME существует, но текст параметров отсутствует. Выбор решения не подменяется умолчанием.");
+                return text.ToString();
+            }
+        }
+
         private static Dictionary<string, object> ReadFrameSettings(
             Transaction tr, JavaScriptSerializer ser, Entity ent)
         {
             try
             {
-                string j = ReadData(tr, ent, XKeyFrame);
+                string j = ReadFrameMetadata(tr, ent);
                 if (j == null) return null;
                 var d = ser.DeserializeObject(j) as Dictionary<string, object>;
-                return Get(d, "settings") as Dictionary<string, object>;
+                if (d == null) throw new FrameSolutionSelectionException("Не читается метка прежней подсистемы; выбор каталога нельзя восстановить безопасно.");
+                object value = Get(d, "settings");
+                if (value == null) return null;
+                var settings = value as Dictionary<string, object>;
+                if (settings == null) throw new FrameSolutionSelectionException("Параметры прежней подсистемы повреждены; выбор каталога не подменяется умолчанием.");
+                object selection;
+                if (settings.TryGetValue("solution_selection", out selection)) FrameSolutionSelection.FromDict(selection);
+                return settings;
             }
-            catch { return null; }
+            catch (FrameSolutionSelectionException) { throw; }
+            catch (System.Exception)
+            { throw new FrameSolutionSelectionException("Метка прежней подсистемы повреждена. Выбор каталога не восстановлен; автоматическая подмена запрещена."); }
         }
 
         private static Extents3d? SelRegion(Transaction tr,

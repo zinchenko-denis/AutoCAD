@@ -49,6 +49,7 @@ namespace AFramePlugin
         private readonly NumericUpDown _floorStep = Num(0, 20000, 0);
         private readonly RadioButton _sCond = new RadioButton(), _sSamples = new RadioButton();
         private readonly Label _desc = new Label();
+        private readonly Button _solution = new Button();
         private GroupBox _g2, _g3, _g4;
 
         public FrameSettings Result { get { return _s.Clone(); } }
@@ -113,7 +114,7 @@ namespace AFramePlugin
             _terr.DropDownStyle = ComboBoxStyle.DropDownList; _terr.Items.AddRange(FrameSettings.Terrains);
             AddPair(_calcCtl, "Ветровой район:", _wind, 10, 48); AddPair(_calcCtl, "Тип местности:", _terr, 240, 48);
             AddPair(_calcCtl, "Высота здания, м:", _height, 10, 76); AddPair(_calcCtl, "Облицовка, кг/м²:", _qclad, 240, 76);
-            AddPair(_calcCtl, "Вынос, мм:", _offset, 10, 104); AddPair(_calcCtl, "Анкер (вырыв), Н:", _na, 240, 104);
+            AddPair(_calcCtl, "Плечо расчёта, мм:", _offset, 10, 104); AddPair(_calcCtl, "Анкер (вырыв), Н:", _na, 240, 104);
             AddPair(_manCtl, "Шаг рядовой, мм:", _stepMain, 10, 48); AddPair(_manCtl, "Шаг угловой, мм:", _stepCorner, 240, 48);
             AddPair(_manCtl, "Стойки в угл., мм:", _railStepC, 10, 76); AddPair(_manCtl, "Старт кронштейна:", _startOff, 240, 76);
             AddPair(_manCtl, "Зазор стыка, мм:", _railGap, 10, 104); AddPair(_manCtl, "Угловая зона, мм:", _cornerZone, 240, 104);
@@ -167,12 +168,15 @@ namespace AFramePlugin
             gd.Controls.Add(_desc);
 
             var reset = new Button { Text = "Сброс", Left = 10, Top = 674, Width = 110, Height = 30 };
+            _solution.Text = "Решение и каталог…";
+            _solution.Name = "solution_catalog";
+            _solution.SetBounds(132, 674, 218, 30);
             var ok = new Button { Text = "Разложить", Left = 630, Top = 674, Width = 106, Height = 30 };
             var cancel = new Button { Text = "Отмена", Left = 744, Top = 674, Width = 106, Height = 30,
                                       DialogResult = DialogResult.Cancel };
             AcceptButton = ok;
             CancelButton = cancel;
-            Controls.AddRange(new Control[] { gc, g1, _g2, _g3, _g4, g5, g6, gd, reset, ok, cancel });
+            Controls.AddRange(new Control[] { gc, g1, _g2, _g3, _g4, g5, g6, gd, reset, _solution, ok, cancel });
 
             LoadControls();
 
@@ -204,8 +208,20 @@ namespace AFramePlugin
                 d.Cladding = _s.Cladding;
                 // марки шин — проектные данные, «Сброс» их не стирает
                 d.RailBrandConcrete = _s.RailBrandConcrete; d.RailBrandClinker = _s.RailBrandClinker;
+                // Явное решение снимается только отдельной командой в его окне.
+                d.SolutionSelection = _s.SolutionSelection == null ? null : _s.SolutionSelection.Clone();
                 CopyInto(d, _s);
                 LoadControls();
+            };
+            _solution.Click += delegate
+            {
+                ReadControls();
+                using (var form = new FrameSolutionForm(_s.SolutionSelection, _s.ClampsOnly))
+                    if (form.ShowDialog(this) == DialogResult.OK)
+                    {
+                        _s.SolutionSelection = form.Result;
+                        LoadControls();
+                    }
             };
             ok.Click += delegate
             {
@@ -258,7 +274,8 @@ namespace AFramePlugin
                 _tVert.Checked = _s.EffSubType == "vertical"; _tInter.Checked = _s.InterFloor; _tOrtho.Checked = _s.Ortho;
                 _profile.Items.Clear();
                 string[] prs = FrameSettings.ProfilesFor(_s.EffSubType);
-                if (prs.Length == 0) { _profile.Items.Add("ШП/ZП — автоматом"); _profile.SelectedIndex = 0; }
+                if (_s.SolutionSelection != null) { _profile.Items.Add("Задан в решении и каталоге"); _profile.SelectedIndex = 0; }
+                else if (prs.Length == 0) { _profile.Items.Add("ШП/ZП — автоматом"); _profile.SelectedIndex = 0; }
                 else
                 {
                     _profile.Items.AddRange(prs);
@@ -287,7 +304,7 @@ namespace AFramePlugin
                 // Не менять режим молча: прежний all/clamps остаётся видимым,
                 // Validate объяснит отказ, а пользователь выбирает каркас.
                 _mAll.Enabled = _mClamps.Enabled = !_s.IsComposite;
-                _profile.Enabled = frameParts && prs.Length > 0;
+                _profile.Enabled = frameParts && prs.Length > 0 && _s.SolutionSelection == null;
                 _g3.Enabled = frameParts;
                 foreach (var c in _calcCtl) c.Visible = !_s.Manual;
                 foreach (var c in _manCtl) c.Visible = _s.Manual;
@@ -320,7 +337,7 @@ namespace AFramePlugin
             _s.Mode = _mClamps.Checked ? "clamps" : _mFrame.Checked ? "frame" : "all";
             // профиль — по списку, который сейчас в окне (облицовку меняем ниже)
             string[] prs = FrameSettings.ProfilesFor(_s.EffSubType);
-            if (prs.Length > 0 && _profile.SelectedIndex >= 0 && _profile.SelectedIndex < prs.Length)
+            if (_s.SolutionSelection == null && prs.Length > 0 && _profile.SelectedIndex >= 0 && _profile.SelectedIndex < prs.Length)
                 _s.Profile = prs[_profile.SelectedIndex];
             _s.Steps = _manual.Checked ? "manual" : "calc";
             if (_wind.SelectedIndex >= 0) _s.WindRegion = FrameSettings.Winds[_wind.SelectedIndex];

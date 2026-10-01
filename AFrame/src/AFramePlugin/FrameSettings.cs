@@ -45,6 +45,7 @@ namespace AFramePlugin
         public double AxisStep = 608, RowStep = 605;
         public bool AskCorners = true, AskFloors = true;
         public double FloorStep = 3000;        // межэтажная без отметок
+        public FrameSolutionSelection SolutionSelection; // explicit historical source declaration; null preserves legacy behavior
         public string Signs = "cond";          // cond | samples
 
         public const double DefStartOff = 300, DefRailGap = 10, DefCornerZone = 1500;
@@ -108,7 +109,7 @@ namespace AFramePlugin
 
         public string SysName
         {
-            get { return InterFloor ? "Межэтажная" : Ortho ? "Ортогональная" : "Standart"; }
+            get { return SolutionSelection != null ? "Вектор-1" : InterFloor ? "Межэтажная" : Ortho ? "Ортогональная" : "Standart"; }
         }
 
         /// <summary>Марка вертикальной направляющей (null — «Авто», подбор расчётом).</summary>
@@ -143,7 +144,7 @@ namespace AFramePlugin
 
         public Dictionary<string, object> SysOverride()
         {
-            var d = new Dictionary<string, object> { { "name", SysName } };
+            var d = new Dictionary<string, object> { { "name", SolutionSelection == null ? SysName : "Вектор-1" } };
             if (!Manual)
             {
                 if (SubType == "vertical") d["name"] = "Вектор-1";   // расчётный пресет, как раньше
@@ -178,12 +179,14 @@ namespace AFramePlugin
         /// указано на чертеже (0 — межэтажная берёт шаг этажа из окна).</summary>
         public Dictionary<string, object> EngineParams(int floorsPicked)
         {
+            string solutionReason = ValidateSolutionSelection();
+            if (solutionReason != null) throw new FrameSolutionSelectionException(solutionReason);
             bool clampsOnly = ClampsOnly;
             var d = new Dictionary<string, object>
             {
                 { "sub_type", EffSubType },
                 { "system", SysOverride() },
-                { "rail_profile", RailProfileOrNull },
+                { "rail_profile", SolutionSelection == null ? RailProfileOrNull : null },
                 { "nsp_type", NspTypeOrNull },
                 { "cladding", Cladding },
             };
@@ -211,6 +214,7 @@ namespace AFramePlugin
                 d["parts"] = "frame";
             }
             if (clampsOnly) d["parts"] = "clamps";
+            if (SolutionSelection != null) d["solution_selection"] = SolutionSelection.ToDict();
             return d;
         }
 
@@ -232,8 +236,22 @@ namespace AFramePlugin
             return new string[0];                         // ортогональная — ШП/ZП автоматом
         }
 
+        public string ValidateSolutionSelection()
+        {
+            if (SolutionSelection == null) return null;
+            string reason = SolutionSelection.Validate();
+            if (reason != null) return reason;
+            if (EffSubType != "vertical" || Cladding != "porcelain")
+                return "Выбранное историческое решение ограничено вертикальной схемой под керамогранит, узел 4.2.1. Для другой схемы нужен отдельный подтверждённый выбор.";
+            if (!ClampsOnly && !Manual)
+                return "Автоматический расчёт выбранных изделий по АТР Вектор-1 2015 недоступен: соответствие расчётным сечениям примера 2026 не подтверждено. Используйте ручные шаги по отдельному инженерному расчёту.";
+            return null;
+        }
+
         public string Validate(bool hasLayout)
         {
+            string solutionReason = ValidateSolutionSelection();
+            if (solutionReason != null) return solutionReason;
             if (Array.IndexOf(Modes, Mode) < 0) return "Неизвестный режим «" + Mode + "».";
             if (Array.IndexOf(Claddings, Cladding) < 0) return "Неизвестная облицовка «" + Cladding + "».";
             if (IsComposite && Mode != "frame")
@@ -257,7 +275,7 @@ namespace AFramePlugin
                     return "Расчётные исходные данные должны быть конечными числами.";
                 if (Height < 1 || Height > 500) return "Высота здания — от 1 до 500 м.";
                 if (QClad <= 0 || QClad > 500) return "Вес облицовки — больше 0 и не больше 500 кг/м².";
-                if (Offset < 20 || Offset > 1000) return "Вынос облицовки — от 20 до 1000 мм.";
+                if (Offset < 20 || Offset > 1000) return "Плечо расчёта — от 20 до 1000 мм.";
                 if (NaMax < 100) return "Усилие вырыва анкера — не меньше 100 Н.";
                 if (InterFloor) return InterfloorCalculationLimit;
             }
@@ -283,6 +301,8 @@ namespace AFramePlugin
         /// <summary>Что произойдёт по «Разложить» — текст для окна.</summary>
         public string Describe(bool hasLayout)
         {
+            string solutionReason = ValidateSolutionSelection();
+            if (solutionReason != null) return solutionReason;
             if (!ClampsOnly && !Manual && EffSubType == "vertical" && Profile == "ГП-60-40")
                 return "Расчёт ГП-60-40 недоступен: нужны подтверждённые характеристики сечения и масса профиля. Расчёт по ГП-40-40 не подтверждает выбранный ГП-60-40. Выберите другой профиль либо ручной режим по отдельному инженерному расчёту.";
             if (!ClampsOnly && !Manual && InterFloor)
@@ -297,9 +317,9 @@ namespace AFramePlugin
                   .Append("; у окон — у каждой грани)")
                   .Append(Manual ? "; кронштейны вручную: рядовая " + F(StepMain) + ", угловая " + F(StepCorner) + " мм"
                                  : "; кронштейны по расчёту: район " + WindRegion + ", местность " + Terrain + ", " +
-                                   F(Height) + " м, облицовка " + F(QClad) + " кг/м², вынос " + F(Offset) +
+                                   F(Height) + " м, облицовка " + F(QClad) + " кг/м², плечо расчёта " + F(Offset) +
                                    " мм, анкер " + F(NaMax) + " Н");
-                if (SubType == "vertical") sb.Append("; профиль ").Append(Profile == "Авто" ? "подбором" : Profile);
+                if (SubType == "vertical") sb.Append(SolutionSelection == null ? "; профиль " + (Profile == "Авто" ? "подбором" : Profile) : "; профиль заявлен в каталоге, физическое назначение не подтверждено");
                 if (InterFloor) sb.Append("; ").Append(Profile);
                 if (!Manual) sb.Append("; коэффициент веса ").Append(F(CladdingLoadFactor));
                 sb.Append(". Шины: стартовая по низу зоны и над проёмами, рядовые по центрам горизонтальных швов")
@@ -327,9 +347,9 @@ namespace AFramePlugin
                 else sb.Append(" и кляммеры");
                 sb.Append(Manual ? "; шаги вручную: рядовая " + F(StepMain) + ", угловая " + F(StepCorner) + " мм"
                                  : "; шаги по расчёту: район " + WindRegion + ", местность " + Terrain + ", " +
-                                   F(Height) + " м, облицовка " + F(QClad) + " кг/м², вынос " + F(Offset) +
+                                   F(Height) + " м, облицовка " + F(QClad) + " кг/м², плечо расчёта " + F(Offset) +
                                    " мм, анкер " + F(NaMax) + " Н");
-                if (SubType == "vertical") sb.Append("; профиль ").Append(Profile == "Авто" ? "подбором" : Profile);
+                if (SubType == "vertical") sb.Append(SolutionSelection == null ? "; профиль " + (Profile == "Авто" ? "подбором" : Profile) : "; профиль заявлен в каталоге, физическое назначение не подтверждено");
                 if (InterFloor) sb.Append("; ").Append(Profile);
                 if (!Manual) sb.Append("; коэффициент веса ").Append(F(CladdingLoadFactor));
                 sb.Append(".");
@@ -357,7 +377,7 @@ namespace AFramePlugin
         // ── хранение ──
         public Dictionary<string, object> ToDict()
         {
-            return new Dictionary<string, object>
+            var result = new Dictionary<string, object>
             {
                 { "cladding", Cladding }, { "tile_step_h", TileStepH }, { "tile_step_h_corner", TileStepHCorner },
                 { "tile_whip", TileWhip }, { "rail_brand_concrete", RailBrandConcrete.Trim() },
@@ -371,6 +391,21 @@ namespace AFramePlugin
                 { "ask_corners", AskCorners }, { "ask_floors", AskFloors }, { "floor_step", FloorStep },
                 { "signs", Signs },
             };
+            if (SolutionSelection != null) result["solution_selection"] = SolutionSelection.ToDict();
+            return result;
+        }
+
+        // Global convenience settings never transport a project declaration to
+        // a different drawing. Drawing metadata uses the complete ToDict above.
+        public Dictionary<string, object> ToLastDict()
+        {
+            var result = ToDict(); result.Remove("solution_selection"); return result;
+        }
+        public static FrameSettings FromLastDict(Dictionary<string, object> value)
+        {
+            if (value == null) return new FrameSettings();
+            var copy = new Dictionary<string, object>(value); copy.Remove("solution_selection");
+            return FromDict(copy);
         }
 
         private static string S(Dictionary<string, object> d, string k, string def)
@@ -435,6 +470,8 @@ namespace AFramePlugin
             s.AskFloors = B(d, "ask_floors", s.AskFloors);
             s.FloorStep = D(d, "floor_step", s.FloorStep);
             s.Signs = OneOf(S(d, "signs", s.Signs), "cond", "cond", "samples");
+            object selection;
+            if (d.TryGetValue("solution_selection", out selection)) s.SolutionSelection = FrameSolutionSelection.FromDict(selection);
             return s;
         }
 
@@ -453,7 +490,7 @@ namespace AFramePlugin
             {
                 string p = LastPath();
                 if (File.Exists(p))
-                    return FromDict(new JavaScriptSerializer().DeserializeObject(
+                    return FromLastDict(new JavaScriptSerializer().DeserializeObject(
                         File.ReadAllText(p, Encoding.UTF8)) as Dictionary<string, object>);
             }
             catch { }
@@ -466,7 +503,7 @@ namespace AFramePlugin
             {
                 string p = LastPath();
                 Directory.CreateDirectory(Path.GetDirectoryName(p));
-                File.WriteAllText(p, new JavaScriptSerializer().Serialize(ToDict()), new UTF8Encoding(false));
+                File.WriteAllText(p, new JavaScriptSerializer().Serialize(ToLastDict()), new UTF8Encoding(false));
             }
             catch { }
         }

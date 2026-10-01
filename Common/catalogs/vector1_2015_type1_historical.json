@@ -1,0 +1,200 @@
+{
+  "catalog_id": "vector1_2015_type1_historical",
+  "executions": [
+    {
+      "coating_thickness": null,
+      "id": "galvanized_painted",
+      "mark_token": null,
+      "pdf_pages": [
+        3,
+        6,
+        8,
+        9
+      ],
+      "steel_grade": null,
+      "title": "Оцинкованная сталь с порошковой окраской"
+    },
+    {
+      "coating_thickness": null,
+      "id": "corrosion_resistant",
+      "mark_token": "КС",
+      "pdf_pages": [
+        3,
+        6,
+        8,
+        9
+      ],
+      "steel_grade": null,
+      "title": "Коррозионностойкая сталь (КС)"
+    }
+  ],
+  "families": {
+    "gp": {
+      "dimensions": {
+        "a_mm": {
+          "values": [
+            40,
+            50,
+            60,
+            80
+          ]
+        },
+        "b_mm": {
+          "basis": "project_and_strength_calculation_required",
+          "values": null
+        },
+        "supply_length_mm": {
+          "basis": "not_stated",
+          "values": null
+        },
+        "thickness_mm": {
+          "basis": "project_and_strength_calculation_required",
+          "values": null
+        }
+      },
+      "family_id": "gp",
+      "printed_pattern": "ГП-(КС)-a-b-c",
+      "role": "profile",
+      "source": {
+        "pdf_page": 9,
+        "position": "4.4",
+        "sheet": "3.4"
+      }
+    },
+    "kr2": {
+      "dimensions": {
+        "L_mm": {
+          "maximum": 350,
+          "minimum": 50,
+          "step": 10
+        },
+        "nominal_width_mm": {
+          "values": [
+            50,
+            60,
+            70,
+            85
+          ]
+        },
+        "thickness_mm": {
+          "basis": "sketch_dimension",
+          "value": 2
+        }
+      },
+      "family_id": "kr2",
+      "printed_pattern": "КР2-(КС)-50(60,70,85)-L",
+      "role": "bracket",
+      "source": {
+        "pdf_page": 6,
+        "position": "2.2",
+        "sheet": "3.2.1"
+      }
+    },
+    "uk": {
+      "dimensions": {
+        "L_mm": {
+          "values": [
+            100,
+            150
+          ]
+        },
+        "nominal_width_mm": {
+          "values": [
+            50,
+            60,
+            70,
+            85
+          ]
+        },
+        "sketch_width_mm_by_nominal": {
+          "50": 54,
+          "60": 64,
+          "70": 74,
+          "85": 89
+        },
+        "thickness_mm": {
+          "values": [
+            1,
+            1.2,
+            1.5
+          ]
+        }
+      },
+      "family_id": "uk",
+      "printed_pattern": "УК-(КС)-50(60,70,85)-L-c",
+      "role": "extender",
+      "source": {
+        "pdf_page": 8,
+        "position": "3.2",
+        "sheet": "3.3"
+      }
+    }
+  },
+  "geometry_parameters": {
+    "automatic_bracket_length_equation": "not_confirmed",
+    "cladding_offset_basis": "wall_structural_face_to_cladding_exterior",
+    "cladding_offset_meaning": "Заявленное пользователем расстояние от поверхности строительного основания до наружной поверхности облицовки.",
+    "insulation_layers_basis": "project_declared_layer_thicknesses",
+    "legacy_calculation_offset_is_separate": true,
+    "unit": "mm"
+  },
+  "missing": [
+    "current_sku",
+    "approved_section_properties",
+    "steel_grade",
+    "manufacturing_tolerances",
+    "hole_coordinates",
+    "node_adjustment_interval",
+    "fixed_sliding_contract",
+    "splice_continuity",
+    "anchor_substrate_design",
+    "complete_fastener_bom",
+    "automatic_bracket_selection"
+  ],
+  "revision": "6bb12795979248fd51f0d9384c8bb0f91b7c45165734ef2ce7d04fe2b6877c24",
+  "schema": "aframe_solution_catalog/1",
+  "scope": "historical_nomenclature_membership_only",
+  "solution": {
+    "adjustment_interval_mm": null,
+    "calculation_binding": "not_confirmed",
+    "cladding": "porcelain",
+    "combination_compatibility": "not_confirmed",
+    "families": {
+      "bracket": "kr2",
+      "extender": "uk",
+      "profile": "gp"
+    },
+    "geometry_preset": "Вектор-1",
+    "local_clearance": {
+      "checked_by_this_increment": false,
+      "from": "outer_insulation_membrane_surface",
+      "minimum_mm": 20,
+      "not": "distance_to_outer_cladding_surface",
+      "pdf_page": 20,
+      "sheet": "4.2.1",
+      "to": "nearest_profile_surface"
+    },
+    "node": {
+      "pdf_page": 20,
+      "sheet": "4.2.1"
+    },
+    "note": "Минимум 30 мм узла 4.1 относится к пластинам У2/У и не переносится на выбранный узел с УК.",
+    "overlap_minimum_mm": null,
+    "solution_id": "vector1_2015_type1_4_2_1",
+    "sub_type": "vertical",
+    "title": "Тип 1, Г-профиль с КР2 и УК; узел 4.2.1"
+  },
+  "source": {
+    "current_manufacturer_approval": "not_confirmed",
+    "current_product_availability": "not_confirmed",
+    "edition_label": null,
+    "edition_note": "3.15 есть только в имени файла; самостоятельный номер редакции не подтверждён.",
+    "edition_year": 2015,
+    "issuer_as_printed": "ООО «Вектор групп»",
+    "kind": "historical_manufacturer_album",
+    "pdf_pages": 109,
+    "sha256": "7386f4152de455a5e2622704d51a98d8f05afd20050807f634eea4572de37142",
+    "source_id": "vector1_2015",
+    "title": "АТР Вектор-1, 2015"
+  }
+}

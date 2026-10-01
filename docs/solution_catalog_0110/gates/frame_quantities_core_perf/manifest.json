@@ -1,0 +1,138 @@
+{
+  "scope": "Production pure C# frame quantities; no live AutoCAD validation.",
+  "status": "PASS",
+  "sizes": [
+    10000,
+    50000
+  ],
+  "clock_is_observation_only": true,
+  "source_sha256": {
+    "Common/FacadeQuantities.cs": "b092bf95f154d6aa8041936bffa79a82c613d7ac8f27fee9d1e6d7c0cde09f90",
+    "tools/frame_quantities_3009/FrameCorePerf.cs": "1fe36ad3dd60b2b03d5631b9f4123579133d9eb11dfc093645b9b28c39ec4685"
+  },
+  "results": [
+    {
+      "count": 10000,
+      "status": "PASS",
+      "clock_is_observation_only": true,
+      "generated_s": 0.0144794,
+      "managed_bytes": 18597264,
+      "peak_working_set": null,
+      "scope": "Pure C# frame quantities; no AutoCAD host, DWG or UI.",
+      "workloads": [
+        {
+          "selection": "all",
+          "count": 10000,
+          "selected_count": 10000,
+          "status": "PASS",
+          "core_s": 0.078647,
+          "rows": 27,
+          "actual_length_m": 9438.825000000004,
+          "diagnostics": {
+            "reports_seen": 1,
+            "reports_compared": 0,
+            "elements_seen": 10000,
+            "elements_validated": 10000,
+            "elements_compared": 0,
+            "cad_links_checked": 20000,
+            "shapes_validated": 0,
+            "canonical_report_keys": 0,
+            "canonical_element_keys": 0,
+            "aggregate_keys_built": 10000,
+            "connection_elements_indexed": 0,
+            "connection_members_validated": 0,
+            "connection_supports_validated": 0,
+            "connection_links_validated": 0
+          }
+        },
+        {
+          "selection": "Z0",
+          "count": 10000,
+          "selected_count": 2500,
+          "status": "PASS",
+          "core_s": 0.0273501,
+          "rows": 9,
+          "actual_length_m": 3146.2750000000015,
+          "diagnostics": {
+            "reports_seen": 1,
+            "reports_compared": 0,
+            "elements_seen": 10000,
+            "elements_validated": 10000,
+            "elements_compared": 0,
+            "cad_links_checked": 20000,
+            "shapes_validated": 0,
+            "canonical_report_keys": 0,
+            "canonical_element_keys": 0,
+            "aggregate_keys_built": 2500,
+            "connection_elements_indexed": 0,
+            "connection_members_validated": 0,
+            "connection_supports_validated": 0,
+            "connection_links_validated": 0
+          }
+        }
+      ]
+    },
+    {
+      "count": 50000,
+      "status": "PASS",
+      "clock_is_observation_only": true,
+      "generated_s": 0.058851999999999995,
+      "managed_bytes": 57242448,
+      "peak_working_set": null,
+      "scope": "Pure C# frame quantities; no AutoCAD host, DWG or UI.",
+      "workloads": [
+        {
+          "selection": "all",
+          "count": 50000,
+          "selected_count": 50000,
+          "status": "PASS",
+          "core_s": 0.310438,
+          "rows": 27,
+          "actual_length_m": 47188.89999999989,
+          "diagnostics": {
+            "reports_seen": 1,
+            "reports_compared": 0,
+            "elements_seen": 50000,
+            "elements_validated": 50000,
+            "elements_compared": 0,
+            "cad_links_checked": 100000,
+            "shapes_validated": 0,
+            "canonical_report_keys": 0,
+            "canonical_element_keys": 0,
+            "aggregate_keys_built": 50000,
+            "connection_elements_indexed": 0,
+            "connection_members_validated": 0,
+            "connection_supports_validated": 0,
+            "connection_links_validated": 0
+          }
+        },
+        {
+          "selection": "Z0",
+          "count": 50000,
+          "selected_count": 12500,
+          "status": "PASS",
+          "core_s": 0.1345846,
+          "rows": 9,
+          "actual_length_m": 15728.349999999962,
+          "diagnostics": {
+            "reports_seen": 1,
+            "reports_compared": 0,
+            "elements_seen": 50000,
+            "elements_validated": 50000,
+            "elements_compared": 0,
+            "cad_links_checked": 100000,
+            "shapes_validated": 0,
+            "canonical_report_keys": 0,
+            "canonical_element_keys": 0,
+            "aggregate_keys_built": 12500,
+            "connection_elements_indexed": 0,
+            "connection_members_validated": 0,
+            "connection_supports_validated": 0,
+            "connection_links_validated": 0
+          }
+        }
+      ]
+    }
+  ],
+  "compile_returncode": 0
+}

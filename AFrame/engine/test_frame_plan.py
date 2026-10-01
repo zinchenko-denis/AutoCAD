@@ -283,8 +283,8 @@ ok(xs10 == [604.0, 1208.0, 1812.0],
    "FR10: доп. ось по центру широкой плиты (%s)" % xs10)
 
 # ── FR-D: факты боевого эталона Ленпроспекта (skip без testdata) ──
-ETALON = "/home/claude/atspec-testdata/dxf/facades/frame_lenprospekt/" \
-         "frame_ps.json"
+ETALON = os.path.join(os.environ.get("ATSPEC_TESTDATA", "/home/claude/atspec-testdata"),
+                      "dxf", "facades", "frame_lenprospekt", "frame_ps.json")
 if os.path.exists(ETALON):
     et = json.load(open(ETALON, encoding="utf-8"))
     # кляммеры рядовые фрагмента — шаг 605 (плита 600 + шов 5)

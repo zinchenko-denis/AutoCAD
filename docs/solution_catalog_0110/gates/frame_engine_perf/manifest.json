@@ -1,0 +1,102 @@
+{
+  "status": "PASS",
+  "scope": "Python frame engine only; C# aggregation and CAD/store are separately measured",
+  "timing_is_descriptive_only": true,
+  "live_autocad_checked": false,
+  "results": [
+    {
+      "target_elements": 1000,
+      "actual_elements": 1120,
+      "zones": 7,
+      "mode": "manual",
+      "counts": {
+        "rails": 112,
+        "hrails": 0,
+        "brackets": 392,
+        "clamps": 616,
+        "fittings": 0
+      },
+      "input_build_seconds": 1.4081000699661672e-05,
+      "engine_seconds": 0.009029167998960475,
+      "peak_process_rss_bytes": 15048704,
+      "memory_scope": "child process including Python runtime, input request, engine result and calibration sample",
+      "static_model_verified": false,
+      "live_autocad_checked": false
+    },
+    {
+      "target_elements": 3000,
+      "actual_elements": 3040,
+      "zones": 19,
+      "mode": "manual",
+      "counts": {
+        "rails": 304,
+        "hrails": 0,
+        "brackets": 1064,
+        "clamps": 1672,
+        "fittings": 0
+      },
+      "input_build_seconds": 3.355100125190802e-05,
+      "engine_seconds": 0.024207139998907223,
+      "peak_process_rss_bytes": 16486400,
+      "memory_scope": "child process including Python runtime, input request, engine result and calibration sample",
+      "static_model_verified": false,
+      "live_autocad_checked": false
+    },
+    {
+      "target_elements": 1000,
+      "actual_elements": 1152,
+      "zones": 6,
+      "mode": "limited_calc",
+      "counts": {
+        "rails": 96,
+        "hrails": 0,
+        "brackets": 528,
+        "clamps": 528,
+        "fittings": 0
+      },
+      "input_build_seconds": 1.3299999409355223e-05,
+      "engine_seconds": 0.018944535000628093,
+      "peak_process_rss_bytes": 15704064,
+      "memory_scope": "child process including Python runtime, input request, engine result and calibration sample",
+      "static_model_verified": false,
+      "live_autocad_checked": false
+    },
+    {
+      "target_elements": 3000,
+      "actual_elements": 3072,
+      "zones": 16,
+      "mode": "limited_calc",
+      "counts": {
+        "rails": 256,
+        "hrails": 0,
+        "brackets": 1408,
+        "clamps": 1408,
+        "fittings": 0
+      },
+      "input_build_seconds": 2.6339999749325216e-05,
+      "engine_seconds": 0.04919087199959904,
+      "peak_process_rss_bytes": 18059264,
+      "memory_scope": "child process including Python runtime, input request, engine result and calibration sample",
+      "static_model_verified": false,
+      "live_autocad_checked": false
+    }
+  ],
+  "source_sha256": {
+    "tools/frame_quantities_3009/test_frame_engine_perf.py": "8a78692cc010c596c011aaa924dfc8846f2c5a7c69937bee00a671765f67309c",
+    "tools/frame_quantities_3009/engine_oracles.py": "85cf377f1e1076fbeea96160d4bec2070e72fe1eb160d51b710c5f925027a50b",
+    "AFrame/engine/frame_engine.py": "b4acaaa98f48f91e0019b04231bb2ca361059e8d6a4e587cdbb64eb432790529",
+    "AFrame/engine/frame_plan.py": "5c4b4bbbc8258d62e965c24604906cd819b6a06a04643425ed1770b07c5d7105",
+    "AFrame/engine/frame_solution_selection.py": "6490da6ced48715c4dce5ca357e0f54be9c035dd7bb6fc8d86b684f1d15f6aee",
+    "AFrame/engine/frame_catalog.py": "947a0277f3a6202dff365c1de6e86c5832dbc2c97e2a810b99d500a5d6f6b163",
+    "AFrame/engine/frame_topology.py": "2455ab874309d1382591800acce35dd3bde04ea3be6519f8b1de89dd5514f5d5",
+    "AFrame/engine/frame_connections.py": "d4febc1ce6e147f1cbce29cb64690f2c3b592efe4e40b9c88da5c8a2dcc74985",
+    "AFrame/engine/frame_spatial.py": "003efc0e73b344d50d4465d2bc1bfc87f8ca149c7d443a1e7d9061e6dbfd6cec",
+    "AFrame/engine/frame_solution_catalog.py": "56e674855cc01e19bf2a0723dff1f3454497a99aef56f3de1b5bbf75c0d44764",
+    "AFrame/engine/dsverka_poligon.py": "a971bd36882c6663c0fcbc466de5e288d9aa1f4d1f6d55e5eb462ae5d635a1ec",
+    "AFrame/engine/analiz_klu_poligon.py": "903a3080c4b01dea51e936560adba060f12f172fe13887bd2785456881f5fa27",
+    "AFrame/engine/audit_frame.py": "7ce9adac3adddcb7619b88d789b78f4b811f9c890e9fd9b08f884b32ee4e2d48",
+    "AFrame/engine/frame_rules.py": "511ec4ec48331034257859ccac70ef028a8c4b398acd7d5b238d778e3c63ea6f",
+    "AFrame/engine/frame_calc.py": "abe20fd3c0de0937ba0636914f083f7c48a7a65b3b4c85f05673278a95e1da88",
+    "AFrame/engine/systems.json": "e9ee0a4cf0c535473dd9931f9b2a3d86dd1d932fe18f84682ef3fd221fbc03c3"
+  }
+}

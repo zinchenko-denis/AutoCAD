@@ -1,0 +1,130 @@
+{
+  "schema": "aframe_solution_code_review/1",
+  "status": "PASS",
+  "reviewed_at_utc": "2026-10-01T06:43:48.760626+00:00",
+  "baseline_commit": "87e67632e9901ea03586fec10b60c293a8fbe306",
+  "reviewed_tree": "working_tree_after_2B1_review_fixes",
+  "scope": "Independent C# review of selection persistence, command guards, quantity declaration and source-proportional work; actual source methods compiled with minimal CAD doubles.",
+  "live_autocad_checked": false,
+  "windows_runtime_checked": false,
+  "engineering_approval": false,
+  "open_findings": [],
+  "findings": [
+    {
+      "id": "R1",
+      "status": "resolved",
+      "reproduced": "A zone mark without ATFRAME plus its explicitly selected canonical hatch falsely conflicted; the dialog could keep legacy calculation settings.",
+      "resolution": "Alias and canonical observations are distinct. Null aliases do not create legacy zones; explicit aliases must match. Verified canonical metadata is read before the dialog and the complete first explicit canonical settings are restored.",
+      "verified": "Both selection orders pass; conflicting aliases, explicit alias with legacy canonical and a genuinely different legacy/new zone refuse. Legacy calc/height/steps are replaced together, later canonicals do not overwrite the first settings."
+    },
+    {
+      "id": "R2",
+      "status": "resolved",
+      "reproduced": "Clamps-only outer-plus-hole could pass the actual-zone selection guard while the metadata writer also included a previous root excluded as a hole.",
+      "resolution": "ValidateClampsRoots refuses any prior frame root absent from the engine result before drawing mutation.",
+      "verified": "Real engine outer/hole fixture and extracted actual command gate accept the outer alone and refuse the excluded previous hole; unchanged exact selection is required for clamps."
+    },
+    {
+      "id": "R3",
+      "status": "resolved",
+      "reproduced": "An existing empty ATFRAME Xrecord was indistinguishable from absent legacy metadata.",
+      "resolution": "The actual reader distinguishes absent dictionaries/keys from empty or malformed records; the ResultBuffer property is read once inside using.",
+      "verified": "Actual extracted reader accepts absent legacy data and valid selection; null Data, empty text, non-text-only and malformed JSON refuse. Every non-null buffer is disposed exactly once on success and refusal."
+    },
+    {
+      "id": "R4",
+      "status": "resolved",
+      "reported_by": "root review",
+      "reproduced": "Moving zone verification before the form removes selected zone contours from polyData before manual-axis bounds are calculated.",
+      "resolution": "The original selected contours are snapshotted before deduplication and the existing bounding loop reads that snapshot.",
+      "verified": "Actual extracted snapshot and bounds loop retain outer/opening bounds after polyData is emptied; no additional CAD read or geometry pass."
+    },
+    {
+      "id": "R5",
+      "status": "resolved",
+      "reported_by": "root review",
+      "reproduced": "A list of aliases rechecked for every canonical observation produced quadratic comparisons for one merged root.",
+      "resolution": "One checked explicit alias snapshot is stored per root; null aliases require no stored snapshot.",
+      "verified": "100 aliases plus 100 canonicals produce 200 observations and 199 comparisons; 1000 plus 1000 produce 2000 observations and 1999 comparisons. Resolution visits one distinct root."
+    }
+  ],
+  "tests": {
+    "command": "python tools/solution_catalog_0110/test_settings_contract.py --out <verification-directory>",
+    "status": "PASS",
+    "native_checks": 44,
+    "pipeline_checks": 23,
+    "total_checks": 67,
+    "git_diff_check": "PASS",
+    "methods": "Actual source extraction for metadata/freshness/result guards and axis bounds; real FrameSettings/FrameSolutionSelection/quantity producer and Python engine.",
+    "additional_boundaries": [
+      "Changed or erased canonical owner refuses before write.",
+      "Selected-owner reread ignores an unrelated corrupt object.",
+      "Global convenience settings exclude project selection and SaveLast follows transaction commit.",
+      "Engine echo must retain exact declaration and explicit limitations; quantity rows retain null product_id."
+    ],
+    "performance": [
+      {
+        "owners": 100,
+        "capture_observations": 100,
+        "resolve_observations": 100,
+        "elapsed_ms": 94.24990000000001,
+        "cad_calls": 0,
+        "modelspace_scans": 0
+      },
+      {
+        "owners": 1000,
+        "capture_observations": 1000,
+        "resolve_observations": 1000,
+        "elapsed_ms": 935.6493,
+        "cad_calls": 0,
+        "modelspace_scans": 0
+      },
+      {
+        "scenario": "same_root_aliases_then_canonicals",
+        "aliases": 100,
+        "canonical_observations": 100,
+        "capture_observations": 200,
+        "alias_comparisons": 199,
+        "resolve_observations": 1,
+        "elapsed_ms": 173.01680000000002,
+        "cad_calls": 0,
+        "modelspace_scans": 0
+      },
+      {
+        "scenario": "same_root_aliases_then_canonicals",
+        "aliases": 1000,
+        "canonical_observations": 1000,
+        "capture_observations": 2000,
+        "alias_comparisons": 1999,
+        "resolve_observations": 1,
+        "elapsed_ms": 1749.9931000000001,
+        "cad_calls": 0,
+        "modelspace_scans": 0
+      }
+    ],
+    "timings_are_diagnostics_not_autocad_benchmarks": true
+  },
+  "architecture_review": {
+    "new_modelspace_scans": 0,
+    "evidence": "FrameCommand diff adds selected-owner and verified-canonical metadata reads only; existing whole-drawing paths are unchanged. Initial selected canonical metadata is cached; prewrite reread is intentional freshness validation.",
+    "pure_selection_cad_calls": 0,
+    "same_root_alias_matching": "linear in observations; exact comparison counters asserted",
+    "cad_double_counters_alone_are_not_host_evidence": true
+  },
+  "preserved_limits": [
+    "Historical nomenclature membership is not assembly or strength approval.",
+    "No automatic bracket-length equation, installed-product assignment or invented section properties.",
+    "Geometric cladding-front offset remains separate from the calculation lever arm.",
+    "Unsupported systems and existing NSP-2/GP-60-40 calculation restrictions remain outside this catalogue declaration."
+  ],
+  "source_sha256": {
+    "AFrame/src/AFramePlugin/FrameCommand.cs": "35c5667c89cb7e79884588230e72e3030e7c43216093f2d56eb778ffe11cc597",
+    "AFrame/src/AFramePlugin/FrameSettings.cs": "f76eb206dcbc97977015865ec88edaaf9311c1769573f801e839f21ed4fb95c4",
+    "AFrame/src/AFramePlugin/FrameSolutionSelection.cs": "59e20979aff3c3628c44d44715bb275069672f35bacd1ee454fb759e596f804a",
+    "AFrame/src/AFramePlugin/FrameQuantities.cs": "4b6af37929044af484306b814f297fb05fa602c176ea0745dcf61b9a878a56a9",
+    "tools/solution_catalog_0110/test_settings_contract.py": "998735461bcfc81804b4acd6fda7fa7cc45f4862087d03a0cedc93b77c72b694",
+    "tools/solution_catalog_0110/SettingsContractProbe.cs": "c33f3aae2039add806c1ccff7b35ba5b3455aaada005cd172c090d285e1aa058"
+  },
+  "focused_manifest_sha256": "371463c1d3bf5a8db0e19249309cbcfe19c830783c5c73b1e609c67f0f980102",
+  "acceptance_boundary": "This receipt closes the listed source-level defects and synthetic regressions. Full repository gates, compilation, UI checks and live AutoCAD acceptance have separate evidence."
+}

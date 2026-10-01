@@ -63,8 +63,12 @@ def main():
     revision = subprocess.check_output(['git','rev-parse','--verify',(args.revision or 'HEAD') + '^{commit}'], cwd=ROOT,text=True).strip()
     if args.revision:
         source_root = Path(archive_dir.name)
-        archive = subprocess.check_output(['git','archive','--format=tar',revision,'AFrame/engine',
-                    'AFrame/src/AFramePlugin/FrameSettings.cs','AFrame/tools/roles/RolesDump.cs'],cwd=ROOT)
+        paths = ['AFrame/engine', 'AFrame/src/AFramePlugin/FrameSettings.cs', 'AFrame/tools/roles/RolesDump.cs']
+        dependency = 'AFrame/src/AFramePlugin/FrameSolutionSelection.cs'
+        if subprocess.run(['git', 'cat-file', '-e', revision + ':' + dependency], cwd=ROOT,
+                          stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL).returncode == 0:
+            paths.append(dependency)
+        archive = subprocess.check_output(['git', 'archive', '--format=tar', revision] + paths, cwd=ROOT)
         with tarfile.open(fileobj=io.BytesIO(archive),mode='r:') as tf:
             tf.extractall(source_root,filter='data')
     sys.path.insert(0,str(source_root/'AFrame/engine'))
@@ -91,6 +95,9 @@ def main():
     (out / 'native_roles.json').write_text(json.dumps(roles, ensure_ascii=False, indent=2), encoding='utf-8')
     exe = out / 'ArchitectureSettings.exe'
     sources = [source_root / 'AFrame/tools/roles/RolesDump.cs', source_root / 'AFrame/src/AFramePlugin/FrameSettings.cs']
+    dependency = source_root / 'AFrame/src/AFramePlugin/FrameSolutionSelection.cs'
+    if dependency.exists():
+        sources.append(dependency)
     cp = subprocess.run(['mcs', '-nologo', '-r:System.Web.Extensions.dll', '-out:' + str(exe)] + [str(p) for p in sources], capture_output=True, text=True)
     (out / 'compile.log').write_text(cp.stdout + cp.stderr, encoding='utf-8')
     if cp.returncode:

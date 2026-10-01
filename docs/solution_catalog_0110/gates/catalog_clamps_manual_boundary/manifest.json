@@ -1,0 +1,47 @@
+{
+  "status": "PASS",
+  "checks": 7,
+  "cases": [
+    {
+      "name": "normal mixed bill counts generated and manual",
+      "status": "PASS"
+    },
+    {
+      "name": "clamps update persists only generated contribution",
+      "status": "PASS"
+    },
+    {
+      "name": "manual-only selection cannot become generated frame",
+      "status": "PASS"
+    },
+    {
+      "name": "contaminated generated origin refused",
+      "status": "PASS"
+    },
+    {
+      "name": "contaminated manual scope refused",
+      "status": "PASS"
+    },
+    {
+      "name": "unrecognized report producer refused",
+      "status": "PASS"
+    },
+    {
+      "name": "valid generated reports retain independent origins",
+      "status": "PASS"
+    }
+  ],
+  "live_autocad_checked": false,
+  "scope": "Actual constructor and Store method; only CAD persistence boundary is captured. No native CAD mutation.",
+  "before_evidence": {
+    "base_commit": "0a397c24d49474f4408fcda7e30da71e163202b0",
+    "pre_fix_working_source_sha256": "783c672c0a0244758fb8de8b0c5de5cbc3cfe7dcaed62dd4247fe7febf5aa928",
+    "observation": "captured_for_generated_StoreFrame=generated:rail,manual:rail; manual_copied_into_generated=True"
+  },
+  "source_sha256": {
+    "AFrame/src/AFramePlugin/FrameQuantities.cs": "4b6af37929044af484306b814f297fb05fa602c176ea0745dcf61b9a878a56a9",
+    "Common/FacadeQuantities.cs": "b092bf95f154d6aa8041936bffa79a82c613d7ac8f27fee9d1e6d7c0cde09f90",
+    "tools/catalog_connections_0110/test_clamps_manual_boundary.py": "ffbeb57ab006131c02df6b48500d7ee46de363a0abbbbe8ea2d0840507e12cd5"
+  },
+  "extracted_methods_sha256": "6fb653632731c77550c92c4397a5c241181586cbb0fb963d9655cb3a047eb5ec"
+}

@@ -295,6 +295,15 @@ namespace AFramePlugin
             result.parameters["fittings_scope"] = "conditional_symbols_not_confirmed_hardware_bom";
             foreach (string key in new[] { "design_scope", "calc_report", "calc_reports", "notes" })
                 if (response.ContainsKey(key)) result.engine_summary[key] = response[key];
+            var solutionReport = Get(response, "solution_report") as Dictionary<string, object>;
+            if (solutionReport != null)
+            {
+                // The exact declaration already exists once in parameters.
+                // Store the engine's limits/status without duplicating selection.
+                var declarationStatus = new Dictionary<string, object>(solutionReport);
+                declarationStatus.Remove("selection");
+                result.engine_summary["solution_report"] = declarationStatus;
+            }
             result.engine_summary["geometry_basis"] = "frame_axes_and_conventional_symbols";
             var systemUsed = Get(response, "system_used") as Dictionary<string, object>;
             string system = Text(Get(systemUsed, "_name"));

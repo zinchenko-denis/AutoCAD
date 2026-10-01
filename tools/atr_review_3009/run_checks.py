@@ -32,7 +32,8 @@ def main():
         ('AFrame', ['test_frame_plan.py', 'test_frame_calc.py',
                     'test_frame_engine.py', 'test_frame_rules.py',
                     'test_frame_topology.py', 'test_frame_topology_index.py',
-                    'test_frame_connections.py', 'audit_frame.py']),
+                    'test_frame_connections.py', 'test_frame_solution_selection.py',
+                    'audit_frame.py']),
     ):
         jobs.extend((module + '_' + Path(s).stem, module + '/engine', [s])
                     for s in scripts)
@@ -89,6 +90,8 @@ def main():
                                           '--out', str(out / 'manual_quantities_output')]),
         ('catalog_tutorial_examples', '.', ['docs/facades_beginner_3009/replay_examples.py',
                                            '--out', str(out / 'catalog_tutorial_examples.json')]),
+        ('solution_settings_contract', '.', ['tools/solution_catalog_0110/test_settings_contract.py',
+                                             '--out', str(out / 'solution_settings_contract')]),
         ('catalog_connection_store', '.', ['tools/catalog_connections_0110/test_connection_store.py',
                                           '--out', str(out / 'catalog_connection_store')]),
         ('catalog_clamps_manual_boundary', '.', ['tools/catalog_connections_0110/test_clamps_manual_boundary.py',
