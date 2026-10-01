@@ -12,8 +12,8 @@
 Репозиторий: https://github.com/zinchenko-denis/AutoCAD
 Рабочая ветка: `feat/auto-reactor`.
 Приватные существующие источники: `zinchenko-denis/atspec-testdata`.
-Продуктовый срез этой итерации: `SOURCE_SHA_PENDING`.
-Windows check этой итерации: `CI_PENDING`.
+Продуктовый срез этой итерации: `546fcd335512f51c177974b69016a398c0dc2f3a`.
+Windows check этой итерации: `№214 — success, run 36887326787; 348/348 UI, четыре затронутых PNG просмотрены`.
 Подтверждение публикации и точные результаты:
 `docs/mounting_contract_0110/github_publication.json` и
 `docs/mounting_contract_0110/verification_manifest.json`.

@@ -1,5 +1,5 @@
 {
-  "product_commit": null,
+  "product_commit": "546fcd335512f51c177974b69016a398c0dc2f3a",
   "illustration_product_commit": "8360c238f342d82c1dd83c63789729506c34df18",
   "illustration_source_manifest": "assets/source_manifest.json",
   "illustration_engine_hashes_match_current": false,
@@ -31,7 +31,7 @@
   "illustration_geometry_matches_current": true,
   "provenance_note": "Guide 2В1: count of shared physical bracket candidates in member rows; full bracket/rail IDs in report warnings. 52 pages, 10 illustrations, 4 DXF retained; 5 tutorial replays PASS; current visual QA in FINAL_QA.json. Full mounting contract and live AutoCAD not confirmed.",
   "product_base_commit": "51f6b7fb5f3d3ee9e989a8fec0f0548c1304bf32",
-  "product_source_state": "2В1 after native window fix: repeated local55/55, compile3/3, independent UI review PASS; synth8/8 reused after44 dependency hashes matched; Windows pending",
+  "product_source_state": "Published and Windows check214 success; four affected connection UI PNG reviewed; 55/55 local gates, compile3/3, full synth8/8 and independent reviews PASS",
   "product_source_sha256": {
     ".github/workflows/check.yml": "aa2a537e56b082f3ea347116e240f3af56e62a97dbd66297f59aedf2a0ece466",
     "AClad/bundle/AClad.bundle/PackageContents.xml": "c6c5853eb59e213c1633b1b0750980c4728f00d2d86d6998f37d0677099c6fdc",

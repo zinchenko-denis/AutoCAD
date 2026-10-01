@@ -1,0 +1,99 @@
+{
+  "artifacts": [
+    {
+      "id": 11175118830,
+      "name": "solution-catalog-ui",
+      "size_in_bytes": 507237,
+      "url": "https://api.github.com/repos/zinchenko-denis/AutoCAD/actions/artifacts/11175118830",
+      "archive_download_url": "https://api.github.com/repos/zinchenko-denis/AutoCAD/actions/artifacts/11175118830/zip",
+      "expired": false,
+      "created_at": "2026-10-01T15:54:55Z",
+      "expires_at": "2026-12-30T15:50:00Z",
+      "updated_at": "2026-10-01T15:54:55Z",
+      "digest": "sha256:56e0d7c4cfd53ef6a17010aad05d50278da851d67804b54140d9da5598ff7253",
+      "workflow_run": {
+        "id": 36887326787,
+        "repository_id": 1271537061,
+        "head_repository_id": 1271537061,
+        "head_branch": "feat/auto-reactor",
+        "head_sha": "546fcd335512f51c177974b69016a398c0dc2f3a"
+      }
+    },
+    {
+      "id": 11174689494,
+      "name": "connection-table-ui",
+      "size_in_bytes": 749613,
+      "url": "https://api.github.com/repos/zinchenko-denis/AutoCAD/actions/artifacts/11174689494",
+      "archive_download_url": "https://api.github.com/repos/zinchenko-denis/AutoCAD/actions/artifacts/11174689494/zip",
+      "expired": false,
+      "created_at": "2026-10-01T15:54:46Z",
+      "expires_at": "2026-12-30T15:50:00Z",
+      "updated_at": "2026-10-01T15:54:46Z",
+      "digest": "sha256:1e9ca2d128de7956b6577a6a6e3e14c1b4fddd31bf23285fbff49e5f2744e1fd",
+      "workflow_run": {
+        "id": 36887326787,
+        "repository_id": 1271537061,
+        "head_repository_id": 1271537061,
+        "head_branch": "feat/auto-reactor",
+        "head_sha": "546fcd335512f51c177974b69016a398c0dc2f3a"
+      }
+    },
+    {
+      "id": 11174604681,
+      "name": "node-geometry",
+      "size_in_bytes": 1484227,
+      "url": "https://api.github.com/repos/zinchenko-denis/AutoCAD/actions/artifacts/11174604681",
+      "archive_download_url": "https://api.github.com/repos/zinchenko-denis/AutoCAD/actions/artifacts/11174604681/zip",
+      "expired": false,
+      "created_at": "2026-10-01T15:55:36Z",
+      "expires_at": "2026-12-30T15:50:00Z",
+      "updated_at": "2026-10-01T15:55:36Z",
+      "digest": "sha256:62d2d27013688b3585e8ba4d5a0cbf0181f893e629611f7f2df040c1a9ad0f53",
+      "workflow_run": {
+        "id": 36887326787,
+        "repository_id": 1271537061,
+        "head_repository_id": 1271537061,
+        "head_branch": "feat/auto-reactor",
+        "head_sha": "546fcd335512f51c177974b69016a398c0dc2f3a"
+      }
+    },
+    {
+      "id": 11174509141,
+      "name": "project-parameters-ui",
+      "size_in_bytes": 1125996,
+      "url": "https://api.github.com/repos/zinchenko-denis/AutoCAD/actions/artifacts/11174509141",
+      "archive_download_url": "https://api.github.com/repos/zinchenko-denis/AutoCAD/actions/artifacts/11174509141/zip",
+      "expired": false,
+      "created_at": "2026-10-01T15:55:18Z",
+      "expires_at": "2026-12-30T15:50:00Z",
+      "updated_at": "2026-10-01T15:55:18Z",
+      "digest": "sha256:b31b037f01fa2df796816b3f980e67ec3de9010d01e6f33c06cdc839233c7ecc",
+      "workflow_run": {
+        "id": 36887326787,
+        "repository_id": 1271537061,
+        "head_repository_id": 1271537061,
+        "head_branch": "feat/auto-reactor",
+        "head_sha": "546fcd335512f51c177974b69016a398c0dc2f3a"
+      }
+    },
+    {
+      "id": 11174054813,
+      "name": "solution-settings-contract",
+      "size_in_bytes": 18493,
+      "url": "https://api.github.com/repos/zinchenko-denis/AutoCAD/actions/artifacts/11174054813",
+      "archive_download_url": "https://api.github.com/repos/zinchenko-denis/AutoCAD/actions/artifacts/11174054813/zip",
+      "expired": false,
+      "created_at": "2026-10-01T15:54:57Z",
+      "expires_at": "2026-12-30T15:50:00Z",
+      "updated_at": "2026-10-01T15:54:57Z",
+      "digest": "sha256:3ffdcdc4e682129622632f742c19f1544a1b4e9df1f8e514b71b6c7d94d8529d",
+      "workflow_run": {
+        "id": 36887326787,
+        "repository_id": 1271537061,
+        "head_repository_id": 1271537061,
+        "head_branch": "feat/auto-reactor",
+        "head_sha": "546fcd335512f51c177974b69016a398c0dc2f3a"
+      }
+    }
+  ]
+}

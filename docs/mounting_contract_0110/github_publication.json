@@ -1,29 +1,49 @@
 {
-  "status": "SOURCE_PUBLISHED_WINDOWS_CI_FAILED_UI_FIX_IN_PROGRESS",
+  "status": "SOURCE_PUBLISHED_WINDOWS_CI_UI_PASS",
   "repository": "zinchenko-denis/AutoCAD",
   "branch": "feat/auto-reactor",
   "base_commit": "51f6b7fb5f3d3ee9e989a8fec0f0548c1304bf32",
-  "product_commit": "0e98fe4006dc4e0c88bb32df6c4946af452d6a97",
+  "initial_product_commit": "0e98fe4006dc4e0c88bb32df6c4946af452d6a97",
+  "product_commit": "546fcd335512f51c177974b69016a398c0dc2f3a",
+  "validated_commit": "546fcd335512f51c177974b69016a398c0dc2f3a",
+  "product_tree": "c9d26c828d489ecc6757169291e5ac34a1e3885a",
   "github_actions": {
-    "id": 36885378560,
-    "job_id": 110447237656,
-    "run_number": 213,
-    "head_sha": "0e98fe4006dc4e0c88bb32df6c4946af452d6a97",
+    "id": 36887326787,
+    "run_number": 214,
+    "head_sha": "546fcd335512f51c177974b69016a398c0dc2f3a",
     "status": "completed",
-    "conclusion": "failure",
-    "html_url": "https://github.com/zinchenko-denis/AutoCAD/actions/runs/36885378560"
+    "conclusion": "success",
+    "event": "push",
+    "html_url": "https://github.com/zinchenko-denis/AutoCAD/actions/runs/36887326787",
+    "created_at": "2026-10-01T15:49:59Z",
+    "updated_at": "2026-10-01T15:56:51Z",
+    "job_id": 110453860340
+  },
+  "prior_failure": {
+    "run_number": 213,
+    "run_id": 36885378560,
+    "commit": "0e98fe4006dc4e0c88bb32df6c4946af452d6a97",
+    "reason": "Actual window exceeded WorkingArea; 14/348 UI failures; table and XLSX passed",
+    "evidence": "ci213_triage.json",
+    "fix": "QuantityTablePreview bounds/client size constrained; strict probe unchanged"
+  },
+  "artifact_verification": {
+    "id": 11174689494,
+    "name": "connection-table-ui",
+    "sha256": "1e9ca2d128de7956b6577a6a6e3e14c1b4fddd31bf23285fbff49e5f2744e1fd",
+    "size_in_bytes": 749613,
+    "review": "ui_visual_review_ci214.json",
+    "input_hashes_verified": 48,
+    "unique_source_paths": 42,
+    "allowed_difference": "explicit LF to CRLF only",
+    "root_image_review": "root_ui_visual_review_ci214.json"
   },
   "main_verified_sha": "e2a4e4df69a1936664c76c44cacff311ad44b07d",
   "main_changed": false,
+  "protected_modules_changed": false,
+  "local_fast_forward_tree_verified": true,
   "release_published": false,
   "live_autocad_checked": false,
-  "product_tree": "98a396b474a43cc3c878cf42f4288abfed399b8e",
-  "local_fast_forward_verified": true,
-  "failure_reason": "Actual QuantityTablePreview outside 1024x728 working area in default and 12pt scenarios; 14/348 failures; table/XLSX passed",
-  "artifact": {
-    "id": 11174252019,
-    "name": "connection-table-ui",
-    "sha256": "c68d5846e80654fc60a3d582191ab19ae7bc89b3f936a89c9f7767f4fe08c0e1",
-    "size_in_bytes": 750787
-  }
+  "prior_release": "build-104",
+  "ui_evidence_limits": "Standalone actual WinForms + native HWND bounds. Four affected PNG reviewed and stored; unchanged historical windows not claimed newly visually reviewed. This is not live AutoCAD acceptance."
 }

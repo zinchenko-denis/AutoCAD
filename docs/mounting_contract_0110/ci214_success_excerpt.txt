@@ -1,0 +1,4 @@
+2026-10-01T15:53:13.1748987Z Shared candidate table checks: 8781 PASS
+2026-10-01T15:53:13.7694008Z Connection table XLSX checks: 42 PASS; real engine members: 4
+2026-10-01T15:53:17.1875283Z Connection actual WinForms: 348 checks, 0 failures; 4 images
+2026-10-01T15:54:54.4890800Z Solution actual WinForms: 919 checks, 0 failures; 10 images

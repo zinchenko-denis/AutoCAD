@@ -1,0 +1,557 @@
+{
+  "status": "PASS",
+  "date": "2026-10-01",
+  "reviewer": "connection_ui agent; actual PNG inspection and native-layout evidence",
+  "head_sha": "546fcd335512f51c177974b69016a398c0dc2f3a",
+  "run_id": 36887326787,
+  "run_number": 214,
+  "job_id": 110453860340,
+  "review_scope": "connection-table-ui artifact only; full workflow status recorded separately",
+  "artifact": {
+    "id": 11174689494,
+    "name": "connection-table-ui",
+    "sha256": "1e9ca2d128de7956b6577a6a6e3e14c1b4fddd31bf23285fbff49e5f2744e1fd",
+    "github_digest_matched": true,
+    "size_bytes": 749613
+  },
+  "ui": {
+    "checks": 348,
+    "failures": 0,
+    "shared_physical_brackets": 4,
+    "physical_rail_rows": 4,
+    "native_layouts": [
+      {
+        "scenario": "default",
+        "window": "{X=0,Y=0,Width=1024,Height=728}",
+        "client": "{X=0,Y=0,Width=1008,Height=689}",
+        "native_window": "{X=0,Y=0,Width=1024,Height=728}",
+        "native_client": "{X=8,Y=31,Width=1008,Height=689}",
+        "working_area": "{X=0,Y=0,Width=1024,Height=728}",
+        "font_points": 9,
+        "minimum_size": "{Width=880, Height=620}",
+        "controls": [
+          {
+            "type": "TextBox",
+            "bounds": "{X=13,Y=13,Width=982,Height=58}",
+            "native_bounds": "{X=21,Y=44,Width=982,Height=58}"
+          },
+          {
+            "type": "DataGridView",
+            "bounds": "{X=13,Y=77,Width=982,Height=346}",
+            "native_bounds": "{X=21,Y=108,Width=982,Height=346}"
+          },
+          {
+            "type": "TextBox",
+            "bounds": "{X=13,Y=429,Width=982,Height=129}",
+            "native_bounds": "{X=21,Y=460,Width=982,Height=129}"
+          },
+          {
+            "type": "TextBox",
+            "bounds": "{X=13,Y=586,Width=982,Height=50}",
+            "native_bounds": "{X=21,Y=617,Width=982,Height=50}"
+          },
+          {
+            "type": "Button",
+            "bounds": "{X=904,Y=3,Width=75,Height=25}",
+            "native_bounds": "{X=925,Y=676,Width=75,Height=25}"
+          },
+          {
+            "type": "Button",
+            "bounds": "{X=811,Y=3,Width=87,Height=25}",
+            "native_bounds": "{X=832,Y=676,Width=87,Height=25}"
+          }
+        ]
+      },
+      {
+        "scenario": "small",
+        "window": "{X=0,Y=0,Width=880,Height=620}",
+        "client": "{X=0,Y=0,Width=864,Height=581}",
+        "native_window": "{X=0,Y=0,Width=880,Height=620}",
+        "native_client": "{X=8,Y=31,Width=864,Height=581}",
+        "working_area": "{X=0,Y=0,Width=1024,Height=728}",
+        "font_points": 9,
+        "minimum_size": "{Width=880, Height=620}",
+        "controls": [
+          {
+            "type": "TextBox",
+            "bounds": "{X=13,Y=13,Width=838,Height=58}",
+            "native_bounds": "{X=21,Y=44,Width=838,Height=58}"
+          },
+          {
+            "type": "DataGridView",
+            "bounds": "{X=13,Y=77,Width=838,Height=238}",
+            "native_bounds": "{X=21,Y=108,Width=838,Height=238}"
+          },
+          {
+            "type": "TextBox",
+            "bounds": "{X=13,Y=321,Width=838,Height=129}",
+            "native_bounds": "{X=21,Y=352,Width=838,Height=129}"
+          },
+          {
+            "type": "TextBox",
+            "bounds": "{X=13,Y=478,Width=838,Height=50}",
+            "native_bounds": "{X=21,Y=509,Width=838,Height=50}"
+          },
+          {
+            "type": "Button",
+            "bounds": "{X=760,Y=3,Width=75,Height=25}",
+            "native_bounds": "{X=781,Y=568,Width=75,Height=25}"
+          },
+          {
+            "type": "Button",
+            "bounds": "{X=667,Y=3,Width=87,Height=25}",
+            "native_bounds": "{X=688,Y=568,Width=87,Height=25}"
+          }
+        ]
+      },
+      {
+        "scenario": "large_font",
+        "window": "{X=0,Y=0,Width=1024,Height=728}",
+        "client": "{X=0,Y=0,Width=1008,Height=689}",
+        "native_window": "{X=0,Y=0,Width=1024,Height=728}",
+        "native_client": "{X=8,Y=31,Width=1008,Height=689}",
+        "working_area": "{X=0,Y=0,Width=1024,Height=728}",
+        "font_points": 12,
+        "minimum_size": "{Width=880, Height=620}",
+        "controls": [
+          {
+            "type": "TextBox",
+            "bounds": "{X=13,Y=13,Width=982,Height=58}",
+            "native_bounds": "{X=21,Y=44,Width=982,Height=58}"
+          },
+          {
+            "type": "DataGridView",
+            "bounds": "{X=13,Y=77,Width=982,Height=346}",
+            "native_bounds": "{X=21,Y=108,Width=982,Height=346}"
+          },
+          {
+            "type": "TextBox",
+            "bounds": "{X=13,Y=429,Width=982,Height=129}",
+            "native_bounds": "{X=21,Y=460,Width=982,Height=129}"
+          },
+          {
+            "type": "TextBox",
+            "bounds": "{X=13,Y=586,Width=982,Height=50}",
+            "native_bounds": "{X=21,Y=617,Width=982,Height=50}"
+          },
+          {
+            "type": "Button",
+            "bounds": "{X=904,Y=3,Width=75,Height=31}",
+            "native_bounds": "{X=925,Y=676,Width=75,Height=31}"
+          },
+          {
+            "type": "Button",
+            "bounds": "{X=787,Y=3,Width=111,Height=31}",
+            "native_bounds": "{X=808,Y=676,Width=111,Height=31}"
+          }
+        ]
+      }
+    ]
+  },
+  "images": [
+    {
+      "name": "connections_default_columns.png",
+      "sha256": "e89bb415b4d915bb0d93af9f8e9dcdfa5163a06d8c7de9af7580bbeaa1aa3ddc",
+      "personally_viewed": true,
+      "layout_ok": true
+    },
+    {
+      "name": "connections_default_warnings.png",
+      "sha256": "ee5d060fffb14ee8a234ae1a5c8a449d65a1ce738ec4afd75cc21aa9a5f93bcf",
+      "personally_viewed": true,
+      "layout_ok": true
+    },
+    {
+      "name": "connections_small_warnings.png",
+      "sha256": "5ab6c8313fa15b92ed55b8bf0e21fd9a336b5b961f3dfc0092560479e2d9b127",
+      "personally_viewed": true,
+      "layout_ok": true
+    },
+    {
+      "name": "connections_large_font_warnings.png",
+      "sha256": "ffcd428d54e6c7323d5d097241b127d7d04d9b30213ba9b0dcb35827fa650739",
+      "personally_viewed": true,
+      "layout_ok": true
+    }
+  ],
+  "visual_review": [
+    "Просмотрены все четыре PNG: default columns, default warnings, small warnings и large-font warnings.",
+    "При обычном и увеличенном до 12 pt шрифте окно 1024×728 полностью совпадает с рабочей областью 1024×728; реальный HWND и кэш ClientSize согласованы.",
+    "Минимальное окно 880×620 полностью помещается в рабочей области. Все основные поля и обе кнопки доступны.",
+    "Общие адресные предупреждения читаются с переносом строк и вертикальной прокруткой. Заголовок и текст примечания инженера, включая поясняющую строку над полем, читаются; наложений не найдено.",
+    "Длинные значения таблицы отображаются с обрезкой в ячейках; исходный полный текст доступен в проверенном tooltip и в прокручиваемых сообщениях. Горизонтальная прокрутка к колонке Примечание проверена.",
+    "Кнопки Продолжить/Отмена видимы целиком в рабочей области, подписи читаются, действия проверены без изменения исходного паспорта."
+  ],
+  "before_after": {
+    "before_run": 213,
+    "before_failures": 14,
+    "before_native_window": "{X=10,Y=10,Width=1044,Height=760}",
+    "after_failures": 0,
+    "after_default_native_window": "{X=0,Y=0,Width=1024,Height=728}",
+    "probe_unchanged": true
+  },
+  "ui_checks_sha256": "513235280dc9b44e2ba64f9e435bbef151c9af0099c6557d1ed5180fe95d905f",
+  "manifest_binding": [
+    {
+      "path": "connection_table_results/manifest.json",
+      "sha256": "7d1aed0e6b5344468defed4a113bfc5eb4123da48b7b745db16a192c4863dbb5",
+      "status": "PASS",
+      "input_hashes_verified": 38
+    },
+    {
+      "path": "connection_ui_results/manifest.json",
+      "sha256": "7cdc7f0e62eb5bc43017369053ddad60786a27c74a09fd89a5459b6807aef364",
+      "status": "PASS",
+      "input_hashes_verified": 10
+    }
+  ],
+  "input_hashes_checked": 48,
+  "unique_source_paths": 42,
+  "source_hash_checks": [
+    {
+      "manifest": "connection_table_results/manifest.json",
+      "path": "tools/catalog_connections_0110/ConnectionTableProbe.cs",
+      "github_blob_sha256": "a4302ceb0616e5f871f1fd1ea37baf587d9382e873d011c4ef6c53bf06dfb8fe",
+      "ci_sha256": "c2e0f36db2e7822e094fbe113a2b32fd5a7885e54bdb6a3db49eab4050a8efd6",
+      "match": "LF_to_CRLF_only"
+    },
+    {
+      "manifest": "connection_table_results/manifest.json",
+      "path": "Common/FacadeQuantities.cs",
+      "github_blob_sha256": "b092bf95f154d6aa8041936bffa79a82c613d7ac8f27fee9d1e6d7c0cde09f90",
+      "ci_sha256": "9453f7fdd91aac9aeab389d3b0ccc9b1968c59c48dfbd04664cd8150b24af305",
+      "match": "LF_to_CRLF_only"
+    },
+    {
+      "manifest": "connection_table_results/manifest.json",
+      "path": "Facades/src/AFacadesPlugin/ConnectionTableData.cs",
+      "github_blob_sha256": "c686399113c25df64575f031d2fad71c0702d2cea65011f68078ee51fc1d92e0",
+      "ci_sha256": "c623f58a3c451ee1ea6dd1cc3ff6970e78a9000d392038935efaeafda47deb34",
+      "match": "LF_to_CRLF_only"
+    },
+    {
+      "manifest": "connection_table_results/manifest.json",
+      "path": "Facades/src/AFacadesPlugin/QuantityTableIdentity.cs",
+      "github_blob_sha256": "82044b27845ff586b475040e4a968398c0325bdf8c6205cd6f5b226597810454",
+      "ci_sha256": "1a60c139e9273b313f13865776d072818ce191007cfc499df61bfb415f53866f",
+      "match": "LF_to_CRLF_only"
+    },
+    {
+      "manifest": "connection_table_results/manifest.json",
+      "path": "Facades/src/AFacadesPlugin/QuantityTableView.cs",
+      "github_blob_sha256": "9656e74f8c3e4a932e4303e694a0690ddf2e14c308de64afa53bce9a8dc80480",
+      "ci_sha256": "215f6452a984220bd47380954874a3f8d24056842c93d3bd30440fbc89540b76",
+      "match": "LF_to_CRLF_only"
+    },
+    {
+      "manifest": "connection_table_results/manifest.json",
+      "path": "Facades/src/AFacadesPlugin/QuantityTableView.Connections.cs",
+      "github_blob_sha256": "1dbc4269e64eda11011c6ad63400870072ebe4d37ac7f959bf74e0d18438e8f8",
+      "ci_sha256": "a7e4a878fbc78ee26d14a284fffbbcd5f858fb6036cfa5e83586a5902edd5474",
+      "match": "LF_to_CRLF_only"
+    },
+    {
+      "manifest": "connection_table_results/manifest.json",
+      "path": "Facades/src/AFacadesPlugin/CladdingTableData.cs",
+      "github_blob_sha256": "8dec6b35b881f29b9da51d9e2c3769be360f53c6fac06670c2005a60e94405fa",
+      "ci_sha256": "fac718cf658527499f115b04892fb0b90d87e6c05255b6044097f5fec06a6915",
+      "match": "LF_to_CRLF_only"
+    },
+    {
+      "manifest": "connection_table_results/manifest.json",
+      "path": "Facades/src/AFacadesPlugin/FrameTableData.cs",
+      "github_blob_sha256": "58de42f818cf70d470bb438b025cb6cb4c70391700d43eeeaee23042281f1ffc",
+      "ci_sha256": "bb39d1b962f97322875fd821dd7e665213ed1241f657d3151ab22af913b946d6",
+      "match": "LF_to_CRLF_only"
+    },
+    {
+      "manifest": "connection_table_results/manifest.json",
+      "path": "Facades/src/AFacadesPlugin/QuantityXlsxFile.cs",
+      "github_blob_sha256": "3c79e7a701ad6ba50bc81ce41cc88ba5d9c0c76c52e601115ccd3df460c3f75e",
+      "ci_sha256": "4ad07b90ec833cfbc0d96750d68a09daabe67cfcc5b44db00aa8f0b696a094a8",
+      "match": "LF_to_CRLF_only"
+    },
+    {
+      "manifest": "connection_table_results/manifest.json",
+      "path": "Facades/src/AFacadesPlugin/XlsxWriter.cs",
+      "github_blob_sha256": "6c4ef614b5fde416fa91ce29adc0ebf99599bb21b285bd7d885bf00469c428fc",
+      "ci_sha256": "4896a4ac083e5c53c15d11b52b301046c3bc44b08835040b51a4b70bb4e4c9e6",
+      "match": "LF_to_CRLF_only"
+    },
+    {
+      "manifest": "connection_table_results/manifest.json",
+      "path": "tools/mounting_contract_0110/reproduce_gap.py",
+      "github_blob_sha256": "da8686d7de5aab38850167e4113922f707833ca6428c760ca1d0bb6fb441fb9c",
+      "ci_sha256": "22cf3fc4bb5f98d172e5cacf3a334a6a821ac40151ba9ad568b315ef0bd528c8",
+      "match": "LF_to_CRLF_only"
+    },
+    {
+      "manifest": "connection_table_results/manifest.json",
+      "path": "AFrame/src/AFramePlugin/FrameQuantities.cs",
+      "github_blob_sha256": "d34f7cf6219dbfec7c88796b12477bea9382d4cca2dc125e4ebd1a252b1cf791",
+      "ci_sha256": "1c1049382e171f79fa4866a555979eced505e28ebbe691d1822253a94192d36c",
+      "match": "LF_to_CRLF_only"
+    },
+    {
+      "manifest": "connection_table_results/manifest.json",
+      "path": "tools/catalog_connections_0110/test_connection_store.py",
+      "github_blob_sha256": "9aaee54e4c8a540f345efb64b0cf924a1956790d9e7ac08705b28df9f290ff0e",
+      "ci_sha256": "af08a062cd8f36c270082adfeb8fc7fb218756a213827f24e3e48dca320cf355",
+      "match": "LF_to_CRLF_only"
+    },
+    {
+      "manifest": "connection_table_results/manifest.json",
+      "path": "tools/catalog_connections_0110/ConnectionStoreProbe.cs",
+      "github_blob_sha256": "fa9a6c335001d5700ae3cf32af25d7dea685a57bf4a96499352989a8b0e329ac",
+      "ci_sha256": "4cd72c31143601fdfbbd33fb335242deceb6de4832aeac26f6a819c4dee6e5ad",
+      "match": "LF_to_CRLF_only"
+    },
+    {
+      "manifest": "connection_table_results/manifest.json",
+      "path": "tools/frame_quantities_3009/engine_oracles.py",
+      "github_blob_sha256": "85cf377f1e1076fbeea96160d4bec2070e72fe1eb160d51b710c5f925027a50b",
+      "ci_sha256": "9ed061a52c2ade715ccff65b58fb64fb7101e2586a63d7a731313c1c0db7c353",
+      "match": "LF_to_CRLF_only"
+    },
+    {
+      "manifest": "connection_table_results/manifest.json",
+      "path": "AFrame/engine/analiz_klu_poligon.py",
+      "github_blob_sha256": "903a3080c4b01dea51e936560adba060f12f172fe13887bd2785456881f5fa27",
+      "ci_sha256": "33935bb1083c334fc2e3318176b20855c06ca7c7573e2be169be00e53d0e385f",
+      "match": "LF_to_CRLF_only"
+    },
+    {
+      "manifest": "connection_table_results/manifest.json",
+      "path": "AFrame/engine/audit_frame.py",
+      "github_blob_sha256": "7ce9adac3adddcb7619b88d789b78f4b811f9c890e9fd9b08f884b32ee4e2d48",
+      "ci_sha256": "a1a42d5b3e49b085036ee212623de1f42e098d4c11a7158b6b2cd223725fab8f",
+      "match": "LF_to_CRLF_only"
+    },
+    {
+      "manifest": "connection_table_results/manifest.json",
+      "path": "AFrame/engine/dsverka_poligon.py",
+      "github_blob_sha256": "a971bd36882c6663c0fcbc466de5e288d9aa1f4d1f6d55e5eb462ae5d635a1ec",
+      "ci_sha256": "1ec28d3531cc2f0b16020961d87d441913fd7befe54a0d407a85e698267dee49",
+      "match": "LF_to_CRLF_only"
+    },
+    {
+      "manifest": "connection_table_results/manifest.json",
+      "path": "AFrame/engine/frame_calc.py",
+      "github_blob_sha256": "abe20fd3c0de0937ba0636914f083f7c48a7a65b3b4c85f05673278a95e1da88",
+      "ci_sha256": "e85641d1e802660af062519cb88596caec154a6af9baada15bab95a3ddb222da",
+      "match": "LF_to_CRLF_only"
+    },
+    {
+      "manifest": "connection_table_results/manifest.json",
+      "path": "AFrame/engine/frame_catalog.py",
+      "github_blob_sha256": "947a0277f3a6202dff365c1de6e86c5832dbc2c97e2a810b99d500a5d6f6b163",
+      "ci_sha256": "be987c0ce8452eadbc5babf0dff28dfba895baf525eea2de5278262ec5af5698",
+      "match": "LF_to_CRLF_only"
+    },
+    {
+      "manifest": "connection_table_results/manifest.json",
+      "path": "AFrame/engine/frame_connections.py",
+      "github_blob_sha256": "d4febc1ce6e147f1cbce29cb64690f2c3b592efe4e40b9c88da5c8a2dcc74985",
+      "ci_sha256": "2f570417d9ca5fda157423fb2ff14f813e7ccc4f067183b924fce75365f992b2",
+      "match": "LF_to_CRLF_only"
+    },
+    {
+      "manifest": "connection_table_results/manifest.json",
+      "path": "AFrame/engine/frame_engine.py",
+      "github_blob_sha256": "b4acaaa98f48f91e0019b04231bb2ca361059e8d6a4e587cdbb64eb432790529",
+      "ci_sha256": "7d85bf5beda118f0750d926c16714282201a1f965e2c27cf93726126a66d6db3",
+      "match": "LF_to_CRLF_only"
+    },
+    {
+      "manifest": "connection_table_results/manifest.json",
+      "path": "AFrame/engine/frame_plan.py",
+      "github_blob_sha256": "5c4b4bbbc8258d62e965c24604906cd819b6a06a04643425ed1770b07c5d7105",
+      "ci_sha256": "36df2b6d2aeaa1dfceb0e31b167eb3cb392a734c2c6eb4aa43a40694531400ad",
+      "match": "LF_to_CRLF_only"
+    },
+    {
+      "manifest": "connection_table_results/manifest.json",
+      "path": "AFrame/engine/frame_rules.py",
+      "github_blob_sha256": "511ec4ec48331034257859ccac70ef028a8c4b398acd7d5b238d778e3c63ea6f",
+      "ci_sha256": "1383ac5badcb5ac07eab12def255b86d679966191acef250e2b09fa41757be5e",
+      "match": "LF_to_CRLF_only"
+    },
+    {
+      "manifest": "connection_table_results/manifest.json",
+      "path": "AFrame/engine/frame_solution_catalog.py",
+      "github_blob_sha256": "56e674855cc01e19bf2a0723dff1f3454497a99aef56f3de1b5bbf75c0d44764",
+      "ci_sha256": "3649cb9bc72344c206efd5011e94efe51ef448ac295ff8d2fb0cbc6af53bb02f",
+      "match": "LF_to_CRLF_only"
+    },
+    {
+      "manifest": "connection_table_results/manifest.json",
+      "path": "AFrame/engine/frame_solution_selection.py",
+      "github_blob_sha256": "6490da6ced48715c4dce5ca357e0f54be9c035dd7bb6fc8d86b684f1d15f6aee",
+      "ci_sha256": "8d7665fd417caae469b7c50a4580fd2182cab2c73c61803b178e52a5e83ae36b",
+      "match": "LF_to_CRLF_only"
+    },
+    {
+      "manifest": "connection_table_results/manifest.json",
+      "path": "AFrame/engine/frame_spatial.py",
+      "github_blob_sha256": "003efc0e73b344d50d4465d2bc1bfc87f8ca149c7d443a1e7d9061e6dbfd6cec",
+      "ci_sha256": "7dc4113560b2baa8d5d786c596428f7a2731ad978c188bfea87aa86161bde2f6",
+      "match": "LF_to_CRLF_only"
+    },
+    {
+      "manifest": "connection_table_results/manifest.json",
+      "path": "AFrame/engine/frame_topology.py",
+      "github_blob_sha256": "2455ab874309d1382591800acce35dd3bde04ea3be6519f8b1de89dd5514f5d5",
+      "ci_sha256": "711625511ff543363bf5738b9b924ee9fd2104c5d870bffc66097962c69f969c",
+      "match": "LF_to_CRLF_only"
+    },
+    {
+      "manifest": "connection_table_results/manifest.json",
+      "path": "AFrame/engine/test_frame_calc.py",
+      "github_blob_sha256": "f72160fe7a3483c35a6c0d7ef669a612e6e44defb95c33916a850c2a605d5239",
+      "ci_sha256": "5b8f2850515ea3c7528480f579a5495cbbd9432eb8e2075c99ade0a9726a185c",
+      "match": "LF_to_CRLF_only"
+    },
+    {
+      "manifest": "connection_table_results/manifest.json",
+      "path": "AFrame/engine/test_frame_connections.py",
+      "github_blob_sha256": "21f2c64b59b1a1f052eadcf1c69d1aa8f0e0e60ad42182f793ac914a16971353",
+      "ci_sha256": "7796a9ee818f2f0a692d685555972ee8fdc34cefa73b3a5d9709ddf228404790",
+      "match": "LF_to_CRLF_only"
+    },
+    {
+      "manifest": "connection_table_results/manifest.json",
+      "path": "AFrame/engine/test_frame_engine.py",
+      "github_blob_sha256": "3d32ffb69a6e9bc5d229ed11201e7e09500b5f193859b6a2cbab190c73679270",
+      "ci_sha256": "a137c20f943630a59f61aa4e6a7fa5288a58fc4c4f863d60c0e7dc9197859bfa",
+      "match": "LF_to_CRLF_only"
+    },
+    {
+      "manifest": "connection_table_results/manifest.json",
+      "path": "AFrame/engine/test_frame_plan.py",
+      "github_blob_sha256": "fa35454f0a80362fc17441d078feaaf18bcb271a84e599de82517329005708a6",
+      "ci_sha256": "91fd40dff46ab004b00d6fdcd53aaf2f1358951ac1e05c71fafb45a70085ed85",
+      "match": "LF_to_CRLF_only"
+    },
+    {
+      "manifest": "connection_table_results/manifest.json",
+      "path": "AFrame/engine/test_frame_rules.py",
+      "github_blob_sha256": "0f629daa13207e436eb5e425e1f4e3d7189d205ffc6956bceca0427eb237b26e",
+      "ci_sha256": "df7b291c70df8ab489b74e6b5b8bc2e3da9963e44f718bd0e0b5556ae261b616",
+      "match": "LF_to_CRLF_only"
+    },
+    {
+      "manifest": "connection_table_results/manifest.json",
+      "path": "AFrame/engine/test_frame_solution_selection.py",
+      "github_blob_sha256": "79b853ab20b95d491fc3e76f667fc7fb7106afa6ace7b5ae9d1ede191f99aceb",
+      "ci_sha256": "7f53b246ff33174a7759d93bc9eca9525627f73faf70e179a8fad06ff4cb4abb",
+      "match": "LF_to_CRLF_only"
+    },
+    {
+      "manifest": "connection_table_results/manifest.json",
+      "path": "AFrame/engine/test_frame_topology.py",
+      "github_blob_sha256": "88f59edd4e8543ec3c444eb3557dbe7a10b922318362ca82360675da1c11586c",
+      "ci_sha256": "a3283a3509f6a5e6cb62fa3eb47bb63de7375592ad2955516e67e0f6b6d458f6",
+      "match": "LF_to_CRLF_only"
+    },
+    {
+      "manifest": "connection_table_results/manifest.json",
+      "path": "AFrame/engine/test_frame_topology_index.py",
+      "github_blob_sha256": "d8e139847c458cdf87fddf24b7c790e15e479ff4c2bbbd3a4848757e6560a1a7",
+      "ci_sha256": "43898e957f3843c21d8e9239fd5baa29b8537af8e3fd15e8cb02ee0351da6c32",
+      "match": "LF_to_CRLF_only"
+    },
+    {
+      "manifest": "connection_table_results/manifest.json",
+      "path": "AFrame/engine/systems.json",
+      "github_blob_sha256": "e9ee0a4cf0c535473dd9931f9b2a3d86dd1d932fe18f84682ef3fd221fbc03c3",
+      "ci_sha256": "881cce9e53278755266ca2441e4891ae71196524dde63634e9742e6e072236ca",
+      "match": "LF_to_CRLF_only"
+    },
+    {
+      "manifest": "connection_table_results/manifest.json",
+      "path": "tools/catalog_connections_0110/test_connection_table.py",
+      "github_blob_sha256": "eb7effa4ced1705191ce60d45cdfcbfc68d29cb0fc2a0ad0eb28c39d5cc063c5",
+      "ci_sha256": "3a0011f2d29b3767814fb0024b5cd73b1b18d2e5c4e74f1cf409f938fb4f80e7",
+      "match": "LF_to_CRLF_only"
+    },
+    {
+      "manifest": "connection_ui_results/manifest.json",
+      "path": "tools/mounting_contract_0110/ConnectionUiProbe.cs",
+      "github_blob_sha256": "fa77698e5358211c6dd90fe680276563ffb003ec345658790a02fb2008098516",
+      "ci_sha256": "6e9d2ff747be5593420cac128c7edee02cf5cbfd8abbb47e558d035bb8d47d60",
+      "match": "LF_to_CRLF_only"
+    },
+    {
+      "manifest": "connection_ui_results/manifest.json",
+      "path": "Common/FacadeQuantities.cs",
+      "github_blob_sha256": "b092bf95f154d6aa8041936bffa79a82c613d7ac8f27fee9d1e6d7c0cde09f90",
+      "ci_sha256": "9453f7fdd91aac9aeab389d3b0ccc9b1968c59c48dfbd04664cd8150b24af305",
+      "match": "LF_to_CRLF_only"
+    },
+    {
+      "manifest": "connection_ui_results/manifest.json",
+      "path": "Facades/src/AFacadesPlugin/ConnectionTableData.cs",
+      "github_blob_sha256": "c686399113c25df64575f031d2fad71c0702d2cea65011f68078ee51fc1d92e0",
+      "ci_sha256": "c623f58a3c451ee1ea6dd1cc3ff6970e78a9000d392038935efaeafda47deb34",
+      "match": "LF_to_CRLF_only"
+    },
+    {
+      "manifest": "connection_ui_results/manifest.json",
+      "path": "Facades/src/AFacadesPlugin/QuantityTableView.cs",
+      "github_blob_sha256": "9656e74f8c3e4a932e4303e694a0690ddf2e14c308de64afa53bce9a8dc80480",
+      "ci_sha256": "215f6452a984220bd47380954874a3f8d24056842c93d3bd30440fbc89540b76",
+      "match": "LF_to_CRLF_only"
+    },
+    {
+      "manifest": "connection_ui_results/manifest.json",
+      "path": "Facades/src/AFacadesPlugin/QuantityTableView.Connections.cs",
+      "github_blob_sha256": "1dbc4269e64eda11011c6ad63400870072ebe4d37ac7f959bf74e0d18438e8f8",
+      "ci_sha256": "a7e4a878fbc78ee26d14a284fffbbcd5f858fb6036cfa5e83586a5902edd5474",
+      "match": "LF_to_CRLF_only"
+    },
+    {
+      "manifest": "connection_ui_results/manifest.json",
+      "path": "Facades/src/AFacadesPlugin/QuantityTablePreview.cs",
+      "github_blob_sha256": "3d80c7d79046e874be4e511dd16cacb5c4781912069ecb2886a213c7078d7bf0",
+      "ci_sha256": "8106f0e9b197c7690c1adfbd27baef61301229e259598dbf502b3a364ff62614",
+      "match": "LF_to_CRLF_only"
+    },
+    {
+      "manifest": "connection_ui_results/manifest.json",
+      "path": "Facades/src/AFacadesPlugin/CladdingTableData.cs",
+      "github_blob_sha256": "8dec6b35b881f29b9da51d9e2c3769be360f53c6fac06670c2005a60e94405fa",
+      "ci_sha256": "fac718cf658527499f115b04892fb0b90d87e6c05255b6044097f5fec06a6915",
+      "match": "LF_to_CRLF_only"
+    },
+    {
+      "manifest": "connection_ui_results/manifest.json",
+      "path": "Facades/src/AFacadesPlugin/FrameTableData.cs",
+      "github_blob_sha256": "58de42f818cf70d470bb438b025cb6cb4c70391700d43eeeaee23042281f1ffc",
+      "ci_sha256": "bb39d1b962f97322875fd821dd7e665213ed1241f657d3151ab22af913b946d6",
+      "match": "LF_to_CRLF_only"
+    },
+    {
+      "manifest": "connection_ui_results/manifest.json",
+      "path": "tools/solution_catalog_0110/test_solution_ui.py",
+      "github_blob_sha256": "ae96cd84df7a148b665acd28eacdf737a0d5eed30c47e829c0f48abee04facc5",
+      "ci_sha256": "05fb5c5d6b30c6bbac7a7a8f0e8b2fd239611e20df70da28a5442dede256044d",
+      "match": "LF_to_CRLF_only"
+    },
+    {
+      "manifest": "connection_ui_results/manifest.json",
+      "path": "tools/mounting_contract_0110/test_ui.py",
+      "github_blob_sha256": "407dc3e664dbd8f5243ff38d65c41044bf3f84b6e3c7032099ccf58c71784f53",
+      "ci_sha256": "61ec59891f8ea48d52c847afe1310f4a80f3a40b25980a5aef50a749d9dc83b6",
+      "match": "LF_to_CRLF_only"
+    }
+  ],
+  "fixture_sha256": "91562c7d93d7230c154bb775aa056b33209dfbff746ee5de343a08e4075e37f8",
+  "fixture_binding": "same bytes in table shared-support fixture and UI manifest",
+  "limits": [
+    "Живой AutoCAD не проверен; это настоящая WinForms-форма в Windows CI с синтетическим engine→producer источником.",
+    "Подтверждены указанная рабочая область, три сценария размера/шрифта и четыре строки данного пилота. Иные DPI, многомониторный переход и произвольное количество строк этим UI-прогоном не исчерпаны.",
+    "PNG DrawToBitmap сами по себе не доказывают нахождение формы на экране; размещение подтверждено отдельными native HWND/client/WorkingArea проверками.",
+    "Монтажная принадлежность, fixed/sliding, непрерывность и передача усилий остаются неподтверждёнными. UI PASS не разрешает автоподбор."
+  ],
+  "live_autocad_checked": false
+}

@@ -1,0 +1,169 @@
+{
+  "status": "PASS",
+  "live_autocad_checked": false,
+  "source_sha256": {
+    "tools\\mounting_contract_0110\\ConnectionUiProbe.cs": "6e9d2ff747be5593420cac128c7edee02cf5cbfd8abbb47e558d035bb8d47d60",
+    "Common\\FacadeQuantities.cs": "9453f7fdd91aac9aeab389d3b0ccc9b1968c59c48dfbd04664cd8150b24af305",
+    "Facades\\src\\AFacadesPlugin\\ConnectionTableData.cs": "c623f58a3c451ee1ea6dd1cc3ff6970e78a9000d392038935efaeafda47deb34",
+    "Facades\\src\\AFacadesPlugin\\QuantityTableView.cs": "215f6452a984220bd47380954874a3f8d24056842c93d3bd30440fbc89540b76",
+    "Facades\\src\\AFacadesPlugin\\QuantityTableView.Connections.cs": "a7e4a878fbc78ee26d14a284fffbbcd5f858fb6036cfa5e83586a5902edd5474",
+    "Facades\\src\\AFacadesPlugin\\QuantityTablePreview.cs": "8106f0e9b197c7690c1adfbd27baef61301229e259598dbf502b3a364ff62614",
+    "Facades\\src\\AFacadesPlugin\\CladdingTableData.cs": "fac718cf658527499f115b04892fb0b90d87e6c05255b6044097f5fec06a6915",
+    "Facades\\src\\AFacadesPlugin\\FrameTableData.cs": "bb39d1b962f97322875fd821dd7e665213ed1241f657d3151ab22af913b946d6",
+    "tools\\solution_catalog_0110\\test_solution_ui.py": "05fb5c5d6b30c6bbac7a7a8f0e8b2fd239611e20df70da28a5442dede256044d",
+    "tools\\mounting_contract_0110\\test_ui.py": "61ec59891f8ea48d52c847afe1310f4a80f3a40b25980a5aef50a749d9dc83b6"
+  },
+  "ui": {
+    "status": "PASS",
+    "checks": 348,
+    "failures": 0,
+    "reasons": [],
+    "images": [
+      "connections_default_columns.png",
+      "connections_default_warnings.png",
+      "connections_small_warnings.png",
+      "connections_large_font_warnings.png"
+    ],
+    "layouts": [
+      {
+        "scenario": "default",
+        "window": "{X=0,Y=0,Width=1024,Height=728}",
+        "client": "{X=0,Y=0,Width=1008,Height=689}",
+        "native_window": "{X=0,Y=0,Width=1024,Height=728}",
+        "native_client": "{X=8,Y=31,Width=1008,Height=689}",
+        "working_area": "{X=0,Y=0,Width=1024,Height=728}",
+        "font_points": 9,
+        "minimum_size": "{Width=880, Height=620}",
+        "controls": [
+          {
+            "type": "TextBox",
+            "bounds": "{X=13,Y=13,Width=982,Height=58}",
+            "native_bounds": "{X=21,Y=44,Width=982,Height=58}"
+          },
+          {
+            "type": "DataGridView",
+            "bounds": "{X=13,Y=77,Width=982,Height=346}",
+            "native_bounds": "{X=21,Y=108,Width=982,Height=346}"
+          },
+          {
+            "type": "TextBox",
+            "bounds": "{X=13,Y=429,Width=982,Height=129}",
+            "native_bounds": "{X=21,Y=460,Width=982,Height=129}"
+          },
+          {
+            "type": "TextBox",
+            "bounds": "{X=13,Y=586,Width=982,Height=50}",
+            "native_bounds": "{X=21,Y=617,Width=982,Height=50}"
+          },
+          {
+            "type": "Button",
+            "bounds": "{X=904,Y=3,Width=75,Height=25}",
+            "native_bounds": "{X=925,Y=676,Width=75,Height=25}"
+          },
+          {
+            "type": "Button",
+            "bounds": "{X=811,Y=3,Width=87,Height=25}",
+            "native_bounds": "{X=832,Y=676,Width=87,Height=25}"
+          }
+        ]
+      },
+      {
+        "scenario": "small",
+        "window": "{X=0,Y=0,Width=880,Height=620}",
+        "client": "{X=0,Y=0,Width=864,Height=581}",
+        "native_window": "{X=0,Y=0,Width=880,Height=620}",
+        "native_client": "{X=8,Y=31,Width=864,Height=581}",
+        "working_area": "{X=0,Y=0,Width=1024,Height=728}",
+        "font_points": 9,
+        "minimum_size": "{Width=880, Height=620}",
+        "controls": [
+          {
+            "type": "TextBox",
+            "bounds": "{X=13,Y=13,Width=838,Height=58}",
+            "native_bounds": "{X=21,Y=44,Width=838,Height=58}"
+          },
+          {
+            "type": "DataGridView",
+            "bounds": "{X=13,Y=77,Width=838,Height=238}",
+            "native_bounds": "{X=21,Y=108,Width=838,Height=238}"
+          },
+          {
+            "type": "TextBox",
+            "bounds": "{X=13,Y=321,Width=838,Height=129}",
+            "native_bounds": "{X=21,Y=352,Width=838,Height=129}"
+          },
+          {
+            "type": "TextBox",
+            "bounds": "{X=13,Y=478,Width=838,Height=50}",
+            "native_bounds": "{X=21,Y=509,Width=838,Height=50}"
+          },
+          {
+            "type": "Button",
+            "bounds": "{X=760,Y=3,Width=75,Height=25}",
+            "native_bounds": "{X=781,Y=568,Width=75,Height=25}"
+          },
+          {
+            "type": "Button",
+            "bounds": "{X=667,Y=3,Width=87,Height=25}",
+            "native_bounds": "{X=688,Y=568,Width=87,Height=25}"
+          }
+        ]
+      },
+      {
+        "scenario": "large_font",
+        "window": "{X=0,Y=0,Width=1024,Height=728}",
+        "client": "{X=0,Y=0,Width=1008,Height=689}",
+        "native_window": "{X=0,Y=0,Width=1024,Height=728}",
+        "native_client": "{X=8,Y=31,Width=1008,Height=689}",
+        "working_area": "{X=0,Y=0,Width=1024,Height=728}",
+        "font_points": 12,
+        "minimum_size": "{Width=880, Height=620}",
+        "controls": [
+          {
+            "type": "TextBox",
+            "bounds": "{X=13,Y=13,Width=982,Height=58}",
+            "native_bounds": "{X=21,Y=44,Width=982,Height=58}"
+          },
+          {
+            "type": "DataGridView",
+            "bounds": "{X=13,Y=77,Width=982,Height=346}",
+            "native_bounds": "{X=21,Y=108,Width=982,Height=346}"
+          },
+          {
+            "type": "TextBox",
+            "bounds": "{X=13,Y=429,Width=982,Height=129}",
+            "native_bounds": "{X=21,Y=460,Width=982,Height=129}"
+          },
+          {
+            "type": "TextBox",
+            "bounds": "{X=13,Y=586,Width=982,Height=50}",
+            "native_bounds": "{X=21,Y=617,Width=982,Height=50}"
+          },
+          {
+            "type": "Button",
+            "bounds": "{X=904,Y=3,Width=75,Height=31}",
+            "native_bounds": "{X=925,Y=676,Width=75,Height=31}"
+          },
+          {
+            "type": "Button",
+            "bounds": "{X=787,Y=3,Width=111,Height=31}",
+            "native_bounds": "{X=808,Y=676,Width=111,Height=31}"
+          }
+        ]
+      }
+    ],
+    "shared_physical_brackets": 4,
+    "physical_rail_rows": 4,
+    "runtime": "Microsoft Windows NT 6.2.9200.0",
+    "live_autocad_checked": false,
+    "scope": "Actual QuantityTablePreview/View with real engine/producer fixture; native window, rows, warnings, scroll, tooltips, actions; no AutoCAD host"
+  },
+  "rendered_sha256": {
+    "connections_default_columns.png": "e89bb415b4d915bb0d93af9f8e9dcdfa5163a06d8c7de9af7580bbeaa1aa3ddc",
+    "connections_default_warnings.png": "ee5d060fffb14ee8a234ae1a5c8a449d65a1ce738ec4afd75cc21aa9a5f93bcf",
+    "connections_large_font_warnings.png": "ffcd428d54e6c7323d5d097241b127d7d04d9b30213ba9b0dcb35827fa650739",
+    "connections_small_warnings.png": "5ab6c8313fa15b92ed55b8bf0e21fd9a336b5b961f3dfc0092560479e2d9b127"
+  },
+  "report_origin": "shared_support_real_engine_to_actual_producer",
+  "report_sha256": "91562c7d93d7230c154bb775aa056b33209dfbff746ee5de343a08e4075e37f8"
+}

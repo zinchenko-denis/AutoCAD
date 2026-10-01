@@ -1,10 +1,10 @@
 {
-  "status": "LOCAL_PASS_AFTER_UI_FIX_WINDOWS_PENDING",
+  "status": "LOCAL_AND_WINDOWS_CI_UI_PASS",
   "date_utc": "2026-10-01",
   "branch": "feat/auto-reactor",
   "base_commit": "51f6b7fb5f3d3ee9e989a8fec0f0548c1304bf32",
   "prior_checkpoint": "689b149d087846aaedc5b814b0178bef1b84061f",
-  "product_commit": null,
+  "product_commit": "546fcd335512f51c177974b69016a398c0dc2f3a",
   "scope": "2В1: addressed ambiguity of a shared physical bracket candidate in connection table; no restraints, gravity distribution, splice continuity or automatic selection assigned",
   "input_sha256_file": "input_sha256.json",
   "input_files_count": 254,
@@ -17,11 +17,16 @@
     "local_gates": "55/55 PASS",
     "facade_compile": "PASS 3/3",
     "independent_review": "PASS; no blocking local findings",
-    "native_connection_ui": "CI213 FAIL 14/348 outside WorkingArea; bounded window fix locally compiled and independently reviewed; next Windows run pending",
+    "native_connection_ui": "348 PASS / 0 failures; four affected PNG independently and root reviewed",
     "local_elapsed_seconds": 217.378,
     "full_synth_dependency_files_unchanged": 44,
     "final_gate_source_files_unchanged": 236,
-    "ui_fix_independent_review": "PASS"
+    "ui_fix_independent_review": "PASS",
+    "windows_check": "214 success",
+    "windows_table_shared_candidate_checks": 8781,
+    "windows_table_xlsx_checks": 42,
+    "windows_table_real_members": 4,
+    "windows_artifact_input_hashes_verified": 48
   },
   "performance": {
     "strategy": "one index over selected deduplicated physical support links; peer list once per shared bracket, split at ID boundaries; bounded count per member",
@@ -45,7 +50,13 @@
     "ci213_triage.json",
     "ci213_source_binding.json",
     "ui_fix_independent_review.json",
-    "full_synth_revalidation_ui_fix.json"
+    "full_synth_revalidation_ui_fix.json",
+    "ci214_run.json",
+    "ci214_table_manifest.json",
+    "ci214_manifest.json",
+    "ci214_ui_checks.json",
+    "ui_visual_review_ci214.json",
+    "root_ui_visual_review_ci214.json"
   ],
   "boundaries": {
     "mounting_status": "not_confirmed",
@@ -61,5 +72,14 @@
   "prior_release": "build-104",
   "main_changed": false,
   "protected_modules_changed": false,
-  "final_report_hashes_match_worktree": true
+  "final_report_hashes_match_worktree": true,
+  "validated_commit": "546fcd335512f51c177974b69016a398c0dc2f3a",
+  "guide": {
+    "pages": 52,
+    "chapters": 20,
+    "figures": 10,
+    "dxf_files": 4,
+    "example_replays": 5,
+    "docx_sha256": "f9e93e05feed0551dbe4556ef78f7eef26b1645d0629c257debd3a6b1410b2b2"
+  }
 }

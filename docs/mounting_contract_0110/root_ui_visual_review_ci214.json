@@ -1,0 +1,27 @@
+{
+  "status": "PASS",
+  "reviewer": "root",
+  "commit": "546fcd335512f51c177974b69016a398c0dc2f3a",
+  "images_personally_viewed": [
+    {
+      "file": "ui_ci214/connections_default_columns.png",
+      "sha256": "e89bb415b4d915bb0d93af9f8e9dcdfa5163a06d8c7de9af7580bbeaa1aa3ddc"
+    },
+    {
+      "file": "ui_ci214/connections_default_warnings.png",
+      "sha256": "ee5d060fffb14ee8a234ae1a5c8a449d65a1ce738ec4afd75cc21aa9a5f93bcf"
+    },
+    {
+      "file": "ui_ci214/connections_large_font_warnings.png",
+      "sha256": "ffcd428d54e6c7323d5d097241b127d7d04d9b30213ba9b0dcb35827fa650739"
+    },
+    {
+      "file": "ui_ci214/connections_small_warnings.png",
+      "sha256": "5ab6c8313fa15b92ed55b8bf0e21fd9a336b5b961f3dfc0092560479e2d9b127"
+    }
+  ],
+  "findings": "All four actual preview bitmaps reviewed. Footer actions fit; addressed warnings visible and scrollable; grid preserves horizontal scrolling and full-cell tooltips. Cropped grid text is recoverable through those controls. Native bounds are separately checked by unchanged probe.",
+  "native_checks": 348,
+  "failures": 0,
+  "live_autocad_checked": false
+}
