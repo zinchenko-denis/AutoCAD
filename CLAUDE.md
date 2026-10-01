@@ -8,6 +8,7 @@
 - Актуальный план единого комплекса НВФ/СФТК — `docs/FACADE_COMPLEX_ROADMAP_30.09.md`. Q-01…Q-06 реализованы: `ATFTABLE → Облицовка / Подсистема`, паспорта физических деталей AClad/AFrame, явная регистрация ручных образцов, проверка актуальности и общий вывод DWG/XLSX. Поведение/границы — `docs/CLADDING_QUANTITIES_30.09.md` и `docs/FRAME_QUANTITIES_30.09.md`, `docs/MANUAL_QUANTITIES_01.10.md`; этап 2А добавляет справочные идентичности и геометрический паспорт соединений через `ATFTABLE → Подсистема → Соединения` ([границы](docs/CATALOG_CONNECTIONS_01.10.md)). Далее подтверждённые изделия/монтажный контракт, расчёт, узлы и материалы.
 - Последняя передача контекста — `docs/HANDOFF_NEXT_SESSION_30.09.md`; актуальные проверки — `docs/catalog_connections_0110/verification_manifest.json`, подтверждение отправки и CI — `docs/catalog_connections_0110/github_publication.json` (предыдущие — `docs/manual_quantities_0110/`, `docs/frame_quantities_3009/`, `docs/quantities_3009/`, `docs/static_review_3009/` и `docs/atr_review_3009/`).
 - Продолжение статической ревизии после `ad2a0a2` — `docs/STATIC_MODEL_REVIEW_30.09.md`, актуальные проверки — `docs/static_review_3009/verification_manifest.json`. Межэтажная расчётная выдача заблокирована до модели опор/стыков; manual сохранён. Полная статическая модель vertical/ortho также не подтверждена, даже если ограниченная цепочка и screening прошли.
+- Последний установочный выпуск — `build-104`: проверенный этап 2А, исходный срез `60f3b35`, сборочный коммит `ec516098` (только trigger-патч). Проверка скачанных архивов — `docs/release_0110/receipt.json`, памятка — `AFrame/docs/FACADES_build31_0110.pdf`. Живой AutoCAD не проверен; дальнейшая итерация каталога в build-104 не входит.
 - Рабочая ветка — `feat/auto-reactor` (`main` сильно отстаёт; слияние в `main`
   — ТОЛЬКО по слову Дениса «Пушим»).
 - Фасадные модули (в работе): `Facades/` (ATFZONE — зоны), `AClad/` (ATTILE —
@@ -22,8 +23,7 @@
   (генератор `tools/make_chronology.py`); ревизия — `docs/HANDOFF_REVIEW_3009.md`.
 - Повторный аудит альбомов и методологии — `docs/ATR_REVIEW_30.09.md`; источники и ограничения — `AFrame/engine/frame_rules.py`. Успех расстановки не означает выполнение всех узлов альбома.
 - Исправления независимой ревизии — `docs/FIXES_30.09.md`; руководство
-  новичка с учебными DXF — `docs/facades_beginner_3009/`. Пока это исходники
-  для будущего выпуска, не новая установленная сборка.
+  новичка с учебными DXF — `docs/facades_beginner_3009/`. Этап 2А опубликован в build-104; новые изменения после него требуют отдельного выпуска.
 - Перед вопросом Герману — альбомы техрешений (`atspec-testdata/docs/facades_atr/`,
   конспекты `Facades/docs/kb/`) и ТЗ: не спрашивать то, что там нарисовано.
 - Тестовые данные — отдельный репо `zinchenko-denis/atspec-testdata` (в
