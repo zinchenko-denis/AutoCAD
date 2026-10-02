@@ -186,10 +186,15 @@ class ConnectionEngineTests(unittest.TestCase):
                     self.assertAlmostEqual(bracket["y"] - rail["y0"], support["offset_mm"], places=3)
 
     def test_legacy_static_refusals_and_clamps_scope_unchanged(self):
-        for req in (request(height=140), request("interfloor", 3000)):
-            result = engine.op_frame(req)
-            self.assertFalse(result["ok"])
-            self.assertNotIn("connection_passport", result)
+        result = engine.op_frame(request("interfloor", 3000))
+        self.assertFalse(result["ok"])
+        self.assertNotIn("connection_passport", result)
+        result = engine.op_frame(request(height=140))
+        self.assertTrue(result["ok"], result.get("error"))
+        self.assertEqual(result["calculation_status"], "partial")
+        self.assertTrue(result["connection_passport"]["members"])
+        self.assertEqual({i["reason"] for i in result["local_issues"]}, {"insufficient_supports"})
+        self.assertEqual({i["status"] for i in result["local_issues"]}, {"not_verified"})
         req = manual_request()
         req["parts"] = "clamps"
         result = engine.op_frame(req)

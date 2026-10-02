@@ -154,23 +154,27 @@ def x4():
     """23.09s: штриховка зоны + её полилинии в одной выборке — FrameCommand
     убирает полилинии зоны (outer_contour_id, openings[].id) из «голых», как
     CladCommand; иначе зона строилась бы дважды."""
-    # Сначала исходный 600-мм участок над окном: адресный отказ
-    # по исходным контурам, без частичного построения.
+    # Исходный 600-мм участок над окном должен строиться с центральной
+    # опорой и точной пометкой. Отступ 300 не меняется для обхода проверки.
     short = fre.run({"op": "frame", "sub_type": "vertical", "system": None,
         "contours": [{"id": "2F0", "pts": rect(0, 0, 6000, 3000)},
                      {"id": "2F1", "pts": rect(2000, 900, 3400, 2400)}],
         "joints_x": [305.0 + 610 * k for k in range(10)]})
-    addressed = {(p.get("x"), p.get("y0"), p.get("y1"), p.get("length"),
-                  p.get("support_count"), tuple(p.get("support_y", [])), p.get("bracket_start_offset"))
-                 for p in short.get("unsupported", [])}
-    expected = {(x, 2400, 3000, 600, 1, (2700,), 300) for x in (2135, 2745, 3355)}
-    negative_ok = (not short.get("ok") and short.get("error_code") == "E_UNSUPPORTED_RAIL" and
-        short.get("unsupported_counts") == {"rail_pieces": 3} and addressed == expected and
-        not any(short.get(k) for k in ("rails", "brackets", "hrails", "clamps", "fittings")))
-    rep("OK" if negative_ok else "BUG", "X4-short", "исходная 600-мм полоса: точный отказ с тремя адресами, без геометрии")
-    # Положительная проверка двойной выборки — та же зона с верхом 3600,
-    # без заведомо одноопорной полосы; штатный отступ 300 сохранён.
-    contours = [{"id": "2F0", "pts": rect(0, 0, 6000, 3600)},
+    addressed = {(p.get("x"), p.get("y0"), p.get("y1"), p.get("support_count"),
+                  p.get("status"), p.get("reason")) for p in short.get("local_issues", [])}
+    expected = {(x, 2400, 3000, 1, "not_verified", "insufficient_supports") for x in (2135, 2745, 3355)}
+    short_ok = (short.get("ok") and short.get("calculation_status") == "not_requested" and
+                addressed == expected and len(short.get("local_issues", [])) == 3)
+    for index, issue in enumerate(short.get("local_issues", [])):
+        rail = short["rails"][issue["member_index"]]
+        supports = sorted(b["y"] for b in short["brackets"] if b["x"] == rail["x"]
+                          and rail["y0"] <= b["y"] <= rail["y1"])
+        short_ok = short_ok and (supports == [2700] and rail.get("issue_index") == index and
+            rail.get("check_status") == "not_verified" and issue.get("failed_checks") == [] and
+            bool(issue.get("message")) and all(rail[k] == issue[k] for k in ("x", "y0", "y1")))
+    rep("OK" if short_ok else "BUG", "X4-short", "исходная 600-мм полоса построена: 3 центральные опоры и 3 адресные пометки")
+    # Двойная выборка проверяется на той же геометрии с короткой полосой.
+    contours = [{"id": "2F0", "pts": rect(0, 0, 6000, 3000)},
                 {"id": "2F1", "pts": rect(2000, 900, 3400, 2400)}]
     r, _ = atfzone(contours)
     part = r["zones_full"][0]

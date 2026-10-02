@@ -19,6 +19,8 @@ python3 AFrame/tools/frame_synth.py --quick   # F16 исправлен 30.09; и
 python3 Facades/tools/zones_synth.py --quick
 python3 AClad/tools/attile_synth.py --quick
 python3 tools/roles_synth.py --quick          # «в ролях конструктора»: ATFZONE → раскладка → ATFRAME (нужен mono)
+python3 AFrame/engine/test_frame_typical_facades.py # пять типовых фасадов: обязательное построение и адресные пометки; настоящий FrameSettings, нужен mono/mcs
+python3 AFrame/tests/test_local_issues.py --out <папка> # пометки → сохранение → ведомость/Excel, нужен mono/mcs или Windows .NET
 python3 tools/fixes_3009/run_facade_regressions.py  # shapely/openpyxl + mono/mcs; --python-only — неполный набор
 python3 tools/atr_review_3009/run_checks.py --out <папка> # полный фасадный набор
 ```
@@ -32,6 +34,12 @@ ATTILE/ATFRAME/ATFZONE — прогон под mono (`AClad/tools/attile_ui`, `A
 `AFrame/tools/roles/RolesDump.cs`): новые поля окна — туда, не в FrameCommand.
 После успешного push также дождаться зелёного CI `check`; при красном —
 прочитать аннотации. Компиляция и CAD doubles не заменяют живой AutoCAD.
+
+Пять типовых фасадов проверяются и в `check`, и перед выпуском. Отказ в этих
+сценариях — ошибка теста, даже если сообщение отказа корректно. Построение
+с непроверенными участками учитывается отдельно от прохождения ограниченного
+расчёта. В Windows тест использует уже собранный `RolesDump.exe` через
+`ROLES_DUMP_EXE`; при его отсутствии локально нужны `mono` и `mcs`.
 
 
 ## Где сохранять результаты

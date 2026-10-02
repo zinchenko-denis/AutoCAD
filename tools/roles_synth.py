@@ -26,7 +26,8 @@ AFrame/tools/roles/RolesDump.cs): «поле окна не дошло до дв�
  R11 плитка, межэтажная: кусков шины без направляющей под ними нет (30.09, Герман: «в простенках
      между окон не может не быть вертикальных направляющих… идут вдоль боковых откосов») — кроме
      простенков уже самого узкого профиля, о которых движок предупредил;
- R12 расчётный успех явно сохраняет static_model.status=not_verified; межэтажный расчёт
+ R12 расчётный результат сохраняет static_model.status=not_verified; локальные
+     проблемы сохраняют отрицательные проверки и считаются отдельно; межэтажный расчёт
      останавливается в окне с точной причиной, ручные сценарии выполняются отдельно;
  X1  раскладка и подсистема не теряют зону ATFZONE.
 
@@ -411,18 +412,23 @@ def run_role(rng, role, dump, n, stats, first, times):
                 req = frame_req(prm, zid, zfull, jx, ry, floors, corners, per_zone)
             res = fre.run(req)
             if not res.get("ok"):
+                OUTCOMES["refused/" + res.get("error_code", "unknown")] += 1
                 if fsy.safe_refusal(req, res):
-                    OUTCOMES["safe_refusal/" + res["error_code"]] += 1
                     INFO["безопасный отказ: " + name + " / " + res["error_code"]] += 1
                 else:
                     bad.append(("R1", "%s: окно пропустило, движок отказал: %s" % (tag, res.get("error"))))
                     DUMP.setdefault((name, "R1"), req)
                 continue
-            OUTCOMES["successful_frame_results"] += 1
+            calculating = prm.get("calc") is not None and prm.get("parts") != "clamps"
+            category = ("built_with_issues" if res.get("local_issues") else "built_passed") if calculating else "manual"
+            OUTCOMES[category] += 1
+            if not calculating and res.get("local_issues"):
+                INFO["ручная геометрия с локальными замечаниями"] += 1
             if prm.get("calc") is not None and prm.get("parts") != "clamps":
                 model = res.get("calc_report", {}).get("static_model") or {}
+                screening_status = "refused" if res.get("local_issues") else "passed"
                 if model.get("status") != "not_verified" or \
-                        model.get("geometric_screening", {}).get("status") != "passed" or \
+                        model.get("geometric_screening", {}).get("status") != screening_status or \
                         model.get("pieces_merged") is not False or model.get("fixed_sliding") != "not_modeled":
                     bad.append(("R12", "%s: успешный расчёт не отделяет геометрическую проверку от неподтверждённой статики" % tag))
             psub = prm["sub_type"]
@@ -569,6 +575,11 @@ def main(argv):
     for outcome, count in control_outcomes.items():
         OUTCOMES["control/" + outcome] += count
     print("РОЛИ: ролей %d, фасадов %d, время %.1f с" % (len(ROLES), total, time.time() - t_all))
+    engine_refused = sum(count for outcome, count in OUTCOMES.items() if outcome.startswith("refused/"))
+    attempts = sum(OUTCOMES[key] for key in ("built_passed", "built_with_issues", "manual")) + engine_refused
+    print("  [ENGINE] попыток %d = расчёт прошёл %d + с замечаниями %d + вручную %d + отказ %d" %
+          (attempts, OUTCOMES["built_passed"], OUTCOMES["built_with_issues"], OUTCOMES["manual"], engine_refused))
+    print("  Частичный расчёт и ручная геометрия не означают подтверждённый монтажный расчёт.")
     for outcome, count in sorted(OUTCOMES.items()):
         print("  [RESULT] %s: %d" % (outcome, count))
     for role in ROLES:

@@ -23,7 +23,7 @@ def base_request(mode):
     if mode == 'limited_calc':
         # Positive timing scenario. The former 41.2 m/1880 N case now fails
         # the actual bracket check with 300 mm overhangs; retain that negative
-        # explicitly below, never count a refusal as a fast calculation.
+        # explicitly below, never count an incomplete calculation as a pass.
         request['calc'] = {'wind_region': 'II', 'terrain': 'B', 'height': 30, 'q_clad': 25,
                            'offset': 230, 'na_max': 3000, 'profile': 'ШП-60-20-20-1,2', 'q_rails': 1.21}
     return request
@@ -52,6 +52,7 @@ def worker(target, mode):
     assert actual_count == zone_count * count_per_zone
     assert len(result['per_zone']) == zone_count
     if mode == 'limited_calc':
+        assert result['calculation_status'] == 'passed' and result['local_issues'] == []
         assert len(result['calc_reports']) == zone_count
         assert all(item['report']['static_model']['status'] == 'not_verified' for item in result['calc_reports'])
     try:
@@ -78,10 +79,20 @@ def main():
         return 0
     former = base_request('limited_calc')
     former['calc'].update(height=41.2, na_max=1880)
-    rejected = frame_engine.run(dict(former, zones=[one_zone(0)]))
-    assert not rejected['ok'] and rejected.get('error_code') == 'E_CALC_MEMBER_CAPACITY'
-    assert not any(rejected.get(key) for key in ARRAYS)
-    failures = [check for case in rejected['static_model']['member_calculation']['cases']
+    partial = frame_engine.run(dict(former, zones=[one_zone(0)]))
+    assert partial['ok'] and partial['calculation_status'] == 'partial'
+    assert len(partial['rails']) == 16 and partial['brackets'] and partial['clamps']
+    assert [issue['member_index'] for issue in partial['local_issues']] == [0, 1, 2, 3, 12, 13, 14, 15]
+    for index, issue in enumerate(partial['local_issues']):
+        rail = partial['rails'][issue['member_index']]
+        assert issue['zone_id'] == 'Z0' and issue['reason'] == 'member_capacity_exceeded'
+        assert issue['status'] == rail['check_status'] == 'failed' and rail['issue_index'] == index
+        assert issue['failed_checks'] == ['кронштейн 1-1, кг/см²']
+        assert {key: issue[key] for key in ('x', 'y0', 'y1')} == {key: rail[key] for key in ('x', 'y0', 'y1')}
+    model = partial['calc_report']['static_model']
+    assert model['status'] == 'not_verified' and model['geometric_screening']['status'] == 'refused'
+    assert model['member_calculation']['status'] == 'refused'
+    failures = [check for case in model['member_calculation']['cases']
                 for check in case['chain']['checks'] if not check['ok']]
     assert failures and all(check['name'] == 'кронштейн 1-1, кг/см²'
                             and check['value'] > check['limit'] for check in failures)

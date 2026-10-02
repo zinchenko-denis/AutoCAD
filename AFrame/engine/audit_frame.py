@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 """Краш-аудит frame_plan: геометрические инварианты выхода."""
 import os
-import sys, itertools, random, math
+import sys, random
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from frame_plan import frame_plan, load_system
+from frame_plan import frame_plan
 
 T = 1.0  # гео-допуск, мм
 
@@ -17,27 +17,8 @@ def boxes(holes):
 def check(tag, req, p):
     errs = []
     if not p.get("ok"):
-        # При исходном коротком участке штатные торцевые отступы дают одну
-        # опору. Принимаем только этот адресный отказ, проверяя его числа.
-        # Произвольная ошибка движка по-прежнему является провалом аудита.
-        items = p.get("unsupported") or []
-        offset = load_system(req.get("system") or "Standart").get("bracket_start_offset")
-        valid = (p.get("error_code") == "E_UNSUPPORTED_RAIL" and
-                 (req.get("sub_type") or "vertical") == "vertical" and not req.get("calc") and
-                 req.get("parts") != "clamps" and items and offset is not None and
-                 p.get("unsupported_counts") == {"rail_pieces": len(items)} and
-                 not any(p.get(k) for k in ("rails", "hrails", "brackets", "clamps", "fittings", "calc_report")))
-        for item in items if valid else []:
-            length = item.get("length", float("nan"))
-            valid = valid and all(isinstance(item.get(k), (float, int)) and math.isfinite(item[k])
-                                  for k in ("x", "y0", "y1", "length"))
-            valid = valid and (0 < length <= 2 * offset + .001 and
-                abs(item["y1"] - item["y0"] - length) < .001 and
-                item.get("bracket_start_offset") == offset and item.get("support_count") == 1 and
-                len(item.get("support_y", [])) == 1 and
-                abs(item["support_y"][0] - (item["y0"] + item["y1"]) / 2) < .001)
-        if valid:
-            return []
+        # Все сценарии этого аудита имеют корректный ручной ввод.
+        # Отказ из-за обычного короткого куска — потеря результата.
         return ["%s: ДВИЖОК ОТКАЗАЛ: %s" % (tag, p.get("error"))]
     sub = req.get("sub_type") or "vertical"
     rails = p["rails"]; hr = p.get("hrails") or []
@@ -91,17 +72,38 @@ def check(tag, req, p):
         su = p.get("system_used") or {}
         step_max = max(float(su.get("bracket_step") or 800),
                        float(su.get("bracket_step_corner") or 800))
-        for r in rails:
+        issues = p.get("local_issues") or []
+        expected_issues = set()
+        for index, r in enumerate(rails):
+            # Опору соседней оси в 1 мм нельзя засчитать этому куску.
+            # 0,5 мм — допуск округления координат статической модели.
             ys = sorted(b["y"] for b in br
-                        if abs(b["x"] - r["x"]) <= T and
-                        r["y0"] - T <= b["y"] <= r["y1"] + T)
+                        if abs(b["x"] - r["x"]) <= 0.5 and
+                        r["y0"] - 0.5 <= b["y"] <= r["y1"] + 0.5)
             if len(set(ys)) < 2:
-                errs.append("%s: НАПРАВЛЯЮЩАЯ С МЕНЕЕ ЧЕМ ДВУМЯ ОПОРАМИ x=%.0f "
-                            "len=%.0f" % (tag, r["x"], r["y1"] - r["y0"]))
+                expected_issues.add(index)
+                issue_index = r.get("issue_index")
+                issue = issues[issue_index] if isinstance(issue_index, int) and 0 <= issue_index < len(issues) else {}
+                valid = (len(set(ys)) == 1 and abs(ys[0] - (r["y0"] + r["y1"]) / 2) <= .001 and
+                    0 < r["y1"] - r["y0"] <= 2 * su["bracket_start_offset"] + .001 and
+                    issue.get("member_index") == index and issue.get("kind") == "rail" and
+                    all(issue.get(k) == r[k] for k in ("x", "y0", "y1")) and
+                    issue.get("status") == r.get("check_status") == "not_verified" and
+                    issue.get("reason") == "insufficient_supports" and issue.get("support_count") == 1 and
+                    issue.get("failed_checks") == [] and bool(issue.get("message")))
+                if not valid:
+                    errs.append("%s: КОРОТКАЯ НАПРАВЛЯЮЩАЯ БЕЗ ЦЕНТРАЛЬНОЙ ОПОРЫ И ТОЧНОЙ ПОМЕТКИ x=%.0f "
+                                "len=%.0f" % (tag, r["x"], r["y1"] - r["y0"]))
+            elif "issue_index" in r or "check_status" in r:
+                errs.append("%s: ЛОЖНАЯ ПОМЕТКА НА ОБЫЧНОЙ НАПРАВЛЯЮЩЕЙ x=%.0f" % (tag, r["x"]))
             for a, b2 in zip(ys, ys[1:]):
                 if b2 - a > step_max + T:
                     errs.append("%s: ШАГ %.0f > %.0f на x=%.0f"
                                 % (tag, b2 - a, step_max, r["x"]))
+        if {i.get("member_index") for i in issues} != expected_issues or len(issues) != len(expected_issues):
+            errs.append("%s: СПИСОК ЗАМЕЧАНИЙ НЕ СОВПАДАЕТ С КОРОТКИМИ КУСКАМИ" % tag)
+        if p.get("calculation_status") != "not_requested":
+            errs.append("%s: РУЧНАЯ ГЕОМЕТРИЯ ВЫДАНА ЗА РАСЧЁТ" % tag)
     # R7: куски направляющих на одной оси не перекрываются
     import collections as _c
     byx = _c.defaultdict(list)
@@ -227,6 +229,7 @@ for _tag, _req in list(_lash_base)[:40]:
 allerrs = []
 crash = 0
 refused = 0
+with_issues = 0
 for tag, req in SC:
     try:
         p = frame_plan(req)
@@ -235,8 +238,10 @@ for tag, req in SC:
         continue
     errors = check(tag, req, p)
     allerrs += errors
-    refused += int(not p.get("ok") and not errors)
-print("сценариев:", len(SC), "адресных отказов:", refused, "нарушений:", len(allerrs), "крашей:", crash)
+    refused += int(not p.get("ok"))
+    with_issues += int(p.get("ok") and bool(p.get("local_issues")))
+print("сценариев:", len(SC), "построено:", len(SC) - refused - crash,
+      "из них с замечаниями:", with_issues, "отказов:", refused, "нарушений:", len(allerrs), "крашей:", crash)
 import collections
 kinds = collections.Counter(e.split(":")[1].strip().split(" (")[0].split(" x=")[0].split(" в ")[0] for e in allerrs)
 for k, v in kinds.most_common():

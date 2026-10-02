@@ -36,14 +36,34 @@ class TestFrameTopology(unittest.TestCase):
         if reason:
             self.assertIn(reason, {r["reason"] for r in result["static_model"]["geometric_screening"]["reasons"]})
 
-    def test_before_repro_zero_and_one_support_are_refused(self):
+    def built_with_issues(self, result, reason, count):
+        self.assertTrue(result["ok"], result.get("error"))
+        self.assertTrue(result["rails"])
+        self.assertEqual(result["calculation_status"], "partial")
+        self.assertEqual(len(result["local_issues"]), len(result["rails"]))
+        model = result["calc_report"]["static_model"]
+        self.assertEqual(model["status"], "not_verified")
+        self.assertEqual(model["geometric_screening"]["status"], "refused")
+        self.assertNotEqual(model["member_calculation"]["status"], "passed")
+        for index, issue in enumerate(result["local_issues"]):
+            rail = result["rails"][issue["member_index"]]
+            self.assertEqual(issue["reason"], reason)
+            self.assertEqual(issue["support_count"], count)
+            self.assertEqual(issue["status"], "not_verified")
+            self.assertEqual(issue["failed_checks"], [])
+            self.assertTrue(issue["message"])
+            self.assertEqual(rail["issue_index"], index)
+            self.assertEqual(rail["check_status"], issue["status"])
+            self.assertEqual({k: rail[k] for k in ("x", "y0", "y1")},
+                             {k: issue[k] for k in ("x", "y0", "y1")})
+
+    def test_zero_and_one_support_keep_geometry_and_precise_warning(self):
         for sub, height, count in (("vertical", 140, 1), ("vertical", 600, 1),
                                    ("ortho", 140, 0), ("ortho", 600, 1)):
             with self.subTest(sub=sub, height=height):
                 result = fe.op_frame(request(sub, height))
-                self.refused(result, "E_CALC_TOPOLOGY_UNSUPPORTED", "insufficient_supports")
-                self.assertTrue(result["static_model"]["members"])
-                self.assertEqual({m["support_count"] for m in result["static_model"]["members"]}, {count})
+                self.built_with_issues(result, "insufficient_supports", count)
+                self.assertEqual({m["support_count"] for m in result["calc_report"]["static_model"]["members"]}, {count})
 
     def test_single_span_is_calculated_as_one_with_actual_free_ends(self):
         for sub in ("vertical", "ortho"):
@@ -169,23 +189,36 @@ class TestFrameTopology(unittest.TestCase):
                                     corners_x=[], calc=request()["calc"]))
         self.refused(direct, "E_CALC_TOPOLOGY_UNSUPPORTED", "empty_geometry")
 
-    def test_later_failed_zone_discards_all_previous_drawable_output(self):
+    def test_later_short_zone_preserves_both_zones_and_global_issue_indices(self):
         req = request("vertical", 3000)
         req["contours"] += [dict(id="short", pts=[[2000, 0], [3200, 0], [3200, 140], [2000, 140]],
                                  joints_x=[2300, 2900])]
         result = fe.op_frame(req)
-        self.refused(result, "E_CALC_TOPOLOGY_UNSUPPORTED", "insufficient_supports")
-        self.assertEqual(result["failed_zone"], "контур short")
-        self.assertEqual({m["geometry"]["y1"] for m in result["static_model"]["members"]}, {140.0})
+        self.assertTrue(result["ok"], result.get("error"))
+        self.assertEqual(result["calculation_status"], "partial")
+        self.assertEqual({r["zone"] for r in result["rails"]}, {"контур A", "контур short"})
+        reports = {r["zone_id"]: r["report"] for r in result["calc_reports"]}
+        self.assertEqual(reports["контур A"]["member_check_status"], "passed")
+        self.assertEqual(reports["контур short"]["member_check_status"], "partial")
+        self.assertEqual(len(result["local_issues"]), 4)
+        for index, issue in enumerate(result["local_issues"]):
+            self.assertEqual(issue["zone_id"], "контур short")
+            self.assertEqual(issue["reason"], "insufficient_supports")
+            self.assertEqual(issue["status"], "not_verified")
+            self.assertEqual(issue["support_count"], 1)
+            rail = result["rails"][issue["member_index"]]
+            self.assertEqual(rail["issue_index"], index)
+            self.assertEqual(rail["y1"], 140)
+        self.assertTrue(all("issue_index" not in r for r in result["rails"] if r["zone"] == "контур A"))
 
-    def test_cli_serializes_refusal_diagnostics_without_partial_geometry(self):
+    def test_cli_serializes_geometry_and_unverified_piece_diagnostics(self):
         with tempfile.TemporaryDirectory() as directory:
             src, dst = Path(directory) / "input.json", Path(directory) / "output.json"
             src.write_text(json.dumps(request("ortho", 140), ensure_ascii=False), encoding="utf-8")
             fe.main(["frame_engine", str(src), str(dst)])
             result = json.loads(dst.read_text(encoding="utf-8"))
-            self.refused(result, "E_CALC_TOPOLOGY_UNSUPPORTED", "insufficient_supports")
-            self.assertEqual(result["static_model"]["members"][0]["support_count"], 0)
+            self.built_with_issues(result, "insufficient_supports", 0)
+            self.assertEqual(result["calc_report"]["static_model"]["members"][0]["support_count"], 0)
 
 
 if __name__ == "__main__":

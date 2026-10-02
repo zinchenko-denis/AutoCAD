@@ -322,19 +322,24 @@ p = frame_plan({"system": "Вектор-1", "contours":
 # The source arithmetic remains 800/450. Its 300-mm free ends were not
 # included in that table: the actual corner reaction now exposes a failure.
 from frame_calc import report as _arithmetic_report
-ok(not p["ok"] and p.get("error_code") == "E_CALC_MEMBER_CAPACITY",
-   "FR-C1: actual overhang reaction fails instead of certifying the source table")
-_c1_arithmetic = _arithmetic_report(p["calc_inputs"])
+ok(p["ok"] and p.get("calculation_status") == "partial" and bool(p["local_issues"]),
+   "FR-C1: geometry is built while the actual overhang reaction remains failed")
+_c1_arithmetic = _arithmetic_report(p["calc_report"]["inputs"])
 ok({"main": _c1_arithmetic["row"]["step"], "corner": _c1_arithmetic["corner"]["step"]}
    == {"main": 800, "corner": 450}, "FR-C1: original arithmetic 800/450 is unchanged")
-_c1_cases = p["static_model"]["member_calculation"]["cases"]
+_c1_cases = p["calc_report"]["static_model"]["member_calculation"]["cases"]
 _c1_bad = [c for case in _c1_cases for c in case["chain"]["checks"] if not c["ok"]]
 ok(_c1_bad and all(c["name"] == "кронштейн 1-1, кг/см²" and c["value"] > c["limit"]
                   for c in _c1_bad), "FR-C1: real failed component is the bracket")
 ok(any(case["response"]["k_reaction"] > 1.5 for case in _c1_cases),
    "FR-C1: 300-mm overhang reaction is larger than the historical 1.132 row")
-ok(not p.get("rails") and not p.get("brackets") and "calc_report" not in p,
-   "FR-C1: failure cannot emit a partial construction")
+ok(p.get("rails") and p.get("brackets") and
+   p["calc_report"]["static_model"]["geometric_screening"]["status"] == "refused" and
+   all(i["status"] == "failed" and i["reason"] == "member_capacity_exceeded" and
+       i["failed_checks"] == ["кронштейн 1-1, кг/см²"] and
+       p["rails"][i["member_index"]]["issue_index"] == n
+       for n, i in enumerate(p["local_issues"])),
+   "FR-C1: every failed bracket check has an addressed rail warning, never a passed claim")
 
 # C2: расчёт не проходит (анкер 300 Н) → честный отказ
 p = frame_plan({"system": "Вектор-1", "contours":
@@ -689,10 +694,13 @@ p_p6 = frame_plan({"system": "Вектор-1", "sub_type": "vertical",
                    "calc": dict(_CALC),
                    "contours": [{"outer": rect(0, 0, 1200, 3000)}],
                    "joints_x": [600], "floors_y": [3000]})
-ok(not p_p6["ok"] and p_p6.get("error_code") == "E_CALC_MEMBER_CAPACITY",
-   "FR-P6: high corner wind with 300-mm free ends has an addressed failure")
+ok(p_p6["ok"] and p_p6.get("calculation_status") == "partial" and p_p6["rails"] and
+   p_p6["calc_report"]["static_model"]["geometric_screening"]["status"] == "refused" and
+   bool(p_p6["local_issues"]) and all(i["status"] == "failed" and
+       i["reason"] == "member_capacity_exceeded" for i in p_p6["local_issues"]),
+   "FR-P6: high corner wind retains geometry with explicit failed piece checks")
 # The profile-candidate test uses an explicitly non-corner facade. The
-# original corner fixture above remains a refusal control, not discarded.
+# original corner fixture above remains a failed calculation control, not discarded.
 p_p6 = frame_plan({"system": "Вектор-1", "sub_type": "vertical", "corners_x": [],
                    "calc": dict(_CALC),
                    "contours": [{"outer": rect(0, 0, 1200, 3000)}],
@@ -710,10 +718,9 @@ ok(all(r["profile"] == p_p6["calc_report"]["profile"]["row"]
 
 # ── FR-A (краш-аудит 03.08): стойки не идут сквозь соседние окна;
 #    верхние доп. кронштейны орто держат перемычку ГП ──
-# Здесь проверяем пересечение геометрии, поэтому у коротких нижних участков
-# задаём отступ 100 явно как вход теста. Это не рекомендация для проекта.
-# Отказ исходного участка при штатных 300 проверяет test_frame_cutting.py.
-p_a1 = frame_plan({"system": {"name": "Вектор-1", "bracket_start_offset": 100}, "sub_type": "vertical",
+# Штатный отступ 300 сохранён: короткие нижние участки должны строиться
+# с центральным кронштейном и адресной пометкой, не скрывая геометрию окна.
+p_a1 = frame_plan({"system": "Вектор-1", "sub_type": "vertical",
                    "contours": [{"outer": rect(0, 0, 4000, 4000),
                                  "holes": [rect(300, 400, 1250, 1400),
                                            rect(1300, 300, 2500,
@@ -1287,17 +1294,21 @@ for _tile_corner in (600, 400):
         tile_step_x_corner=_tile_corner,
         calc={"wind_region": "II", "terrain": "B", "height": 30,
               "q_clad": 40, "offset": 200, "na_max": 3000}))
-    _tile_code = "E_CALC_MEMBER_CAPACITY" if _tile_corner == 600 else "E_CALC_TOPOLOGY_UNSUPPORTED"
-    ok(not _tile_refusal["ok"] and _tile_refusal.get("error_code") == _tile_code,
-       "FR-T7: window fragments have an addressed physical refusal")
-    _tile_reasons = _tile_refusal["static_model"]["geometric_screening"]["reasons"]
+    ok(_tile_refusal["ok"] and _tile_refusal.get("calculation_status") == "partial",
+       "FR-T7: window fragments build with addressed physical warnings")
+    _tile_reasons = _tile_refusal["calc_report"]["static_model"]["geometric_screening"]["reasons"]
     _tile_expected = {"insufficient_supports", "member_capacity_exceeded"} if _tile_corner == 600 else {"insufficient_supports"}
     ok({r["reason"] for r in _tile_reasons} == _tile_expected and
        all(r["support_count"] == 1 if r["reason"] == "insufficient_supports" else
            r["failed_checks"] == ["кронштейн 1-1, кг/см²"] for r in _tile_reasons),
        "FR-T7: exact one-support and bracket-capacity failures; no span-class blanket refusal")
-    ok(not any(_tile_refusal.get(k) for k in ("rails", "hrails", "brackets", "clamps", "fittings"))
-       and "calc_report" not in _tile_refusal, "FR-T7: no geometry or success report on refusal")
+    ok(_tile_refusal["rails"] and _tile_refusal["brackets"] and
+       len(_tile_refusal["local_issues"]) == len(_tile_reasons) and
+       all(i["status"] == ("failed" if i["reason"] == "member_capacity_exceeded" else "not_verified") and
+           _tile_refusal["rails"][i["member_index"]]["check_status"] == i["status"] and
+           _tile_refusal["rails"][i["member_index"]]["issue_index"] == n
+           for n, i in enumerate(_tile_refusal["local_issues"])),
+       "FR-T7: drawable geometry preserves every unsupported or failed piece as a warning")
 pk = frame_plan(dict(treq, system="Вектор-1", exact_step=False,
                      contours=[{"outer": rect(0, 0, 3000, 6000)}],
                      calc={"wind_region": "II", "terrain": "B", "height": 30,

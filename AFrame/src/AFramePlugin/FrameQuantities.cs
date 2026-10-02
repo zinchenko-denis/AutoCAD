@@ -127,7 +127,9 @@ namespace AFramePlugin
                 }
                 element.cad_entities.Add(FacadeQuantityStore.CaptureEntity(tr, entity,
                     entity is BlockReference ? "block" : "outer"));
-                element.color = DrawingColor(tr, entity);
+                // A red review mark is a diagnostic, never the finish colour of a product.
+                element.color = category == "rails" && Get(source, "issue_index") != null
+                    ? null : DrawingColor(tr, entity);
             }
             catch (OperationCanceledException) { throw; }
             catch (System.Exception ex)
@@ -168,12 +170,14 @@ namespace AFramePlugin
                     }
                     AppendRetainedProvenance(old, keptIds, provenance);
                     AppendRetainedConnections(old, keptIds, report.connection_passports);
+                    AppendRetainedIssues(old, keptIds, report.issues);
                 }
                 if (provenance.Count > 0)
                 {
                     report.parameters["retained_sources"] = provenance;
                     report.parameters["summary_scope"] = "new_clamps_operation_only";
-                    report.engineering_coverage = "clamps_geometry_only_with_retained_frame";
+                    report.engineering_coverage = report.issues.Exists(x => x.code == "Q_FRAME_MEMBER_REVIEW")
+                        ? "geometry_with_unverified_members" : "clamps_geometry_only_with_retained_frame";
                 }
                 foreach (var piece in report.elements)
                     if (piece.cad_entities == null || piece.cad_entities.Count != 1)
@@ -289,9 +293,11 @@ namespace AFramePlugin
             var summary = Get(response, "summary") as Dictionary<string, object> ?? new Dictionary<string, object>();
             bool clamps = Text(Get(request, "parts")) == "clamps";
             bool calc = Get(response, "calc_report") != null;
+            var localIssues = IndexLocalIssues(response);
             var result = new QuantityReport { kind = "frame", report_id = run, run_id = run,
                 scope = "whole_frame_run", algorithm = "ATFRAME/facade_quantities/1",
-                completeness = "partial", engineering_coverage = clamps ? "clamps_geometry_only" : calc ? "limited_static_chain" : "geometry_only",
+                completeness = "partial", engineering_coverage = localIssues.Count > 0 ? "geometry_with_unverified_members" :
+                    clamps ? "clamps_geometry_only" : calc ? "limited_static_chain" : "geometry_only",
                 engine_summary = new Dictionary<string, object>(summary) };
             foreach (var parameter in request)
                 if (parameter.Key != "zones" && parameter.Key != "contours" && parameter.Key != "rails_fixed")
@@ -300,7 +306,7 @@ namespace AFramePlugin
             result.parameters["length_basis"] = "engine_axis_segments_with_verified_drawing_identity";
             result.parameters["profile_source"] = "engine_or_user_label_not_catalogue_approval";
             result.parameters["fittings_scope"] = "conditional_symbols_not_confirmed_hardware_bom";
-            foreach (string key in new[] { "design_scope", "calc_report", "calc_reports", "notes" })
+            foreach (string key in new[] { "design_scope", "calc_report", "calc_reports", "notes", "calculation_status" })
                 if (response.ContainsKey(key)) result.engine_summary[key] = response[key];
             var solutionReport = Get(response, "solution_report") as Dictionary<string, object>;
             if (solutionReport != null)
@@ -362,6 +368,15 @@ namespace AFramePlugin
                     });
                 }
             }
+            foreach (var issue in localIssues)
+            {
+                string id = ElementId(run, "rails", issue.Key);
+                result.issues.Add(new QuantityIssue { code = "Q_FRAME_MEMBER_REVIEW", report_id = result.report_id,
+                    element_id = id, element_ids = new List<string> { id }, element_count = 1,
+                    message = LocalIssueMessage(issue.Value, partToRoot) });
+            }
+            if (localIssues.Count > 0)
+                result.parameters["red_review_mark"] = "diagnostic_only_not_product_colour";
             if (response.ContainsKey("connection_passport"))
                 result.connection_passports = new List<QuantityConnectionPassport> {
                     BuildConnectionPassport(Object(response["connection_passport"]), result, response, partToRoot) };
@@ -394,6 +409,63 @@ namespace AFramePlugin
                 result.issues.Add(new QuantityIssue { code = "Q_FRAME_ESTIMATE_NOT_RECALCULATED", report_id = result.report_id,
                     message = "При обновлении только кляммеров оценка числа хлыстов сохранённого каркаса не пересчитывалась и не выводится." });
             return result;
+        }
+
+        // One index per result, never a search through all issues for every drawn rail.
+        // Kept with the quantity producer so command text and the saved table use one wording.
+        internal static Dictionary<int, Dictionary<string, object>> IndexLocalIssues(Dictionary<string, object> response)
+        {
+            var result = new Dictionary<int, Dictionary<string, object>>();
+            object raw = Get(response, "local_issues");
+            if (raw == null)
+            {
+                if (Text(Get(response, "calculation_status")) == "partial")
+                    throw new InvalidOperationException("Расчёт не пройден, но движок не передал список проблемных участков.");
+                return result; // Existing successful engine responses remain readable.
+            }
+            var rails = Array(Get(response, "rails"));
+            foreach (object value in Array(raw))
+            {
+                var issue = value as Dictionary<string, object>;
+                object indexValue = Get(issue, "member_index");
+                if (issue == null || Text(Get(issue, "kind")) != "rail" || indexValue == null ||
+                    indexValue is bool || indexValue is string)
+                    throw new InvalidOperationException("Не распознана направляющая в списке замечаний.");
+                double index = Number(indexValue);
+                if (index != Math.Floor(index) || index < 0 || index >= rails.Length || result.ContainsKey((int)index))
+                    throw new InvalidOperationException("Список замечаний содержит неверный номер направляющей.");
+                var rail = rails[(int)index] as Dictionary<string, object>;
+                string status = Text(Get(issue, "status"));
+                if (rail == null || (status != "not_verified" && status != "failed") ||
+                    string.IsNullOrWhiteSpace(Text(Get(issue, "message"))))
+                    throw new InvalidOperationException("В замечании нет статуса или причины проверки направляющей.");
+                foreach (string coordinate in new[] { "x", "y0", "y1" })
+                    if (Math.Abs(Number(Get(issue, coordinate)) - Number(Get(rail, coordinate))) > 0.01)
+                        throw new InvalidOperationException("Координаты замечания расходятся с направляющей.");
+                if (Text(Get(issue, "zone_id")) != Text(Get(rail, "zone")))
+                    throw new InvalidOperationException("Замечание относится к другой зоне направляющей.");
+                result.Add((int)index, issue);
+            }
+            if (Text(Get(response, "calculation_status")) == "partial" && result.Count == 0)
+                throw new InvalidOperationException("Расчёт не пройден, но движок не передал список проблемных участков.");
+            return result;
+        }
+
+        internal static string LocalIssueMessage(Dictionary<string, object> issue, Dictionary<string, string> mapping)
+        {
+            string zone = Root(Text(Get(issue, "zone_id")), mapping);
+            string status = Text(Get(issue, "status")) == "failed" ? "расчёт не пройден" : "расчёт не подтверждён";
+            return "Зона «" + zone + "», X=" + Number(Get(issue, "x")).ToString("0.##", CultureInfo.InvariantCulture) +
+                ", Y=" + Number(Get(issue, "y0")).ToString("0.##", CultureInfo.InvariantCulture) + "…" +
+                Number(Get(issue, "y1")).ToString("0.##", CultureInfo.InvariantCulture) + " мм: " + status + ". " +
+                Text(Get(issue, "message"));
+        }
+
+        internal static void AppendRetainedIssues(QuantityReport old, ISet<string> keptIds, List<QuantityIssue> into)
+        {
+            foreach (var issue in old.issues ?? new List<QuantityIssue>())
+                if (issue != null && issue.code == "Q_FRAME_MEMBER_REVIEW" && keptIds.Contains(issue.element_id ?? ""))
+                    into.Add(issue); // Immutable warning for the same retained physical member, not a fresh calculation.
         }
 
         private static bool IsManualContribution(QuantityReport value)

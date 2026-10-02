@@ -131,6 +131,39 @@ def main():
         return (not result['ok'] and result.get('error_code') == code and empty_geometry(result)
                 and static_screen(result, 'refused') and bool(reasons)
                 and all(item.get('reason') == reason for item in reasons))
+    def built_with_local_issues(result, reason, status):
+        # Build 106 rejected the entire facade here. Its obsolete restriction
+        # must not return, and retained geometry must never mean calculation passed.
+        report = result.get('calc_report', {})
+        model = report.get('static_model', {})
+        reasons = model.get('geometric_screening', {}).get('reasons', [])
+        issues = result.get('local_issues', [])
+        rails = result.get('rails', [])
+        if not (result.get('ok') is True and rails and result.get('brackets')
+                and result.get('calculation_status') == 'partial'
+                and report.get('member_check_status') == 'partial'
+                and static_screen(result, 'refused') and reasons and issues
+                and model.get('member_calculation', {}).get('status') != 'passed'):
+            return False
+        by_member = {item.get('member_index'): item for item in reasons}
+        if (len(by_member) != len(reasons) or len(issues) != len(reasons)
+                or {item.get('member_index') for item in issues} != set(by_member)):
+            return False
+        for issue_index, issue in enumerate(issues):
+            member_index = issue.get('member_index')
+            if type(member_index) is not int or not 0 <= member_index < len(rails):
+                return False
+            rail, failure = rails[member_index], by_member[member_index]
+            if not (issue.get('kind') == 'rail' and issue.get('reason') == reason
+                    and failure.get('reason') == reason and issue.get('status') == status
+                    and rail.get('check_status') == status and rail.get('issue_index') == issue_index
+                    and bool(issue.get('message')) and issue.get('zone_id') == rail.get('zone')
+                    and issue.get('support_count') == failure.get('support_count')
+                    and issue.get('failed_checks') == failure.get('failed_checks', [])
+                    and all(issue.get(key) == rail.get(key) == failure.get('geometry', {}).get(key)
+                            for key in ('x', 'y0', 'y1'))):
+                return False
+        return True
     check('native_roundtrip_all', all(r['roundtrip'] and not r['apply_error'] for r in native.values()))
     check('previous_fix_weight_is_42', native['weight_preserved']['params']['calc']['q_clad'] == 42)
     check('previous_fix_composite_all_clamps_refused', all(native['composite_' + mode]['valid'] for mode in ('all', 'clamps')))
@@ -165,8 +198,12 @@ def main():
             req['corners_x'] = []
             result = run(f'{sub}_{height}_topology', req)
             if reason:
-                check(f'{sub}_{height}_{reason}', refused_for(result, 'E_CALC_TOPOLOGY_UNSUPPORTED', reason),
-                      result.get('unsupported'))
+                members = result.get('calc_report', {}).get('static_model', {}).get('members', [])
+                check(f'{sub}_{height}_{reason}_built_and_marked',
+                      built_with_local_issues(result, reason, 'not_verified')
+                      and len(result.get('local_issues', [])) == len(result.get('rails', [])) == len(members)
+                      and all(m.get('support_count') == 1 and m.get('support_y') == [height / 2]
+                              for m in members), result.get('local_issues'))
             else:
                 model = result.get('calc_report', {}).get('static_model', {})
                 members = model.get('members') or []
@@ -207,10 +244,15 @@ def main():
     # This profile selection and anchor resistance are both available in the native form.
     mass_request = inputs(native['profile_ШП-60-20']['params'])
     weak_anchor = run('native_shp_weak_anchor', mass_request)
-    check('native_shp_weak_anchor_addressed_refusal',
-          refused_for(weak_anchor, 'E_CALC_MEMBER_CAPACITY', 'member_capacity_exceeded')
-          and all('анкер, кг' in item.get('failed_checks', []) for item in weak_anchor.get('unsupported', [])),
-          weak_anchor.get('error'))
+    weak_model = weak_anchor.get('calc_report', {}).get('static_model', {})
+    weak_cases = weak_model.get('member_calculation', {}).get('cases', [])
+    check('native_shp_weak_anchor_built_with_addressed_failures',
+          built_with_local_issues(weak_anchor, 'member_capacity_exceeded', 'failed')
+          and bool(weak_cases) and all(case.get('chain', {}).get('passed') is False for case in weak_cases)
+          and all('анкер, кг' in item.get('failed_checks', []) for item in weak_anchor.get('local_issues', []))
+          and all(any(check.get('name') == 'анкер, кг' and check.get('ok') is False
+                      for check in case.get('chain', {}).get('checks', [])) for case in weak_cases),
+          weak_anchor.get('local_issues'))
     # Keep the original 565 N negative separately. Use a sufficient explicit
     # anchor input for the independent positive test of selected profile mass.
     mass_request = copy.deepcopy(mass_request)

@@ -39,7 +39,13 @@ def main():
                         if baseline.get(field) == current.get(field)]
         differences = sorted(field for field in baseline.keys() | current.keys()
                              if baseline.get(field) != current.get(field))
-        allowed = {"notes", "design_scope", "connection_passport"} if name == "rect_frame" else set()
+        allowed = {"notes", "design_scope", "connection_passport", "calculation_status", "local_issues"} if name == "rect_frame" else set()
+        # The manual tutorial has no short/problematic members. The new local
+        # issue contract replaces build 106's whole-facade refusal elsewhere;
+        # here it must preserve geometry and explicitly avoid a calculation pass.
+        local_status_check = (name != "rect_frame" or (
+            current.get("calculation_status") == "not_requested"
+            and current.get("local_issues") == [] and "calc_report" not in current))
         # The original tutorial deliberately uses Standart/concrete geometry,
         # outside the Vector-1/vertical/porcelain connection pilot. Validate
         # that the added metadata explicitly refuses that unsupported scope.
@@ -52,10 +58,11 @@ def main():
                 "splice_continuity": "not_modeled", "gravity_load_distribution": "not_verified",
                 "strength": "not_verified"}))
         passed = (current.get("ok") is True and equal_fields == previous["equal_fields"]
-                  and set(differences) <= allowed and passport_scope_check)
+                  and set(differences) <= allowed and passport_scope_check and local_status_check)
         checks.append(dict(example=name, equal_fields=equal_fields,
                            different_metadata_fields=differences, passed=passed,
                            connection_scope_check=passport_scope_check,
+                           local_status_check=local_status_check,
                            request_sha256=digest(request_path),
                            baseline_result_sha256=digest(baseline_path)))
     paths = sorted(path for module in ("Facades", "AClad", "AFrame")
@@ -65,7 +72,7 @@ def main():
         baseline_commit=old_manifest["baseline_commit"],
         source_base_commit=subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=ROOT, text=True).strip(),
         source_is_working_tree=True,
-        comparison="Saved tutorial requests replayed; geometry and quantities unchanged. Frame notes/design_scope remain restrictive; connection_passport explicitly reports the original Standart/concrete example as unsupported.",
+        comparison="Saved tutorial requests replayed; geometry and quantities unchanged. The manual frame example has no local issues and no calculated pass. Frame notes/design_scope remain restrictive; connection_passport explicitly reports the original Standart/concrete example as unsupported.",
         checks=checks,
         passed=all(check["passed"] for check in checks),
         engine_source_sha256={str(path.relative_to(ROOT)): digest(path) for path in paths},

@@ -135,6 +135,30 @@ def evaluate_member(calc_inputs, profile, member, zone, bracket_step, beam_cache
     return dict(response=beam, chain=chain)
 
 
+def local_member_issues(members, reasons, cases=()):
+    """Адресные замечания к геометрии; ни одно из них не означает приёмку."""
+    issues = []
+    for reason in reasons:
+        index = reason.get("member_index")
+        if index is None:
+            continue
+        member = members[index]
+        geometry = member["geometry"]
+        failed = reason["reason"] == "member_capacity_exceeded"
+        checks = reason.get("failed_checks", [])
+        detail = ("не проходит расчёт: " + ", ".join(checks) if failed else
+                  "менее двух опор; расчёт балки не выполнен")
+        message = "Направляющая X=%g, Y=%g…%g мм: %s." % (
+            geometry["x"], geometry["y0"], geometry["y1"], detail)
+        if failed:
+            check = next(c for c in cases[reason["calculation_case"]]["chain"]["checks"] if not c["ok"])
+            message += " %s: %g > %g." % (check["name"], check["value"], check["limit"])
+        issues.append(dict(kind="rail", member_index=index, **geometry,
+            status="failed" if failed else "not_verified", reason=reason["reason"],
+            support_count=member["support_count"], message=message, failed_checks=checks))
+    return issues
+
+
 def screen_layout(sub, rails, hrails, brackets, calc_inputs, member_zones=None,
                   rail_gap=0.0, profiles_by_zone=None, bracket_steps=None):
     """Check each physical member under the existing uniform-load idealisation.
@@ -203,8 +227,9 @@ def screen_layout(sub, rails, hrails, brackets, calc_inputs, member_zones=None,
                 cantilevers="uniform_load_screened" if cases else "not_verified",
                 unequal_spans="uniform_load_screened" if cases else "not_verified",
                 horizontal_member_strength="not_verified",
-                scope="Каждый отдельный кусок проверен по фактическим пролётам и свободным концам "
-                      "при равномерной поперечной нагрузке и простых опорах. Разные куски не склеены. "
+                scope="Куски с двумя и более опорами проверяются по фактическим пролётам и свободным концам "
+                      "при равномерной поперечной нагрузке и простых опорах. Куски с замечаниями "
+                      "не прошли проверку или не имеют расчётной модели. Разные куски не склеены. "
                       "Это ограниченный расчёт: неподвижные/подвижные соединения, передача момента "
                       "через стыки, распределение веса и работа горизонтальных элементов не подтверждены.")
 

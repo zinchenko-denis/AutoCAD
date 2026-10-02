@@ -36,6 +36,7 @@ namespace AFramePlugin
         private const double CloseTol = 0.5;
 
         private const string LayerRails = "_01_ПС_НАПРАВЛЯЮЩИЕ";
+        private const string LayerReview = "_01_ПС_ПРОВЕРИТЬ";
         private const string LayerBrackets = "_01_ПС_кронштейны";
         private const string LayerClamps = "_01_ПС_КЛЯММЕРЫ";
         // 26.09: горизонтальные шины под бетонную/клинкерную плитку — свой слой
@@ -731,6 +732,7 @@ namespace AFramePlugin
             }
             if (fs.SolutionSelection != null) fs.SolutionSelection.ValidateEngineReport(Get(res, "solution_report"), clampsOnly);
             var rails = Get(res, "rails") as object[];
+            var localIssues = FrameQuantities.IndexLocalIssues(res);
             var hrails = Get(res, "hrails") as object[];
             var brackets = Get(res, "brackets") as object[];
             var clamps = Get(res, "clamps") as object[];
@@ -788,6 +790,7 @@ namespace AFramePlugin
                 var ms = (BlockTableRecord)tr.GetObject(
                     bt[BlockTableRecord.ModelSpace], OpenMode.ForWrite);
                 EnsureLayer(tr, db, LayerRails);
+                if (localIssues.Count > 0) EnsureLayer(tr, db, LayerReview);
                 EnsureLayer(tr, db, LayerBrackets);
                 EnsureLayer(tr, db, LayerClamps);
                 ObjectId blkMain = smpMain.IsNull
@@ -919,6 +922,9 @@ namespace AFramePlugin
                                 {
                                     var entity = (Entity)tr.GetObject(rid, OpenMode.ForWrite);
                                     StoreRailRole(tr, entity, r, true);
+                                    if (localIssues.ContainsKey(quantityRailIndex))
+                                        MarkRailForReview(tr, ms, entity, x, y0, y1, railW,
+                                            handlesByRoot, partToRoot, SafeStr(Get(r, "zone")));
                                     quantities.Add(tr, "rails", quantityRailIndex, entity);
                                 }
                                 Remember(handlesByRoot, partToRoot,
@@ -940,6 +946,9 @@ namespace AFramePlugin
                         pl.Layer = LayerRails;
                         ms.AppendEntity(pl);
                         tr.AddNewlyCreatedDBObject(pl, true);
+                        if (localIssues.ContainsKey(quantityRailIndex))
+                            MarkRailForReview(tr, ms, pl, x, y0, y1, railW,
+                                handlesByRoot, partToRoot, SafeStr(Get(r, "zone")));
                         StoreRailRole(tr, pl, r, true);
                         quantities.Add(tr, "rails", quantityRailIndex, pl);
                         Remember(handlesByRoot, partToRoot,
@@ -1166,8 +1175,22 @@ namespace AFramePlugin
                     " м.п. = хлыстов " + SafeStr(Get(sum, "shina_pieces")) + " (не длиннее " +
                     F0(ToD(Get(sum, "tile_whip"))) + " мм, стык на направляющей).");
             }
-            PrintCalcReport(ed, Get(res, "calc_report")
-                            as Dictionary<string, object>);
+            PrintCalcReport(ed, Get(res, "calc_report") as Dictionary<string, object>, localIssues.Count > 0);
+            if (localIssues.Count > 0)
+            {
+                var message = new StringBuilder("\nПОДСИСТЕМА ПОСТРОЕНА; ");
+                message.Append(Get(res, "calc_report") != null
+                    ? "расчёт не пройден или не подтверждён для " + localIssues.Count + " участков."
+                    : localIssues.Count + " участков требуют проверки; ручная расстановка не является расчётом.");
+                message.Append(" Красным отмечены направляющие, для блоков добавлен красный кружок.\nСписок замечаний (координаты в мм; F2 — весь вывод):");
+                var indices = new List<int>(localIssues.Keys); indices.Sort();
+                foreach (int index in indices)
+                    message.Append("\n  · ").Append(FrameQuantities.LocalIssueMessage(localIssues[index], partToRoot));
+                message.Append(quantities.UnavailableReason == null && !quantityKeptPrevious
+                    ? "\nСписок сохранён: ATFTABLE → Подсистема → замечания; он входит в таблицу и экспорт Excel."
+                    : "\nСписок доступен в F2. Ведомость нового результата не сохранена (причина ниже).");
+                ed.WriteMessage(message.ToString());
+            }
             PrintNotes(ed, Get(res, "notes") as object[]);
             ed.WriteMessage("\n  время: источники " + (quantitySourceWatch.ElapsedMilliseconds / 1000.0).ToString("0.00", CultureInfo.InvariantCulture) +
                 " с, расчёт " + (quantityEngineWatch.ElapsedMilliseconds / 1000.0).ToString("0.00", CultureInfo.InvariantCulture) +
@@ -1181,11 +1204,26 @@ namespace AFramePlugin
             else ed.WriteMessage("\nВедомость подсистемы недоступна: " + quantities.UnavailableReason);
         }
 
+        private static void MarkRailForReview(Transaction tr, BlockTableRecord ms, Entity entity,
+            double x, double y0, double y1, double railWidth,
+            Dictionary<string, List<string>> handlesByRoot, Dictionary<string, string> partToRoot, string zone)
+        {
+            entity.ColorIndex = 1;
+            if (!(entity is BlockReference)) return;
+            // Child entities can use fixed colours. This diagnostic ring stays red,
+            // belongs to the same replacement handles, and is not a material quantity.
+            // Its separate layer excludes it from RailsFromHandles / clamps-only.
+            var mark = new Circle(new Point3d(x, (y0 + y1) / 2, 0), Vector3d.ZAxis, Math.Max(60, railWidth));
+            mark.Layer = LayerReview; mark.ColorIndex = 1;
+            ms.AppendEntity(mark); tr.AddNewlyCreatedDBObject(mark, true);
+            Remember(handlesByRoot, partToRoot, zone, mark.Handle.ToString());
+        }
+
         // отчёт этапа 4: шаги по расчёту + цепочка проверок с
         // запасами («условие выполнено» — как в статрасчётах
         // «Вектор фасад»)
         private static void PrintCalcReport(Editor ed,
-            Dictionary<string, object> rep)
+            Dictionary<string, object> rep, bool hasLocalIssues = false)
         {
             if (rep == null) return;
             var steps = Get(rep, "steps") as Dictionary<string, object>;
@@ -1207,7 +1245,7 @@ namespace AFramePlugin
             // кронштейнов много из-за слабого профиля.
             var prof = Get(rep, "profile") as Dictionary<string, object>;
             if (prof != null)
-                ed.WriteMessage("\n  профиль подобран: рядовая " +
+                ed.WriteMessage("\n  исходный профиль: рядовая " +
                     SafeStr(Get(prof, "row")) + " / угловая " +
                     SafeStr(Get(prof, "corner")) + ".");
             var bind = Get(rep, "binding") as Dictionary<string, object>;
@@ -1251,7 +1289,9 @@ namespace AFramePlugin
                     sb.Append("/");
                     sb.Append(SafeStr(Get(c, "limit")));
                 }
-                sb.Append(" — условия данной арифметической цепочки выполнены.");
+                sb.Append(hasLocalIssues
+                    ? " — исходная цепочка шагов; отдельные участки не прошли проверку (список ниже)."
+                    : " — условия данной арифметической цепочки выполнены.");
                 ed.WriteMessage(sb.ToString());
             }
         }

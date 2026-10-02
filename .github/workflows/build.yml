@@ -82,6 +82,15 @@ jobs:
         with:
           python-version: '3.12.10'
 
+      - name: Typical facades must build with actual dialog defaults
+        shell: bash
+        env:
+          PYTHONUTF8: "1"
+          PYTHONIOENCODING: "utf-8"
+        run: |
+          dotnet build AFrame/tools/roles/RolesDump.csproj -c Release -o build_roles
+          ROLES_DUMP_EXE=build_roles/RolesDump.exe python AFrame/engine/test_frame_typical_facades.py
+
       - name: Check manuals match the release number
         shell: bash
         run: |

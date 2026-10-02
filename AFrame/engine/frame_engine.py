@@ -326,7 +326,7 @@ def op_frame(req):
     rails, brackets, clamps, per_zone = [], [], [], []
     hrails, fittings = [], []
     system_used, calc_report = None, None
-    calc_reports = []
+    calc_reports, local_issues = [], []
     design_scopes = []
     connection_passports = []
     for zone_id, contour in items:
@@ -350,6 +350,10 @@ def op_frame(req):
                     "notes": notes + list(res.get("notes") or [])}
         system_used = res.get("system_used") or system_used
         connection_passports.append((zone_id, res.get("connection_passport"), len(rails), len(brackets)))
+        rail_offset, issue_offset = len(rails), len(local_issues)
+        for issue in res.get("local_issues") or []:
+            local_issues.append(dict(issue, member_index=issue["member_index"] + rail_offset,
+                                     zone_id=zone_id))
         design_scopes.append({"zone_id": zone_id, "scope": res["design_scope"]})
         if res.get("calc_report"):
             # 24.09 (рецензия): в ответе оставался отчёт ПОСЛЕДНЕЙ зоны, хотя
@@ -370,6 +374,8 @@ def op_frame(req):
             for t in coll:
                 t = dict(t)
                 t["zone"] = zone_id
+                if "issue_index" in t:
+                    t["issue_index"] += issue_offset
                 dst.append(t)
         for n in res["notes"]:
             notes.append("%s: %s" % (zone_id, n))
@@ -417,6 +423,9 @@ def op_frame(req):
         "brackets": brackets, "clamps": clamps,
         "fittings": fittings, "per_zone": per_zone, "notes": notes,
         "system_used": system_used, "summary": summary,
+        "local_issues": local_issues,
+        "calculation_status": (("partial" if local_issues else "passed")
+                               if calc_report is not None else "not_requested"),
         "design_scope": {"schema": "aframe_design_scope/1", "per_zone": design_scopes,
                          "manufacturer_compliance": "not_asserted"}}
     out["connection_passport"] = merge_connection_passports(req, connection_passports)

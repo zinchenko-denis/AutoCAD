@@ -1,4 +1,4 @@
-"""Резка вертикальных направляющих: зазоры, отступы, окна и точный отказ."""
+"""Резка направляющих: зазоры, отступы, окна и адресные замечания."""
 import unittest
 from collections import Counter
 
@@ -36,15 +36,22 @@ class RailCuttingTests(unittest.TestCase):
         request = dict(system={"name": "Standart", "bracket_start_offset": 300},
                        contours=[dict(outer=rect(0, 0, 1200, 500))], joints_x=[600])
         result = frame_plan(request)
-        self.assertFalse(result["ok"])
-        self.assertEqual(result["error_code"], "E_UNSUPPORTED_RAIL")
-        self.assertEqual(result["unsupported"][0], dict(member_index=0, x=600, y0=0, y1=500,
-            length=500, support_y=[250], support_count=1, bracket_start_offset=300))
-        self.assertFalse(any(result.get(k) for k in ("rails", "hrails", "brackets", "clamps")))
+        self.assertTrue(result["ok"], result.get("error"))
+        self.assertEqual(result["calculation_status"], "not_requested")
+        self.assertEqual([b["y"] for b in result["brackets"]], [250])
+        issue = result["local_issues"][0]
+        self.assertEqual({k: issue[k] for k in ("kind", "member_index", "x", "y0", "y1",
+            "status", "reason", "support_count", "failed_checks")},
+            dict(kind="rail", member_index=0, x=600, y0=0, y1=500,
+                 status="not_verified", reason="insufficient_supports", support_count=1, failed_checks=[]))
+        self.assertTrue(issue["message"])
+        self.assertEqual(result["rails"][0]["check_status"], "not_verified")
+        self.assertEqual(result["rails"][0]["issue_index"], 0)
         request["system"]["bracket_start_offset"] = 100  # Explicit test input, not a design recommendation.
         result = frame_plan(request)
         self.assertTrue(result["ok"], result.get("error"))
         self.assertEqual([b["y"] for b in result["brackets"]], [100, 400])
+        self.assertEqual(result["local_issues"], [])
 
     def test_window_tail_is_repaired_in_manual_equal_and_exact_spacing(self):
         for exact in (False, True):

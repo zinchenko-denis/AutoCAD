@@ -67,7 +67,8 @@ import os
 import sys
 
 from frame_rules import resolve_layout_contract, declared_scope
-from frame_topology import geometric_members, screen_layout, refusal as topology_refusal
+from frame_topology import (geometric_members, screen_layout, local_member_issues,
+                            refusal as topology_refusal)
 from frame_supports import (rail_cuts as _rail_cuts, rail_brackets as _rail_brackets,
                             refine_vertical_supports)
 from frame_connections import build_connection_passport
@@ -1208,6 +1209,8 @@ def frame_plan(req, prepared_solution=_UNPREPARED, include_solution_report=True)
         return resolved
     out = _frame_plan(req)
     if out.get("ok"):
+        out.setdefault("local_issues", [])
+        out.setdefault("calculation_status", "not_requested")
         scope = declared_scope(resolved["contract"], any(
             c.get("holes") for c in req.get("contours") or []))
         out["design_scope"] = scope["metadata"]
@@ -1491,6 +1494,22 @@ def _frame_plan(req):
                calc_rep["corner"]["w_p"]))
         if calc_rep.get("bc_note"):
             notes.append(calc_rep["bc_note"])
+
+    if sub == "vertical" and parts != "clamps":
+        for name, value in (("bracket_start_offset", start_off),
+                            ("bracket_step", step_main), ("bracket_step_corner", step_corner)):
+            # None проходит к прежнему адресному отказу с координатами ниже.
+            # Нуль допустим только для явно заданного торцевого отступа.
+            if value is None:
+                continue
+            try:
+                number = float(value)
+                valid = math.isfinite(number) and (number >= 0 if name == "bracket_start_offset" else number > 0)
+            except (TypeError, ValueError):
+                valid = False
+            if not valid:
+                return {"ok": False, "error_code": "E_FRAME_INPUT",
+                        "error": "Некорректный параметр %s; проверьте настройки кронштейнов." % name}
 
     rail_from = []       # 29.09l: (контур, индекс его первой стойки в rails) — для стыков шин
     tile_geo = {}        # 29.09q: контур → (стена, проёмы) — для удлинения шин без направляющей
@@ -2565,20 +2584,21 @@ def _frame_plan(req):
                      "заданные отступы кронштейнов от торцов; искусственный короткий хвост устранён."
                      % rebalanced_cuts)
 
-    if calc_rep is None and sub == "vertical" and parts != "clamps":
+    local_issues = []
+    if sub == "vertical" and parts != "clamps" and (calc_rep is None or start_off is None):
         members, _horizontal = geometric_members(sub, rails, hrails, brackets)
+        # В-ад (Герман 07.08): короткий кусок с центральным кронштейном
+        # строится. Отсутствие опор из-за пустых настроек этим не исправляется.
         missing = [dict(member_index=m["index"], **m["geometry"],
                         length=round(m["geometry"]["y1"] - m["geometry"]["y0"], 4),
                         support_y=m["support_y"], support_count=m["support_count"],
-                        bracket_start_offset=start_off) for m in members if m["support_count"] < 2]
+                        bracket_start_offset=start_off) for m in members if m["support_count"] == 0
+                   or start_off is None or step_main is None or step_corner is None]
         if missing:
             first = missing[0]
-            remedy = ("При заданных отступах от торцов исходный участок слишком короток; "
-                      "требуется изменение границ/стыков или отдельное решение крепления. "
-                      if start_off is not None and first["length"] <= 2 * start_off + EPS else
-                      "На участке не назначены две опоры; проверьте шаг и положение кронштейнов. ")
+            remedy = "На участке не назначены опоры; проверьте шаг и положение кронштейнов. "
             return {"ok": False, "error_code": "E_UNSUPPORTED_RAIL",
-                    "error": "Подсистема не построена: %d направляющих имеют менее двух опор. "
+                    "error": "Подсистема не построена: %d направляющих не имеют опор. "
                              "Первая: X=%.1f, Y=%.1f…%.1f мм, длина %.1f мм, опор %d. "
                              "%sПрежняя подсистема сохранена." %
                              (len(missing), first["x"], first["y0"], first["y1"],
@@ -2586,10 +2606,13 @@ def _frame_plan(req):
                     "unsupported": missing, "unsupported_counts": {"rail_pieces": len(missing)},
                     "notes": notes}
 
+        if calc_rep is None:
+            local_issues = local_member_issues(members, [dict(reason="insufficient_supports",
+                member_index=m["index"]) for m in members if m["support_count"] < 2])
+
     if calc_rep is not None:
         # A passed arithmetic chain does not establish the static model.
-        # Record every emitted piece, including zero-gap abutting pieces,
-        # before any addressed refusal discards the drawable output.
+        # Record every emitted piece, including zero-gap abutting pieces.
         boxes = [_bbox(_closed(c.get("outer") or []))
                  for c in req.get("contours") or [] if len(c.get("outer") or []) >= 3]
         member_zones = []
@@ -2649,23 +2672,33 @@ def _frame_plan(req):
     if calc_rep is not None:
         topology_error = topology_refusal(static_model)
         if topology_error:
-            topology_error.update(calc_inputs=calc_rep["inputs"],
-                                  notes=notes + [static_model["scope"]])
-            return topology_error
+            reasons = static_model["geometric_screening"]["reasons"]
+            # Неподдержанная схема/пустая геометрия — глобальный отказ.
+            # Проблема конкретного куска сохраняет геометрию с красной меткой;
+            # отрицательный результат его расчёта при этом не меняется.
+            if any(r["reason"] not in ("insufficient_supports", "member_capacity_exceeded")
+                   for r in reasons):
+                topology_error.update(calc_inputs=calc_rep["inputs"],
+                                      notes=notes + [static_model["scope"]])
+                return topology_error
+            local_issues = local_member_issues(static_model["members"], reasons,
+                static_model["member_calculation"]["cases"])
         verification, error = _verify_calc_spacing(calc_rep, req, sub, rails, hrails, brackets,
                                                    corners, corner_zone)
         if error:
             return {"ok": False, "error_code": "E_CALC_LAYOUT", "error": error,
                     "static_model": static_model, "calc_inputs": calc_rep["inputs"]}
         calc_rep["layout_verification"] = verification
+        calc_rep["member_check_status"] = "partial" if local_issues else "passed"
         notes.append("Статическая модель не подтверждена: расчёт пролётов и свесов каждого куска "
                      "при равномерной нагрузке не задаёт неподвижные/подвижные соединения, "
                      "непрерывность через стыки и распределение веса.")
         calc_rep["method"] = {
             "name": "Вектор — цепочка по переданным статическим расчётам",
             "version": "member-beams-2026-10-02",
-            "coverage": "Каждый кусок проверен по фактическим пролётам и свесам при равномерной "
-                        "поперечной нагрузке; проверены шаги и число геометрических опор. "
+            "coverage": "Куски с двумя и более опорами проверены по фактическим пролётам и свесам "
+                        "при равномерной поперечной нагрузке. Куски из списка замечаний не прошли "
+                        "расчёт или не имеют расчётной модели; общая геометрия сохранена. "
                         "Закрепления, стыки, распределение веса, "
                         "горизонтальные НГП/СП и проект в целом требуют отдельной проверки конструктора."}
     clamps = _merge_clamps(clamps)
@@ -2723,8 +2756,12 @@ def _frame_plan(req):
         summary["tile_rail_brand"] = tile_brand
     if parts == "clamps":
         notes.append("только кляммеры по РАСЧЁТНЫМ осям (существующие направляющие "
-                     "не переданы) — подсистема не выдаётся")
+                     "не переданы) — подсистема и подтверждение её расчёта не выдаются")
         rails, hrails, brackets, fittings = [], [], [], []
+        # Замечания с индексами и отчёт относятся к временному каркасу,
+        # которого нет в выдаче. Как при rails_fixed, кляммеры не являются
+        # результатом проверки подсистемы; красить несуществующие rails нельзя.
+        local_issues, calc_rep = [], None
         for k in ("rails", "hrails", "fittings", "brackets_main", "brackets_row"):
             summary[k] = 0
         summary["rails_lm"] = summary["hrails_lm"] = 0.0
@@ -2733,6 +2770,16 @@ def _frame_plan(req):
            "brackets": brackets, "clamps": clamps,
            "fittings": fittings, "summary": summary, "notes": notes,
            "system_used": system_used}
+    # Один линейный проход по замечаниям; индексы относятся к выданным rails.
+    for index, issue in enumerate(local_issues):
+        rails[issue["member_index"]]["check_status"] = issue["status"]
+        rails[issue["member_index"]]["issue_index"] = index
+    out["local_issues"] = local_issues
+    out["calculation_status"] = ("partial" if local_issues else "passed") if calc_rep else "not_requested"
+    if local_issues:
+        notes.append("Построена геометрия с замечаниями: %d направляющих отмечены красным. "
+                     "Для них расчёт не пройден либо не выполнен; требуется решение конструктора."
+                     % len(local_issues))
     if calc_rep is not None:
         out["calc_report"] = calc_rep
         summary["calc_steps"] = calc_rep["steps"]

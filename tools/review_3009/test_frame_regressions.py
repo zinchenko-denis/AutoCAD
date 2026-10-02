@@ -1,8 +1,9 @@
 """Independent AFrame regressions, review 30.09.2026.
 
 Run from repo root: python3 tools/review_3009/test_frame_regressions.py
-These requirements failed on audited HEAD e2a4e4d. The corrected planner must
-either satisfy the invariant or explicitly refuse without emitted elements.
+These requirements failed on audited HEAD e2a4e4d. Local member defects must
+retain drawable geometry with addressed issues and no false calculation pass;
+unsupported global schemes must still refuse without emitted elements.
 The native metadata reader is separately exercised by
 tools/fixes_3009/test_frame_rail_metadata.py using the actual C# methods.
 """
@@ -106,7 +107,7 @@ def vertical_only_clamps():
                "rows_y": [1208, 2416, 3624, 4832, 6040, 7248, 8456]}
     # Raise the ledge above the windows for a supported clamp-readback
     # positive. The original 3200 mm ledge produced 10/30 mm one-support
-    # fragments, now covered explicitly by the negative test below.
+    # fragments, now covered explicitly by the local-warning test below.
     # The separate 320–510 mm piers use explicit 100 mm test offsets.
     request["system"] = {"name": "Standart", "bracket_start_offset": 100}
     full = fe.run(copy.deepcopy(request))
@@ -161,17 +162,34 @@ class FrameContractRegressions(unittest.TestCase):
         self.assertEqual(clamp_set(full), clamp_set(again),
                          "The known mismatch is also present in vertical systems")
 
-    def test_original_clamp_fixture_has_addressed_short_piece_refusal(self):
+    def test_original_clamp_fixture_builds_with_addressed_short_piece_warnings(self):
         request, _, _ = vertical_only_clamps()
         request["contours"][0]["pts"][4][1] = 3200
         request["contours"][0]["pts"][5][1] = 3200
         result = fe.run(request)
-        self.assertFalse(result["ok"])
-        self.assertEqual(result["error_code"], "E_UNSUPPORTED_RAIL")
-        self.assertTrue(result["unsupported"])
-        self.assertTrue(all(p["support_count"] < 2 for p in result["unsupported"]))
-        self.assertTrue({10.0, 30.0}.issubset({p["length"] for p in result["unsupported"]}))
-        self.assertFalse(any(result.get(k) for k in ("rails", "hrails", "brackets", "clamps", "fittings")))
+        self.assertTrue(result["ok"], result.get("error"))
+        self.assertEqual(result["calculation_status"], "not_requested")
+        self.assertNotIn("calc_report", result)
+        self.assertEqual(len(result["rails"]), 27)
+        self.assertTrue(result["brackets"] and result["clamps"])
+        self.assertEqual([(p["member_index"], p["x"], p["y0"], p["y1"])
+                          for p in result["local_issues"]],
+                         [(1, 421.881, 3140, 3200), (3, 1029.881, 3140, 3200),
+                          (5, 1637.881, 3190, 3200), (14, 4069.881, 3170, 3200)])
+        for issue_index, issue in enumerate(result["local_issues"]):
+            rail = result["rails"][issue["member_index"]]
+            self.assertEqual(issue["zone_id"], "контур O")
+            self.assertEqual(issue["reason"], "insufficient_supports")
+            self.assertEqual(issue["status"], "not_verified")
+            self.assertEqual(issue["support_count"], 1)
+            self.assertEqual(issue["failed_checks"], [])
+            self.assertEqual(rail["check_status"], "not_verified")
+            self.assertEqual(rail["issue_index"], issue_index)
+            self.assertEqual({k: rail[k] for k in ("x", "y0", "y1")},
+                             {k: issue[k] for k in ("x", "y0", "y1")})
+            supports = [b["y"] for b in result["brackets"] if b["x"] == rail["x"]
+                        and rail["y0"] <= b["y"] <= rail["y1"]]
+            self.assertEqual(supports, [(rail["y0"] + rail["y1"]) / 2])
 
     def test_shina_has_at_least_one_vertical_support(self):
         _, result = unsupported_gable_shina()

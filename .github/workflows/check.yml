@@ -19,6 +19,7 @@ on:
       - "AClad/engine/**"
       - "AFrame/src/**"
       - "AFrame/engine/**"
+      - "AFrame/tests/**"
       - "Common/**"
       # 24.09 (рецензия): правки проверочных инструментов и бандлов тоже
       # запускают проверку
@@ -192,6 +193,8 @@ jobs:
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           python tools/frame_quantities_3009/test_frame_table.py --out frame_quantity_table_results
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          python AFrame/tests/test_local_issues.py --out frame_local_issue_results
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           python tools/frame_quantities_3009/test_frame_engine_perf.py --targets "1000,3000" --out frame_engine_perf_results
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           dotnet build tools/quantities_3009/QuantityStorePerfCheck.csproj -c Release -o build_quantity_store_perf
@@ -200,6 +203,14 @@ jobs:
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           python tools/frame_quantities_3009/test_store_encoding.py --out quantity_store_encoding_results
           exit $LASTEXITCODE
+
+      - name: Upload local member warning checks
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: frame-local-issues
+          path: frame_local_issue_results/
+          if-no-files-found: warn
 
       - name: Manual facade quantities (actual mapper, CAD adapters and bounded work)
         shell: pwsh
@@ -430,4 +441,5 @@ jobs:
           # 29.09: синтетика «в ролях конструктора» — ATFZONE → раскладка → ATFRAME с настройками
           # окна через настоящий FrameSettings (консольный дампер под .NET Framework)
           dotnet build AFrame/tools/roles/RolesDump.csproj -c Release -o build_roles
+          ROLES_DUMP_EXE=build_roles/RolesDump.exe python AFrame/engine/test_frame_typical_facades.py
           ROLES_DUMP_EXE=build_roles/RolesDump.exe python tools/roles_synth.py --quick
