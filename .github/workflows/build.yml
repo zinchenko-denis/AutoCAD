@@ -163,9 +163,9 @@ jobs:
           @{ bundle = "AFacades"; build = "${{ github.run_number }}"; attempt = "${{ github.run_attempt }}"; sha = "${{ github.sha }}"; ref = "${{ github.ref_name }}"; built_utc = (Get-Date).ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ"); python = "3.12.10"; pyinstaller = "6.22.3" } | ConvertTo-Json | Set-Content -Encoding utf8 "$b/Contents/net48/build-info.json"
           Compress-Archive -Path $b -DestinationPath "AFacades.bundle.zip" -Force
 
-      # ── AClad (раскладка облицовки, этап 2) — четвёртая программа,
-      #    СВОЙ бандл: боевой AFacades не переустанавливается при
-      #    итерациях раскладки (просьба Германа 22.07) ──
+      # ── AClad (раскладка облицовки, этап 2) — четвёртая программа.
+      #    Отдельный бандл; AFacades, AClad и AFrame обновляются
+      #    вместе из одной сборки. ──
       - name: Build AClad DLL
         run: dotnet build AClad/src/ACladPlugin/ACladPlugin.csproj -c Release -o build_acl_dll
 
@@ -190,8 +190,8 @@ jobs:
           Compress-Archive -Path $b -DestinationPath "AClad.bundle.zip" -Force
 
       # ── AFrame (подсистема НВФ: кронштейны/направляющие/кляммеры,
-      #    этап 3) — пятая программа, СВОЙ бандл (итерационный этап,
-      #    AFacades/AClad не трогает) ──
+      #    этап 3) — пятая программа. Отдельный бандл; AFacades,
+      #    AClad и AFrame обновляются вместе из одной сборки. ──
       - name: Build AFrame DLL
         run: dotnet build AFrame/src/AFramePlugin/AFramePlugin.csproj -c Release -o build_afr_dll
 

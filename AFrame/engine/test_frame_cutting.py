@@ -74,6 +74,19 @@ class RailCuttingTests(unittest.TestCase):
         self.assertNotIn("слишком короток", result["error"])
         self.assertFalse(any(result.get(k) for k in ("rails", "hrails", "brackets", "clamps")))
 
+    def test_legacy_null_end_offset_reports_missing_supports_without_crashing(self):
+        result = frame_plan(dict(system=dict(name="Вектор-1", bracket_start_offset=None),
+            sub_type="vertical", parts="frame",
+            contours=[dict(outer=rect(0, 0, 1200, 3000))], joints_x=[600]))
+        self.assertFalse(result["ok"])
+        self.assertEqual(result["error_code"], "E_UNSUPPORTED_RAIL")
+        self.assertEqual(result["unsupported"][0]["support_count"], 0)
+        self.assertIsNone(result["unsupported"][0]["bracket_start_offset"])
+        self.assertIn("X=600.0", result["error"])
+        self.assertIn("проверьте шаг", result["error"])
+        self.assertNotIn("слишком короток", result["error"])
+        self.assertFalse(any(result.get(k) for k in ("rails", "hrails", "brackets", "clamps")))
+
     def test_zero_gap_keeps_two_physical_pieces(self):
         self.assertEqual(_rail_cuts(0, 3300, 3000, 0, 300), [(0, 1650), (1650, 3300)])
         self.assertEqual(_rail_cuts(0, 500, 3000, 10, 300), [(0, 500)])

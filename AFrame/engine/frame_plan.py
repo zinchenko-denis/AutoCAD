@@ -2575,7 +2575,7 @@ def _frame_plan(req):
             first = missing[0]
             remedy = ("При заданных отступах от торцов исходный участок слишком короток; "
                       "требуется изменение границ/стыков или отдельное решение крепления. "
-                      if first["length"] <= 2 * start_off + EPS else
+                      if start_off is not None and first["length"] <= 2 * start_off + EPS else
                       "На участке не назначены две опоры; проверьте шаг и положение кронштейнов. ")
             return {"ok": False, "error_code": "E_UNSUPPORTED_RAIL",
                     "error": "Подсистема не построена: %d направляющих имеют менее двух опор. "
