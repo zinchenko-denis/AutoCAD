@@ -146,7 +146,7 @@ def main():
             n += 1; continue
         if line.startswith('## ') and not in_toc:
             p = doc.add_paragraph()
-            r = p.add_run('Редакция от 2 октября 2026 года для исправленной программы после выпуска 105. Перед занятием установите три фасадных модуля из одного нового выпуска. В архивы 105 эти исправления не входят. Живая проверка в AutoCAD ещё предстоит.')
+            r = p.add_run('Редакция от 2 октября 2026 года для выпуска build-106. Перед занятием установите AFacades, AClad и AFrame из этого выпуска. Живая проверка в AutoCAD ещё предстоит.')
             r.bold = True
             doc.add_page_break()
             doc.add_paragraph('Содержание', style='Heading 1')

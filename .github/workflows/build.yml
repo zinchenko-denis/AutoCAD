@@ -1,9 +1,8 @@
 name: build-bundle
 
-# Собирает готовые ATableSpec.bundle.zip и ABlockGen.bundle.zip на
-# Windows-раннере GitHub (ничего ставить локально не нужно) и публикует
-# ОБА в релиз "latest". Конструктор скачивает zip по ссылке и просто
-# кладёт папку в AutoCAD.
+# Собирает пять бандлов на Windows и публикует их вместе с двумя
+# руководствами фасадного отдела в build-N и latest. Конструктор
+# скачивает три фасадных бандла одного выпуска по инструкции Word.
 
 on:
   push:
@@ -82,6 +81,21 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: '3.12.10'
+
+      - name: Check manuals match the release number
+        shell: bash
+        run: |
+          python - <<'PY'
+          import os, zipfile
+          import xml.etree.ElementTree as ET
+          from pathlib import Path
+          release = 'https://github.com/zinchenko-denis/AutoCAD/releases/tag/build-' + os.environ['GITHUB_RUN_NUMBER']
+          for name in ('Facades_User_Manual.docx', 'Install_AutoCAD_2024.docx'):
+              with zipfile.ZipFile(Path('docs/user') / name) as archive:
+                  rels = ET.fromstring(archive.read('word/_rels/document.xml.rels'))
+                  assert any(item.get('Target') == release for item in rels), name + ': update the release link before building'
+              print(name + ': release link verified')
+          PY
 
       # 1) Плагин (DLL) — ссылки на AutoCAD берутся из NuGet, AutoCAD не нужен
       - name: Build plugin DLL
@@ -253,19 +267,31 @@ jobs:
         with:
           tag_name: latest
           name: "ATableSpec + ABlockGen + AFacades + AClad + AFrame — последняя сборка"
-          body: "Сборка №${{ github.run_number }}, коммит ${{ github.sha }} (исходники — релиз build-${{ github.run_number }}; тег latest исторический и на код не указывает). Готовые бандлы. ATableSpec.bundle.zip — спецификации/раскрой из блоков (команда ATSPEC). ABlockGen.bundle.zip — генератор витражей из блоков (команды ATVITRAGEAR, ATVITRAGE). AFacades.bundle.zip — фасады, этап 1: зоны облицовки, площади и погонажи (команды ATFZONE, ATFTABLE). AClad.bundle.zip — фасады, этап 2: раскладка облицовки — кассеты (ATCLAD) и мелкоштучная плитка/кирпич с раскраской по образцу (ATTILE); обновляется вместе с AFacades и AFrame из той же сборки. AFrame.bundle.zip — фасады, этап 3: подсистема НВФ — кронштейны/направляющие/кляммеры по раскладке (команда ATFRAME). Три фасадных модуля AFacades, AClad и AFrame устанавливать и обновлять вместе, одной сборкой; старые папки при закрытом AutoCAD перенести в резервную папку вне ApplicationPlugins. Распаковать архивы, папки *.bundle положить в %APPDATA%\\Autodesk\\ApplicationPlugins\\, перезапустить AutoCAD."
+          body: |
+            Сборка №${{ github.run_number }}, исходный коммит ${{ github.sha }}.
+            Для передачи отделу используйте [этот конкретный выпуск build-${{ github.run_number }}](https://github.com/zinchenko-denis/AutoCAD/releases/tag/build-${{ github.run_number }}).
+
+            **Фасадный комплект для AutoCAD 2024:** скачать AFacades.bundle.zip, AClad.bundle.zip и AFrame.bundle.zip из Assets ниже. Все три модуля устанавливать и обновлять вместе. Source code для установки не нужен.
+
+            **Две инструкции Word в Assets:** Install_AutoCAD_2024.docx — скачивание, установка и обновление; Facades_User_Manual.docx — полный рабочий процесс и учебные фасады с окнами.
+
+            Исправлены расчёт отдельных направляющих у окон, короткие остатки при резке, принятие старых зон и контроль версий. Команды проекта, зон и схемы узла доступны на ленте. Живая проверка в AutoCAD ещё предстоит; межэтажный автоматический расчёт и полный монтажный подбор не завершены.
+
+            ATableSpec.bundle.zip и ABlockGen.bundle.zip относятся к отдельным модулям; для фасадного пилота их обновлять не требуется. Тег latest исторический и на исходный код не указывает; точный срез закреплён в build-${{ github.run_number }}.
           files: |
             ATableSpec.bundle.zip
             ABlockGen.bundle.zip
             AFacades.bundle.zip
             AClad.bundle.zip
             AFrame.bundle.zip
+            docs/user/Facades_User_Manual.docx
+            docs/user/Install_AutoCAD_2024.docx
 
       # 4c) НЕИЗМЕНЯЕМЫЙ снимок сборки (07.08e, рецензия организации
       # репо): latest перезаписывается, и историческую сборку было
       # не воспроизвести/не откатить. Каждый прогон дополнительно
-      # публикует релиз build-<run_number> с теми же пятью архивами
-      # и SHA кода. Ссылки конструкторам НЕ меняются — им latest.
+      # публикует релиз build-<run_number> с теми же пятью архивами,
+      # двумя руководствами и SHA кода. Отдел получает конкретный build-N.
       # 24.09 (рецензия): тег создавался на ветке по умолчанию (main от
       # 06.07) — «Source code» релиза не совпадал с бандлами. Теперь тег —
       # на собранный коммит (target_commitish), а повторный прогон (rerun
@@ -277,7 +303,14 @@ jobs:
           tag_name: build-${{ github.run_number }}
           target_commitish: ${{ github.sha }}
           name: "build-${{ github.run_number }} (${{ github.sha }})"
-          body: "Неизменяемый снимок сборки №${{ github.run_number }} с коммита ${{ github.sha }}. Для установки конструкторами используется релиз latest; этот — для отката и воспроизведения истории."
+          body: |
+            Неизменяемый выпуск №${{ github.run_number }}, исходный коммит ${{ github.sha }}.
+
+            **Герману и проектному отделу:** начните с Install_AutoCAD_2024.docx. Для установки скачайте из Assets AFacades.bundle.zip, AClad.bundle.zip и AFrame.bundle.zip — все три из этого выпуска. Полное руководство — Facades_User_Manual.docx. GitHub-вход для скачивания не нужен. Source code содержит исходники, а не установщик.
+
+            По сравнению с №105 исправлены расчёт фактических кусков у окон и одноопорные остатки при резке, добавлены принятие старых зон ATFZONEACCEPT, предупреждение о разных версиях и команды на ленте. Стартовый фасад с окнами приведён в руководстве.
+
+            Целевая среда испытаний — полный AutoCAD 2024 для Windows. Живая проверка ещё предстоит; межэтажный автоматический расчёт и полный монтажный подбор не завершены. ATableSpec и ABlockGen для фасадного пилота не обновляйте.
           make_latest: false
           files: |
             ATableSpec.bundle.zip
@@ -285,3 +318,5 @@ jobs:
             AFacades.bundle.zip
             AClad.bundle.zip
             AFrame.bundle.zip
+            docs/user/Facades_User_Manual.docx
+            docs/user/Install_AutoCAD_2024.docx
