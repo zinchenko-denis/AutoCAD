@@ -146,7 +146,7 @@ def main():
             n += 1; continue
         if line.startswith('## ') and not in_toc:
             p = doc.add_paragraph()
-            r = p.add_run('Редакция от 2 октября 2026 года для выпуска build-106. Перед занятием установите AFacades, AClad и AFrame из этого выпуска. Живая проверка в AutoCAD ещё предстоит.')
+            r = p.add_run('Редакция от 2 октября 2026 года для выпуска build-107. Перед занятием установите AFacades, AClad и AFrame из этого выпуска. Живая проверка в AutoCAD ещё предстоит.')
             r.bold = True
             doc.add_page_break()
             doc.add_paragraph('Содержание', style='Heading 1')
@@ -156,6 +156,8 @@ def main():
             doc.add_page_break(); in_toc = True
         if line.startswith('## '):
             p = doc.add_paragraph(title(line[3:]), style='Heading 1')
+            if line.startswith('## 20.'):
+                p.paragraph_format.page_break_before = True
             start = OxmlElement('w:bookmarkStart'); start.set(qn('w:id'), str(n)); start.set(qn('w:name'), bookmark[n])
             end = OxmlElement('w:bookmarkEnd'); end.set(qn('w:id'), str(n)); p._p.insert(0, start); p._p.append(end)
             n += 1; continue
