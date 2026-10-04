@@ -38,7 +38,7 @@ namespace AFramePlugin
                     _sysVarHooked = true;
                 }
             }
-            catch { /* лента не обязательна */ }
+            catch (System.Exception ex) { Plugin.ReportStartupFailure("лента", ex); }
         }
 
         public static void Cleanup()
@@ -61,7 +61,8 @@ namespace AFramePlugin
         {
             if (ComponentManager.Ribbon == null) return;
             ComponentManager.ItemInitialized -= OnItemInitialized;
-            try { Build(); } catch { }
+            try { Build(); }
+            catch (System.Exception ex) { Plugin.ReportStartupFailure("лента", ex); }
         }
 
         private static void OnSysVarChanged(object sender,
@@ -70,7 +71,8 @@ namespace AFramePlugin
             if (e != null && string.Equals(e.Name, "WSCURRENT",
                     StringComparison.OrdinalIgnoreCase))
             {
-                try { Build(); } catch { }
+                try { Build(); }
+                catch (System.Exception ex) { Plugin.ReportStartupFailure("лента", ex); }
             }
         }
 

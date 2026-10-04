@@ -30,12 +30,21 @@ def make_fixtures():
         {"id": "4", "pts": rectangle(8500, 1000, 600, 800)},
     ]
     fixtures = {}
-    for name, count, merged in (("single", 2, False), ("merged", 4, True), ("curved", 2, False)):
+    for name, count, merged in (("single", 2, False), ("merged", 4, True), ("curved", 2, False),
+                                ("fractional", 2, False), ("fractional_merged", 4, True),
+                                ("fractional_curved", 2, False)):
         request = {"op": "zones", "contours": contours[:count], "merge": merged,
                    "cladding": "porcelain", "zone_prefix": "F-", "units": "mm"}
         request = json.loads(json.dumps(request))
-        if name == "curved":
-            request["contours"][1]["bulges"] = [0, 0, 1, 0]
+        if name.startswith("fractional"):
+            # Typical non-integer DWG origin. Integer-only fixtures miss the
+            # double -> JSON decimal -> double conversion in the stored snapshot.
+            for contour in request["contours"]:
+                for point in contour["pts"]:
+                    point[0] += 12345.678901234567
+                    point[1] -= 98765.432109876543
+        if name.endswith("curved"):
+            request["contours"][1]["bulges"] = [0, 0, 0.41421356237309503 if name.startswith("fractional") else 1, 0]
         result = op_zones(request)
         if not result.get("ok") or len(result.get("zones", [])) != 1 or result.get("failed"):
             raise ValueError("Engine rejected adapter positive fixture " + name + ": " + json.dumps(result))

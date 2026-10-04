@@ -80,9 +80,31 @@ namespace Autodesk.AutoCAD.Geometry
     }
     public sealed class CircularArc2d : Curve2d
     {
-        public double StartAngle, EndAngle;
+        public double StartAngle, EndAngle, Radius;
+        public Point2d Center;
+        public Vector2d ReferenceVector;
         public bool IsClockWise;
     }
+    public struct Vector2d
+    {
+        public double X, Y;
+        public Vector2d(double x, double y) { X=x; Y=y; }
+    }
+    public sealed class EllipticalArc2d : Curve2d
+    {
+        public Point2d Center;
+        public Vector2d MajorAxis, MinorAxis;
+        public double MajorRadius, MinorRadius, StartAngle, EndAngle;
+        public bool IsClockWise;
+    }
+    public struct NurbCurve2dData
+    {
+        public int Degree;
+        public bool Rational, Periodic;
+        public List<Point2d> ControlPoints;
+        public List<double> Knots, Weights;
+    }
+    public sealed class NurbCurve2d : Curve2d { public NurbCurve2dData DefinitionData; }
     public sealed class UnsupportedCurve2d : Curve2d { }
     public class Curve2dCollection : List<Curve2d> { }
 }

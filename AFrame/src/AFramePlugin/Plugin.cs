@@ -20,7 +20,8 @@ namespace AFramePlugin
     {
         public void Initialize()
         {
-            try { FacadeSafety.FacadeBundleVersions.Schedule(); } catch { }
+            try { FacadeSafety.FacadeBundleVersions.Schedule(); }
+            catch (System.Exception ex) { ReportStartupFailure("проверка версий", ex); }
             try
             {
                 var doc = AcApp.DocumentManager.MdiActiveDocument;
@@ -32,8 +33,11 @@ namespace AFramePlugin
                         "ATFNODE — размерная схема узла.\n");
             }
             catch { }
-            try { FacadesRibbon.Init();
-            FacadesClassic.Init(); } catch { }   // панель «Фасады»
+            // Независимые пути: ошибка ленты не должна пропускать классическое меню.
+            try { FacadesRibbon.Init(); }
+            catch (System.Exception ex) { ReportStartupFailure("лента", ex); }
+            try { FacadesClassic.Init(); }
+            catch (System.Exception ex) { ReportStartupFailure("классическое меню", ex); }
         }
 
         // маркер версии сборки (урок ABlockGen: «какая сборка у
@@ -64,7 +68,17 @@ namespace AFramePlugin
             catch { return "?"; }
         }
 
-        public void Terminate() { try { FacadeSafety.FacadeBundleVersions.Cancel(); FacadesRibbon.Cleanup();
-            FacadesClassic.Cleanup(); } catch { } }
+        internal static void ReportStartupFailure(string stage, System.Exception error)
+        {
+            FacadeSafety.FacadeStartupDiagnostics.Report("AFrame", BuildStamp(), stage, error);
+        }
+
+        public void Terminate()
+        {
+            try { FacadeSafety.FacadeBundleVersions.Cancel(); } catch { }
+            try { FacadeSafety.FacadeStartupDiagnostics.Cancel(); } catch { }
+            try { FacadesRibbon.Cleanup(); } catch { }
+            try { FacadesClassic.Cleanup(); } catch { }
+        }
     }
 }

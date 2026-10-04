@@ -38,6 +38,7 @@ def main():
         jobs.extend((module + '_' + Path(s).stem, module + '/engine', [s])
                     for s in scripts)
     jobs.extend([
+        ('facade_startup', '.', ['tools/facades/test_startup.py']),
         ('xmod', '.', ['tools/xmod_check.py', '--no-fixture', '--allow=X6']),
         ('frame_quick', '.', ['AFrame/tools/frame_synth.py', '--quick']),
         ('zones_quick', '.', ['Facades/tools/zones_synth.py', '--quick']),

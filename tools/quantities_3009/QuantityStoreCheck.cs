@@ -303,6 +303,90 @@ internal static class QuantityStoreCheck
             Cladding.Fresh();
         }
     }
+
+    // Native HatchLoop.IsPolyline=false also represents an ordinary rectangle
+    // made from LineSegment2d edges. The old double-only fixtures missed it.
+    private sealed class HatchBlockFixture
+    {
+        internal readonly QuantityFixture F = new QuantityFixture("single", "ATTILE", false);
+        internal readonly Hatch Hatch;
+        internal readonly BlockReference Block;
+        internal HatchBlockFixture(params Curve2d[] edges)
+        {
+            var definition = F.Zone.Db.Add(new BlockTableRecord { Name = "TileWithEdgeHatch" });
+            definition.AppendEntity(F.Piece);
+            Hatch = F.Zone.Db.Add(new Hatch());
+            var loop = new HatchLoop { IsPolyline = false, LoopType = HatchLoopTypes.External };
+            loop.Curves.AddRange(edges); Hatch.Loops.Add(loop); definition.AppendEntity(Hatch);
+            Block = F.Zone.Db.Add(new BlockReference { BlockTableRecord = definition.ObjectId });
+            F.Report.elements[0].cad_entities.Clear();
+            F.Report.elements[0].cad_entities.Add(FacadeQuantityStore.CaptureEntity(F.Zone.Tr, Block, "block"));
+            F.Store();
+        }
+        internal void Fresh() { Accepted(F.Read(F.Zone.Hatch), 1); }
+        internal void Changed() { Rejected(F.Read(F.Zone.Hatch)); }
+    }
+
+    private static Curve2d[] RectangleEdges()
+    {
+        return new Curve2d[] {
+            new LineSegment2d(new Point2d(0,0), new Point2d(600,0)),
+            new LineSegment2d(new Point2d(600,0), new Point2d(600,600)),
+            new LineSegment2d(new Point2d(600,600), new Point2d(0,600)),
+            new LineSegment2d(new Point2d(0,600), new Point2d(0,0)) };
+    }
+
+    private static void HatchEdgeCases()
+    {
+        Test("ATTILE_block_rectangle_hatch_edges_roundtrip_and_edit", () => {
+            var f = new HatchBlockFixture(RectangleEdges()); f.Fresh();
+            // Keep the same overall bounds; a bounding-box-only fingerprint fails.
+            f.Hatch.Loops[0].Curves[0].EndPoint = new Point2d(590,0); f.Changed();
+        });
+        Test("ATTILE_block_full_circle_hatch_roundtrip_and_radius", () => {
+            var arc = new CircularArc2d { Center = new Point2d(300,300), Radius = 200,
+                StartAngle = 0, EndAngle = 2*Math.PI, ReferenceVector = new Vector2d(1,0) };
+            var f = new HatchBlockFixture(arc); f.Fresh(); arc.Radius = 190; f.Changed();
+        });
+        Test("ATTILE_block_arc_reference_vector_and_orientation_checked", () => {
+            var arc = new CircularArc2d { Center = new Point2d(300,300), Radius = 200,
+                StartAngle = 0, EndAngle = Math.PI, ReferenceVector = new Vector2d(1,0) };
+            var f = new HatchBlockFixture(arc, new LineSegment2d(new Point2d(100,300), new Point2d(500,300)));
+            f.Fresh(); arc.ReferenceVector = new Vector2d(0,1); f.Changed();
+            arc.ReferenceVector = new Vector2d(1,0); f.Fresh(); arc.IsClockWise = true; f.Changed();
+        });
+        Test("ATTILE_block_elliptical_hatch_roundtrip_and_axis", () => {
+            var arc = new EllipticalArc2d { Center = new Point2d(300,300),
+                MajorAxis = new Vector2d(1,0), MinorAxis = new Vector2d(0,1),
+                MajorRadius = 250, MinorRadius = 100, StartAngle = 0, EndAngle = 2*Math.PI };
+            var f = new HatchBlockFixture(arc); f.Fresh(); arc.MinorRadius = 120; f.Changed();
+        });
+        Test("ATTILE_block_spline_hatch_exact_control_points_knots_weights", () => {
+            var spline = new NurbCurve2d { DefinitionData = new NurbCurve2dData {
+                Degree = 2, Rational = true, Periodic = false,
+                ControlPoints = new List<Point2d> { new Point2d(0,0), new Point2d(300,500), new Point2d(600,0) },
+                Knots = new List<double> { 0,0,0,1,1,1 }, Weights = new List<double> { 1,1,1 } } };
+            var f = new HatchBlockFixture(spline, new LineSegment2d(new Point2d(600,0), new Point2d(0,0))); f.Fresh();
+            spline.DefinitionData.ControlPoints[1] = new Point2d(300,450); f.Changed();
+            spline.DefinitionData.ControlPoints[1] = new Point2d(300,500); f.Fresh();
+            spline.DefinitionData.Weights[1] = 0.8; f.Changed();
+            spline.DefinitionData.Weights[1] = 1; f.Fresh();
+            spline.DefinitionData.Knots[3] = 0.9; f.Changed();
+        });
+        Test("ATTILE_many_tiles_share_one_hatch_definition_capture", () => {
+            var f = new HatchBlockFixture(RectangleEdges()); f.Fresh();
+            long before = CadCounters.HatchLoopsRead;
+            for (int i=0; i<1000; i++) {
+                var tile = f.F.Zone.Db.Add(new BlockReference { BlockTableRecord = f.Block.BlockTableRecord,
+                    Position = new Point3d(i*610,0,0) });
+                FacadeQuantityStore.CaptureEntity(f.F.Zone.Tr, tile, "block");
+            }
+            Require(CadCounters.HatchLoopsRead - before <= 1, "sample hatch traversed once per tile instead of once per phase");
+        });
+        Test("ATTILE_unknown_hatch_edge_not_silently_fingerprinted", () => {
+            Throws(() => new HatchBlockFixture(new UnsupportedCurve2d()));
+        });
+    }
     private static Fixture AddMergedGroup(QuantityFixture f, bool sharedPiece = true, bool emptySecondZone = false)
     {
         // Two independently captured zones, deliberately coincident synthetic
@@ -680,6 +764,7 @@ internal static class QuantityStoreCheck
             Require(read.Rows.ok && read.Rows.rows.Sum(r=>r.quantity)==1 &&
                 Math.Abs(read.Rows.rows.Sum(r=>r.area_m2??0)-0.36)<1e-9,"published v1 quantity result changed");
         });
+        HatchEdgeCases();
         int passed = Results.Count(r => (string)r["status"] == "PASS");
         File.WriteAllText(args[3],Json.Serialize(new Dictionary<string,object> {
             {"scope","Actual production quantity store and actual geometry guards with CAD doubles. No AutoCAD runtime claimed."},

@@ -2,6 +2,8 @@
 // Input reports and facade_zone/1 parts come from the actual Python engine.
 using System;
 using System.Collections.Generic;
+using System.Globalization;
+using System.Threading;
 using System.IO;
 using System.Linq;
 using System.Web.Script.Serialization;
@@ -174,6 +176,42 @@ internal static class ZoneGeometryAdapterCheck
         }
         Fixtures = Dict(Json.DeserializeObject(File.ReadAllText(args[1])));
         Test("fresh_single_hatch_mark_engine_sidecar", () => new Fixture("single").Fresh());
+        Test("fresh_fractional_coordinates_hatch_mark_sidecar", () => new Fixture("fractional").Fresh());
+        Test("fresh_fractional_merged_coordinates_hatch_mark_sidecar", () => new Fixture("fractional_merged").Fresh());
+        Test("fresh_fractional_curved_coordinates_hatch_mark_sidecar", () => new Fixture("fractional_curved").Fresh());
+        Test("fractional_snapshot_repeat_read_in_new_transaction_and_culture", () => {
+            var original = Thread.CurrentThread.CurrentCulture;
+            try {
+                foreach (var culture in new[] { "en-US", "ru-RU", "de-DE" }) {
+                    Thread.CurrentThread.CurrentCulture = new CultureInfo(culture);
+                    var f = new Fixture("fractional_merged"); f.Fresh();
+                    using (var tr = new Transaction(f.Db)) {
+                        var read = ZoneGeometryGuard.Verify(tr, f.Db, f.Mark, f.Sidecar());
+                        Require(read.Ok && read.Fingerprint == f.Captured.Fingerprint,
+                            "unchanged saved snapshot rejected on reread, culture=" + culture + ": " + read.Reason);
+                    }
+                }
+            } finally { Thread.CurrentThread.CurrentCulture = original; }
+        });
+        Test("fractional_source_and_hatch_real_edit_still_rejected", () => {
+            var f = new Fixture("fractional"); f.Fresh();
+            Shift(f.Holes[0], 0.01, 0); f.RefreshHatchFromSources();
+            Rejected(f.Verify(f.Hatch)); Rejected(f.Verify(f.Mark));
+        });
+        Test("fractional_snapshot_hash_corruption_still_rejected", () => {
+            var f = new Fixture("fractional"); f.Fresh();
+            foreach (var carrier in new Entity[] { f.Hatch, f.Mark }) {
+                var record = Record(f.Tr, carrier, ZoneGeometryGuard.Key);
+                string text = string.Concat(record.Data.Where(v => v.TypeCode == (int)DxfCode.Text)
+                    .Select(v => Convert.ToString(v.Value, CultureInfo.InvariantCulture)).ToArray());
+                var data = Dict(Json.DeserializeObject(text)); data["geometry_hash"] = "damaged";
+                var refs = record.Data.Where(v => v.TypeCode == (int)DxfCode.SoftPointerId)
+                    .Select(v => (ObjectId)v.Value).ToArray();
+                WriteRecord(f.Tr, carrier, ZoneGeometryGuard.Key, Json.Serialize(data), refs);
+            }
+            var refused = f.Verify(f.Mark); Rejected(refused);
+            Require(refused.Reason.Contains("повреждён снимок геометрии"), "snapshot hash check was skipped");
+        });
         Test("fresh_merged_hatch_mark_engine_sidecar", () => {
             var f = new Fixture("merged"); f.Fresh();
             Require(f.Captured.Parts.Count == 2, "merged positive fixture did not contain two parts");

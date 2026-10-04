@@ -673,13 +673,57 @@ namespace FacadeSafety
                 for (int i = 0; i < h.NumberOfLoops; i++)
                 {
                     var loop = h.GetLoopAt(i); Add(s, (int)loop.LoopType);
-                    if (!loop.IsPolyline) throw new InvalidOperationException("Ведомость пока не поддерживает криволинейную штриховку внутри образца блока. Используйте проверенный образец с полилинейными границами.");
-                    foreach (BulgeVertex v in loop.Polyline)
-                    { Number(s, v.Vertex.X); Number(s, v.Vertex.Y); Number(s, v.Bulge); }
+                    if (loop.IsPolyline)
+                    {
+                        // Keep the published polyline fingerprint byte-compatible.
+                        foreach (BulgeVertex v in loop.Polyline)
+                        { Number(s, v.Vertex.X); Number(s, v.Vertex.Y); Number(s, v.Bulge); }
+                    }
+                    else
+                    {
+                        // IsPolyline describes storage, not shape: even a rectangle
+                        // made from LINE entities is returned as Curve2d edges.
+                        var curves = loop.Curves;
+                        Add(s, "edges"); Add(s, curves.Count);
+                        foreach (Curve2d curve in curves) HatchEdge(s, curve);
+                    }
                 }
             }
             else throw new InvalidOperationException("Для ведомости не поддерживается объект образца: " + e.GetType().Name + ". Выберите проверенный образец облицовки.");
             return Hash(s.ToString());
+        }
+
+        private static void HatchEdge(StringBuilder s, Curve2d curve)
+        {
+            // These are all four native Hatch edge types. Store their exact
+            // definitions: bounds, area or sampled points would miss later edits.
+            Add(s, curve.GetType().FullName);
+            var line = curve as LineSegment2d;
+            if (line != null) { Point(s, line.StartPoint); Point(s, line.EndPoint); return; }
+            var arc = curve as CircularArc2d;
+            if (arc != null)
+            {
+                Point(s, arc.Center); Number(s, arc.Radius); Vector(s, arc.ReferenceVector);
+                Number(s, arc.StartAngle); Number(s, arc.EndAngle); Add(s, arc.IsClockWise); return;
+            }
+            var ellipse = curve as EllipticalArc2d;
+            if (ellipse != null)
+            {
+                Point(s, ellipse.Center); Vector(s, ellipse.MajorAxis); Vector(s, ellipse.MinorAxis);
+                Number(s, ellipse.MajorRadius); Number(s, ellipse.MinorRadius);
+                Number(s, ellipse.StartAngle); Number(s, ellipse.EndAngle); Add(s, ellipse.IsClockWise); return;
+            }
+            var spline = curve as NurbCurve2d;
+            if (spline != null)
+            {
+                var data = spline.DefinitionData;
+                Add(s, data.Degree); Add(s, data.Rational); Add(s, data.Periodic);
+                Add(s, data.ControlPoints.Count); foreach (Point2d p in data.ControlPoints) Point(s, p);
+                Add(s, data.Knots.Count); foreach (double knot in data.Knots) Number(s, knot);
+                Add(s, data.Weights.Count); foreach (double weight in data.Weights) Number(s, weight);
+                return;
+            }
+            throw new InvalidOperationException("Не удалось проверить границу штриховки образца: " + curve.GetType().Name + ".");
         }
 
         private static string Definition(Transaction tr, ObjectId id, Dictionary<ObjectId, string> cache, HashSet<ObjectId> visiting)
@@ -705,6 +749,8 @@ namespace FacadeSafety
             if (double.IsNaN(value) || double.IsInfinity(value)) throw new InvalidOperationException("Объект содержит неконечные координаты.");
             Add(s, value.ToString("R", CultureInfo.InvariantCulture));
         }
+        private static void Point(StringBuilder s, Point2d p) { Number(s, p.X); Number(s, p.Y); }
+        private static void Vector(StringBuilder s, Vector2d p) { Number(s, p.X); Number(s, p.Y); }
         private static void Point(StringBuilder s, Point3d p) { Number(s, p.X); Number(s, p.Y); Number(s, p.Z); }
         private static void Vector(StringBuilder s, Vector3d p) { Number(s, p.X); Number(s, p.Y); Number(s, p.Z); }
         private static string Hash(string text)

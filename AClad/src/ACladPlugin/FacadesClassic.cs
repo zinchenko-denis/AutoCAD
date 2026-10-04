@@ -48,7 +48,7 @@ namespace ACladPlugin
                     _quitHooked = true;
                 }
             }
-            catch { /* классика не обязательна */ }
+            catch (System.Exception ex) { Plugin.ReportStartupFailure("классическое меню", ex); }
         }
 
         public static void Cleanup()

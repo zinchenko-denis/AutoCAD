@@ -383,11 +383,23 @@ namespace FacadeSafety
             {
                 var d = item as Dictionary<string, object>;
                 var points = new List<double[]>();
-                foreach (var p in Items(Get(d, "points"))) { var xy = Items(p); if (xy.Count != 2) throw new FormatException("неверный снимок координат"); points.Add(new[] { D(xy[0]), D(xy[1]) }); }
-                var bulges = new List<double>(); foreach (var b in Items(Get(d, "bulges"))) bulges.Add(D(b));
+                foreach (var p in Items(Get(d, "points"))) { var xy = Items(p); if (xy.Count != 2) throw new FormatException("неверный снимок координат"); points.Add(new[] { SnapshotNumber(xy[0]), SnapshotNumber(xy[1]) }); }
+                var bulges = new List<double>(); foreach (var b in Items(Get(d, "bulges"))) bulges.Add(SnapshotNumber(b));
                 result.Add(new GeometryLoop { Role = S(Get(d, "role")), Points = points.ToArray(), Bulges = bulges.ToArray(), Closed = Convert.ToBoolean(Get(d, "closed"), CultureInfo.InvariantCulture) });
             }
             return result;
+        }
+
+        // JavaScriptSerializer writes CAD doubles in round-trip format but reads
+        // their JSON literals as Decimal. Decimal -> Double can round via an
+        // intermediate value and change the last bit (e.g. -98765.432109876536).
+        // Read the stored literal directly as Double, as required by that format.
+        // Keep Canonical/part/report conversion unchanged for existing schema 1 hashes.
+        private static double SnapshotNumber(object value)
+        {
+            if (value is decimal)
+                return double.Parse(((decimal)value).ToString(CultureInfo.InvariantCulture), CultureInfo.InvariantCulture);
+            return D(value);
         }
 
         private static void Store(Transaction tr, Entity carrier, Dictionary<string, object> state, IList<ObjectId> refs)
