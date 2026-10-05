@@ -17,6 +17,7 @@ on:
       - "Facades/tests/**"
       - "AClad/src/**"
       - "AClad/engine/**"
+      - "AClad/tests/**"
       - "AFrame/src/**"
       - "AFrame/engine/**"
       - "AFrame/tests/**"
@@ -99,7 +100,7 @@ jobs:
           python test_facade_zones.py
           python test_facades_engine.py
 
-      - name: Facade bundle versions and legacy zone adoption
+      - name: Facade startup, versions, dynamic blocks and legacy zones
         shell: pwsh
         env:
           PYTHONUTF8: "1"
@@ -108,6 +109,8 @@ jobs:
           python tools/facades/test_bundle_versions.py
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           python tools/facades/test_startup.py
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          python AClad/tests/test_dynamic_block_size.py
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           python Facades/tests/test_zone_migration.py
           exit $LASTEXITCODE

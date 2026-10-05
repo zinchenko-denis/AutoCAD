@@ -14,6 +14,7 @@ export PYTHONUTF8=1
 (cd AFrame/engine && python3 test_frame_plan.py && python3 test_frame_calc.py && python3 test_frame_beam.py && python3 test_frame_cutting.py && python3 test_frame_engine.py && python3 test_frame_topology.py && python3 test_frame_topology_index.py && python3 test_frame_connections.py && python3 test_frame_solution_selection.py && python3 audit_frame.py)
 python3 tools/facades/test_bundle_versions.py
 python3 tools/facades/test_startup.py
+python3 AClad/tests/test_dynamic_block_size.py # настоящий MakeDynRef: итоговая пара размеров, база и геометрия; CAD doubles, не нативный вычислитель динблока
 python3 Facades/tests/test_zone_migration.py
 python3 tools/xmod_check.py --no-fixture      # стыки модулей (ATSPEC X6 — не фасады, известен)
 python3 AFrame/tools/frame_synth.py --quick   # F16 исправлен 30.09; исключение больше не требуется

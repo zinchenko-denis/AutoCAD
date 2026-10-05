@@ -122,8 +122,8 @@ namespace AFramePlugin
                 "ATFPROJECT — общие параметры фасадного проекта в текущем чертеже.", "afr_frame"));
             src.Items.Add(MakeButton("Параметры\nзоны", "ATFZONEPARAMS",
                 "ATFZONEPARAMS — наследование параметров проекта, исключения для выбранных зон и отвязка от проекта.", "afr_frame"));
-            src.Items.Add(MakeButton("Схема\nузла", "ATFNODE",
-                "ATFNODE — создать или проверить размерную схему узла. Это диагностическая схема, а не рабочий узел.", "afr_frame"));
+            src.Items.Add(MakeButton("Схема\nслоёв", "ATFNODE",
+                "ATFNODE — справочная схема параметров зоны; чертёж из альбома не вставляется.", "afr_frame"));
             var panel = new RibbonPanel { Source = src };
             tab.Panels.Add(panel);
         }

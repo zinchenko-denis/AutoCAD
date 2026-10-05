@@ -41,7 +41,7 @@ namespace AFramePlugin
                 throw new FrameNodeGeometryException("E_NODE_CONTEXT", "Для схемы нужны параметры одной явно привязанной зоны.");
             _selection = FrameNodeGeometry.CloneSelection(selection); _context = context.Clone(); _context.ValidateSelection(_selection);
             var initial = initialInput == null ? FrameNodeGeometryInput.CreateDefault() : initialInput.Clone();
-            Name = "frame_node"; Text = "ATFNODE — размерная схема";
+            Name = "frame_node"; Text = "ATFNODE — схема слоёв";
             StartPosition = FormStartPosition.CenterParent; ShowInTaskbar = false; MinimizeBox = false;
             AutoScaleMode = AutoScaleMode.Font; Font = new Font("Segoe UI", 9f);
             ClientSize = new Size(900, 650); MinimumSize = new Size(760, 530);
@@ -51,7 +51,7 @@ namespace AFramePlugin
             layout.RowStyles.Add(new RowStyle(SizeType.AutoSize));
             layout.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
             layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 100));
-            var heading = Wrapped("Размерная схема известных плоскостей. Основание стены: x = 0; положительное x направлено наружу. Это подготовительная схема, не рабочий узел и не динамический блок.");
+            var heading = Wrapped("Справочная схема стены, утеплителя, направляющей и облицовки по введённым размерам. Готовый чертёж узла из альбома не вставляется. Основание стены: x = 0; положительное x направлено наружу.");
             heading.Name = "node_heading"; layout.Controls.Add(heading, 0, 0); WrapToWidth(layout, heading);
 
             _editor = BuildEditor(); _scroll.Controls.Add(_editor);

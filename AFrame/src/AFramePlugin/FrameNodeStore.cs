@@ -73,7 +73,10 @@ namespace AFramePlugin
             try { d = FrameNodeJson.Object(Json().DeserializeObject(text.ToString()), "schema", "renderer", "owner", "definition", "zone", "zone_fingerprint", "snapshot", "unit_declaration", "drawing_units", "drawing_digest", "cad_content_digest"); }
             catch (FrameNodeGeometryException) { throw; }
             catch (Exception) { Fail("E_NODE_RECORD", "Паспорт схемы не читается; отсутствие параметров не подставляется."); return null; }
-            FrameNodeJson.Equal(d["schema"], Schema); FrameNodeJson.Equal(d["renderer"], FrameNodeRenderer.Revision);
+            FrameNodeJson.Equal(d["schema"], Schema);
+            string renderer = Text(d, "renderer");
+            if (renderer != FrameNodeRenderer.Revision && renderer != FrameNodeRenderer.LegacyRevision)
+                Fail("E_NODE_RECORD", "Неизвестная версия оформления схемы.");
             if (refs.Count != 3 || refs[0] != owner.ObjectId || refs[1] != owner.BlockTableRecord ||
                 Text(d, "owner") != owner.Handle.ToString() || Text(d, "definition") != owner.BlockTableRecord.Handle.ToString())
                 Fail("E_NODE_COPY", "Схема скопирована или её определение подменено. Создайте новый экземпляр ATFNODE.");
@@ -87,7 +90,7 @@ namespace AFramePlugin
             if (snapshot.Context.zone.owner_handle != zone.Handle.ToString()) Fail("E_NODE_OWNER", "Владелец снимка не соответствует зоне.");
             var drawing = FrameNodeDrawingBuilder.Build(snapshot.Result, snapshot.CaptionLines());
             if (drawing.Digest != drawingDigest) Fail("E_NODE_BODY_CHANGED", "Состав размерной схемы не соответствует её снимку.");
-            if (FrameNodeRenderer.CadContentDigest(tr, owner) != expectedBody) Fail("E_NODE_BODY_CHANGED", "Геометрия, подписи или оформление схемы изменены. Создайте новую схему; прежняя не подтверждена.");
+            if (FrameNodeRenderer.CadContentDigest(tr, owner, renderer) != expectedBody) Fail("E_NODE_BODY_CHANGED", "Геометрия, подписи или оформление схемы изменены. Создайте новую схему; прежняя не подтверждена.");
             return new FrameNodeStored { Snapshot = snapshot, OwnerId = owner.ObjectId, DefinitionId = refs[1], ZoneId = refs[2],
                 OwnerHandle = owner.Handle.ToString(), ZoneHandle = zone.Handle.ToString(), ZoneFingerprint = Text(d, "zone_fingerprint"),
                 UnitDeclaration = Text(d, "unit_declaration"), DrawingUnits = units, DrawingDigest = drawingDigest,

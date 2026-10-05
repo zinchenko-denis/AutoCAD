@@ -1095,17 +1095,21 @@ namespace ACladPlugin
             ms.AppendEntity(br);
             tr.AddNewlyCreatedDBObject(br, true);
             if (p.Te != null) p.Te.ApplyLook(br);     // видимость/цвет/прочие свойства образца
-            bool okW = false, okH = false;
             foreach (DynamicBlockReferenceProperty pr in br.DynamicBlockReferencePropertyCollection)
             {
                 if (pr.ReadOnly) continue;
-                if (pr.PropertyName == p.PW) okW = CladCommand.TrySetNum(pr, p.W);
-                else if (pr.PropertyName == p.PH) okH = CladCommand.TrySetNum(pr, p.H);
+                if (pr.PropertyName == p.PW) CladCommand.TrySetNum(pr, p.W);
+                else if (pr.PropertyName == p.PH) CladCommand.TrySetNum(pr, p.H);
             }
-            ok = okW && okH;
-            if (!ok || !CladCommand.DynSizeMatches(br, p.PW, p.PH, p.W, p.H))
+            // Проверяем окончательную пару из новой коллекции. Промежуточное
+            // чтение сразу после одного setter ещё не является итогом пары.
+            // Уже верное read-only значение также не требует записи.
+            ok = CladCommand.DynSizeMatches(br, p.PW, p.PH, p.W, p.H);
+            if (!ok)
                 throw new InvalidOperationException("Динамический блок не принимает размер " +
-                    F2(p.W) + "×" + F2(p.H) + " мм. Выберите другой элемент или прямоугольник ATTILE.");
+                    F2(p.W) + "×" + F2(p.H) + " мм. " +
+                    CladCommand.DynSizeDescription(br, p.PW, p.PH) +
+                    " Прежняя раскладка сохранена; передайте этот текст разработчику.");
             CladCommand.RequirePlacement(tr, br, x, y, p.W, p.H);
             FillAttributes(tr, br, p.Root, attCache);
             return br;

@@ -86,18 +86,33 @@ namespace Autodesk.AutoCAD.DatabaseServices
         public int ColorIndex=256;
         public Autodesk.AutoCAD.Colors.Color Color=Autodesk.AutoCAD.Colors.Color.FromColorIndex(Autodesk.AutoCAD.Colors.ColorMethod.ByLayer,256);
         public bool Visible=true; public double LinetypeScale=1; public LineWeight LineWeight=LineWeight.ByLayer;
-        public ObjectId LayerId; public Autodesk.AutoCAD.Colors.Transparency Transparency=new Autodesk.AutoCAD.Colors.Transparency(0);
+        public ObjectId LayerId;
+        public static Autodesk.AutoCAD.Colors.Transparency DefaultTransparency=new Autodesk.AutoCAD.Colors.Transparency(255);
+        public Autodesk.AutoCAD.Colors.Transparency Transparency=DefaultTransparency;
         public void SetDatabaseDefaults(){} public void SetDatabaseDefaults(Database db){}
 
     }
     public sealed class Hatch : Entity { }
     public sealed class MText : Entity {
+        // Native optional getters are not unrestricted fields. In particular,
+        // getBackgroundFillColor/getBackgroundScaleFactor return eNotApplicable
+        // when no background has been defined (Autodesk ObjectARX reference).
+        internal static bool StrictOptionalProperties;
         public Autodesk.AutoCAD.Geometry.Point3d Location;
         public Autodesk.AutoCAD.Geometry.Vector3d Normal=Autodesk.AutoCAD.Geometry.Vector3d.ZAxis;
         public double TextHeight=2.5, Width, Rotation, LineSpacingFactor=1;
         public string Contents=""; public AttachmentPoint Attachment=AttachmentPoint.TopLeft;
         public ObjectId TextStyleId; public bool BackgroundFill, UseBackgroundColor, ShowBorders;
-        public double BackgroundScaleFactor=1.5; public int ColumnType,ColumnCount; public double ColumnWidth,ColumnGutterWidth; public Autodesk.AutoCAD.Colors.Color BackgroundFillColor=Autodesk.AutoCAD.Colors.Color.FromColorIndex(Autodesk.AutoCAD.Colors.ColorMethod.ByAci,7);
+        private double backgroundScaleFactor=1.5,columnWidth,columnGutterWidth; private int columnCount;
+        private Autodesk.AutoCAD.Colors.Color backgroundFillColor=Autodesk.AutoCAD.Colors.Color.FromColorIndex(Autodesk.AutoCAD.Colors.ColorMethod.ByAci,7);
+        public int ColumnType;
+        public double BackgroundScaleFactor {get {BackgroundRequired();return backgroundScaleFactor;} set {backgroundScaleFactor=value;}}
+        public Autodesk.AutoCAD.Colors.Color BackgroundFillColor {get {BackgroundRequired();return backgroundFillColor;} set {backgroundFillColor=value;}}
+        public int ColumnCount {get {ColumnsRequired();return columnCount;} set {columnCount=value;}}
+        public double ColumnWidth {get {ColumnsRequired();return columnWidth;} set {columnWidth=value;}}
+        public double ColumnGutterWidth {get {ColumnsRequired();return columnGutterWidth;} set {columnGutterWidth=value;}}
+        private void BackgroundRequired(){if(StrictOptionalProperties&&!BackgroundFill)throw new InvalidOperationException("eNotApplicable: background fill is not defined");}
+        private void ColumnsRequired(){if(StrictOptionalProperties&&ColumnType==0)throw new InvalidOperationException("Column data is not defined for NoColumns");}
         public LineSpacingStyle LineSpacingStyle=LineSpacingStyle.AtLeast;
     }
     public sealed class Polyline : Entity { }
@@ -291,7 +306,12 @@ namespace Autodesk.AutoCAD.Colors {
   public bool IsByAci {get{return ColorMethod==ColorMethod.ByAci;}}
   public bool IsByColor {get{return ColorMethod==ColorMethod.ByColor;}}
  }
- public struct Transparency {public byte Alpha;public bool ByLayerFlag,ByBlockFlag;public Transparency(byte value){Alpha=value;ByLayerFlag=ByBlockFlag=false;}public bool IsByLayer {get{return ByLayerFlag;}}public bool IsByBlock {get{return ByBlockFlag;}}}
+ public struct Transparency {
+  private byte alpha;public static bool StrictAlpha;public bool ByLayerFlag,ByBlockFlag,InvalidFlag;
+  public Transparency(byte value){alpha=value;ByLayerFlag=ByBlockFlag=InvalidFlag=false;}
+  public byte Alpha {get{if(StrictAlpha&&!IsByAlpha)throw new InvalidOperationException("eInvalidKey");return alpha;}set{alpha=value;}}
+  public bool IsByLayer {get{return ByLayerFlag;}}public bool IsByBlock {get{return ByBlockFlag;}}public bool IsByAlpha {get{return !ByLayerFlag&&!ByBlockFlag&&!InvalidFlag;}}
+ }
 }
 namespace Autodesk.AutoCAD.DatabaseServices {
  using Autodesk.AutoCAD.Geometry;

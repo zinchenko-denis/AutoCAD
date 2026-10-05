@@ -38,10 +38,11 @@ namespace AFramePlugin
                 else if (mode.StringResult == "Check" || mode.StringResult == "Проверить") Check(ed, db);
             }
             catch (FrameNodeGeometryException ex) { ed.WriteMessage("\nATFNODE: " + ex.Message + " [" + ex.Code + "]"); }
-            catch (System.Exception ex) { ed.WriteMessage("\nATFNODE: операция не выполнена. " + ex.Message); }
+            catch (System.Exception ex) { ed.WriteMessage("\nATFNODE: операция не выполнена. " + ex.Message + "\nПодробности для разбора ошибки (F2):\n" + ex); }
         }
         private static void Create(Autodesk.AutoCAD.ApplicationServices.Document doc, Editor ed, Database db)
         {
+            ed.WriteMessage("\nБудет построена справочная схема стены, утеплителя, направляющей и облицовки по введённым размерам. Готовый чертёж узла из альбома не вставляется.");
             var selected = ed.GetEntity(new PromptEntityOptions("\nВыберите штриховку или марку зоны, привязанной через ATFZONEPARAMS: "));
             if (selected.Status != PromptStatus.OK) return;
             Source source;

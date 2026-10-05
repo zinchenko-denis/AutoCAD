@@ -110,8 +110,18 @@ namespace Autodesk.AutoCAD.ApplicationServices {
 public class FakeApplication {
  public FakeGroups MenuGroups = new FakeGroups(); public FakeBar MenuBar = new FakeBar();
 }
-public class FakeBar { public int Count { get { return 4; } } }
-public class FakeGroups { public FakeGroup Item(int i) { return Group; } public FakeGroup Group = new FakeGroup(); }
+public class FakeBar {
+ public int Count { get {
+  var app = (FakeApplication)Autodesk.AutoCAD.ApplicationServices.Application.AcadApplication;
+  int count = 4; // Built-in menus are outside the test-owned groups.
+  foreach (var group in app.MenuGroups.All)
+   foreach (var menu in group.Menus.All) if (menu.OnMenuBar) count++;
+  return count;
+ } }
+}
+public class FakeGroups { public FakeGroups() { All.Add(Group); }
+ public List<FakeGroup> All = new List<FakeGroup>(); public int Count { get { return All.Count; } }
+ public FakeGroup Item(int i) { return All[i]; } public FakeGroup Group = new FakeGroup(); }
 public class FakeGroup { public FakeMenus Menus = new FakeMenus(); }
 public class FakeMenus {
  public List<FakeMenu> All = new List<FakeMenu>();
@@ -120,25 +130,42 @@ public class FakeMenus {
  public FakeMenu Add(string name) { var menu = new FakeMenu { Name = name }; All.Add(menu); return menu; }
 }
 public class FakeMenu {
+ public static int FailAfterAdds = -1;
  public string Name; public string NameNoMnemonic { get { return Name; } } public bool OnMenuBar, FailAdd;
  public List<FakeItem> Items = new List<FakeItem>();
  public int Count { get { return Items.Count; } }
  public FakeItem Item(int i) { return Items[i]; }
  public FakeItem AddMenuItem(int i, string label, string macro) {
-  if (FailAdd) throw new InvalidOperationException("COM menu unavailable");
+  if (FailAdd || FailAfterAdds == 0) throw new InvalidOperationException("COM menu unavailable");
+  if (FailAfterAdds > 0) FailAfterAdds--;
   var item = new FakeItem { Caption = label, Macro = macro, Menu = this }; Items.Insert(i, item); return item;
  }
- public void InsertInMenuBar(int i) { OnMenuBar = true; }
- public void RemoveFromMenuBar() { OnMenuBar = false; }
+ public void InsertInMenuBar(int i) {
+  var app = (FakeApplication)Autodesk.AutoCAD.ApplicationServices.Application.AcadApplication;
+  if (OnMenuBar || i < 0 || i > app.MenuBar.Count) throw new InvalidOperationException("invalid menu insertion");
+  OnMenuBar = true;
+ }
+ public void RemoveFromMenuBar() {
+  if (!OnMenuBar) throw new InvalidOperationException("menu is not on menu bar");
+  OnMenuBar = false;
+ }
 }
 public class FakeItem { public string Caption, Macro; public FakeMenu Menu; public void Delete() { Menu.Items.Remove(this); } }
 FAKE_PLUGINS
 public class Probe {
- static int Checks; public static int Errors;
- static void Expect(bool condition, string label) { Checks++; if (!condition) throw new Exception(label); }
+ static int Checks, Failures; public static int Errors;
+ static void Expect(bool condition, string label) { Checks++; if (!condition) { Failures++; Console.WriteLine("FAIL: " + label); } }
  static void Init() { AFacadesPlugin.FacadesClassic.Init(); ACladPlugin.FacadesClassic.Init(); AFramePlugin.FacadesClassic.Init(); }
  static void Main() {
-  Init(); var app = (FakeApplication)Autodesk.AutoCAD.ApplicationServices.Application.AcadApplication;
+  var app = (FakeApplication)Autodesk.AutoCAD.ApplicationServices.Application.AcadApplication;
+  // A real COM call can fail after creating some items. Exit must still remove them.
+  FakeMenu.FailAfterAdds = 1; AFacadesPlugin.FacadesClassic.Init();
+  Expect(Errors == 1, "partial first initialization exposes the injected COM exception");
+  var partial = app.MenuGroups.Group.Menus.Item(0);
+  Autodesk.AutoCAD.ApplicationServices.Application.Quit();
+  Expect(partial.Count == 0 && !partial.OnMenuBar, "failed first initialization still installs quit cleanup");
+  FakeMenu.FailAfterAdds = -1; Errors = 0;
+  Init();
   Expect(app.MenuGroups.Group.Menus.Count == 1, "one shared menu");
   var menu = app.MenuGroups.Group.Menus.Item(0);
   Expect(menu.Count == 11 && menu.OnMenuBar, "all commands and menubar");
@@ -158,7 +185,33 @@ public class Probe {
   Expect(Errors == 3, "actual classic Init reports swallowed COM failures");
   menu.FailAdd = false; Init();
   Expect(menu.Count == 11 && menu.OnMenuBar, "menu recovers after transient COM failure");
-  Console.WriteLine("PASS: " + Checks + " actual COM menu lifecycle checks (CAD doubles)");
+  // MenuGroups.Item(0) is not a stable identity when partial customizations load.
+  // The same failure was already documented for the SPDS profile in July.
+  var foreignGroup = new FakeGroup(); app.MenuGroups.All.Insert(0, foreignGroup);
+  var foreignMenu = foreignGroup.Menus.Add("Инструменты пользователя");
+  foreignMenu.AddMenuItem(0, "Линия", "_LINE "); foreignMenu.InsertInMenuBar(0);
+  Autodesk.AutoCAD.ApplicationServices.Application.Quit();
+  Expect(menu.Count == 0 && !menu.OnMenuBar, "quit finds facade menu after MenuGroups reorder");
+  Expect(foreignMenu.Count == 1 && foreignMenu.OnMenuBar, "cleanup preserves other customization menus");
+  Init();
+  Expect(menu.Count == 11 && menu.OnMenuBar && foreignGroup.Menus.Count == 1,
+      "initialization finds the existing menu outside Item(0), without a duplicate");
+  app.MenuGroups.All.Remove(foreignGroup);
+  // This exact old caption is in the release history. A caption change must
+  // not strand the old command; an unrelated macro with our caption is not ours.
+  menu.AddMenuItem(menu.Count, "Размерная схема узла (ATFNODE)", "_ATFNODE ");
+  var userItem = menu.AddMenuItem(menu.Count, "Зоны фасада (ATFZONE)", "_LINE ");
+  var extended = menu.AddMenuItem(menu.Count, "Пользовательская команда", "_ATFZONE_EXTRA ");
+  Init();
+  Expect(menu.Count == 13 && menu.Items.FindAll(i => i.Macro == "_ATFNODE ").Count == 1,
+      "renamed legacy command is replaced without duplication");
+  Expect(menu.Items.Contains(userItem) && menu.Items.Contains(extended),
+      "same caption and similar command names do not confer ownership");
+  Autodesk.AutoCAD.ApplicationServices.Application.Quit();
+  Expect(menu.Count == 2 && menu.Items.Contains(userItem) && menu.Items.Contains(extended),
+      "quit removes only exact owned command macros");
+  Console.WriteLine((Failures == 0 ? "PASS: " : "FAIL: ") + Checks + " actual COM menu lifecycle checks (CAD doubles); failures=" + Failures);
+  if (Failures != 0) Environment.Exit(1);
  }
 }
 '''

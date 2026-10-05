@@ -3,7 +3,7 @@
 // панель не найти»). Паттерн — боевой ClassicUi ATableSpec: позднее
 // связывание COM (dynamic), макросы «_CMD » БЕЗ ^C^C (грабля 25.06).
 // Меню одно на все фасадные модули; каждый плагин идемпотентно
-// пересоздаёт только СВОИ пункты (по подписи).
+// пересоздаёт только СВОИ пункты (по точному макросу команды).
 
 using System;
 using AcApp = Autodesk.AutoCAD.ApplicationServices.Application;
@@ -28,7 +28,7 @@ namespace AFacadesPlugin
         {
             try
             {
-                Build();
+                // Подписка до Build: частично созданное меню тоже надо убрать.
                 // 03.08 (скрин Германа): запись «ACAD:Фасады» в
                 // профиле menubar давала «Ошибка при загрузке
                 // элемента меню» при КАЖДОМ старте — профиль
@@ -43,6 +43,7 @@ namespace AFacadesPlugin
                     AcApp.QuitAborted += delegate { Init(); };
                     _quitHooked = true;
                 }
+                Build();
             }
             catch (System.Exception ex) { Plugin.ReportStartupFailure("классическое меню", ex); }
         }
@@ -66,30 +67,29 @@ namespace AFacadesPlugin
         {
             dynamic app = AcApp.AcadApplication;
             if (app == null) return null;
-            dynamic mg = app.MenuGroups.Item(0);
-            dynamic menus = mg.Menus;
-            for (int i = 0; i < (int)menus.Count; i++)
+            dynamic groups = app.MenuGroups;
+            // Частичные CUI могут изменить порядок групп: Item(0) не является
+            // сохранённой идентичностью меню (грабля СПДС из ClassicUi, 07.07).
+            for (int g = 0; g < (int)groups.Count; g++)
             {
-                dynamic m = menus.Item(i);
-                string nm = null;
-                try { nm = (string)m.NameNoMnemonic; } catch { }
-                if (nm == null)
-                    try { nm = (string)m.Name; } catch { }
-                if (nm != null &&
-                    nm.Replace("&", "") == MenuName)
+                dynamic menus = groups.Item(g).Menus;
+                for (int i = 0; i < (int)menus.Count; i++)
                 {
-                    // 24.09 (рецензия): после отменённого выхода (QuitAborted) меню
-                    // оставалось в Menus, но снятым с menubar — вернуть на место
-                    if (create)
-                        try { if (!(bool)m.OnMenuBar) m.InsertInMenuBar((int)app.MenuBar.Count); }
-                        catch { }
+                    dynamic m = menus.Item(i);
+                    string nm = null;
+                    try { nm = (string)m.NameNoMnemonic; } catch { }
+                    if (nm == null)
+                        try { nm = (string)m.Name; } catch { }
+                    if (nm == null || nm.Replace("&", "") != MenuName) continue;
+                    // После отменённого выхода вернуть снятое с menubar меню.
+                    if (create && !(bool)m.OnMenuBar)
+                        m.InsertInMenuBar((int)app.MenuBar.Count);
                     return m;
                 }
             }
-            if (!create) return null;
-            dynamic menu = menus.Add(MenuName);
-            try { menu.InsertInMenuBar((int)app.MenuBar.Count); }
-            catch { }
+            if (!create || (int)groups.Count == 0) return null;
+            dynamic menu = groups.Item(0).Menus.Add(MenuName);
+            menu.InsertInMenuBar((int)app.MenuBar.Count);
             return menu;
         }
 
@@ -99,12 +99,11 @@ namespace AFacadesPlugin
             for (int i = (int)menu.Count - 1; i >= 0; i--)
             {
                 dynamic it = menu.Item(i);
-                string cap = null;
-                try { cap = (string)it.Caption; } catch { }
-                if (cap == null) continue;
-                cap = cap.Replace("&", "");
+                string macro = null;
+                try { macro = (string)it.Macro; } catch { }
+                if (macro == null) continue;
                 foreach (var my in Items)
-                    if (cap == my[0])
+                    if (macro == "_" + my[1] + " ")
                     { try { it.Delete(); } catch { } break; }
             }
         }

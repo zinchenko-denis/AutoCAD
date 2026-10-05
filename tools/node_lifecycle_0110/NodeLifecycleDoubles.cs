@@ -26,7 +26,7 @@ namespace Autodesk.AutoCAD.Colors {
   public System.Drawing.Color ColorValue {get{return System.Drawing.Color.FromArgb(255,Red,Green,Blue);}}
   public static Color FromColorIndex(ColorMethod method,short index){return new Color{ColorMethod=method,ColorIndex=index};}
  }
- public struct Transparency {public byte Alpha;public bool IsByLayer,IsByBlock;public Transparency(byte alpha){Alpha=alpha;IsByLayer=IsByBlock=false;}}
+ public struct Transparency {public byte Alpha;public bool IsByLayer,IsByBlock;public bool IsByAlpha {get{return !IsByLayer&&!IsByBlock;}}public Transparency(byte alpha){Alpha=alpha;IsByLayer=IsByBlock=false;}}
 }
 namespace Autodesk.AutoCAD.GraphicsInterface {
  public struct FontDescriptor {public string TypeFace;public bool Bold,Italic;public int CharacterSet,PitchAndFamily;public FontDescriptor(string face,bool bold,bool italic,int charset,int pitch){TypeFace=face;Bold=bold;Italic=italic;CharacterSet=charset;PitchAndFamily=pitch;}}

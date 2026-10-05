@@ -579,19 +579,19 @@ namespace ACladPlugin
                     // (числовые; видимость не трогаем — В8)
                     if (dynW != null && dynH != null && br.IsDynamicBlock)
                     {
-                        bool okW = false, okH = false;
                         foreach (DynamicBlockReferenceProperty pr in
                                  br.DynamicBlockReferencePropertyCollection)
                         {
                             if (pr.ReadOnly) continue;
                             if (pr.PropertyName == dynW)
-                                okW = TrySetNum(pr, w);
+                                TrySetNum(pr, w);
                             else if (pr.PropertyName == dynH)
-                                okH = TrySetNum(pr, h);
+                                TrySetNum(pr, h);
                         }
-                        if (!okW || !okH || !DynSizeMatches(br, dynW, dynH, w, h))
+                        if (!DynSizeMatches(br, dynW, dynH, w, h))
                             throw new InvalidOperationException("Блок «" + blockName + "» не принимает размер " +
-                                F0(w) + "×" + F0(h) + " мм. Раскладка отменена; прежние объекты сохранены.");
+                                F0(w) + "×" + F0(h) + " мм. " + DynSizeDescription(br, dynW, dynH) +
+                                " Раскладка отменена; прежние объекты сохранены.");
                     }
                     RequirePlacement(tr, br, x, y, w, h);
 
@@ -1223,6 +1223,21 @@ namespace ACladPlugin
                 if (pr.PropertyName == ph) gotH = Math.Abs(actual - h) <= 1e-6;
             }
             return gotW && gotH;
+        }
+
+        internal static string DynSizeDescription(BlockReference br, string pw, string ph)
+        {
+            var values = new List<string>();
+            foreach (DynamicBlockReferenceProperty pr in br.DynamicBlockReferencePropertyCollection)
+            {
+                if (pr.PropertyName != pw && pr.PropertyName != ph) continue;
+                string actual;
+                try { actual = Convert.ToString(pr.Value, CultureInfo.InvariantCulture); }
+                catch (System.Exception ex) { actual = ex.GetType().Name + ": " + ex.Message; }
+                values.Add("«" + pr.PropertyName + "»=" + actual + (pr.ReadOnly ? " (только чтение)" : ""));
+            }
+            return "После задания обоих размеров: " +
+                (values.Count == 0 ? "параметры не найдены" : string.Join(", ", values.ToArray())) + ".";
         }
 
         // Числовой параметр ещё не доказывает правильную геометрию блока.

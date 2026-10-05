@@ -7,7 +7,7 @@ namespace AFramePlugin
 {
     internal static class FrameNodeRenderer
     {
-        internal const string LayerName = "_01_УЗЛЫ_СХЕМЫ", BlockPrefix = "AFNODE_SCHEMA_", Revision = "aframe_node_renderer/1";
+        internal const string LayerName = "_01_УЗЛЫ_СХЕМЫ", BlockPrefix = "AFNODE_SCHEMA_", Revision = "aframe_node_renderer/2", LegacyRevision = "aframe_node_renderer/1";
         internal const int MaxPrimitives = FrameNodeDrawingBuilder.MaxPrimitives;
         internal static BlockReference Create(Transaction tr, Database db, FrameNodeDrawing drawing, Point3d positionWcs)
         {
@@ -55,7 +55,7 @@ namespace AFramePlugin
         }
         private static string Escape(string text)
         { return (text ?? "").Replace("\\", "\\\\").Replace("{", "\\{").Replace("}", "\\}").Replace("\r", "").Replace("\n", "\\P"); }
-        internal static string CadContentDigest(Transaction tr, BlockReference owner)
+        internal static string CadContentDigest(Transaction tr, BlockReference owner, string rendererRevision = Revision)
         {
             ValidateTransform(owner);
             CheckExtensions(tr, owner, true);
@@ -73,7 +73,7 @@ namespace AFramePlugin
                 var entity = tr.GetObject(id, OpenMode.ForRead) as Entity;
                 if (entity == null || entity.IsErased) Fail("E_NODE_BODY_CHANGED", "Примитив схемы отсутствует.");
                 CheckExtensions(tr, entity, false);
-                var record = Style(entity); record["handle"] = entity.Handle.ToString();
+                var record = Style(entity, rendererRevision); record["handle"] = entity.Handle.ToString();
                 var line = entity as Line; var text = entity as MText;
                 if (line != null)
                 {
@@ -86,11 +86,23 @@ namespace AFramePlugin
                     record["height"] = Finite(text.TextHeight); record["width"] = Finite(text.Width); record["rotation"] = Finite(text.Rotation);
                     record["normal"] = Vector(text.Normal); record["attachment"] = (int)text.Attachment;
                     record["spacing"] = Finite(text.LineSpacingFactor); record["spacing_style"] = (int)text.LineSpacingStyle;
-                    record["background"] = text.BackgroundFill; record["background_color"] = text.BackgroundFillColor.ColorValue.ToArgb();
-                    record["background_method"] = text.BackgroundFillColor.ColorMethod.ToString(); record["background_scale"] = Finite(text.BackgroundScaleFactor);
+                    record["background"] = text.BackgroundFill;
+                    // Optional native getters fail when this MText has no
+                    // background/column data. Doubles used to return values
+                    // unconditionally and hid that failure on freshly drawn text.
+                    if (text.BackgroundFill || rendererRevision == LegacyRevision)
+                    {
+                        var background = text.BackgroundFillColor;
+                        record["background_color"] = background.ColorValue.ToArgb();
+                        record["background_method"] = background.ColorMethod.ToString(); record["background_scale"] = Finite(text.BackgroundScaleFactor);
+                    }
                     record["background_use_drawing"] = text.UseBackgroundColor; record["borders"] = text.ShowBorders;
-                    record["columns"] = (int)text.ColumnType; record["column_count"] = text.ColumnCount;
-                    record["column_width"] = Finite(text.ColumnWidth); record["column_gutter"] = Finite(text.ColumnGutterWidth);
+                    int columns = (int)text.ColumnType; record["columns"] = columns;
+                    if (columns != 0 || rendererRevision == LegacyRevision) // 0 = NoColumns
+                    {
+                        record["column_count"] = text.ColumnCount;
+                        record["column_width"] = Finite(text.ColumnWidth); record["column_gutter"] = Finite(text.ColumnGutterWidth);
+                    }
                     record["style"] = text.TextStyleId.Handle.ToString();
                     object style;
                     if (!styles.TryGetValue(text.TextStyleId, out style))
@@ -109,10 +121,10 @@ namespace AFramePlugin
             }
             if (body.Count == 0) Fail("E_NODE_BODY_CHANGED", "Определение схемы пусто.");
             var layer = (LayerTableRecord)tr.GetObject(owner.LayerId, OpenMode.ForRead);
-            return FrameParameterJson.Hash(new Dictionary<string, object> { { "renderer", Revision }, { "definition", definition.Handle.ToString() },
+            return FrameParameterJson.Hash(new Dictionary<string, object> { { "renderer", rendererRevision }, { "definition", definition.Handle.ToString() },
                 { "name", definition.Name }, { "units", (int)definition.Units }, { "origin", Point(definition.Origin) },
-                { "reference_style", Style(owner) }, { "layer_state", new object[] { layer.Name, layer.IsOff, layer.IsFrozen, layer.IsLocked,
-                    layer.Color.ColorMethod.ToString(), layer.Color.ColorValue.ToArgb(), (int)layer.LineWeight, layer.LinetypeObjectId.Handle.ToString(), layer.Transparency.Alpha, layer.Transparency.IsByLayer, layer.Transparency.IsByBlock } }, { "body", body } });
+                { "reference_style", Style(owner, rendererRevision) }, { "layer_state", new object[] { layer.Name, layer.IsOff, layer.IsFrozen, layer.IsLocked,
+                    layer.Color.ColorMethod.ToString(), layer.Color.ColorValue.ToArgb(), (int)layer.LineWeight, layer.LinetypeObjectId.Handle.ToString(), Alpha(layer.Transparency, rendererRevision), layer.Transparency.IsByLayer, layer.Transparency.IsByBlock } }, { "body", body } });
         }
         private static void CheckExtensions(Transaction tr, DBObject owner, bool nodeOwner)
         {
@@ -138,11 +150,18 @@ namespace AFramePlugin
                 axes.Xaxis.CrossProduct(axes.Yaxis).DotProduct(Vector3d.ZAxis) < 1 - 1e-12)
                 Fail("E_NODE_TRANSFORM", "Преобразование схемы не является переносом и поворотом XY без масштаба.");
         }
-        private static Dictionary<string, object> Style(Entity e)
+        private static Dictionary<string, object> Style(Entity e, string rendererRevision)
         { return new Dictionary<string, object> { { "layer", e.Layer }, { "color_method", e.Color.ColorMethod.ToString() },
             { "color", e.Color.ColorValue.ToArgb() }, { "color_index", e.ColorIndex }, { "linetype", e.Linetype },
             { "linetype_scale", Finite(e.LinetypeScale) }, { "lineweight", (int)e.LineWeight }, { "visible", e.Visible },
-            { "transparency", e.Transparency.Alpha }, { "transparency_by_layer", e.Transparency.IsByLayer }, { "transparency_by_block", e.Transparency.IsByBlock } }; }
+            { "transparency", Alpha(e.Transparency, rendererRevision) }, { "transparency_by_layer", e.Transparency.IsByLayer }, { "transparency_by_block", e.Transparency.IsByBlock } }; }
+        private static object Alpha(Autodesk.AutoCAD.Colors.Transparency value, string rendererRevision)
+        {
+            // AutoCAD throws eInvalidKey for Alpha on inherited transparency.
+            // The two method flags remain in the digest, so ByLayer/ByBlock
+            // cannot be silently changed into an explicit opacity or each other.
+            return value.IsByAlpha || rendererRevision == LegacyRevision ? (object)value.Alpha : null;
+        }
         private static double Finite(double value) { if (double.IsNaN(value) || double.IsInfinity(value)) Fail("E_NODE_BODY_CHANGED", "Неконечная координата или параметр схемы."); return value; }
         private static double[] Point(Point3d p) { return new[] { Finite(p.X), Finite(p.Y), Finite(p.Z) }; }
         private static double[] Vector(Vector3d v) { return new[] { Finite(v.X), Finite(v.Y), Finite(v.Z) }; }
