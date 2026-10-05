@@ -168,23 +168,23 @@ public class Probe {
   Init();
   Expect(app.MenuGroups.Group.Menus.Count == 1, "one shared menu");
   var menu = app.MenuGroups.Group.Menus.Item(0);
-  Expect(menu.Count == 11 && menu.OnMenuBar, "all commands and menubar");
-  var expected = new HashSet<string> { "_ATFZONE ", "_ATFTABLE ", "_ATFZONEACCEPT ", "_ATFZONERESET ", "_ATTILE ", "_ATCLADDIM ", "_ATFRAME ", "_ATFRAMEDIM ", "_ATFPROJECT ", "_ATFZONEPARAMS ", "_ATFNODE " };
+  Expect(menu.Count == 13 && menu.OnMenuBar, "all commands and menubar");
+  var expected = new HashSet<string> { "_ATFZONE ", "_ATFTABLE ", "_ATFZONEACCEPT ", "_ATFZONERESET ", "_ATTILE ", "_ATCLADDIM ", "_ATFRAME ", "_ATFRAMEDIM ", "_ATFPROJECT ", "_ATFZONEPARAMS ", "_ATFNODE ", "_ATFNODEIMPORT ", "_ATFNODEEDIT " };
   foreach (var item in menu.Items) Expect(expected.Remove(item.Macro), "unique valid command macro " + item.Macro);
   Expect(expected.Count == 0, "all macros installed");
-  Init(); Expect(menu.Count == 11, "idempotent reinitialization");
+  Init(); Expect(menu.Count == 13, "idempotent reinitialization");
   Autodesk.AutoCAD.ApplicationServices.Application.Quit();
   Expect(menu.Count == 0 && !menu.OnMenuBar, "quit removes transient menu from persisted menubar");
   Autodesk.AutoCAD.ApplicationServices.Application.Abort();
-  Expect(menu.Count == 11 && menu.OnMenuBar, "cancelled quit restores menu");
+  Expect(menu.Count == 13 && menu.OnMenuBar, "cancelled quit restores menu");
   Autodesk.AutoCAD.ApplicationServices.Application.Quit();
   Expect(menu.Count == 0 && !menu.OnMenuBar, "second quit cleans menu");
-  Init(); Expect(menu.Count == 11 && menu.OnMenuBar, "later start restores items");
+  Init(); Expect(menu.Count == 13 && menu.OnMenuBar, "later start restores items");
   Expect(Errors == 0, "valid lifecycle does not emit startup errors");
   menu.FailAdd = true; Init();
   Expect(Errors == 3, "actual classic Init reports swallowed COM failures");
   menu.FailAdd = false; Init();
-  Expect(menu.Count == 11 && menu.OnMenuBar, "menu recovers after transient COM failure");
+  Expect(menu.Count == 13 && menu.OnMenuBar, "menu recovers after transient COM failure");
   // MenuGroups.Item(0) is not a stable identity when partial customizations load.
   // The same failure was already documented for the SPDS profile in July.
   var foreignGroup = new FakeGroup(); app.MenuGroups.All.Insert(0, foreignGroup);
@@ -194,7 +194,7 @@ public class Probe {
   Expect(menu.Count == 0 && !menu.OnMenuBar, "quit finds facade menu after MenuGroups reorder");
   Expect(foreignMenu.Count == 1 && foreignMenu.OnMenuBar, "cleanup preserves other customization menus");
   Init();
-  Expect(menu.Count == 11 && menu.OnMenuBar && foreignGroup.Menus.Count == 1,
+  Expect(menu.Count == 13 && menu.OnMenuBar && foreignGroup.Menus.Count == 1,
       "initialization finds the existing menu outside Item(0), without a duplicate");
   app.MenuGroups.All.Remove(foreignGroup);
   // This exact old caption is in the release history. A caption change must
@@ -203,7 +203,7 @@ public class Probe {
   var userItem = menu.AddMenuItem(menu.Count, "Зоны фасада (ATFZONE)", "_LINE ");
   var extended = menu.AddMenuItem(menu.Count, "Пользовательская команда", "_ATFZONE_EXTRA ");
   Init();
-  Expect(menu.Count == 13 && menu.Items.FindAll(i => i.Macro == "_ATFNODE ").Count == 1,
+  Expect(menu.Count == 15 && menu.Items.FindAll(i => i.Macro == "_ATFNODE ").Count == 1,
       "renamed legacy command is replaced without duplication");
   Expect(menu.Items.Contains(userItem) && menu.Items.Contains(extended),
       "same caption and similar command names do not confer ownership");

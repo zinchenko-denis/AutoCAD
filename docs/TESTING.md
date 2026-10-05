@@ -15,6 +15,8 @@ export PYTHONUTF8=1
 python3 tools/facades/test_bundle_versions.py
 python3 tools/facades/test_startup.py
 python3 AClad/tests/test_dynamic_block_size.py # настоящий MakeDynRef: итоговая пара размеров, база и геометрия; CAD doubles, не нативный вычислитель динблока
+python3 AFrame/tests/test_node_library.py --out <папка> # реальные команды/адаптер библиотеки: выбор 3 из 5, откат, COPY/import; CAD doubles
+python3 tools/node_library/test_author.py # генератор авторского LISP; не создание нативного DWG
 python3 Facades/tests/test_zone_migration.py
 python3 tools/xmod_check.py --no-fixture      # стыки модулей (ATSPEC X6 — не фасады, известен)
 python3 AFrame/tools/frame_synth.py --quick   # F16 исправлен 30.09; исключение больше не требуется
@@ -44,6 +46,12 @@ ATTILE/ATFRAME/ATFZONE — прогон под mono (`AClad/tools/attile_ui`, `A
 расчёта. В Windows тест использует уже собранный `RolesDump.exe` через
 `ROLES_DUMP_EXE`; при его отсутствии локально нужны `mono` и `mcs`.
 
+
+Нативный пилот библиотеки проверяется отдельно по [короткому маршруту](../tools/node_library/README.md).
+`ATFNODETEST` в полном AutoCAD проверяет реальные геометрию, марки и размеры
+пяти выбранных вставок при изменении трёх и возврате параметров; его запись
+откатывается. Компиляция этой команды не означает её выполнения. Ручки,
+пользовательские COPY/Undo и save/open остаются отдельными действиями в AutoCAD.
 
 ## Где сохранять результаты
 

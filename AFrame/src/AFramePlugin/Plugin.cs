@@ -30,7 +30,8 @@ namespace AFramePlugin
                         "\nAFrame загружен (сборка DLL от " + BuildStamp() +
                         "). Команды: ATFRAME — подсистема НВФ по раскладке ATTILE; " +
                         "ATFPROJECT — параметры проекта; ATFZONEPARAMS — параметры зон; " +
-                        "ATFNODE — размерная схема узла.\n");
+                        "ATFNODE — схема слоёв; ATFNODEIMPORT — узел из библиотеки; " +
+                        "ATFNODEEDIT — изменить выбранные узлы.\n");
             }
             catch { }
             // Независимые пути: ошибка ленты не должна пропускать классическое меню.

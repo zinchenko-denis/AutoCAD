@@ -91,6 +91,17 @@ jobs:
           dotnet build AFrame/tools/roles/RolesDump.csproj -c Release -o build_roles
           ROLES_DUMP_EXE=build_roles/RolesDump.exe python AFrame/engine/test_frame_typical_facades.py
 
+      - name: Parametric node library adapters and authoring generator
+        shell: pwsh
+        env:
+          PYTHONUTF8: "1"
+          PYTHONIOENCODING: "utf-8"
+        run: |
+          python AFrame/tests/test_node_library.py --out build_node_library
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          python tools/node_library/test_author.py
+          exit $LASTEXITCODE
+
       - name: Check manuals match the release number
         shell: bash
         run: |

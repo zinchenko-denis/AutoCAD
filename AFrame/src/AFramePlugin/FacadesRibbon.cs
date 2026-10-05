@@ -124,6 +124,10 @@ namespace AFramePlugin
                 "ATFZONEPARAMS — наследование параметров проекта, исключения для выбранных зон и отвязка от проекта.", "afr_frame"));
             src.Items.Add(MakeButton("Схема\nслоёв", "ATFNODE",
                 "ATFNODE — справочная схема параметров зоны; чертёж из альбома не вставляется.", "afr_frame"));
+            src.Items.Add(MakeButton("Узел из\nбиблиотеки", "ATFNODEIMPORT",
+                "ATFNODEIMPORT — вставить нативный параметрический узел из подготовленного библиотечного DWG.", "afr_frame"));
+            src.Items.Add(MakeButton("Изменить\nузлы", "ATFNODEEDIT",
+                "ATFNODEEDIT — изменить параметры только выбранных экземпляров библиотечного узла.", "afr_frame"));
             var panel = new RibbonPanel { Source = src };
             tab.Panels.Add(panel);
         }

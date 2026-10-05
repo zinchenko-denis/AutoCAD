@@ -1,0 +1,243 @@
+{
+  "schema": "af_node_native_author/1",
+  "version": 1,
+  "units": "mm",
+  "origin": [
+    0,
+    0
+  ],
+  "node_id": "native_rect_fixture_v1",
+  "block_name": "AFN_TEST_RECTANGLES_V1",
+  "provenance": {
+    "scope": "Synthetic rectangles only. No manufacturer source or engineering meaning."
+  },
+  "variants": [
+    "RECT_A",
+    "RECT_B"
+  ],
+  "defaults": {
+    "AFN_INSULATION": 100,
+    "AFN_CLADDING_X": 230,
+    "AFN_VARIANT": "RECT_A"
+  },
+  "alternate": {
+    "AFN_INSULATION": 150,
+    "AFN_CLADDING_X": 280,
+    "AFN_VARIANT": "RECT_B"
+  },
+  "parameters": {
+    "AFN_INSULATION": {
+      "start": [
+        0,
+        70
+      ],
+      "end": [
+        100,
+        70
+      ],
+      "label": [
+        50,
+        80
+      ]
+    },
+    "AFN_CLADDING_X": {
+      "start": [
+        0,
+        100
+      ],
+      "end": [
+        230,
+        100
+      ],
+      "label": [
+        115,
+        110
+      ]
+    }
+  },
+  "entities": [
+    {
+      "id": "left",
+      "type": "polyline",
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          100,
+          0
+        ],
+        [
+          100,
+          50
+        ],
+        [
+          0,
+          50
+        ]
+      ],
+      "closed": true
+    },
+    {
+      "id": "right",
+      "type": "polyline",
+      "points": [
+        [
+          220,
+          0
+        ],
+        [
+          230,
+          0
+        ],
+        [
+          230,
+          50
+        ],
+        [
+          220,
+          50
+        ]
+      ],
+      "closed": true
+    },
+    {
+      "id": "dleft",
+      "type": "dimension",
+      "p1": [
+        0,
+        70
+      ],
+      "p2": [
+        100,
+        70
+      ],
+      "line_point": [
+        50,
+        80
+      ]
+    },
+    {
+      "id": "dright",
+      "type": "dimension",
+      "p1": [
+        0,
+        100
+      ],
+      "p2": [
+        230,
+        100
+      ],
+      "line_point": [
+        115,
+        110
+      ]
+    },
+    {
+      "id": "a",
+      "type": "polyline",
+      "variant": "RECT_A",
+      "points": [
+        [
+          300,
+          0
+        ],
+        [
+          330,
+          0
+        ],
+        [
+          330,
+          50
+        ],
+        [
+          300,
+          50
+        ]
+      ],
+      "closed": true
+    },
+    {
+      "id": "b",
+      "type": "circle",
+      "variant": "RECT_B",
+      "center": [
+        350,
+        25
+      ],
+      "radius": 20
+    },
+    {
+      "id": "marka",
+      "type": "text",
+      "variant": "RECT_A",
+      "position": [
+        300,
+        65
+      ],
+      "height": 3,
+      "text": "RECT_A"
+    },
+    {
+      "id": "markb",
+      "type": "text",
+      "variant": "RECT_B",
+      "position": [
+        300,
+        65
+      ],
+      "height": 3,
+      "text": "RECT_B"
+    },
+    {
+      "id": "note",
+      "type": "attribute",
+      "position": [
+        0,
+        -10
+      ],
+      "height": 3,
+      "tag": "NOTE",
+      "text": "Preserve instance text"
+    }
+  ],
+  "actions": [
+    {
+      "parameter": "AFN_INSULATION",
+      "kind": "stretch",
+      "frame": [
+        [
+          99,
+          -1
+        ],
+        [
+          101,
+          85
+        ]
+      ],
+      "entities": [
+        "left",
+        "dleft"
+      ]
+    },
+    {
+      "parameter": "AFN_CLADDING_X",
+      "kind": "stretch",
+      "frame": [
+        [
+          219,
+          -1
+        ],
+        [
+          231,
+          115
+        ]
+      ],
+      "entities": [
+        "right",
+        "dright"
+      ]
+    }
+  ]
+}

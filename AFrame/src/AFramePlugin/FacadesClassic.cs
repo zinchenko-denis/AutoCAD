@@ -21,6 +21,8 @@ namespace AFramePlugin
             new[] { "Параметры проекта (ATFPROJECT)", "ATFPROJECT" },
             new[] { "Параметры зон (ATFZONEPARAMS)", "ATFZONEPARAMS" },
             new[] { "Схема слоёв (ATFNODE)", "ATFNODE" },
+            new[] { "Узел из библиотеки (ATFNODEIMPORT)", "ATFNODEIMPORT" },
+            new[] { "Изменить выбранные узлы (ATFNODEEDIT)", "ATFNODEEDIT" },
         };
 
         private static bool _quitHooked;

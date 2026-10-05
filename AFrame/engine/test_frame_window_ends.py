@@ -115,6 +115,66 @@ class WindowEndTests(unittest.TestCase):
         self.assertEqual(self.rail_spans(result, 996), [(0, 500), (3500, 5000)])
         self.assertEqual(self.rail_spans(result, 2004), [(0, 2000), (3500, 5000)])
 
+    def test_each_aligned_window_gets_jambs_without_nearby_joint_axis(self):
+        # The first window's jamb occupies only its own height. Its X must
+        # not suppress an independent jamb at the next window on that axis.
+        for sub, calculate in (("vertical", False), ("vertical", True), ("ortho", False)):
+            for joints in ([600, 1500, 2400], [996, 1500, 2400]):
+                with self.subTest(sub=sub, calculate=calculate, joints=joints):
+                    req = request(sub, calculate)
+                    req["joints_x"] = joints
+                    req["contours"] = [
+                        dict(id="wall", pts=rect(0, 0, 3000, 8000)),
+                        dict(id="lower", pts=rect(1000, 1000, 2000, 2500)),
+                        dict(id="upper", pts=rect(1000, 4000, 2000, 5500))]
+                    result = op_frame(req)
+                    self.assertTrue(result["ok"], result.get("error"))
+                    for x in (900, 2100):
+                        self.assertEqual(self.rail_spans(result, x),
+                                         [(950, 2550), (3950, 5550)])
+                    for x in {r["x"] for r in result["rails"]}:
+                        spans = self.rail_spans(result, x)
+                        self.assertTrue(all(a[1] <= b[0] for a, b in zip(spans, spans[1:])))
+                    if sub == "vertical":
+                        for x in (900, 2100):
+                            supports = [b["y"] for b in result["brackets"] if b["x"] == x]
+                            for y in (1250, 2250, 4250, 5250):
+                                self.assertIn(y, supports)
+
+    def test_guaranteed_jambs_do_not_fill_existing_floor_or_stock_gaps(self):
+        # A gap is not missing window coverage, even when its explicit size
+        # exceeds the fragment filter. Preserve the uncut rail's occupancy.
+        for sub in ("vertical", "ortho"):
+            for joints in ([600, 1500, 2400], [996, 1500, 2004]):
+                with self.subTest(sub=sub, joints=joints):
+                    req = request(sub)
+                    req["joints_x"] = joints
+                    req["system"]["rail_gap"] = 120
+                    req["floors_y"] = [2500]
+                    req["contours"][1]["pts"] = rect(1000, 1000, 2000, 4500)
+                    result = op_frame(req)
+                    self.assertTrue(result["ok"], result.get("error"))
+                    expected = ([(950, 2440), (2560, 4550)] if sub == "vertical"
+                                else [(950, 3890), (4010, 4550)])
+                    for x in (900, 2100):
+                        self.assertEqual(self.rail_spans(result, x), expected)
+
+    def test_overlapping_guaranteed_jamb_ranges_merge_before_stock_cutting(self):
+        for sub in ("vertical", "ortho"):
+            for joints in ([600, 1500, 2400], [996, 1500, 2004]):
+                with self.subTest(sub=sub, joints=joints):
+                    req = request(sub)
+                    req["joints_x"] = joints
+                    req["contours"] = [dict(id="wall", pts=rect(0, 0, 3000, 8000)),
+                        dict(id="lower", pts=rect(1000, 1000, 2000, 2500)),
+                        dict(id="upper", pts=rect(1000, 2550, 2000, 4050))]
+                    result = op_frame(req)
+                    self.assertTrue(result["ok"], result.get("error"))
+                    expected = ([(950, 3950), (3960, 4100)] if sub == "vertical"
+                                else [(950, 3945), (3955, 4100)])
+                    for x in (900, 2100):
+                        self.assertEqual(self.rail_spans(result, x), expected)
+
     def test_clamps_only_roundtrip_keeps_window_roles(self):
         req = request()
         req["parts"] = "all"

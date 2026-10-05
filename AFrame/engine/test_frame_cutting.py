@@ -145,7 +145,7 @@ class RailCuttingTests(unittest.TestCase):
         self.assertEqual(_rail_cuts(0, 3300, 3000, 0, 300), [(0, 3000), (3000, 3300)])
         self.assertEqual(_rail_cuts(0, 500, 3000, 10, 300), [(0, 500)])
 
-    def test_fifteen_windows_calculate_and_only_overloaded_piece_gets_extra_support(self):
+    def test_fifteen_windows_keep_all_jambs_and_only_overloaded_pieces_get_extra_support(self):
         # Контрольный аналог ревизии. Координаты явные; число 190 из чужого
         # отчёта не воспроизводится без его JSON. Поля расчёта — defaults формы.
         request = dict(op="frame", system={"name": "Вектор-1"}, sub_type="vertical",
@@ -159,7 +159,7 @@ class RailCuttingTests(unittest.TestCase):
         result = op_frame(request)
         self.assertTrue(result["ok"], result.get("error"))
         model = result["calc_report"]["static_model"]
-        self.assertEqual(model["member_count"], 148)
+        self.assertEqual(model["member_count"], 160)
         self.assertEqual(result["calculation_status"], "partial")
         self.assertEqual(len(result["local_issues"]), 12)
         self.assertTrue(all((i["y0"], i["y1"], i["status"], i["reason"], i["support_count"])
@@ -168,10 +168,15 @@ class RailCuttingTests(unittest.TestCase):
         self.assertEqual({m["index"] for m in model["members"] if m["support_count"] < 2},
                          {i["member_index"] for i in result["local_issues"]})
         self.assertTrue(all(c["chain"]["passed"] for c in model["member_calculation"]["cases"]))
-        self.assertEqual(result["calc_report"]["support_refinements"], [dict(member_index=142,
-            x=1400, y0=1150, y1=2750, previous_max_step=500, actual_max_step=333.3334,
-            brackets_before=3, brackets_after=4)])
-        self.assertEqual(result["summary"]["brackets_row"], 545)
+        # Each of these three aligned windows needs its own left jamb.
+        # Before 06.10 the axis-level shortcut silently omitted the upper two.
+        self.assertEqual([(r["y0"], r["y1"]) for r in result["rails"] if r["x"] == 1400],
+                         [(1150, 2750), (4150, 5750), (7150, 8750)])
+        self.assertEqual(result["calc_report"]["support_refinements"], [dict(member_index=142 + floor,
+            x=1400, y0=1150 + 3000 * floor, y1=2750 + 3000 * floor,
+            previous_max_step=500, actual_max_step=333.3334,
+            brackets_before=3, brackets_after=4) for floor in range(3)])
+        self.assertEqual(result["summary"]["brackets_row"], 583)
         manual = dict(request)
         manual.pop("calc")
         manual["system"] = dict(name="Вектор-1", bracket_step=800, bracket_step_corner=500)
@@ -179,7 +184,9 @@ class RailCuttingTests(unittest.TestCase):
         self.assertTrue(before["ok"], before.get("error"))
         self.assertEqual(result["rails"], before["rails"])
         unchanged = lambda brackets: {(b["x"], b["y"], b["kind"]) for b in brackets
-                                     if not (b["x"] == 1400 and 1150 <= b["y"] <= 2750)}
+                                     if not (b["x"] == 1400 and any(
+                                         1150 + 3000 * floor <= b["y"] <= 2750 + 3000 * floor
+                                         for floor in range(3)))}
         self.assertEqual(unchanged(result["brackets"]), unchanged(before["brackets"]))
 
     def test_refinement_does_not_move_support_shared_with_another_piece(self):

@@ -174,6 +174,59 @@ def _sub_y(spans, lo, hi):
     return out
 
 
+def _merge_y_spans(spans):
+    out = []
+    for a, b in sorted(spans):
+        if out and a <= out[-1][1] + EPS:
+            out[-1] = (out[-1][0], max(out[-1][1], b))
+        else:
+            out.append((a, b))
+    return out
+
+
+def _window_side_spans(outer, boxes, edge_off, overhang, occupied):
+    """Missing jamb ranges, grouped before cutting; existing gaps stay empty.
+
+    Occupied ranges describe continuous rails BEFORE stock/floor cuts.
+    Another window at the same X is independent only outside those ranges.
+    Nearby-axis buckets avoid scanning all physical pieces for each window.
+    """
+    x0, y0, x1, y1 = _bbox(outer)
+    nearby, candidates = {}, {}
+
+    def add(x, a, b):
+        nearby.setdefault(math.floor(x / 50.0), []).append((x, a, b))
+
+    for x, a, b in occupied:
+        add(x, a, b)
+    for bx0, by0, bx1, by1 in boxes:
+        for x in (bx0 - edge_off, bx1 + edge_off):
+            if x < x0 - EPS or x > x1 + EPS:
+                continue
+            a, b = max(by0 - overhang, y0), min(by1 + overhang, y1)
+            if b - a > EPS:
+                candidates.setdefault(x, []).append((a, b))
+    for x, requested in candidates.items():
+        spans = []
+        wall = _vspans(outer, x)
+        for a, b in _merge_y_spans(requested):
+            spans.extend((max(a, lo), min(b, hi)) for lo, hi in wall
+                         if min(b, hi) - max(a, lo) > EPS)
+        for ox0, oy0, ox1, oy1 in boxes:
+            if ox0 + EPS < x < ox1 - EPS:
+                spans = _sub_y(spans, oy0, oy1)
+        for bucket in range(math.floor((x - 50.0) / 50.0),
+                            math.floor((x + 50.0) / 50.0) + 1):
+            for rx, a, b in nearby.get(bucket, []):
+                if abs(rx - x) <= 50.0:
+                    spans = _sub_y(spans, a, b)
+        # Preserve the existing minimum for isolated window fragments.
+        for a, b in spans:
+            if b - a > 100.0:
+                add(x, a, b)
+                yield x, a, b
+
+
 def _dedup_pieces(staged, min_frag=100.0):
     """Куски стоек, сведённые по ОСИ X (04.08, D-сверка полигона).
 
@@ -200,6 +253,7 @@ def _dedup_pieces(staged, min_frag=100.0):
         # стабильная сортировка: False (собственные) раньше True
         items = sorted(by[k], key=lambda t: abs(t[2] - t[3]) > EPS)
         taken = []
+        own, moved_by_step = [], {}
         for lo, hi, x, jx, step in items:
             spans = [(lo, hi)]
             for a, b in taken:
@@ -208,8 +262,19 @@ def _dedup_pieces(staged, min_frag=100.0):
             for a, b in spans:
                 if b - a <= (min_frag if moved else EPS):
                     continue
-                out.append((a, b, x, jx, step))
+                if moved:
+                    moved_by_step.setdefault(step, []).append((a, b, x, jx, step))
+                else:
+                    own.append((a, b, x, jx, step))
                 taken.append((a, b))
+        out.extend(own)
+        for parts in moved_by_step.values():
+            # Two close windows can produce overlapping jamb ranges on the
+            # same axis. Dedup leaves adjacent fragments: join them BEFORE
+            # stock/floor cutting, so the eventual physical joint has a gap.
+            x, jx, step = parts[0][2:]
+            out.extend((a, b, x, jx, step) for a, b in
+                       _merge_y_spans((p[0], p[1]) for p in parts))
     return out
 
 
@@ -1974,7 +2039,6 @@ def _frame_plan(req):
             top_y = max(ys_g) if ys_g else y0
             # вертикальные ШП по рустам; у окон — Z-образные со
             # смещением 100 и выступом 50 (как вертикальная)
-            zone_side = set()
             n0_rails = len(rails)
             # 04.08 (фидбэк Германа, п.4): «при ортогональной не
             # рисуются профили по середине плитки, если она более
@@ -2042,12 +2106,12 @@ def _frame_plan(req):
                 for _p in pieces:
                     if _p[1] - _p[0] > EPS:
                         staged_o.append((_p[0], _p[1], _p[2], jx, None))
+            occupied_o = []
             for s_lo, s_hi, s_x, jx, _st in _dedup_pieces(staged_o):
                 if s_hi - s_lo <= EPS:
                     continue
                 side = abs(s_x - jx) > EPS
-                if side:
-                    zone_side.add(round(s_x, 4))
+                occupied_o.append((round(s_x, 4), s_lo, s_hi))
                 if stock > EPS and s_hi - s_lo > stock + EPS:
                     notes.append("ШП X=%.0f длиной %.0f > хлыста "
                                  "%.0f" % (s_x, s_hi - s_lo,
@@ -2122,45 +2186,16 @@ def _frame_plan(req):
             # сетки случайно стояла ближе edge_off СНАРУЖИ грани, и
             # доп. кронштейны п.9 висели без профиля.
             if edge_off > EPS:
-                for bx0, by0, bx1, by1 in hole_boxes:
-                    for zx in (bx0 - edge_off, bx1 + edge_off):
-                        if any(abs(zx - m) <= EPS for m in zone_side):
-                            continue
-                        if zx < x0 - EPS or zx > x1 + EPS:
-                            continue
-                        z0 = max(by0 - overhang, y0)
-                        z1 = min(by1 + overhang, y1)
-                        if z1 - z0 <= EPS:
-                            continue
-                        # 03.08 (аудит): Z режется чужими окнами
-                        # и МИНУС существующие куски этой оси (±50) —
-                        # ни дублей, ни Z сквозь проём; осколки <100
-                        # не ставим (В-аг)
-                        spans = [(a8, b8) for a8, b8, _x8 in
-                                 _clip_pieces(outer, [(z0, z1, zx)])]
-                        for ox0, oy0, ox1, oy1 in hole_boxes:
-                            if ox0 + EPS < zx < ox1 - EPS:
-                                spans = _sub_y(spans, oy0, oy1)
-                        for rr in rails[n0_rails:]:
-                            if abs(rr["x"] - zx) <= 50.0:
-                                spans = _sub_y(spans, rr["y0"],
-                                               rr["y1"])
-                        spans = [(a5, b5) for a5, b5 in spans
-                                 if b5 - a5 > 100.0]
-                        if not spans:
-                            continue
-                        zone_side.add(round(zx, 4))
-                        for sa, sb in spans:
-                            for za, zb in _cut_by_len(sa, sb,
-                                                      rail_std, gap):
-                                rails.append({"x": round(zx, 4),
-                                              "y0": round(za, 4),
-                                              "y1": round(zb, 4),
-                                              "len": round(zb - za, 4),
-                                              "clamp_role": "window",
-                                              "kind": "Z-профиль"})
-                            _piece_clamps(clamps, rows, sa, sb, zx,
-                                          True, [], wedges)
+                for zx, sa, sb in _window_side_spans(outer, hole_boxes,
+                                                    edge_off, overhang, occupied_o):
+                    for za, zb in _cut_by_len(sa, sb, rail_std, gap):
+                        rails.append({"x": round(zx, 4),
+                                      "y0": round(za, 4),
+                                      "y1": round(zb, 4),
+                                      "len": round(zb - za, 4),
+                                      "clamp_role": "window",
+                                      "kind": "Z-профиль"})
+                    _piece_clamps(clamps, rows, sa, sb, zx, True, [], wedges)
             continue
 
         # ── ВЕРТИКАЛЬНАЯ (дефолт; ТЗ 26.07 §1) ──
@@ -2190,8 +2225,6 @@ def _frame_plan(req):
                     mids.append((jx_all[i] + jx_all[i + 1]) / 2.0)
             jx_all = sorted(jx_all + mids)
 
-        zone_side = set()
-        n0_rails = len(rails)
         staged = []
         for jx in jx_all:
             # угловая зона (В17: типовой случай — полоса у краёв зоны)
@@ -2266,13 +2299,13 @@ def _frame_plan(req):
                     piece_step = step_corner if _in_corner(_p[2], x0, x1, corner_zone, corners) else step_main
                     staged.append((_p[0], _p[1], _p[2], jx, piece_step))
 
+        occupied_v = []
         for s_lo, s_hi, s_x, jx, step in _dedup_pieces(staged):
             if True:
                 if s_hi - s_lo <= EPS:
                     continue
                 side = abs(s_x - jx) > EPS       # оконный (смещённый)
-                if side:
-                    zone_side.add(round(s_x, 4))
+                occupied_v.append((round(s_x, 4), s_lo, s_hi))
                 fl_in = [f for f in floors_c
                          if s_lo + EPS < f < s_hi - EPS]
                 # направляющие. Отметки УКАЗАНЫ: куски между стыками
@@ -2344,60 +2377,37 @@ def _frame_plan(req):
         # осями, оставалось без стоек и без боковых кляммеров.
         # Межэтажная — своя ветка (30.09b: НСП вдоль откосов, от перекрытия до перекрытия).
         if sub == "vertical" and edge_off > EPS:
-            for bx0, by0, bx1, by1 in hole_boxes:
-                for zx in (bx0 - edge_off, bx1 + edge_off):
-                    if any(abs(zx - m) <= EPS for m in zone_side):
-                        continue
-                    if zx < x0 - EPS or zx > x1 + EPS:
-                        continue
-                    z0 = max(by0 - overhang, y0)
-                    z1 = min(by1 + overhang, y1)
-                    if z1 - z0 <= EPS:
-                        continue
-                    # 03.08 (аудит): гарантированная стойка
-                    # режется ЧУЖИМИ окнами и МИНУС уже существующие
-                    # куски этой же оси (±50: ось руста ровно в
-                    # edge_off от грани, пересекающиеся окна) —
-                    # ни дублей, ни стоек сквозь проём; осколки
-                    # короче 100 не ставим. Стойка в 50..300 от
-                    # грани — В-аг
-                    spans = [(a8, b8) for a8, b8, _x8 in
-                             _clip_pieces(outer, [(z0, z1, zx)])]
-                    for ox0, oy0, ox1, oy1 in hole_boxes:
-                        if ox0 + EPS < zx < ox1 - EPS:
-                            spans = _sub_y(spans, oy0, oy1)
-                    for rr in rails[n0_rails:]:
-                        if abs(rr["x"] - zx) <= 50.0:
-                            spans = _sub_y(spans, rr["y0"], rr["y1"])
-                    spans = [(a5, b5) for a5, b5 in spans
-                             if b5 - a5 > 100.0]
-                    if not spans:
-                        continue
-                    zone_side.add(round(zx, 4))
-                    in_c = _in_corner(zx, x0, x1, corner_zone,
-                                      corners)
-                    stp = step_corner if in_c else step_main
-                    rail_parts = []
-                    for za, zb in spans:
-                        cuts = _rail_cuts(za, zb, rail_std, gap, start_off) if lash else [(za, zb)]
-                        rail_parts.extend(cuts)
-                        _piece_clamps(clamps, rows, za, zb, zx, True,
-                                      [b for _a, b in cuts[:-1]], wedges)
-                    for za, zb in rail_parts:
-                        rails.append({"x": round(zx, 4),
-                                      "y0": round(za, 4),
-                                      "y1": round(zb, 4),
-                                      "len": round(zb - za, 4),
-                                      "clamp_role": "window",
-                                      "kind": "направляющая"})
-                        if stp is not None and start_off is not None:
-                            for y in _rail_brackets(za, zb,
-                                                    float(start_off),
-                                                    float(stp),
-                                                    exact_step):
-                                brackets.append({"x": round(zx, 4),
-                                                 "y": round(y, 4),
-                                                 "kind": "рядовой"})
+            for zx, za, zb in _window_side_spans(outer, hole_boxes,
+                                                edge_off, overhang, occupied_v):
+                in_c = _in_corner(zx, x0, x1, corner_zone, corners)
+                stp = step_corner if in_c else step_main
+                if lash:
+                    cuts = [(a, b, False) for a, b in _rail_cuts(za, zb, rail_std, gap, start_off)]
+                else:
+                    # Same explicit-floor joints as for shifted jambs above.
+                    # Joining candidate ranges must not erase these seams.
+                    bounds = ([za, zb] if zb - za <= rail_std + EPS else
+                              [za] + [f for f in floors_c if za + EPS < f < zb - EPS] + [zb])
+                    cuts = []
+                    for i, (a, b) in enumerate(zip(bounds, bounds[1:])):
+                        a += gap / 2.0 if i > 0 else 0.0
+                        b -= gap / 2.0 if i + 1 < len(bounds) - 1 else 0.0
+                        if b - a > EPS:
+                            cuts.append((a, b, i > 0))
+                _piece_clamps(clamps, rows, za, zb, zx, True,
+                              [b for _a, b, _joined in cuts[:-1]], wedges)
+                for a, b, joined in cuts:
+                    rails.append({"x": round(zx, 4),
+                                  "y0": round(a, 4),
+                                  "y1": round(b, 4),
+                                  "len": round(b - a, 4),
+                                  "clamp_role": "window",
+                                  "kind": "направляющая"})
+                    if stp is not None and start_off is not None:
+                        for pi, y in enumerate(_rail_brackets(a, b, float(start_off), float(stp), exact_step)):
+                            brackets.append({"x": round(zx, 4),
+                                             "y": round(y, 4),
+                                             "kind": "несущий" if joined and pi == 0 else "рядовой"})
 
     # 29.09l (Герман, ответ на 9в PDF №27): «лучше делать стык хлыстов на
     # направляющей». Прогоны шин режутся на хлысты ПОСЛЕ расстановки: стык — на
