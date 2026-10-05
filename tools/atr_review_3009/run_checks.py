@@ -30,6 +30,8 @@ def main():
         ('AClad', ['test_cladding_plan.py', 'test_clad_engine.py',
                    'test_tile_pattern.py', 'audit_clad.py']),
         ('AFrame', ['test_frame_plan.py', 'test_frame_calc.py',
+                    'test_frame_beam.py', 'test_frame_cutting.py',
+                    'test_frame_window_ends.py',
                     'test_frame_engine.py', 'test_frame_rules.py',
                     'test_frame_topology.py', 'test_frame_topology_index.py',
                     'test_frame_connections.py', 'test_frame_solution_selection.py',

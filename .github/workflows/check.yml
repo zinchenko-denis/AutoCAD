@@ -138,6 +138,7 @@ jobs:
           python test_frame_calc.py
           python test_frame_beam.py
           python test_frame_cutting.py
+          python test_frame_window_ends.py
           python test_frame_engine.py
           python test_frame_rules.py
           python test_frame_topology.py

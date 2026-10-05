@@ -1248,7 +1248,14 @@ def _frame_plan(req):
     rail_step_main = float(rail_step_main) if rail_step_main else None
     edge_rail_off = float(req.get("edge_rail_off") or
                           system.get("edge_rail_off") or 100.0)
-    gap = float(system.get("rail_gap") or 0.0)
+    try:
+        gap = float(system.get("rail_gap") or 0.0)
+        valid_gap = math.isfinite(gap) and gap >= 0
+    except (TypeError, ValueError):
+        valid_gap = False
+    if not valid_gap:
+        return {"ok": False, "error_code": "E_FRAME_INPUT",
+                "error": "Зазор направляющих rail_gap должен быть конечным числом не меньше нуля."}
     edge_off = float(system.get("edge_offset") or 0.0)
     overhang = float(system.get("edge_overhang") or 0.0)
     mid_over = system.get("mid_rail_over")
@@ -1320,7 +1327,6 @@ def _frame_plan(req):
     edge_rail = float(system.get("edge_rail_off") or 100.0)
 
     notes, rails, brackets, clamps = [], [], [], []
-    rebalanced_cuts = 0
     hrails, fittings = [], []
     # 26.09 (Денис): облицовка. Керамогранит/композит — как было (стойки по
     # швам раскладки, кляммеры). Бетонная/клинкерная плитка — подсистема БЕЗ
@@ -2000,19 +2006,19 @@ def _frame_plan(req):
                             sx = bx1 + edge_off
                     if not inside and sx is None:
                         continue
-                    sy0 = by0 - (overhang if sx is not None else 0.0)
-                    sy1 = by1 + (overhang if sx is not None else 0.0)
                     nxt = []
                     for lo, hi, xe in pieces:
-                        c0 = max(lo, sy0 if sx is not None else by0)
-                        c1 = min(hi, sy1 if sx is not None else by1)
+                        # Торцы исходной оси — по окну. Выступ 50/50
+                        # относится только к отдельному Z-профилю рядом.
+                        c0, c1 = max(lo, by0), min(hi, by1)
                         if c1 - c0 <= EPS or (xe != jx):
                             nxt.append((lo, hi, xe))
                             continue
                         if c0 - lo > EPS:
                             nxt.append((lo, c0, xe))
                         if not inside:
-                            nxt.append((c0, c1, sx))
+                            nxt.append((max(lo, by0 - overhang),
+                                        min(hi, by1 + overhang), sx))
                         if hi - c1 > EPS:
                             nxt.append((c1, hi, xe))
                     pieces = nxt
@@ -2209,14 +2215,11 @@ def _frame_plan(req):
                 if not inside and sx is None:
                     continue
                 nxt = []
-                # смещённый оконный кусок выступает за проём на
-                # overhang сверху и снизу (ТЗ 26.07: длина = сторона
-                # окна + 100, выступ 50/50)
-                sy0 = by0 - (overhang if sx is not None else 0.0)
-                sy1 = by1 + (overhang if sx is not None else 0.0)
+                # Выступ 50/50 — только у боковой оконной стойки.
+                # Исходная ось под/над окном доходит до грани проёма,
+                # а не обрезается по торцу соседней смещённой стойки.
                 for lo, hi, xe in pieces:
-                    c0, c1 = max(lo, sy0 if sx is not None else by0), \
-                             min(hi, sy1 if sx is not None else by1)
+                    c0, c1 = max(lo, by0), min(hi, by1)
                     if c1 - c0 <= EPS or (xe != jx):
                         # не пересекает по высоте / кусок уже смещён
                         nxt.append((lo, hi, xe))
@@ -2226,7 +2229,8 @@ def _frame_plan(req):
                     if inside:
                         pass                     # вырез
                     else:
-                        nxt.append((c0, c1, sx))
+                        nxt.append((max(lo, by0 - overhang),
+                                    min(hi, by1 + overhang), sx))
                     if hi - c1 > EPS:
                         nxt.append((c1, hi, xe))
                 pieces = nxt
@@ -2277,16 +2281,13 @@ def _frame_plan(req):
                 # перекрытии, — «несущий» (В-е). Отметок НЕТ (lash,
                 # Герман 07.08 ответ 2): хлысты РОВНО rail_std от
                 # низа куска, зазор gap МЕЖДУ хлыстами (полигон: низы
-                # 24070.3+3010n), короткий хвост делит длину с предыдущим,
-                # кронштейны
+                # 24070.3+3010n), последний добор короче. Кронштейны
                 # все одного типа. В обоих режимах на каждую
                 # направляющую: 300 от торцов + равномерно ≤ шага
                 # (ТЗ 26.07), короткая — один в центре.
                 segs2 = []
                 if lash:
                     cuts = _rail_cuts(s_lo, s_hi, rail_std, gap, start_off)
-                    if len(cuts) > 1 and cuts[-2][1] - cuts[-2][0] < rail_std - EPS:
-                        rebalanced_cuts += 1
                     segs2 = [(a, b, False) for a, b in cuts]
                     seams_in = [b for _a, b, _f in segs2[:-1]]
                 else:
@@ -2379,8 +2380,6 @@ def _frame_plan(req):
                     rail_parts = []
                     for za, zb in spans:
                         cuts = _rail_cuts(za, zb, rail_std, gap, start_off) if lash else [(za, zb)]
-                        if len(cuts) > 1 and cuts[-2][1] - cuts[-2][0] < rail_std - EPS:
-                            rebalanced_cuts += 1
                         rail_parts.extend(cuts)
                         _piece_clamps(clamps, rows, za, zb, zx, True,
                                       [b for _a, b in cuts[:-1]], wedges)
@@ -2443,8 +2442,6 @@ def _frame_plan(req):
                 for za, zb in [(a5, b5) for a5, b5 in spans if b5 - a5 > 100.0]:
                     rail_parts = _rail_cuts(za, zb, rail_std, gap_v,
                                            start_off if sub == "vertical" else None)
-                    if len(rail_parts) > 1 and rail_parts[-2][1] - rail_parts[-2][0] < rail_std - EPS:
-                        rebalanced_cuts += 1
                     for pa, pb in rail_parts:
                         if pb - pa <= EPS:
                             continue
@@ -2578,11 +2575,6 @@ def _frame_plan(req):
                              "Прежняя подсистема сохранена." % (n_bare, n_air),
                     "unsupported": unsupported, "unsupported_counts": {"pieces": n_bare, "joints": n_air},
                     "notes": notes}
-
-    if rebalanced_cuts:
-        notes.append("Перераспределены последние два хлыста на %d участках: сохранены зазор и "
-                     "заданные отступы кронштейнов от торцов; искусственный короткий хвост устранён."
-                     % rebalanced_cuts)
 
     local_issues = []
     if sub == "vertical" and parts != "clamps" and (calc_rep is None or start_off is None):

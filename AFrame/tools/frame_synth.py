@@ -75,6 +75,7 @@ import random
 import sys
 import time
 from collections import Counter, defaultdict
+from decimal import Decimal
 
 from shapely.geometry import LineString, Point, Polygon
 from shapely.ops import unary_union
@@ -268,7 +269,12 @@ def local_issue_errors(req, res):
 
 
 def _issue_canon(res, dx=0, dy=0):
-    return (res.get("calculation_status"), sorted((round(i["x"] - dx, 3), round(i["y0"] - dy, 3), round(i["y1"] - dy, 3),
+    # Выходные координаты уже десятичные с четырьмя знаками. Вычитание
+    # больших float перед округлением искажало половинную границу:
+    # 4853.9105 и 28924.2105 - 24070.3 округлялись до разных тысячных.
+    def local(value, offset):
+        return round(Decimal(str(value)) - Decimal(str(offset)), 3)
+    return (res.get("calculation_status"), sorted((local(i["x"], dx), local(i["y0"], dy), local(i["y1"], dy),
         i["status"], i["reason"], i["support_count"], tuple(i["failed_checks"]))
         for i in res.get("local_issues") or []))
 

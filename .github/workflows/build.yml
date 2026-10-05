@@ -56,7 +56,7 @@ jobs:
           (cd ABlockGen/engine && python test_vitrage_plan.py && python test_vitrage_recognize.py && python test_crash_scenarios.py)
           (cd Facades/engine && python test_facade_zones.py && python test_facades_engine.py)
           (cd AClad/engine && python test_cladding_plan.py && python test_clad_engine.py && python test_tile_pattern.py && python audit_clad.py)
-          (cd AFrame/engine && python test_frame_plan.py && python test_frame_calc.py && python test_frame_beam.py && python test_frame_cutting.py && python test_frame_engine.py && python audit_frame.py)
+          (cd AFrame/engine && python test_frame_plan.py && python test_frame_calc.py && python test_frame_beam.py && python test_frame_cutting.py && python test_frame_window_ends.py && python test_frame_engine.py && python audit_frame.py)
           python tools/engine_contract.py
           python tools/xmod_check.py --no-fixture --allow=X6
           python tools/label_refs_check.py

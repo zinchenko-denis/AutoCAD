@@ -22,6 +22,7 @@ python3 Facades/tools/zones_synth.py --quick
 python3 AClad/tools/attile_synth.py --quick
 python3 tools/roles_synth.py --quick          # «в ролях конструктора»: ATFZONE → раскладка → ATFRAME (нужен mono)
 python3 AFrame/engine/test_frame_typical_facades.py # пять типовых фасадов: обязательное построение и адресные пометки; настоящий FrameSettings, нужен mono/mcs
+python3 AFrame/engine/test_frame_window_ends.py # торцы у окон в vertical/ortho, обе стороны и дробные координаты; проверяются геометрия и опоры
 python3 AFrame/tests/test_local_issues.py --out <папка> # пометки → сохранение → ведомость/Excel, нужен mono/mcs или Windows .NET
 python3 tools/fixes_3009/run_facade_regressions.py  # shapely/openpyxl + mono/mcs; --python-only — неполный набор
 python3 tools/atr_review_3009/run_checks.py --out <папка> # полный фасадный набор

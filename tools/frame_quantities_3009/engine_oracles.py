@@ -97,14 +97,19 @@ def run_cases():
     assert stock['oracle']['counts']['rail'] == 3
     assert stock['oracle']['length_m']['rail'] == 6.08
     assert stock['response']['summary']['rail_stock_est'] == 2
-    # Последние два хлыста перераспределены: 80-мм одноопорный хвост
-    # устранён, общий погонаж и оба зазора прежние.
+    # Хлысты по 3 м и добор, как задано Германом. Короткий добор с одной
+    # опорой остаётся в геометрии и ведомости, но помечен как непроверенный.
     stock_rails = stock['response']['rails']
-    assert [piece['len'] for piece in stock_rails] == [3000.0, 1540.0, 1540.0]
+    assert [piece['len'] for piece in stock_rails] == [3000.0, 3000.0, 80.0]
     assert all(b['y0'] - a['y1'] == 10 for a, b in zip(stock_rails, stock_rails[1:]))
-    assert all(len({b['y'] for b in stock['response']['brackets']
-                    if b['x'] == piece['x'] and piece['y0'] <= b['y'] <= piece['y1']}) >= 2
-               for piece in stock_rails)
+    assert [len({b['y'] for b in stock['response']['brackets']
+                 if b['x'] == piece['x'] and piece['y0'] <= b['y'] <= piece['y1']})
+            for piece in stock_rails] == [4, 4, 1]
+    assert [b['y'] for b in stock['response']['brackets'] if b['y'] >= 6020] == [6060]
+    assert stock_rails[-1]['check_status'] == 'not_verified'
+    assert len(stock['response']['local_issues']) == 1
+    issue = stock['response']['local_issues'][0]
+    assert (issue['member_index'], issue['y0'], issue['y1'], issue['support_count']) == (2, 6020, 6100, 1)
     assert results['empty']['oracle']['physical_count'] == 0
     assert results['only_clamps']['oracle']['counts'] == {'clamp': 5}
     assert results['clinker_shina']['oracle']['counts']['shina'] == 42

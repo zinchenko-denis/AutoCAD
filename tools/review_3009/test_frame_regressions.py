@@ -82,8 +82,8 @@ def native_short_rails():
                "rows_y": [600, 1200, 1800, 2400, 3020],
                "calc": {"terrain": "B", "height": 30, "q_clad": 25,
                         "offset": 230, "na_max": 3000, "wind_region": "II"}}
-    # Stock cutting must redistribute the former 150 mm tail before metadata
-    # readback; no single-support physical piece may reach the drawing.
+    # Stock cutting keeps 3000 mm plus a 140 mm remainder after the 10 mm gap.
+    # The short piece remains drawable, marked and present in metadata readback.
     manual = copy.deepcopy(request)
     manual.pop("calc")
     full = fp.frame_plan(manual)
@@ -106,8 +106,8 @@ def vertical_only_clamps():
                             3461.881, 4069.881, 4677.881, 5285.881],
                "rows_y": [1208, 2416, 3624, 4832, 6040, 7248, 8456]}
     # Raise the ledge above the windows for a supported clamp-readback
-    # positive. The original 3200 mm ledge produced 10/30 mm one-support
-    # fragments, now covered explicitly by the local-warning test below.
+    # positive. At the original 3200 mm ledge, the local-warning test below
+    # covers 60/80 mm pieces above windows and 190 mm stock remainders.
     # The separate 320–510 mm piers use explicit 100 mm test offsets.
     request["system"] = {"name": "Standart", "bracket_start_offset": 100}
     full = fe.run(copy.deepcopy(request))
@@ -152,8 +152,33 @@ class FrameContractRegressions(unittest.TestCase):
                          (len(fixed), len(full["rails"])))
         calculated = fp.frame_plan(request)
         self.assertTrue(calculated["ok"], calculated.get("error"))
+        self.assertEqual(calculated["calculation_status"], "partial")
+        expected_rails = [(300, 0, 3000), (300, 3010, 3150),
+                          (900, 0, 3000), (900, 3010, 3150),
+                          (1500, 0, 3000), (1500, 3010, 3150)]
+        expected_issues = [(1, 300, 3010, 3150), (3, 900, 3010, 3150),
+                           (5, 1500, 3010, 3150)]
+        self.assertEqual(len(fixed), 6)
+        self.assertEqual(len(full["clamps"]), 21)
+        self.assertEqual(len(again["clamps"]), 21)
+        for result in (full, calculated):
+            self.assertEqual([(r["x"], r["y0"], r["y1"]) for r in result["rails"]],
+                             expected_rails)
+            self.assertEqual([(i["member_index"], i["x"], i["y0"], i["y1"])
+                              for i in result["local_issues"]], expected_issues)
+            for issue_index, issue in enumerate(result["local_issues"]):
+                rail = result["rails"][issue["member_index"]]
+                self.assertEqual((issue["status"], issue["reason"], issue["support_count"]),
+                                 ("not_verified", "insufficient_supports", 1))
+                self.assertEqual(issue["failed_checks"], [])
+                self.assertEqual((rail["check_status"], rail["issue_index"]),
+                                 ("not_verified", issue_index))
+                self.assertEqual([b["y"] for b in result["brackets"] if b["x"] == rail["x"]
+                                  and rail["y0"] <= b["y"] <= rail["y1"]], [3080])
         model = calculated["calc_report"]["static_model"]
-        self.assertTrue(all(m["support_count"] >= 2 for m in model["members"]))
+        self.assertEqual([(m["index"], m["support_count"]) for m in model["members"]],
+                         [(0, 6), (1, 1), (2, 6), (3, 1), (4, 6), (5, 1)])
+        self.assertEqual(len(model["member_calculation"]["cases"]), 1)
         self.assertTrue(all(c["chain"]["passed"] for c in model["member_calculation"]["cases"]))
         self.assertEqual(model["status"], "not_verified")
 
@@ -175,7 +200,9 @@ class FrameContractRegressions(unittest.TestCase):
         self.assertEqual([(p["member_index"], p["x"], p["y0"], p["y1"])
                           for p in result["local_issues"]],
                          [(1, 421.881, 3140, 3200), (3, 1029.881, 3140, 3200),
-                          (5, 1637.881, 3190, 3200), (14, 4069.881, 3170, 3200)])
+                          (5, 1637.881, 3140, 3200), (8, 2245.881, 3010, 3200),
+                          (10, 2853.881, 3010, 3200), (12, 3461.881, 3010, 3200),
+                          (14, 4069.881, 3120, 3200)])
         for issue_index, issue in enumerate(result["local_issues"]):
             rail = result["rails"][issue["member_index"]]
             self.assertEqual(issue["zone_id"], "контур O")
@@ -190,6 +217,13 @@ class FrameContractRegressions(unittest.TestCase):
             supports = [b["y"] for b in result["brackets"] if b["x"] == rail["x"]
                         and rail["y0"] <= b["y"] <= rail["y1"]]
             self.assertEqual(supports, [(rail["y0"] + rail["y1"]) / 2])
+        fixed = [{k: r[k] for k in ("x", "y0", "y1", "clamp_role")}
+                 for r in result["rails"]]
+        again = fe.run(dict(copy.deepcopy(request), parts="clamps", rails_fixed=fixed))
+        self.assertTrue(again["ok"], again.get("error"))
+        self.assertEqual(len(result["clamps"]), 55)
+        self.assertEqual(len(again["clamps"]), 55)
+        self.assertEqual(clamp_set(result), clamp_set(again))
 
     def test_shina_has_at_least_one_vertical_support(self):
         _, result = unsupported_gable_shina()

@@ -7,32 +7,27 @@ EPS = 1e-6
 
 
 def rail_cuts(a, b, max_length, gap, start_off=None):
-    """Хлысты от низа; короткий искусственный хвост делим с предпоследним.
+    """Хлысты заданной длины снизу вверх, после них зазор и последний добор.
 
-    Отступы кронштейнов заданы системой/конструктором, а не новой нормой.
-    Две разные опоры при этих отступах помещаются только на длине >2*start_off.
-    Переносим только свободный стык без отметки перекрытия; зазор, границы
-    участка, максимальную длину и уже уложенные нижние хлысты сохраняем.
-    Исходный короткий участок функция не удлиняет и опоры ему не выдумывает.
+    ТЗ Германа 07.08, повторено в отзыве 06.10: короткий добор не меняет
+    длины предыдущих хлыстов. start_off оставлен для совместимости вызовов;
+    отступ влияет на кронштейны и замечания, но не на координаты резки.
+    Как в исходном алгоритме, конец участка внутри следующего зазора
+    оставляет последний хлыст целым: нулевого/отрицательного добора нет,
+    а расстояние до границы участка не превышает заданного зазора.
     """
+    if not math.isfinite(gap) or gap < 0:
+        raise ValueError("rail_gap должен быть конечным числом не меньше нуля")
     if b - a <= EPS:
         return []
     if max_length <= EPS:
         return [(a, b)]
     parts, cursor = [], a
-    while b - cursor > max_length + EPS:
-        parts.append((cursor, cursor + max_length))
-        cursor += max_length + gap
-    # Даже если конец попал в прежний зазор, сохраняем границу участка:
-    # последний реальный хлыст и этот остаток получают один общий стык.
-    parts.append((cursor, b))
-    min_length = 2.0 * float(start_off or 0.0)
-    if len(parts) > 1 and parts[-1][1] - parts[-1][0] <= min_length + EPS:
-        lo, hi = parts[-2][0], b
-        half = (hi - lo - gap) / 2.0
-        if half > EPS:
-            parts[-2:] = [(lo, lo + half), (lo + half + gap, hi)]
-    return [(lo, hi) for lo, hi in parts if hi - lo > EPS]
+    while b - cursor > EPS:
+        end = min(cursor + max_length, b)
+        parts.append((cursor, end))
+        cursor = end + gap
+    return parts
 
 
 def rail_brackets(a, b, start_off, step, exact=False):
