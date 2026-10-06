@@ -18,8 +18,8 @@ RELEASE_ASSETS = ("AFacades.bundle.zip", "AClad.bundle.zip", "AFrame.bundle.zip"
 def release_links(release_build):
     if release_build is None:
         return {}
-    if isinstance(release_build, bool) or not isinstance(release_build, int) or release_build < 109:
-        raise ValueError("The node commands require an explicitly selected build 109 or newer")
+    if isinstance(release_build, bool) or not isinstance(release_build, int) or release_build < 110:
+        raise ValueError("The node commands require an explicitly selected build 110 or newer")
     base = f"https://github.com/zinchenko-denis/AutoCAD/releases/download/build-{release_build}/"
     return {name: base + name for name in RELEASE_ASSETS}
 
@@ -148,6 +148,6 @@ if __name__ == "__main__":
     parser.add_argument("--code-sha", required=True)
     parser.add_argument("--ci-url", required=True)
     parser.add_argument("--release-build", type=int,
-                        help="Explicit published build 109 or newer; omit for the offline pilot without release links")
+                        help="Explicit published build 110 or newer; omit for the offline pilot without release links")
     args = parser.parse_args()
     print(json.dumps(make_package(**vars(args)), ensure_ascii=False))

@@ -5,15 +5,58 @@ not that a particular AutoCAD load error has been reproduced in the host.
 """
 from pathlib import Path
 import json
+import re
 import subprocess
 import sys
 import tempfile
+import xml.etree.ElementTree as ET
 
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "tools/quantities_3009"))
 from probe_runtime import available, command, compile_probe
 
 MODULES = (("Facades", "AFacades"), ("AClad", "AClad"), ("AFrame", "AFrame"))
+
+
+def check_package_commands(manifests=None):
+    """Check the source/manifest command contract before compiling CAD doubles.
+
+    Optional XML texts let a historical manifest be checked without changing
+    the checkout. This verifies registration metadata, not native autoload.
+    """
+    total = 0
+    for folder, module in MODULES:
+        declared = []
+        for path in sorted((ROOT / folder / "src" / (module + "Plugin")).rglob("*.cs")):
+            if {"bin", "obj"}.intersection(path.parts):
+                continue
+            source = path.read_text(encoding="utf-8-sig")
+            # Keep string literals intact while excluding commented attributes.
+            source = re.sub(r'@"(?:""|[^"])*"|"(?:\\.|[^"\\])*"|//[^\n]*|/\*[\s\S]*?\*/',
+                            lambda m: "" if m[0].startswith(("//", "/*")) else m[0], source)
+            attributes = re.findall(r'\[\s*CommandMethod\s*\((.*?)\)\s*\]', source, re.S)
+            for attribute in attributes:
+                # All current modules use the one-name overload. Fail closed if
+                # a grouped/localized overload is introduced and needs support.
+                match = re.fullmatch(r'\s*"([A-Za-z0-9_]+)"\s*(?:,\s*CommandFlags\.[A-Za-z0-9_. |]+)?\s*', attribute)
+                if not match:
+                    raise AssertionError(f"{path}: unsupported CommandMethod signature: {attribute}")
+                declared.append(match[1].upper())
+        if not declared or len(declared) != len(set(declared)):
+            raise AssertionError(f"{module}: missing or duplicate source commands: {declared}")
+        xml = (manifests[module] if manifests is not None else
+               (ROOT / folder / "bundle" / (module + ".bundle") / "PackageContents.xml").read_text(encoding="utf-8-sig"))
+        entries = ET.fromstring(xml).findall(f".//ComponentEntry[@AppName='{module}']/Commands/Command")
+        expected = set(declared)
+        for field in ("Global", "Local"):
+            actual = [entry.get(field, "").upper() for entry in entries]
+            missing, extra = sorted(expected - set(actual)), sorted(set(actual) - expected)
+            if missing or extra or len(actual) != len(set(actual)):
+                raise AssertionError(f"{module} PackageContents {field}: missing={missing}, extra={extra}, duplicates={len(actual) != len(set(actual))}")
+        if any(entry.get("Global", "").upper() != entry.get("Local", "").upper() for entry in entries):
+            raise AssertionError(f"{module}: Global/Local command pairs differ")
+        total += len(declared)
+    print(f"PASS: {total} source commands match Global/Local registration in all 3 facade bundles (metadata contract)")
 
 STARTUP = r'''
 using System;
@@ -228,6 +271,7 @@ def run_probe(output, label, source, sources, references):
 
 
 def main():
+    check_package_commands()
     if not available():
         raise SystemExit("mono/mcs or Windows dotnet is required; checks were not run")
     with tempfile.TemporaryDirectory(prefix="facades_startup_") as directory:

@@ -39,6 +39,10 @@
         <Command Global="ATFPROJECT" Local="ATFPROJECT" />
         <Command Global="ATFZONEPARAMS" Local="ATFZONEPARAMS" />
         <Command Global="ATFNODE" Local="ATFNODE" />
+        <Command Global="ATFNODEIMPORT" Local="ATFNODEIMPORT" />
+        <Command Global="ATFNODEEDIT" Local="ATFNODEEDIT" />
+        <Command Global="ATFNODEDEMO" Local="ATFNODEDEMO" />
+        <Command Global="ATFNODETEST" Local="ATFNODETEST" />
       </Commands>
     </ComponentEntry>
   </Components>
