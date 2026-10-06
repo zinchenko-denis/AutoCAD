@@ -17,6 +17,7 @@ python3 tools/facades/test_startup.py
 python3 AClad/tests/test_dynamic_block_size.py # настоящий MakeDynRef: итоговая пара размеров, база и геометрия; CAD doubles, не нативный вычислитель динблока
 python3 AFrame/tests/test_node_library.py --out <папка> # реальные команды/адаптер библиотеки: выбор 3 из 5, откат, COPY/import; CAD doubles
 python3 tools/node_library/test_author.py # генератор авторского LISP; не создание нативного DWG
+python3 tools/stamp_library/test_inspect.py # читающий инспектор штампа: контракт и file-open doubles; не AutoCAD/СПДС
 python3 Facades/tests/test_zone_migration.py
 python3 tools/xmod_check.py --no-fixture      # стыки модулей (ATSPEC X6 — не фасады, известен)
 python3 AFrame/tools/frame_synth.py --quick   # F16 исправлен 30.09; исключение больше не требуется
@@ -52,6 +53,12 @@ ATTILE/ATFRAME/ATFZONE — прогон под mono (`AClad/tools/attile_ui`, `A
 пяти выбранных вставок при изменении трёх и возврате параметров; его запись
 откатывается. Компиляция этой команды не означает её выполнения. Ручки,
 пользовательские COPY/Undo и save/open остаются отдельными действиями в AutoCAD.
+
+Первый этап штампов — [ATFSTAMPINSPECT](../tools/stamp_library/README.md): чтение
+трёх выбранных объектов без изменения DWG. В AutoCAD/СПДС отдельно проверить
+APPLOAD, вложенный выбор, COM, кириллицу и новый TXT UTF-8; передать **TXT и F2**.
+Дополнительные свойства СПДС выводятся только в F2. Синтетический контракт не
+подтверждает определение полей шифра/адреса или автоматическое заполнение листов.
 
 ## Где сохранять результаты
 

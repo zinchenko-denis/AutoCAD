@@ -115,7 +115,7 @@ jobs:
           python Facades/tests/test_zone_migration.py
           exit $LASTEXITCODE
 
-      - name: Parametric node library (command adapters and authoring generator, no AutoCAD host)
+      - name: Node library and read-only stamp inspector (no AutoCAD host)
         shell: pwsh
         env:
           PYTHONUTF8: "1"
@@ -124,6 +124,8 @@ jobs:
           python AFrame/tests/test_node_library.py --out build_node_library
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           python tools/node_library/test_author.py
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          python tools/stamp_library/test_inspect.py
           exit $LASTEXITCODE
 
       - name: AClad engine unit test

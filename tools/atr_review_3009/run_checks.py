@@ -46,6 +46,7 @@ def main():
         ('node_library', '.', ['AFrame/tests/test_node_library.py',
                               '--out', str(out / 'node_library')]),
         ('node_library_author', '.', ['tools/node_library/test_author.py']),
+        ('stamp_inspector', '.', ['tools/stamp_library/test_inspect.py']),
         ('xmod', '.', ['tools/xmod_check.py', '--no-fixture', '--allow=X6']),
         ('frame_quick', '.', ['AFrame/tools/frame_synth.py', '--quick']),
         ('zones_quick', '.', ['Facades/tools/zones_synth.py', '--quick']),
