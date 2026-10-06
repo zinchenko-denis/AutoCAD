@@ -11,7 +11,21 @@ from pathlib import Path
 import generate
 
 
-def make_package(source, guide, fixes, diagram, out, code_sha, ci_url):
+RELEASE_ASSETS = ("AFacades.bundle.zip", "AClad.bundle.zip", "AFrame.bundle.zip",
+                  "Install_AutoCAD_2024.docx", "Facades_User_Manual.docx")
+
+
+def release_links(release_build):
+    if release_build is None:
+        return {}
+    if isinstance(release_build, bool) or not isinstance(release_build, int) or release_build < 109:
+        raise ValueError("The node commands require an explicitly selected build 109 or newer")
+    base = f"https://github.com/zinchenko-denis/AutoCAD/releases/download/build-{release_build}/"
+    return {name: base + name for name in RELEASE_ASSETS}
+
+
+def make_package(source, guide, fixes, diagram, out, code_sha, ci_url, release_build=None):
+    downloads = release_links(release_build)
     if not re.fullmatch(r"[0-9a-f]{40}", code_sha):
         raise ValueError("code_sha must identify the exact tested commit")
     data = json.loads(source.read_text(encoding="utf-8-sig"))
@@ -27,6 +41,22 @@ def make_package(source, guide, fixes, diagram, out, code_sha, ci_url):
         "Facade_18x12_15windows.dxf": (root / "docs/pilot/assets/Facade_18x12_15windows.dxf").read_bytes(),
         "source/vector1_2015_4_2_1_training.json": source.read_bytes(),
     }
+    if downloads:
+        plugin_instructions = f"""ДЛЯ КОМАНД ПЛАГИНА И ФАСАДНЫХ ИСПРАВЛЕНИЙ — ВЫПУСК №{release_build}
+Сначала откройте Install_AutoCAD_2024.docx, затем установите одновременно
+AFacades, AClad и AFrame из одного номера. Прямые ссылки закреплены за
+build-{release_build}; вход GitHub для скачивания не нужен:
+""" + "\n".join(f"{name}\n{url}" for name, url in downloads.items()) + f"""
+После установки у всех трёх модулей в F2 должен быть номер {release_build}.
+ATFNODEIMPORT/EDIT/DEMO/TEST проверяются с этим комплектом.
+Установка модулей не подтверждает создание нативного DWG: маршрут автора
+и живой опыт «три из пяти» в AutoCAD ещё нужно выполнить.
+"""
+    else:
+        plugin_instructions = """ATFNODEIMPORT/EDIT/DEMO/TEST требуют новых фасадных DLL. В №108 их нет.
+Номер установочного выпуска для этого автономного пакета не указан.
+LISP-автор и ручной опыт через Properties можно проверить без новых DLL.
+"""
     readme = f"""ТЕСТОВЫЙ УЗЕЛ ДЛЯ AUTOCAD 2024 — 06.10.2026
 
 Начните с Node_Pilot_Guide_2026-10-06.docx.
@@ -41,7 +71,7 @@ vector1_2015_4_2_1_training.lsp → ATFNATIVEBUILD.
 После успешной авторской проверки пять вставок сохраняются как 3B + 2A.
 Дальнейшая ручная проверка через Properties описана в инструкции.
 
-ATFNODEIMPORT/EDIT/DEMO/TEST требуют новых фасадных DLL. В №108 их нет.
+{plugin_instructions}
 Этот ZIP не обновляет AFacades/AClad/AFrame и не заменяет установочный выпуск.
 Facade_18x12_15windows.dxf — исходный учебный фасад для проверки исправлений
 подсистемы после установки исправленных модулей, а не DWG динамического узла.
@@ -90,6 +120,7 @@ Windows CI: {ci_url}
         "code_sha": code_sha, "ci_url": ci_url,
         "node_id": data["node_id"], "native_autocad_executed": False,
         "contains_native_dwg": False, "contains_plugin_bundles": False,
+        "required_plugin_release": ({"build": release_build, "assets": downloads} if downloads else None),
         "files": {name: hashlib.sha256(blob).hexdigest() for name, blob in files.items()},
     }
     files["package-info.json"] = (json.dumps(manifest, ensure_ascii=False, indent=2) + "\n").encode("utf-8")
@@ -116,5 +147,7 @@ if __name__ == "__main__":
         parser.add_argument("--" + name, type=Path, required=True)
     parser.add_argument("--code-sha", required=True)
     parser.add_argument("--ci-url", required=True)
+    parser.add_argument("--release-build", type=int,
+                        help="Explicit published build 109 or newer; omit for the offline pilot without release links")
     args = parser.parse_args()
     print(json.dumps(make_package(**vars(args)), ensure_ascii=False))

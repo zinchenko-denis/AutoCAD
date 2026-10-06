@@ -7,7 +7,45 @@ from docx.enum.table import WD_TABLE_ALIGNMENT
 from docx.enum.text import WD_ALIGN_PARAGRAPH
 from docx.oxml import OxmlElement
 from docx.oxml.ns import qn
+from docx.opc.constants import RELATIONSHIP_TYPE as RT
 from docx.shared import Cm, Pt, RGBColor
+
+
+RELEASE_ASSETS = (
+    ("AFacades.bundle.zip", "Зоны и ведомости"),
+    ("AClad.bundle.zip", "Облицовка"),
+    ("AFrame.bundle.zip", "Подсистема и команды узлов"),
+    ("Install_AutoCAD_2024.docx", "Скачивание, установка и обновление"),
+    ("Facades_User_Manual.docx", "Полное руководство и контрольные фасады"),
+)
+
+
+def release_links(release_build):
+    if release_build is None:
+        return []
+    if isinstance(release_build, bool) or not isinstance(release_build, int) or release_build < 109:
+        raise ValueError("The node commands require an explicitly selected build 109 or newer")
+    base = f"https://github.com/zinchenko-denis/AutoCAD/releases/download/build-{release_build}/"
+    return [(name, purpose, base + name) for name, purpose in RELEASE_ASSETS]
+
+
+def hyperlink(paragraph, text, url):
+    link = OxmlElement("w:hyperlink")
+    link.set(qn("r:id"), paragraph.part.relate_to(url, RT.HYPERLINK, is_external=True))
+    run = OxmlElement("w:r")
+    props = OxmlElement("w:rPr")
+    color = OxmlElement("w:color")
+    color.set(qn("w:val"), "0563C1")
+    props.append(color)
+    underline = OxmlElement("w:u")
+    underline.set(qn("w:val"), "single")
+    props.append(underline)
+    run.append(props)
+    label = OxmlElement("w:t")
+    label.text = text
+    run.append(label)
+    link.append(run)
+    paragraph._p.append(link)
 
 
 def paragraph(doc, text, bold=False):
@@ -59,7 +97,8 @@ def page(doc, title):
     doc.add_heading(title, 1)
 
 
-def build(out, diagram, code_sha, ci_url):
+def build(out, diagram, code_sha, ci_url, release_build=None):
+    downloads = release_links(release_build)
     doc = Document()
     sec = doc.sections[0]
     sec.page_width, sec.page_height = Cm(21), Cm(29.7)
@@ -135,8 +174,23 @@ def build(out, diagram, code_sha, ci_url):
     step(doc, 6, "Отдельно проверьте линейные ручки, COPY и Undo. После COPY изменение копии не должно менять исходник. Properties изменяет поля по отдельности: отменяйте нужное число операций до исходного состояния.")
     step(doc, 7, "Сохраните DWG, закройте его и откройте заново. Повторите переход трёх выбранных вставок в B. Сравните геометрию, марки и размеры до и после повторного открытия.")
 
-    page(doc, "3. Плагин и результаты проверки")
-    paragraph(doc, "Команды ниже требуют исправленного комплекта AFacades + AClad + AFrame. Выпуск №108 их не содержит. Эта инструкция и LISP не обновляют установленные DLL.", True)
+    if downloads:
+        page(doc, f"3. Скачать комплект №{release_build}")
+        paragraph(doc, f"Для команд библиотеки и проверки фасадных исправлений установите AFacades + AClad + AFrame из одного выпуска №{release_build}. Все три модуля обновляются вместе.", True)
+        paragraph(doc, "Ниже — прямые ссылки на этот номер выпуска. Вход в GitHub для скачивания не нужен. Сначала откройте Install_AutoCAD_2024.docx; затем закройте AutoCAD и обновите три бандла по инструкции.")
+        downloads_table = table(doc, ["Скачать файл", "Назначение"], [(name, purpose) for name, purpose, _ in downloads], [7.3, 10.1])
+        for row, (name, _, url) in zip(downloads_table.rows[1:], downloads):
+            p = row.cells[0].paragraphs[0]
+            p.clear()
+            hyperlink(p, name, url)
+        step(doc, 1, "Скачайте все три ZIP из таблицы. Source code для установки не нужен. Старые и новые модули разных выпусков не смешивайте.")
+        step(doc, 2, f"После установки запустите AutoCAD и проверьте в F2 номер {release_build} у всех трёх модулей. Затем переходите к командам следующего раздела.")
+        paragraph(doc, "Тестовый ZIP содержит LISP-генератор и материалы опыта; установочных бандлов и готового динамического DWG в нём нет. Обновление DLL не подтверждает успешный запуск автора: нативный узел по-прежнему нужно создать и проверить в AutoCAD.")
+    page(doc, ("4" if downloads else "3") + ". Плагин и результаты проверки")
+    if downloads:
+        paragraph(doc, f"Команды ниже проверяйте после установки трёх модулей выпуска №{release_build} по ссылкам предыдущего раздела. Выпуск №108 этих команд не содержит.", True)
+    else:
+        paragraph(doc, "Команды ниже требуют исправленного комплекта AFacades + AClad + AFrame. Выпуск №108 их не содержит. Номер нового установочного выпуска здесь не указан; эта инструкция и LISP не обновляют установленные DLL.", True)
     table(doc, ["Команда", "Что проверить после обновления модулей"], [
         ("ATFNODEIMPORT", "Выбрать полученный библиотечный DWG, затем точку вставки. Чужой блок с совпавшим именем не должен быть заменён."),
         ("ATFNODEDEMO", "Выбрать одну библиотечную вставку; получить пять её копий для отдельного опыта."),
@@ -146,11 +200,13 @@ def build(out, diagram, code_sha, ci_url):
     paragraph(doc, "ATFNODE остаётся справочной схемой слоёв. Для библиотеки используются команды из таблицы. Автоматический тест не заменяет ручки, ручной COPY/Undo и сохранение/открытие.")
     doc.add_heading("Что передать Денису", 2)
     paragraph(doc, "Заполните Test_Results.txt. Приложите DWG, снимки «пять A» и «три B + две A», полный F2/журнал и точные действия до ошибки. При отказе укажите, на каком шаге он произошёл; отказ обычного сценария — ошибка опыта, а не успешный тест.")
-    paragraph(doc, "Для проверки фасадных исправлений используйте отдельный Fixes_2026-10-05_06.txt. Там указано, какие исправления уже есть в №108, какие требуют нового выпуска и какой наблюдаемый результат ожидать.")
+    paragraph(doc, "Для проверки фасадных исправлений используйте отдельный Fixes_2026-10-05_06.txt. Там сохранены 13 пунктов с историей ошибок, действиями и ожидаемым наблюдаемым результатом.")
     paragraph(doc, "Не принимайте учебные значения за инженерное назначение: параметры проекта, крепёж, монтажные диапазоны и расчётное подтверждение задаются отдельно.")
     doc.add_heading("Идентификация комплекта", 2)
     paragraph(doc, "Исходный код: " + code_sha)
     paragraph(doc, "Windows CI: " + ci_url)
+    if downloads:
+        paragraph(doc, f"Установочные модули и две инструкции: build-{release_build}. Ссылки закреплены за этим номером; latest не используется.")
     paragraph(doc, "Нативный AutoCAD до выдачи комплекта: НЕ ВЫПОЛНЕН. Итог фиксирует проектная группа после этого маршрута.", True)
     out.parent.mkdir(parents=True, exist_ok=True)
     doc.save(out)
@@ -162,6 +218,8 @@ if __name__ == "__main__":
     parser.add_argument("--diagram", type=Path)
     parser.add_argument("--code-sha", required=True)
     parser.add_argument("--ci-url", required=True)
+    parser.add_argument("--release-build", type=int,
+                        help="Explicit published build 109 or newer; omit for the offline pilot without release links")
     args = parser.parse_args()
-    build(args.out, args.diagram, args.code_sha, args.ci_url)
+    build(args.out, args.diagram, args.code_sha, args.ci_url, args.release_build)
     print(args.out)

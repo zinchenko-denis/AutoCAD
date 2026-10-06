@@ -29,7 +29,7 @@ def main():
     footer._p.append(page)
     handouts.markdown(document, (ROOT / "INSTALL_AUTOCAD_2024.md").read_text(encoding="utf-8"))
     for paragraph in document.paragraphs:
-        if paragraph.text == "Проверить первый запуск":
+        if paragraph.text in ("Проверить первый запуск", "Если возникла проблема"):
             paragraph.paragraph_format.page_break_before = True
     target = ROOT / "Install_AutoCAD_2024.docx"
     document.save(target)

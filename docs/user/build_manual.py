@@ -62,6 +62,8 @@ def table(doc, rows):
     lens = [max((len(plain(r[j])) for r in values if len(r) > j), default=1) for j in range(cols)]
     weights = [max(12, min(75, n)) ** .7 for n in lens]
     widths = [7.0 * w / sum(weights) for w in weights]
+    if values[0] == ["Кнопка", "Команда", "Для чего нужна"]:
+        widths = [1.6, 1.65, 3.75]  # Keep command names on one line.
     for col, width in zip(t.columns, widths):
         col.width = Inches(width)
     pr = t._tbl.tblPr
@@ -126,7 +128,7 @@ def main():
     doc.core_properties.title = 'Фасадные модули AutoCAD Руководство начинающего пользователя'
     doc.core_properties.subject = 'Зоны облицовка подсистема и ведомости'
     doc.core_properties.author = 'Фасадные модули AutoCAD'
-    doc.core_properties.keywords = 'AFacades AClad AFrame ATFZONE ATTILE ATFRAME ATFTABLE ATFPROJECT ATFZONEPARAMS ATFNODE'
+    doc.core_properties.keywords = 'AFacades AClad AFrame ATFZONE ATTILE ATFRAME ATFTABLE ATFPROJECT ATFZONEPARAMS ATFNODE ATFNODEIMPORT ATFNODEEDIT ATFNODEDEMO ATFNODETEST'
     head = sec.header.paragraphs[0]; head.text = 'Фасадные модули AutoCAD  •  Руководство начинающего пользователя'
     for r in head.runs: r.font.size = Pt(8); r.font.color.rgb = BLACK
     footer = sec.footer.paragraphs[0]; footer.alignment = WD_ALIGN_PARAGRAPH.RIGHT
@@ -146,7 +148,7 @@ def main():
             n += 1; continue
         if line.startswith('## ') and not in_toc:
             p = doc.add_paragraph()
-            r = p.add_run('Редакция от 5 октября 2026 года для выпуска build-108. Перед занятием установите AFacades, AClad и AFrame из этого выпуска. Живая проверка в AutoCAD ещё предстоит.')
+            r = p.add_run('Редакция от 6 октября 2026 года для выпуска build-109. Перед занятием установите AFacades, AClad и AFrame из этого выпуска. Живая проверка в AutoCAD ещё предстоит.')
             r.bold = True
             doc.add_page_break()
             doc.add_paragraph('Содержание', style='Heading 1')
