@@ -21,7 +21,7 @@ def main():
     executable = out / 'node_library.exe'
     sources = [ROOT / 'AFrame/tests/test_node_library.cs']
     sources += [ROOT / ('AFrame/src/AFramePlugin/FrameNodeLibrary' + suffix + '.cs')
-                for suffix in ('Core', 'Cad', 'Command')]
+                for suffix in ('Core', 'Cad', 'Command', 'HostCheck')]
     compiled = compile_probe(sources, ['System.Core'], executable)
     (out / 'compile.log').write_text(compiled.stdout + compiled.stderr, encoding='utf-8')
     if compiled.returncode:

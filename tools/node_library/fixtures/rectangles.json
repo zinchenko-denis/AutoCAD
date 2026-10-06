@@ -27,6 +27,7 @@
   },
   "parameters": {
     "AFN_INSULATION": {
+      "dimension_id": "dleft",
       "start": [
         0,
         70
@@ -41,6 +42,7 @@
       ]
     },
     "AFN_CLADDING_X": {
+      "dimension_id": "dright",
       "start": [
         0,
         100

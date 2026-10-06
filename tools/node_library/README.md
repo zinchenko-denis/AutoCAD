@@ -82,7 +82,11 @@ JSON `schema=af_node_native_author/1` содержит:
 
 - `node_id`, `version=1`, `block_name`, `units=mm`, `origin=[0,0]`, `provenance`;
 - две строки `variants`; состояния `defaults` и `alternate` с тремя точными
-  именами свойств; две горизонтальные `parameters` со `start`, `end`, `label`;
+  именами свойств; две горизонтальные `parameters` со `start`, `end`, `label`
+  и обязательным `dimension_id` своего общего размера (`dim_insulation` и
+  `dim_cladding` в учебном пилоте). Размер измеряет от стены исходное значение
+  параметра; его действие stretch включает только подвижный конец, а нативная
+  проверка сопоставляет измерение с текущим значением параметра;
 - `entities` с уникальными `id`, `type` и необязательным `variant` (`null` — общие).
   Типы: line (`start/end`), polyline (`points/closed`), circle (`center/radius`),
   text (`position/height/text`), dimension (`p1/p2/line_point/height`), attribute

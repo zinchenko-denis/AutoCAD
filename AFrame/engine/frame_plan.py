@@ -215,10 +215,10 @@ def _window_side_spans(outer, boxes, edge_off, overhang, occupied):
         for ox0, oy0, ox1, oy1 in boxes:
             if ox0 + EPS < x < ox1 - EPS:
                 spans = _sub_y(spans, oy0, oy1)
-        for bucket in range(math.floor((x - 50.0) / 50.0),
-                            math.floor((x + 50.0) / 50.0) + 1):
+        for bucket in range(math.floor((x - 50.0 - EPS) / 50.0),
+                            math.floor((x + 50.0 + EPS) / 50.0) + 1):
             for rx, a, b in nearby.get(bucket, []):
-                if abs(rx - x) <= 50.0:
+                if abs(rx - x) <= 50.0 + EPS:
                     spans = _sub_y(spans, a, b)
         # Preserve the existing minimum for isolated window fragments.
         for a, b in spans:
@@ -2000,13 +2000,17 @@ def _frame_plan(req):
             for px, yy in add_br:
                 if _in_boxes(hole_boxes, px, yy) or not _inside_pt(outer, px, yy):
                     continue
-                if not any(abs(h["y"] - yy) <= EPS and h["x0"] - EPS <= px <= h["x1"] + EPS
+                # hrails already stores output coordinates (4 decimals).
+                # Compare in the same precision, keeping the existing EPS:
+                # a translated fractional Y must not lose its upper support.
+                out_x, out_y = round(px, 4), round(yy, 4)
+                if not any(abs(h["y"] - out_y) <= EPS and h["x0"] - EPS <= out_x <= h["x1"] + EPS
                            for h in hrails) and \
                         not any(abs(g - yy) <= EPS for g in ys_g):
                     continue                     # ГП на отметке нет
                 if any(near_pt(b, px, yy) for b in brackets):
                     continue
-                brackets.append({"x": round(px, 4), "y": round(yy, 4),
+                brackets.append({"x": out_x, "y": out_y,
                                  "kind": "рядовой"})
                 n_add += 1
             if n_add:
@@ -2111,7 +2115,7 @@ def _frame_plan(req):
                 if s_hi - s_lo <= EPS:
                     continue
                 side = abs(s_x - jx) > EPS
-                occupied_o.append((round(s_x, 4), s_lo, s_hi))
+                occupied_o.append((s_x, s_lo, s_hi))
                 if stock > EPS and s_hi - s_lo > stock + EPS:
                     notes.append("ШП X=%.0f длиной %.0f > хлыста "
                                  "%.0f" % (s_x, s_hi - s_lo,
@@ -2305,7 +2309,7 @@ def _frame_plan(req):
                 if s_hi - s_lo <= EPS:
                     continue
                 side = abs(s_x - jx) > EPS       # оконный (смещённый)
-                occupied_v.append((round(s_x, 4), s_lo, s_hi))
+                occupied_v.append((s_x, s_lo, s_hi))
                 fl_in = [f for f in floors_c
                          if s_lo + EPS < f < s_hi - EPS]
                 # направляющие. Отметки УКАЗАНЫ: куски между стыками

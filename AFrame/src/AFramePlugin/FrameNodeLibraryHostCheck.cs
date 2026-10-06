@@ -37,6 +37,7 @@ namespace AFramePlugin
             internal readonly List<string> Marks = new List<string>();
             internal readonly List<string> Dimensions = new List<string>();
             internal readonly List<double> Measures = new List<double>();
+            internal readonly List<double> CaptionMeasures = new List<double>();
             internal string GeometryKey, TextKey, MarksKey, DimensionKey;
             internal void Finish()
             {
@@ -44,11 +45,12 @@ namespace AFramePlugin
                 MarksKey = Join(Marks); DimensionKey = Join(Dimensions);
                 if (Geometry.Count == 0 || Marks.Count == 0 || Dimensions.Count < 2)
                     FrameNodeLibraryContract.Fail("Проверка не выполнена: нужны геометрия, марки DBText/MText и два нативных линейных размера.");
-                CheckMeasure(State.Values.Insulation); CheckMeasure(State.Values.Cladding);
+                CheckMeasure(Measures, State.Values.Insulation); CheckMeasure(Measures, State.Values.Cladding);
+                CheckMeasure(CaptionMeasures, State.Values.Insulation); CheckMeasure(CaptionMeasures, State.Values.Cladding);
             }
-            private void CheckMeasure(double expected)
+            private void CheckMeasure(List<double> measures, double expected)
             {
-                foreach (double actual in Measures) if (Math.Abs(actual - expected) <= 1e-6) return;
+                foreach (double actual in measures) if (Math.Abs(actual - expected) <= 1e-6) return;
                 FrameNodeLibraryContract.Fail("Нативные размеры не подтверждают значение " + N(expected) +
                     " мм. Чтение динамического свойства само по себе не доказывает работу узла.");
             }
@@ -68,6 +70,8 @@ namespace AFramePlugin
             var ed = doc.Editor; var db = doc.Database;
             try
             {
+                UnitsValue units;
+                if (!FrameNodeLibraryCommand.Millimeters(ed, db, out units)) return;
                 ed.WriteMessage("\nНативная проверка 3 из 5: A→B→B→A→A. Изменения будут отменены; save/open и пользовательский UNDO проверяются отдельно.");
                 var result = ed.GetSelection(new PromptSelectionOptions {
                     MessageForAdding = "\nВыберите ровно пять контрольных узлов с одинаковыми параметрами A: " });
@@ -87,6 +91,7 @@ namespace AFramePlugin
                 View[] original;
                 using (doc.LockDocument())
                 {
+                    FrameNodeLibraryCommand.CheckUnits(db, units);
                     using (var cad = new FrameNodeLibraryCad(db))
                     {
                         original = Capture(cad, ids);
@@ -146,6 +151,7 @@ namespace AFramePlugin
             {
                 var block = cad.Reference(ids[i]);
                 var view = new View { State = cad.Read(ids[i]) };
+                CaptureCaptions(cad, block, view);
                 var objects = new DBObjectCollection();
                 try
                 {
@@ -165,6 +171,36 @@ namespace AFramePlugin
         }
         private static void SameAll(View[] before, View[] after, string stage)
         { for (int i = 0; i < before.Length; i++) before[i].Same(after[i], stage); }
+
+        private static void CaptureCaptions(FrameNodeLibraryCad cad, BlockReference block, View view)
+        {
+            // This is the evaluated body, used only to inspect displayed
+            // dimension settings in local coordinates. Compatibility still
+            // comes exclusively from the original DynamicBlockTableRecord.
+            // Explode may transform dimension overrides along with a scaled
+            // insert; those transient overrides are not the source caption.
+            var body = (BlockTableRecord)cad.Transaction.GetObject(block.BlockTableRecord, OpenMode.ForRead);
+            foreach (ObjectId id in body)
+            {
+                var dimension = cad.Transaction.GetObject(id, OpenMode.ForRead) as Dimension;
+                if (dimension == null || !dimension.Visible) continue;
+                if (!(dimension is AlignedDimension) && !(dimension is RotatedDimension))
+                    FrameNodeLibraryContract.Fail("Проверка не выполнена: неподдержанный размер вычисленного тела узла.");
+                double measured = dimension.Measurement, displayed = measured * dimension.Dimlfac;
+                if (!FrameNodeLibraryContract.Finite(measured) || !FrameNodeLibraryContract.Finite(displayed) ||
+                    dimension.Dimlfac <= 0 || Math.Abs(displayed - measured) > 1e-6)
+                    FrameNodeLibraryContract.Fail("Проверка не выполнена: DIMLFAC меняет подпись локального размера узла в мм.");
+                if ((!String.IsNullOrEmpty(dimension.DimensionText) && dimension.DimensionText != "<>") ||
+                    dimension.Dimrnd != 0 || dimension.Dimlunit != 2 || dimension.Dimtol || dimension.Dimlim ||
+                    (!String.IsNullOrEmpty(dimension.Dimpost) && dimension.Dimpost != "<>"))
+                    FrameNodeLibraryContract.Fail("Проверка не выполнена: текст, округление, единицы, допуск или префикс размера отличаются от десятичных миллиметров пилота.");
+                if (dimension.Dimdec < 0 || dimension.Dimdec > 8 || Math.Abs(Math.Round(displayed, dimension.Dimdec) - measured) > 1e-6)
+                    FrameNodeLibraryContract.Fail("Проверка не выполнена: точность подписи скрывает введённую дробную часть размера.");
+                view.CaptionMeasures.Add(measured);
+                view.Dimensions.Add("LOCAL_CAPTION|" + N(measured) + "|" + N(dimension.Dimlfac) + "|" +
+                    dimension.DimensionText + "|" + dimension.Dimpost + "|" + dimension.Dimdec);
+            }
+        }
 
         // Only the small set generated by native_author.lsp is supported.
         // Unknown types are a visible incomplete check, never a silent PASS.
@@ -245,14 +281,10 @@ namespace AFramePlugin
                 double measured = dimension.Measurement / scale;
                 if (!FrameNodeLibraryContract.Finite(measured) || Math.Abs(measured - geometric) > 1e-6)
                     FrameNodeLibraryContract.Fail("Нативное значение размера не совпадает с геометрией выносных точек; вычисление размера не подтверждено.");
-                if (!String.IsNullOrEmpty(dimension.DimensionText) && dimension.DimensionText != "<>")
-                    FrameNodeLibraryContract.Fail("Проверка не выполнена: размер имеет текстовую подмену; нужна штатная измеряемая подпись.");
-                if (FrameNodeLibraryContract.Equal(scale, 1) && !FrameNodeLibraryContract.Equal(dimension.Dimlfac, 1))
-                    FrameNodeLibraryContract.Fail("Проверка не выполнена: DIMLFAC меняет подпись размера узла в масштабе 1:1.");
                 view.Measures.Add(measured);
                 view.Dimensions.Add(dimension.GetType().Name + "|" + N(measured) + "|" + P(p1, inverse) + P(p2, inverse) +
                     P(dimLine, inverse) + P(dimension.TextPosition, inverse) + dimension.DimensionText + "|" +
-                    N(dimension.Dimlfac) + "|" + dimension.Dimpost + "|" + appearance); return;
+                    N(dimension.Dimlfac) + "|" + dimension.Dimpost + "|" + dimension.Dimdec + "|" + appearance); return;
             }
             FrameNodeLibraryContract.Fail("Проверка не выполнена: неподдержанный результат Explode " + entity.GetType().Name + ".");
         }

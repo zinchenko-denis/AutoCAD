@@ -174,7 +174,7 @@ namespace AFramePlugin
         {
             return ed.GetDouble(new PromptDoubleOptions(message) { AllowNegative = false, AllowZero = false, AllowNone = false });
         }
-        private static bool Millimeters(Editor ed, Database db, out UnitsValue units)
+        internal static bool Millimeters(Editor ed, Database db, out UnitsValue units)
         {
             units = db.Insunits;
             if (units == UnitsValue.Millimeters) return true;
@@ -185,7 +185,7 @@ namespace AFramePlugin
             var result = ed.GetKeywords(options);
             return result.Status == PromptStatus.OK && (result.StringResult == "Yes" || result.StringResult == "Да");
         }
-        private static void CheckUnits(Database db, UnitsValue expected)
+        internal static void CheckUnits(Database db, UnitsValue expected)
         {
             if (db.Insunits != expected) FrameNodeLibraryContract.Fail("Единицы DWG изменились во время команды. Повторите команду.");
         }

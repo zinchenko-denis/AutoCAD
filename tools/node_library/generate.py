@@ -82,6 +82,8 @@ def validate(data: dict[str, Any]) -> dict[str, Any]:
     _require(isinstance(parameters, dict) and set(parameters) == set(PROPERTIES[:2]), "exact two linear parameter definitions required")
     for name, spec in parameters.items():
         _require(isinstance(spec, dict), f"{name}: object required")
+        _require(set(spec) == {"start", "end", "label", "dimension_id"}, f"{name}: start/end/label/dimension_id required")
+        _text(spec.get("dimension_id"), f"{name}.dimension_id", 128)
         p1, p2 = _point(spec.get("start"), name), _point(spec.get("end"), name)
         _point(spec.get("label"), name)
         _require(p1[0] == 0 and p2[0] == data["defaults"][name] and p1[1] == p2[1], f"{name}: explicit horizontal wall datum and default endpoint required")
@@ -135,6 +137,18 @@ def validate(data: dict[str, Any]) -> dict[str, Any]:
                 _require(entity.get("variant") is None, f"{ident}: instance attributes must be common")
                 _text(entity.get("prompt", tag), ident)
 
+    bound_dimensions = set()
+    for name, spec in parameters.items():
+        ident = spec["dimension_id"]
+        dimension = by_id.get(ident)
+        _require(dimension is not None and dimension["type"] == "dimension", f"{name}: dimension_id must identify a dimension")
+        _require(ident not in bound_dimensions, f"{name}: each parameter requires its own dimension_id")
+        bound_dimensions.add(ident)
+        _require(dimension.get("variant") is None, f"{name}: bound dimension must be common to both variants")
+        p1, p2 = dimension["p1"], dimension["p2"]
+        _require(p1[0] == 0 and p2[0] == data["defaults"][name] and p1[1] == p2[1],
+                 f"{name}: bound dimension must measure the default distance from the wall datum")
+
     actions = data.get("actions")
     _require(isinstance(actions, list) and actions, "explicit actions are required")
     selected = {name: set() for name in PROPERTIES[:2]}
@@ -157,8 +171,18 @@ def validate(data: dict[str, Any]) -> dict[str, Any]:
             _require(p1[0] < p2[0] and p1[1] < p2[1], "stretch frame must be nonempty min/max rectangle")
         else:
             _require("frame" not in action, "move action must not have a stretch frame")
+        for other_name, spec in parameters.items():
+            ident = spec["dimension_id"]
+            if ident not in members:
+                continue
+            _require(name == other_name, f"{name}: cannot act on another parameter's bound dimension")
+            _require(kind == "stretch", f"{name}: bound dimension needs endpoint stretch, not whole-object move")
+            fixed, moving = by_id[ident]["p1"], by_id[ident]["p2"]
+            inside = lambda pt: p1[0] < pt[0] < p2[0] and p1[1] < pt[1] < p2[1]
+            outside = lambda pt: pt[0] < p1[0] or pt[0] > p2[0] or pt[1] < p1[1] or pt[1] > p2[1]
+            _require(inside(moving) and outside(fixed), f"{name}: stretch frame must contain only the moving dimension endpoint, away from the boundary")
     for name, members in selected.items():
-        _require(any(by_id[x]["type"] == "dimension" for x in members), f"{name}: linked dimension required")
+        _require(parameters[name]["dimension_id"] in members, f"{name}: bound dimension must be in its action selection")
         _require(any(by_id[x]["type"] in ("line", "polyline", "circle") for x in members), f"{name}: actual geometry required")
     for variant in variants:
         own = [x for x in entities if x.get("variant") == variant]

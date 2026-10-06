@@ -74,6 +74,37 @@ class WindowEndTests(unittest.TestCase):
                 self.assertEqual(self.rail_spans(result, x + dx),
                                  [(dy, 2000 + dy), (3500 + dy, 5000 + dy)])
 
+    def test_fractional_translation_preserves_nearby_jamb_boundary(self):
+        # At the existing 50 mm boundary, rounding only the occupied axis
+        # used to add one extra jamb after moving the entire facade.
+        for sub in ("vertical", "ortho"):
+            for delta in (-0.001, 0, 0.001):
+                req = request(sub)
+                req["joints_x"] = [850 + delta, 1500, 2150 - delta]
+                before = op_frame(req)
+                self.assertTrue(before["ok"], before.get("error"))
+                for x in (900, 2100):
+                    self.assertEqual(bool(self.rail_spans(before, x)), delta < 0,
+                                     "50.001 needs its own jamb; 50 and 49.999 already have one nearby")
+                for dx, dy in ((0.12344, -0.37544), (-0.12344, 0.37544),
+                               (12800.12344, -4620.37544)):
+                    with self.subTest(sub=sub, delta=delta, dx=dx, dy=dy):
+                        shifted = copy.deepcopy(req)
+                        shifted["joints_x"] = [x + dx for x in req["joints_x"]]
+                        for c in shifted["contours"]:
+                            c["pts"] = [[x + dx, y + dy] for x, y in c["pts"]]
+                        after = op_frame(shifted)
+                        self.assertTrue(after["ok"], after.get("error"))
+                        geometry = lambda result, tx, ty: Counter(
+                            (round(r["x"] + tx, 4), round(r["y0"] + ty, 4),
+                             round(r["y1"] + ty, 4), r["kind"], r["clamp_role"])
+                            for r in result["rails"])
+                        self.assertEqual(geometry(before, dx, dy), geometry(after, 0, 0))
+                        supports = lambda result, tx, ty: Counter(
+                            (round(b["x"] + tx, 4), round(b["y"] + ty, 4), b["kind"])
+                            for b in result["brackets"])
+                        self.assertEqual(supports(before, dx, dy), supports(after, 0, 0))
+
     def test_fractional_sill_reproduces_video_class(self):
         # Синтетический аналог, не восстановленный DWG. В видео измерен
         # торец 2101.1599; положение окна здесь задано явно на 50 выше.

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import copy
 import json
+import math
 from pathlib import Path
 import sys
 import unittest
@@ -87,11 +88,11 @@ def parse(source):
 def audit_scope(forms):
     """Find a write to a caller's dynamically scoped variable before shipping.
 
-    Only three afn:-prefixed bindings intentionally cross helper boundaries:
-    input data, diagnostic failure and the command-owned editor flag.
+    Only the afn:-prefixed bindings listed here cross helper boundaries:
+    input data, diagnostics and the command-owned editor flag.
     Nested *error* deliberately captures the enclosing command's declared locals.
     """
-    globals_allowed = {"afn:data", "afn:failure", "afn:editor-owned"}
+    globals_allowed = {"afn:data", "afn:failure", "afn:editor-owned", "afn:stage", "afn:last-command"}
     errors = []
 
     def body(form, scope):
@@ -125,16 +126,22 @@ class NativeFailure(Exception):
     pass
 
 
+class Pair(tuple):
+    """Dotted alist cell, distinct from a proper Lisp list."""
+
+
 class CleanupModel:
     """Execute only the error-handler control flow with mocked CAD operations.
 
     This proves ownership decisions in our handler, not AutoCAD UNDO/BCLOSE.
     """
     def __init__(self, editor, owned_editor, commands_owned, undo_state, fail=None):
-        self.vars = {"BLOCKEDITOR": editor, "CMDACTIVE": 1}
+        self.vars = {"BLOCKEDITOR": editor, "CMDACTIVE": 1, "LASTPROMPT": "failed native prompt"}
         self.env = {"afn:editor-owned": owned_editor, "commands-owned": commands_owned,
-                    "undo-state": undo_state, "settings": [], "afn:failure": None, "message": "test"}
+                    "undo-state": undo_state, "settings": [], "afn:failure": None, "message": "test",
+                    "afn:stage": "test stage", "afn:last-command": "_.BPARAMETER"}
         self.calls = []
+        self.messages = []
         self.fail = fail
 
     def run(self, expression):
@@ -181,6 +188,7 @@ class CleanupModel:
         if head == "strcat":
             return "".join(values)
         if head == "princ":
+            self.messages.extend(values)
             return None
         if head == "command":
             self.calls.append(("cancel",))
@@ -197,12 +205,95 @@ class CleanupModel:
                 raise AssertionError(fn)
             call = tuple(str(x) for x in tokens)
             self.calls.append(call)
+            self.vars["LASTPROMPT"] = "cleanup prompt: " + call[0]
             if self.fail == call[0]:
                 return NativeFailure(call[0])
             if call[0] == "_.BCLOSE":
                 self.vars["BLOCKEDITOR"] = 0
             return None
         raise AssertionError(f"unmodelled error-handler expression: {head}")
+
+
+class PreflightModel(CleanupModel):
+    def __init__(self):
+        super().__init__(0, False, False, None)
+        self.env.update({":vlax-true": -1, ":vlax-false": 0, "layer-zero": object()})
+        self.layer = {"LayerOn": -1, "Freeze": 0, "Lock": 0}
+
+    def run(self, expression):
+        if isinstance(expression, list) and expression:
+            if expression[0] == "afn:assert":
+                if not self.run(expression[1]):
+                    raise NativeFailure(self.run(expression[2]))
+                return None
+            if expression[0] in ("vla-get-LayerOn", "vla-get-Freeze", "vla-get-Lock"):
+                return self.layer[expression[0][8:]]
+        return super().run(expression)
+
+
+class DimensionModel(CleanupModel):
+    """Evaluate the real pure-Lisp dimension predicate on synthetic snapshots.
+
+    This cannot execute CAD commands, XData propagation or the native evaluator.
+    """
+    def __init__(self, runtime, data):
+        super().__init__(0, False, False, None)
+        self.env.update({"afn:data": data, ":vlax-false": 0})
+        self.defuns = {f[1]: f for f in parse(runtime) if isinstance(f, list) and f[:1] == ["defun"]}
+
+    def run(self, expression):
+        if not isinstance(expression, list) or not expression:
+            return super().run(expression)
+        head, *args = expression
+        if head == "foreach":
+            result = None
+            for item in self.run(args[1]) or []:
+                self.env[args[0]] = item
+                for body in args[2:]:
+                    result = self.run(body)
+            return result
+        if head in {"afn:get", "afn:assert", "car", "cdr", "cadr", "cons", "nth", "length", "distance", "equal"}:
+            values = [self.run(x) for x in args]
+            if head == "afn:get":
+                return dict(values[1]).get(values[0])
+            if head == "afn:assert":
+                if not values[0]:
+                    raise NativeFailure(values[1])
+                return None
+            if head == "car":
+                return values[0][0] if values[0] else None
+            if head == "cdr":
+                if isinstance(values[0], Pair):
+                    return values[0][1]
+                return values[0][1:] if values[0] else []
+            if head == "cadr":
+                return values[0][1] if values[0] else None
+            if head == "cons":
+                return [values[0], *(values[1] or [])]
+            if head == "nth":
+                return values[1][values[0]]
+            if head == "length":
+                return len(values[0] or [])
+            if head == "distance":
+                return math.dist(*values)
+            if head == "equal":
+                return abs(values[0] - values[1]) <= values[2] if len(values) == 3 and all(isinstance(x, (int, float)) for x in values[:2]) else values[0] == values[1]
+        if head in self.defuns:
+            definition = self.defuns[head]
+            declaration = definition[2]
+            divider = declaration.index("/") if "/" in declaration else len(declaration)
+            values = [self.run(x) for x in args]
+            outer = self.env.copy()
+            self.env.update(dict(zip(declaration[:divider], values)))
+            self.env.update({x: None for x in declaration[divider + 1:]})
+            try:
+                result = None
+                for body in definition[3:]:
+                    result = self.run(body)
+                return result
+            finally:
+                self.env = outer
+        return super().run(expression)
 
 
 class AuthorTests(unittest.TestCase):
@@ -253,21 +344,109 @@ class AuthorTests(unittest.TestCase):
             with self.assertRaises(ContractError):
                 validate(data)
 
+    def test_bound_dimension_contract_rejects_move_only_and_ambiguous_links(self):
+        mutations = [
+            lambda d: d["parameters"]["AFN_INSULATION"].pop("dimension_id"),
+            lambda d: d["parameters"]["AFN_INSULATION"].update(dimension_id="left"),
+            lambda d: d["parameters"]["AFN_INSULATION"].update(dimension_id="missing"),
+            lambda d: d["parameters"]["AFN_CLADDING_X"].update(dimension_id="dleft"),
+            lambda d: d["entities"][2].update(variant="RECT_A"),
+            lambda d: d["entities"][2].update(p2=[99, 70]),
+            lambda d: (d["actions"][0].update(kind="move"), d["actions"][0].pop("frame")),
+            lambda d: d["actions"][0].update(frame=[[-1, -1], [101, 85]]),
+            lambda d: d["actions"][0].update(frame=[[100, -1], [101, 85]]),
+            lambda d: d["actions"][0]["entities"].append("dright"),
+        ]
+        for change in mutations:
+            data = copy.deepcopy(self.data)
+            change(data)
+            with self.subTest(change=change), self.assertRaises(ContractError):
+                validate(data)
+
+    def dimension_snapshot(self):
+        def row(ident, end):
+            return ["AcDbAlignedDimension", ident, [0, 0, 0], [end, 0, 0], end,
+                    [end / 2, 10, 0], "", 1, "", "", 2, 0, 0, 8, 0, "0"]
+        return [[row("dleft", 150), row("dright", 280)],
+                {"AFN_INSULATION": 150, "AFN_CLADDING_X": 280}, [], []]
+
+    def check_dimensions(self, snapshot):
+        model = DimensionModel(self.runtime, self.data)
+        model.env["afn:data"] = {**self.data, "parameters": [Pair((k, v)) for k, v in self.data["parameters"].items()]}
+        model.env["snapshot-input"] = snapshot
+        model.run(["afn:check-dimensions", "snapshot-input"])
+
+    def test_native_dimension_predicate_checks_value_not_translation(self):
+        good = self.dimension_snapshot()
+        self.check_dimensions(good)
+        moved = copy.deepcopy(good)
+        moved[0][0][2:6] = [[50, 0, 0], [150, 0, 0], 100, [100, 10, 0]]
+        with self.assertRaisesRegex(NativeFailure, "measurement mismatch"):
+            self.check_dimensions(moved)
+        lying_measurement = copy.deepcopy(moved)
+        lying_measurement[0][0][4] = 150
+        with self.assertRaisesRegex(NativeFailure, "measurement mismatch"):
+            self.check_dimensions(lying_measurement)
+
+    def test_native_dimension_predicate_rejects_wrong_id_and_bad_format(self):
+        mutations = [lambda s: s[0].append(copy.deepcopy(s[0][0])),
+                     lambda s: s[0][0].__setitem__(1, None)]
+        for index, wrong in ((6, "100"), (7, 2), (8, "prefix"), (9, "suffix"),
+                             (10, 4), (11, 100), (12, 1), (13, 2), (14, -1), (15, "DIM")):
+            mutations.append(lambda s, i=index, v=wrong: s[0][0].__setitem__(i, v))
+        for mutate in mutations:
+            snapshot = self.dimension_snapshot()
+            mutate(snapshot)
+            with self.assertRaises(NativeFailure):
+                self.check_dimensions(snapshot)
+
     def handler(self):
         main = next(x for x in parse(self.runtime) if isinstance(x, list) and x[:2] == ["defun", "c:ATFNATIVEBUILD"])
         handler = next(x for x in main[3:] if isinstance(x, list) and x[:2] == ["defun", "*error*"])
         return ["progn", *handler[3:]]
 
+    def preflight(self, message):
+        main = next(x for x in parse(self.runtime) if isinstance(x, list) and x[:2] == ["defun", "c:ATFNATIVEBUILD"])
+        return next(x for x in main[3:] if isinstance(x, list) and x[:1] == ["afn:assert"] and message in x[-1])
+
+    def test_layer_zero_preflight_rejects_invisible_or_locked_output(self):
+        predicate = self.preflight("Layer 0 must")
+        model = PreflightModel()
+        model.run(predicate)
+        for key, bad in (("LayerOn", 0), ("Freeze", -1), ("Lock", -1)):
+            model = PreflightModel()
+            model.layer[key] = bad
+            with self.assertRaisesRegex(NativeFailure, "Layer 0"):
+                model.run(predicate)
+            self.assertEqual(model.calls, [])
+
+    def test_undo_preflight_rejects_disabled_single_or_foreign_group(self):
+        predicate = self.preflight("UNDO must")
+        for flags in (1, 5, 53):
+            model = PreflightModel()
+            model.vars["UNDOCTL"] = flags
+            model.run(predicate)
+        for flags in (0, 2, 3, 9, 61):
+            model = PreflightModel()
+            model.vars["UNDOCTL"] = flags
+            with self.assertRaisesRegex(NativeFailure, "UNDO must"):
+                model.run(predicate)
+            self.assertEqual(model.calls, [])
+
     def test_preflight_failure_does_not_discard_foreign_editor_or_command(self):
         model = CleanupModel(editor=1, owned_editor=False, commands_owned=False, undo_state=None)
         model.run(self.handler())
         self.assertEqual(model.calls, [])
-        self.assertEqual(model.vars, {"BLOCKEDITOR": 1, "CMDACTIVE": 1})
+        self.assertEqual(model.vars["BLOCKEDITOR"], 1)
+        self.assertEqual(model.vars["CMDACTIVE"], 1)
+        self.assertIn("\nAFN STAGE: test stage", model.messages)
+        self.assertIn("\nAFN LAST PROMPT: failed native prompt", model.messages)
 
     def test_own_editor_failure_closes_before_rollback(self):
         model = CleanupModel(editor=1, owned_editor=True, commands_owned=True, undo_state="open")
         model.run(self.handler())
         self.assertEqual(model.calls, [("cancel",), ("_.BCLOSE", "_Discard"), ("_.UNDO", "_End"), ("_.U",), ("restore",)])
+        self.assertIn("\nAFN LAST PROMPT: failed native prompt", model.messages)
 
     def test_save_failure_after_group_end_rolls_back_own_group(self):
         model = CleanupModel(editor=0, owned_editor=False, commands_owned=True, undo_state="ended")
