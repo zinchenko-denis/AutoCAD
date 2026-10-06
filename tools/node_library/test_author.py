@@ -67,7 +67,7 @@ def parse(source):
         cursor += 1
         if type(token) is str and token == "(":
             result = []
-            while cursor < len(tokens) and tokens[cursor] != ")":
+            while cursor < len(tokens) and not (type(tokens[cursor]) is str and tokens[cursor] == ")"):
                 result.append(one())
             if cursor == len(tokens):
                 raise ValueError("unclosed list")
@@ -136,9 +136,11 @@ class CleanupModel:
     This proves ownership decisions in our handler, not AutoCAD UNDO/BCLOSE.
     """
     def __init__(self, editor, owned_editor, commands_owned, undo_state, fail=None):
-        self.vars = {"BLOCKEDITOR": editor, "CMDACTIVE": 1, "LASTPROMPT": "failed native prompt"}
+        self.vars = {"BLOCKEDITOR": editor, "CMDACTIVE": 1, "LASTPROMPT": "failed native prompt",
+                     "UNDOCTL": 61 if undo_state == "open" else 53}
         self.env = {"afn:editor-owned": owned_editor, "commands-owned": commands_owned,
                     "undo-state": undo_state, "settings": [], "afn:failure": None, "message": "test",
+                    "settings-changed": commands_owned,
                     "afn:stage": "test stage", "afn:last-command": "_.BPARAMETER"}
         self.calls = []
         self.messages = []
@@ -183,6 +185,12 @@ class CleanupModel:
             return not values[0]
         if head == "logand":
             return values[0] & values[1]
+        if head == "member":
+            return values[0] in values[1]
+        if head == "null":
+            return values[0] is None
+        if head == "itoa":
+            return str(values[0])
         if head == "getvar":
             return self.vars[values[0]]
         if head == "strcat":
@@ -210,24 +218,139 @@ class CleanupModel:
                 return NativeFailure(call[0])
             if call[0] == "_.BCLOSE":
                 self.vars["BLOCKEDITOR"] = 0
+            if call == ("_.UNDO", "_End") and self.fail != "end-noop":
+                self.vars["UNDOCTL"] &= ~8
             return None
         raise AssertionError(f"unmodelled error-handler expression: {head}")
 
 
 class PreflightModel(CleanupModel):
-    def __init__(self):
+    """Run actual pre-build Lisp control flow; CAD state/commands are doubles."""
+    def __init__(self, runtime=None):
         super().__init__(0, False, False, None)
         self.env.update({":vlax-true": -1, ":vlax-false": 0, "layer-zero": object()})
         self.layer = {"LayerOn": -1, "Freeze": 0, "Lock": 0}
+        self.vars.update(UNDOCTL=53, DBMOD=0, DWGTITLED=0, BLOCKEDITOR=0, TILEMODE=1,
+                         LISPSYS=1, CMDACTIVE=0)
+        self.env["afn:data"] = {"block_name": "AFN_TEST"}
+        self.defuns = {f[1]: f for f in parse(runtime or "") if isinstance(f, list) and f[:1] == ["defun"]}
+        self.count, self.existing_block = 0, None
+        self.output, self.existing_file = "new-library.dwg", None
+        self.dialog, self.reject_normalize, self.normalize_dbmod = None, False, None
+        self.reject_begin, self.reject_end = False, False
+        self.events = []
+
+    def prepare(self):
+        """Execute the real command up to its first geometry-writing helper."""
+        for expression in self.defuns["c:ATFNATIVEBUILD"][3:]:
+            if expression[:1] == ["defun"]:
+                continue
+            if expression[:1] == ["afn:build-definition"]:
+                self.events.append("geometry reached")
+                return
+            self.run(expression)
+        raise AssertionError("geometry boundary missing")
+
+    def native_command(self, tokens):
+        call = tuple(tokens)
+        self.calls.append(call)
+        self.events.append(call)
+        flags = self.vars["UNDOCTL"]
+        if self.fail == "normalize":
+            self.vars["CMDACTIVE"] = 1
+            raise NativeFailure("native normalization failed")
+        if call == ("_.UNDO", "_All"):
+            if flags & 1 or flags & 8:
+                raise AssertionError("Off requires direct All and no active group")
+        elif call == ("_.UNDO", "_Control", "_All"):
+            if not (flags & 1 and flags & 2) or flags & 8:
+                raise AssertionError("One requires Control/All and no active group")
+        elif call == ("_.UNDO", "_Begin"):
+            if flags & 11 != 1:
+                raise AssertionError("Begin before verified All/no group")
+            if not self.reject_begin:
+                self.vars["UNDOCTL"] |= 8
+            return
+        elif call == ("_.UNDO", "_End"):
+            if not self.reject_end:
+                self.vars["UNDOCTL"] &= ~8
+            return
+        else:
+            raise AssertionError(f"unexpected native preparation command: {call}")
+        if not self.reject_normalize:
+            self.vars["UNDOCTL"] = (flags | 1) & ~2
+        if self.normalize_dbmod is not None:
+            self.vars["DBMOD"] = self.normalize_dbmod
 
     def run(self, expression):
         if isinstance(expression, list) and expression:
+            head, *args = expression
             if expression[0] == "afn:assert":
                 if not self.run(expression[1]):
                     raise NativeFailure(self.run(expression[2]))
                 return None
             if expression[0] in ("vla-get-LayerOn", "vla-get-Freeze", "vla-get-Lock"):
                 return self.layer[expression[0][8:]]
+            if head == "foreach":
+                for item in self.run(args[1]):
+                    self.env[args[0]] = item
+                    for body in args[2:]:
+                        self.run(body)
+                return None
+            if head in self.defuns and head != "afn:restore":
+                form = self.defuns[head]
+                signature = form[2]
+                split = signature.index("/") if "/" in signature else len(signature)
+                values = [self.run(a) for a in args]
+                scoped = [s for s in signature if s != "/"]
+                old = {s: self.env.get(s) for s in scoped}
+                self.env.update(dict.fromkeys(scoped))
+                self.env.update(zip(signature[:split], values))
+                try:
+                    result = None
+                    for body in form[3:]:
+                        result = self.run(body)
+                    return result
+                finally:
+                    self.env.update(old)
+            if head in ("afn:get", "vla-get-ActiveDocument", "vlax-get-acad-object", "vla-get-ModelSpace",
+                        "vla-get-Layers", "vla-Item", "vla-get-Count", "tblsearch", "getfiled", "findfile",
+                        "getvar", "setvar", "cons", "car", "cdr", "assoc", "apply"):
+                values = [self.run(a) for a in args]
+                if head == "afn:get":
+                    return values[1].get(values[0])
+                if head in ("vla-get-ActiveDocument", "vlax-get-acad-object", "vla-get-ModelSpace", "vla-get-Layers", "vla-Item"):
+                    return head
+                if head == "vla-get-Count":
+                    return self.count
+                if head == "tblsearch":
+                    return self.existing_block
+                if head == "findfile":
+                    return self.existing_file
+                if head == "getfiled":
+                    self.events.append("output dialog")
+                    if self.dialog:
+                        self.dialog(self)
+                    return self.output
+                if head == "getvar":
+                    return self.vars.get(values[0], 0)
+                if head == "setvar":
+                    self.calls.append(("setvar", *values))
+                    self.vars[values[0]] = values[1]
+                    return values[1]
+                if head == "cons":
+                    return [values[0], *(values[1] or [])] if values[1] is None or isinstance(values[1], list) else Pair(values)
+                if head == "assoc":
+                    return Pair((values[0], values[1][values[0]])) if values[0] in values[1] else None
+                if head == "car":
+                    return values[0][0]
+                if head == "cdr":
+                    value = values[0]
+                    return value[1] if isinstance(value, Pair) else value[2] if len(value) == 3 and value[1] == "." else value[1:]
+                if head == "apply":
+                    if values[0] != "vl-cmdf":
+                        raise AssertionError(values[0])
+                    return self.native_command(values[1])
         return super().run(expression)
 
 
@@ -406,32 +529,138 @@ class AuthorTests(unittest.TestCase):
         return ["progn", *handler[3:]]
 
     def preflight(self, message):
-        main = next(x for x in parse(self.runtime) if isinstance(x, list) and x[:2] == ["defun", "c:ATFNATIVEBUILD"])
+        main = next(x for x in parse(self.runtime) if isinstance(x, list) and x[:2] == ["defun", "afn:check-drawing"])
         return next(x for x in main[3:] if isinstance(x, list) and x[:1] == ["afn:assert"] and message in x[-1])
 
     def test_layer_zero_preflight_rejects_invisible_or_locked_output(self):
-        predicate = self.preflight("Layer 0 must")
+        predicate = self.preflight("Слой 0 должен")
         model = PreflightModel()
         model.run(predicate)
         for key, bad in (("LayerOn", 0), ("Freeze", -1), ("Lock", -1)):
             model = PreflightModel()
             model.layer[key] = bad
-            with self.assertRaisesRegex(NativeFailure, "Layer 0"):
+            with self.assertRaisesRegex(NativeFailure, "Слой 0"):
                 model.run(predicate)
             self.assertEqual(model.calls, [])
 
-    def test_undo_preflight_rejects_disabled_single_or_foreign_group(self):
-        predicate = self.preflight("UNDO must")
-        for flags in (1, 5, 53):
-            model = PreflightModel()
-            model.vars["UNDOCTL"] = flags
-            model.run(predicate)
-        for flags in (0, 2, 3, 9, 61):
-            model = PreflightModel()
-            model.vars["UNDOCTL"] = flags
-            with self.assertRaisesRegex(NativeFailure, "UNDO must"):
-                model.run(predicate)
+    def test_reported_view_change_reaches_geometry_with_real_preparation(self):
+        # Actual report: UNDOCTL=53, DBMOD=16, DWGTITLED=0, BLOCKEDITOR=0.
+        # The old predicate rejected DBMOD=16 before the first drawing change.
+        for dbmod in (0, 8, 16, 24):
+            model = PreflightModel(self.runtime)
+            model.vars["DBMOD"] = dbmod
+            model.prepare()
+            self.assertEqual(model.calls[0], ("_.UNDO", "_Begin"))
+            self.assertEqual(model.events[-1], "geometry reached")
+            self.assertEqual(model.env["undo-state"], "open")
+            self.assertIn(f"DBMOD={dbmod}", "".join(model.messages))
+            self.assertIn("UNDOCTL=53", "".join(model.messages))
+
+    def test_dirty_or_nonempty_drawing_is_rejected_before_dialog_or_undo(self):
+        cases = [("DBMOD", x) for x in (*range(1, 8), 9, 17, 25, 32, 40, 48, 64, 128, -1)]
+        cases += [("DWGTITLED", 1), ("BLOCKEDITOR", 1), ("TILEMODE", 0)]
+        for key, value in cases:
+            model = PreflightModel(self.runtime)
+            model.vars.update(UNDOCTL=48)
+            model.vars[key] = value
+            with self.assertRaises(NativeFailure):
+                model.prepare()
+            self.assertEqual(model.calls, [], (key, value))
+            self.assertNotIn("output dialog", model.events)
+        for attribute, value in (("count", 1), ("existing_block", "foreign block")):
+            model = PreflightModel(self.runtime)
+            setattr(model, attribute, value)
+            with self.assertRaises(NativeFailure):
+                model.prepare()
             self.assertEqual(model.calls, [])
+            self.assertNotIn("output dialog", model.events)
+
+    def test_all_undo_flags_are_prepared_without_closing_foreign_groups(self):
+        for flags in range(64):
+            model = PreflightModel(self.runtime)
+            model.vars["UNDOCTL"] = flags
+            if flags & 8:
+                with self.assertRaisesRegex(NativeFailure, "активна группа UNDO"):
+                    model.prepare()
+                self.assertEqual(model.calls, [], flags)
+                self.assertEqual(model.vars["UNDOCTL"], flags)
+                continue
+            model.prepare()
+            commands = [c for c in model.calls if c[0] == "_.UNDO"]
+            normalize = [("_.UNDO", "_All")] if not flags & 1 else [("_.UNDO", "_Control", "_All")] if flags & 2 else []
+            self.assertEqual(commands, [*normalize, ("_.UNDO", "_Begin")], flags)
+            self.assertEqual(model.vars["UNDOCTL"] & 11, 9)  # All plus our new group.
+            if normalize:
+                self.assertLess(model.events.index("output dialog"), model.events.index(normalize[0]))
+                self.assertIn("Этот режим сохраняется", "".join(model.messages))
+
+    def test_cancel_existing_output_and_state_change_do_not_prepare_undo(self):
+        for attribute, value in (("output", None), ("existing_file", "existing.dwg")):
+            model = PreflightModel(self.runtime)
+            model.vars["UNDOCTL"] = 48
+            setattr(model, attribute, value)
+            with self.assertRaises(NativeFailure):
+                model.prepare()
+            self.assertEqual(model.calls, [])
+        for key, value in (("DBMOD", 1), ("UNDOCTL", 61), ("DWGTITLED", 1), ("BLOCKEDITOR", 1)):
+            model = PreflightModel(self.runtime)
+            model.dialog = lambda m, k=key, v=value: m.vars.__setitem__(k, v)
+            with self.assertRaises(NativeFailure):
+                model.prepare()
+            self.assertEqual(model.calls, [], key)
+
+    def test_undo_normalization_readback_and_failure_never_undo_previous_work(self):
+        for fail in ("silent refusal", "command failure"):
+            model = PreflightModel(self.runtime)
+            model.vars["UNDOCTL"] = 48
+            model.reject_normalize = fail == "silent refusal"
+            model.fail = "normalize" if fail == "command failure" else None
+            with self.assertRaises(NativeFailure):
+                model.prepare()
+            model.run(self.handler())
+            self.assertNotIn(("_.UNDO", "_Begin"), model.calls)
+            self.assertNotIn(("_.UNDO", "_End"), model.calls)
+            self.assertNotIn(("_.U",), model.calls)
+            self.assertNotIn(("restore",), model.calls)
+            self.assertIsNone(model.env["undo-state"])
+
+    def test_silent_begin_refusal_does_not_claim_ownership_or_reach_geometry(self):
+        model = PreflightModel(self.runtime)
+        model.reject_begin = True
+        with self.assertRaisesRegex(NativeFailure, "не открыл группу"):
+            model.prepare()
+        model.run(self.handler())
+        self.assertNotIn("geometry reached", model.events)
+        self.assertNotIn(("_.UNDO", "_End"), model.calls)
+        self.assertNotIn(("_.U",), model.calls)
+        self.assertNotIn(("restore",), model.calls)
+        self.assertIsNone(model.env["undo-state"])
+
+    def test_end_readback_blocks_save_and_undo_when_group_is_still_open(self):
+        main = next(x for x in parse(self.runtime) if isinstance(x, list) and x[:2] == ["defun", "c:ATFNATIVEBUILD"])
+        ending = next(i for i, x in enumerate(main) if isinstance(x, list) and x[:1] == ["afn:cmd"] and x[1] == ["quote", ["_.UNDO", "_End"]])
+        model = PreflightModel(self.runtime)
+        model.vars["UNDOCTL"] = 61
+        model.env["undo-state"] = "open"
+        model.reject_end = True
+        with self.assertRaisesRegex(NativeFailure, "не завершил группу"):
+            for expression in main[ending:]:
+                model.run(expression)
+        self.assertEqual(model.env["undo-state"], "open")
+        cleanup = CleanupModel(editor=0, owned_editor=False, commands_owned=True, undo_state="open", fail="end-noop")
+        cleanup.run(self.handler())
+        self.assertNotIn(("_.U",), cleanup.calls)
+        self.assertEqual(cleanup.env["undo-state"], "open")
+
+    def test_own_undo_setting_change_is_not_rejected_as_input_dbmod(self):
+        model = PreflightModel(self.runtime)
+        model.vars.update(UNDOCTL=48, DBMOD=16)
+        # CAD double injects an additional dirty bit after our own command.
+        # This tests ordering, not a claim that native UNDO sets DBMOD=4.
+        model.normalize_dbmod = 20
+        model.prepare()
+        self.assertEqual(model.events[-1], "geometry reached")
+        self.assertIn("DBMOD=20", "".join(model.messages))
 
     def test_preflight_failure_does_not_discard_foreign_editor_or_command(self):
         model = CleanupModel(editor=1, owned_editor=False, commands_owned=False, undo_state=None)

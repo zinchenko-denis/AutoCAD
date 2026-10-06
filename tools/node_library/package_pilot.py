@@ -42,12 +42,19 @@ def make_package(source, guide, fixes, diagram, out, code_sha, ci_url, release_b
         "source/vector1_2015_4_2_1_training.json": source.read_bytes(),
     }
     if downloads:
+        # Include the existing instructions: GitHub DOCX links were inaccessible
+        # in the customer's session. This does not rebuild either document.
+        for name in ("Install_AutoCAD_2024.docx", "Facades_User_Manual.docx"):
+            files[name] = (root / "docs/user" / name).read_bytes()
         plugin_instructions = f"""ДЛЯ КОМАНД ПЛАГИНА И ФАСАДНЫХ ИСПРАВЛЕНИЙ — ВЫПУСК №{release_build}
-Сначала откройте Install_AutoCAD_2024.docx, затем установите одновременно
+Обе общие инструкции DOCX вложены в этот ZIP; скачивать их по ссылкам не нужно.
+Если модули ещё не установлены, откройте Install_AutoCAD_2024.docx и установите
 AFacades, AClad и AFrame из одного номера. Прямые ссылки закреплены за
 build-{release_build}; вход GitHub для скачивания не нужен:
 """ + "\n".join(f"{name}\n{url}" for name, url in downloads.items()) + f"""
 После установки у всех трёх модулей в F2 должен быть номер {release_build}.
+Если выпуск №{release_build} уже установлен, ради исправления LISP переустановка
+трёх модулей не нужна. Загрузите новый LISP из этого архива через APPLOAD.
 ATFNODEIMPORT/EDIT/DEMO/TEST проверяются с этим комплектом.
 Установка модулей не подтверждает создание нативного DWG: маршрут автора
 и живой опыт «три из пяти» в AutoCAD ещё нужно выполнить.
@@ -57,12 +64,17 @@ ATFNODEIMPORT/EDIT/DEMO/TEST проверяются с этим комплект
 Номер установочного выпуска для этого автономного пакета не указан.
 LISP-автор и ручной опыт через Properties можно проверить без новых DLL.
 """
-    readme = f"""ТЕСТОВЫЙ УЗЕЛ ДЛЯ AUTOCAD 2024 — 06.10.2026
+    readme = f"""ТЕСТОВЫЙ УЗЕЛ ДЛЯ AUTOCAD 2024 — ИСПРАВЛЕНИЕ ЗАПУСКА 06.10.2026
 
 Начните с Node_Pilot_Guide_2026-10-06.docx.
 Распакуйте весь архив в отдельную папку. В полном AutoCAD 2024:
 новый пустой несохранённый чертёж → APPLOAD →
 vector1_2015_4_2_1_training.lsp → ATFNATIVEBUILD.
+
+В этой редакции изменение вида/окна в пустом новом DWG больше не вызывает
+ложный отказ DBMOD. Реальные изменения объектов и базы по-прежнему проверяются.
+Причина остановки и исходные настройки печатаются в F2. При активной чужой
+группе UNDO команда не закрывает её автоматически; следуйте инструкции узла.
 
 Готовый DWG должен создать и проверить AutoCAD на вашем компьютере.
 Здесь лежит авторский LISP, а не уже проверенный динамический DWG.
@@ -83,7 +95,8 @@ Test_Results.txt — краткий бланк результата, запол�
 
 Код: {code_sha}
 Windows CI: {ci_url}
-Нативный запуск до выдачи: НЕ ВЫПОЛНЕН.
+Успешная нативная приёмка: НЕ ЗАВЕРШЕНА. Прежняя редакция остановилась
+на проверке состояния; эта исправленная редакция ещё требует запуска в AutoCAD.
 Геометрия и первичные данные предназначены для проектной группы;
 не переносите содержимое папки source и LISP в публичный репозиторий.
 """
