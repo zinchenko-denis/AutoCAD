@@ -678,7 +678,7 @@ namespace ACladPlugin
                                     string root = RootName(zone, partToRoot);
                                     // зона в ключе — только если у блока есть атрибут ЗАХВАТКА
                                     // (иначе копии всех зон одинаковы — прототипов вдвое меньше)
-                                    string key = defId.Handle.ToString() + "|" + type + "|" + F2(w) + "|" + F2(h) +
+                                    string key = defId.Handle.ToString() + "|" + type + "|" + PrototypeSizeKey(w, h) +
                                                  (HasZoneAttr(tr, defId, zoneAttr) ? "|" + root : "");
                                     Proto pr;
                                     if (cloneOk && protoByKey.TryGetValue(key, out pr))
@@ -1235,6 +1235,14 @@ namespace ACladPlugin
                 tr.Commit();
             }
             return del;
+        }
+
+        // Размер в ключе не является подписью: округление до сотых сливает
+        // разные подрезки, и копия получает геометрию первого прототипа.
+        internal static string PrototypeSizeKey(double w, double h)
+        {
+            return w.ToString("R", CultureInfo.InvariantCulture) + "|" +
+                h.ToString("R", CultureInfo.InvariantCulture);
         }
 
         private static string F2(double v) { return v.ToString("0.##", CultureInfo.InvariantCulture); }

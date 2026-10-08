@@ -1,0 +1,11 @@
+{
+  "fixture_id": "REPLACE_WITH_PRIVATE_FIXTURE_ID",
+  "input_sha256": null,
+  "source_handle": null,
+  "width_property": null,
+  "height_property": null,
+  "outline_layer": null,
+  "tolerance": 0.000001,
+  "repeats": 2,
+  "cases": []
+}

@@ -45,6 +45,7 @@ def main():
     source = Path(__file__).with_suffix(".cs").read_text(encoding="utf-8")
     source = source.replace("__CLAD_METHODS__", "\n".join(method(clad, name) for name in names))
     source = source.replace("__MAKE_DYN_REF__", method(tile, "MakeDynRef"))
+    source = source.replace("__PROTO_SIZE_KEY__", method(tile, "PrototypeSizeKey"))
     cs, exe = out / "DynamicBlockSizeCheck.cs", out / "DynamicBlockSizeCheck.exe"
     cs.write_text(source, encoding="utf-8")
     compiled = compile_probe([cs, ROOT / "AClad/src/ACladPlugin/LayoutSafety.cs"], [], exe)

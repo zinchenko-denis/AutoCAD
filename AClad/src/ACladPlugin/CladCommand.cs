@@ -1232,8 +1232,34 @@ namespace ACladPlugin
             {
                 if (pr.PropertyName != pw && pr.PropertyName != ph) continue;
                 string actual;
-                try { actual = Convert.ToString(pr.Value, CultureInfo.InvariantCulture); }
+                try
+                {
+                    object value = pr.Value;
+                    actual = Convert.ToString(value, CultureInfo.InvariantCulture) +
+                        " [тип=" + (value == null ? "null" : value.GetType().FullName) + "]";
+                }
                 catch (System.Exception ex) { actual = ex.GetType().Name + ": " + ex.Message; }
+                try
+                {
+                    actual += " [API=" + pr.PropertyTypeCode.ToString(CultureInfo.InvariantCulture) +
+                        ", единицы=" + pr.UnitsType.ToString() + "]";
+                }
+                catch (System.Exception ex) { actual += " [метаданные: " + ex.GetType().Name + "]"; }
+                // Только при отказе: в обычном цикле не читаем ограничения
+                // каждой плитки. Пустой список не исключает min/max/increment.
+                try
+                {
+                    object[] allowed = pr.GetAllowedValues();
+                    if (allowed != null && allowed.Length > 0)
+                    {
+                        var formatted = new List<string>();
+                        for (int i = 0; i < Math.Min(8, allowed.Length); i++)
+                            formatted.Add(Convert.ToString(allowed[i], CultureInfo.InvariantCulture));
+                        actual += " [список=" + string.Join("; ", formatted.ToArray()) +
+                            (allowed.Length > 8 ? "; …" : "") + "]";
+                    }
+                }
+                catch (System.Exception ex) { actual += " [список: " + ex.GetType().Name + "]"; }
                 values.Add("«" + pr.PropertyName + "»=" + actual + (pr.ReadOnly ? " (только чтение)" : ""));
             }
             return "После задания обоих размеров: " +

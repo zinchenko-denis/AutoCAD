@@ -141,7 +141,13 @@ namespace ACladPlugin
                 double before = Convert.ToDouble(previous, CultureInfo.InvariantCulture);
                 if (Finite(before) && Math.Abs(before - requested) <= tolerance) return true;
                 if (write == null) return false;
-                write(Convert.ChangeType(requested, previous.GetType(), CultureInfo.InvariantCulture));
+                object candidate = Convert.ChangeType(requested, previous.GetType(), CultureInfo.InvariantCulture);
+                // Convert.ChangeType сам округляет double в целочисленный тип.
+                // Нельзя передавать блоку 36 вместо запрошенных 35.85, даже если
+                // последующая проверка заметит отличие и отменит транзакцию.
+                double converted = Convert.ToDouble(candidate, CultureInfo.InvariantCulture);
+                if (!Finite(converted) || Math.Abs(converted - requested) > tolerance) return false;
+                write(candidate);
                 // Динсвойство может молча отвергнуть или округлить новое значение.
                 object stored = read();
                 if (stored == null) return false;

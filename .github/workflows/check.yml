@@ -61,6 +61,26 @@ jobs:
       - name: Build AFrame DLL (compile check)
         run: dotnet build AFrame/src/AFramePlugin/AFramePlugin.csproj -c Release -o build_afr_dll
 
+      - name: Native AutoCAD harness compile and missing-host guard (no AutoCAD execution)
+        shell: pwsh
+        run: |
+          dotnet build tools/native_autocad/AutoCAD.NativeAdapterCheck.csproj -c Release -o build_native_adapter
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          $parseTokens = $null
+          $parseErrors = $null
+          [void][System.Management.Automation.Language.Parser]::ParseFile(
+            (Join-Path $PWD 'tools/native_autocad/run.ps1'), [ref]$parseTokens, [ref]$parseErrors)
+          if ($parseErrors.Count -gt 0) { $parseErrors | Out-String | Write-Error; exit 1 }
+          # No native runtime is installed on this runner. This must be BLOCKED,
+          # never a successful AutoCAD result or an implicitly skipped native gate.
+          $missing = Join-Path $PWD 'missing-native-input'
+          & pwsh -NoProfile -File tools/native_autocad/run.ps1 `
+            -AcadExe ($missing + '/acad.exe') -InputDwg ($missing + '/input.dwg') `
+            -ACladDll ($missing + '/ACladPlugin.dll') -HarnessDll ($missing + '/check.dll') `
+            -CasesConfig ($missing + '/cases.json') -OutputDirectory (Join-Path $PWD 'native_missing_host')
+          if ($LASTEXITCODE -ne 2) { throw 'Missing AutoCAD host must return BLOCKED (exit 2).' }
+          exit 0
+
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
@@ -124,6 +144,10 @@ jobs:
           python AFrame/tests/test_node_library.py --out build_node_library
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           python tools/node_library/test_author.py
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          python tools/native_autocad/test_outline_oracle.py --out build_native_outline_oracle
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          python tools/atr_review_3009/test_runner_integrity.py
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           python tools/stamp_library/test_inspect.py
           exit $LASTEXITCODE

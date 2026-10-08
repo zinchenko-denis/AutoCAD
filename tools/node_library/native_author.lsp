@@ -393,9 +393,9 @@
   (if (/= 1 (logand 3 flags))
     (princ "\n[AFN] Для нового чертежа включён UNDO All. Этот режим сохраняется для последующей отмены.")))
 
-(defun c:ATFNATIVEBUILD (/ *error* document space name output settings settings-changed undo-state commands-owned afn:editor-owned afn:geometry-started afn:stage afn:last-command afn:failed-prompt refs setting)
+(defun c:ATFNATIVEBUILD (/ *error* document space name output settings settings-changed undo-state undo-result commands-owned afn:editor-owned afn:geometry-started afn:stage afn:last-command afn:failed-prompt refs setting)
   (setq afn:failure nil undo-state nil commands-owned nil settings-changed nil afn:editor-owned nil afn:geometry-started nil afn:stage "preflight" afn:last-command nil afn:failed-prompt nil)
-  (princ "\n[AFN] Автор узла 2026-10-08.1")
+  (princ "\n[AFN] Автор узла 2026-10-08.2")
   (defun *error* (message / result failed-prompt)
     (setq failed-prompt (if afn:failed-prompt afn:failed-prompt (getvar "LASTPROMPT")))
     ; Report first: a cleanup failure must never conceal the original cause.
@@ -414,13 +414,21 @@
             (vl-catch-all-apply 'command-s '("_.BCLOSE" "_Discard"))
             (if (= (getvar "BLOCKEDITOR") 0) (setq afn:editor-owned nil))))
         (if (and (equal undo-state "open") (= (getvar "BLOCKEDITOR") 0)
-            (= 0 (logand 3 (getvar "CMDACTIVE"))))
+            (= 0 (logand 3 (getvar "CMDACTIVE"))) (= 8 (logand 8 (getvar "UNDOCTL"))))
           (progn
             (setq result (vl-catch-all-apply 'command-s '("_.UNDO" "_End")))
-            (if (and (not (vl-catch-all-error-p result)) (= 0 (logand 8 (getvar "UNDOCTL"))))
+            ; End can close our group and still report an error. The native
+            ; readback, not the return value alone, determines its ownership.
+            (if (= 1 (logand 11 (getvar "UNDOCTL")))
               (setq undo-state "ended"))))
         (if (and (equal undo-state "ended") (= (getvar "BLOCKEDITOR") 0)
-            (= 0 (logand 3 (getvar "CMDACTIVE"))) (= 0 (logand 8 (getvar "UNDOCTL"))))
+            (= 0 (logand 3 (getvar "CMDACTIVE"))) (= 1 (logand 11 (getvar "UNDOCTL")))
+            ; Attempt flags do not prove a database mutation: the first setvar
+            ; or BLOCK entmake may fail before changing anything. Preflight
+            ; proved this named definition absent; its actual existence is the
+            ; owned mutation witness. Settings alone are restored below, never
+            ; by U that could consume history preceding an empty group.
+            name (tblsearch "BLOCK" name))
           (vl-catch-all-apply 'command-s '("_.U")))))
     (if settings-changed (vl-catch-all-apply 'afn:restore (list settings)))
     (if afn:geometry-started
@@ -445,10 +453,15 @@
   (setq commands-owned T)
   (afn:at "подготовка UNDO")
   (afn:prepare-undo)
-  (afn:cmd '("_.UNDO" "_Begin"))
-  (afn:assert (= 8 (logand 8 (getvar "UNDOCTL")))
+  ; As with BEDIT, native commands can mutate state before raising an error.
+  ; Preparation proved no group was open, so record a newly opened group
+  ; before reporting the command failure. Never claim an initial foreign group.
+  (setq afn:last-command "_.UNDO"
+    undo-result (vl-catch-all-apply 'command-s '("_.UNDO" "_Begin")))
+  (if (= 8 (logand 8 (getvar "UNDOCTL"))) (setq undo-state "open"))
+  (afn:command-result undo-result)
+  (afn:assert (equal undo-state "open")
     "AutoCAD не открыл группу UNDO автора. Построение не начато.")
-  (setq undo-state "open")
   (setq settings-changed T)
   (foreach setting '(("CMDECHO" . 0) ("OSMODE" . 0) ("SNAPMODE" . 0) ("BACTIONBARMODE" . 1)
       ("DYNMODE" . 0) ("DIMASSOC" . 1) ("ATTREQ" . 0) ("ATTDIA" . 0) ("INSUNITS" . 4) ("CLAYER" . "0") ("DIMLAYER" . "0"))
@@ -464,10 +477,12 @@
   (setvar "INSUNITS" 4)
   (vla-Regen document 1)
   (afn:cmd '("_.ZOOM" "_Extents"))
-  (afn:cmd '("_.UNDO" "_End"))
-  (afn:assert (= 0 (logand 8 (getvar "UNDOCTL")))
+  (setq afn:last-command "_.UNDO"
+    undo-result (vl-catch-all-apply 'command-s '("_.UNDO" "_End")))
+  (if (= 1 (logand 11 (getvar "UNDOCTL"))) (setq undo-state "ended"))
+  (afn:command-result undo-result)
+  (afn:assert (equal undo-state "ended")
     "AutoCAD не завершил группу UNDO автора. Сохранение не выполняется.")
-  (setq undo-state "ended")
   (afn:at "save DWG")
   (vla-SaveAs document output)
   (setq undo-state nil commands-owned nil)
@@ -475,5 +490,5 @@
   (princ "\nPASS IN THIS HOST: native signature/actions/dimensions/marks, five instances (3 changed/2 unchanged), A-B-A-B, repeat, database Copy.")
   (princ "\nSTILL REQUIRED: manual grips/Properties, plugin selection command and cancel/Undo, UI COPY, save-close-open inspection in AutoCAD 2024.")
   (princ))
-(princ "\nАвтор узла 2026-10-08.1 загружен; построение ещё не выполнялось. Команда ATFNATIVEBUILD — в новом пустом несохранённом чертеже AutoCAD 2024.")
+(princ "\nАвтор узла 2026-10-08.2 загружен; построение ещё не выполнялось. Команда ATFNATIVEBUILD — в новом пустом несохранённом чертеже AutoCAD 2024.")
 (princ)

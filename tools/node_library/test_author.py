@@ -142,7 +142,8 @@ class CleanupModel:
                     "undo-state": undo_state, "settings": [], "afn:failure": None, "message": "test",
                     "settings-changed": commands_owned,
                     "afn:geometry-started": commands_owned,
-                    "afn:stage": "test stage", "afn:last-command": "_.BPARAMETER"}
+                    "afn:stage": "test stage", "afn:last-command": "_.BPARAMETER", "name": "AFN_TEST"}
+        self.owned_definition = commands_owned
         self.calls = []
         self.messages = []
         self.fail = fail
@@ -194,6 +195,8 @@ class CleanupModel:
             return str(values[0])
         if head == "getvar":
             return self.vars[values[0]]
+        if head == "tblsearch":
+            return {"name": values[1]} if self.owned_definition else None
         if head == "list":
             return values
         if head == "strcat":
@@ -245,6 +248,7 @@ class PreflightModel(CleanupModel):
         self.env["afn:data"] = {"block_name": "AFN_TEST"}
         self.defuns = {f[1]: f for f in parse(runtime or "") if isinstance(f, list) and f[:1] == ["defun"]}
         self.count, self.existing_block = 0, None
+        self.owned_definition = False
         self.output, self.existing_file = "new-library.dwg", None
         self.dialog, self.reject_normalize, self.normalize_dbmod = None, False, None
         self.reject_begin, self.reject_end = False, False
@@ -340,7 +344,7 @@ class PreflightModel(CleanupModel):
                 if head == "vla-get-Count":
                     return self.count
                 if head == "tblsearch":
-                    return self.existing_block
+                    return self.existing_block or ({"name": values[1]} if self.owned_definition else None)
                 if head == "findfile":
                     return self.existing_file
                 if head == "getfiled":
@@ -372,6 +376,41 @@ class PreflightModel(CleanupModel):
                         raise AssertionError(values[0])
                     return self.native_command(values[1])
         return super().run(expression)
+
+
+class UndoFailureModel(PreflightModel):
+    """Inject failure before/after a native Undo state transition.
+
+    Executes production Lisp ownership/cleanup expressions only. This does not
+    emulate AutoCAD undo history or prove what caused a reported UNDOCTL=61.
+    """
+    def __init__(self, runtime, command, after, active=0, flags_after=None):
+        super().__init__(runtime)
+        self.failure_command = ("_.UNDO", command)
+        self.failure_after = after
+        self.active_after = active
+        self.flags_after = flags_after
+        self.injected = False
+
+    def native_command(self, tokens):
+        call = tuple(tokens)
+        if call == ("_.U",):
+            self.calls.append(call)
+            self.events.append(call)
+            return None
+        if call == self.failure_command and not self.injected:
+            self.injected = True
+            if self.failure_after:
+                super().native_command(tokens)
+            else:
+                self.calls.append(call)
+                self.events.append(call)
+            self.vars["CMDACTIVE"] = self.active_after
+            if self.flags_after is not None:
+                self.vars["UNDOCTL"] = self.flags_after
+            self.vars["LASTPROMPT"] = "injected Undo native failure"
+            raise NativeFailure("injected Undo native failure")
+        return super().native_command(tokens)
 
 
 class CommandProtocolModel(PreflightModel):
@@ -734,7 +773,7 @@ class AuthorTests(unittest.TestCase):
 
     def test_end_readback_blocks_save_and_undo_when_group_is_still_open(self):
         main = next(x for x in parse(self.runtime) if isinstance(x, list) and x[:2] == ["defun", "c:ATFNATIVEBUILD"])
-        ending = next(i for i, x in enumerate(main) if isinstance(x, list) and x[:1] == ["afn:cmd"] and x[1] == ["quote", ["_.UNDO", "_End"]])
+        ending = self.undo_end_index(main)
         model = PreflightModel(self.runtime)
         model.vars["UNDOCTL"] = 61
         model.env["undo-state"] = "open"
@@ -747,6 +786,122 @@ class AuthorTests(unittest.TestCase):
         cleanup.run(self.handler())
         self.assertNotIn(("_.U",), cleanup.calls)
         self.assertEqual(cleanup.env["undo-state"], "open")
+
+    def undo_end_index(self, main):
+        # Locate the main command's End, not the nested error handler. Support
+        # historical afn:cmd and the readback-before-reporting implementation
+        # so the same regressions replay against the unfixed runtime.
+        for index, expression in enumerate(main[3:], 3):
+            if not isinstance(expression, list) or expression[:1] == ["defun"]:
+                continue
+            if any(call[1] == ["quote", ["_.UNDO", "_End"]]
+                   for call in calls_to(expression, "afn:cmd")):
+                return index
+            if any(call[2] == ["quote", ["_.UNDO", "_End"]]
+                   for call in calls_to(expression, "vl-catch-all-apply")):
+                return index
+        raise AssertionError("main Undo End missing")
+
+    def test_begin_failure_readback_closes_only_newly_opened_empty_group(self):
+        for after in (False, True):
+            model = UndoFailureModel(self.runtime, "_Begin", after)
+            with self.assertRaisesRegex(NativeFailure, "injected Undo"):
+                model.prepare()
+            self.assertEqual(model.env["undo-state"], "open" if after else None)
+            self.assertNotIn("geometry reached", model.events)
+            self.assertFalse(model.env["settings-changed"])
+            model.run(self.handler())
+            expected = [("_.UNDO", "_Begin")] + ([("_.UNDO", "_End")] if after else [])
+            self.assertEqual(model.calls, expected)
+            self.assertEqual(model.vars["UNDOCTL"], 53)
+            self.assertNotIn(("_.U",), model.calls)  # An empty group must not consume earlier history.
+
+    def test_end_failure_readback_rolls_back_only_ended_owned_group(self):
+        main = next(x for x in parse(self.runtime) if isinstance(x, list) and x[:2] == ["defun", "c:ATFNATIVEBUILD"])
+        ending = self.undo_end_index(main)
+        for after in (False, True):
+            model = UndoFailureModel(self.runtime, "_End", after)
+            model.prepare()
+            model.owned_definition = True  # Our header existed before the injected End failure.
+            with self.assertRaisesRegex(NativeFailure, "injected Undo"):
+                for expression in main[ending:]:
+                    model.run(expression)
+            self.assertEqual(model.env["undo-state"], "ended" if after else "open")
+            model.run(self.handler())
+            commands = [call for call in model.calls if call[0] in ("_.UNDO", "_.U")]
+            expected = [("_.UNDO", "_Begin"), ("_.UNDO", "_End")]
+            if not after:
+                expected.append(("_.UNDO", "_End"))
+            self.assertEqual(commands, expected + [("_.U",)])
+            self.assertEqual(model.vars["UNDOCTL"], 53)
+            self.assertIn("injected Undo native failure", "".join(model.messages))
+
+    def test_undo_failure_with_active_command_never_cleans_up_or_rolls_back(self):
+        main = next(x for x in parse(self.runtime) if isinstance(x, list) and x[:2] == ["defun", "c:ATFNATIVEBUILD"])
+        for command in ("_Begin", "_End"):
+            for active in (1, 2, 3):
+                model = UndoFailureModel(self.runtime, command, after=True, active=active)
+                with self.assertRaisesRegex(NativeFailure, "injected Undo"):
+                    model.prepare()
+                    for expression in main[self.undo_end_index(main):]:
+                        model.run(expression)
+                before = list(model.calls)
+                model.run(self.handler())
+                self.assertEqual([call for call in model.calls if call[0] != "restore"], before)
+                self.assertNotIn(("_.U",), model.calls)
+                self.assertEqual(model.vars["CMDACTIVE"], active)
+
+    def test_cleanup_end_failure_reads_actual_group_state_before_rollback(self):
+        for after in (False, True):
+            model = UndoFailureModel(self.runtime, "_End", after)
+            model.prepare()
+            model.owned_definition = True
+            model.env["afn:failure"] = "original construction failure"
+            model.run(self.handler())
+            self.assertEqual(model.env["undo-state"], "ended" if after else "open")
+            self.assertEqual(("_.U",) in model.calls, after)
+            self.assertIn("original construction failure", "".join(model.messages))
+
+    def test_end_that_loses_all_mode_never_consumes_unknown_undo_history(self):
+        main = next(x for x in parse(self.runtime) if isinstance(x, list) and x[:2] == ["defun", "c:ATFNATIVEBUILD"])
+        for flags in (0, 2, 3, 48, 50, 51):
+            model = UndoFailureModel(self.runtime, "_End", after=True, flags_after=flags)
+            model.prepare()
+            model.owned_definition = True
+            with self.assertRaisesRegex(NativeFailure, "injected Undo"):
+                for expression in main[self.undo_end_index(main):]:
+                    model.run(expression)
+            model.run(self.handler())
+            self.assertNotIn(("_.U",), model.calls)
+
+    def test_empty_group_after_first_setting_or_header_failure_never_undoes_history(self):
+        class FirstSettingFailure(UndoFailureModel):
+            def run(self, expression):
+                if isinstance(expression, list) and expression[:1] == ["setvar"]:
+                    raise NativeFailure("first setvar failed without mutation")
+                return super().run(expression)
+
+        class FirstHeaderFailure(UndoFailureModel):
+            def run(self, expression):
+                if isinstance(expression, list) and expression[:1] == ["entmake"]:
+                    return None  # Native BLOCK creation failed without creating its definition.
+                return super().run(expression)
+
+        setting = FirstSettingFailure(self.runtime, "_Never", False)
+        with self.assertRaisesRegex(NativeFailure, "first setvar"):
+            setting.prepare()
+        header = FirstHeaderFailure(self.runtime, "_Never", False)
+        header.prepare()
+        with self.assertRaisesRegex(NativeFailure, "Cannot create block header"):
+            header.run(header.defuns["afn:build-definition"][3])
+        for model in (setting, header):
+            self.assertTrue(model.env["settings-changed"])
+            self.assertFalse(model.owned_definition)
+            model.run(self.handler())
+            self.assertEqual(model.vars["UNDOCTL"], 53)
+            self.assertIn(("_.UNDO", "_End"), model.calls)
+            self.assertNotIn(("_.U",), model.calls)
+            self.assertIn(("restore",), model.calls)
 
     def test_own_undo_setting_change_is_not_rejected_as_input_dbmod(self):
         model = PreflightModel(self.runtime)

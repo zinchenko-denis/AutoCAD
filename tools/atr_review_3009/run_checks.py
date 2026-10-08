@@ -16,6 +16,23 @@ import time
 ROOT = Path(__file__).resolve().parents[2]
 
 
+def source_hashes():
+    """Hash product code and the actual test harness before and after execution.
+
+    Include new, non-ignored source files too: an uncommitted regression still
+    participates in the run and must not disappear from its evidence.
+    """
+    names = subprocess.check_output(
+        ['git', 'ls-files', '-z', '--cached', '--others', '--exclude-standard'],
+        cwd=ROOT).decode('utf-8').split('\0')
+    suffixes = {'.py', '.cs', '.csproj', '.json', '.lsp', '.yml', '.yaml',
+                '.ps1', '.scr'}
+    return {name: hashlib.sha256((ROOT / name).read_bytes()).hexdigest()
+            for name in sorted(set(names))
+            if name and Path(name).suffix.lower() in suffixes
+            and (ROOT / name).is_file()}
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument('--out', type=Path)
@@ -24,6 +41,9 @@ def main():
     out.mkdir(parents=True, exist_ok=True)
     env = dict(os.environ, PYTHONUTF8='1', PYTHONIOENCODING='utf-8',
                PYTHONDONTWRITEBYTECODE='1')
+    base_commit = subprocess.check_output(
+        ['git', 'rev-parse', 'HEAD'], cwd=ROOT, text=True).strip()
+    hashes_before = source_hashes()
     jobs = []
     for module, scripts in (
         ('Facades', ['test_facade_zones.py', 'test_facades_engine.py']),
@@ -40,12 +60,19 @@ def main():
         jobs.extend((module + '_' + Path(s).stem, module + '/engine', [s])
                     for s in scripts)
     jobs.extend([
+        ('bundle_versions', '.', ['tools/facades/test_bundle_versions.py']),
         ('facade_startup', '.', ['tools/facades/test_startup.py']),
+        ('zone_migration', '.', ['Facades/tests/test_zone_migration.py']),
+        ('frame_typical_facades', '.', ['AFrame/engine/test_frame_typical_facades.py']),
+        ('frame_local_issues', '.', ['AFrame/tests/test_local_issues.py',
+                                    '--out', str(out / 'frame_local_issues')]),
         ('dynamic_block_size', '.', ['AClad/tests/test_dynamic_block_size.py',
                                     '--out', str(out / 'dynamic_block_size')]),
         ('node_library', '.', ['AFrame/tests/test_node_library.py',
                               '--out', str(out / 'node_library')]),
         ('node_library_author', '.', ['tools/node_library/test_author.py']),
+        ('native_outline_oracle', '.', ['tools/native_autocad/test_outline_oracle.py',
+                                       '--out', str(out / 'native_outline_oracle')]),
         ('stamp_inspector', '.', ['tools/stamp_library/test_inspect.py']),
         ('xmod', '.', ['tools/xmod_check.py', '--no-fixture', '--allow=X6']),
         ('frame_quick', '.', ['AFrame/tools/frame_synth.py', '--quick']),
@@ -147,22 +174,23 @@ def main():
         print(name + ': ' + ('PASS' if run.returncode == 0 else 'FAIL'), flush=True)
         if run.returncode:
             print((run.stdout + run.stderr)[-4000:], flush=True)
-    paths = []
-    for module in ('Facades', 'AClad', 'AFrame', 'Common'):
-        paths += [p for p in (ROOT / module).rglob('*') if p.is_file()
-                  and p.suffix in ('.py', '.cs', '.csproj', '.json')
-                  and ('/engine/' in p.as_posix() or '/src/' in p.as_posix()
-                       or module == 'Common')]
-    hashes = {str(p.relative_to(ROOT)): hashlib.sha256(p.read_bytes()).hexdigest()
-              for p in sorted(paths)}
-    manifest = {'base_commit': subprocess.check_output(
-                    ['git', 'rev-parse', 'HEAD'], cwd=ROOT, text=True).strip(),
-                'results': results, 'source_sha256': hashes,
+    hashes_after = source_hashes()
+    changed = {path: {'before': hashes_before.get(path),
+                      'after': hashes_after.get(path)}
+               for path in sorted(hashes_before.keys() | hashes_after.keys())
+               if hashes_before.get(path) != hashes_after.get(path)}
+    manifest = {'base_commit': base_commit,
+                'results': results, 'source_sha256': hashes_after,
+                'source_sha256_before': hashes_before,
+                'source_stable': not changed, 'source_changes': changed,
                 'live_autocad_checked': False, 'release_published': False,
                 'known_exclusion': 'X6 belongs to unchanged ATSPEC'}
     (out / 'manifest.json').write_text(json.dumps(manifest, ensure_ascii=False,
                                                 indent=2) + '\n', encoding='utf-8')
-    return int(any(r['returncode'] for r in results))
+    if changed:
+        print('SOURCE CHANGED DURING RUN: FAIL (' + str(len(changed)) +
+              ' files); see source_changes in manifest.json', flush=True)
+    return int(bool(changed) or any(r['returncode'] for r in results))
 
 
 if __name__ == '__main__':
