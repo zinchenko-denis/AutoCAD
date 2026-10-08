@@ -13,6 +13,7 @@ import generate
 
 RELEASE_ASSETS = ("AFacades.bundle.zip", "AClad.bundle.zip", "AFrame.bundle.zip",
                   "Install_AutoCAD_2024.docx", "Facades_User_Manual.docx")
+AUTHOR_REVISION = "2026-10-08.1"
 
 
 def release_links(release_build):
@@ -35,8 +36,8 @@ def make_package(source, guide, fixes, diagram, out, code_sha, ci_url, release_b
     root = Path(__file__).resolve().parents[2]
     files = {
         "vector1_2015_4_2_1_training.lsp": lsp,
-        "Node_Pilot_Guide_2026-10-06.docx": guide.read_bytes(),
-        "Fixes_2026-10-05_06.txt": fixes.read_bytes(),
+        guide.name: guide.read_bytes(),
+        fixes.name: fixes.read_bytes(),
         "Before_After.png": diagram.read_bytes(),
         "Facade_18x12_15windows.dxf": (root / "docs/pilot/assets/Facade_18x12_15windows.dxf").read_bytes(),
         "source/vector1_2015_4_2_1_training.json": source.read_bytes(),
@@ -54,7 +55,7 @@ build-{release_build}; вход GitHub для скачивания не нуже
 """ + "\n".join(f"{name}\n{url}" for name, url in downloads.items()) + f"""
 После установки у всех трёх модулей в F2 должен быть номер {release_build}.
 Если выпуск №{release_build} уже установлен, ради исправления LISP переустановка
-трёх модулей не нужна. Загрузите новый LISP из этого архива через APPLOAD.
+трёх модулей не нужна. Загрузите новый LISP из этого архива через _.APPLOAD.
 ATFNODEIMPORT/EDIT/DEMO/TEST проверяются с этим комплектом.
 Установка модулей не подтверждает создание нативного DWG: маршрут автора
 и живой опыт «три из пяти» в AutoCAD ещё нужно выполнить.
@@ -64,17 +65,30 @@ ATFNODEIMPORT/EDIT/DEMO/TEST проверяются с этим комплект
 Номер установочного выпуска для этого автономного пакета не указан.
 LISP-автор и ручной опыт через Properties можно проверить без новых DLL.
 """
-    readme = f"""ТЕСТОВЫЙ УЗЕЛ ДЛЯ AUTOCAD 2024 — ИСПРАВЛЕНИЕ ЗАПУСКА 06.10.2026
+    readme = f"""ТЕСТОВЫЙ УЗЕЛ ДЛЯ AUTOCAD 2024 — РЕДАКЦИЯ {AUTHOR_REVISION}
 
-Начните с Node_Pilot_Guide_2026-10-06.docx.
+Начните с {guide.name}.
 Распакуйте весь архив в отдельную папку. В полном AutoCAD 2024:
-новый пустой несохранённый чертёж → APPLOAD →
-vector1_2015_4_2_1_training.lsp → ATFNATIVEBUILD.
+новый пустой несохранённый чертёж → _.APPLOAD →
+vector1_2015_4_2_1_training.lsp → _.LOGFILEON → ATFNATIVEBUILD.
+В F2 проверьте редакцию загруженного автора: {AUTHOR_REVISION}.
 
-В этой редакции изменение вида/окна в пустом новом DWG больше не вызывает
-ложный отказ DBMOD. Реальные изменения объектов и базы по-прежнему проверяются.
-Причина остановки и исходные настройки печатаются в F2. При активной чужой
-группе UNDO команда не закрывает её автоматически; следуйте инструкции узла.
+В редакции 08.10 исправлены пропущенный ответ о числе ручек параметра Visibility
+и вторичная ошибка обработчика отказа. Команды журнала указаны с префиксом _.
+для русского AutoCAD. Ошибка построения не возникла из-за действий Германа.
+Сохранено исправление 06.10: изменение только вида/окна (DBMOD 8/16) допускается.
+
+В видео 08.10 показан отказ UNDOCTL=61; на отдельном снимке повтор при 53 —
+незавершённый запрос Visibility. Исправление Visibility не устраняет первый
+сценарий с 61: признак чужой открытой группы UNDO по-прежнему блокирует запуск.
+Автор не выполняет автоматический End чужой группы. Если отказ произошёл
+до изменений, выбрасывать пустой DWG не нужно; сохраните F2. Не закрывайте
+группу вручную только для обхода проверки и не обнуляйте DBMOD.
+Если построение уже началось и очистка не завершена, закройте только этот
+тестовый DWG без сохранения. Незавершённый результат не использовать.
+
+Путь к журналу: (getvar "LOGFILENAME"). После опыта: _.LOGFILEOFF,
+если журнал включили только для этого теста. Сохраните полный F2 или файл .log.
 
 Готовый DWG должен создать и проверить AutoCAD на вашем компьютере.
 Здесь лежит авторский LISP, а не уже проверенный динамический DWG.
@@ -88,26 +102,27 @@ vector1_2015_4_2_1_training.lsp → ATFNATIVEBUILD.
 Facade_18x12_15windows.dxf — исходный учебный фасад для проверки исправлений
 подсистемы после установки исправленных модулей, а не DWG динамического узла.
 
-Fixes_2026-10-05_06.txt — ошибки и порядок их проверки.
+{fixes.name} — ошибки и порядок их проверки.
 Test_Results.txt — краткий бланк результата, заполняется проектной группой.
 Передайте Денису заполненный бланк, F2/журнал, DWG и снимки до/после.
 Монтажная пригодность и несущая способность этим опытом не подтверждаются.
 
 Код: {code_sha}
 Windows CI: {ci_url}
-Успешная нативная приёмка: НЕ ЗАВЕРШЕНА. Прежняя редакция остановилась
-на проверке состояния; эта исправленная редакция ещё требует запуска в AutoCAD.
+Успешная нативная приёмка: НЕ ЗАВЕРШЕНА. Готовый DWG не создан.
+Проверки Python/CI не исполняют AutoCAD; эта редакция требует живого запуска.
 Геометрия и первичные данные предназначены для проектной группы;
 не переносите содержимое папки source и LISP в публичный репозиторий.
 """
-    result = """ПРОТОКОЛ ПРОЕКТНОЙ ГРУППЫ — ТЕСТОВЫЙ УЗЕЛ И ИСПРАВЛЕНИЯ 05–06.10
+    result = f"""ПРОТОКОЛ ПРОЕКТНОЙ ГРУППЫ — ТЕСТОВЫЙ УЗЕЛ 08.10.2026
 Дата и исполнитель:
 Версия/язык AutoCAD 2024:
+Редакция автора из F2 (ожидается {AUTHOR_REVISION}):
 Номер установленного выпуска трёх фасадных модулей (из F2):
 Исходный DWG/шаблон:
 
 Для каждой строки: ПОЛУЧИЛОСЬ / ОШИБКА / НЕ ПРОВЕРЯЛИ + наблюдение.
-1. APPLOAD/ATFNATIVEBUILD, успешное создание и сохранение DWG:
+1. _.APPLOAD / _.LOGFILEON / ATFNATIVEBUILD, создание и сохранение DWG:
 2. Все пять приведены в A (100/230), контуры/размеры/марки:
 3. Рамкой выбраны ровно три и переведены в B (150/280):
 4. Две невыбранные сохранили геометрию, размеры и марки A:
@@ -123,13 +138,16 @@ Windows CI: {ci_url}
 Ожидалось:
 Получилось:
 Полный текст F2, этап и последний запрос команды:
+Значения UNDOCTL, DBMOD и BLOCKEDITOR до построения и после отказа:
 Приложены: DWG / F2 или лог / снимки / XLSX / файл зон JSON.
 Отказ обычного сценария записывается как ошибка, не как успешная проверка.
+Отказ с UNDOCTL=61 до построения остаётся открытым сценарием.
 """
     files["README_FIRST.txt"] = readme.encode("utf-8-sig")
     files["Test_Results.txt"] = result.encode("utf-8-sig")
     manifest = {
         "schema": "af_node_pilot_package/1",
+        "author_revision": AUTHOR_REVISION,
         "code_sha": code_sha, "ci_url": ci_url,
         "node_id": data["node_id"], "native_autocad_executed": False,
         "contains_native_dwg": False, "contains_plugin_bundles": False,
@@ -140,7 +158,7 @@ Windows CI: {ci_url}
     out.parent.mkdir(parents=True, exist_ok=True)
     with zipfile.ZipFile(out, "w", zipfile.ZIP_DEFLATED) as archive:
         for name, blob in files.items():
-            info = zipfile.ZipInfo(name, date_time=(2026, 10, 6, 0, 0, 0))
+            info = zipfile.ZipInfo(name, date_time=(2026, 10, 8, 0, 0, 0))
             info.compress_type = zipfile.ZIP_DEFLATED
             info.external_attr = 0o100644 << 16
             archive.writestr(info, blob)

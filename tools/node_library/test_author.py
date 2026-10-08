@@ -92,7 +92,7 @@ def audit_scope(forms):
     input data, diagnostics and the command-owned editor flag.
     Nested *error* deliberately captures the enclosing command's declared locals.
     """
-    globals_allowed = {"afn:data", "afn:failure", "afn:editor-owned", "afn:stage", "afn:last-command"}
+    globals_allowed = {"afn:data", "afn:failure", "afn:editor-owned", "afn:stage", "afn:last-command", "afn:failed-prompt"}
     errors = []
 
     def body(form, scope):
@@ -135,12 +135,13 @@ class CleanupModel:
 
     This proves ownership decisions in our handler, not AutoCAD UNDO/BCLOSE.
     """
-    def __init__(self, editor, owned_editor, commands_owned, undo_state, fail=None):
-        self.vars = {"BLOCKEDITOR": editor, "CMDACTIVE": 1, "LASTPROMPT": "failed native prompt",
+    def __init__(self, editor, owned_editor, commands_owned, undo_state, fail=None, active=0):
+        self.vars = {"BLOCKEDITOR": editor, "CMDACTIVE": active, "LASTPROMPT": "failed native prompt",
                      "UNDOCTL": 61 if undo_state == "open" else 53}
         self.env = {"afn:editor-owned": owned_editor, "commands-owned": commands_owned,
                     "undo-state": undo_state, "settings": [], "afn:failure": None, "message": "test",
                     "settings-changed": commands_owned,
+                    "afn:geometry-started": commands_owned,
                     "afn:stage": "test stage", "afn:last-command": "_.BPARAMETER"}
         self.calls = []
         self.messages = []
@@ -193,30 +194,39 @@ class CleanupModel:
             return str(values[0])
         if head == "getvar":
             return self.vars[values[0]]
+        if head == "list":
+            return values
         if head == "strcat":
             return "".join(values)
         if head == "princ":
             self.messages.extend(values)
             return None
         if head == "command":
-            self.calls.append(("cancel",))
-            self.vars["CMDACTIVE"] = 0
-            return None
+            raise NativeFailure("command is forbidden in local *error* context")
         if head == "afn:restore":
             self.calls.append(("restore",))
             return None
         if head == "vl-catch-all-error-p":
             return isinstance(values[0], NativeFailure)
+        if head == "vl-catch-all-error-message":
+            return str(values[0])
+        if head == "exit":
+            raise NativeFailure(self.env.get("afn:failure"))
         if head == "vl-catch-all-apply":
             fn, tokens = values
+            if fn == "afn:restore":
+                self.calls.append(("restore",))
+                return NativeFailure("restore failed") if self.fail == "restore" else None
             if fn != "command-s":
                 raise AssertionError(fn)
+            if not tokens:
+                raise AssertionError("no-argument command-s has no documented main-command cancellation")
             call = tuple(str(x) for x in tokens)
             self.calls.append(call)
             self.vars["LASTPROMPT"] = "cleanup prompt: " + call[0]
             if self.fail == call[0]:
                 return NativeFailure(call[0])
-            if call[0] == "_.BCLOSE":
+            if call[0] == "_.BCLOSE" and self.fail != "close-noop":
                 self.vars["BLOCKEDITOR"] = 0
             if call == ("_.UNDO", "_End") and self.fail != "end-noop":
                 self.vars["UNDOCTL"] &= ~8
@@ -285,6 +295,12 @@ class PreflightModel(CleanupModel):
     def run(self, expression):
         if isinstance(expression, list) and expression:
             head, *args = expression
+            if head == "vl-catch-all-apply" and self.run(args[0]) == "command-s":
+                tokens = self.run(args[1])
+                try:
+                    return self.native_command(tokens)
+                except NativeFailure as exc:
+                    return exc
             if expression[0] == "afn:assert":
                 if not self.run(expression[1]):
                     raise NativeFailure(self.run(expression[2]))
@@ -315,7 +331,7 @@ class PreflightModel(CleanupModel):
                     self.env.update(old)
             if head in ("afn:get", "vla-get-ActiveDocument", "vlax-get-acad-object", "vla-get-ModelSpace",
                         "vla-get-Layers", "vla-Item", "vla-get-Count", "tblsearch", "getfiled", "findfile",
-                        "getvar", "setvar", "cons", "car", "cdr", "assoc", "apply"):
+                        "getvar", "setvar", "cons", "car", "cdr", "cadr", "assoc", "apply"):
                 values = [self.run(a) for a in args]
                 if head == "afn:get":
                     return values[1].get(values[0])
@@ -344,14 +360,94 @@ class PreflightModel(CleanupModel):
                     return Pair((values[0], values[1][values[0]])) if values[0] in values[1] else None
                 if head == "car":
                     return values[0][0]
+                if head == "cadr":
+                    return values[0][1]
                 if head == "cdr":
                     value = values[0]
                     return value[1] if isinstance(value, Pair) else value[2] if len(value) == 3 and value[1] == "." else value[1:]
                 if head == "apply":
+                    # Retained only to replay the historical runtime against
+                    # the new protocol checks; shipped runtime uses command-s.
                     if values[0] != "vl-cmdf":
                         raise AssertionError(values[0])
                     return self.native_command(values[1])
         return super().run(expression)
+
+
+class CommandProtocolModel(PreflightModel):
+    """Consume native command input, not evaluate CAD geometry.
+
+    Visibility's final grip prompt comes from the supplied 08.10 host capture.
+    Other routes are bounded contracts from the Autodesk command references.
+    The model cannot certify BEDIT, native actions, Undo or DWG persistence.
+    """
+    def __init__(self, runtime):
+        super().__init__(runtime)
+        self.vars["BACTIONBARMODE"] = 1
+        self.command_error = None
+        self.editor_opens_before_error = False
+
+    def native_command(self, tokens):
+        self.calls.append(tuple(tokens))
+        command, *answers = tokens
+        if self.command_error:
+            if command == "_.-BEDIT" and self.editor_opens_before_error:
+                self.vars["BLOCKEDITOR"] = 1
+            self.vars["LASTPROMPT"] = "original native failure"
+            raise NativeFailure(self.command_error)
+        if command == "_.-BEDIT":
+            if len(answers) != 1:
+                raise NativeFailure("BEDIT requires one block name")
+            self.vars["BLOCKEDITOR"] = 1
+        elif command == "_.BPARAMETER":
+            kind = answers.pop(0)
+            allowed = {"_Name", "_Label", "_Base", "_Palette"}
+            while answers and isinstance(answers[0], str) and answers[0] in allowed:
+                answers.pop(0)
+                if not answers:
+                    raise NativeFailure("missing option value")
+                answers.pop(0)
+            points = 1 if kind == "_Visibility" else 3 if kind == "_Linear" else -1
+            if points == -1:
+                raise NativeFailure("unmodelled parameter type")
+            for _ in range(points):
+                if not answers or not isinstance(answers.pop(0), list):
+                    raise NativeFailure("missing parameter point")
+            maximum = 1 if kind == "_Visibility" else 2
+            self.vars["LASTPROMPT"] = f"Введите число ручек [0/{maximum}] <1>:"
+            if not answers or type(answers.pop(0)) is not int:
+                # command-s does not leave a pending prompt in the main processor.
+                self.vars["CMDACTIVE"] = 0
+                raise NativeFailure("missing terminal grip count")
+            if tokens[-1] not in range(maximum + 1) or answers:
+                raise NativeFailure("unexpected parameter answers")
+        elif command == "_.BACTIONTOOL":
+            kind = answers.pop(0)
+            if kind not in {"_Move", "_Stretch"}:
+                raise NativeFailure("unmodelled action type")
+            required = 6 if kind == "_Stretch" else 4
+            if self.vars["BACTIONBARMODE"] == 0:
+                required += 1  # An action-location point is required only in mode 0.
+            if len(answers) != required or answers[required - (2 if self.vars["BACTIONBARMODE"] == 0 else 1)] != "":
+                raise NativeFailure("incomplete action selection/location")
+        elif command == "_.BSAVE":
+            if answers:
+                raise NativeFailure("unexpected BSAVE input")
+        elif command == "_.BCLOSE":
+            self.vars["BLOCKEDITOR"] = 0
+        else:
+            raise NativeFailure("unmodelled authoring command: " + command)
+        return None
+
+
+def calls_to(form, name):
+    """Read command expressions from source, without a copied command builder."""
+    if not isinstance(form, list) or not form:
+        return []
+    found = [form] if form[0] == name else []
+    for child in form[1:]:
+        found.extend(calls_to(child, name))
+    return found
 
 
 class DimensionModel(CleanupModel):
@@ -558,7 +654,7 @@ class AuthorTests(unittest.TestCase):
 
     def test_dirty_or_nonempty_drawing_is_rejected_before_dialog_or_undo(self):
         cases = [("DBMOD", x) for x in (*range(1, 8), 9, 17, 25, 32, 40, 48, 64, 128, -1)]
-        cases += [("DWGTITLED", 1), ("BLOCKEDITOR", 1), ("TILEMODE", 0)]
+        cases += [("DWGTITLED", 1), ("BLOCKEDITOR", 1), ("TILEMODE", 0), ("CMDACTIVE", 1), ("CMDACTIVE", 2), ("CMDACTIVE", 3)]
         for key, value in cases:
             model = PreflightModel(self.runtime)
             model.vars.update(UNDOCTL=48)
@@ -663,7 +759,7 @@ class AuthorTests(unittest.TestCase):
         self.assertIn("DBMOD=20", "".join(model.messages))
 
     def test_preflight_failure_does_not_discard_foreign_editor_or_command(self):
-        model = CleanupModel(editor=1, owned_editor=False, commands_owned=False, undo_state=None)
+        model = CleanupModel(editor=1, owned_editor=False, commands_owned=False, undo_state=None, active=1)
         model.run(self.handler())
         self.assertEqual(model.calls, [])
         self.assertEqual(model.vars["BLOCKEDITOR"], 1)
@@ -671,16 +767,99 @@ class AuthorTests(unittest.TestCase):
         self.assertIn("\nAFN STAGE: test stage", model.messages)
         self.assertIn("\nAFN LAST PROMPT: failed native prompt", model.messages)
 
+    def command_expressions(self, command):
+        definition = next(f for f in parse(self.runtime) if isinstance(f, list) and f[:2] == ["defun", "afn:build-definition"])
+        return [x for x in calls_to(definition, "afn:cmd")
+                if isinstance(x[1], list) and x[1][:2] == ["list", command]]
+
+    def test_visibility_consumes_captured_final_grip_prompt(self):
+        expression = self.command_expressions("_.BPARAMETER")[0]
+        model = CommandProtocolModel(self.runtime)
+        model.run(expression)
+        self.assertEqual(model.calls[-1][-1], 1)
+        # This is the exact pre-08.10 omission, not an invented host failure.
+        broken = copy.deepcopy(expression)
+        broken[1].pop()
+        with self.assertRaisesRegex(NativeFailure, "missing terminal grip"):
+            model.run(broken)
+        self.assertEqual(model.vars["CMDACTIVE"], 0)
+        self.assertEqual(model.env["afn:failed-prompt"], "Введите число ручек [0/1] <1>:")
+
+    def test_linear_and_action_streams_consume_complete_prompt_contracts(self):
+        model = CommandProtocolModel(self.runtime)
+        spec = self.data["parameters"]["AFN_INSULATION"]
+        model.env.update({"name-p": "AFN_INSULATION", "spec": spec, "ename": "parameter-entity",
+                          "frame": [[0, 0], [100, 100]], "selected": ["geometry-1"]})
+        model.run(self.command_expressions("_.BPARAMETER")[1])
+        for expression in self.command_expressions("_.BACTIONTOOL"):
+            model.run(expression)
+            broken = copy.deepcopy(expression)
+            broken[1].pop()  # A missing end-of-selection must not pass.
+            with self.assertRaisesRegex(NativeFailure, "incomplete action"):
+                model.run(broken)
+        # Read the actual settings path, rather than assuming action-bar mode.
+        prepared = PreflightModel(self.runtime)
+        prepared.vars["BACTIONBARMODE"] = 0
+        prepared.prepare()
+        self.assertEqual(prepared.vars["BACTIONBARMODE"], 1)
+        model.vars["BACTIONBARMODE"] = 0
+        with self.assertRaisesRegex(NativeFailure, "incomplete action"):
+            model.run(self.command_expressions("_.BACTIONTOOL")[0])
+
+    def test_error_context_disallows_command_and_early_rejection_is_not_geometry_failure(self):
+        model = CleanupModel(editor=0, owned_editor=False, commands_owned=False, undo_state=None)
+        with self.assertRaisesRegex(NativeFailure, "command is forbidden"):
+            model.run(["command"])
+        self.assertEqual(calls_to(self.handler(), "command"), [])
+        self.assertNotIn("*push-error-using-command*", self.runtime)
+        model.run(self.handler())
+        text = "".join(model.messages)
+        self.assertIn("Построение узла не начато", text)
+        self.assertNotIn("закройте этот новый чертёж", text)
+
+    def test_open_editor_error_records_ownership_before_reporting(self):
+        for opened in (False, True):
+            model = CommandProtocolModel(self.runtime)
+            model.command_error = "BEDIT failed"
+            model.editor_opens_before_error = opened
+            with self.assertRaisesRegex(NativeFailure, "BEDIT failed"):
+                model.run(["afn:open-editor", String("AFN_TEST")])
+            self.assertEqual(bool(model.env["afn:editor-owned"]), opened)
+            self.assertEqual(model.env["afn:failed-prompt"], "original native failure")
+            self.assertEqual(model.env["afn:last-command"], "_.-BEDIT")
+
+    def test_unknown_active_prompt_prevents_close_end_and_undo(self):
+        for active in (1, 2, 3):
+            model = CleanupModel(editor=1, owned_editor=True, commands_owned=True,
+                                 undo_state="open", active=active)
+            model.run(self.handler())
+            self.assertEqual(model.calls, [("restore",)])
+            self.assertIn("автоматический откат не выполнялся", "".join(model.messages))
+            self.assertEqual(model.vars["BLOCKEDITOR"], 1)
+            self.assertEqual(model.vars["UNDOCTL"], 61)
+
+    def test_original_diagnostic_survives_cleanup_failure_and_prompt_changes(self):
+        for failure in ("_.BCLOSE", "_.UNDO", "restore", "close-noop", "end-noop"):
+            model = CleanupModel(editor=1, owned_editor=True, commands_owned=True,
+                                 undo_state="open", fail=failure)
+            model.env["afn:failed-prompt"] = "captured grip prompt"
+            model.env["afn:failure"] = "original failure"
+            model.run(self.handler())
+            self.assertIn("\nAFN BUILD ABORTED: original failure", model.messages)
+            self.assertIn("\nAFN LAST PROMPT: captured grip prompt", model.messages)
+            if failure in ("_.BCLOSE", "_.UNDO", "close-noop", "end-noop"):
+                self.assertNotIn(("_.U",), model.calls)
+
     def test_own_editor_failure_closes_before_rollback(self):
         model = CleanupModel(editor=1, owned_editor=True, commands_owned=True, undo_state="open")
         model.run(self.handler())
-        self.assertEqual(model.calls, [("cancel",), ("_.BCLOSE", "_Discard"), ("_.UNDO", "_End"), ("_.U",), ("restore",)])
+        self.assertEqual(model.calls, [("_.BCLOSE", "_Discard"), ("_.UNDO", "_End"), ("_.U",), ("restore",)])
         self.assertIn("\nAFN LAST PROMPT: failed native prompt", model.messages)
 
     def test_save_failure_after_group_end_rolls_back_own_group(self):
         model = CleanupModel(editor=0, owned_editor=False, commands_owned=True, undo_state="ended")
         model.run(self.handler())
-        self.assertEqual(model.calls, [("cancel",), ("_.U",), ("restore",)])
+        self.assertEqual(model.calls, [("_.U",), ("restore",)])
 
     def test_failed_close_or_end_never_undoes_unknown_previous_work(self):
         model = CleanupModel(editor=1, owned_editor=True, commands_owned=True, undo_state="open", fail="_.BCLOSE")

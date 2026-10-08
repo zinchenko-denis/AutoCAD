@@ -17,18 +17,30 @@
   (cond ((= (type x) 'VARIANT) (afn:unbox (vlax-variant-value x)))
         ((= (type x) 'SAFEARRAY) (mapcar 'afn:unbox (vlax-safearray->list x)))
         (T x)))
-(defun afn:cmd (arguments)
+(defun afn:command-result (result)
+  ; Snapshot the failed native prompt before any cleanup can overwrite it.
+  (if (or (vl-catch-all-error-p result) (/= 0 (logand 3 (getvar "CMDACTIVE"))))
+    (progn
+      (setq afn:failed-prompt (getvar "LASTPROMPT"))
+      (afn:fail (if (vl-catch-all-error-p result)
+        (vl-catch-all-error-message result)
+        (strcat "Command did not finish: " afn:last-command))))))
+(defun afn:cmd (arguments / result)
   (setq afn:last-command (car arguments))
-  (apply 'vl-cmdf arguments)
-  ; An unexpected extra prompt is a failure, not permission to feed the next command.
-  (afn:assert (= 0 (logand 3 (getvar "CMDACTIVE")))
-    (strcat "Command did not finish: " (car arguments))))
-(defun afn:open-editor (name)
+  ; Every call is one complete non-interactive command. command-s cancels an
+  ; incomplete token stream in its temporary processor; it cannot leave the
+  ; next command name serving as an answer to an unfinished native prompt.
+  (setq result (vl-catch-all-apply 'command-s arguments))
+  (afn:command-result result))
+(defun afn:open-editor (name / result)
   ; afn:editor-owned is deliberately dynamically bound by ATFNATIVEBUILD.
   ; Its preflight proved that no foreign Block Editor was open.
   (setq afn:last-command "_.-BEDIT")
-  (vl-cmdf "_.-BEDIT" name)
+  (setq result (vl-catch-all-apply 'command-s (list "_.-BEDIT" name)))
+  ; BEDIT may enter the editor before reporting an error. Record ownership
+  ; from the readback while preflight still proves there was no foreign editor.
   (if (= (getvar "BLOCKEDITOR") 1) (setq afn:editor-owned T))
+  (afn:command-result result)
   (afn:assert (and afn:editor-owned (= 0 (logand 3 (getvar "CMDACTIVE")))) "BEDIT did not open cleanly"))
 (defun afn:close-editor ()
   (afn:cmd '("_.BSAVE"))
@@ -152,7 +164,8 @@
   (afn:assert (entmake '((0 . "ENDBLK"))) "Cannot close block header")
   (afn:at "create visibility parameter")
   (afn:open-editor name)
-  (afn:cmd (list "_.BPARAMETER" "_Visibility" "_Name" "AFN_VARIANT" "_Label" "AFN_VARIANT" '(0.0 -100.0 0.0)))
+  ; Visibility, like Linear below, ends with the number-of-grips prompt.
+  (afn:cmd (list "_.BPARAMETER" "_Visibility" "_Name" "AFN_VARIANT" "_Label" "AFN_VARIANT" '(0.0 -100.0 0.0) 1))
   (afn:close-editor)
   ; Read the localized default state through the native reference API.
   ; No hard-coded English/Russian VisibilityState0 name and no private DXF internals.
@@ -348,6 +361,8 @@
     "; DBMOD=" (itoa (getvar "DBMOD"))
     "; DWGTITLED=" (itoa (getvar "DWGTITLED"))
     "; BLOCKEDITOR=" (itoa (getvar "BLOCKEDITOR"))))
+  (afn:assert (= 0 (logand 3 (getvar "CMDACTIVE")))
+    "Завершите текущую команду перед запуском автора узла.")
   (afn:assert (= 0 (getvar "BLOCKEDITOR")) "Закройте редактор блока перед запуском автора.")
   (afn:assert (and (= 0 (getvar "DWGTITLED"))
       (member (getvar "DBMOD") '(0 8 16 24)) (= 1 (getvar "TILEMODE")))
@@ -378,29 +393,41 @@
   (if (/= 1 (logand 3 flags))
     (princ "\n[AFN] Для нового чертежа включён UNDO All. Этот режим сохраняется для последующей отмены.")))
 
-(defun c:ATFNATIVEBUILD (/ *error* document space name output settings settings-changed undo-state commands-owned afn:editor-owned afn:stage afn:last-command refs setting)
-  (setq afn:failure nil undo-state nil commands-owned nil settings-changed nil afn:editor-owned nil afn:stage "preflight" afn:last-command nil)
+(defun c:ATFNATIVEBUILD (/ *error* document space name output settings settings-changed undo-state commands-owned afn:editor-owned afn:geometry-started afn:stage afn:last-command afn:failed-prompt refs setting)
+  (setq afn:failure nil undo-state nil commands-owned nil settings-changed nil afn:editor-owned nil afn:geometry-started nil afn:stage "preflight" afn:last-command nil afn:failed-prompt nil)
+  (princ "\n[AFN] Автор узла 2026-10-08.1")
   (defun *error* (message / result failed-prompt)
-    (setq failed-prompt (getvar "LASTPROMPT"))
-    ; No work in an existing drawing is allowed by the preflight below. Close our
-    ; editor without saving, end our own group, and roll back only that group.
-    (if commands-owned
-      (repeat 3 (if (/= 0 (logand 3 (getvar "CMDACTIVE"))) (command))))
-    (if (and afn:editor-owned (= (getvar "BLOCKEDITOR") 1))
-      (vl-catch-all-apply 'command-s '("_.BCLOSE" "_Discard")))
-    (if (and (equal undo-state "open") (= (getvar "BLOCKEDITOR") 0))
-      (progn
-        (setq result (vl-catch-all-apply 'command-s '("_.UNDO" "_End")))
-        (if (and (not (vl-catch-all-error-p result)) (= 0 (logand 8 (getvar "UNDOCTL"))))
-          (setq undo-state "ended"))))
-    (if (and (equal undo-state "ended") (= (getvar "BLOCKEDITOR") 0))
-      (vl-catch-all-apply 'command-s '("_.U")))
-    (if settings-changed (afn:restore settings))
+    (setq failed-prompt (if afn:failed-prompt afn:failed-prompt (getvar "LASTPROMPT")))
+    ; Report first: a cleanup failure must never conceal the original cause.
     (princ (strcat "\nAFN BUILD ABORTED: " (if afn:failure afn:failure message)))
     (princ (strcat "\nAFN STAGE: " afn:stage))
     (if afn:last-command (princ (strcat "\nAFN COMMAND: " afn:last-command)))
     (if failed-prompt (princ (strcat "\nAFN LAST PROMPT: " failed-prompt)))
-    (princ "\nСоздание библиотеки не подтверждено. Незавершённый результат не использовать. Если откат прервался, закройте этот новый чертёж без сохранения.")
+    ; command is forbidden here and command-s with no arguments is NOT a
+    ; documented way to cancel the main document processor. Never run UNDO
+    ; while an unknown command is active. Our complete command-s batches use
+    ; their own temporary processor, so normal failure cleanup starts idle.
+    (if (and commands-owned (= 0 (logand 3 (getvar "CMDACTIVE"))))
+      (progn
+        (if (and afn:editor-owned (= (getvar "BLOCKEDITOR") 1))
+          (progn
+            (vl-catch-all-apply 'command-s '("_.BCLOSE" "_Discard"))
+            (if (= (getvar "BLOCKEDITOR") 0) (setq afn:editor-owned nil))))
+        (if (and (equal undo-state "open") (= (getvar "BLOCKEDITOR") 0)
+            (= 0 (logand 3 (getvar "CMDACTIVE"))))
+          (progn
+            (setq result (vl-catch-all-apply 'command-s '("_.UNDO" "_End")))
+            (if (and (not (vl-catch-all-error-p result)) (= 0 (logand 8 (getvar "UNDOCTL"))))
+              (setq undo-state "ended"))))
+        (if (and (equal undo-state "ended") (= (getvar "BLOCKEDITOR") 0)
+            (= 0 (logand 3 (getvar "CMDACTIVE"))) (= 0 (logand 8 (getvar "UNDOCTL"))))
+          (vl-catch-all-apply 'command-s '("_.U")))))
+    (if settings-changed (vl-catch-all-apply 'afn:restore (list settings)))
+    (if afn:geometry-started
+      (princ "\nСоздание библиотеки не подтверждено. Незавершённый результат не использовать. Если откат прервался, закройте этот новый чертёж без сохранения.")
+      (princ "\nПостроение узла не начато. Устраните указанную причину и повторите запуск."))
+    (if (and commands-owned (/= 0 (logand 3 (getvar "CMDACTIVE"))))
+      (princ "\nАктивная команда не завершилась; автоматический откат не выполнялся. Завершите её клавишей Esc. Незавершённый новый чертёж не сохраняйте."))
     (princ))
   (afn:assert afn:data "Загрузите сгенерированный LISP узла, а не отдельный служебный runtime.")
   (afn:assert (member (getvar "LISPSYS") '(1 2)) "Нужен Unicode AutoLISP: LISPSYS 1 или 2, затем перезапуск AutoCAD.")
@@ -426,6 +453,7 @@
   (foreach setting '(("CMDECHO" . 0) ("OSMODE" . 0) ("SNAPMODE" . 0) ("BACTIONBARMODE" . 1)
       ("DYNMODE" . 0) ("DIMASSOC" . 1) ("ATTREQ" . 0) ("ATTDIA" . 0) ("INSUNITS" . 4) ("CLAYER" . "0") ("DIMLAYER" . "0"))
     (setvar (car setting) (cdr setting)))
+  (setq afn:geometry-started T)
   (afn:build-definition name space)
   (afn:at "five-instance native checks")
   (setq refs (afn:five space name))
@@ -447,5 +475,5 @@
   (princ "\nPASS IN THIS HOST: native signature/actions/dimensions/marks, five instances (3 changed/2 unchanged), A-B-A-B, repeat, database Copy.")
   (princ "\nSTILL REQUIRED: manual grips/Properties, plugin selection command and cancel/Undo, UI COPY, save-close-open inspection in AutoCAD 2024.")
   (princ))
-(princ "\nАвтор узла загружен; построение ещё не выполнялось. Команда ATFNATIVEBUILD — в новом пустом несохранённом чертеже AutoCAD 2024.")
+(princ "\nАвтор узла 2026-10-08.1 загружен; построение ещё не выполнялось. Команда ATFNATIVEBUILD — в новом пустом несохранённом чертеже AutoCAD 2024.")
 (princ)
