@@ -121,6 +121,9 @@ def build(out, diagram, code_sha, ci_url, release_build=None):
         style.paragraph_format.line_spacing = 1.08
         style.paragraph_format.space_after = Pt(7)
     doc.styles["Title"].font.size = Pt(25)
+    # Some runtime templates add a decorative border below the title.
+    for border in doc.styles["Title"].element.xpath(".//w:pBdr"):
+        border.getparent().remove(border)
     doc.styles["Subtitle"].font.size = Pt(12)
     doc.styles["Heading 1"].font.size = Pt(17)
     doc.styles["Heading 2"].font.size = Pt(12)
