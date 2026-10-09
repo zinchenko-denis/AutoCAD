@@ -105,7 +105,8 @@ def page(doc, title):
     doc.add_heading(title, 1)
 
 
-def build(out, diagram, code_sha, ci_url, release_build=None):
+def build(out, diagram, code_sha, ci_url, release_build=None,
+          fixes_name="Fixes_2026-10-08_09_build111.txt"):
     downloads = release_links(release_build)
     doc = Document()
     sec = doc.sections[0]
@@ -131,7 +132,7 @@ def build(out, diagram, code_sha, ci_url, release_build=None):
     for name in ("Heading 1", "Heading 2"):
         doc.styles[name].paragraph_format.keep_with_next = True
     header = sec.header.paragraphs[0]
-    header.text = "ФАСАДЫ / ПРОЕКТНАЯ ГРУППА / 08.10.2026"
+    header.text = "ФАСАДЫ / ПРОЕКТНАЯ ГРУППА / 09.10.2026"
     header.runs[0].font.size = Pt(8)
     footer = sec.footer.paragraphs[0]
     footer.alignment = WD_ALIGN_PARAGRAPH.RIGHT
@@ -144,9 +145,9 @@ def build(out, diagram, code_sha, ci_url, release_build=None):
     doc.core_properties.subject = "Проверка выбранных трёх экземпляров из пяти в AutoCAD 2024"
 
     doc.add_heading("Тестовый\nдинамический узел", 0)
-    doc.add_paragraph("Вектор-1 · тип 1 · узел 4.2.1\nИнструкция проектной группе · 8 октября 2026", "Subtitle")
+    doc.add_paragraph("Вектор-1 · тип 1 · узел 4.2.1\nИнструкция проектной группе · 9 октября 2026", "Subtitle")
     paragraph(doc, "Цель: изменить геометрию, размеры и марки трёх выбранных вставок из пяти. Две невыбранные вставки должны остаться прежними.", True)
-    paragraph(doc, "В комплекте LISP-автор редакции 2026-10-08.2 для полного AutoCAD 2024 Windows. Исправлены пропущенный ответ о числе ручек Visibility, вторичная ошибка обработчика и учёт собственной группы Undo при исключении Begin/End. Готовый DWG ещё не создан; живая приёмка не завершена. Модули №110 ради этого исправления LISP переустанавливать не нужно.")
+    paragraph(doc, "В комплекте LISP-автор редакции 2026-10-08.2 для полного AutoCAD 2024 Windows. Исправлены пропущенный ответ о числе ручек Visibility, вторичная ошибка обработчика и учёт собственной группы Undo при исключении Begin/End. Готовый DWG ещё не создан; живая приёмка не завершена. Установка трёх фасадных модулей и проверка автора узла выполняются по отдельным шагам ниже.")
     table(doc, ["Параметр", "Состояние A", "Состояние B"], [
         ("Утеплитель", "100 мм", "150 мм"),
         ("Вынос до лицевой плоскости", "230 мм", "280 мм"),
@@ -213,7 +214,7 @@ def build(out, diagram, code_sha, ci_url, release_build=None):
     paragraph(doc, "ATFNODE остаётся справочной схемой слоёв. Для библиотеки используются команды из таблицы. Автоматический тест не заменяет ручки, ручной COPY/Undo и сохранение/открытие.")
     doc.add_heading("Что передать Денису", 2)
     paragraph(doc, "Заполните Test_Results.txt. Приложите DWG, снимки «пять A» и «три B + две A», полный F2/журнал и точные действия до ошибки. При отказе укажите, на каком шаге он произошёл; отказ обычного сценария — ошибка опыта, а не успешный тест.")
-    paragraph(doc, "Исправления и порядок повторной проверки описаны в Fixes_2026-10-08.txt. Отдельно отмечен неустранённый сценарий UNDOCTL=61. Синтетические проверки и Windows CI не являются выполнением динамического узла в AutoCAD.")
+    paragraph(doc, f"Исправления и порядок повторной проверки описаны в {fixes_name}. Отдельно отмечен неустранённый сценарий UNDOCTL=61. Синтетические проверки и Windows CI не являются выполнением динамического узла в AutoCAD.")
     paragraph(doc, "Не принимайте учебные значения за инженерное назначение: параметры проекта, крепёж, монтажные диапазоны и расчётное подтверждение задаются отдельно.")
     doc.add_heading("Идентификация комплекта", 2)
     paragraph(doc, "LISP-автор: 2026-10-08.2. Эта редакция должна быть видна в F2 после загрузки.")
@@ -234,6 +235,8 @@ if __name__ == "__main__":
     parser.add_argument("--ci-url", required=True)
     parser.add_argument("--release-build", type=int,
                         help="Explicit published build 110 or newer; omit for the offline pilot without release links")
+    parser.add_argument("--fixes-name", default="Fixes_2026-10-08_09_build111.txt",
+                        help="Name of the fixes checklist included in the pilot ZIP")
     args = parser.parse_args()
-    build(args.out, args.diagram, args.code_sha, args.ci_url, args.release_build)
+    build(args.out, args.diagram, args.code_sha, args.ci_url, args.release_build, args.fixes_name)
     print(args.out)

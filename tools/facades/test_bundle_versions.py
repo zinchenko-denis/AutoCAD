@@ -23,17 +23,27 @@ using AcApp = Autodesk.AutoCAD.ApplicationServices.Application;
 namespace Autodesk.AutoCAD.ApplicationServices
 {
     public class Document { public Editor Editor = new Editor(); }
-    public class Editor { public string History = ""; public void WriteMessage(string value) { History += value; } }
+    public class Editor {
+        public string History = ""; public bool Fail;
+        public void WriteMessage(string value) {
+            if (Fail) throw new InvalidOperationException("editor unavailable");
+            History += value;
+        }
+    }
     public class Documents { public Document MdiActiveDocument; }
     public static class Application
     {
         public static Documents DocumentManager = new Documents();
         public static event EventHandler Idle;
         public static int Alerts;
+        public static bool FailAlert;
         public static string Warning;
         public static void RaiseIdle() { if (Idle != null) Idle(null, EventArgs.Empty); }
         public static int Subscribers { get { return Idle == null ? 0 : Idle.GetInvocationList().Length; } }
-        public static void ShowAlertDialog(string warning) { Alerts++; Warning = warning; }
+        public static void ShowAlertDialog(string warning) {
+            if (FailAlert) throw new InvalidOperationException("alert unavailable");
+            Alerts++; Warning = warning;
+        }
     }
 }
 
@@ -120,6 +130,38 @@ class Probe
             subscriptions += (int)application.GetProperty("Subscribers").GetValue(null, null);
         }
         Expect(alerts == 1 && subscriptions == 0, "three assemblies must show one warning and detach all callbacks");
+        // A startup diagnostic must not throw out of Idle and skip other plugins.
+        AppDomain.CurrentDomain.SetData("AutoCAD.Facades.BundleVersions.Checked", null);
+        var editor = AcApp.DocumentManager.MdiActiveDocument.Editor;
+        editor.Fail = true;
+        int previousAlerts = AcApp.Alerts;
+        bool escaped = false, nextCallback = false;
+        EventHandler observer = delegate { nextCallback = true; };
+        FacadeBundleVersions.Schedule(); AcApp.Idle += observer;
+        try { AcApp.RaiseIdle(); } catch (Exception) { escaped = true; }
+        finally { AcApp.Idle -= observer; }
+        Expect(!escaped && nextCallback, "unavailable Editor must not abort later Idle callbacks");
+        Expect(AcApp.Alerts == previousAlerts + 1 && AcApp.Subscribers == 0,
+            "unavailable Editor preserves the version alert and detaches the completed check");
+        editor.Fail = false;
+        AppDomain.CurrentDomain.SetData("AutoCAD.Facades.BundleVersions.Checked", null);
+        AcApp.FailAlert = true;
+        string previousHistory = editor.History;
+        FacadeBundleVersions.Schedule(); AcApp.RaiseIdle();
+        string addedHistory = editor.History.Substring(previousHistory.Length);
+        Expect(addedHistory.Contains("Фасадные модули установлены") &&
+            !addedHistory.Contains("Не удалось проверить версии"),
+            "unavailable alert preserves the real F2 result without claiming the version check failed");
+        Expect(AcApp.Subscribers == 0, "unavailable alert does not retain an Idle callback");
+        // Both output channels may fail, but this remains a contained diagnostic failure.
+        AppDomain.CurrentDomain.SetData("AutoCAD.Facades.BundleVersions.Checked", null);
+        editor.Fail = true; escaped = false; nextCallback = false;
+        FacadeBundleVersions.Schedule(); AcApp.Idle += observer;
+        try { AcApp.RaiseIdle(); } catch (Exception) { escaped = true; }
+        finally { AcApp.Idle -= observer; }
+        Expect(!escaped && nextCallback && AcApp.Subscribers == 0,
+            "failure of both diagnostic channels cannot abort startup callbacks");
+        editor.Fail = false; AcApp.FailAlert = false;
         Console.WriteLine("PASS: " + checks + " bundle compatibility/startup checks");
     }
 }

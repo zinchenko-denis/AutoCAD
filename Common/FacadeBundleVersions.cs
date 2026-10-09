@@ -33,17 +33,18 @@ namespace FacadeSafety
 
         private static void OnIdle(object sender, EventArgs args)
         {
-            // Startup loads all bundles before Idle. With no DWG open, wait for
-            // a document so the same warning is also retained in command history.
-            if (AcApp.DocumentManager.MdiActiveDocument == null) return;
-            Cancel();
-            lock (AppDomain.CurrentDomain)
-            {
-                if (AppDomain.CurrentDomain.GetData(CheckedKey) != null) return;
-                AppDomain.CurrentDomain.SetData(CheckedKey, true);
-            }
             try
             {
+                // The document/editor may still be unavailable during startup.
+                // Do not let a diagnostic callback abort the remaining Idle handlers.
+                var doc = AcApp.DocumentManager.MdiActiveDocument;
+                if (doc == null) return;
+                Cancel();
+                lock (AppDomain.CurrentDomain)
+                {
+                    if (AppDomain.CurrentDomain.GetData(CheckedKey) != null) return;
+                    AppDomain.CurrentDomain.SetData(CheckedKey, true);
+                }
                 var loaded = new Dictionary<string, List<string>>(StringComparer.Ordinal);
                 foreach (Assembly assembly in AppDomain.CurrentDomain.GetAssemblies())
                     foreach (string module in Modules)
@@ -58,13 +59,19 @@ namespace FacadeSafety
                         }
                 string warning = FindProblem(loaded);
                 if (warning == null) return;
-                AcApp.DocumentManager.MdiActiveDocument.Editor.WriteMessage("\n" + warning + "\n");
-                AcApp.ShowAlertDialog(warning);
+                // Each channel must work even if the other is temporarily unavailable.
+                try { doc.Editor.WriteMessage("\n" + warning + "\n"); } catch (Exception) { }
+                try { AcApp.ShowAlertDialog(warning); } catch (Exception) { }
             }
             catch (Exception)
             {
-                AcApp.DocumentManager.MdiActiveDocument.Editor.WriteMessage(
-                    "\nНе удалось проверить версии фасадных модулей. Установите AFacades, AClad и AFrame вместе из одного выпуска и перезапустите AutoCAD.\n");
+                try
+                {
+                    var doc = AcApp.DocumentManager.MdiActiveDocument;
+                    if (doc != null) doc.Editor.WriteMessage(
+                        "\nНе удалось проверить версии фасадных модулей. Установите AFacades, AClad и AFrame вместе из одного выпуска и перезапустите AutoCAD.\n");
+                }
+                catch (Exception) { }
             }
         }
 

@@ -67,12 +67,19 @@ namespace ACladPlugin
         public readonly Point3d Position;
         public string Layer;
         public bool SnapshotReaders, Coupled, BadGeometry;
+        // Independent geometry errors: matching numeric properties do not
+        // prove that the native stretch operation moved the actual outline.
+        public double GeometryWidthDelta, GeometryHeightDelta, GeometryXDelta, GeometryYDelta;
+        public double LocalBaseX, LocalBaseY;
         public int Writes, Looks, Attributes;
         public BlockReference() { Properties = new List<PropertyState>(); }
         public BlockReference(Point3d p, ObjectId def)
         {
             Properties = Next.Properties; Position = p;
             SnapshotReaders = Next.SnapshotReaders; Coupled = Next.Coupled; BadGeometry = Next.BadGeometry;
+            GeometryWidthDelta = Next.GeometryWidthDelta; GeometryHeightDelta = Next.GeometryHeightDelta;
+            GeometryXDelta = Next.GeometryXDelta; GeometryYDelta = Next.GeometryYDelta;
+            LocalBaseX = Next.LocalBaseX; LocalBaseY = Next.LocalBaseY;
             Next = this;
         }
         public IEnumerable<DynamicBlockReferenceProperty> DynamicBlockReferencePropertyCollection
@@ -91,8 +98,12 @@ namespace ACladPlugin
         {
             double w = Convert.ToDouble(block.Properties[0].Value),
                 h = Convert.ToDouble(block.Properties[1].Value);
-            return new Extents3d { MinPoint = block.Position,
-                MaxPoint = new Point3d(block.Position.X + w + (block.BadGeometry ? 1 : 0), block.Position.Y + h, 0) };
+            double x = block.Position.X + block.LocalBaseX + block.GeometryXDelta,
+                y = block.Position.Y + block.LocalBaseY + block.GeometryYDelta;
+            return new Extents3d { MinPoint = new Point3d(x, y, 0),
+                MaxPoint = new Point3d(block.Position.X + (block.LocalBaseX + w + block.GeometryWidthDelta) +
+                    block.GeometryXDelta + (block.BadGeometry ? 1 : 0),
+                    block.Position.Y + (block.LocalBaseY + h + block.GeometryHeightDelta) + block.GeometryYDelta, 0) };
         }
 __CLAD_METHODS__
     }
@@ -105,6 +116,7 @@ __CLAD_METHODS__
             public SampleElem Te;
             public string Layer = "cassette", PW = "ширина", PH = "высота", Root = "Zone";
             public double W = 821.87, H = 600, Ox, Oy;
+            public double TestX = 125.5, TestY = -42.5;
         }
         static string F2(double value) { return value.ToString("0.##", CultureInfo.InvariantCulture); }
         static void FillAttributes(Transaction tr, BlockReference b, string root, Dictionary<ObjectId, List<ObjectId>> cache)
@@ -114,9 +126,9 @@ __PROTO_SIZE_KEY__
         internal static bool Run(Proto p)
         {
             bool ok;
-            var b = MakeDynRef(new Transaction(), new BlockTableRecord(), p, 125.5, -42.5,
+            var b = MakeDynRef(new Transaction(), new BlockTableRecord(), p, p.TestX, p.TestY,
                 new Dictionary<ObjectId, List<ObjectId>>(), out ok);
-            return ok && b.Position.X == 125.5 && b.Position.Y == -42.5 &&
+            return ok && b.Position.X == p.TestX - p.Ox && b.Position.Y == p.TestY - p.Oy &&
                 b.Attributes == 1 && b.Looks == (p.Te == null ? 0 : 1);
         }
     }
@@ -173,6 +185,10 @@ __PROTO_SIZE_KEY__
                 b.Properties[0].Value = 244.99999999999884;
                 b.Properties[1].Value = 65.0;
             }, true);
+            checks++;
+            if (!(BlockReference.Next.Properties[1].Value is double) ||
+                (double)BlockReference.Next.Properties[1].Value != 35.85)
+            { failures++; Console.WriteLine("FAIL fractional_native_double_type_and_value_must_be_preserved"); }
             Case("native_increment_1mm_is_not_success", (b, p) => {
                 p.W = 245; p.H = 35.85;
                 b.Properties[0].Value = 244.99999999999884;
@@ -198,6 +214,10 @@ __PROTO_SIZE_KEY__
                 p.W = 245; p.H = 36;
                 b.Properties[0].Value = 245.0; b.Properties[1].Value = (short)65;
             }, true);
+            checks++;
+            if (!(BlockReference.Next.Properties[1].Value is short) ||
+                (short)BlockReference.Next.Properties[1].Value != 36 || BlockReference.Next.Writes != 1)
+            { failures++; Console.WriteLine("FAIL exact_native_int16_type_and_value_must_be_preserved"); }
             Case("restricted_property_reports_allowed_values", (b, p) => {
                 p.W = 245; p.H = 35.85;
                 b.Properties[0].Value = 245.0; b.Properties[1].Value = 65.0;
@@ -221,6 +241,67 @@ __PROTO_SIZE_KEY__
             Case("height_changes_width", (b, p) => b.Coupled = true, false);
             Case("missing_dimension", (b, p) => b.Properties[1].Name = "длина", false);
             Case("properties_right_geometry_wrong", (b, p) => b.BadGeometry = true, false);
+            // The previous 0.5 mm acceptance hid a real 0.15 mm size/base error.
+            // Repeat near the origin and at previously supported/far coordinates.
+            foreach (double origin in new[] { 125.5, 4e9, -4e9, 1e11, -1e11 })
+            {
+                foreach (double width in new[] { 245.0, 821.87 })
+                {
+                    Case("exact_fractional_geometry_at_" + origin + "_width_" + width, (b, p) => {
+                        p.TestX = origin; p.TestY = -origin; p.W = width; p.H = 35.85;
+                    }, true);
+                    Case("exact_fractional_geometry_nonzero_base_at_" + origin + "_width_" + width, (b, p) => {
+                        p.TestX = origin; p.TestY = -origin; p.W = width; p.H = 35.85;
+                        b.LocalBaseX = p.Ox = 0.01; b.LocalBaseY = p.Oy = 0.03;
+                    }, true);
+                }
+                foreach (double error in new[] { -0.15, 0.15 })
+                {
+                    Case("exact_properties_wrong_width_" + origin + "_" + error, (b, p) => {
+                        p.TestX = origin; p.TestY = -origin; b.GeometryWidthDelta = error;
+                    }, false);
+                    Case("exact_properties_wrong_height_" + origin + "_" + error, (b, p) => {
+                        p.TestX = origin; p.TestY = -origin; b.GeometryHeightDelta = error;
+                    }, false);
+                    Case("exact_properties_wrong_base_x_" + origin + "_" + error, (b, p) => {
+                        p.TestX = origin; p.TestY = -origin; b.GeometryXDelta = error;
+                    }, false);
+                    Case("exact_properties_wrong_base_y_" + origin + "_" + error, (b, p) => {
+                        p.TestX = origin; p.TestY = -origin; b.GeometryYDelta = error;
+                    }, false);
+                }
+            }
+            Case("fractional_geometry_roundoff_is_accepted", (b, p) => {
+                p.W = 245; p.H = 35.85; b.GeometryWidthDelta = 1e-12;
+                b.GeometryHeightDelta = -1e-12; b.GeometryXDelta = 1e-12; b.GeometryYDelta = -1e-12;
+            }, true);
+            Case("geometry_error_exceeding_numerical_tolerance", (b, p) => b.GeometryWidthDelta = 0.00001, false);
+            Case("large_y_must_not_expand_x_tolerance", (b, p) => {
+                p.TestY = 1e11; b.GeometryWidthDelta = 0.00001;
+            }, false);
+            Case("large_x_must_not_expand_y_tolerance", (b, p) => {
+                p.TestX = 1e11; b.GeometryHeightDelta = 0.00001;
+            }, false);
+            foreach (double localBase in new[] { 1e11, -1e11 })
+            {
+                Case("large_local_base_at_small_target_" + localBase, (b, p) => {
+                    b.LocalBaseX = p.Ox = localBase; b.LocalBaseY = p.Oy = -localBase;
+                    p.H = 35.85;
+                }, true);
+                Case("large_local_base_does_not_hide_0.15mm_" + localBase, (b, p) => {
+                    b.LocalBaseX = p.Ox = localBase; b.LocalBaseY = p.Oy = -localBase;
+                    p.H = 35.85; b.GeometryWidthDelta = 0.15;
+                }, false);
+            }
+            Case("coordinate_roundoff_tolerance_is_capped", (b, p) => {
+                p.TestX = 1e12; p.TestY = -1e12; b.GeometryWidthDelta = 0.00025;
+            }, false);
+            foreach (double origin in new[] { 1e13, 1e14, -1e14 })
+                Case("coordinate_scale_must_not_hide_0.15mm_" + origin, (b, p) => {
+                    p.TestX = origin; p.TestY = -origin; b.GeometryWidthDelta = 0.15;
+                }, false);
+            Case("nonfinite_geometry_nan", (b, p) => b.GeometryWidthDelta = double.NaN, false);
+            Case("nonfinite_geometry_infinity", (b, p) => b.GeometryHeightDelta = double.PositiveInfinity, false);
             Case("nan_request", (b, p) => p.W = double.NaN, false);
             Case("wrong_base", (b, p) => p.Ox = 5, false);
             Case("unchanged_size", (b, p) => { b.Properties[0].Value = p.W; b.Properties[1].Value = p.H; }, true);

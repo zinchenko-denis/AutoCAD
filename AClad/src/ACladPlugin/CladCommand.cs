@@ -1273,13 +1273,30 @@ namespace ACladPlugin
             double x, double y, double w, double h)
         {
             Extents3d ex = CellExtents(tr, br);
-            double ew = ex.MaxPoint.X - ex.MinPoint.X, eh = ex.MaxPoint.Y - ex.MinPoint.Y;
             double dx = ex.MinPoint.X - x, dy = ex.MinPoint.Y - y;
-            if (double.IsNaN(ew) || double.IsNaN(eh) || double.IsInfinity(ew) || double.IsInfinity(eh) ||
-                double.IsNaN(dx) || double.IsNaN(dy) || double.IsInfinity(dx) || double.IsInfinity(dy) ||
-                Math.Abs(ew - w) > 0.5 || Math.Abs(eh - h) > 0.5 ||
-                Math.Abs(dx) > 0.5 || Math.Abs(dy) > 0.5)
+            double dx1 = ex.MaxPoint.X - (x + w), dy1 = ex.MaxPoint.Y - (y + h);
+            // Сравниваем границы, а не (max - min): вычитание мировых координат
+            // теряет точность вдали от нуля. Учитываем только округление double
+            // в BlockTransform (например, (x - Ox) + (Ox + w)), не допуск монтажа.
+            // Поправка ограничена 0.0001 мм и не растёт безгранично с координатами.
+            const double epsilon = 2.2204460492503131e-16;
+            Point3d position = br.Position;
+            // Перенос большой локальной базы к нулю также теряет точность;
+            // учитываем его отдельно по осям, не расширяя точную соседнюю ось.
+            double scaleX = Math.Max(Math.Max(Math.Abs(x), Math.Abs(x + w)), Math.Abs(position.X));
+            double scaleY = Math.Max(Math.Max(Math.Abs(y), Math.Abs(y + h)), Math.Abs(position.Y));
+            double toleranceX = Math.Min(1e-4, Math.Max(1e-6, 4 * epsilon * scaleX));
+            double toleranceY = Math.Min(1e-4, Math.Max(1e-6, 4 * epsilon * scaleY));
+            if (double.IsNaN(dx) || double.IsNaN(dy) || double.IsInfinity(dx) || double.IsInfinity(dy) ||
+                double.IsNaN(dx1) || double.IsNaN(dy1) || double.IsInfinity(dx1) || double.IsInfinity(dy1) ||
+                Math.Abs(dx) > toleranceX || Math.Abs(dy) > toleranceY ||
+                Math.Abs(dx1) > toleranceX || Math.Abs(dy1) > toleranceY)
                 throw new InvalidOperationException("Габарит или базовая точка блока не совпадает с рассчитанной плиткой. " +
+                    "Отклонения границ слева/снизу/справа/сверху: " +
+                    dx.ToString("G17", CultureInfo.InvariantCulture) + "/" +
+                    dy.ToString("G17", CultureInfo.InvariantCulture) + "/" +
+                    dx1.ToString("G17", CultureInfo.InvariantCulture) + "/" +
+                    dy1.ToString("G17", CultureInfo.InvariantCulture) + " мм. " +
                     "Используйте прямоугольник ATTILE либо блок с базой в левом нижнем углу. " +
                     "Прежняя раскладка сохранена.");
         }

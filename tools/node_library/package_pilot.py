@@ -25,14 +25,19 @@ def release_links(release_build):
     return {name: base + name for name in RELEASE_ASSETS}
 
 
-def make_package(source, guide, fixes, diagram, out, code_sha, ci_url, release_build=None):
+def make_package(source, guide, fixes, diagram, out, code_sha, ci_url, release_build=None,
+                 instructions_dir=None):
     downloads = release_links(release_build)
     if not re.fullmatch(r"[0-9a-f]{40}", code_sha):
         raise ValueError("code_sha must identify the exact tested commit")
     data = json.loads(source.read_text(encoding="utf-8-sig"))
     if data["node_id"] != "vector1_2015_type1_4_2_1_training":
         raise ValueError("This handout packages only the explicitly agreed first training node")
-    lsp = generate.render(data).encode("utf-8-sig")
+    rendered = generate.render(data)
+    revisions = set(re.findall(r"Автор узла (\d{4}-\d{2}-\d{2}\.\d+)", rendered))
+    if revisions != {AUTHOR_REVISION}:
+        raise ValueError("Author revision does not match the generated LISP")
+    lsp = rendered.encode("utf-8-sig")
     root = Path(__file__).resolve().parents[2]
     files = {
         "vector1_2015_4_2_1_training.lsp": lsp,
@@ -43,10 +48,11 @@ def make_package(source, guide, fixes, diagram, out, code_sha, ci_url, release_b
         "source/vector1_2015_4_2_1_training.json": source.read_bytes(),
     }
     if downloads:
-        # Include the existing instructions: GitHub DOCX links were inaccessible
-        # in the customer's session. This does not rebuild either document.
+        # Copy the exact release instructions; do not rebuild or re-encode them.
+        # The CLI can select the downloaded release assets explicitly.
+        instructions_dir = instructions_dir or root / "docs/user"
         for name in ("Install_AutoCAD_2024.docx", "Facades_User_Manual.docx"):
-            files[name] = (root / "docs/user" / name).read_bytes()
+            files[name] = (instructions_dir / name).read_bytes()
         plugin_instructions = f"""ДЛЯ КОМАНД ПЛАГИНА И ФАСАДНЫХ ИСПРАВЛЕНИЙ — ВЫПУСК №{release_build}
 Обе общие инструкции DOCX вложены в этот ZIP; скачивать их по ссылкам не нужно.
 Если модули ещё не установлены, откройте Install_AutoCAD_2024.docx и установите
@@ -65,7 +71,8 @@ ATFNODEIMPORT/EDIT/DEMO/TEST проверяются с этим комплект
 Номер установочного выпуска для этого автономного пакета не указан.
 LISP-автор и ручной опыт через Properties можно проверить без новых DLL.
 """
-    readme = f"""ТЕСТОВЫЙ УЗЕЛ ДЛЯ AUTOCAD 2024 — РЕДАКЦИЯ {AUTHOR_REVISION}
+    readme = f"""ТЕСТОВЫЙ УЗЕЛ ДЛЯ AUTOCAD 2024 — КОМПЛЕКТ 09.10.2026
+LISP-автор: {AUTHOR_REVISION}
 
 Начните с {guide.name}.
 Распакуйте весь архив в отдельную папку. В полном AutoCAD 2024:
@@ -73,10 +80,11 @@ LISP-автор и ручной опыт через Properties можно про
 vector1_2015_4_2_1_training.lsp → _.LOGFILEON → ATFNATIVEBUILD.
 В F2 проверьте редакцию загруженного автора: {AUTHOR_REVISION}.
 
-В редакции 08.10.2 дополнительно исправлено владение своей группой Undo при
+В редакции {AUTHOR_REVISION} дополнительно исправлено владение своей группой Undo при
 исключении Begin/End; пустая группа не даёт права U по предыдущей истории.
-Сохранены исправления ответа о числе ручек Visibility и обработчика отказа. Команды журнала указаны с префиксом _.
-для русского AutoCAD. Ошибка построения не возникла из-за действий Германа.
+Сохранены исправления ответа о числе ручек Visibility и обработчика отказа.
+Команды журнала указаны с префиксом _. для русского AutoCAD.
+Ошибка построения не возникла из-за действий Германа.
 Сохранено исправление 06.10: изменение только вида/окна (DBMOD 8/16) допускается.
 
 В видео 08.10 показан отказ UNDOCTL=61; на отдельном снимке повтор при 53 —
@@ -115,7 +123,7 @@ Windows CI: {ci_url}
 Геометрия и первичные данные предназначены для проектной группы;
 не переносите содержимое папки source и LISP в публичный репозиторий.
 """
-    result = f"""ПРОТОКОЛ ПРОЕКТНОЙ ГРУППЫ — ТЕСТОВЫЙ УЗЕЛ 08.10.2026
+    result = f"""ПРОТОКОЛ ПРОЕКТНОЙ ГРУППЫ — ТЕСТОВЫЙ УЗЕЛ 09.10.2026
 Дата и исполнитель:
 Версия/язык AutoCAD 2024:
 Редакция автора из F2 (ожидается {AUTHOR_REVISION}):
@@ -159,7 +167,7 @@ Windows CI: {ci_url}
     out.parent.mkdir(parents=True, exist_ok=True)
     with zipfile.ZipFile(out, "w", zipfile.ZIP_DEFLATED) as archive:
         for name, blob in files.items():
-            info = zipfile.ZipInfo(name, date_time=(2026, 10, 8, 0, 0, 0))
+            info = zipfile.ZipInfo(name, date_time=(2026, 10, 9, 0, 0, 0))
             info.compress_type = zipfile.ZIP_DEFLATED
             info.external_attr = 0o100644 << 16
             archive.writestr(info, blob)
@@ -181,5 +189,7 @@ if __name__ == "__main__":
     parser.add_argument("--ci-url", required=True)
     parser.add_argument("--release-build", type=int,
                         help="Explicit published build 110 or newer; omit for the offline pilot without release links")
+    parser.add_argument("--instructions-dir", type=Path,
+                        help="Directory with the two exact release DOCX assets; defaults to docs/user")
     args = parser.parse_args()
     print(json.dumps(make_package(**vars(args)), ensure_ascii=False))
