@@ -1,0 +1,18 @@
+{
+  "schema_version": 1,
+  "native_autocad": false,
+  "cases": [
+    {"id":"245x35.85_double","width":245,"height":35.85,"behavior":"ordinary","geometry_width_error":0},
+    {"id":"821.87x600_double","width":821.87,"height":600,"behavior":"ordinary","geometry_width_error":0},
+    {"id":"245x35.85_snapshot","width":245,"height":35.85,"behavior":"snapshot","geometry_width_error":0},
+    {"id":"821.87x600_snapshot","width":821.87,"height":600,"behavior":"snapshot","geometry_width_error":0},
+    {"id":"245x35.85_native_increment_1mm","width":245,"height":35.85,"behavior":"native_increment_1mm","geometry_width_error":0},
+    {"id":"245x35.85_integer_value","width":245,"height":35.85,"behavior":"integer_value","geometry_width_error":0},
+    {"id":"245x35.85_readonly_exact","width":245,"height":35.85,"behavior":"readonly_exact","geometry_width_error":0},
+    {"id":"821.87x600_readonly_exact","width":821.87,"height":600,"behavior":"readonly_exact","geometry_width_error":0},
+    {"id":"245x35.85_setter_rejects","width":245,"height":35.85,"behavior":"setter_rejects","geometry_width_error":0},
+    {"id":"245x35.85_coupled","width":245,"height":35.85,"behavior":"coupled","geometry_width_error":0},
+    {"id":"245x35.85_bad_geometry_1mm","width":245,"height":35.85,"behavior":"ordinary","geometry_width_error":1},
+    {"id":"245x35.85_bad_geometry_0.15mm","width":245,"height":35.85,"behavior":"ordinary","geometry_width_error":0.15}
+  ]
+}
