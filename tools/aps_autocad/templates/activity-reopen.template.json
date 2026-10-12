@@ -1,0 +1,38 @@
+{
+  "id": "AutoCADCoreProbeReopen",
+  "engine": "Autodesk.AutoCAD+24_3",
+  "appbundles": [
+    "YOUR_APS_NAMESPACE.AutoCADCoreProbe+YOUR_UNIQUE_ALIAS"
+  ],
+  "commandLine": [
+    "\"$(engine.path)\\accoreconsole.exe\" /i \"$(args[dwg].path)\" /al \"$(appbundles[AutoCADCoreProbe].path)\" /s \"$(settings[script].path)\""
+  ],
+  "parameters": {
+    "dwg": {
+      "verb": "get",
+      "required": true,
+      "localName": "input.dwg"
+    },
+    "config": {
+      "verb": "get",
+      "required": true,
+      "localName": "config.json"
+    },
+    "result": {
+      "verb": "put",
+      "required": true,
+      "localName": "reopen-result.json"
+    },
+    "expected": {
+      "verb": "get",
+      "required": true,
+      "localName": "expected.json"
+    }
+  },
+  "settings": {
+    "script": {
+      "value": "ATREOPENVERIFY\n"
+    }
+  },
+  "description": "Private diagnostic Core probe; no desktop or production ATTILE acceptance"
+}

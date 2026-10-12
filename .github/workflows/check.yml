@@ -86,6 +86,27 @@ jobs:
         with:
           python-version: '3.12'
 
+      - name: APS Core probe compile, package and protocol guards (no cloud AutoCAD execution)
+        shell: pwsh
+        run: |
+          python tools/aps_autocad/build_probe.py --out build_aps_probe
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          python -m unittest discover -s tools/aps_autocad -p 'test_*.py'
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          python tools/aps_autocad/test_probe_contract.py --out build_aps_probe_contract
+          exit $LASTEXITCODE
+
+      - name: Upload APS diagnostic bundle (no private DWG or credentials)
+        uses: actions/upload-artifact@v4
+        with:
+          name: aps-core-probe
+          path: |
+            build_aps_probe/FacadeCoreProbe.zip
+            build_aps_probe/build-manifest.json
+            build_aps_probe/package-result.json
+            build_aps_probe/compile.log
+          if-no-files-found: error
+
       - name: Engine unit test
         shell: bash
         env:
