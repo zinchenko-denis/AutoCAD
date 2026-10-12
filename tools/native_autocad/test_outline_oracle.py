@@ -22,10 +22,10 @@ __ACTUAL_METHODS__
         new[] { 1000.125, -42.25, 0.0 }, new[] { 1245.125, -42.25, 0.0 },
         new[] { 1245.125, -6.4, 0.0 }, new[] { 1000.125, -6.4, 0.0 }
     };
-    static void Test(string name, double[][] points, bool expected)
+    static void Test(string name, double[][] points, bool expected, double expectedZ = 0.0)
     {
         bool accepted = true;
-        try { CheckOutline(points, 1000.125, -42.25, 245, 35.85, 1e-6); }
+        try { CheckOutline(points, 1000.125, -42.25, 245, 35.85, 1e-6, expectedZ); }
         catch (InvalidOperationException) { accepted = false; }
         checks++;
         if (accepted != expected) { failures++; Console.WriteLine("FAIL " + name); }
@@ -52,6 +52,11 @@ __ACTUAL_METHODS__
         p = Copy(); p[0][1] = double.PositiveInfinity; Test("infinite", p, false);
         p = Copy(); p[1] = p[0]; Test("duplicate corner", p, false);
         Test("missing corner", Copy().Take(3).ToArray(), false);
+        const double sourcePositionZ = -14000.125;
+        p = Copy(); foreach (var vertex in p) vertex[2] = sourcePositionZ;
+        Test("source plane uses explicit insertion Z", p, true, sourcePositionZ);
+        Test("source plane differs from insertion Z", p, false, sourcePositionZ + .15);
+        Test("made insertion must still be in Z zero plane", p, false);
         Console.WriteLine("Outline oracle: " + checks + " checks, " + failures +
             " failures; actual pure C# methods, NOT AutoCAD execution.");
         return failures == 0 ? 0 : 1;

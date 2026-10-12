@@ -147,6 +147,8 @@ jobs:
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           python tools/native_autocad/test_outline_oracle.py --out build_native_outline_oracle
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          python tools/native_autocad/test_setter_trace.py --out build_native_setter_trace
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           python tools/atr_review_3009/test_runner_integrity.py
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           python tools/stamp_library/test_inspect.py

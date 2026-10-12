@@ -15,6 +15,7 @@ export PYTHONUTF8=1
 python3 tools/facades/test_bundle_versions.py
 python3 tools/facades/test_startup.py
 python3 AClad/tests/test_dynamic_block_size.py # настоящий MakeDynRef: итоговая пара размеров, база и геометрия; CAD doubles, не нативный вычислитель динблока
+python3 tools/native_autocad/test_setter_trace.py # запись исходных исключений/значений вокруг настоящего setter; без AutoCAD
 python3 AFrame/tests/test_node_library.py --out <папка> # реальные команды/адаптер библиотеки: выбор 3 из 5, откат, COPY/import; CAD doubles
 python3 tools/node_library/test_author.py # генератор авторского LISP; не создание нативного DWG
 python3 tools/stamp_library/test_inspect.py # читающий инспектор штампа: контракт и file-open doubles; не AutoCAD/СПДС
@@ -89,6 +90,13 @@ Core Console/APS могут проверять готовые динамичес
 примера отдельно: этот образец и кассета 821,87 × 600. Идентичность нового
 образца имеющимся приватным DWG пока не установлена. Нельзя подменять его
 произвольным прямоугольником либо менять ограничения блока по догадке.
+
+Снимок 13.10 добавляет случай **563,55 × 588,25 → примерно 564 × 588**:
+финальные свойства имеют CLR-тип Double. На этом входе нужны отдельные снимки
+до записи, переданный boxed-кандидат, исходное исключение setter и свежая пара
+после каждой записи. Стенд сохраняет эти наблюдения отдельно от приёмочных
+MakeDynRef cases; они не превращают отказ обычной раскладки в PASS.
+Идентичность DWG со снимка старому приватному образцу пока не подтверждена.
 
 ## Где сохранять результаты
 

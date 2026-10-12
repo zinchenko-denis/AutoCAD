@@ -63,6 +63,7 @@ namespace FacadeNativeCheck
                 { "schema_version", 1 }, { "test_kind", "autocad-2024-production-makedynref" },
                 { "status", "BLOCKED" }, { "exit_code", 2 }, { "native_execution", false },
                 { "full_native_gate", "NOT_RUN" }, { "adapter_scope", "MakeDynRef/SampleElem/CellExtents" },
+                { "setter_trace_acceptance", "NOT_APPLICABLE_EXPLORATORY" },
                 { "started_utc", DateTime.UtcNow.ToString("o") },
                 { "limitations", new[] { "ATTILE command UI and full-command rollback not executed",
                     "LISP author, native node 3-of-5, COPY/Undo and save/reopen not executed",
@@ -74,6 +75,9 @@ namespace FacadeNativeCheck
             bool mayWriteResult = false;
             var caseResults = new List<Dictionary<string, object>>();
             result["cases"] = caseResults;
+            var setterTraces = new List<Dictionary<string, object>>();
+            result["exploratory_setter_traces"] = setterTraces;
+            result["exploratory_setter_trace_status"] = "NOT_RUN";
             try
             {
                 if (string.IsNullOrWhiteSpace(resultPath) || !Path.IsPathRooted(resultPath))
@@ -161,6 +165,26 @@ namespace FacadeNativeCheck
                     }
                     if (rollbackFailed) break;
                 }
+                // These observations cannot turn a failed MakeDynRef case into PASS.
+                // Each order gets a separate insertion and Abort transaction after the ordinary cases.
+                if (!rollbackFailed)
+                {
+                    result["exploratory_setter_trace_status"] = "OBSERVED";
+                    foreach (var c in cfg.cases)
+                    {
+                        foreach (string order in new[] { "PRODUCTION_COLLECTION", "W_THEN_H", "H_THEN_W" })
+                        {
+                            var trace = RunSetterTrace(db, sourceId, cfg, c, order, adapter, before, members);
+                            setterTraces.Add(trace);
+                            if ((string)trace["status"] != "OBSERVED")
+                                result["exploratory_setter_trace_status"] = "INCOMPLETE";
+                            if ((bool)trace["source_integrity_failed"]) pass = false;
+                            if ((string)trace["rollback"] == "FAIL")
+                            { pass = false; rollbackFailed = true; break; }
+                        }
+                        if (rollbackFailed) break;
+                    }
+                }
                 result["stopped_after_rollback_failure"] = rollbackFailed;
                 RequireHash(cfg.source_dwg, cfg.source_sha256);
                 RequireHash(cfg.working_dwg, cfg.working_sha256);
@@ -226,7 +250,8 @@ namespace FacadeNativeCheck
                                 throw new InvalidOperationException("Production sample ProbeDyn does not match the explicit fixture properties.");
                             var sourceOutline = Outline(source, cfg.outline_layer);
                             CheckOutline(sourceOutline, sourceOutline.Min(p => p[0]), sourceOutline.Min(p => p[1]),
-                                NumericProperty(source, cfg.width_property), NumericProperty(source, cfg.height_property), cfg.tolerance);
+                                NumericProperty(source, cfg.width_property), NumericProperty(source, cfg.height_property),
+                                cfg.tolerance, source.Position.Z);
                             r["source_outline_vertices"] = sourceOutline;
                         }
                         else
@@ -306,11 +331,168 @@ namespace FacadeNativeCheck
             return r;
         }
 
+        private static Dictionary<string, object> RunSetterTrace(Database db, ObjectId sourceId, Configuration cfg,
+            Case c, string order, Adapter adapter, string before, string members)
+        {
+            var r = new Dictionary<string, object> { { "id", c.id }, { "requested", c },
+                { "order", order }, { "status", "INCOMPLETE" },
+                { "acceptance", "NOT_APPLICABLE_EXPLORATORY" }, { "rollback", "NOT_CHECKED" },
+                { "source_integrity_failed", false } };
+            var stages = new List<object>(); r["stages"] = stages;
+            try
+            {
+                using (var tr = db.TransactionManager.StartTransaction())
+                {
+                    try
+                    {
+                        var source = (BlockReference)tr.GetObject(sourceId, OpenMode.ForRead);
+                        var ms = (BlockTableRecord)tr.GetObject(SymbolUtilityServices.GetBlockModelSpaceId(db), OpenMode.ForWrite);
+                        object sample = null;
+                        if (c.mode == "sample")
+                        {
+                            sample = adapter.From(tr, source, adapter.Cell(tr, source));
+                            r["sample_captured_properties"] = ((Dictionary<string, object>)Field(sample, "Props"))
+                                .Select(p => new Dictionary<string, object> { { "name", p.Key },
+                                    { "value", Scalar(p.Value) }, { "clr_type", p.Value?.GetType().FullName } }).ToArray();
+                            if (!(bool)Field(sample, "Usable"))
+                                throw new InvalidOperationException("Production SampleElem rejected this explicit sample; no normalization performed.");
+                            adapter.Probe(sample, tr, ms);
+                            if (!(bool)Field(sample, "Dyn") || (string)Field(sample, "W") != cfg.width_property ||
+                                (string)Field(sample, "H") != cfg.height_property)
+                                throw new InvalidOperationException("Production sample ProbeDyn does not match the explicit fixture properties.");
+                        }
+                        else adapter.ProbeDefinition(tr, ms, source.DynamicBlockTableRecord, cfg.width_property, cfg.height_property);
+                        var made = new BlockReference(new Point3d(c.x - (sample != null ? (double)Field(sample, "OffX") : 0.0),
+                            c.y - (sample != null ? (double)Field(sample, "OffY") : 0.0), 0),
+                            sample != null ? (ObjectId)Field(sample, "Def") : source.DynamicBlockTableRecord);
+                        made.Layer = source.Layer;
+                        ms.AppendEntity(made); tr.AddNewlyCreatedDBObject(made, true);
+                        stages.Add(TraceState(made, cfg, "fresh_before_ApplyLook"));
+                        if (sample != null) adapter.ApplyLook(sample, made);
+                        stages.Add(TraceState(made, cfg,
+                            sample != null ? "after_ApplyLook" : "ApplyLook_NOT_APPLICABLE_DEFINITION_MODE"));
+                        // First trace preserves MakeDynRef's collection and enumeration order.
+                        // Explicit W/H permutations instead reacquire each wrapper after evaluation.
+                        IEnumerable<DynamicBlockReferenceProperty> assignments;
+                        if (order == "PRODUCTION_COLLECTION")
+                            assignments = made.DynamicBlockReferencePropertyCollection.Cast<DynamicBlockReferenceProperty>();
+                        else
+                            assignments = (order == "W_THEN_H" ? new[] { cfg.width_property, cfg.height_property } :
+                                new[] { cfg.height_property, cfg.width_property }).Select(name => RequireProperty(made, name));
+                        foreach (var property in assignments)
+                        {
+                            string name = property.PropertyName;
+                            if (name != cfg.width_property && name != cfg.height_property) continue;
+                            double requested = name == cfg.width_property ? c.width : c.height;
+                            var entry = new Dictionary<string, object> { { "stage", "assign" }, { "property", name },
+                                { "requested", BoxedValue(requested) }, { "read_only", property.ReadOnly } };
+                            stages.Add(entry);
+                            if (property.ReadOnly) entry["assignment"] = "SKIPPED_READ_ONLY";
+                            else entry["assignment"] = TraceAssignment(adapter.SetNumber, () => property.Value,
+                                value => property.Value = value, requested);
+                            entry["fresh_after"] = TraceState(made, cfg, "after_" + name);
+                        }
+                        // Geometry queries may force native evaluation: never call them between setters.
+                        try { r["final_cell_extents"] = Bounds(adapter.Cell(tr, made)); }
+                        catch (System.Exception ex) { r["final_cell_error"] = Unwrap(ex).ToString(); }
+                        try { r["final_native_outline_vertices"] = Outline(made, cfg.outline_layer); }
+                        catch (System.Exception ex) { r["final_outline_error"] = Unwrap(ex).ToString(); }
+                        r["status"] = "OBSERVED";
+                    }
+                    finally
+                    {
+                        try
+                        {
+                            if (SourceFingerprint(tr, (BlockReference)tr.GetObject(sourceId, OpenMode.ForRead)) != before)
+                                throw new InvalidOperationException("Source fingerprint changed during exploratory assignment.");
+                            r["source_fingerprint_unchanged_during"] = true;
+                        }
+                        catch (System.Exception ex)
+                        { r["status"] = "INCOMPLETE"; r["source_integrity_failed"] = true; r["source_integrity_error"] = Unwrap(ex).ToString(); }
+                        finally { tr.Abort(); }
+                    }
+                }
+            }
+            catch (System.Exception ex) { r["status"] = "INCOMPLETE"; r["error"] = Unwrap(ex).ToString(); }
+            try
+            {
+                using (var tr = db.TransactionManager.StartTransaction())
+                {
+                    try
+                    {
+                        if (Members(tr, db) != members || SourceFingerprint(tr,
+                            (BlockReference)tr.GetObject(sourceId, OpenMode.ForRead)) != before)
+                            throw new InvalidOperationException("Exploratory Abort did not restore ModelSpace membership/source fingerprint.");
+                        r["rollback"] = "PASS";
+                        r["source_fingerprint_unchanged_after_abort"] = true;
+                        r["modelspace_membership_unchanged_after_abort"] = true;
+                    }
+                    finally { tr.Abort(); }
+                }
+            }
+            catch (System.Exception ex)
+            { r["status"] = "INCOMPLETE"; r["source_integrity_failed"] = true; r["rollback"] = "FAIL"; r["rollback_error"] = Unwrap(ex).ToString(); }
+            return r;
+        }
+
+        // Instrument delegates around the exact production conversion/readback method.
+        // Preserve the original setter exception before production deliberately catches it.
+        private static Dictionary<string, object> TraceAssignment(
+            Func<Func<object>, Action<object>, double, bool> productionSetter,
+            Func<object> read, Action<object> write, double requested)
+        {
+            var events = new List<object>();
+            var r = new Dictionary<string, object> { { "requested", BoxedValue(requested) },
+                { "events", events }, { "setter_invocations", 0 } };
+            try
+            {
+                r["production_returned"] = productionSetter(() => {
+                    try
+                    {
+                        object value = read();
+                        events.Add(new object[] { "read", BoxedValue(value) });
+                        return value;
+                    }
+                    catch (System.Exception ex) { events.Add(new object[] { "read_exception", Unwrap(ex).ToString() }); throw; }
+                }, value => {
+                    r["setter_invocations"] = (int)r["setter_invocations"] + 1;
+                    events.Add(new object[] { "setter_input", BoxedValue(value) });
+                    try { write(value); events.Add(new object[] { "setter_returned" }); }
+                    catch (System.Exception ex) { events.Add(new object[] { "setter_exception", Unwrap(ex).ToString() }); throw; }
+                }, requested);
+            }
+            catch (System.Exception ex) { r["production_exception"] = Unwrap(ex).ToString(); }
+            return r;
+        }
+
+        private static object BoxedValue(object value)
+        {
+            return new Dictionary<string, object> { { "clr_type", value?.GetType().FullName },
+                { "value", value is double ? ((double)value).ToString("R", CultureInfo.InvariantCulture) :
+                    value is float ? ((float)value).ToString("R", CultureInfo.InvariantCulture) :
+                    Convert.ToString(value, CultureInfo.InvariantCulture) } };
+        }
+
+        private static object TraceState(BlockReference br, Configuration cfg, string stage)
+        {
+            var r = new Dictionary<string, object> { { "stage", stage } };
+            var pair = new List<object>(); r["fresh_pair"] = pair;
+            foreach (string name in new[] { cfg.width_property, cfg.height_property })
+            {
+                var item = new Dictionary<string, object> { { "property", name } }; pair.Add(item);
+                try { item["boxed"] = BoxedValue(RequireProperty(br, name).Value); }
+                catch (System.Exception ex) { item["read_error"] = Unwrap(ex).ToString(); }
+            }
+            try { r["all_properties"] = Properties(br); }
+            catch (System.Exception ex) { r["properties_error"] = Unwrap(ex).ToString(); }
+            return r;
+        }
+
         private sealed class Adapter
         {
             internal readonly Type Proto;
             internal readonly MethodInfo Make;
-            private readonly MethodInfo cell, from, probe, probeDefinition;
+            private readonly MethodInfo cell, from, probe, probeDefinition, applyLook, setNumber;
             internal Adapter(Assembly assembly)
             {
                 var tile = assembly.GetType("ACladPlugin.TilePatternCommand", true);
@@ -320,12 +502,18 @@ namespace FacadeNativeCheck
                 cell = assembly.GetType("ACladPlugin.CladCommand", true).GetMethod("CellExtents", Any);
                 from = sample?.GetMethod("From", Any); probe = sample?.GetMethod("Probe", Any);
                 probeDefinition = tile.GetMethod("ProbeDyn", Any);
-                if (Proto == null || Make == null || cell == null || from == null || probe == null || probeDefinition == null)
+                applyLook = sample?.GetMethod("ApplyLook", Any);
+                setNumber = assembly.GetType("ACladPlugin.LayoutSafety", true).GetMethod("SetNumberChecked", Any);
+                if (Proto == null || Make == null || cell == null || from == null || probe == null || probeDefinition == null ||
+                    applyLook == null || setNumber == null)
                     throw new InvalidOperationException("Production adapter contract was not found. Harness must be reviewed against this DLL.");
             }
             internal Extents3d Cell(Transaction tr, BlockReference br) { return (Extents3d)cell.Invoke(null, new object[] { tr, br }); }
             internal object From(Transaction tr, BlockReference br, Extents3d ext) { return from.Invoke(null, new object[] { tr, br, ext }); }
             internal void Probe(object sample, Transaction tr, BlockTableRecord ms) { probe.Invoke(sample, new object[] { tr, ms }); }
+            internal void ApplyLook(object sample, BlockReference br) { applyLook.Invoke(sample, new object[] { br }); }
+            internal bool SetNumber(Func<object> read, Action<object> write, double requested)
+            { return (bool)setNumber.Invoke(null, new object[] { read, write, requested, Type.Missing }); }
             internal void ProbeDefinition(Transaction tr, BlockTableRecord ms, ObjectId def, string width, string height)
             {
                 object[] args = { tr, ms, def, null, null };
@@ -389,7 +577,8 @@ namespace FacadeNativeCheck
                 finally { foreach (DBObject item in objects) item.Dispose(); }
             }
         }
-        private static void CheckOutline(double[][] vertices, double x, double y, double width, double height, double tolerance)
+        private static void CheckOutline(double[][] vertices, double x, double y, double width, double height,
+            double tolerance, double expectedZ = 0.0)
         {
             for (int i = 0; i < vertices.Length; i++)
             {
@@ -397,8 +586,8 @@ namespace FacadeNativeCheck
                 bool sameX = Math.Abs(a[0] - b[0]) <= tolerance, sameY = Math.Abs(a[1] - b[1]) <= tolerance;
                 if (sameX == sameY) throw new InvalidOperationException("Native outline has a diagonal or zero-length edge.");
             }
-            var expected = new List<double[]> { new[] { x, y, 0.0 }, new[] { x + width, y, 0.0 },
-                new[] { x + width, y + height, 0.0 }, new[] { x, y + height, 0.0 } };
+            var expected = new List<double[]> { new[] { x, y, expectedZ }, new[] { x + width, y, expectedZ },
+                new[] { x + width, y + height, expectedZ }, new[] { x, y + height, expectedZ } };
             foreach (var point in vertices)
             {
                 int index = expected.FindIndex(p => p.Zip(point, (a, b) => Finite(b) && Math.Abs(a - b) <= tolerance).All(b => b));
