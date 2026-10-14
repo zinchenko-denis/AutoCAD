@@ -301,6 +301,9 @@ def op_frame(req):
             "rows_y": req.get("rows_y"),
             "floor_step": req.get("floor_step"),
             "corners_x": req.get("corners_x"),
+            "cladding_offset": req.get("cladding_offset"),
+            "corner_channel_outer_overhang": req.get("corner_channel_outer_overhang"),
+            "corner_channel_y_offset": req.get("corner_channel_y_offset"),
             # 01.08: выбор профиля (видимость динблока) — ГРАБЛЯ-13:
             # новые поля req пробрасывать в base ЯВНО
             "rail_profile": req.get("rail_profile"),
@@ -323,8 +326,11 @@ def op_frame(req):
             # 23.09b (Герман): что раскладывать + существующие направляющие
             "parts": req.get("parts"),
             "rails_fixed": req.get("rails_fixed")}
+    if "external_corners" in req:
+        base["external_corners"] = req["external_corners"]
     rails, brackets, clamps, per_zone = [], [], [], []
-    hrails, fittings = [], []
+    hrails, fittings, corner_channels, corner_issues = [], [], [], []
+    matched_external_corners = set()
     system_used, calc_report = None, None
     calc_reports, local_issues = [], []
     design_scopes = []
@@ -348,6 +354,9 @@ def op_frame(req):
                     "static_model": res.get("static_model"),
                     "unsupported_counts": res.get("unsupported_counts") or {},
                     "notes": notes + list(res.get("notes") or [])}
+        matched_external_corners.update((p['x'],p['y']) for p in res.get('matched_external_corners') or [])
+        for issue in res.get("corner_issues") or []:
+            corner_issues.append(dict(issue, zone=zone_id, zone_id=zone_id))
         system_used = res.get("system_used") or system_used
         connection_passports.append((zone_id, res.get("connection_passport"), len(rails), len(brackets)))
         rail_offset, issue_offset = len(rails), len(local_issues)
@@ -370,7 +379,8 @@ def op_frame(req):
                           (res["brackets"], brackets),
                           (res["clamps"], clamps),
                           (res.get("hrails") or [], hrails),
-                          (res.get("fittings") or [], fittings)):
+                          (res.get("fittings") or [], fittings),
+                          (res.get("corner_channels") or [], corner_channels)):
             for t in coll:
                 t = dict(t)
                 t["zone"] = zone_id
@@ -386,7 +396,16 @@ def op_frame(req):
                          "brackets_row": s["brackets_row"],
                          # 24.09: чтобы C# удалял прежнее только у зон с результатом
                          "clamps": len(res["clamps"]),
-                         "hrails": len(res.get("hrails") or [])})
+                         "hrails": len(res.get("hrails") or []),
+                         "corner_channels": len(res.get("corner_channels") or [])})
+    if req.get('parts') != 'clamps':
+        for point in req.get('external_corners') or []:
+            x,y = float(point['x']),float(point['y'])
+            if (x,y) not in matched_external_corners and not any(
+                    i.get('reason')=='no_matching_edge' and i.get('corner_x')==x and i.get('y')==y for i in corner_issues):
+                corner_issues.append(dict(code='no_matching_edge',reason='no_matching_edge',
+                    message='Выбранная точка не совпадает с вертикальной внешней гранью выбранных контуров.',
+                    corner_x=x,y=y,zone='',zone_id=''))
     lm = sum(r["len"] for r in rails) / 1000.0
     hlm = sum(r["len"] for r in hrails) / 1000.0
     stock = float((system_used or {}).get("rail_stock") or 0.0)
@@ -395,6 +414,8 @@ def op_frame(req):
         "rails": len(rails), "rails_lm": round(lm, 2),
         "hrails": len(hrails), "hrails_lm": round(hlm, 2),
         "fittings": len(fittings),
+        "corner_channels": len(corner_channels),
+        "corner_issues": len(corner_issues),
         "rail_stock_est": (int(math.ceil(lm * 1000.0 / stock))
                            if stock > EPS else None),
         "brackets_main": sum(1 for b in brackets
@@ -421,7 +442,11 @@ def op_frame(req):
     out = {
         "ok": True, "rails": rails, "hrails": hrails,
         "brackets": brackets, "clamps": clamps,
-        "fittings": fittings, "per_zone": per_zone, "notes": notes,
+        "fittings": fittings, "corner_channels": corner_channels,
+        "corner_issues": corner_issues,
+        "corner_geometry_status": ("partial" if corner_issues else "drawn")
+            if req.get("external_corners") and req.get("parts") != "clamps" else "not_requested",
+        "per_zone": per_zone, "notes": notes,
         "system_used": system_used, "summary": summary,
         "local_issues": local_issues,
         "calculation_status": (("partial" if local_issues else "passed")

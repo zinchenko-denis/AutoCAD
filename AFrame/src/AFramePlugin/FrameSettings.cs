@@ -39,6 +39,14 @@ namespace AFramePlugin
         public string WindRegion = "II";
         public string Terrain = "B";
         public double Height = 30, QClad = 25, Offset = 230, NaMax = 3000;
+        // Geometric project input, independent of the calculation lever arm.
+        public double? CladdingOffset;
+        public double? EffectiveCladdingOffset
+        {
+            get { return SolutionSelection != null && SolutionSelection.geometry != null &&
+                SolutionSelection.geometry.cladding_front_offset_mm.HasValue
+                ? SolutionSelection.geometry.cladding_front_offset_mm : CladdingOffset; }
+        }
         public double StepMain = 800, StepCorner = 800, RailStepCorner = 0;
         public double StartOff = 300, RailGap = 10, CornerZone = 1500;
         public string Axes = "step";           // step | points — только если у зон нет раскладки
@@ -191,6 +199,7 @@ namespace AFramePlugin
                 { "nsp_type", NspTypeOrNull },
                 { "cladding", Cladding },
             };
+            if (!clampsOnly && EffectiveCladdingOffset.HasValue) d["cladding_offset"] = EffectiveCladdingOffset.Value;
             var calc = clampsOnly ? null : CalcDict();
             if (calc != null) d["calc"] = calc;
             if (Manual && !clampsOnly)
@@ -254,6 +263,11 @@ namespace AFramePlugin
             return null;
         }
 
+        // Selected external corners can create their own axes even when the
+        // ordinary grid contains no line inside a narrow selected wall.
+        public static bool HasUsableAxisInput(bool isTile, string subType, int ordinaryAxes, int selectedCorners)
+        { return isTile || ordinaryAxes > 0 || (subType == "vertical" && selectedCorners > 0); }
+
         public string Validate(bool hasLayout)
         {
             string solutionReason = ValidateSolutionSelection();
@@ -271,6 +285,8 @@ namespace AFramePlugin
                 if (!hasLayout && RowStep < 50)
                     return "Шины ставятся по рядам плитки, а у зон нет раскладки ATTILE — задайте шаг рядов от 50 мм.";
             }
+            if (!ClampsOnly && EffectiveCladdingOffset.HasValue && (!Finite(EffectiveCladdingOffset.Value) || EffectiveCladdingOffset.Value < 0))
+                return "Вынос облицовки — конечное число не меньше нуля.";
             if (!ClampsOnly && !Manual)
             {
                 if (EffSubType == "vertical" && Profile == "ГП-60-40")
@@ -317,7 +333,7 @@ namespace AFramePlugin
             if (IsTile)
             {
                 sb.Append(TypeTitle).Append(" подсистема: вертикальные направляющие шагом ").Append(F(TileStepH))
-                  .Append(" мм от края зоны, не по швам (первая и последняя — в 100 мм от краёв")
+                  .Append(" мм от края зоны, не по швам (у границ без выбранного внешнего угла — 100 мм от края")
                   .Append(TileStepHCorner > 0 ? "; в угловых зонах — шагом " + F(TileStepHCorner)
                                               : "; в угловых зонах — тем же шагом (в угловой зоне 0)")
                   .Append("; у окон — у каждой грани)")
@@ -340,6 +356,7 @@ namespace AFramePlugin
                 if (aft.Count > 0) sb.Append(" После «Разложить» указать: ").Append(string.Join(", ", aft.ToArray())).Append(".");
                 if (InterFloor) sb.Append(" Без отметок — перекрытия шагом этажа " + F(FloorStep) + " мм.");
                 if (Manual) sb.Append(" Несущая способность при ручном шаге программой не проверяется.");
+                AppendCornerDescription(sb);
                 return sb.ToString();
             }
             if (ClampsOnly)
@@ -374,7 +391,21 @@ namespace AFramePlugin
             if (after.Count > 0) sb.Append(" После «Разложить» указать: ").Append(string.Join(", ", after.ToArray())).Append(".");
             if (InterFloor && !ClampsOnly)
                 sb.Append(" Без отметок — перекрытия шагом этажа " + F(FloorStep) + " мм.");
+            AppendCornerDescription(sb);
             return sb.ToString();
+        }
+
+        private void AppendCornerDescription(StringBuilder sb)
+        {
+            if (ClampsOnly || !AskCorners) return;
+            if (!EffectiveCladdingOffset.HasValue)
+            { sb.Append(" Вынос облицовки не задан; его запросим после выбора внешних углов."); return; }
+            double offset = EffectiveCladdingOffset.Value;
+            sb.Append(" У выбранных внешних углов: вынос облицовки ").Append(F(offset))
+              .Append(" мм; внутренний ряд кронштейнов на ").Append(F(offset + 100)).Append(" мм.");
+            if (EffSubType == "vertical")
+                sb.Append(" Дополнительно ряд на границе. Угловой швеллер: длина ").Append(F(offset + 200))
+                  .Append(" мм, высота 100 мм; его привязка и несущая способность требуют уточнения.");
         }
 
         private static string F(double v) { return v.ToString("0.##", CultureInfo.InvariantCulture); }
@@ -405,6 +436,7 @@ namespace AFramePlugin
                 { "mode", Mode }, { "sub_type", SubType }, { "profile", Profile }, { "steps", Steps },
                 { "wind_region", WindRegion }, { "terrain", Terrain }, { "height", Height },
                 { "q_clad", QClad }, { "offset", Offset }, { "na_max", NaMax },
+                { "cladding_offset", CladdingOffset },
                 { "step_main", StepMain }, { "step_corner", StepCorner }, { "rail_step_corner", RailStepCorner },
                 { "start_off", StartOff }, { "rail_gap", RailGap }, { "corner_zone", CornerZone },
                 { "axes", Axes }, { "axis_step", AxisStep }, { "row_step", RowStep },
@@ -481,6 +513,8 @@ namespace AFramePlugin
             s.Height = D(d, "height", s.Height);
             s.QClad = D(d, "q_clad", s.QClad);
             s.Offset = D(d, "offset", s.Offset);
+            s.CladdingOffset = d.ContainsKey("cladding_offset") && d["cladding_offset"] != null
+                ? (double?)D(d, "cladding_offset", double.NaN) : null;
             s.NaMax = D(d, "na_max", s.NaMax);
             s.StepMain = D(d, "step_main", s.StepMain);
             s.StepCorner = D(d, "step_corner", s.StepCorner);

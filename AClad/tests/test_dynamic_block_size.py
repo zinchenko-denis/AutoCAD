@@ -39,7 +39,7 @@ def main():
     out.mkdir(parents=True, exist_ok=True)
     clad = (ROOT / "AClad/src/ACladPlugin/CladCommand.cs").read_text(encoding="utf-8")
     tile = (ROOT / "AClad/src/ACladPlugin/TilePatternCommand.cs").read_text(encoding="utf-8")
-    names = ["TrySetNum", "DynSizeMatches", "RequirePlacement"]
+    names = ["TrySetNum", "TrySetNumWithFailure", "DynSizeMatches", "RequirePlacement"]
     if "internal static string DynSizeDescription(" in clad:
         names.append("DynSizeDescription")
     source = Path(__file__).with_suffix(".cs").read_text(encoding="utf-8")

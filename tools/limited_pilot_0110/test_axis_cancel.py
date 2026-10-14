@@ -1,4 +1,4 @@
-"""Execute the exact ATFRAME no-layout axis block with real FrameSettings.
+"""Execute exact ATFRAME axis input and its final corner-aware gate with real FrameSettings.
 
 Prompt statuses are explicit CAD doubles. Only continued cases run the real
 Python engine. This is not the full command, a CAD transaction or native Esc.
@@ -60,8 +60,27 @@ def extract(source):
                source.index('projectOperation.VerifyFresh(', end)]
     assert markers == sorted(markers), 'axes return must precede source capture, engine and CAD prewrite'
     assert all(body < pos < method_end and depth(pos) >= 1 for pos in markers), 'source boundaries stay in RunCore'
-    return source[start:end], source[rows_start:rows_end], dict(zip(('axis_start', 'axis_end_exclusive', 'frame_rows_clear', 'source_capture', 'engine_call',
+    boundaries = dict(zip(('axis_start', 'axis_end_exclusive', 'frame_rows_clear', 'source_capture', 'engine_call',
         'cad_write_lock', 'fresh_guard'), [source.count('\n', 0, pos) + 1 for pos in markers]))
+    corner_segment = ''
+    final_gate = '            if (!FrameSettings.HasUsableAxisInput('
+    if final_gate in source:
+        assert source.count(final_gate) == 1, 'final corner-aware axis gate must be unique'
+        corner_start = source.index('            var cornersX = new List<object>();', end)
+        corner_end = source.index('            // 29.09: параметры окна → запрос движку', corner_start)
+        gate = source.index(final_gate)
+        assert end <= corner_start < gate < corner_end < rows_start, 'final axis gate follows corner selection and precedes row cleanup'
+        assert depth(corner_start) == depth(corner_end) == depth(gate) == 1, 'corner-aware gate returns from RunCore directly'
+        assert masked[corner_start:corner_end].count('{') == masked[corner_start:corner_end].count('}'), 'whole corner input/gate segment only'
+        corner_segment = source[corner_start:corner_end]
+        boundaries.update(corner_input_start=source.count('\n', 0, corner_start)+1,
+                          final_axis_gate=source.count('\n', 0, gate)+1,
+                          corner_input_end_exclusive=source.count('\n', 0, corner_end)+1)
+    else:
+        # Historical replay must retain the genuine old empty-grid gate; do not
+        # silently accept a current source whose final gate was removed.
+        assert 'if (joints.Count == 0 && !fs.IsTile)' in source[start:end], 'legacy source requires its original empty-axis rejection'
+    return source[start:end], source[rows_start:rows_end], corner_segment, boundaries
 
 
 def main():
@@ -76,15 +95,19 @@ def main():
         return 2
     out = args.out.resolve(); build = out / 'build'; build.mkdir(parents=True, exist_ok=True)
     source = args.source.resolve(); source_before = digest(source)
-    segment, rows_segment, boundaries = extract(source.read_text(encoding='utf-8'))
+    segment, rows_segment, corner_segment, boundaries = extract(source.read_text(encoding='utf-8'))
     template = Path(__file__).with_name('AxisCancelProbe.cs')
     assert template.read_text(encoding='utf-8').count('/* ACTUAL_AXIS_SEGMENT */') == 1
     assert template.read_text(encoding='utf-8').count('/* ACTUAL_ROWS_MODE_SEGMENT */') == 1
+    assert template.read_text(encoding='utf-8').count('/* ACTUAL_CORNER_GATE_SEGMENT */') == 1
     generated = build / 'AxisCancelExtracted.cs'
     generated.write_text(template.read_text(encoding='utf-8').replace('/* ACTUAL_AXIS_SEGMENT */', segment)
-                         .replace('/* ACTUAL_ROWS_MODE_SEGMENT */', rows_segment), encoding='utf-8')
+                         .replace('/* ACTUAL_ROWS_MODE_SEGMENT */', rows_segment)
+                         .replace('/* ACTUAL_CORNER_GATE_SEGMENT */', corner_segment or
+                                  'var cornersX = new List<object>(); var externalCorners = new List<object>();'), encoding='utf-8')
     (build / 'actual_axis_segment.txt').write_text(segment, encoding='utf-8')
     (build / 'actual_rows_mode_segment.txt').write_text(rows_segment, encoding='utf-8')
+    (build / 'actual_corner_gate_segment.txt').write_text(corner_segment, encoding='utf-8')
     src = ROOT / 'AFrame/src/AFramePlugin'
     actual = [src / name for name in ('FrameSettings.cs', 'FrameSolutionSelection.cs', 'FrameProjectParameters.cs')]
     exe = build / 'AxisCancelProbe.exe'
@@ -96,11 +119,19 @@ def main():
             raise AssertionError(reason)
         checks.append(reason)
     need(compiled.returncode == 0, 'unchanged axis block and actual settings compile')
-    point = lambda status, x=0: {'status': status, 'x': x}
+    point = lambda status, x=0, y=0: {'status': status, 'x': x, 'y': y}
     scenarios = [{'name': 'point_cancel', 'points': [point('OK', 600), point('Cancel')]},
         {'name': 'point_none', 'points': [point('OK', 600), point('None')]},
         {'name': 'initial_cancel', 'points': [point('Cancel')]},
         {'name': 'empty_none', 'points': [point('None')]}]
+    if corner_segment:
+        scenarios += [
+            {'name': 'empty_with_corner', 'ask_corners': True,
+             'points': [point('None'), point('OK', 0, 1500), point('None')]},
+            {'name': 'corner_cancel', 'ask_corners': True,
+             'points': [point('None'), point('Cancel')]},
+            {'name': 'axis_cancel_before_corners', 'ask_corners': True, 'remaining_prompts': 2,
+             'points': [point('OK', 600), point('Cancel'), point('OK', 0, 1500), point('None')]}]
     save(out / 'input.json', {'selection': example_selection(), 'scenarios': scenarios})
     subprocess.run(command(exe) + [str(out / 'input.json'), str(out / 'native_output.json')], check=True)
     native = json.loads((out / 'native_output.json').read_text(encoding='utf-8'))
@@ -111,14 +142,16 @@ def main():
     need(set(by_name) == {s['name'] for s in scenarios}, 'all prompt scenarios execute')
     responses = {}
     for name, result in by_name.items():
-        expected_continued = name == 'point_none' or (name == 'point_cancel' and args.expect == 'broken')
+        scenario = next(s for s in scenarios if s['name'] == name)
+        expected_continued = name in ('point_none', 'empty_with_corner') or (name == 'point_cancel' and args.expect == 'broken')
         need(result['continued'] == expected_continued, 'axis continuation matches ' + args.expect + ': ' + name)
-        need(result['remaining_prompts'] == 0 and len(result['prompts']) == len(next(s['points'] for s in scenarios if s['name'] == name)),
+        need(result['remaining_prompts'] == scenario.get('remaining_prompts', 0) and
+             len(result['prompts']) == len(scenario['points']) - scenario.get('remaining_prompts', 0),
              'exact requested prompt sequence consumed: ' + name)
         need(all(p['allow_none'] for p in result['prompts']), 'Enter is explicitly enabled: ' + name)
-        need(result['joints'] == ([600] if name.startswith('point_') else []), 'accepted axis values retained only as local input: ' + name)
+        need(result['joints'] == ([600] if name.startswith('point_') or name == 'axis_cancel_before_corners' else []), 'accepted axis values retained only as local input: ' + name)
         need((result['request'] is not None) == expected_continued, 'harness calls EngineParams only after continuation: ' + name)
-        if name.endswith('cancel') and args.expect == 'fixed':
+        if name in ('point_cancel', 'initial_cancel', 'axis_cancel_before_corners') and args.expect == 'fixed':
             need(any('отмен' in s.lower() for s in result['messages']), 'cancellation is explicitly reported: ' + name)
         if not expected_continued:
             continue
@@ -129,7 +162,15 @@ def main():
              'actual EngineParams preserves positive manual steps: ' + name)
         response = frame_engine.run(request)
         need(response.get('ok') is True and request == before, 'actual engine succeeds without input mutation: ' + name)
-        need(len(response['rails']) == 1 and len(response['brackets']) == 4, 'continued engine creates one rail and four bracket symbols: ' + name)
+        if name == 'empty_with_corner':
+            need(request['joints_x'] == [] and request['external_corners'] == [{'x': 0, 'y': 1500}],
+                 'actual selected corner reaches engine after empty ordinary axis input')
+            need({rail['x'] for rail in response['rails']} == {0, 330} and len(response['brackets']) == 8,
+                 'selected vertical corner creates both actual axes and their brackets')
+            need(response['corner_geometry_status'] == 'partial' and response['corner_channels'] == [],
+                 'missing channel placement is not promoted to completed corner')
+        else:
+            need(len(response['rails']) == 1 and len(response['brackets']) == 4, 'continued engine creates one rail and four bracket symbols: ' + name)
         need(response['solution_report']['physical_assignment'] == 'not_asserted' and
              response['solution_report']['calculation_binding'] == 'not_confirmed', 'engine does not grant physical or engineering assignment: ' + name)
         save(out / name / 'request.json', request); save(out / name / 'response.json', response)
@@ -140,6 +181,10 @@ def main():
     need(digest(source) == source_before, 'source unchanged during extraction and execution')
     need(boundaries['axis_end_exclusive'] < boundaries['source_capture'] < boundaries['engine_call'] < boundaries['cad_write_lock'],
          'actual RunCore returns from axes before engine and CAD prewrite; source structure checked')
+    if corner_segment:
+        need(boundaries['axis_end_exclusive'] <= boundaries['corner_input_start'] < boundaries['final_axis_gate'] <
+             boundaries['corner_input_end_exclusive'] < boundaries['source_capture'],
+             'actual corner-aware final input gate precedes source capture, engine and CAD prewrite')
     dependencies = {Path(__file__).resolve(), template, *actual, ROOT / 'tools/quantities_3009/probe_runtime.py', ROOT / 'AFrame/engine/systems.json'}
     dependencies.update((ROOT / 'AFrame/engine').glob('*.py'))
     # A saved baseline is explicitly separate from the current repository binding.
@@ -151,10 +196,11 @@ def main():
         'verification': {'status': 'PASS', 'expected_behavior': args.expect, 'checks': len(checks), 'assertions': checks},
         'defect_reproduced': args.expect == 'broken', 'engineering_assessment': 'BLOCKED', 'live_autocad_checked': False,
         'full_command_execution': 'NOT_RUN', 'cad_transaction_rollback': 'NOT_RUN',
-        'scope': 'Exact no-layout axis segment plus actual FrameSettings with prompt doubles; real engine invoked by harness only for continued cases.',
+        'scope': 'Exact no-layout axis segment and current final corner-aware input gate (legacy source keeps its original gate), plus actual FrameSettings with prompt doubles; real engine invoked by harness only for continued cases.',
         'source_control_flow': boundaries, 'command_source': {'path': str(source), 'sha256': source_before},
         'generated_probe_source': {'path': str(generated.relative_to(out)), 'sha256': digest(generated)},
         'actual_segment_sha256': hashlib.sha256(segment.encode('utf-8')).hexdigest(),
+        'corner_gate_segment_sha256': hashlib.sha256(corner_segment.encode('utf-8')).hexdigest() if corner_segment else None,
         'continuation_rows_segment_sha256': hashlib.sha256(rows_segment.encode('utf-8')).hexdigest(),
         'source_sha256': repository_sources,
         'artifact_sha256': {str(p.relative_to(out)): digest(p) for p in sorted(artifacts)},

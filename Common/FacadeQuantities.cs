@@ -964,7 +964,7 @@ namespace FacadeSafety
         private static List<string> SortedUnion(IEnumerable<string> a, IEnumerable<string> b)
         { var s = Set(a); if (b != null) foreach (string v in b) s.Add(v); return Sorted(s); }
         private static bool Empty(string value) { return string.IsNullOrWhiteSpace(value); }
-        private static bool IsLinearRole(string role) { return role == "rail" || role == "hrail" || role == "shina"; }
+        private static bool IsLinearRole(string role) { return role == "rail" || role == "hrail" || role == "shina" || role == "corner_channel"; }
         private static bool IsFrameRole(string role) { return IsLinearRole(role) || role == "bracket" || role == "clamp" || role == "fitting"; }
         private static void Reset(QuantityDiagnostics diagnostics)
         {

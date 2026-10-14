@@ -37,6 +37,7 @@ namespace AFramePlugin
 
         private const string LayerRails = "_01_ПС_НАПРАВЛЯЮЩИЕ";
         private const string LayerReview = "_01_ПС_ПРОВЕРИТЬ";
+        private const string LayerCornerChannels = "_01_ПС_ШВЕЛЛЕРЫ_УГЛОВЫЕ";
         private const string LayerBrackets = "_01_ПС_кронштейны";
         private const string LayerClamps = "_01_ПС_КЛЯММЕРЫ";
         // 26.09: горизонтальные шины под бетонную/клинкерную плитку — свой слой
@@ -485,8 +486,6 @@ namespace AFramePlugin
                     ed.WriteMessage("\n  осей по шагу " + F0(jstep) +
                         ": " + joints.Count);
                 }
-                if (joints.Count == 0 && !fs.IsTile)
-                { ed.WriteMessage("\nОсей нет — отмена."); return; }
                 if (rowsY.Count == 0 && !fs.IsTile)   // у плитки — ряды от низа каждой зоны, в движке
                 {
                     double rstep = fs.RowStep;
@@ -516,6 +515,7 @@ namespace AFramePlugin
             // углы здания (фидбэк Германа 27.07): угловая зона (1500)
             // отсчитывается от УКАЗАННЫХ внешних углов; нет точек — по краям
             var cornersX = new List<object>();
+            var externalCorners = new List<object>();
             if (fs.AskCorners && !clampsOnly)   // 29.09c: у плитки углы тоже (шаг — по расчёту)
             {
                 while (true)
@@ -527,12 +527,27 @@ namespace AFramePlugin
                     if (pcv.Status == PromptStatus.Cancel) return;
                     if (pcv.Status != PromptStatus.OK) break;
                     cornersX.Add(pcv.Value.X);
+                    externalCorners.Add(new Dictionary<string, object> { { "x", pcv.Value.X }, { "y", pcv.Value.Y } });
                     ed.WriteMessage("\n  угол X = " + F0(pcv.Value.X) +
                                     " (всего " + cornersX.Count + ")");
                 }
                 if (cornersX.Count == 0)
                     ed.WriteMessage("\n  углы не указаны — угловые зоны " +
-                        "по краям контуров.");
+                        "по краям контуров; угловые ряды и швеллеры не создаются.");
+            }
+
+            if (!FrameSettings.HasUsableAxisInput(fs.IsTile, subType, joints.Count, externalCorners.Count))
+            { ed.WriteMessage("\nНет осей стоек: выберите исходную раскладку или задайте оси; для вертикальной схемы можно указать внешний угол. Прежняя подсистема сохранена."); return; }
+
+            if (externalCorners.Count > 0 && !fs.EffectiveCladdingOffset.HasValue)
+            {
+                var offsetOptions = new PromptDoubleOptions("\nВынос наружной поверхности облицовки от основания, мм: ")
+                { AllowNegative = false, AllowZero = true, AllowNone = false };
+                var offsetResult = ed.GetDouble(offsetOptions);
+                if (offsetResult.Status != PromptStatus.OK) return;
+                if (double.IsNaN(offsetResult.Value) || double.IsInfinity(offsetResult.Value))
+                { ed.WriteMessage("\nВынос облицовки должен быть конечным числом не меньше нуля. Прежняя подсистема сохранена."); return; }
+                fs.CladdingOffset = offsetResult.Value;
             }
 
             // 29.09: параметры окна → запрос движку — FrameSettings.EngineParams (одна логика
@@ -632,6 +647,7 @@ namespace AFramePlugin
             // что раскладывать, облицовка, плитка), проверяется синтетикой «в ролях»
             foreach (var kvp in fs.EngineParams(floors.Count)) payload[kvp.Key] = kvp.Value;
             if (cornersX.Count > 0) payload["corners_x"] = cornersX;
+            payload["external_corners"] = externalCorners;
             if (clampsOnly)
             {
                 // существующие направляющие: из прошлой подсистемы зон (метка
@@ -737,6 +753,8 @@ namespace AFramePlugin
             var brackets = Get(res, "brackets") as object[];
             var clamps = Get(res, "clamps") as object[];
             var fittings = Get(res, "fittings") as object[];
+            var cornerChannels = FrameQuantities.ValidateCornerChannels(res, payload);
+            var cornerIssues = FrameQuantities.ValidateCornerIssues(res, partToRoot);
             var sysUsed = Get(res, "system_used")
                           as Dictionary<string, object>;
             double railW = sysUsed != null ? ToD(Get(sysUsed, "rail_width"))
@@ -792,6 +810,7 @@ namespace AFramePlugin
                 EnsureLayer(tr, db, LayerRails);
                 if (localIssues.Count > 0) EnsureLayer(tr, db, LayerReview);
                 EnsureLayer(tr, db, LayerBrackets);
+                if (cornerChannels != null && cornerChannels.Length > 0) EnsureLayer(tr, db, LayerCornerChannels);
                 EnsureLayer(tr, db, LayerClamps);
                 ObjectId blkMain = smpMain.IsNull
                     ? EnsureSignBlock(tr, db, BlkMain, true) : smpMain;
@@ -821,7 +840,7 @@ namespace AFramePlugin
                         if (pzd == null) continue;
                         double cnt = ToD(Get(pzd, "rails")) + ToD(Get(pzd, "clamps")) +
                                      ToD(Get(pzd, "hrails")) + ToD(Get(pzd, "brackets_main")) +
-                                     ToD(Get(pzd, "brackets_row"));
+                                     ToD(Get(pzd, "brackets_row")) + ToD(Get(pzd, "corner_channels"));
                         string pzid = SafeStr(Get(pzd, "zone_id")), proot;
                         string quantityRoot = partToRoot.TryGetValue(pzid, out proot) ? proot : pzid;
                         if (cnt <= 0) { emptyQuantityRoots.Add(quantityRoot); continue; }
@@ -954,6 +973,27 @@ namespace AFramePlugin
                         Remember(handlesByRoot, partToRoot,
                                  SafeStr(Get(r, "zone")),
                                  pl.Handle.ToString());
+                        made++;
+                    }
+
+                // Corner channels are separate geometric pieces, not horizontal
+                // bearing rails. The engine owns their placement; normal ownership
+                // and transaction protocols cover replacement, COPY and quantities.
+                if (cornerChannels != null)
+                    for (int i = 0; i < cornerChannels.Length; i++)
+                    {
+                        quantities.Poll();
+                        var channel = cornerChannels[i] as Dictionary<string, object>;
+                        var vertices = FrameQuantities.CornerChannelVertices(channel);
+                        var pl = new Polyline();
+                        for (int k = 0; k < vertices.Length; k++)
+                            pl.AddVertexAt(k, new Point2d(vertices[k][0], vertices[k][1]), 0, 0, 0);
+                        pl.Closed = true;
+                        pl.Layer = LayerCornerChannels;
+                        ms.AppendEntity(pl);
+                        tr.AddNewlyCreatedDBObject(pl, true);
+                        quantities.Add(tr, "corner_channels", i, pl);
+                        Remember(handlesByRoot, partToRoot, SafeStr(Get(channel, "zone")), pl.Handle.ToString());
                         made++;
                     }
 
@@ -1162,7 +1202,8 @@ namespace AFramePlugin
                 "+" + SafeStr(Get(sum, "clamps_row")) + "+" +
                 SafeStr(Get(sum, "clamps_side")) + "+" +
                 SafeStr(Get(sum, "clamps_combo")) + ", метизов " +
-                SafeStr(Get(sum, "fittings")) +
+                SafeStr(Get(sum, "fittings")) + ", швеллеров угловых " +
+                SafeStr(Get(sum, "corner_channels")) +
                 (erased > 0 ? "; прежних удалено " + erased : "") + ".");
             if (fs.IsTile && sum != null)
             {
@@ -1174,6 +1215,16 @@ namespace AFramePlugin
                     SafeStr(Get(sum, "shina_end_lm")) + " м.п.; всего " + SafeStr(Get(sum, "shina_lm")) +
                     " м.п. = хлыстов " + SafeStr(Get(sum, "shina_pieces")) + " (не длиннее " +
                     F0(ToD(Get(sum, "tile_whip"))) + " мм, стык на направляющей).");
+            }
+            if (cornerChannels != null && cornerChannels.Length > 0)
+                ed.WriteMessage("\n  Швеллеры угловые: геометрия по выносу облицовки; сечение, несущая способность и комплект крепежа не подтверждены.");
+            if (cornerIssues != null && cornerIssues.Length > 0)
+            {
+                var cornerMessage = new StringBuilder("\nВНЕШНИЕ УГЛЫ НЕ ЗАВЕРШЕНЫ: ");
+                cornerMessage.Append(cornerIssues.Length).Append(" замечаний. Подробности сохранены для ведомости.");
+                foreach (object issue in cornerIssues)
+                    cornerMessage.Append("\n  · ").Append(FrameQuantities.CornerIssueMessage(issue as Dictionary<string, object>, partToRoot));
+                ed.WriteMessage(cornerMessage.ToString());
             }
             PrintCalcReport(ed, Get(res, "calc_report") as Dictionary<string, object>, localIssues.Count > 0);
             if (localIssues.Count > 0)

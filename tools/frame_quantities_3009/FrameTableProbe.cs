@@ -73,6 +73,17 @@ internal static class FrameTableProbe
         unknownStock.rows.Add(new QuantityRow { basis = "estimate", role = "rail_stock_est", quantity = 2 });
         Check(Convert.ToString(FrameTableData.Build(unknownStock, null, new[] { "А" }, null, true).Estimates[0][7]) == "не определена",
             "Unknown stock length became zero or inapplicable");
+        var cornerResult = new QuantityResult { ok = true, completeness = "partial" };
+        cornerResult.source_engineering_coverage.Add("geometry_with_unverified_corner_channels");
+        cornerResult.rows.Add(new QuantityRow { role = "corner_channel", type = "швеллер угловой",
+            quantity = 3, length_mm = 545.75, total_length_m = 1.63725 });
+        var cornerTable = FrameTableData.Build(cornerResult, null, new[] { "А" }, null, false);
+        Check((string)cornerTable.Installed[0][2] == "Швеллер угловой" &&
+            (double)cornerTable.Installed[0][7] == 545.75 && (double)cornerTable.Installed[0][9] == 1.63725,
+            "Corner channel name, exact length or metres lost in table");
+        Check(Convert.ToString(cornerTable.Installed[0][10]).Contains("несущая способность") &&
+            cornerTable.Information.Any(text => text.Contains("геометрическая расстановка угловых швеллеров")),
+            "Corner channel export lost its engineering boundary");
         bool refused = false;
         try { FrameTableData.Build(new QuantityResult { ok = false }, null, new[] { "А" }, null, true); }
         catch (InvalidOperationException) { refused = true; }

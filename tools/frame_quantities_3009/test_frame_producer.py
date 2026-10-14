@@ -14,7 +14,7 @@ import subprocess
 import sys
 import tempfile
 
-from engine_oracles import ARRAYS, ROOT, cases, frame_engine, run_cases
+from engine_oracles import ARRAYS, ROOT, cases, frame_engine, run_cases, zone, rect
 sys.path.insert(0, str(ROOT / 'tools/quantities_3009'))
 from probe_runtime import available, command, compile_probe
 
@@ -70,6 +70,16 @@ def main():
         subprocess.run(command(executable) + [str(infile), str(outfile)], check=True)
         return json.loads(outfile.read_text(encoding='utf-8'))
 
+    # Lifecycle source guard complements the executed pure input decision: the
+    # CAD command must ask corners before rejecting an empty ordinary grid.
+    command_source = (ROOT / 'AFrame/src/AFramePlugin/FrameCommand.cs').read_text(encoding='utf-8')
+    check(command_source.index('externalCorners.Add(') < command_source.index('HasUsableAxisInput(') <
+          command_source.index('// ── 5. движок') < command_source.index('// ── 6. чертёж'),
+          'Empty ordinary grid rejected before corner selection or after drawing mutation')
+    check(command_source.index('ValidateCornerChannels(res, payload)') < command_source.index('// ── 6. чертёж') and
+          command_source.index('ValidateCornerIssues(res, partToRoot)') < command_source.index('// ── 6. чертёж'),
+          'Malformed corner result is not validated before drawing replacement')
+
     records = []
     fixtures = run_cases()
     for name, fixture in fixtures.items():
@@ -116,6 +126,82 @@ def main():
                   'Omitted retained-frame estimate needs an explicit reason')
         records.append({'case': name, 'counts': expected['counts'], 'length_m': expected['length_m'], 'physical_count': expected['physical_count']})
 
+    # Controlled corner piece: exercise actual producer, shape guard and common
+    # aggregation independently of the engine's own corner geometry assertions.
+    corner_request = copy.deepcopy(fixtures['vertical_stock']['request'])
+    corner_request.update(cladding_offset=345.75, external_corners=[{'x': 0.0, 'y': 200.0}])
+    corner_response = copy.deepcopy(fixtures['vertical_stock']['response'])
+    corner_response['corner_channels'] = [{
+        'zone': 'P1', 'kind': 'швеллер угловой', 'role': 'corner_channel',
+        'x0': -25.0, 'x1': 520.75, 'len': 545.75, 'height': 100.0,
+        'y': 312.5, 'y0': 262.5, 'y1': 362.5, 'capacity_status': 'not_verified'}]
+    corner_result = run('corner_channel_explicit_geometry', corner_request, corner_response)
+    check(corner_result['ok'], 'Explicit corner channel rejected by actual quantity producer')
+    channel = next(item for item in corner_result['report']['elements'] if item['role'] == 'corner_channel')
+    check(channel['length_mm'] == 545.75 and channel['height_mm'] == 100.0,
+          'Corner channel geometry lost or counted as another rail')
+    check(channel['mark'] is None and channel['material'] is None and channel['product_id'] is None,
+          'Corner channel acquired unconfirmed engineering data')
+    check(corner_result['report']['engineering_coverage'] in ('geometry_with_unverified_corner_channels', 'geometry_with_unverified_members') and
+          any(issue['code'] == 'Q_FRAME_CORNER_CHANNEL_REVIEW' for issue in corner_result['report']['issues']),
+          'Drawn corner channel promoted to a verified bearing element')
+    aggregate = corner_result['withEstimates']
+    check(aggregate['ok'], 'Common quantities do not accept corner_channel as separate physical category')
+    channel_rows = [row for row in aggregate['rows'] if row['role'] == 'corner_channel']
+    check(len(channel_rows) == 1 and channel_rows[0]['quantity'] == 1 and
+          channel_rows[0]['total_length_m'] == 0.54575, 'Channel count/metres mixed with bearing rails')
+    for field, value in [('height', 70.0), ('len', 400.0), ('y0', 0.0), ('capacity_status', 'verified')]:
+        corrupted = copy.deepcopy(corner_response)
+        corrupted['corner_channels'][0][field] = value
+        check(not run('corner_channel_wrong_' + field, corner_request, corrupted)['ok'],
+              'Malformed corner channel accepted: ' + field)
+    missing = copy.deepcopy(corner_response)
+    missing.pop('corner_channels')
+    check(not run('corner_channels_missing', corner_request, missing)['ok'],
+          'New corner protocol missing result array silently became known zero')
+    missing['corner_channels'] = []
+    check(run('corner_channels_known_zero', corner_request, missing)['ok'],
+          'Explicit known zero is not accepted')
+
+    incomplete = copy.deepcopy(missing)
+    incomplete.update(corner_geometry_status='partial', corner_issues=[{
+        'code': 'placement_not_specified', 'zone_id': 'P1',
+        'message': 'Привязка швеллера по горизонтали и вертикали не задана.'}])
+    incomplete_result = run('corner_placement_missing', corner_request, incomplete)
+    check(incomplete_result['ok'] and incomplete_result['report']['engineering_coverage'] == 'geometry_with_incomplete_corners',
+          'Unfinished external corner reported as completed frame geometry')
+    check(any(issue['code'] == 'Q_FRAME_CORNER_GEOMETRY_INCOMPLETE' for issue in incomplete_result['report']['issues']),
+          'Missing corner placement warning vanished from quantities')
+    incomplete['corner_issues'] = []
+    check(not run('corner_placement_reason_missing', corner_request, incomplete)['ok'],
+          'Partial corner without reasons accepted')
+
+    # Full real engine -> actual C# producer -> actual common aggregation. Empty
+    # ordinary joints is intentional: the selected vertical corner supplies axes.
+    real_corner_request = {
+        'op': 'frame', 'system': 'Standart', 'sub_type': 'vertical', 'parts': 'frame',
+        'zones': [zone('P1', rect(0, 0, 3000, 3000))], 'joints_x': [],
+        'external_corners': [{'x': 0.0, 'y': 1500.0}], 'cladding_offset': 345.7512345,
+        'corner_channel_outer_overhang': 25.1234567, 'corner_channel_y_offset': 0.3456789}
+    real_corner_response = frame_engine.run(real_corner_request)
+    check(real_corner_response.get('ok') is True and real_corner_response.get('corner_channels'),
+          'Real engine refuses empty ordinary joints with a selected vertical corner')
+    integrated_corner = run('real_corner_engine_to_quantities', real_corner_request, real_corner_response)
+    check(integrated_corner['ok'] and integrated_corner['withEstimates']['ok'],
+          'Actual corner DTO does not pass C# geometry/quantity contracts')
+    actual_channels = real_corner_response['corner_channels']
+    channel_elements = [item for item in integrated_corner['report']['elements'] if item['role'] == 'corner_channel']
+    check(len(channel_elements) == len(actual_channels) and all(abs(item['length_mm'] - 545.7512345) < 1e-7
+          for item in channel_elements), 'Actual corner pieces lost or their length changed between engine and quantities')
+    partial_request = copy.deepcopy(real_corner_request)
+    partial_request.pop('corner_channel_outer_overhang')
+    partial_request.pop('corner_channel_y_offset')
+    partial_response = frame_engine.run(partial_request)
+    partial_result = run('real_corner_placement_pending', partial_request, partial_response)
+    check(partial_result['ok'] and partial_result['report']['engineering_coverage'] == 'geometry_with_incomplete_corners' and
+          not any(item['role'] == 'corner_channel' for item in partial_result['report']['elements']),
+          'Missing placement invented physical channels or disappeared at producer boundary')
+
     fixture = fixtures['vertical_stock']
     for category in ARRAYS:
         response = copy.deepcopy(fixture['response'])
@@ -147,6 +233,12 @@ def main():
     check(len(provenance['last']) == 1 and provenance['last'][0]['run_id'] == 'run-second' and provenance['last'][0]['element_ids'] == ['C2'],
           'Deleted members leave stale provenance or retained clamp loses its origin')
     check(provenance['none'] == [], 'No retained members must mean no retained provenance')
+    check({issue['code'] for issue in provenance['keptCornerIssues']} ==
+          {'Q_FRAME_CORNER_CHANNEL_REVIEW', 'Q_FRAME_CORNER_GEOMETRY_INCOMPLETE'},
+          'Clamps update loses retained corner warnings')
+    check(provenance['erasedCornerIssues'] == [], 'Removed frame leaves stale corner warnings')
+    check([issue['code'] for issue in provenance['otherRetainedIssues']] == ['Q_FRAME_CORNER_GEOMETRY_INCOMPLETE'],
+          'Retained frame loses incomplete-corner scope or revives removed channel warning')
     profiles_file = out / 'profile_guard.json'
     subprocess.run(command(executable) + ['--profiles', str(profiles_file)], check=True)
     profiles = json.loads(profiles_file.read_text(encoding='utf-8'))

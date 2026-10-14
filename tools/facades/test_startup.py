@@ -145,7 +145,9 @@ using System.Collections.Generic;
 namespace Autodesk.AutoCAD.ApplicationServices {
  public static class Application {
   public static dynamic AcadApplication = new FakeApplication();
-  public static event EventHandler BeginQuit, QuitAborted;
+  public static event EventHandler BeginQuit, QuitAborted, Idle;
+  public static int IdleSubscribers { get { return Idle == null ? 0 : Idle.GetInvocationList().Length; } }
+  public static void RaiseIdle() { if (Idle != null) Idle(null, EventArgs.Empty); }
   public static void Quit() { if (BeginQuit != null) BeginQuit(null, EventArgs.Empty); }
   public static void Abort() { if (QuitAborted != null) QuitAborted(null, EventArgs.Empty); }
  }
@@ -198,16 +200,47 @@ FAKE_PLUGINS
 public class Probe {
  static int Checks, Failures; public static int Errors;
  static void Expect(bool condition, string label) { Checks++; if (!condition) { Failures++; Console.WriteLine("FAIL: " + label); } }
- static void Init() { AFacadesPlugin.FacadesClassic.Init(); ACladPlugin.FacadesClassic.Init(); AFramePlugin.FacadesClassic.Init(); }
+ static void QueueInit() { AFacadesPlugin.FacadesClassic.Init(); ACladPlugin.FacadesClassic.Init(); AFramePlugin.FacadesClassic.Init(); }
+ static void Init() { QueueInit(); Autodesk.AutoCAD.ApplicationServices.Application.RaiseIdle(); }
  static void Main() {
   var app = (FakeApplication)Autodesk.AutoCAD.ApplicationServices.Application.AcadApplication;
   // A real COM call can fail after creating some items. Exit must still remove them.
   FakeMenu.FailAfterAdds = 1; AFacadesPlugin.FacadesClassic.Init();
+  Autodesk.AutoCAD.ApplicationServices.Application.RaiseIdle();
   Expect(Errors == 1, "partial first initialization exposes the injected COM exception");
   var partial = app.MenuGroups.Group.Menus.Item(0);
   Autodesk.AutoCAD.ApplicationServices.Application.Quit();
   Expect(partial.Count == 0 && !partial.OnMenuBar, "failed first initialization still installs quit cleanup");
   FakeMenu.FailAfterAdds = -1; Errors = 0;
+  app.MenuGroups.Group.Menus.All.Clear();
+  // Autoloader can initialize the DLL before COM/menu groups are ready.
+  // Exercise the actual callbacks: no manual second Initialize is allowed.
+  Autodesk.AutoCAD.ApplicationServices.Application.AcadApplication = null;
+  QueueInit(); QueueInit();
+  Expect(Autodesk.AutoCAD.ApplicationServices.Application.IdleSubscribers == 3,
+      "unavailable COM queues exactly one deferred initializer per module");
+  Autodesk.AutoCAD.ApplicationServices.Application.RaiseIdle();
+  Expect(Autodesk.AutoCAD.ApplicationServices.Application.IdleSubscribers == 3 && Errors == 0,
+      "idle before COM readiness retains pending initializers without a false error");
+  Autodesk.AutoCAD.ApplicationServices.Application.AcadApplication = app;
+  app.MenuGroups.All.Clear();
+  Autodesk.AutoCAD.ApplicationServices.Application.RaiseIdle();
+  Expect(Autodesk.AutoCAD.ApplicationServices.Application.IdleSubscribers == 3 && app.MenuGroups.Group.Menus.Count == 0,
+      "empty MenuGroups are not mistaken for completed initialization");
+  app.MenuGroups.All.Add(app.MenuGroups.Group);
+  Autodesk.AutoCAD.ApplicationServices.Application.RaiseIdle();
+  Expect(app.MenuGroups.Group.Menus.Count == 1 && app.MenuGroups.Group.Menus.Item(0).Count == 13,
+      "menu appears when COM becomes ready, without reloading the bundles");
+  Expect(Autodesk.AutoCAD.ApplicationServices.Application.IdleSubscribers == 0 && Errors == 0,
+      "completed deferred initialization detaches all callbacks");
+  Autodesk.AutoCAD.ApplicationServices.Application.Quit();
+  QueueInit();
+  Expect(Autodesk.AutoCAD.ApplicationServices.Application.IdleSubscribers == 3,
+      "menu rebuild is deferred to Idle instead of accessing COM during Initialize");
+  Autodesk.AutoCAD.ApplicationServices.Application.Quit();
+  Autodesk.AutoCAD.ApplicationServices.Application.RaiseIdle();
+  Expect(Autodesk.AutoCAD.ApplicationServices.Application.IdleSubscribers == 0 && app.MenuGroups.Group.Menus.Item(0).Count == 0,
+      "quit cancels pending initialization so Idle cannot resurrect the menu");
   Init();
   Expect(app.MenuGroups.Group.Menus.Count == 1, "one shared menu");
   var menu = app.MenuGroups.Group.Menus.Item(0);
@@ -219,6 +252,7 @@ public class Probe {
   Autodesk.AutoCAD.ApplicationServices.Application.Quit();
   Expect(menu.Count == 0 && !menu.OnMenuBar, "quit removes transient menu from persisted menubar");
   Autodesk.AutoCAD.ApplicationServices.Application.Abort();
+  Autodesk.AutoCAD.ApplicationServices.Application.RaiseIdle();
   Expect(menu.Count == 13 && menu.OnMenuBar, "cancelled quit restores menu");
   Autodesk.AutoCAD.ApplicationServices.Application.Quit();
   Expect(menu.Count == 0 && !menu.OnMenuBar, "second quit cleans menu");
@@ -226,6 +260,8 @@ public class Probe {
   Expect(Errors == 0, "valid lifecycle does not emit startup errors");
   menu.FailAdd = true; Init();
   Expect(Errors == 3, "actual classic Init reports swallowed COM failures");
+  Expect(Autodesk.AutoCAD.ApplicationServices.Application.IdleSubscribers == 0,
+      "a real menu creation failure reports once and leaves no retry loop");
   menu.FailAdd = false; Init();
   Expect(menu.Count == 13 && menu.OnMenuBar, "menu recovers after transient COM failure");
   // MenuGroups.Item(0) is not a stable identity when partial customizations load.

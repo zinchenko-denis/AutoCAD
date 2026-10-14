@@ -73,7 +73,16 @@ internal static class FrameProducerProbe
             FrameQuantities.AppendRetainedProvenance(afterSecond, new HashSet<string> { "C2" }, last);
             var none = new List<object>();
             FrameQuantities.AppendRetainedProvenance(afterSecond, new HashSet<string>(), none);
-            File.WriteAllText(args[1], json.Serialize(new { first, second, mixed, last, none }));
+            original.issues.Add(new QuantityIssue { code = "Q_FRAME_CORNER_CHANNEL_REVIEW", element_id = "CH" });
+            original.issues.Add(new QuantityIssue { code = "Q_FRAME_CORNER_GEOMETRY_INCOMPLETE" });
+            var keptCornerIssues = new List<QuantityIssue>();
+            FrameQuantities.AppendRetainedIssues(original, new HashSet<string> { "CH" }, keptCornerIssues);
+            var erasedCornerIssues = new List<QuantityIssue>();
+            FrameQuantities.AppendRetainedIssues(original, new HashSet<string>(), erasedCornerIssues);
+            var otherRetainedIssues = new List<QuantityIssue>();
+            FrameQuantities.AppendRetainedIssues(original, new HashSet<string> { "R" }, otherRetainedIssues);
+            File.WriteAllText(args[1], json.Serialize(new { first, second, mixed, last, none,
+                keptCornerIssues, erasedCornerIssues, otherRetainedIssues }));
             return 0;
         }
         var payload = (Dictionary<string, object>)json.DeserializeObject(File.ReadAllText(args[0]));

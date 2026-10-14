@@ -35,10 +35,39 @@ def main():
         baseline = json.loads(baseline_path.read_text())
         # Normalize tuples to the JSON boundary used by the stored examples.
         current = json.loads(json.dumps(modules[name.split("_")[-1]].run(request)))
+        # A request without selected external corners may gain only the explicit
+        # empty corner contract. Validate each new field before removing it from
+        # the legacy geometry/quantity comparison; all old values remain exact.
+        corner_scope_check = True
+        compared = current
+        if name == "rect_frame":
+            summary = current.get("summary")
+            zones = current.get("per_zone")
+            is_zero = lambda value: type(value) is int and value == 0
+            corner_scope_check = (
+                current.get("corner_channels") == []
+                and current.get("corner_issues") == []
+                and current.get("corner_geometry_status") == "not_requested"
+                and isinstance(summary, dict)
+                and is_zero(summary.get("corner_channels"))
+                and is_zero(summary.get("corner_issues"))
+                and isinstance(zones, list)
+                and all(isinstance(zone, dict)
+                        and is_zero(zone.get("corner_channels")) for zone in zones))
+            if corner_scope_check:
+                compared = json.loads(json.dumps(current))
+                for field in ("corner_channels", "corner_issues", "corner_geometry_status"):
+                    del compared[field]
+                del compared["summary"]["corner_channels"]
+                del compared["summary"]["corner_issues"]
+                for zone in compared["per_zone"]:
+                    del zone["corner_channels"]
         equal_fields = [field for field in previous["equal_fields"]
-                        if baseline.get(field) == current.get(field)]
+                        if baseline.get(field) == compared.get(field)]
         differences = sorted(field for field in baseline.keys() | current.keys()
                              if baseline.get(field) != current.get(field))
+        comparison_differences = sorted(field for field in baseline.keys() | compared.keys()
+                                        if baseline.get(field) != compared.get(field))
         allowed = {"notes", "design_scope", "connection_passport", "calculation_status", "local_issues"} if name == "rect_frame" else set()
         # The manual tutorial has no short/problematic members. The new local
         # issue contract replaces build 106's whole-facade refusal elsewhere;
@@ -58,9 +87,11 @@ def main():
                 "splice_continuity": "not_modeled", "gravity_load_distribution": "not_verified",
                 "strength": "not_verified"}))
         passed = (current.get("ok") is True and equal_fields == previous["equal_fields"]
-                  and set(differences) <= allowed and passport_scope_check and local_status_check)
+                  and set(comparison_differences) <= allowed and passport_scope_check
+                  and local_status_check and corner_scope_check)
         checks.append(dict(example=name, equal_fields=equal_fields,
                            different_metadata_fields=differences, passed=passed,
+                           corner_scope_check=corner_scope_check,
                            connection_scope_check=passport_scope_check,
                            local_status_check=local_status_check,
                            request_sha256=digest(request_path),

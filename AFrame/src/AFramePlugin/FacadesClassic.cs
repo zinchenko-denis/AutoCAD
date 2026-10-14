@@ -26,6 +26,7 @@ namespace AFramePlugin
         };
 
         private static bool _quitHooked;
+        private static bool _waitingForIdle;
 
         public static void Init()
         {
@@ -46,13 +47,48 @@ namespace AFramePlugin
                     AcApp.QuitAborted += delegate { Init(); };
                     _quitHooked = true;
                 }
-                Build();
+                // Autoloader can call Initialize before COM/menu groups exist.
+                // Do not make COM calls from DLL initialization; retry readiness
+                // on Idle, once per module, until AutoCAD has its menu groups.
+                if (!_waitingForIdle)
+                {
+                    AcApp.Idle += OnIdle;
+                    _waitingForIdle = true;
+                }
             }
             catch (System.Exception ex) { Plugin.ReportStartupFailure("классическое меню", ex); }
         }
 
+        private static void OnIdle(object sender, EventArgs args)
+        {
+            try
+            {
+                dynamic app = AcApp.AcadApplication;
+                if (app == null) return;
+                dynamic groups = app.MenuGroups;
+                if (groups == null || (int)groups.Count == 0) return;
+                // Readiness is established. A genuine Build exception is
+                // reported once; do not retry a broken menu on every Idle.
+                CancelPending();
+                Build();
+            }
+            catch (System.Exception ex)
+            {
+                CancelPending();
+                Plugin.ReportStartupFailure("классическое меню", ex);
+            }
+        }
+
+        private static void CancelPending()
+        {
+            if (!_waitingForIdle) return;
+            AcApp.Idle -= OnIdle;
+            _waitingForIdle = false;
+        }
+
         public static void Cleanup()
         {
+            CancelPending();
             try
             {
                 dynamic menu = FindMenu(false);

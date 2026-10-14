@@ -1209,6 +1209,13 @@ namespace ACladPlugin
             return LayoutSafety.SetNumberChecked(() => pr.Value, value => pr.Value = value, v);
         }
 
+        internal static bool TrySetNumWithFailure(DynamicBlockReferenceProperty pr,
+            double v, out System.Exception failure)
+        {
+            return LayoutSafety.SetNumberCheckedWithFailure(
+                () => pr.Value, value => pr.Value = value, v, out failure);
+        }
+
         internal static bool DynSizeMatches(BlockReference br, string pw, string ph, double w, double h)
         {
             bool gotW = false, gotH = false;

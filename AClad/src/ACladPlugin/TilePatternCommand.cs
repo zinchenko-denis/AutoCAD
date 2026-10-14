@@ -1095,11 +1095,17 @@ namespace ACladPlugin
             ms.AppendEntity(br);
             tr.AddNewlyCreatedDBObject(br, true);
             if (p.Te != null) p.Te.ApplyLook(br);     // видимость/цвет/прочие свойства образца
+            System.Exception firstFailure = null;
+            string failedProperty = null;
             foreach (DynamicBlockReferenceProperty pr in br.DynamicBlockReferencePropertyCollection)
             {
                 if (pr.ReadOnly) continue;
-                if (pr.PropertyName == p.PW) CladCommand.TrySetNum(pr, p.W);
-                else if (pr.PropertyName == p.PH) CladCommand.TrySetNum(pr, p.H);
+                System.Exception failure;
+                if (pr.PropertyName == p.PW) CladCommand.TrySetNumWithFailure(pr, p.W, out failure);
+                else if (pr.PropertyName == p.PH) CladCommand.TrySetNumWithFailure(pr, p.H, out failure);
+                else continue;
+                if (firstFailure == null && failure != null)
+                { firstFailure = failure; failedProperty = pr.PropertyName; }
             }
             // Проверяем окончательную пару из новой коллекции. Промежуточное
             // чтение сразу после одного setter ещё не является итогом пары.
@@ -1109,7 +1115,9 @@ namespace ACladPlugin
                 throw new InvalidOperationException("Динамический блок не принимает размер " +
                     F2(p.W) + "×" + F2(p.H) + " мм. " +
                     CladCommand.DynSizeDescription(br, p.PW, p.PH) +
-                    " Прежняя раскладка сохранена; передайте этот текст разработчику.");
+                    (firstFailure == null ? "" : " При задании свойства «" + failedProperty +
+                        "» возникло исключение; исходная причина приведена ниже.") +
+                    " Прежняя раскладка сохранена; передайте этот текст разработчику.", firstFailure);
             CladCommand.RequirePlacement(tr, br, x, y, p.W, p.H);
             FillAttributes(tr, br, p.Root, attCache);
             return br;

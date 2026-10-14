@@ -66,6 +66,8 @@ import math
 import os
 import sys
 
+import frame_corners as corner_geometry
+
 from frame_rules import resolve_layout_contract, declared_scope
 from frame_topology import (geometric_members, screen_layout, local_member_issues,
                             refusal as topology_refusal)
@@ -134,7 +136,7 @@ def _inside_pt(poly, x, y, tol=1.0):
     return any(lo - tol <= y <= hi + tol for lo, hi in _vspans(poly, x))
 
 
-def _clip_pieces(poly, pieces):
+def _clip_pieces(poly, pieces, corner_edges=None):
     """Куски (lo, hi, x) ∩ стена по вертикали x (смещённая оконная стойка
     у края зоны могла выйти за контур)."""
     xs = [q[0] for q in poly]
@@ -142,7 +144,8 @@ def _clip_pieces(poly, pieces):
     for lo, hi, xe in pieces:
         if xe < min(xs) - EPS or xe > max(xs) + EPS:
             continue                     # ось вне габарита стены
-        for a, b in _vspans(poly, xe):
+        for a, b in (corner_geometry.wall_spans(poly, xe, corner_edges, _vspans)
+                     if corner_edges else _vspans(poly, xe)):
             c0, c1 = max(lo, a), min(hi, b)
             if c1 - c0 > EPS:
                 out.append((c0, c1, xe))
@@ -1274,6 +1277,11 @@ def frame_plan(req, prepared_solution=_UNPREPARED, include_solution_report=True)
         return resolved
     out = _frame_plan(req)
     if out.get("ok"):
+        out.setdefault("corner_channels", [])
+        out.setdefault("corner_issues", [])
+        out.setdefault("corner_geometry_status", "not_requested")
+        out["summary"].setdefault("corner_channels", len(out["corner_channels"]))
+        out["summary"].setdefault("corner_issues", len(out["corner_issues"]))
         out.setdefault("local_issues", [])
         out.setdefault("calculation_status", "not_requested")
         scope = declared_scope(resolved["contract"], any(
@@ -1290,6 +1298,10 @@ def frame_plan(req, prepared_solution=_UNPREPARED, include_solution_report=True)
 
 
 def _frame_plan(req):
+    cladding_offset, external_points, corner_error = corner_geometry.validate_request(req)
+    channel_placement, placement_error = corner_geometry.validate_placement(req)
+    if corner_error or placement_error:
+        return {"ok": False, "error_code": "E_FRAME_INPUT", "error": corner_error or placement_error}
     try:
         system = load_system(req.get("system") or "Standart",
                              req.get("_systems_dir"))
@@ -1393,6 +1405,7 @@ def _frame_plan(req):
 
     notes, rails, brackets, clamps = [], [], [], []
     hrails, fittings = [], []
+    corner_channels, corner_issues, corner_contexts = [], [], []
     # 26.09 (Денис): облицовка. Керамогранит/композит — как было (стойки по
     # швам раскладки, кляммеры). Бетонная/клинкерная плитка — подсистема БЕЗ
     # привязки к вертикальным швам: вертикальные направляющие заданным шагом
@@ -1456,7 +1469,7 @@ def _frame_plan(req):
         return _clamps_on_rails(req, sub, system, joints, rows, floors)
     if parts == "frame":
         rows = []
-    if not joints and not tile:
+    if not joints and not tile and not (sub == "vertical" and external_points):
         return {"ok": False,
                 "error": "нет осей стоек (joints_x) — раскладка "
                          "ATCLAD не выбрана и оси не заданы"}
@@ -1596,6 +1609,46 @@ def _frame_plan(req):
         holes = [_closed(h) for h in (c.get("holes") or [])]
         x0, y0, x1, y1 = _bbox(outer)
         hole_boxes = [_bbox(h) for h in holes]
+        corner_edges = corner_geometry.selected_edges(outer, external_points, cladding_offset)
+        if corner_edges:
+            corner_contexts.append((corner_edges, outer, hole_boxes))
+            corner_issues.extend(corner_geometry.width_issues(corner_edges, outer, _hspans))
+        for px, py in external_points:
+            if x0-EPS <= px <= x1+EPS and y0-EPS <= py <= y1+EPS and not any(
+                    abs(px-e['corner_x']) <= corner_geometry.PICK_TOL and
+                    e['y0']-corner_geometry.PICK_TOL <= py <= e['y1']+corner_geometry.PICK_TOL
+                    for e in corner_edges):
+                corner_issues.append(dict(corner_x=px, y=py, reason='no_matching_edge'))
+
+        legacy_horizontal = None
+
+        def horizontal_at(y):
+            nonlocal legacy_horizontal
+            if legacy_horizontal is None:
+                legacy_horizontal = _hpos(x0, x1, min_corner, corner_zone,
+                    float(step_main or 800), float(step_corner or step_main or 800), corners)
+            legacy = lambda: legacy_horizontal
+            if not corner_edges:
+                return legacy_horizontal
+            # Local section endpoints, not the whole polygon bbox: selected stepped
+            # edges start their own rows only on the levels where that wall exists.
+            result = []
+            for left, right in _hspans(outer, y):
+                local_legacy = lambda: [x for x in legacy() if left-EPS <= x <= right+EPS]
+                positions = corner_geometry.horizontal_positions(left, right, y,
+                    corner_edges, min_corner, corner_zone, float(step_main or 800),
+                    float(step_corner or step_main or 800), exact_step, local_legacy)
+                if not positions:
+                    for edge in corner_edges:
+                        if edge['y0']-EPS <= y <= edge['y1']+EPS and (
+                                abs(edge['corner_x']-left) <= corner_geometry.PICK_TOL or
+                                abs(edge['corner_x']-right) <= corner_geometry.PICK_TOL):
+                            if not any(i['reason']=='insufficient_width' and
+                                       i['corner_x']==edge['corner_x'] for i in corner_issues):
+                                corner_issues.append(dict(corner_x=edge['corner_x'],inner_x=edge['inner_x'],
+                                    y=y,reason='insufficient_width'))
+                result.extend(positions)
+            return sorted(set(result))
         # 24.09 (рецензия): проёмы везде — по габариту; у непрямоугольного
         # (трапеция, треугольник, скос) подсистема обходит весь габарит
         for hi, h in enumerate(holes):
@@ -1693,8 +1746,7 @@ def _frame_plan(req):
                                 if sb2 - sa2 > EPS]
                 # кронштейны по центру перекрытия, шаг по горизонтали —
                 # только там, где есть НГП (иначе кронштейн «в воздухе»)
-                for px in _hpos(x0, x1, min_corner, corner_zone,
-                                step_m, step_c, corners):
+                for px in horizontal_at(f):
                     if _in_boxes(hole_boxes, px, f) or \
                             not any(sa - EPS <= px <= sb + EPS for sa, sb in segs):
                         continue          # в проёме / вне стены / уступ
@@ -1949,8 +2001,7 @@ def _frame_plan(req):
         if sub == "ortho":
             step_m = float(step_main or 800.0)
             step_c = float(step_corner or step_m)
-            xs_g = _hpos(x0, x1, min_corner, corner_zone,
-                         step_m, step_c, corners)
+            xs_g = horizontal_at(y0 + float(start_off or 300.0))
             ys_g = []
             yy = y0 + float(start_off or 300.0)
             while yy < y1 - EPS:
@@ -1998,6 +2049,8 @@ def _frame_plan(req):
                                        "kind": "ГП-40-40"})
             n_add = 0
             for px, yy in add_br:
+                if corner_geometry.in_reserved_horizontal(px, yy, corner_edges):
+                    continue
                 if _in_boxes(hole_boxes, px, yy) or not _inside_pt(outer, px, yy):
                     continue
                 # hrails already stores output coordinates (4 decimals).
@@ -2027,7 +2080,7 @@ def _frame_plan(req):
                                 (((sa, min(sb, bx0)),
                                   (max(sa, bx1), sb)))
                                 if sb2 - sa2 > EPS]
-                for px in xs_g:
+                for px in horizontal_at(yy):
                     if _in_boxes(hole_boxes, px, yy) or \
                             not any(sa - EPS <= px <= sb + EPS for sa, sb in segs):
                         continue
@@ -2170,7 +2223,7 @@ def _frame_plan(req):
                         segs = [(sa2, sb2) for sa, sb in segs
                                 for sa2, sb2 in ((sa, min(sb, bx0)), (max(sa, bx1), sb))
                                 if sb2 - sa2 > EPS]
-                for px in xs_g:
+                for px in horizontal_at(yy):
                     if _in_boxes(hole_boxes, px, yy) or \
                             not any(sa - EPS <= px <= sb + EPS for sa, sb in segs) or \
                             any(near_pt(b, px, yy) for b in brackets):
@@ -2229,6 +2282,11 @@ def _frame_plan(req):
                     mids.append((jx_all[i] + jx_all[i + 1]) / 2.0)
             jx_all = sorted(jx_all + mids)
 
+        original_axes = set(jx_all)
+        if corner_edges:
+            jx_all = sorted(set(jx_all + [x for edge in corner_edges
+                                for x in (edge['corner_x'], edge['inner_x'])
+                                if x0-EPS <= x <= x1+EPS]))
         staged = []
         for jx in jx_all:
             # угловая зона (В17: типовой случай — полоса у краёв зоны)
@@ -2240,7 +2298,11 @@ def _frame_plan(req):
             # ВЫРЕЗАЕТ диапазон; ось ближе edge_offset к грани проёма —
             # на высоте проёма кусок СМЕЩАЕТСЯ от грани (26.07: крепёж
             # не ближе 100 мм от края проёма)
-            pieces = [(lo7, hi7, jx) for lo7, hi7 in _vspans(outer, jx)]
+            wall_spans = corner_geometry.wall_spans(outer, jx, corner_edges, _vspans)
+            if jx not in original_axes:
+                wall_spans = corner_geometry.new_axis_spans(jx, corner_edges, wall_spans)
+            wall_spans = corner_geometry.reserve_vertical(wall_spans, jx, corner_edges)
+            pieces = [(lo7, hi7, jx) for lo7, hi7 in wall_spans]
             for bx0, by0, bx1, by1 in hole_boxes:
                 inside = bx0 - EPS < jx < bx1 + EPS
                 sx = None
@@ -2284,7 +2346,7 @@ def _frame_plan(req):
                 for a4, b4 in spans:
                     cut2.append((a4, b4, xe))
             n_cut = len(cut2)
-            pieces = _clip_pieces(outer, cut2)
+            pieces = _clip_pieces(outer, cut2, corner_edges)
             if len(pieces) < n_cut and any(abs(xe - jx) > EPS for _a, _b, xe in cut2):
                 notes.append("оконная стойка у края зоны (ось %.0f) за контуром стены — "
                              "не ставится" % jx)
@@ -2707,6 +2769,20 @@ def _frame_plan(req):
                         "расчёт или не имеют расчётной модели; общая геометрия сохранена. "
                         "Закрепления, стыки, распределение веса, "
                         "горизонтальные НГП/СП и проект в целом требуют отдельной проверки конструктора."}
+    if sub == "vertical" and parts != "clamps":
+        for corner_edges, corner_outer, corner_holes in corner_contexts:
+            channels, issues = corner_geometry.channels(corner_edges, rails, brackets,
+                corner_outer, corner_holes, _hspans, channel_placement)
+            corner_channels.extend(channels)
+            corner_issues.extend(issues)
+        if corner_issues:
+            notes.append("Геометрия внешних углов завершена частично; замечаний: %d. "
+                         "Привязка, пересечение с проёмом или совпадение уровней опор "
+                         "проверяются отдельно; неподтверждённые швеллеры не нарисованы." % len(corner_issues))
+        if corner_channels:
+            notes.append("Швеллеры угловые: геометрия по заданной привязке; сечение, крепления "
+                         "и несущая способность этой операцией не проверены.")
+    corner_issues = corner_geometry.complete_issues(corner_issues)
     clamps = _merge_clamps(clamps)
     # 01.08 (письмо Германа, п.2): марка профиля для СОСТОЯНИЯ
     # ВИДИМОСТИ динблока (C# ставит видимость по этому полю).
@@ -2739,6 +2815,8 @@ def _frame_plan(req):
         "hrails": len(hrails),
         "hrails_lm": round(hlm, 2),
         "fittings": len(fittings),
+        "corner_channels": len(corner_channels),
+        "corner_issues": len(corner_issues),
         "rail_stock_est": (int(math.ceil(lm * 1000.0 / stock))
                            if stock > EPS else None),
         "brackets_main": sum(1 for b in brackets
@@ -2774,7 +2852,15 @@ def _frame_plan(req):
         summary["rail_stock_est"] = None
     out = {"ok": True, "rails": rails, "hrails": hrails,
            "brackets": brackets, "clamps": clamps,
-           "fittings": fittings, "summary": summary, "notes": notes,
+           "fittings": fittings, "corner_channels": corner_channels,
+           "corner_issues": corner_issues,
+           "matched_external_corners": [dict(x=x,y=y) for x,y in external_points if any(
+               abs(x-e['corner_x']) <= corner_geometry.PICK_TOL and
+               e['y0']-corner_geometry.PICK_TOL <= y <= e['y1']+corner_geometry.PICK_TOL
+               for edges,_outer,_holes in corner_contexts for e in edges)],
+           "corner_geometry_status": ("partial" if corner_issues else "drawn")
+               if external_points and parts != "clamps" else "not_requested",
+           "summary": summary, "notes": notes,
            "system_used": system_used}
     # Один линейный проход по замечаниям; индексы относятся к выданным rails.
     for index, issue in enumerate(local_issues):

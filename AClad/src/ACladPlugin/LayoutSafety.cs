@@ -132,6 +132,16 @@ namespace ACladPlugin
         internal static bool SetNumberChecked(Func<object> read, Action<object> write,
             double requested, double tolerance = 1e-6)
         {
+            Exception ignored;
+            return SetNumberCheckedWithFailure(read, write, requested, out ignored, tolerance);
+        }
+
+        // Сохраняем исходную причину для итогового отказа, не меняя порядок
+        // чтения/записи и правила принятия. Старое имя/сигнатура нужны стендам.
+        internal static bool SetNumberCheckedWithFailure(Func<object> read, Action<object> write,
+            double requested, out Exception failure, double tolerance = 1e-6)
+        {
+            failure = null;
             if (read == null || !Finite(requested) || !Finite(tolerance) || tolerance < 0)
                 return false;
             try
@@ -154,7 +164,7 @@ namespace ACladPlugin
                 double actual = Convert.ToDouble(stored, CultureInfo.InvariantCulture);
                 return Finite(actual) && Math.Abs(actual - requested) <= tolerance;
             }
-            catch (Exception) { return false; }
+            catch (Exception ex) { failure = ex; return false; }
         }
 
         private static bool Finite(double value)

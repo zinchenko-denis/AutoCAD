@@ -23,7 +23,7 @@ namespace ACladPlugin
     {
         public string Name;
         public object Value;
-        public bool ReadOnly, Reject, Throw, ThrowMetadata;
+        public bool ReadOnly, Reject, Throw, ThrowAfterStore, ThrowMetadata;
         public double Increment;
         public short TypeCode = 1;
         public string Units = "Distance";
@@ -50,11 +50,12 @@ namespace ACladPlugin
             set
             {
                 block.Writes++;
-                if (state.ReadOnly || state.Throw) throw new InvalidOperationException("TEST_SETTER_DENIED");
+                if (state.ReadOnly || state.Throw) throw new InvalidOperationException("TEST_SETTER_DENIED:" + state.Name);
                 if (!state.Reject)
                     state.Value = state.Increment > 0
                         ? (object)(Math.Round(Convert.ToDouble(value, CultureInfo.InvariantCulture) /
                             state.Increment) * state.Increment) : value;
+                if (state.ThrowAfterStore) throw new InvalidOperationException("TEST_SETTER_AFTER_STORE");
                 if (block.Coupled && state.Name == "высота")
                     block.Properties[0].Value = Convert.ToDouble(block.Properties[0].Value) + 10;
             }
@@ -135,6 +136,8 @@ __PROTO_SIZE_KEY__
     static class DynamicBlockSizeCheck
     {
         static int checks, failures;
+        static string lastFailure;
+        static InvalidOperationException lastException;
         static void Case(string name, Action<BlockReference, TilePatternCommand.Proto> setup, bool expected)
         {
             foreach (bool sample in new[] { false, true })
@@ -145,8 +148,9 @@ __PROTO_SIZE_KEY__
                 var p = new TilePatternCommand.Proto { Te = sample ? new TilePatternCommand.SampleElem() : null };
                 setup(b, p); BlockReference.Next = b;
                 bool accepted;
+                lastFailure = null; lastException = null;
                 try { accepted = TilePatternCommand.Run(p); }
-                catch (InvalidOperationException) { accepted = false; }
+                catch (InvalidOperationException ex) { accepted = false; lastFailure = ex.ToString(); lastException = ex; }
                 checks++;
                 if (accepted != expected) { failures++; Console.WriteLine("FAIL " + name + "/sample=" + sample); }
             }
@@ -238,6 +242,24 @@ __PROTO_SIZE_KEY__
             Case("readonly_wrong", (b, p) => b.Properties[0].ReadOnly = true, false);
             Case("setter_silently_rejects", (b, p) => b.Properties[0].Reject = true, false);
             Case("setter_throws", (b, p) => b.Properties[0].Throw = true, false);
+            checks++;
+            if (lastFailure == null || !lastFailure.Contains("TEST_SETTER_DENIED") ||
+                !lastFailure.Contains("ширина"))
+            { failures++; Console.WriteLine("FAIL original_native_setter_exception_lost_from_F2"); }
+            Case("both_setters_throw_keep_first_cause", (b, p) => {
+                b.Properties[0].Throw = true; b.Properties[1].Throw = true;
+            }, false);
+            checks++;
+            if (BlockReference.Next.Writes != 2 || lastException == null ||
+                lastException.InnerException == null ||
+                lastException.InnerException.Message != "TEST_SETTER_DENIED:ширина")
+            { failures++; Console.WriteLine("FAIL first_native_exception_lost_or_second_write_skipped"); }
+            // A native setter may update the value and then throw. As before,
+            // the fresh final pair and geometry determine acceptance; recording
+            // a diagnostic must not introduce an earlier rejection.
+            Case("setter_throws_after_storing_valid_pair", (b, p) => {
+                b.Properties[0].ThrowAfterStore = true;
+            }, true);
             Case("height_changes_width", (b, p) => b.Coupled = true, false);
             Case("missing_dimension", (b, p) => b.Properties[1].Name = "длина", false);
             Case("properties_right_geometry_wrong", (b, p) => b.BadGeometry = true, false);

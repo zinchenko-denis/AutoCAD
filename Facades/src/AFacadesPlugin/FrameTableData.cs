@@ -112,6 +112,7 @@ namespace AFacadesPlugin
             if (!string.IsNullOrEmpty(row.orientation))
                 note = "Ориентация на схеме: " + (row.orientation == "vertical" ? "вертикальная" :
                     row.orientation == "horizontal" ? "горизонтальная" : row.orientation) + ". " + note;
+            if (row.role == "corner_channel") note = "Сечение, несущая способность и комплект крепежа не подтверждены. " + note;
             if (row.role == "fitting") note = "Условное соединение; комплект метизов не подтверждён. " + note;
             if (estimate) note = "Длина относится к исходному хлысту. Оценка по сумме длин; не раскрой и не закупка. " + note;
             return new object[] {
@@ -129,6 +130,8 @@ namespace AFacadesPlugin
                 case "geometry_only": return "Источник: геометрическая расстановка без статического расчёта.";
                 case "geometry_with_unverified_members": return "Источник: построенная схема содержит участки, расчёт которых не пройден или не подтверждён. " +
                     "Их координаты и причины приведены в замечаниях; красный цвет служит пометкой проверки, а не цветом изделия.";
+                case "geometry_with_incomplete_corners": return "Источник: расстановка подсистемы содержит незавершённые внешние углы; причины приведены в замечаниях.";
+                case "geometry_with_unverified_corner_channels": return "Источник: геометрическая расстановка угловых швеллеров; их сечение, несущая способность и крепёж не подтверждены.";
                 case "limited_static_chain": return "Источник: ограниченная расчётная цепочка; полная статическая модель не подтверждена.";
                 case "clamps_geometry_only": return "Источник: режим только кляммеров. Существующие направляющие не включены в созданный состав.";
                 case "clamps_geometry_only_with_retained_frame": return "Источник: новые кляммеры и сохранённые элементы предыдущего построения подсистемы. " +
@@ -136,7 +139,7 @@ namespace AFacadesPlugin
                 default: return "Инженерное покрытие источника не определено; расчётный допуск ведомостью не подтверждается.";
             }
         }
-        private static bool Linear(string role) { return role == "rail" || role == "hrail" || role == "shina"; }
+        private static bool Linear(string role) { return role == "rail" || role == "hrail" || role == "shina" || role == "corner_channel"; }
         private static string Category(string role)
         {
             switch (role)
@@ -144,6 +147,7 @@ namespace AFacadesPlugin
                 case "rail": return "Направляющая";
                 case "hrail": return "Горизонтальная направляющая";
                 case "shina": return "Шина";
+                case "corner_channel": return "Швеллер угловой";
                 case "bracket": return "Кронштейн";
                 case "clamp": return "Кляммер";
                 case "fitting": return "Условное соединение";

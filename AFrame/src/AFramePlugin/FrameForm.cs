@@ -48,6 +48,7 @@ namespace AFramePlugin
         private readonly NumericUpDown _axisStep = Num(50, 20000, 0), _rowStep = Num(0, 20000, 0);
         private readonly CheckBox _corners = new CheckBox(), _floors = new CheckBox();
         private readonly NumericUpDown _floorStep = Num(0, 20000, 0);
+        private readonly TextBox _claddingOffset = new TextBox();
         private readonly RadioButton _sCond = new RadioButton(), _sSamples = new RadioButton();
         private readonly Label _desc = new Label();
         private readonly Button _solution = new Button();
@@ -153,11 +154,12 @@ namespace AFramePlugin
 
             // ── 5. после «Разложить» ──
             var g5 = new GroupBox { Text = "6. После «Разложить» указать на чертеже", Left = 10, Top = 534, Width = 470, Height = 76 };
-            _corners.Text = "внешние углы здания (угловые зоны)";
+            _corners.Text = "внешние углы здания";
             _floors.Text = "отметки перекрытий";
-            Place(_corners, 10, 20, 450); Place(_floors, 10, 46, 200);
+            Place(_corners, 10, 20, 195); Place(_floors, 10, 46, 200);
             Place(_floorStep, 380, 44, 80);
-            g5.Controls.AddRange(new Control[] { _corners, _floors, L("Этаж без отметок, мм:", 230, 46, 148), _floorStep });
+            Place(_claddingOffset, 380, 20, 80);
+            g5.Controls.AddRange(new Control[] { _corners, _floors, L("Вынос облицовки, мм:", 210, 20, 168), _claddingOffset, L("Этаж без отметок, мм:", 230, 46, 148), _floorStep });
 
             // ── 6. знаки ──
             var g6 = new GroupBox { Text = "7. Знаки кронштейнов и кляммеров", Left = 10, Top = 614, Width = 470, Height = 50 };
@@ -202,6 +204,7 @@ namespace AFramePlugin
                                        _tileWhip })
                 nu.ValueChanged += upd;
             _brand.TextChanged += upd;
+            _claddingOffset.TextChanged += upd;
             foreach (var ch in new[] { _corners, _floors }) ch.CheckedChanged += upd;
             reset.Click += delegate
             {
@@ -298,6 +301,9 @@ namespace AFramePlugin
                 _axisStep.Value = Dec(_s.AxisStep, _axisStep); _rowStep.Value = Dec(_s.RowStep, _rowStep);
                 _corners.Checked = _s.AskCorners; _floors.Checked = _s.AskFloors;
                 _floorStep.Value = Dec(_s.FloorStep, _floorStep);
+                if (!_claddingOffset.Focused || ProjectOffsetProvided())
+                    _claddingOffset.Text = _s.EffectiveCladdingOffset.HasValue
+                        ? _s.EffectiveCladdingOffset.Value.ToString("0.########", CultureInfo.InvariantCulture) : "";
                 _sCond.Checked = _s.Signs == "cond"; _sSamples.Checked = _s.Signs == "samples";
 
                 bool frameParts = !_s.ClampsOnly;
@@ -328,6 +334,7 @@ namespace AFramePlugin
                                   : "У выбранных зон нет раскладки — оси и швы задать здесь:");
                 _layoutInfo.ForeColor = _hasLayout ? Color.DarkGreen : Color.Firebrick;
                 _corners.Enabled = frameParts;
+                _claddingOffset.Enabled = frameParts && !ProjectOffsetProvided();
                 _floorStep.Enabled = _s.InterFloor && frameParts;
                 string err = _s.Validate(_hasLayout);
                 _desc.ForeColor = err == null ? SystemColors.ControlText : Color.Firebrick;
@@ -335,6 +342,10 @@ namespace AFramePlugin
             }
             finally { _loading = false; }
         }
+
+        private bool ProjectOffsetProvided()
+        { return _s.SolutionSelection != null && _s.SolutionSelection.geometry != null &&
+            _s.SolutionSelection.geometry.cladding_front_offset_mm.HasValue; }
 
         private void ReadControls()
         {
@@ -355,6 +366,13 @@ namespace AFramePlugin
             _s.AxisStep = (double)_axisStep.Value; _s.RowStep = (double)_rowStep.Value;
             _s.AskCorners = _corners.Checked; _s.AskFloors = _floors.Checked;
             _s.FloorStep = (double)_floorStep.Value;
+            if (!ProjectOffsetProvided())
+            {
+                double value;
+                _s.CladdingOffset = string.IsNullOrWhiteSpace(_claddingOffset.Text) ? (double?)null :
+                    double.TryParse(_claddingOffset.Text.Replace(',', '.'), NumberStyles.Float,
+                        CultureInfo.InvariantCulture, out value) ? value : double.NaN;
+            }
             _s.Signs = _sSamples.Checked ? "samples" : "cond";
             _s.TileStepH = (double)_tileH.Value; _s.TileStepHCorner = (double)_tileHC.Value;
             _s.TileWhip = (double)_tileWhip.Value;

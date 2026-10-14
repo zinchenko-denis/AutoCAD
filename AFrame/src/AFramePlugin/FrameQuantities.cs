@@ -17,7 +17,7 @@ namespace AFramePlugin
     // No dynamic property is changed by the quantities path.
     internal sealed class FrameQuantities
     {
-        private static readonly string[] Categories = { "rails", "hrails", "brackets", "clamps", "fittings" };
+        private static readonly string[] Categories = { "rails", "hrails", "brackets", "clamps", "fittings", "corner_channels" };
         private readonly QuantityReport report;
         private readonly Dictionary<string, List<QuantityElement>> elements = new Dictionary<string, List<QuantityElement>>();
         private readonly Dictionary<string, object[]> inputs = new Dictionary<string, object[]>();
@@ -40,7 +40,7 @@ namespace AFramePlugin
                 int offset = 0;
                 foreach (string category in Categories)
                 {
-                    object[] source = Array(Get(response, category));
+                    object[] source = CategoryItems(response, request, category);
                     inputs[category] = source;
                     elements[category] = report.elements.GetRange(offset, source.Length);
                     offset += source.Length;
@@ -176,8 +176,10 @@ namespace AFramePlugin
                 {
                     report.parameters["retained_sources"] = provenance;
                     report.parameters["summary_scope"] = "new_clamps_operation_only";
-                    report.engineering_coverage = report.issues.Exists(x => x.code == "Q_FRAME_MEMBER_REVIEW")
-                        ? "geometry_with_unverified_members" : "clamps_geometry_only_with_retained_frame";
+                    report.engineering_coverage = report.issues.Exists(x => x.code == "Q_FRAME_CORNER_GEOMETRY_INCOMPLETE")
+                        ? "geometry_with_incomplete_corners" : report.issues.Exists(x => x.code == "Q_FRAME_MEMBER_REVIEW")
+                        ? "geometry_with_unverified_members" : report.issues.Exists(x => x.code == "Q_FRAME_CORNER_CHANNEL_REVIEW")
+                            ? "geometry_with_unverified_corner_channels" : "clamps_geometry_only_with_retained_frame";
                 }
                 foreach (var piece in report.elements)
                     if (piece.cad_entities == null || piece.cad_entities.Count != 1)
@@ -293,10 +295,12 @@ namespace AFramePlugin
             var summary = Get(response, "summary") as Dictionary<string, object> ?? new Dictionary<string, object>();
             bool clamps = Text(Get(request, "parts")) == "clamps";
             bool calc = Get(response, "calc_report") != null;
+            bool hasCornerChannels = CategoryItems(response, request, "corner_channels").Length > 0;
             var localIssues = IndexLocalIssues(response);
             var result = new QuantityReport { kind = "frame", report_id = run, run_id = run,
                 scope = "whole_frame_run", algorithm = "ATFRAME/facade_quantities/1",
                 completeness = "partial", engineering_coverage = localIssues.Count > 0 ? "geometry_with_unverified_members" :
+                    hasCornerChannels ? "geometry_with_unverified_corner_channels" :
                     clamps ? "clamps_geometry_only" : calc ? "limited_static_chain" : "geometry_only",
                 engine_summary = new Dictionary<string, object>(summary) };
             foreach (var parameter in request)
@@ -306,7 +310,7 @@ namespace AFramePlugin
             result.parameters["length_basis"] = "engine_axis_segments_with_verified_drawing_identity";
             result.parameters["profile_source"] = "engine_or_user_label_not_catalogue_approval";
             result.parameters["fittings_scope"] = "conditional_symbols_not_confirmed_hardware_bom";
-            foreach (string key in new[] { "design_scope", "calc_report", "calc_reports", "notes", "calculation_status" })
+            foreach (string key in new[] { "design_scope", "calc_report", "calc_reports", "notes", "calculation_status", "corner_issues", "corner_geometry_status" })
                 if (response.ContainsKey(key)) result.engine_summary[key] = response[key];
             var solutionReport = Get(response, "solution_report") as Dictionary<string, object>;
             if (solutionReport != null)
@@ -333,7 +337,7 @@ namespace AFramePlugin
             result.zone_ids.AddRange(scope); result.zone_ids.Sort(StringComparer.Ordinal);
             foreach (string category in Categories)
             {
-                object[] source = Array(Get(response, category));
+                object[] source = CategoryItems(response, request, category);
                 for (int i = 0; i < source.Length; i++)
                 {
                     var item = source[i] as Dictionary<string, object>;
@@ -342,8 +346,10 @@ namespace AFramePlugin
                         throw new InvalidOperationException("Элемент подсистемы не связан с обработанной зоной.");
                     string role = category == "rails" ? "rail" : category == "hrails" ?
                         (type.StartsWith("шина", StringComparison.Ordinal) ? "shina" : "hrail") :
-                        category == "brackets" ? "bracket" : category == "clamps" ? "clamp" : "fitting";
-                    bool linear = category == "rails" || category == "hrails";
+                        category == "brackets" ? "bracket" : category == "clamps" ? "clamp" :
+                        category == "corner_channels" ? "corner_channel" : "fitting";
+                    bool linear = category == "rails" || category == "hrails" || category == "corner_channels";
+                    if (category == "corner_channels") CornerChannelVertices(item);
                     double? length = null;
                     if (linear)
                     {
@@ -353,7 +359,7 @@ namespace AFramePlugin
                         if (Get(item, "len") != null && Math.Abs(Number(Get(item, "len")) - length.Value) > 0.01)
                             throw new InvalidOperationException("Длина направляющей расходится с её конечными точками.");
                     }
-                    string profile = linear ? Text(Get(item, "profile")) : null;
+                    string profile = linear && category != "corner_channels" ? Text(Get(item, "profile")) : null;
                     if (profile == "направляющая" || profile == "Z-профиль" || profile == "НГП" ||
                         (profile == type && type.StartsWith("шина", StringComparison.Ordinal))) profile = null;
                     string orientation = category == "rails" ? "vertical" : category == "hrails" ? "horizontal" :
@@ -364,8 +370,16 @@ namespace AFramePlugin
                         role = role, type = type, mark = string.IsNullOrEmpty(profile) ? null : profile,
                         product_id = null, material = null, coating = null, color = null,
                         orientation = orientation, piece_kind = linear ? "segment" : "symbol",
-                        length_mm = length, origin = "generated:ATFRAME:" + category
+                        length_mm = length, height_mm = category == "corner_channels" ? (double?)100 : null,
+                        origin = "generated:ATFRAME:" + category
                     });
+                    if (category == "corner_channels")
+                    {
+                        string id = ElementId(run, category, i);
+                        result.issues.Add(new QuantityIssue { code = "Q_FRAME_CORNER_CHANNEL_REVIEW", report_id = result.report_id,
+                            element_id = id, element_ids = new List<string> { id }, element_count = 1,
+                            message = "Швеллер угловой: учтены длина и количество по геометрии. Сечение, материал, несущая способность и комплект крепежа не подтверждены." });
+                    }
                 }
             }
             foreach (var issue in localIssues)
@@ -377,6 +391,7 @@ namespace AFramePlugin
             }
             if (localIssues.Count > 0)
                 result.parameters["red_review_mark"] = "diagnostic_only_not_product_colour";
+            AppendCornerIssues(response, result, partToRoot);
             if (response.ContainsKey("connection_passport"))
                 result.connection_passports = new List<QuantityConnectionPassport> {
                     BuildConnectionPassport(Object(response["connection_passport"]), result, response, partToRoot) };
@@ -409,6 +424,71 @@ namespace AFramePlugin
                 result.issues.Add(new QuantityIssue { code = "Q_FRAME_ESTIMATE_NOT_RECALCULATED", report_id = result.report_id,
                     message = "При обновлении только кляммеров оценка числа хлыстов сохранённого каркаса не пересчитывалась и не выводится." });
             return result;
+        }
+
+        internal static string CornerIssueMessage(Dictionary<string, object> issue, Dictionary<string, string> mapping)
+        {
+            if (issue == null || string.IsNullOrWhiteSpace(Text(Get(issue, "message"))))
+                throw new InvalidOperationException("Отсутствует причина незавершённой геометрии угла.");
+            string zone = Root(Text(Get(issue, "zone_id")), mapping);
+            return (zone.Length > 0 ? "Зона «" + zone + "»: " : "") + Text(Get(issue, "message"));
+        }
+
+        internal static object[] ValidateCornerIssues(Dictionary<string, object> response,
+            Dictionary<string, string> mapping)
+        {
+            object value = Get(response, "corner_issues");
+            bool partial = Text(Get(response, "corner_geometry_status")) == "partial";
+            if (value == null)
+            {
+                if (partial) throw new InvalidOperationException("Геометрия угла не завершена, но движок не передал причины.");
+                return new object[0];
+            }
+            var issues = Array(value);
+            if (partial && issues.Length == 0)
+                throw new InvalidOperationException("Геометрия угла не завершена, но список причин пуст.");
+            foreach (object raw in issues) CornerIssueMessage(raw as Dictionary<string, object>, mapping);
+            return issues;
+        }
+
+        private static void AppendCornerIssues(Dictionary<string, object> response, QuantityReport report,
+            Dictionary<string, string> mapping)
+        {
+            var issues = ValidateCornerIssues(response, mapping);
+            foreach (object raw in issues)
+                report.issues.Add(new QuantityIssue { code = "Q_FRAME_CORNER_GEOMETRY_INCOMPLETE", report_id = report.report_id,
+                    message = CornerIssueMessage(raw as Dictionary<string, object>, mapping) });
+            if (issues.Length > 0) report.engineering_coverage = "geometry_with_incomplete_corners";
+        }
+
+        internal static object[] ValidateCornerChannels(Dictionary<string, object> response,
+            Dictionary<string, object> request)
+        {
+            var channels = CategoryItems(response, request, "corner_channels");
+            foreach (object channel in channels) CornerChannelVertices(channel as Dictionary<string, object>);
+            return channels;
+        }
+
+        // Exact vertices used by CAD and quantity validation. No positioning
+        // inference is made here; a malformed engine item aborts the transaction.
+        internal static double[][] CornerChannelVertices(Dictionary<string, object> item)
+        {
+            double x0 = Number(Get(item, "x0")), x1 = Number(Get(item, "x1"));
+            double y = Number(Get(item, "y")), y0 = Number(Get(item, "y0")), y1 = Number(Get(item, "y1"));
+            if (x1 <= x0 || Math.Abs((x1 - x0) - Number(Get(item, "len"))) > 0.000001 ||
+                Math.Abs(Number(Get(item, "height")) - 100) > 0.000001 ||
+                Math.Abs(y0 - (y - 50)) > 0.000001 || Math.Abs(y1 - (y + 50)) > 0.000001 ||
+                Text(Get(item, "capacity_status")) != "not_verified")
+                throw new InvalidOperationException("Геометрия или расчётный статус углового швеллера не подтверждены ответом движка.");
+            return new[] { new[] { x0, y0 }, new[] { x1, y0 }, new[] { x1, y1 }, new[] { x0, y1 } };
+        }
+
+        private static object[] CategoryItems(Dictionary<string, object> response,
+            Dictionary<string, object> request, string category)
+        {
+            if (category == "corner_channels" && !response.ContainsKey(category) &&
+                !request.ContainsKey("external_corners")) return new object[0]; // legacy result only
+            return Array(Get(response, category));
         }
 
         // One index per result, never a search through all issues for every drawn rail.
@@ -464,7 +544,8 @@ namespace AFramePlugin
         internal static void AppendRetainedIssues(QuantityReport old, ISet<string> keptIds, List<QuantityIssue> into)
         {
             foreach (var issue in old.issues ?? new List<QuantityIssue>())
-                if (issue != null && issue.code == "Q_FRAME_MEMBER_REVIEW" && keptIds.Contains(issue.element_id ?? ""))
+                if (issue != null && (((issue.code == "Q_FRAME_MEMBER_REVIEW" || issue.code == "Q_FRAME_CORNER_CHANNEL_REVIEW") &&
+                    keptIds.Contains(issue.element_id ?? "")) || (issue.code == "Q_FRAME_CORNER_GEOMETRY_INCOMPLETE" && keptIds.Count > 0)))
                     into.Add(issue); // Immutable warning for the same retained physical member, not a fresh calculation.
         }
 

@@ -18,7 +18,18 @@ internal sealed class PromptPointResult
 {
     internal PromptStatus Status;
     internal Point Value = new Point();
-    internal sealed class Point { internal double X; }
+    internal sealed class Point { internal double X; internal double Y; }
+}
+internal sealed class PromptDoubleOptions
+{
+    internal string Message;
+    internal bool AllowNegative, AllowZero, AllowNone;
+    internal PromptDoubleOptions(string message) { Message = message; }
+}
+internal sealed class PromptDoubleResult
+{
+    internal PromptStatus Status;
+    internal double Value;
 }
 internal sealed class PromptEditor
 {
@@ -31,6 +42,8 @@ internal sealed class PromptEditor
         if (Results.Count == 0) throw new InvalidOperationException("Unexpected extra prompt");
         return Results.Dequeue();
     }
+    internal PromptDoubleResult GetDouble(PromptDoubleOptions options)
+    { throw new InvalidOperationException("Unexpected numeric prompt: explicit L is already set in these scenarios"); }
     internal void WriteMessage(string message) { Messages.Add(message); }
 }
 internal static class AxisCancelProbe
@@ -38,21 +51,24 @@ internal static class AxisCancelProbe
     private static readonly JavaScriptSerializer Json = new JavaScriptSerializer { MaxJsonLength = int.MaxValue };
     private static string F0(double value) { return value.ToString("0", CultureInfo.InvariantCulture); }
     private static void Segment(FrameSettings fs, PromptEditor ed, List<double> joints,
-        List<double> rowsY, List<Dictionary<string, object>> axisInputContours, Action continuation)
+        List<double> rowsY, List<Dictionary<string, object>> axisInputContours, Action<List<object>, List<object>> continuation)
     {
+        bool clampsOnly = fs.ClampsOnly;
+        string subType = fs.EffSubType;
 /* ACTUAL_AXIS_SEGMENT */
-        continuation();
+/* ACTUAL_CORNER_GATE_SEGMENT */
+        continuation(cornersX, externalCorners);
     }
     public static int Main(string[] args)
     {
         var input = (Dictionary<string, object>)Json.DeserializeObject(File.ReadAllText(args[0]));
-        var fs = new FrameSettings { Steps = "manual", Mode = "frame", SubType = "vertical", Cladding = "porcelain",
+        var baselineSettings = new FrameSettings { Steps = "manual", Mode = "frame", SubType = "vertical", Cladding = "porcelain",
             Profile = "ГП-40-40", StepMain = 800, StepCorner = 800, RailGap = 10, Axes = "points",
             AskCorners = false, AskFloors = false, Signs = "cond" };
-        fs.SolutionSelection = FrameSolutionSelection.FromDict(input["selection"]);
-        var stored = fs.ToDict();
-        fs = FrameSettings.FromDict((Dictionary<string, object>)Json.DeserializeObject(Json.Serialize(stored)));
-        string valid = fs.Validate(false);
+        baselineSettings.SolutionSelection = FrameSolutionSelection.FromDict(input["selection"]);
+        var stored = baselineSettings.ToDict();
+        baselineSettings = FrameSettings.FromDict((Dictionary<string, object>)Json.DeserializeObject(Json.Serialize(stored)));
+        string valid = baselineSettings.Validate(false);
         if (valid != null) throw new InvalidOperationException(valid);
         var pts = new List<object> { new double[] { 0, 0 }, new double[] { 1200, 0 },
             new double[] { 1200, 3000 }, new double[] { 0, 3000 } };
@@ -60,13 +76,20 @@ internal static class AxisCancelProbe
         var results = new List<object>();
         foreach (Dictionary<string, object> scenario in (object[])input["scenarios"])
         {
+            var fs = baselineSettings.Clone();
+            fs.AskCorners = scenario.ContainsKey("ask_corners") && (bool)scenario["ask_corners"];
+            if (fs.AskCorners) fs.CladdingOffset = 230;
             var ed = new PromptEditor();
             foreach (Dictionary<string, object> point in (object[])scenario["points"])
                 ed.Results.Enqueue(new PromptPointResult { Status = (PromptStatus)Enum.Parse(typeof(PromptStatus), (string)point["status"]),
-                    Value = new PromptPointResult.Point { X = Convert.ToDouble(point["x"], CultureInfo.InvariantCulture) } });
+                    Value = new PromptPointResult.Point { X = Convert.ToDouble(point["x"], CultureInfo.InvariantCulture),
+                        Y = Convert.ToDouble(point["y"], CultureInfo.InvariantCulture) } });
             var joints = new List<double>(); var rows = new List<double>();
             bool continued = false;
-            Segment(fs, ed, joints, rows, contours, delegate { continued = true; });
+            List<object> selectedCorners = null, windCorners = null;
+            Segment(fs, ed, joints, rows, contours, delegate(List<object> x, List<object> xy) {
+                continued = true; windCorners = x; selectedCorners = xy;
+            });
             var rowsAfterAxes = new List<double>(rows);
             Dictionary<string, object> request = null;
             if (continued)
@@ -78,6 +101,8 @@ internal static class AxisCancelProbe
                 // Only the test harness reaches the real engine via this DTO.
                 // Later source capture, CAD prewrite and drawing are not simulated.
                 request = fs.EngineParams(0);
+                if (fs.AskCorners)
+                { request["external_corners"] = selectedCorners; request["corners_x"] = windCorners; }
                 request["op"] = "frame"; request["joints_x"] = joints;
                 request["floors_y"] = new object[0]; request["rows_y"] = rowsY;
                 request["zones"] = new object[] { new Dictionary<string, object> {
@@ -88,7 +113,7 @@ internal static class AxisCancelProbe
                 remaining_prompts = ed.Results.Count, messages = ed.Messages, prompts = ed.Prompts });
         }
         File.WriteAllText(args[1], Json.Serialize(new { validation_error = valid,
-            settings = stored, settings_roundtrip = Json.Serialize(stored) == Json.Serialize(fs.ToDict()), results }));
+            settings = stored, settings_roundtrip = Json.Serialize(stored) == Json.Serialize(baselineSettings.ToDict()), results }));
         return 0;
     }
 }

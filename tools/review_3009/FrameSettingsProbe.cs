@@ -61,6 +61,36 @@ static class FrameSettingsProbe
         gp60.Steps = "calc";
         gp60.Mode = "clamps";
         if (gp60.Validate(true) != null) failures++;
+        // External-corner geometry must use a separate, explicitly supplied L.
+        var unsetOffset = FrameSettings.FromDict(new Dictionary<string, object> { { "offset", 777.0 } });
+        if (unsetOffset.EffectiveCladdingOffset.HasValue || unsetOffset.EngineParams(0).ContainsKey("cladding_offset")) failures++;
+        foreach (string sub in new[] { "vertical", "ortho", "interfloor" })
+            foreach (string mode in new[] { "manual", "calc" })
+            {
+                var corners = new FrameSettings { SubType = sub, Steps = mode, CladdingOffset = 345.75, Offset = 123.0 };
+                var parameters = corners.EngineParams(0);
+                if ((double)parameters["cladding_offset"] != 345.75 || corners.Clone().CladdingOffset != 345.75) failures++;
+                if (mode == "calc" && (double)((Dictionary<string, object>)parameters["calc"])["offset"] != 123.0) failures++;
+                if (mode == "manual" && parameters.ContainsKey("calc")) failures++;
+                corners.Mode = "clamps";
+                if (corners.EngineParams(0).ContainsKey("cladding_offset")) failures++;
+            }
+        foreach (double invalid in new[] { double.NaN, double.PositiveInfinity, -1.0 })
+            if (new FrameSettings { CladdingOffset = invalid, Steps = "manual" }.Validate(true) == null) failures++;
+        if (new FrameSettings { CladdingOffset = 0, Steps = "manual" }.Validate(true) != null) failures++;
+        var explicitProjectOffset = new FrameSettings { CladdingOffset = 456.0, Offset = 123.0,
+            SolutionSelection = new FrameSolutionSelection { geometry = new FrameSolutionGeometry { cladding_front_offset_mm = 321.25 } } };
+        if (explicitProjectOffset.EffectiveCladdingOffset != 321.25 || explicitProjectOffset.CladdingOffset != 456.0 ||
+            explicitProjectOffset.Offset != 123.0) failures++;
+        explicitProjectOffset.SolutionSelection = null;
+        if (explicitProjectOffset.EffectiveCladdingOffset != 456.0) failures++;
+        if (FrameSettings.HasUsableAxisInput(false, "vertical", 0, 0) ||
+            !FrameSettings.HasUsableAxisInput(false, "vertical", 0, 1) ||
+            !FrameSettings.HasUsableAxisInput(false, "vertical", 1, 0) ||
+            !FrameSettings.HasUsableAxisInput(true, "vertical", 0, 0) ||
+            FrameSettings.HasUsableAxisInput(false, "ortho", 0, 1) ||
+            FrameSettings.HasUsableAxisInput(false, "interfloor", 0, 1)) failures++;
+        Console.WriteLine("Separate external-corner offset: manual/calc, all 3 schemes, serialization, missing/zero/invalid values checked");
         Console.WriteLine("Domain settings failures: {0}", failures);
         return failures == 0 ? 0 : 1;
     }
