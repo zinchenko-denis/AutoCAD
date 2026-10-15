@@ -14,7 +14,7 @@ spec.loader.exec_module(handouts)
 
 
 def main():
-    document = handouts.new_document("Скачивание и установка фасадных модулей в AutoCAD 2024")
+    document = handouts.new_document("Установка фасадных модулей AutoCAD")
     document.core_properties.subject = "Установка трёх фасадных модулей для проектного отдела"
     document.core_properties.keywords = "AutoCAD 2024, GitHub, установка, обновление"
     document.core_properties.comments = ""
@@ -29,7 +29,7 @@ def main():
     footer._p.append(page)
     handouts.markdown(document, (ROOT / "INSTALL_AUTOCAD_2024.md").read_text(encoding="utf-8"))
     for paragraph in document.paragraphs:
-        if paragraph.text in ("Проверить первый запуск", "Если возникла проблема"):
+        if paragraph.text == "Короткая проверка после установки":
             paragraph.paragraph_format.page_break_before = True
     target = ROOT / "Install_AutoCAD_2024.docx"
     document.save(target)
