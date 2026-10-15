@@ -1,0 +1,96 @@
+{
+  "schema": "facade_release_summary/1",
+  "build": 112,
+  "source_sha": "126e770df1878c28fcf1f2404b7c81dd9758b751",
+  "verified_utc": "2026-10-15T06:42:57.601Z",
+  "status": "PASS",
+  "check": {
+    "id": 38692969159,
+    "url": "https://github.com/zinchenko-denis/AutoCAD/actions/runs/38692969159",
+    "conclusion": "success",
+    "steps_passed": 47,
+    "steps_total": 47
+  },
+  "build_workflow": {
+    "id": 38693087822,
+    "url": "https://github.com/zinchenko-denis/AutoCAD/actions/runs/38693087822",
+    "event": "workflow_dispatch",
+    "attempt": 1,
+    "conclusion": "success",
+    "test_steps": 7,
+    "build_steps": 33
+  },
+  "main_before": "e2a4e4df69a1936664c76c44cacff311ad44b07d",
+  "main_after": "e2a4e4df69a1936664c76c44cacff311ad44b07d",
+  "downloads": {
+    "count": 16,
+    "http_200": 16,
+    "latest_equals_build": true,
+    "inspections": [
+      "ZIP CRC and exact bundle files",
+      "Source assets and build-info SHA/ref",
+      "PE/CLR and frozen Python modules",
+      "frame_corners PYZ and channel parameter IL 50.0/0.0",
+      "DOCX/TXT source bytes and current release links"
+    ]
+  },
+  "assets": [
+    {
+      "name": "ABlockGen.bundle.zip",
+      "bytes": 8187055,
+      "sha256": "d81a78a48921fa5262bfd8447eca66c14d897b37618f39d69c5d5e3eb9b14a67",
+      "url": "https://github.com/zinchenko-denis/AutoCAD/releases/download/build-112/ABlockGen.bundle.zip"
+    },
+    {
+      "name": "AClad.bundle.zip",
+      "bytes": 8369893,
+      "sha256": "6d70318f095d3f9ab33ccb9176e0dec103add2cc9780225019f36c299c6846c2",
+      "url": "https://github.com/zinchenko-denis/AutoCAD/releases/download/build-112/AClad.bundle.zip"
+    },
+    {
+      "name": "AFacades.bundle.zip",
+      "bytes": 8349579,
+      "sha256": "85b873b5ef461a1dbfbbf7e2d2413d2771c5c1931047c4f74b943067d956d254",
+      "url": "https://github.com/zinchenko-denis/AutoCAD/releases/download/build-112/AFacades.bundle.zip"
+    },
+    {
+      "name": "AFrame.bundle.zip",
+      "bytes": 8532052,
+      "sha256": "9b6b557e2274a9bbe1b02b1b795da61189fb75651d93a09c37a4f4b2c924db1e",
+      "url": "https://github.com/zinchenko-denis/AutoCAD/releases/download/build-112/AFrame.bundle.zip"
+    },
+    {
+      "name": "ATableSpec.bundle.zip",
+      "bytes": 25638576,
+      "sha256": "13b9282eaf8990a603ab212ead23f1d3efb5ccee75bca51295fc8e844b7af61a",
+      "url": "https://github.com/zinchenko-denis/AutoCAD/releases/download/build-112/ATableSpec.bundle.zip"
+    },
+    {
+      "name": "Facades_User_Manual.docx",
+      "bytes": 1028158,
+      "sha256": "39249701cc45fab6a6e40a6e5e71e44306461bb5a8a3a8aeb5c841305b314519",
+      "url": "https://github.com/zinchenko-denis/AutoCAD/releases/download/build-112/Facades_User_Manual.docx"
+    },
+    {
+      "name": "Fixes_2026-10-15_build112.txt",
+      "bytes": 6039,
+      "sha256": "4957158ee8abf7c98621d99fbb8c07a5094382cc31f8bda92ef73d29f60e80cf",
+      "url": "https://github.com/zinchenko-denis/AutoCAD/releases/download/build-112/Fixes_2026-10-15_build112.txt"
+    },
+    {
+      "name": "Install_AutoCAD_2024.docx",
+      "bytes": 41074,
+      "sha256": "f651aa66007261ef1dcb229594d74c0e38f2bd64e96fe55518d7ed17225bc27a",
+      "url": "https://github.com/zinchenko-denis/AutoCAD/releases/download/build-112/Install_AutoCAD_2024.docx"
+    }
+  ],
+  "documents": {
+    "install_pages": 2,
+    "manual_pages": 66,
+    "control_scenarios": 23,
+    "visual_qa": "PASS"
+  },
+  "live_autocad_checked": false,
+  "typical_attile_failure": "OPEN",
+  "engineering_approval": false
+}
