@@ -167,8 +167,14 @@ def main():
                  'actual selected corner reaches engine after empty ordinary axis input')
             need({rail['x'] for rail in response['rails']} == {0, 330} and len(response['brackets']) == 8,
                  'selected vertical corner creates both actual axes and their brackets')
-            need(response['corner_geometry_status'] == 'partial' and response['corner_channels'] == [],
-                 'missing channel placement is not promoted to completed corner')
+            need(request['corner_channel_outer_overhang'] == 50 and request['corner_channel_y_offset'] == 0,
+                 'actual settings supply the confirmed schematic placement')
+            channels = response['corner_channels']
+            need(response['corner_geometry_status'] == 'drawn' and response['corner_issues'] == [] and len(channels) == 4,
+                 'ordinary vertical corner completes with four schematic channels')
+            need(all(c['x0'] == -50 and c['x1'] == 380 and c['len'] == 430 and c['height'] == 100 and
+                     c['y'] == c['bracket_y'] and c['y0'] == c['y']-50 and c['y1'] == c['y']+50
+                     for c in channels), 'channel overhangs and centre match the confirmed drawing convention')
         else:
             need(len(response['rails']) == 1 and len(response['brackets']) == 4, 'continued engine creates one rail and four bracket symbols: ' + name)
         need(response['solution_report']['physical_assignment'] == 'not_asserted' and

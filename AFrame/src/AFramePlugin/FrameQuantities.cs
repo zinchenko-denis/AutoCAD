@@ -378,7 +378,7 @@ namespace AFramePlugin
                         string id = ElementId(run, category, i);
                         result.issues.Add(new QuantityIssue { code = "Q_FRAME_CORNER_CHANNEL_REVIEW", report_id = result.report_id,
                             element_id = id, element_ids = new List<string> { id }, element_count = 1,
-                            message = "Швеллер угловой: учтены длина и количество по геометрии. Сечение, материал, несущая способность и комплект крепежа не подтверждены." });
+                            message = "Швеллер угловой: учтены длина и количество по условной схеме без фактических монтажных смещений. Сечение, материал, несущая способность и комплект крепежа не подтверждены." });
                     }
                 }
             }

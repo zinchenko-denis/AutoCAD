@@ -72,9 +72,24 @@ static class FrameSettingsProbe
                 if ((double)parameters["cladding_offset"] != 345.75 || corners.Clone().CladdingOffset != 345.75) failures++;
                 if (mode == "calc" && (double)((Dictionary<string, object>)parameters["calc"])["offset"] != 123.0) failures++;
                 if (mode == "manual" && parameters.ContainsKey("calc")) failures++;
+                bool expectedChannel = sub == "vertical";
+                if (parameters.ContainsKey("corner_channel_outer_overhang") != expectedChannel ||
+                    parameters.ContainsKey("corner_channel_y_offset") != expectedChannel) failures++;
+                if (expectedChannel && ((double)parameters["corner_channel_outer_overhang"] != 50.0 ||
+                    (double)parameters["corner_channel_y_offset"] != 0.0 ||
+                    (double)corners.Clone().EngineParams(0)["corner_channel_outer_overhang"] != 50.0 ||
+                    !corners.Describe(true).Contains("без фактических монтажных смещений"))) failures++;
+                corners.AskCorners = false;
+                if (corners.EngineParams(0).ContainsKey("corner_channel_outer_overhang") ||
+                    corners.EngineParams(0).ContainsKey("corner_channel_y_offset")) failures++;
+                corners.AskCorners = true;
                 corners.Mode = "clamps";
-                if (corners.EngineParams(0).ContainsKey("cladding_offset")) failures++;
+                if (corners.EngineParams(0).ContainsKey("cladding_offset") ||
+                    corners.EngineParams(0).ContainsKey("corner_channel_outer_overhang") ||
+                    corners.EngineParams(0).ContainsKey("corner_channel_y_offset")) failures++;
             }
+        if (unsetOffset.EngineParams(0).ContainsKey("corner_channel_outer_overhang") ||
+            unsetOffset.EngineParams(0).ContainsKey("corner_channel_y_offset")) failures++;
         foreach (double invalid in new[] { double.NaN, double.PositiveInfinity, -1.0 })
             if (new FrameSettings { CladdingOffset = invalid, Steps = "manual" }.Validate(true) == null) failures++;
         if (new FrameSettings { CladdingOffset = 0, Steps = "manual" }.Validate(true) != null) failures++;

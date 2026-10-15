@@ -200,6 +200,13 @@ namespace AFramePlugin
                 { "cladding", Cladding },
             };
             if (!clampsOnly && EffectiveCladdingOffset.HasValue) d["cladding_offset"] = EffectiveCladdingOffset.Value;
+            // German confirmed 15.10: simplified elevation only, 50 mm beyond
+            // each axis and centre at bracket Y. Actual mounting offsets are not modeled.
+            if (!clampsOnly && AskCorners && EffSubType == "vertical" && EffectiveCladdingOffset.HasValue)
+            {
+                d["corner_channel_outer_overhang"] = 50.0;
+                d["corner_channel_y_offset"] = 0.0;
+            }
             var calc = clampsOnly ? null : CalcDict();
             if (calc != null) d["calc"] = calc;
             if (Manual && !clampsOnly)
@@ -405,7 +412,7 @@ namespace AFramePlugin
               .Append(" мм; внутренний ряд кронштейнов на ").Append(F(offset + 100)).Append(" мм.");
             if (EffSubType == "vertical")
                 sb.Append(" Дополнительно ряд на границе. Угловой швеллер: длина ").Append(F(offset + 200))
-                  .Append(" мм, высота 100 мм; его привязка и несущая способность требуют уточнения.");
+                  .Append(" мм, высота 100 мм; свесы по 50 мм за обе оси, середина на отметке кронштейна. Условная схема без фактических монтажных смещений; несущая способность швеллера не проверяется.");
         }
 
         private static string F(double v) { return v.ToString("0.##", CultureInfo.InvariantCulture); }

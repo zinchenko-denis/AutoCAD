@@ -82,6 +82,7 @@ internal static class FrameTableProbe
             (double)cornerTable.Installed[0][7] == 545.75 && (double)cornerTable.Installed[0][9] == 1.63725,
             "Corner channel name, exact length or metres lost in table");
         Check(Convert.ToString(cornerTable.Installed[0][10]).Contains("несущая способность") &&
+            Convert.ToString(cornerTable.Installed[0][10]).Contains("без фактических монтажных смещений") &&
             cornerTable.Information.Any(text => text.Contains("геометрическая расстановка угловых швеллеров")),
             "Corner channel export lost its engineering boundary");
         bool refused = false;

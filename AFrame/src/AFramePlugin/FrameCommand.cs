@@ -1217,7 +1217,7 @@ namespace AFramePlugin
                     F0(ToD(Get(sum, "tile_whip"))) + " мм, стык на направляющей).");
             }
             if (cornerChannels != null && cornerChannels.Length > 0)
-                ed.WriteMessage("\n  Швеллеры угловые: геометрия по выносу облицовки; сечение, несущая способность и комплект крепежа не подтверждены.");
+                ed.WriteMessage("\n  Швеллеры угловые: условная схема без фактических монтажных смещений. Сечение, несущая способность и комплект крепежа не подтверждены.");
             if (cornerIssues != null && cornerIssues.Length > 0)
             {
                 var cornerMessage = new StringBuilder("\nВНЕШНИЕ УГЛЫ НЕ ЗАВЕРШЕНЫ: ");

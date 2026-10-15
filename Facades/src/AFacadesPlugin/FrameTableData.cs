@@ -112,7 +112,7 @@ namespace AFacadesPlugin
             if (!string.IsNullOrEmpty(row.orientation))
                 note = "Ориентация на схеме: " + (row.orientation == "vertical" ? "вертикальная" :
                     row.orientation == "horizontal" ? "горизонтальная" : row.orientation) + ". " + note;
-            if (row.role == "corner_channel") note = "Сечение, несущая способность и комплект крепежа не подтверждены. " + note;
+            if (row.role == "corner_channel") note = "Условная схема без фактических монтажных смещений. Сечение, несущая способность и комплект крепежа не подтверждены. " + note;
             if (row.role == "fitting") note = "Условное соединение; комплект метизов не подтверждён. " + note;
             if (estimate) note = "Длина относится к исходному хлысту. Оценка по сумме длин; не раскрой и не закупка. " + note;
             return new object[] {
