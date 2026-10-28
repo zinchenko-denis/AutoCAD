@@ -20,6 +20,7 @@ python3 AFrame/tests/test_node_library.py --out <папка> # реальные 
 python3 tools/node_library/test_author.py # генератор авторского LISP; не создание нативного DWG
 python3 tools/stamp_library/test_inspect.py # читающий инспектор штампа: контракт и file-open doubles; не AutoCAD/СПДС
 python3 Facades/tests/test_zone_migration.py
+python3 Facades/tests/test_contour_plane.py   # ATFZONE: поднятые/развёрнутые контуры → Z = 0, вертикальные — отказ; CAD doubles + движок
 python3 tools/xmod_check.py --no-fixture      # стыки модулей (ATSPEC X6 — не фасады, известен)
 python3 AFrame/tools/frame_synth.py --quick   # F16 исправлен 30.09; исключение больше не требуется
 python3 Facades/tools/zones_synth.py --quick

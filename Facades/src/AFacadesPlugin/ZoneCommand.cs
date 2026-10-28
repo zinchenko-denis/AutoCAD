@@ -139,6 +139,8 @@ namespace AFacadesPlugin
             var contours = new List<Dictionary<string, object>>();
             var idByHandle = new Dictionary<string, ObjectId>();
             var skipped = new List<string>();
+            // 28.10: поднятые/развёрнутые контуры (handle → что с плоскостью)
+            var offPlane = new Dictionary<string, string>();
             using (var tr = db.TransactionManager.StartTransaction())
             {
                 foreach (SelectedObject so in sel.Value)
@@ -151,12 +153,7 @@ namespace AFacadesPlugin
                     { skipped.Add(Hnd(pl) + " (недостаточно вершин)"); continue; }
                     var pts = new List<object>();
                     var bulges = new List<object>();
-                    for (int i = 0; i < n; i++)
-                    {
-                        Point2d p = pl.GetPoint2dAt(i);
-                        pts.Add(new[] { p.X, p.Y });
-                        bulges.Add(pl.GetBulgeAt(i));
-                    }
+                    if (!ReadContour(pl, pts, bulges, offPlane, skipped)) continue;
                     bool closed = pl.Closed;
                     if (!closed)
                     {
@@ -263,12 +260,7 @@ namespace AFacadesPlugin
                                 { skipped.Add(h + " (<3 вершин)"); continue; }
                                 var pts = new List<object>();
                                 var bulges = new List<object>();
-                                for (int i = 0; i < n; i++)
-                                {
-                                    Point2d p = pl.GetPoint2dAt(i);
-                                    pts.Add(new[] { p.X, p.Y });
-                                    bulges.Add(pl.GetBulgeAt(i));
-                                }
+                                if (!ReadContour(pl, pts, bulges, offPlane, skipped)) continue;
                                 bool closed = pl.Closed ||
                                     pl.GetPoint2dAt(0).GetDistanceTo(
                                         pl.GetPoint2dAt(n - 1)) <= CloseTol;
@@ -331,7 +323,7 @@ namespace AFacadesPlugin
                     ed.WriteMessage("\n  витражей " + (vit.Count - both) + ", дверей " + drs.Count +
                                     "; остальные проёмы — окна.");
                 }
-                if (!PickParapets(ed, db, filter, parapetContours, parapetIds, skipped))
+                if (!PickParapets(ed, db, filter, parapetContours, parapetIds, skipped, offPlane))
                 { ed.WriteMessage("\nОтменено."); return; }
                 if (parapetIds.Count > 0)
                 {
@@ -448,6 +440,42 @@ namespace AFacadesPlugin
                 return;
             }
 
+            // ── 3в. 28.10 (снимок Германа: «поддерживается только плоскость XY с Z = 0»):
+            //    поднятые и развёрнутые контуры с согласия пользователя переносим на Z = 0
+            //    в той же транзакции, что и зоны: в плане ничего не сдвигается, отмена U
+            //    возвращает всё сразу. Без переноса штриховка и проверки зон не проходят ──
+            var moveSet = new HashSet<ObjectId>();
+            var moveInfo = new List<string>();
+            foreach (var kv in offPlane)
+            {
+                ObjectId mid;
+                if (!idByHandle.TryGetValue(kv.Key, out mid) && !parapetIds.TryGetValue(kv.Key, out mid)) continue;
+                if (!moveSet.Add(mid)) continue;
+                moveInfo.Add(kv.Key + " — " + kv.Value);
+            }
+            if (moveSet.Count > 0)
+            {
+                ed.WriteMessage("\nКонтуры не в плоскости XY с Z = 0: " + moveSet.Count + " (" +
+                    string.Join("; ", moveInfo.GetRange(0, Math.Min(5, moveInfo.Count)).ToArray()) +
+                    (moveInfo.Count > 5 ? "; …" : "") + ")." +
+                    "\nЗоны, раскладка и каркас строятся на Z = 0. При переносе вид контуров в плане не меняется.");
+                // тот же образец вопроса, что у ATTILE «заменить раскладку?»: Enter — «Да»
+                var mopt = new PromptKeywordOptions(
+                    "\nПеренести эти контуры на Z = 0 и продолжить? ") { AllowNone = false };
+                mopt.Keywords.Add("Да");
+                mopt.Keywords.Add("Нет");
+                mopt.Keywords.Default = "Да";
+                var mres = ed.GetKeywords(mopt);
+                if (mres.Status != PromptStatus.OK || mres.StringResult == "Нет")
+                {
+                    ed.WriteMessage("\nОтменено без изменений. Без переноса зоны на этих контурах не строятся. " +
+                        "Переведите их на Z = 0 сами (Свойства → «Уровень» = 0; для развёрнутых — _FLATTEN " +
+                        "в мировой ПСК) и повторите ATFZONE.");
+                    return;
+                }
+            }
+            var movedToZ = new HashSet<ObjectId>();
+
             // ── 4. точка таблицы (до транзакции — один undo-шаг на всё) ──
             Point3d tablePt = Point3d.Origin;
             bool doTable = form.MakeTable;
@@ -498,6 +526,9 @@ namespace AFacadesPlugin
                             if (idByHandle.ContainsKey(s))
                                 holeIds.Add(idByHandle[s]);
                         }
+                    // 28.10: на Z = 0 до штриховки — граница и штриховка в одной плоскости
+                    foreach (var mid in outIds) MoveContour(tr, mid, moveSet, movedToZ);
+                    foreach (var mid in holeIds) MoveContour(tr, mid, moveSet, movedToZ);
                     foreach (var lid in outIds)
                     {
                         var ent = (Entity)tr.GetObject(lid, OpenMode.ForWrite);
@@ -671,6 +702,7 @@ namespace AFacadesPlugin
                     string pid = SafeStr(Get(pd, "id"));
                     ObjectId poid;
                     if (pd == null || !parapetIds.TryGetValue(pid, out poid)) continue;
+                    MoveContour(tr, poid, moveSet, movedToZ);
                     var pent = (Entity)tr.GetObject(poid, OpenMode.ForWrite);
                     string ptop = F3(Get(pd, "top_m"));
                     // 29.09p (Герман, 29.09n: «парапеты маркировать не надо — отрисовать их
@@ -746,7 +778,9 @@ namespace AFacadesPlugin
                 "; S нетто " + F3(Get(sum, "area_net_total_m2")) + " м²" +
                 "; отливы " + F3(Get(sum, "sills_total_m")) + " м.п." +
                 "; откосы " + F3(Get(sum, "jambs_total_m")) + " м.п." +
-                "; слой «" + layer + "»." + SkippedMsg(skipped));
+                "; слой «" + layer + "»." +
+                (movedToZ.Count > 0 ? " Контуров перенесено на Z = 0: " + movedToZ.Count + "." : "") +
+                SkippedMsg(skipped));
             // 29.09 (Герман): проёмы по типам, погонаж по категориям, парапеты, линии схемы
             ed.WriteMessage("\n  проёмы: окна " + SafeStr(Get(sum, "window_count")) + " (" +
                 F3(Get(sum, "window_area_m2")) + " м²), витражи " + SafeStr(Get(sum, "vitrage_count")) +
@@ -1219,9 +1253,34 @@ namespace AFacadesPlugin
             return true;
         }
 
+        // 28.10: вершины контура — в мировых координатах (вид сверху). Поднятый или
+        // развёрнутый контур запоминаем: перед построением ATFZONE предложит перенести
+        // его на Z = 0. Вертикальный/наклонный — пропускаем с понятной причиной.
+        private static bool ReadContour(Polyline pl, List<object> pts, List<object> bulges,
+            Dictionary<string, string> offPlane, List<string> skipped)
+        {
+            var kind = ContourPlane.Classify(pl);
+            if (kind == ContourPlane.Kind.Unsupported)
+            {
+                skipped.Add(Hnd(pl) + " (" + ContourPlane.Describe(pl) + ")");
+                return false;
+            }
+            ContourPlane.Read(pl, kind, pts, bulges);
+            if (kind == ContourPlane.Kind.Parallel) offPlane[Hnd(pl)] = ContourPlane.Describe(pl);
+            return true;
+        }
+
+        private static void MoveContour(Transaction tr, ObjectId id, HashSet<ObjectId> moveSet,
+            HashSet<ObjectId> moved)
+        {
+            if (!moveSet.Contains(id) || moved.Contains(id)) return;
+            ContourPlane.MoveToWorld((Polyline)tr.GetObject(id, OpenMode.ForWrite));
+            moved.Add(id);
+        }
+
         private static bool PickParapets(Editor ed, Database db, SelectionFilter filter,
             List<Dictionary<string, object>> outList, Dictionary<string, ObjectId> ids,
-            List<string> skipped)
+            List<string> skipped, Dictionary<string, string> offPlane)
         {
             var res = ed.GetSelection(new PromptSelectionOptions
             { MessageForAdding = "\nВыберите ПАРАПЕТ — контуры или линии по верху (Enter — нет): " }, filter);
@@ -1242,12 +1301,7 @@ namespace AFacadesPlugin
                         pl.GetPoint2dAt(0).GetDistanceTo(pl.GetPoint2dAt(n - 1)) <= CloseTol);
                     var pts = new List<object>();
                     var bulges = new List<object>();
-                    for (int i = 0; i < n; i++)
-                    {
-                        Point2d p = pl.GetPoint2dAt(i);
-                        pts.Add(new[] { p.X, p.Y });
-                        bulges.Add(pl.GetBulgeAt(i));
-                    }
+                    if (!ReadContour(pl, pts, bulges, offPlane, skipped)) continue;
                     if (ids.ContainsKey(h)) continue;
                     ids[h] = pl.ObjectId;
                     outList.Add(new Dictionary<string, object>

@@ -154,9 +154,27 @@ namespace Autodesk.AutoCAD.DatabaseServices
         public Vector3d Normal = Vector3d.ZAxis;
         public int NumberOfVertices { get { return Points.Count; } }
         public Point2d GetPoint2dAt(int i) { return Points[i]; }
-        public Point3d GetPoint3dAt(int i) { return new Point3d(Points[i].X, Points[i].Y, Elevation); }
+        // World point by the AutoCAD arbitrary axis algorithm (DXF reference), so
+        // raised and upside-down polylines read like in AutoCAD (28.10).
+        public Point3d GetPoint3dAt(int i) { return Ocs.ToWorld(Normal, Points[i].X, Points[i].Y, Elevation); }
         public double GetBulgeAt(int i) { return Bulges[i]; }
+        public void SetPointAt(int i, Point2d p) { Points[i] = p; }
+        public void SetBulgeAt(int i, double bulge) { Bulges[i] = bulge; }
         public void AddVertexAt(int i, Point2d p, double bulge, double startWidth, double endWidth) { Points.Insert(i,p); Bulges.Insert(i,bulge); }
+    }
+    public static class Ocs
+    {
+        public static Point3d ToWorld(Vector3d normal, double x, double y, double z)
+        {
+            double len = normal.Length;
+            double nx = normal.X / len, ny = normal.Y / len, nz = normal.Z / len;
+            double ax, ay, az;
+            if (Math.Abs(nx) < 1.0 / 64 && Math.Abs(ny) < 1.0 / 64) { ax = nz; ay = 0; az = -nx; }   // Wy x N
+            else { ax = -ny; ay = nx; az = 0; }                                                      // Wz x N
+            double al = Math.Sqrt(ax * ax + ay * ay + az * az); ax /= al; ay /= al; az /= al;
+            double bx = ny * az - nz * ay, by = nz * ax - nx * az, bz = nx * ay - ny * ax;            // N x A
+            return new Point3d(x * ax + y * bx + z * nx, x * ay + y * by + z * ny, x * az + y * bz + z * nz);
+        }
     }
     public struct BulgeVertex
     {

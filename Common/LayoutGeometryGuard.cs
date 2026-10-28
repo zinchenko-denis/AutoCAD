@@ -217,7 +217,8 @@ namespace FacadeSafety
         {
             if (pl == null || pl.NumberOfVertices < 3 ||
                 !(Math.Abs(pl.Elevation) <= 1e-6) || !((pl.Normal - Vector3d.ZAxis).Length <= 1e-9))
-                throw new InvalidOperationException("Контур должен лежать в плоскости XY/Z=0.");
+                throw new InvalidOperationException("Контур должен лежать в плоскости XY с Z = 0 и нормалью вверх. " +
+                    "Постройте по нему зону командой ATFZONE: поднятый или развёрнутый контур она предложит перенести на Z = 0.");
             if (!pl.Closed && !(pl.GetPoint2dAt(0).GetDistanceTo(pl.GetPoint2dAt(pl.NumberOfVertices - 1)) <= 0.5))
                 throw new InvalidOperationException("Исходный контур не замкнут.");
             var s = new StringBuilder(pl.Closed ? "closed;" : "joined;");

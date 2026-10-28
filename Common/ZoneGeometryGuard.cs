@@ -166,7 +166,7 @@ namespace FacadeSafety
         {
             loop = null; reason = null;
             if (poly == null) { reason = "исходный объект не является полилинией"; return false; }
-            if (!WorldPlane(poly.Normal, poly.Elevation)) { reason = "поддерживается только плоскость XY с Z = 0"; return false; }
+            if (!WorldPlane(poly.Normal, poly.Elevation)) { reason = PlaneReason(poly); return false; }
             var pts = new double[poly.NumberOfVertices][]; var bulges = new double[pts.Length];
             for (int i = 0; i < pts.Length; i++)
             {
@@ -234,6 +234,27 @@ namespace FacadeSafety
             types.AddRange(bySource);
             string unused;
             return GeometryFingerprint.TryFingerprint(loops, out unused, out reason);
+        }
+
+        // 28.10: вместо общей фразы — какой контур и что именно с его плоскостью.
+        // Поднятый или развёрнутый контур ATFZONE сам предлагает перенести на Z = 0.
+        private static string PlaneReason(Polyline poly)
+        {
+            Vector3d n = poly.Normal; double e = poly.Elevation;
+            string detail;
+            if (!Finite(n.X) || !Finite(n.Y) || !Finite(n.Z) || !Finite(e)) detail = "повреждённые координаты";
+            else if (Math.Abs(n.X) > 1e-9 || Math.Abs(n.Y) > 1e-9 || Math.Abs(Math.Abs(n.Z) - 1) > 1e-9)
+                detail = "контур вертикальный или наклонный";
+            else
+            {
+                double z = n.Z < 0 ? -e : e;
+                var parts = new List<string>();
+                if (n.Z < 0) parts.Add("развёрнут, нормаль вниз");
+                if (Math.Abs(z) > GeometryFingerprint.CoordinateTolerance)
+                    parts.Add("Z = " + z.ToString("0.###", CultureInfo.InvariantCulture) + " мм");
+                detail = string.Join("; ", parts.ToArray());
+            }
+            return "исходный контур " + poly.Handle + " не в плоскости XY с Z = 0 (" + detail + ")";
         }
 
         private static bool WorldPlane(Vector3d normal, double elevation)

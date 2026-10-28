@@ -141,7 +141,7 @@ jobs:
           python test_facade_zones.py
           python test_facades_engine.py
 
-      - name: Facade startup, versions, dynamic blocks and legacy zones
+      - name: Facade startup, versions, dynamic blocks, legacy zones and contour plane
         shell: pwsh
         env:
           PYTHONUTF8: "1"
@@ -154,6 +154,8 @@ jobs:
           python AClad/tests/test_dynamic_block_size.py
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           python Facades/tests/test_zone_migration.py
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          python Facades/tests/test_contour_plane.py
           exit $LASTEXITCODE
 
       - name: Node library and read-only stamp inspector (no AutoCAD host)
