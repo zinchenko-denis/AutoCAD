@@ -253,31 +253,41 @@ jobs:
       # 4a) Артефакты сборки (видны в разделе Actions; скачивание — для залогиненных)
       - name: Upload artifact
         uses: actions/upload-artifact@v4
+        continue-on-error: true   # архивы и так в выпуске; лимит хранилища не должен ронять сборку
         with:
+          retention-days: 3
           name: ATableSpec.bundle
           path: ATableSpec.bundle.zip
 
       - name: Upload ABlockGen artifact
         uses: actions/upload-artifact@v4
+        continue-on-error: true   # архивы и так в выпуске; лимит хранилища не должен ронять сборку
         with:
+          retention-days: 3
           name: ABlockGen.bundle
           path: ABlockGen.bundle.zip
 
       - name: Upload AFacades artifact
         uses: actions/upload-artifact@v4
+        continue-on-error: true   # архивы и так в выпуске; лимит хранилища не должен ронять сборку
         with:
+          retention-days: 3
           name: AFacades.bundle
           path: AFacades.bundle.zip
 
       - name: Upload AClad artifact
         uses: actions/upload-artifact@v4
+        continue-on-error: true   # архивы и так в выпуске; лимит хранилища не должен ронять сборку
         with:
+          retention-days: 3
           name: AClad.bundle
           path: AClad.bundle.zip
 
       - name: Upload AFrame artifact
         uses: actions/upload-artifact@v4
+        continue-on-error: true   # архивы и так в выпуске; лимит хранилища не должен ронять сборку
         with:
+          retention-days: 3
           name: AFrame.bundle
           path: AFrame.bundle.zip
 

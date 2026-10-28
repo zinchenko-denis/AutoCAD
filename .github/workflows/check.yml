@@ -96,9 +96,20 @@ jobs:
           python tools/aps_autocad/test_probe_contract.py --out build_aps_probe_contract
           exit $LASTEXITCODE
 
+      # Загрузка в хранилище не должна ронять проверку (лимит закрытого репозитория),
+      # а наличие пакета APS проверяется отдельно, как прежде через if-no-files-found: error
+      - name: APS diagnostic bundle files present
+        shell: pwsh
+        run: |
+          foreach ($f in 'build_aps_probe/FacadeCoreProbe.zip', 'build_aps_probe/build-manifest.json', 'build_aps_probe/package-result.json', 'build_aps_probe/compile.log') {
+            if (-not (Test-Path $f)) { Write-Error "missing $f"; exit 1 }
+          }
+
       - name: Upload APS diagnostic bundle (no private DWG or credentials)
         uses: actions/upload-artifact@v4
+        continue-on-error: true   # закрытый репозиторий: лимит хранилища не должен ронять проверку
         with:
+          retention-days: 14
           name: aps-core-probe
           path: |
             build_aps_probe/FacadeCoreProbe.zip
@@ -276,7 +287,9 @@ jobs:
       - name: Upload local member warning checks
         if: always()
         uses: actions/upload-artifact@v4
+        continue-on-error: true   # закрытый репозиторий: лимит хранилища не должен ронять проверку
         with:
+          retention-days: 14
           name: frame-local-issues
           path: frame_local_issue_results/
           if-no-files-found: warn
@@ -324,7 +337,9 @@ jobs:
       - name: Upload connection table and native preview evidence
         if: always()
         uses: actions/upload-artifact@v4
+        continue-on-error: true   # закрытый репозиторий: лимит хранилища не должен ронять проверку
         with:
+          retention-days: 14
           name: connection-table-ui
           path: |
             connection_table_results/
@@ -355,7 +370,9 @@ jobs:
       - name: Upload pilot mounting contract evidence
         if: always()
         uses: actions/upload-artifact@v4
+        continue-on-error: true   # закрытый репозиторий: лимит хранилища не должен ронять проверку
         with:
+          retention-days: 14
           name: pilot-completion-contract
           path: pilot_completion_contract_results/
           if-no-files-found: warn
@@ -375,7 +392,9 @@ jobs:
       - name: Upload limited pilot workflow evidence
         if: always()
         uses: actions/upload-artifact@v4
+        continue-on-error: true   # закрытый репозиторий: лимит хранилища не должен ронять проверку
         with:
+          retention-days: 14
           name: limited-pilot-acceptance
           path: limited_pilot_results/
           if-no-files-found: warn
@@ -393,7 +412,9 @@ jobs:
       - name: Upload table command lifecycle evidence
         if: always()
         uses: actions/upload-artifact@v4
+        continue-on-error: true   # закрытый репозиторий: лимит хранилища не должен ронять проверку
         with:
+          retention-days: 14
           name: table-command-lifecycle
           path: table_lifecycle_results/
           if-no-files-found: warn
@@ -411,7 +432,9 @@ jobs:
       - name: Upload pilot node and table lifecycle evidence
         if: always()
         uses: actions/upload-artifact@v4
+        continue-on-error: true   # закрытый репозиторий: лимит хранилища не должен ронять проверку
         with:
+          retention-days: 14
           name: pilot-node-table-lifecycle
           path: node_lifecycle_results/
           if-no-files-found: warn
@@ -419,7 +442,9 @@ jobs:
       - name: Upload historical catalogue UI evidence
         if: always()
         uses: actions/upload-artifact@v4
+        continue-on-error: true   # закрытый репозиторий: лимит хранилища не должен ронять проверку
         with:
+          retention-days: 14
           name: solution-catalog-ui
           path: solution_ui_results/
           if-no-files-found: warn
@@ -427,7 +452,9 @@ jobs:
       - name: Upload solution settings contract evidence
         if: always()
         uses: actions/upload-artifact@v4
+        continue-on-error: true   # закрытый репозиторий: лимит хранилища не должен ронять проверку
         with:
+          retention-days: 14
           name: solution-settings-contract
           path: |
             solution_settings_results/*_output.json
@@ -454,7 +481,9 @@ jobs:
       - name: Upload project parameters evidence
         if: always()
         uses: actions/upload-artifact@v4
+        continue-on-error: true   # закрытый репозиторий: лимит хранилища не должен ронять проверку
         with:
+          retention-days: 14
           name: project-parameters-ui
           path: |
             project_parameters_core_results/
@@ -481,7 +510,9 @@ jobs:
       - name: Upload pilot node geometry evidence
         if: always()
         uses: actions/upload-artifact@v4
+        continue-on-error: true   # закрытый репозиторий: лимит хранилища не должен ронять проверку
         with:
+          retention-days: 14
           name: node-geometry
           path: |
             node_geometry_core_results/
